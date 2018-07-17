@@ -1,0 +1,15 @@
+language: go
+go:
+- 1.10.x
+before_script:
+- make bootstrap
+script:
+- make
+after_success:
+- bash <(curl -s https://codecov.io/bash) -t "$CODECOV_KEY" || echo "Codecov did not collect
+  coverage reports"
+env:
+  global:
+  - V=1
+notifications:
+    email: false
