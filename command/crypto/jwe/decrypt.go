@@ -1,0 +1,133 @@
+package jwe
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/smallstep/cli/errs"
+
+	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command/crypto/internal/jose"
+	"github.com/smallstep/cli/command/crypto/internal/utils"
+	"github.com/urfave/cli"
+)
+
+func decryptCommand() cli.Command {
+	return cli.Command{
+		Name:      "decrypt",
+		Action:    cli.ActionFunc(decryptAction),
+		Usage:     "verify a JWE and decrypt ciphertext",
+		UsageText: "step crypto jwe decrypt [--key JWK] [--jwks JWKS] [--kid KID]",
+		Description: `The 'step crypto jwe decrypt' command verifies a JWE read from STDIN and
+decrypts the ciphertext printing it to STDOUT. If verification fails a
+non-zero failure code is returned. If verification succeeds the command
+returns 0.`,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name: "key",
+				Usage: `The JWE recipient's private key. The KEY argument should be the name of a
+file containing a private JWK (or a JWK encrypted as a JWE payload) or a PEM
+encoded private key (or a private key encrypted using [TODO: insert private
+key encryption mechanism]).`,
+			},
+			cli.StringFlag{
+				Name: "jwks",
+				Usage: `The JWK Set containing the recipient's private key. The JWKS argument should
+be the name of a file. The file contents should be a JWK Set or a JWE with a
+JWK Set payload. The '--jwks' flag requires the use of the '--kid' flag to
+specify which key to use.`,
+			},
+			cli.StringFlag{
+				Name: "kid",
+				Usage: `The ID of the recipient's private key. KID is a case-sensitive string. When
+used with '--jwk' the KID value must match the "kid" member of the JWK. When
+used with '--jwks' (a JWK Set) the KID value must match the "kid" member of
+one of the JWKs in the JWK Set.`,
+			},
+		},
+	}
+}
+
+func decryptAction(ctx *cli.Context) error {
+	data, err := utils.ReadAll(os.Stdin)
+	if err != nil {
+		return err
+	}
+
+	key := ctx.String("key")
+	jwks := ctx.String("jwks")
+	kid := ctx.String("kid")
+
+	obj, err := jose.ParseEncrypted(string(data))
+	if err != nil {
+		return errors.Wrap(err, "error parsing data")
+	}
+
+	alg := jose.KeyAlgorithm(obj.Header.Algorithm)
+
+	var isPBES2 bool
+	switch alg {
+	case jose.PBES2_HS256_A128KW, jose.PBES2_HS384_A192KW, jose.PBES2_HS512_A256KW:
+		isPBES2 = true
+	}
+
+	switch {
+	case isPBES2 && key != "":
+		return errors.Errorf("flag '--key' cannot be used with JWE algorithm '%s'", alg)
+	case isPBES2 && jwks != "":
+		return errors.Errorf("flag '--jwks' cannot be used with JWE algorithm '%s'", alg)
+	case !isPBES2 && key == "" && jwks == "":
+		return errs.RequiredOrFlag(ctx, "key", "jwk")
+	case key != "" && jwks != "":
+		return errs.MutuallyExclusiveFlags(ctx, "key", "jwks")
+	case jwks != "" && kid == "":
+		return errs.RequiredWithFlag(ctx, "kid", "jwks")
+	}
+
+	// Read key from --key or --jwks
+	var pbes2Key []byte
+	var jwk *jose.JSONWebKey
+	switch {
+	case key != "":
+		jwk, err = jose.ParseKey(key, "enc", "", kid, false)
+	case jwks != "":
+		jwk, err = jose.ParseKeySet(jwks, "", kid, false)
+	case isPBES2:
+		pbes2Key, err = utils.ReadPassword("Please enter the password to decrypt the content encryption key: ")
+	default:
+		return errs.RequiredOrFlag(ctx, "key", "jwk")
+	}
+	if err != nil {
+		return err
+	}
+
+	var decryptKey interface{}
+	if isPBES2 {
+		decryptKey = pbes2Key
+	} else {
+		// Private keys are used for decryption
+		if jwk.IsPublic() {
+			return errors.New("cannot use a public key for decryption")
+		}
+
+		if jwk.Use == "sig" {
+			return errors.New("invalid jwk use: found 'sig' (signature), expecting 'enc' (encryption)")
+		}
+
+		// Validate jwk
+		if err := jose.ValidateJWK(jwk); err != nil {
+			return err
+		}
+
+		decryptKey = jwk.Key
+	}
+
+	decrypted, err := obj.Decrypt(decryptKey)
+	if err != nil {
+		return errors.Wrap(err, "error decrypting data")
+	}
+
+	fmt.Printf(string(decrypted))
+
+	return nil
+}
