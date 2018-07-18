@@ -239,11 +239,16 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 				r.printf("\n")
 			} else {
 				ordered := (node.ListFlags&md.ListTypeOrdered != 0)
+				unordered := (node.ListFlags&md.ListTypeOrdered == 0 && node.ListFlags&md.ListTypeDefinition == 0)
 				for i, item := range r.list.items {
-					if ordered {
-						// add numbers on ordered lists
+					if ordered || unordered {
 						p := bytes.IndexFunc(item.term, func(r rune) bool { return !unicode.IsSpace(r) })
-						item.term = append(item.term[:p], append([]byte(fmt.Sprintf("%d. ", i+1)), item.term[p:]...)...)
+						switch {
+						case ordered: // add numbers on ordered lists
+							item.term = append(item.term[:p], append([]byte(fmt.Sprintf("%d. ", i+1)), item.term[p:]...)...)
+						case unordered: // add bullet points on unordered lists
+							item.term = append(item.term[:p], append([]byte("• "), item.term[p:]...)...)
+						}
 					}
 
 					r.write(item.term)
