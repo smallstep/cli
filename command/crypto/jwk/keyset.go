@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command/crypto/internal/jose"
+	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
 
@@ -17,15 +18,14 @@ func keysetCommand() cli.Command {
 	return cli.Command{
 		Name:      "keyset",
 		Usage:     "add, remove, and find JWKs in JWK Sets",
-		UsageText: "step crypto jwk set COMMAND [ARGUMENTS] [GLOBAL_FLAGS] [SUBCOMMAND_FLAGS]",
-		Description: `The 'step crypto jwk set' command group provides facilities for managing and
+		UsageText: "**step crypto jwk keyset** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step crypto jwk set** command group provides facilities for managing and
 inspecting JWK Sets. A is a JSON object that represents a set of JWKs. They
 are defined in RFC7517.
 
-  A JWK Set is simply a JSON object with a "keys" member whose value is an
-array of JWKs. Additional members are allowed in the object. They will be
-preserved by this tool, but otherwise ignored. Duplicate member names are not
-allowed.`,
+A JWK Set is simply a JSON object with a "keys" member whose value is an array
+of JWKs. Additional members are allowed in the object. They will be preserved
+by this tool, but otherwise ignored. Duplicate member names are not allowed.`,
 		Subcommands: cli.Commands{
 			keysetAddCommand(),
 			keysetRemoveCommand(),
@@ -40,15 +40,15 @@ func keysetAddCommand() cli.Command {
 		Name:      "add",
 		Action:    cli.ActionFunc(keysetAddAction),
 		Usage:     "a JWK to a JWK Set",
-		UsageText: "step crypto jwk set add JWKS_FILE",
-		Description: `The 'step crypto jwk set add' command reads a JWK from STDIN and
-adds it to the JWK Set in JWKS_FILE. Modifications to JWKS_FILE are in-place.
-The file is 'flock'd while it's being read and modified.
+		UsageText: "**step crypto jwk keyset add** <jwks-file>",
+		Description: `**step crypto jwk keyset add** command reads a JWK from STDIN and adds it to
+the JWK Set in <jwks-file>. Modifications to <jwks-file> are in-place. The
+file is 'flock'd while it's being read and modified.
 
-POSITIONAL ARGUMENTS:
+## POSITIONAL ARGUMENTS:
 
-  JWKS_FILE
-    File containing a JWK Set`,
+<jwks-file>
+: File containing a JWK Set`,
 	}
 }
 
@@ -57,19 +57,20 @@ func keysetRemoveCommand() cli.Command {
 		Name:      "remove",
 		Action:    cli.ActionFunc(keysetRemoveAction),
 		Usage:     "a JWK from a JWK Set",
-		UsageText: "step crypto jwk set remove JWKS_FILE --kid [KID]",
-		Description: `The 'step crypto jwk set remove' command removes the JWK with a key ID
-matching KID from the JWK Set stored in JWKS_FILE. Modifications to JWKS_FILE
-are in-place. The file is 'flock'd while it's being read and modified.
+		UsageText: "**step crypto jwk keyset remove** <jwks-file> [**--kid**=<kid>]",
+		Description: `**step crypto jwk keyset remove** command removes the JWK with a key ID
+matching <kid> from the JWK Set stored in <jwks-file>. Modifications to
+<jwks-file> are in-place. The file is 'flock'd while it's being read and
+modified.
 
-POSITONAL_ARGUMENTS:
+## POSITONAL_ARGUMENTS:
 
-  JWKS_FILE
-    File containing a JWK Set`,
+<jwks-file>
+: File containing a JWK Set`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "kid",
-				Usage: `The key ID of the JWK to remove from the JWK Set. KID is a case-sensitive
+				Usage: `The key ID of the JWK to remove from the JWK Set. <kid> is a case-sensitive
 string.`,
 			},
 		},
@@ -81,14 +82,14 @@ func keysetListCommand() cli.Command {
 		Name:      "list",
 		Action:    cli.ActionFunc(keysetListAction),
 		Usage:     "key IDs of JWKs in a JWK Set",
-		UsageText: "step crypto jwk set list JWKS_FILE",
-		Description: `The 'step crypto jwk set list' command lists the IDs ("kid" parameters) of
+		UsageText: "**step crypto jwk keyset list** <jwks-file>",
+		Description: `**step crypto jwk keyset list** command lists the IDs ("kid" parameters) of
 JWKs in a JWK Set.
 
-POSITONAL_ARGUMENTS:
+## POSITONAL_ARGUMENTS:
 
-  JWKS_FILE
-    File containing a JWK Set`,
+<jwks-file>
+: File containing a JWK Set`,
 	}
 }
 
@@ -97,19 +98,19 @@ func keysetFindCommand() cli.Command {
 		Name:      "find",
 		Action:    cli.ActionFunc(keysetFindAction),
 		Usage:     "a JWK in a JWK Set",
-		UsageText: "step crypto jwk set find JWKS_FILE --kid [KID]",
-		Description: `The 'step crypto jwk set find' command locates the JWK with a key ID
-matching KID from the JWK Set stored in JWKS_FILE. The matching JWK is printed
-to STDOUT.
+		UsageText: "**step crypto jwk keyset find** <jwks-file> [**--kid**=<kid>]",
+		Description: `**step crypto jwk keyset find** command locates the JWK with a key ID matching
+<kid> from the JWK Set stored in <jwks-file>. The matching JWK is printed to
+STDOUT.
 
-POSITONAL_ARGUMENTS:
+## POSITONAL_ARGUMENTS:
 
-  JWKS_FILE
-    File containing a JWK Set`,
+<jwks-file>
+: File containing a JWK Set`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "kid",
-				Usage: `The key ID of the JWK to remove from the JWK Set. KID is a case-sensitive
+				Usage: `The key ID of the JWK to locate from the JWK Set. <kid> is a case-sensitive
 string.`,
 			},
 		},
@@ -117,8 +118,8 @@ string.`,
 }
 
 func keysetAddAction(ctx *cli.Context) error {
-	if ctx.NArg() != 1 {
-		return errors.Errorf("not enough positional arguments, use '%s'", ctx.Command.UsageText)
+	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		return err
 	}
 
 	b, err := ioutil.ReadAll(os.Stdin)
@@ -151,8 +152,8 @@ func keysetAddAction(ctx *cli.Context) error {
 }
 
 func keysetRemoveAction(ctx *cli.Context) error {
-	if ctx.NArg() != 1 {
-		return errors.Errorf("not enough positional arguments, use '%s'", ctx.Command.UsageText)
+	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		return err
 	}
 
 	kid := ctx.String("kid")
@@ -175,8 +176,8 @@ func keysetRemoveAction(ctx *cli.Context) error {
 }
 
 func keysetListAction(ctx *cli.Context) error {
-	if ctx.NArg() != 1 {
-		return errors.Errorf("not enough positional arguments, use '%s'", ctx.Command.UsageText)
+	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		return err
 	}
 
 	jwksFile := ctx.Args().Get(0)
@@ -193,8 +194,8 @@ func keysetListAction(ctx *cli.Context) error {
 }
 
 func keysetFindAction(ctx *cli.Context) error {
-	if ctx.NArg() != 1 {
-		return errors.Errorf("not enough positional arguments, use '%s'", ctx.Command.UsageText)
+	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		return err
 	}
 
 	kid := ctx.String("kid")
@@ -223,7 +224,7 @@ func rwLockKeySet(filename string) (jwks *jose.JSONWebKeySet, writeFunc func(boo
 
 	f, err = os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
-		err = errors.Wrapf(err, "error reading %s", filename)
+		err = errs.FileError(err, filename)
 		return
 	}
 
@@ -235,7 +236,7 @@ func rwLockKeySet(filename string) (jwks *jose.JSONWebKeySet, writeFunc func(boo
 	case nil: // continue
 	case syscall.EWOULDBLOCK:
 		f.Close()
-		err = errors.Errorf("%s is locked", filename)
+		err = errors.Errorf("error reading %s: file is locked", filename)
 		return
 	default:
 		f.Close()
