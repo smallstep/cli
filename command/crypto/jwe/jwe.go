@@ -8,50 +8,55 @@ func Command() cli.Command {
 		Name:      "jwe",
 		Usage:     "encrypt and decrypt data and keys using JSON Web Encryption (JWE)",
 		UsageText: "step crypto jwe <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `The 'step crypto jwe' command group provides facilities for encrypting and
+		Description: `The **step crypto jwe** command group provides facilities for encrypting and
 decrypting content and representing encrypted content using JSON-based data
 structures as defined by the JSON Web Encryption (JWE) specification in
 RFC7516, using algorithms defined in the JSON Web Algorithms (JWA)
 specification in RFC7518. A JWE is a data structure representing an encrypted
 and integrity-protected message.
 
-  There are two JWE serializations: the compact serialization is a small, URL-
+There are two JWE serializations: the compact serialization is a small, URL-
 safe representation that base64 encodes the JWE components. The compact
 serialization is a URL-safe string, suitable for space-constrained
 environments such as HTTP headers and URI query parameters. The JSON
 serialization represents JWEs as JSON objects and allows the same content to
 be encrypted to multiple parties (using multiple keys).
 
-  A typical JWE in compact serialization is a dot-separated string with five
+A typical JWE in compact serialization is a dot-separated string with five
 parts:
-  * Header: metadata describing how the plaintext payload was processed to
+
+  • Header: metadata describing how the plaintext payload was processed to
     produce ciphertext (e.g., which algorithms were used to encrypt the
     content encryption key and the plaintext payload)
-  * Encrypted Key: the "content encryption key" that was used to encrypt the
+
+  • Encrypted Key: the "content encryption key" that was used to encrypt the
     plaintext payload, encrypted for the JWE recipient(s) (see: "what's with
     the encrypted key" below)
-  * Initialization Vector: an initialization vector for use with the specified
+
+  • Initialization Vector: an initialization vector for use with the specified
     encryption algorithm, if applicable
-  * Ciphertext: the ciphertext value resulting produced from authenticated
+
+  • Ciphertext: the ciphertext value resulting produced from authenticated
     encryption of the plaintext with additional authenticated data
-  * Authentication Tag: value resulting fromthe authenticated encryption of
+
+  • Authentication Tag: value resulting fromthe authenticated encryption of
     the plaintext with additional authenticated data
 
 ## What's with encrypted key?
 
-  This is somewhat confusing. Instead of directly encrypting the plaintext
+This is somewhat confusing. Instead of directly encrypting the plaintext
 payload, JWE typically generates a new "content encryption key" then encrypts
 *that key* for the intended recipient(s). Todo: y tho?
 
-  While versatile, JWE is easy to use incorrectly. Therefore, any use of this
+While versatile, JWE is easy to use incorrectly. Therefore, any use of this
 subcommand requires the use of the '--subtle' flag as a misuse prevention
 mechanism. You should only use this subcommand if you know what you're doing.
 If possible, you're better off using the higher level 'crypto nacl' command
 group.
 
-EXAMPLES
+## EXAMPLES
 
-  This example demonstrates how to produce a JWE for a recipient using the
+This example demonstrates how to produce a JWE for a recipient using the
 RSA-OAEP algorithm to encrypt the content encryption key (producing the
 encrypted key), and the A256GCM (AES GCM with 256-bit key) algorithm to
 produce the ciphertext and authentication tag.
