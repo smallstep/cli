@@ -61,38 +61,42 @@ RSA-OAEP algorithm to encrypt the content encryption key (producing the
 encrypted key), and the A256GCM (AES GCM with 256-bit key) algorithm to
 produce the ciphertext and authentication tag.
 
-  1. Encode the JWE header with the desired "alg" and "enc" members then
-     encode it producing the *header*
-       BASE64URL(UTF8({"alg":"RSA-OAEP","enc":"A256GCM"}))
-       => eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ
-  2. Generate a random content encryption key (CEK), encrypt it using
-     RSA-OAEP, producing the *encrypted key*
-  3. Generate a random initialization vector
-  4. Perform authenticated encryption over the plaintext using the content
-     encryption key and A256GCM algorithm with the base64-encoded JWE headers
-     provided as additional authenticated data producing the *ciphertext* and
-     *authentication tag*
-  5. Assemble the final result (compact serialization) to produce the string:
+    1. Encode the JWE header with the desired "alg" and "enc" members then
+       encode it producing the *header*
+         BASE64URL(UTF8({"alg":"RSA-OAEP","enc":"A256GCM"}))
+         => eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ
 
-        BASE64URL(UTF8(header)) || '.'
-     || BASE64URL(encrypted key) || '.'
-     || BASE64URL(initialization vector) || '.'
-     || BASE64URL(ciphertext) || '.'
-     || BASE64URL(authentication tag)
+    2. Generate a random content encryption key (CEK), encrypt it using
+       RSA-OAEP, producing the *encrypted key*
 
-     Producing a result like (line breaks for display purposes only):
+    3. Generate a random initialization vector
 
-     eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ.
-     OKOawDo13gRp2ojaHV7LFpZcgV7T6DVZKTyKOMTYUmKoTCVJRgckCL9kiMT03JGe
-     ipsEdY3mx_etLbbWSrFr05kLzcSr4qKAq7YN7e9jwQRb23nfa6c9d-StnImGyFDb
-     Sv04uVuxIp5Zms1gNxKKK2Da14B8S4rzVRltdYwam_lDp5XnZAYpQdb76FdIKLaV
-     mqgfwX7XWRxv2322i-vDxRfqNzo_tETKzpVLzfiwQyeyPGLBIO56YJ7eObdv0je8
-     1860ppamavo35UgoRdbYaBcoh9QcfylQr66oc6vFWXRcZ_ZT2LawVCWTIy3brGPi
-     6UklfCpIMfIjf7iGdXKHzg.
-     48V1_ALb6US04U3b.
-     5eym8TW_c8SuK0ltJ3rpYIzOeDQz7TALvtu6UG9oMo4vpzs9tX_EFShS8iB7j6ji
-     SdiwkIr3ajwQzaBtQD_A.
-     XFBoMYUZodetZdvTiFvSkQ`,
+    4. Perform authenticated encryption over the plaintext using the content
+       encryption key and A256GCM algorithm with the base64-encoded JWE headers
+       provided as additional authenticated data producing the *ciphertext* and
+       *authentication tag*
+
+    5. Assemble the final result (compact serialization) to produce the string:
+
+          BASE64URL(UTF8(header)) || '.'
+       || BASE64URL(encrypted key) || '.'
+       || BASE64URL(initialization vector) || '.'
+       || BASE64URL(ciphertext) || '.'
+       || BASE64URL(authentication tag)
+
+       Producing a result like (line breaks for display purposes only):
+
+       eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ.
+       OKOawDo13gRp2ojaHV7LFpZcgV7T6DVZKTyKOMTYUmKoTCVJRgckCL9kiMT03JGe
+       ipsEdY3mx_etLbbWSrFr05kLzcSr4qKAq7YN7e9jwQRb23nfa6c9d-StnImGyFDb
+       Sv04uVuxIp5Zms1gNxKKK2Da14B8S4rzVRltdYwam_lDp5XnZAYpQdb76FdIKLaV
+       mqgfwX7XWRxv2322i-vDxRfqNzo_tETKzpVLzfiwQyeyPGLBIO56YJ7eObdv0je8
+       1860ppamavo35UgoRdbYaBcoh9QcfylQr66oc6vFWXRcZ_ZT2LawVCWTIy3brGPi
+       6UklfCpIMfIjf7iGdXKHzg.
+       48V1_ALb6US04U3b.
+       5eym8TW_c8SuK0ltJ3rpYIzOeDQz7TALvtu6UG9oMo4vpzs9tX_EFShS8iB7j6ji
+       SdiwkIr3ajwQzaBtQD_A.
+       XFBoMYUZodetZdvTiFvSkQ`,
 		Subcommands: cli.Commands{
 			encryptCommand(),
 			decryptCommand(),

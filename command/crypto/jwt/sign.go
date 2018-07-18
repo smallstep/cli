@@ -48,6 +48,7 @@ arguments requires the use of the '--subtle' flag as a misuse prevention
 mechanism.
 
   A JWT signed using JWS has three parts:
+
     1. A base64 encoded JSON object representing the JOSE (JSON Object Signing
        and Encryption) header that describes the cryptographic operations
        applied to the JWT Claims Set

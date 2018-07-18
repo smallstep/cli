@@ -23,6 +23,7 @@ a key/value pair. Logically a verified JWT can be interpreted as "ISSUER says
 to AUDIENCE that SUBJECT's CLAIM_NAME is CLAIM_VALUE" for each claim.
 
   A JWT signed using JWS has three parts:
+
     1. A base64 encoded JSON object representing the JOSE (JSON Object Signing
        and Encryption) header that describes the cryptographic operations
        applied to the JWT Claims Set
