@@ -12,6 +12,7 @@ import (
 	"github.com/smallstep/cli/command/crypto/internal/crypto"
 	"github.com/smallstep/cli/command/crypto/internal/jose"
 	"github.com/smallstep/cli/command/crypto/internal/utils"
+	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
 
@@ -414,14 +415,9 @@ recommended. Requires **--insecure** flag.`,
 }
 
 func createAction(ctx *cli.Context) error {
-	switch ctx.NArg() {
-	case 0:
-		return errors.New("missing positional arguments 'PUB_FILE' 'PRIV_FILE'")
-	case 1:
-		return errors.New("missing positional argument 'PRIV_FILE'")
-	case 2: // ok
-	default:
-		return errors.New("too many positional arguments use only 'PUB_FILE' 'PRIV_FILE'")
+	// require public and private files
+	if err := errs.NumberOfArguments(ctx, 2); err != nil {
+		return err
 	}
 
 	// Use password to protect private JWK by default
@@ -430,14 +426,14 @@ func createAction(ctx *cli.Context) error {
 		if ctx.Bool("insecure") {
 			usePassword = false
 		} else {
-			return errors.New("flag '--no-password' requires the '--insecure' flag")
+			return errs.RequiredInsecureFlag(ctx, "no-password")
 		}
 	}
 
 	pubFile := ctx.Args().Get(0)
 	privFile := ctx.Args().Get(1)
 	if pubFile == privFile {
-		return errors.New("positional arguments 'PUB_FILE' 'PRIV_FILE' cannot be equal")
+		return errs.EqualArguments(ctx, "public-jwk-file", "private-jwk-file")
 	}
 
 	kty := ctx.String("kty")
@@ -451,40 +447,40 @@ func createAction(ctx *cli.Context) error {
 	switch kty {
 	case "EC":
 		if ctx.IsSet("size") {
-			return errors.New("flag '--size' is incompatible with '--kty EC'")
+			return errs.IncompatibleFlag(ctx, "size", "--kty EC")
 		}
 	case "RSA":
 		if ctx.IsSet("crv") {
-			return errors.New("flag '--crv' is incompatible with '--kty RSA'")
+			return errs.IncompatibleFlag(ctx, "crv", "--kty RSA")
 		}
 		// If size is not set it will use a safe default
 		if ctx.IsSet("size") {
 			if size < 2048 && !ctx.Bool("insecure") {
-				return errors.New("minimum '--size' for RSA keys is 2048 bits without '--insecure' flag")
+				return errs.MinSizeInsecureFlag(ctx, "size", "2048")
 			}
 			if size <= 0 {
-				return errors.New("flag '--size' must be >= 0")
+				return errs.MinSizeFlag(ctx, "size", "0")
 			}
 		}
 	case "OKP":
 		if ctx.IsSet("size") {
-			return errors.New("flag '--size' is incompatible with '--kty OKP'")
+			return errs.IncompatibleFlag(ctx, "size", "--kty OKP")
 		}
 	case "oct":
 		if ctx.IsSet("crv") {
-			return errors.New("flag '--crv' is incompatible with '--kty oct'")
+			return errs.IncompatibleFlag(ctx, "crv", "--kty oct")
 		}
 		// If size is not set it will use a safe default
 		if ctx.IsSet("size") {
 			if size < 16 && !ctx.Bool("insecure") {
-				return errors.New("minimum '--size' for oct keys is 16 bytes without '--insecure' flag")
+				return errs.MinSizeInsecureFlag(ctx, "size", "16")
 			}
 			if size <= 0 {
-				return errors.New("flag '--size' must be >= 0")
+				return errs.MinSizeFlag(ctx, "size", "0")
 			}
 		}
 	default:
-		return errors.New("missing or invalid value for flag '--kty'")
+		return errs.InvalidFlagValue(ctx, "kty", kty, "EC, RSA, OKP, or oct")
 	}
 
 	// Generate or read secrets
@@ -546,7 +542,7 @@ func createAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error marshaling JWK")
 	}
 	if err := utils.WriteFile(pubFile, b, 0600); err != nil {
-		return errors.Wrap(err, "error creating JWK")
+		return errs.FileError(err, pubFile)
 	}
 
 	if jwk.IsPublic() {
@@ -612,7 +608,7 @@ func createAction(ctx *cli.Context) error {
 		}
 	}
 	if err := utils.WriteFile(privFile, b, 0600); err != nil {
-		return errors.Wrap(err, "error creating JWK")
+		return errs.FileError(err, privFile)
 	}
 
 	return nil
