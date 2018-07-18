@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"text/tabwriter"
+	"unicode"
 
 	"github.com/samfoo/ansi"
 	md "github.com/smallstep/cli/pkg/blackfriday"
@@ -237,7 +238,14 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 				w.Flush()
 				r.printf("\n")
 			} else {
-				for _, item := range r.list.items {
+				ordered := (node.ListFlags&md.ListTypeOrdered != 0)
+				for i, item := range r.list.items {
+					if ordered {
+						// add numbers on ordered lists
+						p := bytes.IndexFunc(item.term, func(r rune) bool { return !unicode.IsSpace(r) })
+						item.term = append(item.term[:p], append([]byte(fmt.Sprintf("%d. ", i+1)), item.term[p:]...)...)
+					}
+
 					r.write(item.term)
 					for _, def := range item.definitions {
 						r.write(def)
