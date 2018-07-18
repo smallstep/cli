@@ -6,9 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/smallstep/cli/command/crypto/internal/jose"
-
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command/crypto/internal/jose"
 	"github.com/urfave/cli"
 )
 
@@ -17,9 +16,9 @@ func publicCommand() cli.Command {
 		Name:      "public",
 		Action:    cli.ActionFunc(publicAction),
 		Usage:     "extract a public JSON Web Key (JWK) from a private JWK",
-		UsageText: `step crypto jwk public`,
-		Description: `The 'step crypto jwk public' command reads a JWK from STDIN, derives
-the corresponding public JWK, and prints the derived JWK to STDOUT.`,
+		UsageText: `**step crypto jwk public**`,
+		Description: `**step crypto jwk public** command reads a JWK from STDIN, derives the
+corresponding public JWK, and prints the derived JWK to STDOUT.`,
 	}
 }
 
@@ -40,7 +39,16 @@ func publicAction(ctx *cli.Context) error {
 		return errors.New("error reading JWK: unsupported format")
 	}
 
-	b, err = json.MarshalIndent(jwk.Public(), "", "  ")
+	var public jose.JSONWebKey
+
+	// go-jose JSONWebKey.Public() returns an empty key for oct
+	if _, ok := jwk.Key.([]byte); ok {
+		public = *jwk
+	} else {
+		public = jwk.Public()
+	}
+
+	b, err = json.MarshalIndent(public, "", "  ")
 	if err != nil {
 		return errors.Wrap(err, "error marshaling JWK")
 	}
