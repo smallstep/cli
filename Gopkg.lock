@@ -162,12 +162,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/smallstep/go-makefile"
-  packages = ["."]
-  revision = "c6025f797567554133ce98a3fcc224b3691a9f05"
-
-[[projects]]
-  branch = "master"
   name = "github.com/tsenart/deadcode"
   packages = ["."]
   revision = "210d2dc333e90c7e3eedf4f2242507a8e83ed4ab"
@@ -306,6 +300,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "173e6eb13528165fee3e441bf795759815662b55ce4f0a05d6ce91844ce81507"
+  inputs-digest = "fa64d6eeb6bbfd71fc8611b747c693b51895b85a63e3256655db302cb0bec52c"
   solver-name = "gps-cdcl"
   solver-version = 1
