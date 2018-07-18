@@ -18,8 +18,8 @@ func thumbprintCommand() cli.Command {
 		Name:      "thumbprint",
 		Action:    cli.ActionFunc(thumbprintAction),
 		Usage:     "compute thumbprint for a JWK",
-		UsageText: `step crypto jwk thumbprint`,
-		Description: `The 'step crypto jwk thumbprint' command reads a JWK from STDINT, derives the
+		UsageText: `**step crypto jwk thumbprint**`,
+		Description: `**step crypto jwk thumbprint** reads a JWK from STDINT, derives the
 corresponding JWK Thumbprint (RFC7638), and prints the base64-urlencoded
 thumbprint to STDOUT.`,
 	}
