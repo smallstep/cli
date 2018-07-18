@@ -1,4 +1,4 @@
-package certificates
+package certificate
 
 import (
 	"encoding/pem"
@@ -14,19 +14,33 @@ func bundleCommand() cli.Command {
 		Name:      "bundle",
 		Action:    cli.ActionFunc(bundleAction),
 		Usage:     `bundle a certificate with intermediate certificate(s) needed for certificate path validation.`,
-		UsageText: `step certificates bundle CRT_FILE BUNDLE_FILE`,
-		Description: `The 'step certificates bundle' command bundles a certificate with any
-intermediates necessary to validate the certificate.
+		UsageText: `**step certificate bundle** <crt_file> <ca> <bundle_file>`,
+		Description: `**step certificate bundle** command bundles a certificate
+		with any intermediates necessary to validate the certificate.
 
-  POSITIONAL ARGUMENTS
-    CRT_FILE
-      The path to a leaf certificate to bundle with issuing certificate(s).
+## POSITIONAL ARGUMENTS
 
-    CA_FILE
-      The path to the Certificate Authoriy issusing certificate for the leaf.
+<crt_file>
+: The path to a leaf certificate to bundle with issuing certificate(s).
 
-    BUNDLE_FILE
-	  The path to write the bundle.`,
+<ca>
+: The path to the Certificate Authoriy issusing certificate.
+
+<bundle_file>
+: The path to write the bundle.
+
+## EXIT CODES
+
+This command returns 0 on success and \>0 if any error occurs.
+
+## EXAMPLES
+
+Bundle a certificate with the intermediate certificate authority (issuer):
+
+'''
+$ step certificate bundle foo.crt intermediate-ca.crt foo-bundle.crt
+'''
+`,
 	}
 }
 

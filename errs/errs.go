@@ -9,30 +9,12 @@ import (
 	"github.com/urfave/cli"
 )
 
-// err errExitCode is the default exit code when an error occurs.
-const errExitCode = 1
-
-// ErrTooFewArgs occurs when too few arguments were provided by the user
-var ErrTooFewArgs = NewError("Not enough arguments were provided")
-
-// ErrTooManyArgs occurs when too many arguments were provided by the user
-var ErrTooManyArgs = NewError("Too many arguments were provided")
-
-// ErrMissingArgs occurs when one or more arguments are missing
-var ErrMissingArgs = NewError("An incorrect number of arguments were provided")
-
-// ErrMissingToken occurs when a STEP_TOKEN or --token flag is not provided
-var ErrMissingToken = NewError("A one-time token must be provided to bootstrap the identity via the `--token` flag or `$STEP_TOKEN` environment variable")
-
-// ErrMissingCAURL occurs when a STEP_CA_URL or --ca-url flag is not provided
-var ErrMissingCAURL = NewError("The CA URL must be provided through the --ca-url flag or `$STEP_CA_URL` environment variable")
-
 // NewError returns a new Error for the given format and arguments
 func NewError(format string, args ...interface{}) error {
 	return errors.Errorf(format, args...)
 }
 
-// NewExitError returns an error than the urfave/cli package will handle and
+// NewExitError returns an error that the urfave/cli package will handle and
 // will show the given error and exit with the given code.
 func NewExitError(err error, exitCode int) error {
 	return cli.NewExitError(err, exitCode)
@@ -52,38 +34,6 @@ func Wrap(err error, format string, args ...interface{}) error {
 		}
 	}
 	return errors.Wrapf(cause, format, args...)
-}
-
-// UsageExitError prints out the usage error followed by the help documentation
-// for the command
-func UsageExitError(c *cli.Context, err error) error {
-	msg := fmt.Sprintf("Error: %s\n\n%s", err.Error(), usageString(c))
-	return cli.NewExitError(msg, errExitCode)
-}
-
-// UnexpectedExitError wraps the error denoting that it was unexpected
-func UnexpectedExitError(err error) error {
-	msg := fmt.Sprintf("Error: An unexpected error was encountered: %s", err.Error())
-	return cli.NewExitError(msg, errExitCode)
-}
-
-// ToError transforms the given error into our frameworks error type
-func ToError(err error) error {
-	switch err.(type) {
-	case nil:
-		return nil
-	default:
-		return cli.NewExitError(prependErrorMsg(err), errExitCode)
-	}
-}
-
-func prependErrorMsg(err error) string {
-	m := err.Error()
-	if strings.HasPrefix(m, "Error:") {
-		return m
-	}
-
-	return "Error: " + m
 }
 
 // InsecureCommand returns an error with a message saying that the current
@@ -177,6 +127,22 @@ func IncompatibleFlag(ctx *cli.Context, flag string, value string) error {
 	return errors.Errorf("flag '--%s' is incompatible with '%s'", flag, value)
 }
 
+// IncompatibleFlagValue returns an error with the flag being incompatible with the
+// given value.
+func IncompatibleFlagValue(ctx *cli.Context, flag, incompatibleWith,
+	incompatibleWithValue string) error {
+	return errors.Errorf("flag '--%s' is incompatible with flag '--%s %s'",
+		flag, incompatibleWith, incompatibleWithValue)
+}
+
+// IncompatibleFlagValues returns an error with the flag being incompatible with the
+// given value.
+func IncompatibleFlagValues(ctx *cli.Context, flag, value, incompatibleWith,
+	incompatibleWithValue string) error {
+	return errors.Errorf("flag '--%s %s' is incompatible with flag '--%s %s'",
+		flag, value, incompatibleWith, incompatibleWithValue)
+}
+
 // RequiredFlag returns an error with the required flag message.
 func RequiredFlag(ctx *cli.Context, flag string) error {
 	return errors.Errorf("'%s %s' requires the '--%s' flag", ctx.App.HelpName,
@@ -184,8 +150,13 @@ func RequiredFlag(ctx *cli.Context, flag string) error {
 }
 
 // RequiredWithFlag returns an error with the required flag message with another flag.
-func RequiredWithFlag(ctx *cli.Context, required, with string) error {
-	return errors.Errorf("flag '--%s' requires the '--%s' flag", required, with)
+func RequiredWithFlag(ctx *cli.Context, flag, required string) error {
+	return errors.Errorf("flag '--%s' requires the '--%s' flag", flag, required)
+}
+
+// RequiredWithFlagValue returns an error with the required flag message.
+func RequiredWithFlagValue(ctx *cli.Context, flag, value, required string) error {
+	return errors.Errorf("'--%s %s' requires the '--%s' flag", flag, value, required)
 }
 
 // RequiredInsecureFlag returns an error with the required flag message unless
@@ -235,11 +206,6 @@ func usage(ctx *cli.Context) string {
 	// keep just the first line and remove markdown
 	lines := strings.Split(ctx.Command.UsageText, "\n")
 	return strings.Replace(lines[0], "**", "", -1)
-}
-
-// usageString returns the command usage prepended by the string "Usage: ".
-func usageString(ctx *cli.Context) string {
-	return "Usage: " + usage(ctx)
 }
 
 // FileError is a wrapper for errors of the os package.

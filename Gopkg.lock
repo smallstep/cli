@@ -83,7 +83,7 @@
   branch = "master"
   name = "github.com/gordonklaus/ineffassign"
   packages = ["."]
-  revision = "7bae11eba15a3285c75e388f77eb6357a2d73ee2"
+  revision = "3fd9b69f2fb179405773f03d33c68a00f3a1ca4a"
 
 [[projects]]
   branch = "master"
@@ -219,7 +219,7 @@
     "scrypt",
     "ssh/terminal"
   ]
-  revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
+  revision = "a2144134853fc9a27a7b1e3eb4f19f1a76df13c9"
 
 [[projects]]
   branch = "master"
@@ -231,7 +231,7 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["idna"]
-  revision = "d0887baf81f4598189d4e12a37c6da86f0bba4d0"
+  revision = "8887df42c721e930089d31b28391090a10a497d7"
 
 [[projects]]
   branch = "master"
@@ -272,7 +272,7 @@
     "go/internal/gcimporter",
     "go/types/typeutil"
   ]
-  revision = "57f659e14dda699044a713b0f8d1d3ff033e0455"
+  revision = "32950ab3be12acf6d472893021373669979907ab"
 
 [[projects]]
   name = "gopkg.in/alecthomas/kingpin.v3-unstable"

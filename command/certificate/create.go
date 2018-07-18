@@ -1,4 +1,4 @@
-package certificates
+package certificate
 
 import (
 	"crypto/rand"
@@ -23,59 +23,63 @@ func createCommand() cli.Command {
 		Name:   "create",
 		Action: cli.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
-		UsageText: `step certificates create SUBJECT CRT_FILE KEY_FILE [--type=CERTIFICATE_TYPE]
-		[--profile=PROFILE] [--csr] [--token=TOKEN]`,
-		Description: `The 'step certificates create' command generates a certificate or a
-  certificate signing requests (CSR) that can be signed later using 'step
-  certificates sign' (or some other tool) to produce a certificate.
+		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
+		[**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
+		[**no-password**] [**--profile**=<profile>]`,
+		Description: `**step certificate create** generates a certificate or a
+certificate signing requests (CSR) that can be signed later using 'step
+certificates sign' (or some other tool) to produce a certificate.
 
-  This command can create x.509 certificates for use with TLS as well as SSH
-  certificates.
+This command creates x.509 certificates for use with TLS.
 
-POSITIONAL ARGUMENTS
-  SUBJECT
-    The subject of the certificate. Typically this is a hostname for services or an email address for people.
+## POSITIONAL ARGUMENTS
 
-  CRT_FILE
-    File to write CRT or CSR to (PEM format)
+<subject>
+: The subject of the certificate. Typically this is a hostname for services or an email address for people.
 
-  KEY_FILE
-    File to write private key to (PEM format)`,
+<crt_file>
+: File to write CRT or CSR to (PEM format)
+
+<key_file>
+: File to write private key to (PEM format)
+
+## EXIT CODES
+
+This command returns 0 on success and \>0 if any error occurs.
+
+## EXAMPLES
+
+Create a CSR and key:
+
+'''
+$ step certificate create foo foo.csr foo.key --csr
+'''
+
+Create a CSR and key - do not encrypt the key when writing to disk:
+
+'''
+$ step certificate create foo foo.csr foo.key --csr --no-password --insecure
+'''
+
+Create a leaf certificate and key:
+
+'''
+$ step certificate create foo foo.crt foo.key intermediate-ca --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
+'''
+
+Create a root certificate and key:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile root-ca
+'''
+
+Create an intermediate certificate and key:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key
+'''
+`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "type",
-				Value: "x509",
-				Usage: `The type of certificate to generate. If not specified default is x509.
-
-  CERTIFICATE_TYPE must be one of:
-    x509
-      Generate an x.509 certificate suitable for use with TLS.
-    ssh
-      Generate an SSH certificate.`,
-			},
-			cli.StringFlag{
-				Name:  "profile",
-				Value: "leaf",
-				Usage: `The certificate profile sets various certificate details such as
-  certificate use and expiration. The default profile is 'leaf' which is suitable
-  for a client or server using TLS.
-
-  PROFILE must be one of:
-    leaf
-	  Generate a leaf x.509 certificate suitable for use with TLs.
-    intermediate-ca
-      Generate a certificate that can be used to sign additional leaf or intermediate certificates.
-    root-ca
-      Generate a new self-signed root certificate suitable for use as a root CA.`,
-			},
-			cli.StringFlag{
-				Name:  "token",
-				Usage: `A provisioning token or bootstrap token for authenticating to a remote CA.`,
-			},
-			cli.BoolFlag{
-				Name:  "csr",
-				Usage: `Generate a certificate signing request (CSR) instead of a certificate.`,
-			},
 			cli.StringFlag{
 				Name:  "ca",
 				Usage: `The certificate authority used to issue the new certificate (PEM file).`,
@@ -85,16 +89,36 @@ POSITIONAL ARGUMENTS
 				Usage: `The certificate authority private key used to sign the new certificate (PEM file).`,
 			},
 			cli.BoolFlag{
-				Name:  "no-password",
-				Usage: "TODO, requires --insecure",
-			},
-			cli.BoolFlag{
-				Name:   "subtle",
-				Hidden: true,
+				Name:  "csr",
+				Usage: `Generate a certificate signing request (CSR) instead of a certificate.`,
 			},
 			cli.BoolFlag{
 				Name:   "insecure",
 				Hidden: true,
+			},
+			cli.BoolFlag{
+				Name: "no-password",
+				Usage: `Do not ask for a password to encrypt the private key.
+Sensitive key material will be written to disk unencrypted. This is not
+recommended. Requires **--insecure** flag.`,
+			},
+			cli.StringFlag{
+				Name:  "profile",
+				Value: "leaf",
+				Usage: `The certificate profile sets various certificate details such as
+  certificate use and expiration. The default profile is 'leaf' which is suitable
+  for a client or server using TLS.
+
+: <profile> is a case-sensitive string and must be one of:
+
+    **leaf**
+	:  Generate a leaf x.509 certificate suitable for use with TLs.
+
+    **intermediate-ca**
+    :  Generate a certificate that can be used to sign additional leaf or intermediate certificates.
+
+    **root-ca**
+    :  Generate a new self-signed root certificate suitable for use as a root CA.`,
 			},
 		},
 	}
@@ -122,12 +146,22 @@ func createAction(ctx *cli.Context) error {
 		return errs.EqualArguments(ctx, "CRT_FILE", "KEY_FILE")
 	}
 
-	typ := ctx.String("type")
 	prof := ctx.String("profile")
 	caPath := ctx.String("ca")
 	caKeyPath := ctx.String("ca-key")
+	if prof != "root-ca" {
+		if caPath == "" {
+			return errs.RequiredWithFlagValue(ctx, "profile", prof, "ca")
+		}
+		if caKeyPath == "" {
+			return errs.RequiredWithFlagValue(ctx, "profile", prof, "ca-key")
+		}
+	}
+	var typ string
 	if ctx.Bool("csr") {
 		typ = "x509-csr"
+	} else {
+		typ = "x509"
 	}
 
 	var (
@@ -204,10 +238,8 @@ func createAction(ctx *cli.Context) error {
 			Headers: map[string]string{},
 		}
 		priv = profile.SubjectPrivateKey()
-	case "ssh":
-		return errors.Errorf("implementation incomplete! Come back later ...")
 	default:
-		return errs.InvalidFlagValue(ctx, "type", typ, "x509, ssh")
+		return errs.NewError("unexpected type: %s", typ)
 	}
 
 	if err := ioutil.WriteFile(crtFile, pem.EncodeToMemory(pubPEM),

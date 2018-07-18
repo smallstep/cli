@@ -5,10 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"fmt"
 	"io/ioutil"
 	"net"
-	"strings"
 	"testing"
 	"time"
 
@@ -35,7 +33,7 @@ func Test_WriteCertificate(t *testing.T) {
 				return []byte{}, nil
 			},
 			crtOut: "./fakeDir/test.crt",
-			err:    errors.New("failed to open './fakeDir/test.crt' for writing: open ./fakeDir/test.crt: no such file or directory"),
+			err:    errors.New("open ./fakeDir/test.crt failed: no such file or directory"),
 		},
 		"success": {
 			crt: func() ([]byte, error) {
@@ -130,28 +128,38 @@ func Test_LoadCertificate(t *testing.T) {
 		testCert       = "./test_files/ca.crt"
 	)
 
-	e1 := fmt.Sprintf("error decoding certificate file %s", testBadPEMCert)
-	e2 := fmt.Sprintf("error parsing x509 certificate file %s", testBadCert)
-
-	tests := []struct {
-		crtPath       string
-		expectedError string
+	tests := map[string]struct {
+		crtPath string
+		err     error
 	}{
-		{"", "error opening certificate file "},
-		{"<path>", "error opening certificate file <path>"},
-		{testBadPEMCert, e1},
-		{testBadCert, e2},
+		"certificate file does not exist": {
+			crtPath: "<path>",
+			err:     errors.New("open <path> failed: no such file or directory"),
+		},
+		"certificate poorly formatted - PEM decode failure": {
+			crtPath: testBadPEMCert,
+			err:     errors.New("error decoding certificate file"),
+		},
+		"certificate parse failure": {
+			crtPath: testBadCert,
+			err:     errors.New("error parsing x509 certificate file"),
+		},
+		"success": {
+			crtPath: testCert,
+		},
 	}
 
-	for i, tc := range tests {
-		_, _, err := LoadCertificate(tc.crtPath)
-		if assert.Error(t, err) {
-			assert.True(t, strings.HasPrefix(err.Error(), tc.expectedError), err.Error(), i)
+	for name, test := range tests {
+		t.Logf("Running test case: %s", name)
+
+		crt, block, err := LoadCertificate(test.crtPath)
+		if err != nil {
+			if assert.NotNil(t, test.err) {
+				assert.HasPrefix(t, err.Error(), test.err.Error())
+			}
+		} else {
+			assert.Equals(t, crt.Subject.CommonName, "internal.smallstep.com")
+			assert.NotNil(t, block)
 		}
 	}
-
-	crt, pemBlock, err := LoadCertificate(testCert)
-	assert.FatalError(t, err)
-	assert.Equals(t, crt.Subject.CommonName, "internal.smallstep.com")
-	assert.NotNil(t, pemBlock)
 }

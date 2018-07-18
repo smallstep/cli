@@ -1,4 +1,4 @@
-package certificates
+package certificate
 
 import (
 	"crypto/tls"
@@ -22,42 +22,92 @@ func inspectCommand() cli.Command {
 	return cli.Command{
 		Name:      "inspect",
 		Action:    cli.ActionFunc(inspectAction),
-		Usage:     `print certificate or CSR details in human readable format.`,
-		UsageText: `step certificates inspect CRT_FILE [--format=FORMAT]`,
-		Description: `The 'step certificates inspect' command prints the details of a certificate
+		Usage:     `print certificate or CSR details in human readable format`,
+		UsageText: `**step certificate inspect** <crt_file> [**--format**=<format>]`,
+		Description: `**step certificate inspect** command prints the details of a certificate
 or CSR in a human readable format. Output from the inspect command is printed to
 STDERR instead of STDOUT unless. This is an intentional barrier to accidental
 misuse: scripts should never rely on the contents of an unvalidated certificate.
-For scripting purposes, use 'step certificates verify'.
+For scripting purposes, use **step certificate verify**.
 
-  POSITIONAL ARGUMENTS
-    CRT_FILE
-      The path to a certificate or certificate signing request (CSR) to inspect.`,
+
+## POSITIONAL ARGUMENTS
+
+<crt_file>
+:  Path to a certificate or certificate signing request (CSR) to inspect.
+
+## EXIT CODES
+
+This command returns 0 on success and \>0 if any error occurs.
+
+## EXAMPLES
+
+Inspect a local certificate (default to text format):
+
+'''
+$ step certificate inspect ./certificate.crt
+'''
+
+Inspect a local certificate in json format:
+
+'''
+$ step certificate inspect ./certificate.crt --format json
+'''
+
+Inspect a remote certificate (using the default root certificate bundle to verify the server):
+
+'''
+$ step certificate inspect https://smallstep.com
+'''
+
+Inspect a remote certificate using a custom root certificate to verify the server:
+
+'''
+$ step certificate inspect https://smallstep.com --roots ./certificate.crt
+'''
+
+Inspect a remote certificate using a custom list of root certificates to verify the server:
+
+'''
+$ step certificate inspect https://smallstep.com --roots "./certificate.crt,./certificate2.crt,/certificate3.crt"
+'''
+
+Inspect a remote certificate using a custom directory of root certificates to verify the server:
+
+'''
+$ step certificate inspect https://smallstep.com --roots "./path/to/certificates/"
+'''
+`,
+
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "format",
 				Value: "text",
 				Usage: `The output format for printing the introspection details.
 
-  FORMAT must be one of:
-    text
-      Print output in unstructured text suitable for a human to read
-    json
-      Print output in JSON format`,
+: <format> is a string and must be one of:
+
+    **text**
+    :  Print output in unstructured text suitable for a human to read.
+
+    **json**
+    :  Print output in JSON format.`,
 			},
 			cli.StringFlag{
 				Name: "roots",
-				Usage: `Root certificate(s) to use in request to obtain remote server certificate.
+				Usage: `Root certificate(s) that will be used to verify the
+authenticity of the remote server.
 
-    ROOTS is a string containing a (FILE | LIST of FILES | DIRECTORY) defined in one of the following ways:
-      FILE
-        Relative or full path to a file. All certificates in the file will be used for path validation.
-      LIST of Files
-        Comma-separated list of relative or full file paths. Every PEM encoded certificate
-        from each file will be used for path validation.
-      DIRECTORY
-        Relative or full path to a directory. Every PEM encoded certificate from each file
-        in the directory will be used for path validation.`,
+: <roots> is a case-sensitive string and may be one of:
+
+    **file**
+	:  Relative or full path to a file. All certificates in the file will be used for path validation.
+
+    **list of files**
+	:  Comma-separated list of relative or full file paths. Every PEM encoded certificate from each file will be used for path validation.
+
+    **directory**
+	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
 		},
 	}

@@ -1,4 +1,4 @@
-package certificates
+package certificate
 
 import (
 	"crypto/x509"
@@ -13,18 +13,51 @@ import (
 
 func verifyCommand() cli.Command {
 	return cli.Command{
-		Name:      "verify",
-		Action:    cli.ActionFunc(verifyAction),
-		Usage:     `verify a certificate.`,
-		UsageText: `step certificates verify CRT_FILE [--host=HOST]`,
-		Description: `The 'step certificates verify' command executes the certificate path validation
-algorithm for x.509 certificates defined in RFC 5280. If the certificate is valid
-this command will return '0'. If validation fails, or if an error occurs, this
-command will produce a non-zero return value.
+		Name:   "verify",
+		Action: cli.ActionFunc(verifyAction),
+		Usage:  `verify a certificate.`,
+		UsageText: `**step certificates verify** <crt_file> [**--host**=<host>]
+		[**--roots**=<path-to-root-certificates(s)>]`,
+		Description: `**step certificates verify** executes the certificate path
+validation algorithm for x.509 certificates defined in RFC 5280. If the
+certificate is valid this command will return '0'. If validation fails, or if
+an error occurs, this command will produce a non-zero return value.
 
-  POSITIONAL ARGUMENTS
-    CRT_FILE
-      The path to a certificate to validate.`,
+## POSITIONAL ARGUMENTS
+
+<crt_file>
+: The path to a certificate to validate.
+
+## EXIT CODES
+
+This command returns 0 on success and \>0 if any error occurs.
+
+## EXAMPLES
+
+Verify a certificate using your operating system's default root certificate bundle:
+
+'''
+$ step certificate verify ./certificate.crt
+'''
+
+Verify a certificate using a custom root certificate for path validation:
+
+'''
+$ step certificate verify ./certificate.crt --roots ./root-certificate.crt
+'''
+
+Verify a certificate using a custom list of root certificates for path validation:
+
+'''
+$ step certificate verify ./certificate.crt --roots "./root-certificate.crt,./root-certificate2.crt,/root-certificate3.crt"
+'''
+
+Verify a certificate using a custom directory of root certificates for path validation:
+
+'''
+$ step certificate verify ./certificate.crt --roots "./path/to/root-certificates/"
+'''
+`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "host",
@@ -32,17 +65,19 @@ command will produce a non-zero return value.
 			},
 			cli.StringFlag{
 				Name: "roots",
-				Usage: `Root certificates to use in the path validation algorithm.
+				Usage: `Root certificate(s) that will be used to verify the
+authenticity of the remote server.
 
-    ROOTS is a string containing a (FILE | LIST of FILES | DIRECTORY) defined in one of the following ways:
-      FILE
-        Relative or full path to a file. All certificates in the file will be used for path validation.
-      LIST of Files
-        Comma-separated list of relative or full file paths. Every PEM encoded certificate
-        from each file will be used for path validation.
-      DIRECTORY
-        Relative or full path to a directory. Every PEM encoded certificate from each file
-        in the directory will be used for path validation.`,
+: <roots> is a case-sensitive string and may be one of:
+
+    **file**
+	:  Relative or full path to a file. All certificates in the file will be used for path validation.
+
+    **list of files**
+	:  Comma-separated list of relative or full file paths. Every PEM encoded certificate from each file will be used for path validation.
+
+    **directory**
+	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
 		},
 	}

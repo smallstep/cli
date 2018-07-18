@@ -20,7 +20,6 @@ import (
 
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/randutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
 	jose "gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -142,7 +141,7 @@ func oauthCmd(c *cli.Context) error {
 		Console:  c.Bool("console"),
 	}
 	if err := opts.Validate(); err != nil {
-		return errs.UsageExitError(c, err)
+		return err
 	}
 	if (opts.Provider != "google" || c.IsSet("authorization-endpoint")) && !c.IsSet("client-id") {
 		return errors.New("flag '--client-id' required with '--provider'")
@@ -206,7 +205,7 @@ func oauthCmd(c *cli.Context) error {
 
 	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, opts.Email)
 	if err != nil {
-		return errs.ToError(err)
+		return err
 	}
 
 	var tok *token
@@ -223,7 +222,7 @@ func oauthCmd(c *cli.Context) error {
 	}
 
 	if err != nil {
-		return errs.ToError(err)
+		return err
 	}
 
 	if c.Bool("header") {

@@ -1,4 +1,4 @@
-package certificates
+package certificate
 
 import (
 	"crypto/tls"
@@ -22,26 +22,64 @@ func lintCommand() cli.Command {
 		Name:      "lint",
 		Action:    cli.ActionFunc(lintAction),
 		Usage:     `lint certificate details.`,
-		UsageText: `step certificates lint CRT_FILE`,
+		UsageText: `**step certificate lint** <crt_file> [**--roots**=<roots>]`,
 		Description: `UPDATE ME
 
-  POSITIONAL ARGUMENTS
-    CRT_FILE
-      The path to a certificate or certificate signing request (CSR) to inspect.`,
+## POSITIONAL ARGUMENTS
+
+<crt_file>
+:  Path to a certificate or certificate signing request (CSR) to lint.
+
+## EXIT CODES
+
+This command returns 0 on success and \>0 if any error occurs.
+
+## EXAMPLES
+
+'''
+$ step certificate lint ./certificate.crt
+'''
+
+Lint a remote certificate (using the default root certificate bundle to verify the server):
+
+'''
+$ step certificate lint https://smallstep.com
+'''
+
+Lint a remote certificate using a custom root certificate to verify the server:
+
+'''
+$ step certificate lint https://smallstep.com --roots ./certificate.crt
+'''
+
+Lint a remote certificate using a custom list of root certificates to verify the server:
+
+'''
+$ step certificate lint https://smallstep.com --roots "./certificate.crt,./certificate2.crt,/certificate3.crt"
+'''
+
+Lint a remote certificate using a custom directory of root certificates to verify the server:
+
+'''
+$ step certificate lint https://smallstep.com --roots "./path/to/certificates/"
+'''
+`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "roots",
-				Usage: `Root certificate(s) to use in request to obtain remote server certificate.
+				Usage: `Root certificate(s) that will be used to verify the
+authenticity of the remote server.
 
-    ROOTS is a string containing a (FILE | LIST of FILES | DIRECTORY) defined in one of the following ways:
-      FILE
-        Relative or full path to a file. All certificates in the file will be used for path validation.
-      LIST of Files
-        Comma-separated list of relative or full file paths. Every PEM encoded certificate
-        from each file will be used for path validation.
-      DIRECTORY
-        Relative or full path to a directory. Every PEM encoded certificate from each file
-        in the directory will be used for path validation.`,
+: <roots> is a case-sensitive string and may be one of:
+
+    **file**
+	:  Relative or full path to a file. All certificates in the file will be used for path validation.
+
+    **list of files**
+	:  Comma-separated list of relative or full file paths. Every PEM encoded certificate from each file will be used for path validation.
+
+    **directory**
+	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
 		},
 	}

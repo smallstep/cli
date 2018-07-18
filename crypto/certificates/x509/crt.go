@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/errs"
 )
 
 // WriteCertificate encodes a x509 Certificate to a file on disk in PEM format.
@@ -19,8 +20,7 @@ func WriteCertificate(crt []byte, out string) error {
 	certOut, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
 		os.FileMode(0644))
 	if err != nil {
-		return errors.Wrapf(err,
-			"failed to open '%s' for writing", out)
+		return errs.FileError(err, out)
 	}
 	err = pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: crt})
 	if err != nil {
@@ -35,7 +35,7 @@ func WriteCertificate(crt []byte, out string) error {
 func LoadCertificate(crtPath string) (*x509.Certificate, *pem.Block, error) {
 	publicBytes, err := ioutil.ReadFile(crtPath)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "error opening certificate file %s", crtPath)
+		return nil, nil, errs.FileError(err, crtPath)
 	}
 	publicPEM, _ := pem.Decode(publicBytes)
 	if publicPEM == nil {
@@ -63,7 +63,7 @@ func ReadCertPool(path string) (*x509.CertPool, error) {
 	if info.IsDir() {
 		finfos, err := ioutil.ReadDir(path)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, errs.FileError(err, path)
 		}
 		for _, finfo := range finfos {
 			files = append(files, filepath.Join(path, finfo.Name()))
@@ -76,7 +76,7 @@ func ReadCertPool(path string) (*x509.CertPool, error) {
 	for _, f := range files {
 		bytes, err := ioutil.ReadFile(f)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, errs.FileError(err, f)
 		}
 		for len(bytes) > 0 {
 			var block *pem.Block

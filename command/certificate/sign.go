@@ -1,4 +1,4 @@
-package certificates
+package certificate
 
 import (
 	"encoding/pem"
@@ -18,24 +18,33 @@ func signCommand() cli.Command {
 		Name:      "sign",
 		Action:    cli.ActionFunc(signAction),
 		Usage:     "sign a certificate signing request (CSR).",
-		UsageText: `step certificates sign CSR_FILE CRT_FILE KEY_FILE [--token=TOKEN]`,
-		Description: `The 'step certificates sign' generates a signed certificate from a
-  certificate signing requests (CSR).
+		UsageText: `**step certificate sign** <csr_file> <crt_file> <key_file>`,
+		Description: `**step certificate sign** generates a signed
+certificate from a certificate signing request (CSR).
 
-  POSITIONAL ARGUMENTS
-    CSR_FILE
-      The path to a certificate signing request (CSR) to be signed.
-    CRT_FILE
-      The path to an issuing certificate.
-    KEY_FILE
-      The path to a private key for signing the CSR.`,
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name: "token",
-				Usage: `A provisioning token or bootstrap token for secure introduction and
-  mutual authentication with an unknown CA.`,
-			},
-		},
+## POSITIONAL ARGUMENTS
+
+<csr_file>
+: The path to a certificate signing request (CSR) to be signed.
+
+<crt_file>
+: The path to an issuing certificate.
+
+<key_file>
+: The path to a private key for signing the CSR.
+
+## EXIT CODES
+
+This command returns 0 on success and \>0 if any error occurs.
+
+## EXAMPLES
+
+Sign a certificate signing request:
+
+'''
+$ step certificate sign ./certificate-signing-request.csr ./issuer-certificate.crt ./issuer-private-key.priv
+'''
+`,
 	}
 }
 
@@ -58,6 +67,7 @@ func signAction(ctx *cli.Context) error {
 		return errors.WithStack(err)
 	}
 	// Load the Issuer Certificate.
+
 	issuerCrt, _, err := stepx509.LoadCertificate(crtFile)
 	if err != nil {
 		return errors.WithStack(err)

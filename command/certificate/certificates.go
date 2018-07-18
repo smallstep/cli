@@ -1,4 +1,4 @@
-package certificates
+package certificate
 
 import (
 	"github.com/smallstep/cli/command"
@@ -8,10 +8,10 @@ import (
 // Command returns the cli.Command for jwt and related subcommands.
 func init() {
 	cmd := cli.Command{
-		Name:      "certificates",
+		Name:      "certificate",
 		Usage:     "create, revoke, validate, bundle, and otherwise manage certificates.",
 		UsageText: "step certificates <group | command> [arguments] [global-flags] [subcommand-flags]",
-		Description: `The 'step certificates' command group provides facilities for creating
+		Description: `**step certificates** command group provides facilities for creating
   certificate signing requests (CSRs), creating self-signed certificates
   (e.g., for use as a root certificate authority), generating leaf or
   intermediate CA certificate by signing a CSR, validating certificates,
@@ -19,7 +19,7 @@ func init() {
   of private keys.
 
   More information about certificates in general (as opposed to the
-  certificates commands) can be found at 'step help topics certificates'
+  **step certificate** sub-commands) can be found at **step help topics certificate**
   or online at [URL].`,
 
 		Subcommands: cli.Commands{

@@ -136,7 +136,7 @@ $ step crypto jwk create ed.pub.json ed.json \
 Create a key from an existing PEM file:
 
 '''
-$ step crypto jwk create jwk.pub.json jwk.json 
+$ step crypto jwk create jwk.pub.json jwk.json
     --from-pem key.pem
 '''
 

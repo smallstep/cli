@@ -19,7 +19,7 @@ import (
 	"github.com/smallstep/cli/usage"
 
 	// Enabled commands
-	_ "github.com/smallstep/cli/command/certificates"
+	_ "github.com/smallstep/cli/command/certificate"
 	_ "github.com/smallstep/cli/command/crypto"
 	_ "github.com/smallstep/cli/command/oauth"
 
