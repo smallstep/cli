@@ -41,9 +41,9 @@ func keysetAddCommand() cli.Command {
 		Action:    cli.ActionFunc(keysetAddAction),
 		Usage:     "a JWK to a JWK Set",
 		UsageText: "**step crypto jwk keyset add** <jwks-file>",
-		Description: `**step crypto jwk keyset add** command reads a JWK from STDIN and adds it to
-the JWK Set in <jwks-file>. Modifications to <jwks-file> are in-place. The
-file is 'flock'd while it's being read and modified.
+		Description: `**step crypto jwk keyset add** reads a JWK from STDIN and adds it to the JWK
+Set in <jwks-file>. Modifications to <jwks-file> are in-place. The file is
+'flock'd while it's being read and modified.
 
 ## POSITIONAL ARGUMENTS:
 
@@ -58,10 +58,9 @@ func keysetRemoveCommand() cli.Command {
 		Action:    cli.ActionFunc(keysetRemoveAction),
 		Usage:     "a JWK from a JWK Set",
 		UsageText: "**step crypto jwk keyset remove** <jwks-file> [**--kid**=<kid>]",
-		Description: `**step crypto jwk keyset remove** command removes the JWK with a key ID
-matching <kid> from the JWK Set stored in <jwks-file>. Modifications to
-<jwks-file> are in-place. The file is 'flock'd while it's being read and
-modified.
+		Description: `**step crypto jwk keyset remove** removes the JWK with a key ID matching <kid>
+from the JWK Set stored in <jwks-file>. Modifications to <jwks-file> are
+in-place. The file is 'flock'd while it's being read and modified.
 
 ## POSITONAL_ARGUMENTS:
 
@@ -83,8 +82,8 @@ func keysetListCommand() cli.Command {
 		Action:    cli.ActionFunc(keysetListAction),
 		Usage:     "key IDs of JWKs in a JWK Set",
 		UsageText: "**step crypto jwk keyset list** <jwks-file>",
-		Description: `**step crypto jwk keyset list** command lists the IDs ("kid" parameters) of
-JWKs in a JWK Set.
+		Description: `**step crypto jwk keyset list** lists the IDs ("kid" parameters) of JWKs in a
+JWK Set.
 
 ## POSITONAL_ARGUMENTS:
 
