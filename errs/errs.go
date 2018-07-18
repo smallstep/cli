@@ -232,8 +232,9 @@ func usage(ctx *cli.Context) string {
 	if len(ctx.Command.UsageText) == 0 {
 		return fmt.Sprintf("%s %s [command options]", ctx.App.HelpName, ctx.Command.Name)
 	}
-
-	return ctx.Command.UsageText
+	// keep just the first line and remove markdown
+	lines := strings.Split(ctx.Command.UsageText, "\n")
+	return strings.Replace(lines[0], "**", "", -1)
 }
 
 // usageString returns the command usage prepended by the string "Usage: ".
