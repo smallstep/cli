@@ -19,7 +19,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/crypto"
+	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
 	jose "gopkg.in/square/go-jose.v2"
@@ -282,12 +282,12 @@ type oauth struct {
 }
 
 func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHint string) (*oauth, error) {
-	state, err := crypto.GenerateRandomRestrictedString(32)
+	state, err := randutil.GenerateRandomRestrictedString(32)
 	if err != nil {
 		return nil, err
 	}
 
-	challenge, err := crypto.GenerateRandomRestrictedString(64)
+	challenge, err := randutil.GenerateRandomRestrictedString(64)
 	if err != nil {
 		return nil, err
 	}

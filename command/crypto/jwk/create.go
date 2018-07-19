@@ -9,8 +9,8 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto"
 	"github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
@@ -562,7 +562,7 @@ func createAction(ctx *cli.Context) error {
 				return errors.Wrap(err, "error reading password")
 			}
 
-			salt, err := crypto.GetRandomSalt(pbkdf2SaltSize)
+			salt, err := randutil.GetRandomSalt(pbkdf2SaltSize)
 			if err != nil {
 				return err
 			}
@@ -574,7 +574,7 @@ func createAction(ctx *cli.Context) error {
 				P2S:       salt,
 			}
 		} else {
-			key, err := crypto.RandAlphanumeric(32)
+			key, err := randutil.RandAlphanumeric(32)
 			if err != nil {
 				return errors.Wrap(err, "error generating password")
 			}

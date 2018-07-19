@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto"
+	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/urfave/cli"
@@ -283,7 +283,7 @@ func signAction(ctx *cli.Context) error {
 		c.IssuedAt = jose.NewNumericDate(now)
 	}
 	if c.ID == "" && ctx.IsSet("jti") {
-		if c.ID, err = crypto.RandHex(40); err != nil {
+		if c.ID, err = randutil.RandHex(40); err != nil {
 			return errors.Wrap(err, "error creating random jti")
 		}
 	}

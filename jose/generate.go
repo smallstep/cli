@@ -7,8 +7,8 @@ import (
 	"crypto/rsa"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto"
 	"github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/randutil"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -160,7 +160,7 @@ func generateOctKey(size int, alg, use, kid string) (*JSONWebKey, error) {
 		size = DefaultOctSize
 	}
 
-	key, err := crypto.RandAlphanumeric(size)
+	key, err := randutil.RandAlphanumeric(size)
 	if err != nil {
 		return nil, err
 	}
