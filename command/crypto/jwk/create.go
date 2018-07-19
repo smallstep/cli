@@ -574,7 +574,7 @@ func createAction(ctx *cli.Context) error {
 				P2S:       salt,
 			}
 		} else {
-			key, err := utils.RandAlphanumeric(32)
+			key, err := crypto.RandAlphanumeric(32)
 			if err != nil {
 				return errors.Wrap(err, "error generating password")
 			}
