@@ -37,7 +37,7 @@ func ReadCertificate(filename string) (*x509.Certificate, error) {
 
 	// PEM format
 	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
-		crt, err := ReadPEM(filename)
+		crt, err := Read(filename)
 		if err != nil {
 			return nil, err
 		}
@@ -54,8 +54,8 @@ func ReadCertificate(filename string) (*x509.Certificate, error) {
 	return crt, errors.Wrapf(err, "error parsing %s", filename)
 }
 
-// ParsePEM returns the key or certificate PEM-encoded in the given bytes.
-func ParsePEM(b []byte, filename string) (interface{}, error) {
+// Parse returns the key or certificate PEM-encoded in the given bytes.
+func Parse(b []byte, filename string) (interface{}, error) {
 	block, rest := pem.Decode(b)
 	switch {
 	case block == nil:
@@ -98,20 +98,20 @@ func ParsePEM(b []byte, filename string) (interface{}, error) {
 	}
 }
 
-// ReadPEM returns the key or certificated encoded in the given PEM encoded
+// Read returns the key or certificated encoded in the given PEM encoded
 // file. If the file is encrypted it will ask for a password and it will try
 // to decrypt it.
 //
 // Supported keys algorithms are RSA and EC. Supported standards for private
 // keys are PKCS#1, PKCS#8, RFC5915 for EC, and base64-encoded DER for
 // certificates and public keys.
-func ReadPEM(filename string) (interface{}, error) {
+func Read(filename string) (interface{}, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error reading %s", filename)
 	}
 
-	return ParsePEM(b, filename)
+	return Parse(b, filename)
 }
 
 // pkcs8 reflects an ASN.1, PKCS#8 PrivateKey. See

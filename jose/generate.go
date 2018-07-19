@@ -32,7 +32,7 @@ func GenerateJWK(kty, crv, alg, use, kid string, size int) (jwk *JSONWebKey, err
 // GenerateJWKFromPEM returns an incomplete JSONWebKey using the key from a
 // PEM file.
 func GenerateJWKFromPEM(filename string) (*JSONWebKey, error) {
-	key, err := pem.ReadPEM(filename)
+	key, err := pem.Read(filename)
 	if err != nil {
 		return nil, err
 	}
