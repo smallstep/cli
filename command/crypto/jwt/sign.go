@@ -21,30 +21,30 @@ func signCommand() cli.Command {
 		Name:   "sign",
 		Action: cli.ActionFunc(signAction),
 		Usage:  "create a signed JWT data structure",
-		UsageText: `step crypto jwt sign [- | FILENAME] [--alg ALGORITHM] [--aud AUDIENCE] [--iss ISSUER] [--sub SUB]
-        [--exp EXPIRATION] [--iat ISSUED_AT] [--nbf NOT_BEFORE] [--key JWK]
-        [--jwks JWKS] [--kid KID] [--jti JTI]`,
-		Description: `The 'step crypto jwt sign' command generates a signed JSON Web Token (JWT)
-by computing a digital signature or message authentication code for a JSON
+		UsageText: `**step crypto jwt sign** [- | <filename>]
+		[**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
+        [**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>] [**--key**=<jwk>]
+        [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]`,
+		Description: `**step crypto jwt sign** command generates a signed JSON Web Token (JWT) by
+computing a digital signature or message authentication code for a JSON
 payload. By default, the payload to sign is read from STDIN and the JWT will
 be written to STDOUT. The suggested pronunciation of JWT is the same as the
 English word "jot".
 
-  A JWT is a compact data structure used to represent some JSON encoded
-"claims" that are passed as the payload of a JWS or JWE structure, enabling
-the claims to be digitally signed and/or encrypted. The "claims" (or "claim
-set") are represented as an ordinary JSON object. JWTs are represented using a
-compact format that's URL safe and can be used in space-constrained
-environments. JWTs can be passed in HTTP Authorization headers and as URI
-query parameters.
+A JWT is a compact data structure used to represent some JSON encoded "claims"
+that are passed as the payload of a JWS or JWE structure, enabling the claims
+to be digitally signed and/or encrypted. The "claims" (or "claim set") are
+represented as an ordinary JSON object. JWTs are represented using a compact
+format that's URL safe and can be used in space-constrained environments. JWTs
+can be passed in HTTP Authorization headers and as URI query parameters.
 
-  A "claim" is a piece of information asserted about a subject, represented as
-a key/value pair. Logically a verified JWT should be interpreted as "ISSUER
-says to AUDIENCE that SUBJECT's CLAIM_NAME is CLAIM_VALUE" for each claim.
+A "claim" is a piece of information asserted about a subject, represented as a
+key/value pair. Logically a verified JWT should be interpreted as "<issuer> says
+to <audience> that <subject>'s <claim-name> is <claim-value>" for each claim.
 
-  Some optional arguments introduce subtle security considerations if omitted.
-These considerations should be carefully analyzed. Therefore, omitting SUBTLE
-arguments requires the use of the '--subtle' flag as a misuse prevention
+Some optional arguments introduce subtle security considerations if omitted.
+These considerations should be carefully analyzed. Therefore, omitting <subtle>
+arguments requires the use of the **--subtle** flag as a misuse prevention
 mechanism.
 
   A JWT signed using JWS has three parts:
@@ -64,68 +64,85 @@ used. If the JWK has no "alg" member then a default is selected depending on
 the JWK key type. If the JWK has an "alg" member and the "alg" flag is passed
 the two options must match unless the '--subtle' flag is also passed.
 
-    ALGORITHM is a case-sensitive string and must be one of:
+: <algorithm> is a case-sensitive string and must be one of:
 
-     HS256
-      HMAC using SHA-256 (default for "oct" key type)
-     HS384
-      HMAC using SHA-384
-     HS512
-      HMAC using SHA-512
-     RS256
-      RSASSA-PKCS1-v1_5 using SHA-256 (default for "RSA" key type)
-     RS384
-      RSASSA-PKCS1-v1_5 using SHA-384
-     RS512
-      RSASSA-PKCS1-v1_5 using SHA-512
-     ES256
-      ECDSA using P-256 and SHA-256 (default for "EC" key type)
-     ES384
-      ECDSA using P-384 and SHA-384
-     ES512
-      ECDSA using P-521 and SHA-512
-     PS256
-      RSASSA-PSS using SHA-256 and MGF1 with SHA-256
-     PS384
-      RSASSA-PSS using SHA-384 and MGF1 with SHA-384
-     PS512
-      RSASSA-PSS using SHA-512 and MGF1 with SHA-512
-     EdDSA
-      EdDSA signature algorithm`,
+    **HS256**
+    :  HMAC using SHA-256 (default for "oct" key type)
+
+    **HS384**
+    :  HMAC using SHA-384
+
+    **HS512**
+    :  HMAC using SHA-512
+
+    **RS256**
+    :  RSASSA-PKCS1-v1_5 using SHA-256 (default for "RSA" key type)
+
+    **RS384**
+    :  RSASSA-PKCS1-v1_5 using SHA-384
+
+    **RS512**
+    :  RSASSA-PKCS1-v1_5 using SHA-512
+
+    **ES256**
+    :  ECDSA using P-256 and SHA-256 (default for "EC" key type)
+
+    **ES384**
+    :  ECDSA using P-384 and SHA-384
+
+    **ES512**
+    :  ECDSA using P-521 and SHA-512
+
+    **PS256**
+    :  RSASSA-PSS using SHA-256 and MGF1 with SHA-256
+
+    **PS384**
+    :  RSASSA-PSS using SHA-384 and MGF1 with SHA-384
+
+    **PS512**
+    :  RSASSA-PSS using SHA-512 and MGF1 with SHA-512
+
+    **EdDSA**
+    :  EdDSA signature algorithm`,
 			},
 			cli.StringFlag{
 				Name: "iss, issuer",
 				Usage: `The issuer of this JWT. The processing of this claim is generally
-application specific. Typically, the ISSUER must match the name of some
+application specific. Typically, the issuer must match the name of some
 trusted entity (e.g., an identity provider like "https://accounts.google.com")
 and identify which key(s) to use for JWT verification and/or decryption (e.g.,
-the keys at "https://www.googleapis.com/oauth2/v3/certs"). ISSUER is a
-case-sensitive string.`,
+the keys at "https://www.googleapis.com/oauth2/v3/certs").
+
+: <issuer> is a case-sensitive string.`,
 			},
 			cli.StringSliceFlag{
 				Name: "aud, audience",
-				Usage: `The intended recipient(s) of the JWT, encoded as the "aud" claim in the JWT.
-Recipient(s) must identify themselves with one or more of the values in the
-"aud" claim. The "aud" claim can be a string (indicating a single recipient)
-or an array (indicating multiple potential recipients). This flag can be used
-multiple times to generate a JWK with multiple intended recipients. Each
-AUDIENCE is a case-sensitive string.`,
+				Usage: `The intended recipient(s) of the JWT, encoded as the **"aud"** claim in the
+JWT. Recipient(s) must identify themselves with one or more of the values in
+the **"aud"** claim. The **"aud"** claim can be a string (indicating a single
+recipient) or an array (indicating multiple potential recipients). This flag
+can be used multiple times to generate a JWK with multiple intended
+recipients.
+
+: Each <audience> is a case-sensitive string.`,
 			},
 			cli.StringFlag{
 				Name: "sub, subject",
 				Usage: `The subject of this JWT. The "claims" are normally interpreted as statements
 about this subject. The subject must either be locally unique in the context
 of the issuer or globally unique. The processing of this claim is generally
-application specific. SUBJECT is a case-sensitive string.`,
+application specific.
+
+: <subject> is a case-sensitive string.`,
 			},
 			cli.Int64Flag{
 				Name: "exp, expiration",
-				Usage: `The expiration time on or after which the JWT must not be accepted. EXPIRATION
-must be a numeric value representing a Unix timestamp.`,
+				Usage: `The expiration time on or after which the JWT must not be accepted.
+<expiration> must be a numeric value representing a Unix timestamp.`,
 			},
 			cli.Int64Flag{
 				Name: "nbf, not-before",
-				Usage: `The time before which the JWT must not be accepted. NOT_BEFORE must be a
+				Usage: `The time before which the JWT must not be accepted. <not-before> must be a
 numeric value representing a Unix timestamp. If not provided, the current time
 is used.`,
 			},
@@ -140,31 +157,31 @@ provided, the current time is used.`,
 				Usage: `A unique identifier for the JWT. The identifier must be assigned in a manner
 that ensures that there is a negligible probability that the same value will
 be accidentally assigned to multiple JWTs. The JTI claim can be used to
-prevent a JWT from being replayed (i.e., recipient(s) can use JTI to make a
-JWT one-time-use). The JTI argument is a case-sensitive string. If the '--jti'
-flag is used without an argument a JTI will be generated randomly with
-sufficient entropy to satisfy the collision-resistance criteria.`,
+prevent a JWT from being replayed (i.e., recipient(s) can use <jti> to make a
+JWT one-time-use). The <jti> argument is a case-sensitive string. If the
+**--jti** flag is used without an argument a <jti> will be generated randomly
+with sufficient entropy to satisfy the collision-resistance criteria.`,
 			},
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The key to use to sign the JWT. The KEY argument should be the name of a file.
+				Usage: `The key to use to sign the JWT. The <key> argument should be the name of a file.
 JWTs can be signed using a private JWK (or a JWK encrypted as a JWE payload)
 or a PEM encoded private key (or a private key encrypted using [TODO: insert
 private key encryption mechanism]).`,
 			},
 			cli.StringFlag{
 				Name: "jwks",
-				Usage: `The JWK Set containing the key to use to sign the JWT. The JWKS argument
+				Usage: `The JWK Set containing the key to use to sign the JWT. The <jwks> argument
 should be the name of a file. The file contents should be a JWK Set or a JWE
-with a JWK Set payload. The '--jwks' flag requires the use of the '--kid' flag
-to specify which key to use.`,
+with a JWK Set payload. The **--jwks** flag requires the use of the **--kid**
+flag to specify which key to use.`,
 			},
 			cli.StringFlag{
 				Name: "kid",
-				Usage: `The ID of the key used to sign the JWT. The KID argument is a case-sensitive
-string. When used with '--jwk' the KID value must match the
-"kid" member of the JWK. When used with '--jwks' (a JWK Set) the KID value must
-match the "kid" member of one of the JWKs in the JWK Set.`,
+				Usage: `The ID of the key used to sign the JWT. The <kid> argument is a case-sensitive
+string. When used with '--jwk' the <kid> value must match the **"kid"** member
+of the JWK. When used with **--jwks** (a JWK Set) the <kid> value must match
+the **"kid"** member of one of the JWKs in the JWK Set.`,
 			},
 			cli.BoolFlag{
 				Name:   "subtle",
@@ -194,7 +211,7 @@ func signAction(ctx *cli.Context) error {
 			return err
 		}
 	default:
-		return errors.Errorf("unknown arguments %v", args[1:])
+		return errs.TooManyArguments(ctx)
 	}
 
 	isSubtle := ctx.Bool("subtle")
