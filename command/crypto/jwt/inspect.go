@@ -15,14 +15,14 @@ import (
 
 func inspectCommand() cli.Command {
 	return cli.Command{
-		Name:      "inspect",
-		Action:    cli.ActionFunc(inspectAction),
-		Usage:     `return the decoded JWT without verification`,
-		UsageText: `step crypto jwt inspect --insecure`,
-		Description: `The 'step crypto jwt inspect' command reads a JWT data structure from STDIN,
-decodes it, and outputs the header and payload on STDERR. Since this command
-does not verify the JWT you must pass '--insecure' as a misuse prevention
-mechanism.`,
+		Name:   "inspect",
+		Action: cli.ActionFunc(inspectAction),
+		Usage:  `return the decoded JWT without verification`,
+		UsageText: `**step crypto jwt inspect**
+		**--insecure**`,
+		Description: `**step crypto jwt inspect** reads a JWT data structure from STDIN, decodes it,
+and outputs the header and payload on STDERR. Since this command does not
+verify the JWT you must pass **--insecure** as a misuse prevention mechanism.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:   "insecure",
@@ -33,13 +33,17 @@ mechanism.`,
 }
 
 func inspectAction(ctx *cli.Context) error {
-	token, err := utils.ReadString(os.Stdin)
-	if err != nil {
+	if err := errs.NumberOfArguments(ctx, 0); err != nil {
 		return err
 	}
 
 	if !ctx.Bool("insecure") {
 		return errs.InsecureCommand(ctx)
+	}
+
+	token, err := utils.ReadString(os.Stdin)
+	if err != nil {
+		return err
 	}
 
 	return printToken(token)
