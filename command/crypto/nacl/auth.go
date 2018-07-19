@@ -6,13 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/smallstep/cli/errs"
-
-	"github.com/smallstep/cli/command/crypto/internal/utils"
-	"golang.org/x/crypto/nacl/auth"
-
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/nacl/auth"
 )
 
 func authCommand() cli.Command {

@@ -6,13 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/smallstep/cli/errs"
-
-	"golang.org/x/crypto/nacl/box"
-
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command/crypto/internal/utils"
+	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/nacl/box"
 )
 
 func boxCommand() cli.Command {

@@ -6,12 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 
-	"golang.org/x/crypto/nacl/sign"
-
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command/crypto/internal/utils"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/nacl/sign"
 )
 
 func signCommand() cli.Command {

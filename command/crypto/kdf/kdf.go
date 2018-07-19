@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command/crypto/internal/utils"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 
 	"golang.org/x/crypto/bcrypt"

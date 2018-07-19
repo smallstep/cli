@@ -1,4 +1,4 @@
-package crypto
+package pem
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command/crypto/internal/utils"
+	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ed25519"
 )
 

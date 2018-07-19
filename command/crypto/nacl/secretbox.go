@@ -5,12 +5,11 @@ import (
 	"io/ioutil"
 	"os"
 
-	"golang.org/x/crypto/nacl/secretbox"
-
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command/crypto/internal/utils"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/nacl/secretbox"
 )
 
 func secretboxCommand() cli.Command {

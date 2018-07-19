@@ -9,10 +9,10 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command/crypto/internal/crypto"
 	"github.com/smallstep/cli/command/crypto/internal/jose"
-	"github.com/smallstep/cli/command/crypto/internal/utils"
+	"github.com/smallstep/cli/crypto/pem"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
 
@@ -522,7 +522,7 @@ func createAction(ctx *cli.Context) error {
 	// Add x5c (X.509 Certificate Chain) parameter
 	crtFiles := ctx.StringSlice("from-certificate")
 	for _, name := range crtFiles {
-		crt, err := crypto.ReadCertificate(name)
+		crt, err := pem.ReadCertificate(name)
 		if err != nil {
 			return err
 		}
@@ -561,7 +561,7 @@ func createAction(ctx *cli.Context) error {
 				return errors.Wrap(err, "error reading password")
 			}
 
-			salt, err := crypto.GetRandomSalt(pbkdf2SaltSize)
+			salt, err := pem.GetRandomSalt(pbkdf2SaltSize)
 			if err != nil {
 				return err
 			}

@@ -7,8 +7,8 @@ import (
 	"crypto/rsa"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command/crypto/internal/crypto"
-	"github.com/smallstep/cli/command/crypto/internal/utils"
+	"github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -32,7 +32,7 @@ func GenerateJWK(kty, crv, alg, use, kid string, size int) (jwk *JSONWebKey, err
 // GenerateJWKFromPEM returns an incomplete JSONWebKey using the key from a
 // PEM file.
 func GenerateJWKFromPEM(filename string) (*JSONWebKey, error) {
-	key, err := crypto.ReadPEM(filename)
+	key, err := pem.ReadPEM(filename)
 	if err != nil {
 		return nil, err
 	}
