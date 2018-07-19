@@ -18,7 +18,7 @@ func Command() cli.Command {
 	return cli.Command{
 		Name:      "kdf",
 		Usage:     "key derivation functions for password hashing and verification",
-		UsageText: "step crypto kdf <SUBCOMMAND> [SUBCOMMAND_FLAGS]",
+		UsageText: "step crypto kdf <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			hashCommand(),
 			compareCommand(),
@@ -28,49 +28,51 @@ func Command() cli.Command {
 
 func hashCommand() cli.Command {
 	return cli.Command{
-		Name:      "hash",
-		Action:    cli.ActionFunc(hashAction),
-		Usage:     "derive a secret key from a secret value (e.g., a password)",
-		UsageText: "step crypto kdf hash [INPUT] [--alg ALGORITHM]",
-		Description: `The 'step crypto kdf hash' command uses a key derivation function (KDF) to
-produce a pseudorandom secret key based on some (presumably secret) input
-value. This is useful for password verification approaches based on password
-hashing. Key derivation functions are designed to be computationally
-intensive, making it more difficult for attackers to perform brute-force
-attacks on password databases.
+		Name:   "hash",
+		Action: cli.ActionFunc(hashAction),
+		Usage:  "derive a secret key from a secret value (e.g., a password)",
+		UsageText: `**step crypto kdf hash** [<input>]
+		[--alg ALGORITHM]`,
+		Description: `**step crypto kdf hash** uses a key derivation function (KDF) to produce a
+pseudorandom secret key based on some (presumably secret) input value. This is
+useful for password verification approaches based on password hashing. Key
+derivation functions are designed to be computationally intensive, making it
+more difficult for attackers to perform brute-force attacks on password
+databases.
 
-  If this command is run without the optional INPUT argument and STDIN is a
-TTY (i.e., you're running the command in an interactive terminal and not
-piping input to it) you'll be prompted to enter a value on STDERR. If STDIN is
-not a TTY it will be read without prompting.
+If this command is run without the optional <input> argument and STDIN is a TTY
+(i.e., you're running the command in an interactive terminal and not piping
+input to it) you'll be prompted to enter a value on STDERR. If STDIN is not a
+TTY it will be read without prompting.
 
-  This command will produce a string encoding of the KDF output along with the
+This command will produce a string encoding of the KDF output along with the
 algorithm used, salt, and any parameters required for validation in PHC string
 format.
 
-  The KDFs are run with parameters that are considered safe. The 'scrypt'
+The KDFs are run with parameters that are considered safe. The 'scrypt'
 parameters are currently fixed at N=32768, r=8 and p=1. The 'bcrypt' work
 factor is currently fixed at 10.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
 
-  INPUT
-    The input to the key derivation function. INPUT is optional and its use is
-not recommended. If this argument is provided the '--insecure' flag must also
-be provided because your (presumably secret) INPUT will likely be logged and
-appear in places you might not expect. If omitted input is read from STDIN.
-		`,
+<input>
+:  The input to the key derivation function. <input> is optional and its use is
+not recommended. If this argument is provided the **--insecure** flag must also
+be provided because your (presumably secret) <input> will likely be logged and
+appear in places you might not expect. If omitted input is read from STDIN.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "alg",
 				Value: "scrypt",
 				Usage: `The KDF algorithm to use.
 
-  ALGORITHM must be one of:
-    scrypt
-      A password-based KDF designed to use exponential time and memory.
-    bcrypt
-      A password-based KDF designed to use exponential time.`,
+:  <algorithm> must be one of:
+
+    **scrypt**
+    :  A password-based KDF designed to use exponential time and memory.
+
+    **bcrypt**
+    :  A password-based KDF designed to use exponential time.`,
 			},
 			cli.BoolFlag{
 				Name:   "insecure",
@@ -152,27 +154,30 @@ func compareCommand() cli.Command {
 		Name:      "compare",
 		Action:    cli.ActionFunc(compareAction),
 		Usage:     "compare a plaintext value (e.g., a password) and a hash",
-		UsageText: "step crypto kdf compare PHC_HASH [INPUT]",
+		UsageText: "step crypto kdf compare <phc-hash> [<input>]",
 		Description: `The 'step crypto kdf compare' command compares a plaintext value (e.g., a
 password) with an existing KDF password hash in PHC string format. The PHC
 string input indicates which KDF algorithm and parameters to use.
 
-  If the input matches PHC_HASH the command prints a human readable message
+  If the input matches <phc-hash> the command prints a human readable message
 indicating success to STDERR and returns 0. If the input does not match an
 error will be printed to STDERR and the command will exit with a non-zero
 return code.
 
-  If this command is run without the optional INPUT argument and STDIN is a
+  If this command is run without the optional <input> argument and STDIN is a
 TTY (i.e., you're running the command in an interactive terminal and not
 piping input to it) you'll be prompted to enter a value on STDERR. If STDIN is
 not a TTY it will be read without prompting.
 
 POSITIONAL ARGUMENTS
 
-  INPUT
-    The plaintext value to compare with PHC_HASH. INPUT is optional and its
-use is not recommended. If this argument is provided the '--insecure' flag
-must also be provided because your (presumably secret) INPUT will likely be
+<phc-hash>
+:  The KDF password hash in PHC string format.
+
+<input>
+:  The plaintext value to compare with <phc-hash>. <input> is optional and its
+use is not recommended. If this argument is provided the **--insecure** flag
+must also be provided because your (presumably secret) <input> will likely be
 logged and appear in places you might not expect. If omitted input is read
 from STDIN.`,
 		Flags: []cli.Flag{
