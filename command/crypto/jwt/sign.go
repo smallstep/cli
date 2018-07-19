@@ -283,7 +283,7 @@ func signAction(ctx *cli.Context) error {
 		c.IssuedAt = jose.NewNumericDate(now)
 	}
 	if c.ID == "" && ctx.IsSet("jti") {
-		if c.ID, err = randutil.RandHex(40); err != nil {
+		if c.ID, err = randutil.Hex(40); err != nil {
 			return errors.Wrap(err, "error creating random jti")
 		}
 	}

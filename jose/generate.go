@@ -160,7 +160,7 @@ func generateOctKey(size int, alg, use, kid string) (*JSONWebKey, error) {
 		size = DefaultOctSize
 	}
 
-	key, err := randutil.RandAlphanumeric(size)
+	key, err := randutil.Alphanumeric(size)
 	if err != nil {
 		return nil, err
 	}

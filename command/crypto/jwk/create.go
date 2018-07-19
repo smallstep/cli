@@ -562,7 +562,7 @@ func createAction(ctx *cli.Context) error {
 				return errors.Wrap(err, "error reading password")
 			}
 
-			salt, err := randutil.GetRandomSalt(pbkdf2SaltSize)
+			salt, err := randutil.Salt(pbkdf2SaltSize)
 			if err != nil {
 				return err
 			}
@@ -574,7 +574,7 @@ func createAction(ctx *cli.Context) error {
 				P2S:       salt,
 			}
 		} else {
-			key, err := randutil.RandAlphanumeric(32)
+			key, err := randutil.Alphanumeric(32)
 			if err != nil {
 				return errors.Wrap(err, "error generating password")
 			}

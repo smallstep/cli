@@ -282,12 +282,12 @@ type oauth struct {
 }
 
 func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHint string) (*oauth, error) {
-	state, err := randutil.GenerateRandomRestrictedString(32)
+	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
 	}
 
-	challenge, err := randutil.GenerateRandomRestrictedString(64)
+	challenge, err := randutil.Alphanumeric(64)
 	if err != nil {
 		return nil, err
 	}

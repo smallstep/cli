@@ -68,7 +68,7 @@ func GeneratePasswordOnEmpty(ptr *string, key string) error {
 
 	if len(*ptr) == 0 {
 		var err error
-		if *ptr, err = randutil.GenerateRandomRestrictedString(passwordLength); err != nil {
+		if *ptr, err = randutil.Alphanumeric(passwordLength); err != nil {
 			return errors.Wrapf(err, "Failed to generate %s", key)
 		}
 		fmt.Printf("\n\n%s: %s\n\n", key, *ptr)
