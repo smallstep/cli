@@ -14,7 +14,7 @@ func Command() cli.Command {
 	return cli.Command{
 		Name:        "otp",
 		Usage:       "generate and verify one-time passwords",
-		UsageText:   "step crypto otp SUBCOMMAND [SUBCOMMAND_ARGUMENTS] [GLOBAL_FLAGS] [SUBCOMMAND_FLAGS]",
+		UsageText:   "step crypto otp <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `Implements TOTP and HOTP one-time passwords (mention RFCs)`,
 		Subcommands: cli.Commands{
 			generateCommand(),

@@ -15,8 +15,8 @@ func generateCommand() cli.Command {
 		Name:        "generate",
 		Action:      cli.ActionFunc(generateAction),
 		Usage:       "one-time password",
-		UsageText:   `step crypto otp generate`,
-		Description: `The 'step crypto otp generate' command does TOTP and HTOP`,
+		UsageText:   `**step crypto otp generate**`,
+		Description: `**step crypto otp generate** does TOTP and HTOP`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "issuer, iss",

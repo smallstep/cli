@@ -18,8 +18,8 @@ func verifyCommand() cli.Command {
 		Name:        "verify",
 		Action:      cli.ActionFunc(verifyAction),
 		Usage:       "one-time password",
-		UsageText:   `step crypto otp verify`,
-		Description: `The 'step crypto otp verify' command does TOTP and HTOP`,
+		UsageText:   `**step crypto otp verify**`,
+		Description: `**step crypto otp verify** does TOTP and HTOP`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "secret",
