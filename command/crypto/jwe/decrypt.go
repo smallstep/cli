@@ -14,34 +14,34 @@ import (
 
 func decryptCommand() cli.Command {
 	return cli.Command{
-		Name:      "decrypt",
-		Action:    cli.ActionFunc(decryptAction),
-		Usage:     "verify a JWE and decrypt ciphertext",
-		UsageText: "step crypto jwe decrypt [--key JWK] [--jwks JWKS] [--kid KID]",
-		Description: `The 'step crypto jwe decrypt' command verifies a JWE read from STDIN and
-decrypts the ciphertext printing it to STDOUT. If verification fails a
-non-zero failure code is returned. If verification succeeds the command
-returns 0.`,
+		Name:   "decrypt",
+		Action: cli.ActionFunc(decryptAction),
+		Usage:  "verify a JWE and decrypt ciphertext",
+		UsageText: `**step crypto jwe decrypt**
+		[**--key**=<jwk>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+		Description: `**step crypto jwe decrypt** verifies a JWE read from STDIN and decrypts the
+ciphertext printing it to STDOUT. If verification fails a non-zero failure
+code is returned. If verification succeeds the command returns 0.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The JWE recipient's private key. The KEY argument should be the name of a
+				Usage: `The JWE recipient's private key. The <key> argument should be the name of a
 file containing a private JWK (or a JWK encrypted as a JWE payload) or a PEM
 encoded private key (or a private key encrypted using [TODO: insert private
 key encryption mechanism]).`,
 			},
 			cli.StringFlag{
 				Name: "jwks",
-				Usage: `The JWK Set containing the recipient's private key. The JWKS argument should
+				Usage: `The JWK Set containing the recipient's private key. The <jwks> argument should
 be the name of a file. The file contents should be a JWK Set or a JWE with a
-JWK Set payload. The '--jwks' flag requires the use of the '--kid' flag to
+JWK Set payload. The **--jwks** flag requires the use of the **--kid** flag to
 specify which key to use.`,
 			},
 			cli.StringFlag{
 				Name: "kid",
-				Usage: `The ID of the recipient's private key. KID is a case-sensitive string. When
-used with '--jwk' the KID value must match the "kid" member of the JWK. When
-used with '--jwks' (a JWK Set) the KID value must match the "kid" member of
+				Usage: `The ID of the recipient's private key. <kid> is a case-sensitive string. When
+used with **--key** the <kid> value must match the **"kid"** member of the JWK. When
+used with **--jwks** (a JWK Set) the KID value must match the **"kid"** member of
 one of the JWKs in the JWK Set.`,
 			},
 		},
@@ -49,6 +49,10 @@ one of the JWKs in the JWK Set.`,
 }
 
 func decryptAction(ctx *cli.Context) error {
+	if err := errs.NumberOfArguments(ctx, 0); err != nil {
+		return err
+	}
+
 	data, err := utils.ReadAll(os.Stdin)
 	if err != nil {
 		return err
