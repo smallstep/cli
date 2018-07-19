@@ -2,8 +2,21 @@ package crypto
 
 import (
 	"crypto/rand"
+	"io"
 	"math/big"
+
+	"github.com/pkg/errors"
 )
+
+// GetRandomSalt generates a new salt of the given size.
+func GetRandomSalt(size int) ([]byte, error) {
+	salt := make([]byte, size)
+	_, err := io.ReadFull(rand.Reader, salt)
+	if err != nil {
+		return nil, errors.Wrap(err, "error generating salt")
+	}
+	return salt, nil
+}
 
 // GenerateRandomASCIIString returns a securely generated random ASCII string.
 // It reads random numbers from crypto/rand and searches for printable characters.

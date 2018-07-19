@@ -2,13 +2,11 @@ package pem
 
 import (
 	"bytes"
-	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 
@@ -16,16 +14,6 @@ import (
 	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ed25519"
 )
-
-// GetRandomSalt generates a new salt of the given size.
-func GetRandomSalt(size int) ([]byte, error) {
-	salt := make([]byte, size)
-	_, err := io.ReadFull(rand.Reader, salt)
-	if err != nil {
-		return nil, errors.Wrap(err, "error generating salt")
-	}
-	return salt, nil
-}
 
 // ReadCertificate returns a *x509.Certificate from the given filename. It
 // supports certificates formats PEM and DER.

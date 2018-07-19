@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto"
 	"github.com/smallstep/cli/crypto/pem"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
@@ -561,7 +562,7 @@ func createAction(ctx *cli.Context) error {
 				return errors.Wrap(err, "error reading password")
 			}
 
-			salt, err := pem.GetRandomSalt(pbkdf2SaltSize)
+			salt, err := crypto.GetRandomSalt(pbkdf2SaltSize)
 			if err != nil {
 				return err
 			}
