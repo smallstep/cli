@@ -16,7 +16,7 @@ func secretboxCommand() cli.Command {
 	return cli.Command{
 		Name:        "secretbox",
 		Usage:       "encrypts and authenticates small messages using secret-key cryptography",
-		UsageText:   "step crypto nacl secretbox SUBCOMMAND [SUBCOMMAND_FLAGS]",
+		UsageText:   "step crypto nacl secretbox <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `TODO`,
 		Subcommands: cli.Commands{
 			secretboxOpenCommand(),
@@ -27,15 +27,33 @@ func secretboxCommand() cli.Command {
 
 func secretboxOpenCommand() cli.Command {
 	return cli.Command{
-		Name:        "open",
-		Action:      cli.ActionFunc(secretboxOpenAction),
-		Usage:       "authenticates and decrypts a box produced by seal",
-		UsageText:   "step crypto nacl secretbox open NONCE KEY_FILE [--raw]",
+		Name:   "open",
+		Action: cli.ActionFunc(secretboxOpenAction),
+		Usage:  "authenticates and decrypts a box produced by seal",
+		UsageText: `**step crypto nacl secretbox open** <nonce> <key-file>
+		[--raw]`,
 		Description: `TODO`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "raw",
 				Usage: "Indicates that input is not base64 encoded",
+			},
+		},
+	}
+}
+
+func secretboxSealCommand() cli.Command {
+	return cli.Command{
+		Name:   "seal",
+		Action: cli.ActionFunc(secretboxSealAction),
+		Usage:  "produces an encrypted ciphertext",
+		UsageText: `**step crypto nacl secretbox seal** <nonce> <key-file>
+		[--raw]`,
+		Description: `TODO`,
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "raw",
+				Usage: "Do not base64 encode output",
 			},
 		},
 	}
@@ -93,22 +111,6 @@ func secretboxOpenAction(ctx *cli.Context) error {
 
 	os.Stdout.Write(raw)
 	return nil
-}
-
-func secretboxSealCommand() cli.Command {
-	return cli.Command{
-		Name:        "seal",
-		Action:      cli.ActionFunc(secretboxSealAction),
-		Usage:       "produces an encrypted ciphertext",
-		UsageText:   "step crypto nacl secretbox seal NONCE KEY_FILE [--raw]",
-		Description: `TODO`,
-		Flags: []cli.Flag{
-			cli.BoolFlag{
-				Name:  "raw",
-				Usage: "Do not base64 encode output",
-			},
-		},
-	}
 }
 
 func secretboxSealAction(ctx *cli.Context) error {

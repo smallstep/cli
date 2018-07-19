@@ -17,7 +17,7 @@ func authCommand() cli.Command {
 	return cli.Command{
 		Name:      "auth",
 		Usage:     "authenticates a message using a secret key",
-		UsageText: "step crypto nacl auth SUBCOMMAND [SUBCOMMAND_FLAGS]",
+		UsageText: "step crypto nacl auth <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			authDigestCommand(),
 			authVerifyCommand(),
@@ -27,19 +27,21 @@ func authCommand() cli.Command {
 
 func authDigestCommand() cli.Command {
 	return cli.Command{
-		Name:      "digest",
-		Action:    cli.ActionFunc(authDigestAction),
-		Usage:     "generates a 32-byte digest for a message",
-		UsageText: "step crypto nacl auth digest KEY_FILE",
+		Name:        "digest",
+		Action:      cli.ActionFunc(authDigestAction),
+		Usage:       "generates a 32-byte digest for a message",
+		UsageText:   "**step crypto nacl auth digest** <key-file>",
+		Description: `TODO`,
 	}
 }
 
 func authVerifyCommand() cli.Command {
 	return cli.Command{
-		Name:      "verify",
-		Action:    cli.ActionFunc(authVerifyAction),
-		Usage:     "checks digest is a valid for a message",
-		UsageText: "step crypto nacl auth verify KEY_FILE DIGEST",
+		Name:        "verify",
+		Action:      cli.ActionFunc(authVerifyAction),
+		Usage:       "checks digest is a valid for a message",
+		UsageText:   "**step crypto nacl auth verify** <key-file> <digest>",
+		Description: `TODO`,
 	}
 }
 

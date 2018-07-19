@@ -17,7 +17,7 @@ func boxCommand() cli.Command {
 	return cli.Command{
 		Name:      "box",
 		Usage:     "authenticate and encrypt small messages using public-key cryptography",
-		UsageText: "step crypto nacl box SUBCOMMAND [SUBCOMMAND_FLAGS]",
+		UsageText: "step crypto nacl box <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			boxKeypairCommand(),
 			boxOpenCommand(),
@@ -31,17 +31,77 @@ func boxKeypairCommand() cli.Command {
 		Name:      "keypair",
 		Action:    cli.ActionFunc(boxKeypairAction),
 		Usage:     "generate a key for use with seal and open",
-		UsageText: "step crypto nacl box keypair PUB_FILE PRIV_FILE",
+		UsageText: "**step crypto nacl box keypair** <pub-file> <priv-file>",
 		Description: `Generates a new public/private keypair suitable for use with seal and open.
 The private key is encrypted using a password in a nacl secretbox.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
 
-  PUB_FILE
-    The path to write the public key.
+<pub-file>
+:  The path to write the public key.
 
-  PRIV_FILE
-    The path to write the encrypted private key.`,
+<priv-file>
+:  The path to write the encrypted private key.`,
+	}
+}
+
+func boxOpenCommand() cli.Command {
+	return cli.Command{
+		Name:   "open",
+		Action: cli.ActionFunc(boxOpenAction),
+		Usage:  "authenticate and decrypt a box produced by seal",
+		UsageText: `**step crypto nacl box open** <nonce> <sender-pub-key> <priv-key>
+		[--raw]`,
+		Description: `Authenticate and decrypt a box produced by seal using the specified KEY. If
+PRIV_KEY is encrypted you will be prompted for the password. The sealed box is
+read from STDIN and the decrypted plaintext is written to STDOUT.
+
+## POSITIONAL ARGUMENTS
+
+<nonce>
+:  The nonce provided when the box was sealed.
+
+<sender-pub-key>
+:  The path to the public key of the peer that produced the sealed box.
+
+<priv-key>
+:  The path to the private key used to open the box.`,
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "raw",
+				Usage: "Indicates that input is not base64 encoded",
+			},
+		},
+	}
+}
+
+func boxSealCommand() cli.Command {
+	return cli.Command{
+		Name:   "seal",
+		Action: cli.ActionFunc(boxSealAction),
+		Usage:  "produce an authenticated and encrypted ciphertext",
+		UsageText: `**step crypto nacl box seal** <nonce> <recipient-pub-key> <priv-key>
+		[--raw]`,
+		Description: `Reads plaintext from STDIN and writes an encrypted and authenticated
+ciphertext to STDOUT. The "box" can be open by the a recipient who has access
+to the private key corresponding to <recipient-pub-key>.
+
+## POSITIONAL ARGUMENTS
+
+<nonce>
+:  Must be unique for each distinct message for a given pair of keys.
+
+<recipient-pub-key>
+:  The path to the public key of the intended recipient of the sealed box.
+
+<priv-key>
+:  The path to the private key used for authentication.`,
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "raw",
+				Usage: "Do not base64 encode output",
+			},
+		},
 	}
 }
 
@@ -53,7 +113,7 @@ func boxKeypairAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	pubFile, privFile := args[0], args[1]
 	if pubFile == privFile {
-		return errs.EqualArguments(ctx, "PUB_FILE", "PRIV_FILE")
+		return errs.EqualArguments(ctx, "<pub-file>", "<priv-file>")
 	}
 
 	pub, priv, err := box.GenerateKey(rand.Reader)
@@ -70,35 +130,6 @@ func boxKeypairAction(ctx *cli.Context) error {
 	}
 
 	return nil
-}
-
-func boxOpenCommand() cli.Command {
-	return cli.Command{
-		Name:      "open",
-		Action:    cli.ActionFunc(boxOpenAction),
-		Usage:     "authenticate and decrypt a box produced by seal",
-		UsageText: "step crypto nacl box open NONCE SENDER_PUB_KEY PRIV_KEY [--raw]",
-		Description: `Authenticate and decrypt a box produced by seal using the specified KEY. If
-PRIV_KEY is encrypted you will be prompted for the password. The sealed box is
-read from STDIN and the decrypted plaintext is written to STDOUT.
-
-POSITIONAL ARGUMENTS
-
-  NONCE
-    The nonce provided when the box was sealed.
-
-  SENDER_PUB_KEY
-    The path to the public key of the peer that produced the sealed box.
-
-  PRIV_KEY
-    The path to the private key used to open the box.`,
-		Flags: []cli.Flag{
-			cli.BoolFlag{
-				Name:  "raw",
-				Usage: "Indicates that input is not base64 encoded",
-			},
-		},
-	}
 }
 
 func boxOpenAction(ctx *cli.Context) error {
@@ -161,35 +192,6 @@ func boxOpenAction(ctx *cli.Context) error {
 
 	os.Stdout.Write(raw)
 	return nil
-}
-
-func boxSealCommand() cli.Command {
-	return cli.Command{
-		Name:      "seal",
-		Action:    cli.ActionFunc(boxSealAction),
-		Usage:     "produce an authenticated and encrypted ciphertext",
-		UsageText: "step crypto nacl box seal NONCE RECIPIENT_PUB_KEY PRIV_KEY [--raw]",
-		Description: `Reads plaintext from STDIN and writes an encrypted and authenticated
-ciphertext to STDOUT. The "box" can be open by the a recipient who has access
-to the private key corresponding to RECIPIENT_PUB_KEY.
-
-POSITIONAL ARGUMENTS
-
-  NONCE
-    Must be unique for each distinct message for a given pair of keys.
-
-  RECIPIENT_PUB_KEY
-    The path to the public key of the intended recipient of the sealed box.
-
-  PRIV_KEY
-    The path to the private key used for authentication.`,
-		Flags: []cli.Flag{
-			cli.BoolFlag{
-				Name:  "raw",
-				Usage: "Do not base64 encode output",
-			},
-		},
-	}
 }
 
 func boxSealAction(ctx *cli.Context) error {

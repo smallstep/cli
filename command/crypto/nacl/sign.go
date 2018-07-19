@@ -17,7 +17,7 @@ func signCommand() cli.Command {
 	return cli.Command{
 		Name:      "sign",
 		Usage:     "signs small messages using public-key cryptography",
-		UsageText: "step crypto nacl sign SUBCOMMAND [SUBCOMMAND_FLAGS]",
+		UsageText: "step crypto nacl sign <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			signKeypairCommand(),
 			signOpenCommand(),
@@ -31,7 +31,7 @@ func signKeypairCommand() cli.Command {
 		Name:      "keypair",
 		Action:    cli.ActionFunc(signKeypairAction),
 		Usage:     "generates a pair for use with sign and open",
-		UsageText: "step crypto nacl sign keypair PUB_FILE PRIV_FILE",
+		UsageText: "**step crypto nacl sign keypair** <pub-file> <priv-file>",
 	}
 }
 
@@ -40,7 +40,7 @@ func signOpenCommand() cli.Command {
 		Name:      "open",
 		Action:    cli.ActionFunc(signOpenAction),
 		Usage:     "verifies a signed message produced by sign",
-		UsageText: "step crypto nacl sign open PUB_FILE",
+		UsageText: "**step crypto nacl sign open** <pub-file>",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "raw",
@@ -55,7 +55,7 @@ func signSignCommand() cli.Command {
 		Name:      "sign",
 		Action:    cli.ActionFunc(signSignAction),
 		Usage:     "signs a message using Ed25519",
-		UsageText: "step crypto nacl sign sign PRIV_FILE",
+		UsageText: "**step crypto nacl sign sign** <priv-file>",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "raw",
@@ -73,7 +73,7 @@ func signKeypairAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	pubFile, privFile := args[0], args[1]
 	if pubFile == privFile {
-		return errs.EqualArguments(ctx, "PUB_FILE", "PRIV_FILE")
+		return errs.EqualArguments(ctx, "<pub-file>", "<priv-file>")
 	}
 
 	pub, priv, err := sign.GenerateKey(rand.Reader)
