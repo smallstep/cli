@@ -57,10 +57,10 @@ func Alphanumeric(length int) (string, error) {
 	return String(length, "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 }
 
-// Ascii returns a securely generated random ASCII string. It reads random
+// ASCII returns a securely generated random ASCII string. It reads random
 // numbers from crypto/rand and searches for printable characters. It will
 // return an error if the system's secure random number generator fails to
 // function correctly, in which case the caller must not continue.
-func Ascii(length int) (string, error) {
+func ASCII(length int) (string, error) {
 	return String(length, ascii)
 }
