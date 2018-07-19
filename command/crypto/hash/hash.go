@@ -28,7 +28,7 @@ func Command() cli.Command {
 	return cli.Command{
 		Name:      "hash",
 		Usage:     "generates and checks hashes of files and directories",
-		UsageText: "step crypto hash <SUBCOMMAND> [SUBCOMMAND_FLAGS]",
+		UsageText: "step crypto hash <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			digestCommand(),
 			compareCommand(),
@@ -38,35 +38,50 @@ func Command() cli.Command {
 
 func digestCommand() cli.Command {
 	return cli.Command{
-		Name:      "digest",
-		Action:    cli.ActionFunc(digestAction),
-		Usage:     "generate a hash digest of a file or directory",
-		UsageText: "step crypto hash digest FILE_OR_DIRECTORY [--alg ALGORITHM]",
-		Description: `The 'step crypto hash digest' command generates a hash digest for a given
-file or directory. For a file, the output is the same as tools like 'shasum'.
-For directories, the tool computes a hash tree and outputs a single hash
-digest.
+		Name:   "digest",
+		Action: cli.ActionFunc(digestAction),
+		Usage:  "generate a hash digest of a file or directory",
+		UsageText: `**step crypto hash digest** <file-or-directory>
+		[**--alg**=<algorithm>]`,
+		Description: `**step crypto hash digest** generates a hash digest for a given file or
+directory. For a file, the output is the same as tools like 'shasum'. For
+directories, the tool computes a hash tree and outputs a single hash digest.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
 
-  FILE_OR_DIRECTORY
-    The path to a file or directory to hash.`,
+<file-or-directory>
+: The path to a file or directory to hash.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "alg",
 				Value: "sha256",
 				Usage: `The hash algorithm to use.
 
-  ALGORITHM must be one of:
-    sha1
-    sha224
-    sha256 (default)
-    sha384
-    sha512
-    sha512-224
-    sha512-256
-    sha
-    md5 (requires '--insecure')`,
+: <algorithm> must be one of:
+
+    **sha1** (or sha)
+    :  SHA-1 produces a 160-bit hash value
+
+    **sha224**
+    :  SHA-224 produces a 224-bit hash value
+
+    **sha256** (default)
+    :  SHA-256 produces a 256-bit hash value
+
+    **sha384**
+    :  SHA-384 produces a 384-bit hash value
+
+    **sha512**
+    :  SHA-512 produces a 512-bit hash value
+
+    **sha512-224**
+    :  SHA-512/224 uses SHA-512 and truncates the output to 224 bits
+
+    **sha512-256**
+    :  SHA-512/256 uses SHA-512 and truncates the output to 256 bits
+
+    **md5** (requires --insecure)
+    :  MD5 produces a 128-bit hash value`,
 			},
 			cli.BoolFlag{
 				Name:   "insecure",
@@ -78,36 +93,52 @@ POSITIONAL ARGUMENTS
 
 func compareCommand() cli.Command {
 	return cli.Command{
-		Name:      "compare",
-		Action:    cli.ActionFunc(compareAction),
-		Usage:     "verify the hash digest for a file or directory matches an expected value",
-		UsageText: "step crypto hash compare HASH FILE_OR_DIRECTORY [--alg ALGORITHM]",
-		Description: `The 'step crypto hash compare' command verifies that the expected hash value
-matches the computed hash value for a file or directory.
+		Name:   "compare",
+		Action: cli.ActionFunc(compareAction),
+		Usage:  "verify the hash digest for a file or directory matches an expected value",
+		UsageText: `**step crypto hash compare** <hash> <file-or-directory>
+		[--alg ALGORITHM]`,
+		Description: `**step crypto hash compare** verifies that the expected hash value matches the
+computed hash value for a file or directory.
 
-POSITIONAL ARGUMENTS
+## POSITIONAL ARGUMENTS
 
-  HASH
-    The expected hash digest
+<hash>
+: The expected hash digest
 
-  FILE_OR_DIRECTORY
-    The path to a file or directory to hash.`,
+<file-or-directory>
+: The path to a file or directory to hash.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "alg",
 				Value: "sha256",
 				Usage: `The hash algorithm to use.
 
-  ALGORITHM must be one of:
-    sha1
-    sha224
-    sha256 (default)
-    sha384
-    sha512
-    sha512-224
-    sha512-256
-    sha
-    md5 (requires '--insecure')`,
+: <algorithm> must be one of:
+
+    **sha1** (or sha)
+    :  SHA-1 produces a 160-bit hash value
+
+    **sha224**
+    :  SHA-224 produces a 224-bit hash value
+
+    **sha256** (default)
+    :  SHA-256 produces a 256-bit hash value
+
+    **sha384**
+    :  SHA-384 produces a 384-bit hash value
+
+    **sha512**
+    :  SHA-512 produces a 512-bit hash value
+
+    **sha512-224**
+    :  SHA-512/224 produces a 224-bit hash value
+
+    **sha512-256**
+    :  SHA-512/256 produces a 256-bit hash value
+
+    **md5** (requires --insecure)
+    :  MD5 produces a 128-bit hash value`,
 			},
 			cli.BoolFlag{
 				Name:   "insecure",
