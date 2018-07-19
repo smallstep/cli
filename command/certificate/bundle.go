@@ -15,7 +15,7 @@ func bundleCommand() cli.Command {
 		Action:    cli.ActionFunc(bundleAction),
 		Usage:     `bundle a certificate with intermediate certificate(s) needed for certificate path validation.`,
 		UsageText: `**step certificate bundle** <crt_file> <ca> <bundle_file>`,
-		Description: `**step certificate bundle** command bundles a certificate
+		Description: `**step certificate bundle** bundles a certificate
 		with any intermediates necessary to validate the certificate.
 
 ## POSITIONAL ARGUMENTS

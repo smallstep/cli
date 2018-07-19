@@ -42,7 +42,8 @@ This command returns 0 on success and \>0 if any error occurs.
 Sign a certificate signing request:
 
 '''
-$ step certificate sign ./certificate-signing-request.csr ./issuer-certificate.crt ./issuer-private-key.priv
+$ step certificate sign ./certificate-signing-request.csr \
+./issuer-certificate.crt ./issuer-private-key.priv
 '''
 `,
 	}

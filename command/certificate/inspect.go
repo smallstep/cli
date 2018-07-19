@@ -24,7 +24,7 @@ func inspectCommand() cli.Command {
 		Action:    cli.ActionFunc(inspectAction),
 		Usage:     `print certificate or CSR details in human readable format`,
 		UsageText: `**step certificate inspect** <crt_file> [**--format**=<format>]`,
-		Description: `**step certificate inspect** command prints the details of a certificate
+		Description: `**step certificate inspect** prints the details of a certificate
 or CSR in a human readable format. Output from the inspect command is printed to
 STDERR instead of STDOUT unless. This is an intentional barrier to accidental
 misuse: scripts should never rely on the contents of an unvalidated certificate.
@@ -69,7 +69,8 @@ $ step certificate inspect https://smallstep.com --roots ./certificate.crt
 Inspect a remote certificate using a custom list of root certificates to verify the server:
 
 '''
-$ step certificate inspect https://smallstep.com --roots "./certificate.crt,./certificate2.crt,/certificate3.crt"
+$ step certificate inspect https://smallstep.com \
+--roots "./certificate.crt,./certificate2.crt,/certificate3.crt"
 '''
 
 Inspect a remote certificate using a custom directory of root certificates to verify the server:

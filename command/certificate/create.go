@@ -64,7 +64,8 @@ $ step certificate create foo foo.csr foo.key --csr --no-password --insecure
 Create a leaf certificate and key:
 
 '''
-$ step certificate create foo foo.crt foo.key intermediate-ca --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
+$ step certificate create foo foo.crt foo.key intermediate-ca \
+--ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
 '''
 
 Create a root certificate and key:
@@ -76,7 +77,8 @@ $ step certificate create foo foo.crt foo.key --profile root-ca
 Create an intermediate certificate and key:
 
 '''
-$ step certificate create foo foo.crt foo.key --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key
+$ step certificate create foo foo.crt foo.key --profile intermediate-ca \
+--ca ./root-ca.crt --ca-key ./root-ca.key
 '''
 `,
 		Flags: []cli.Flag{

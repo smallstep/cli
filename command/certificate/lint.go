@@ -55,7 +55,8 @@ $ step certificate lint https://smallstep.com --roots ./certificate.crt
 Lint a remote certificate using a custom list of root certificates to verify the server:
 
 '''
-$ step certificate lint https://smallstep.com --roots "./certificate.crt,./certificate2.crt,/certificate3.crt"
+$ step certificate lint https://smallstep.com \
+--roots "./certificate.crt,./certificate2.crt,/certificate3.crt"
 '''
 
 Lint a remote certificate using a custom directory of root certificates to verify the server:

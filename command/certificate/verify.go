@@ -49,7 +49,8 @@ $ step certificate verify ./certificate.crt --roots ./root-certificate.crt
 Verify a certificate using a custom list of root certificates for path validation:
 
 '''
-$ step certificate verify ./certificate.crt --roots "./root-certificate.crt,./root-certificate2.crt,/root-certificate3.crt"
+$ step certificate verify ./certificate.crt \
+--roots "./root-certificate.crt,./root-certificate2.crt,/root-certificate3.crt"
 '''
 
 Verify a certificate using a custom directory of root certificates for path validation:

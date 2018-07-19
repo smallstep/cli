@@ -47,7 +47,8 @@ Create an RSA public / private key pair with 4096 bits:
 $ step crypto keypair foo.pub foo.key --type RSA --size 4096
 '''
 
-Create an RSA public / private key with fewer than the recommended number of bits (recommended >= 2048 bits):
+Create an RSA public / private key with fewer than the recommended number of
+bits (recommended >= 2048 bits):
 
 '''
 $ step crypto keypair foo.pub foo.key --type RSA --size 1024 --insecure
@@ -62,7 +63,8 @@ $ step crypto keypair foo.pub foo.key --type EC --curve "P-521"
 Create an EC public / private key pair but do not encrypt the private key file:
 
 '''
-$ step crypto keypair foo.pub foo.key --type EC --curve "P-256" --no-password --insecure
+$ step crypto keypair foo.pub foo.key --type EC --curve "P-256" \
+--no-password --insecure
 '''
 
 Create an Octet Key Pair with curve Ed25519:
