@@ -11,7 +11,6 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 
-	"github.com/maraino/dbg"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/pbkdf2"
@@ -224,7 +223,6 @@ func DecryptPEMBlock(block *pem.Block, password []byte) ([]byte, error) {
 			symkey = pbkdf2.Key(password, salt, iter, 24, keyHash)
 			block, err = des.NewTripleDESCipher(symkey)
 		default:
-			dbg.DD(pki)
 			return nil, errors.Errorf("unsupported encrypted PEM: unknown algorithm %v", encParam.EncryAlgo)
 		}
 		if err != nil {
