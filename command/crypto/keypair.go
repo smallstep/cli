@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
+	spem "github.com/smallstep/cli/crypto/pem"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/reader"
 	"github.com/urfave/cli"
 )
@@ -197,18 +197,24 @@ func createAction(ctx *cli.Context) error {
 		return errors.WithStack(err)
 	}
 
-	if err := utils.WritePublicKey(pub, pubFile); err != nil {
+	_, err = spem.Serialize(pub, spem.ToFile(pubFile, 0600))
+	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	var pass string
-	if !noPass {
-		reader.ReadPasswordSubtle(
+	if noPass {
+		_, err = spem.Serialize(priv, spem.ToFile(privFile, 0600))
+	} else {
+		var pass string
+		if err := reader.ReadPasswordSubtle(
 			fmt.Sprintf("Password with which to encrypt private key file `%s`: ", privFile),
-			&pass, "Password", reader.RetryOnEmpty)
-
+			&pass, "Password", reader.RetryOnEmpty); err != nil {
+			return errors.WithStack(err)
+		}
+		_, err = spem.Serialize(priv, spem.WithEncryption(pass),
+			spem.ToFile(privFile, 0600))
 	}
-	if err := utils.WritePrivateKey(priv, pass, privFile); err != nil {
+	if err != nil {
 		return errors.WithStack(err)
 	}
 

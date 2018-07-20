@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"math/big"
 	"net"
 	"strings"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
+	spem "github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/utils"
 )
 
 // Profile is an interface that certificate profiles (e.g. leaf,
@@ -247,13 +250,19 @@ func (b *base) CreateCertificate() ([]byte, error) {
 func (b *base) CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, error) {
 	crtBytes, err := b.CreateCertificate()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
-	if err := WriteCertificate(crtBytes, crtOut); err != nil {
-		return nil, err
+	if err := utils.WriteFile(crtOut, pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: crtBytes,
+	}), 0600); err != nil {
+		return nil, errors.WithStack(err)
 	}
-	if err := keys.WritePrivateKey(b.SubjectPrivateKey(), pass, keyOut); err != nil {
-		return nil, err
+
+	_, err = spem.Serialize(b.SubjectPrivateKey(),
+		spem.WithEncryption(pass), spem.ToFile(keyOut, 0600))
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 	return crtBytes, nil
 }

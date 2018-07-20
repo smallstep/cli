@@ -6,14 +6,15 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/pkg/errors"
 	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
 	"github.com/smallstep/cli/crypto/keys"
+	spem "github.com/smallstep/cli/crypto/pem"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/reader"
 	"github.com/urfave/cli"
 )
@@ -131,14 +132,10 @@ func createAction(ctx *cli.Context) error {
 		return err
 	}
 
-	// Use password to protect private JWK by default
-	usePassword := true
-	if ctx.Bool("no-password") {
-		if ctx.Bool("insecure") {
-			usePassword = false
-		} else {
-			return errs.RequiredWithFlag(ctx, "insecure", "no-password")
-		}
+	insecure := ctx.Bool("insecure")
+	noPass := ctx.Bool("no-password")
+	if noPass && !insecure {
+		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
 	}
 
 	subject := ctx.Args().Get(0)
@@ -244,20 +241,24 @@ func createAction(ctx *cli.Context) error {
 		return errs.NewError("unexpected type: %s", typ)
 	}
 
-	if err := ioutil.WriteFile(crtFile, pem.EncodeToMemory(pubPEM),
+	if err := utils.WriteFile(crtFile, pem.EncodeToMemory(pubPEM),
 		os.FileMode(0600)); err != nil {
 		return errs.FileError(err, crtFile)
 	}
 
-	var pass string
-	if usePassword {
+	if noPass {
+		_, err = spem.Serialize(priv, spem.ToFile(keyFile, 0600))
+	} else {
+		var pass string
 		if err := reader.ReadPasswordSubtle(
 			fmt.Sprintf("Password with which to encrypt private key file `%s`: ", keyFile),
 			&pass, "Password", reader.RetryOnEmpty); err != nil {
 			return errors.WithStack(err)
 		}
+		_, err = spem.Serialize(priv, spem.WithEncryption(pass),
+			spem.ToFile(keyFile, 0600))
 	}
-	if err := keys.WritePrivateKey(priv, pass, keyFile); err != nil {
+	if err != nil {
 		return errors.WithStack(err)
 	}
 	return nil

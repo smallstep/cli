@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"math/big"
-	"os"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ed25519"
@@ -24,9 +23,6 @@ var (
 	DefaultKeySize = 2048
 	// DefaultKeyCurve is the default curve of a private key.
 	DefaultKeyCurve = "P-256"
-
-	x509EncryptPEMBlock     = x509.EncryptPEMBlock
-	x509MarshalECPrivateKey = x509.MarshalECPrivateKey
 )
 
 // PublicKey extracts a public key from a private key.
@@ -36,66 +32,11 @@ func PublicKey(priv interface{}) (interface{}, error) {
 		return &k.PublicKey, nil
 	case *ecdsa.PrivateKey:
 		return &k.PublicKey, nil
+	case ed25519.PrivateKey:
+		return k.Public(), nil
 	default:
 		return nil, errors.Errorf("unrecognized key type: %T", priv)
 	}
-}
-
-// PrivatePEM will convert a private key and encryption password
-// to an encrypted pem block.
-// Nil encryption options is identical to InsecureEncOpts() -- so no encryption.
-func PrivatePEM(priv interface{}, e *EncOpts) (*pem.Block, error) {
-	var insecure bool
-	if e == nil {
-		e = InsecureEncOpts()
-	}
-	if e.pass == "" {
-		insecure = true
-	}
-	switch k := priv.(type) {
-	case *rsa.PrivateKey:
-		if insecure {
-			return &pem.Block{
-				Bytes: x509.MarshalPKCS1PrivateKey(k),
-				Type:  "RSA PRIVATE KEY",
-			}, nil
-		}
-		return x509EncryptPEMBlock(rand.Reader, "RSA PRIVATE KEY",
-			x509.MarshalPKCS1PrivateKey(k), []byte(e.pass), e.cipher)
-	case *ecdsa.PrivateKey:
-		b, err := x509MarshalECPrivateKey(k)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to marshal EC private key")
-		}
-		if insecure {
-			return &pem.Block{
-				Bytes: b,
-				Type:  "EC PRIVATE KEY",
-			}, nil
-		}
-		return x509EncryptPEMBlock(rand.Reader, "EC PRIVATE KEY",
-			b, []byte(e.pass), e.cipher)
-	default:
-		return nil, errors.Errorf("Unrecognized key - type: %T, value: %v", priv, priv)
-	}
-}
-
-// EncOpts is a type containing options for encrypting secrets to disk.
-// The fields are a password and cipher used for encryption.
-type EncOpts struct {
-	pass   string
-	cipher x509.PEMCipher
-}
-
-// InsecureEncOpts returns an empty EncOpts. Unspecified password indicates insecure.
-func InsecureEncOpts() *EncOpts {
-	return &EncOpts{}
-}
-
-// DefaultEncOpts populates the password field and sets a sane default
-// for the encryption cipher.
-func DefaultEncOpts(pass string) *EncOpts {
-	return &EncOpts{pass, x509.PEMCipherAES128}
 }
 
 // PublicPEM returns the public key in PEM block format.
@@ -249,63 +190,4 @@ func LoadPrivateKey(bytes []byte, getPass func() (string, error)) (interface{}, 
 		return nil, errors.Errorf("unexpected key type: %s", p.Type)
 	}
 	return key, nil
-}
-
-// WritePrivateKey encodes a crypto private key to a file on disk in PEM format.
-// Any file with the same name will be overwritten.
-func WritePrivateKey(key interface{}, pass, out string) error {
-	// Remove any file with same name, if it exists.
-	// Permissions on private key files may be such that overwriting them is impossible.
-	if _, err := os.Stat(out); err == nil {
-		if err = os.Remove(out); err != nil {
-			return errors.WithStack(err)
-		}
-	}
-	keyOut, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-		os.FileMode(0600))
-	if err != nil {
-		return errors.Wrapf(err,
-			"failed to open '%s' for writing", out)
-	}
-	privPem, err := PrivatePEM(key, DefaultEncOpts(pass))
-	if err != nil {
-		return errors.Wrap(err,
-			"failed to convert private key to PEM block")
-	}
-	err = pem.Encode(keyOut, privPem)
-	if err != nil {
-		return errors.Wrapf(err,
-			"pem encode '%s' failed", out)
-	}
-	keyOut.Close()
-	return nil
-}
-
-// WritePublicKey encodes a crypto public key to a file on disk in PEM format.
-// Any file with the same name will be overwritten.
-func WritePublicKey(key interface{}, out string) error {
-	// Remove any file with same name, if it exists.
-	if _, err := os.Stat(out); err == nil {
-		if err = os.Remove(out); err != nil {
-			return errors.WithStack(err)
-		}
-	}
-	keyOut, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-		os.FileMode(0600))
-	if err != nil {
-		return errors.Wrapf(err,
-			"failed to open '%s' for writing", out)
-	}
-	pubPEM, err := PublicPEM(key)
-	if err != nil {
-		return errors.Wrap(err,
-			"failed to convert public key to PEM block")
-	}
-	err = pem.Encode(keyOut, pubPEM)
-	if err != nil {
-		return errors.Wrapf(err,
-			"pem encode '%s' failed", out)
-	}
-	keyOut.Close()
-	return nil
 }

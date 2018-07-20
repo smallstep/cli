@@ -4,10 +4,18 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
+	"encoding/pem"
+	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
+	"github.com/smallstep/cli/crypto/keys"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -117,3 +125,275 @@ func TestRead(t *testing.T) {
 		}
 	}
 }
+
+func Test_Serialize(t *testing.T) {
+	tests := map[string]struct {
+		in   func() (interface{}, error)
+		pass string
+		file string
+		err  error
+	}{
+		"unrecognized key type": {
+			in: func() (interface{}, error) {
+				return "shake and bake", nil
+			},
+			err: errors.New("cannot serialize type 'string', value 'shake and bake'"),
+		},
+		"RSA Private Key success": {
+			in: func() (interface{}, error) {
+				return keys.GenerateKey("RSA", "", 1024)
+			},
+		},
+		"RSA Public Key success": {
+			in: func() (interface{}, error) {
+				pub, _, err := keys.GenerateKeyPair("RSA", "", 1024)
+				return pub, err
+			},
+		},
+		"EC Private Key success": {
+			in: func() (interface{}, error) {
+				return keys.GenerateKey("EC", "P-256", 0)
+			},
+		},
+		"EC Private Key success - encrypt input data": {
+			in: func() (interface{}, error) {
+				return keys.GenerateKey("EC", "P-256", 0)
+			},
+			pass: "pass",
+		},
+		"EC Public Key success": {
+			in: func() (interface{}, error) {
+				pub, _, err := keys.GenerateKeyPair("EC", "P-256", 0)
+				return pub, err
+			},
+		},
+		"OKP Private Key success": {
+			in: func() (interface{}, error) {
+				return keys.GenerateKey("OKP", "Ed25519", 0)
+			},
+		},
+		"OKP Public Key success": {
+			in: func() (interface{}, error) {
+				pub, _, err := keys.GenerateKeyPair("OKP", "Ed25519", 0)
+				return pub, err
+			},
+		},
+		"propagate open key out file error": {
+			in: func() (interface{}, error) {
+				return keys.GenerateKey("EC", "P-256", 0)
+			},
+			file: "./fakeDir/test.key",
+			err:  errors.New("open ./fakeDir/test.key failed: no such file or directory"),
+		},
+		"ToFile Success (EC Private Key unencrypted)": {
+			in: func() (interface{}, error) {
+				return keys.GenerateKey("EC", "P-256", 0)
+			},
+			file: "./test.key",
+		},
+		"ToFile Success (EC Private Key encrypted)": {
+			in: func() (interface{}, error) {
+				return keys.GenerateKey("EC", "P-256", 0)
+			},
+			pass: "pass",
+			file: "./test.key",
+		},
+	}
+
+	for name, test := range tests {
+		if _, err := os.Stat("./test.key"); err == nil {
+			assert.FatalError(t, os.Remove("./test.key"))
+		}
+		t.Logf("Running test case: %s", name)
+
+		in, err := test.in()
+		assert.FatalError(t, err)
+
+		var p *pem.Block
+		if test.pass == "" && test.file == "" {
+			p, err = Serialize(in)
+		} else if test.pass != "" && test.file != "" {
+			p, err = Serialize(in, WithEncryption(test.pass), ToFile(test.file, 0600))
+		} else if test.pass != "" {
+			p, err = Serialize(in, WithEncryption(test.pass))
+		} else {
+			p, err = Serialize(in, ToFile(test.file, 0600))
+		}
+
+		if err != nil {
+			if assert.NotNil(t, test.err) {
+				assert.HasPrefix(t, err.Error(), test.err.Error())
+			}
+		} else {
+			if assert.Nil(t, test.err) {
+				switch k := in.(type) {
+				case *rsa.PrivateKey:
+					if test.pass == "" {
+						assert.False(t, x509.IsEncryptedPEMBlock(p))
+						assert.Equals(t, p.Type, "RSA PRIVATE KEY")
+						assert.Equals(t, p.Bytes, x509.MarshalPKCS1PrivateKey(k))
+					} else {
+						assert.True(t, x509.IsEncryptedPEMBlock(p))
+						assert.Equals(t, p.Type, "RSA PRIVATE KEY")
+						assert.Equals(t, p.Headers["Proc-Type"], "4,ENCRYPTED")
+
+						der, err := x509.DecryptPEMBlock(p, []byte(test.pass))
+						assert.FatalError(t, err)
+						assert.Equals(t, der, x509.MarshalPKCS1PrivateKey(k))
+					}
+				case *rsa.PublicKey, *ecdsa.PublicKey:
+					assert.False(t, x509.IsEncryptedPEMBlock(p))
+					assert.Equals(t, p.Type, "PUBLIC KEY")
+
+					b, err := x509.MarshalPKIXPublicKey(k)
+					assert.FatalError(t, err)
+					assert.Equals(t, p.Bytes, b)
+				case *ecdsa.PrivateKey:
+					assert.Equals(t, p.Type, "EC PRIVATE KEY")
+					var actualBytes []byte
+					if test.pass == "" {
+						assert.False(t, x509.IsEncryptedPEMBlock(p))
+						actualBytes = p.Bytes
+					} else {
+						assert.True(t, x509.IsEncryptedPEMBlock(p))
+						assert.Equals(t, p.Headers["Proc-Type"], "4,ENCRYPTED")
+
+						actualBytes, err = x509.DecryptPEMBlock(p, []byte(test.pass))
+						assert.FatalError(t, err)
+					}
+					expectedBytes, err := x509.MarshalECPrivateKey(k)
+					assert.FatalError(t, err)
+					assert.Equals(t, actualBytes, expectedBytes)
+
+					if test.file != "" {
+						// Check key permissions
+						fileInfo, err := os.Stat(test.file)
+						assert.FatalError(t, err)
+						assert.Equals(t, fileInfo.Mode(), os.FileMode(0600))
+						// Verify that key written to file is correct
+						keyFileBytes, err := ioutil.ReadFile(test.file)
+						assert.FatalError(t, err)
+						pemKey, _ := pem.Decode(keyFileBytes)
+						assert.Equals(t, pemKey.Type, "EC PRIVATE KEY")
+						if x509.IsEncryptedPEMBlock(pemKey) {
+							assert.Equals(t, pemKey.Headers["Proc-Type"], "4,ENCRYPTED")
+							actualBytes, err = x509.DecryptPEMBlock(pemKey, []byte(test.pass))
+							assert.FatalError(t, err)
+						} else {
+							actualBytes = pemKey.Bytes
+						}
+						assert.Equals(t, actualBytes, expectedBytes)
+					}
+				case ed25519.PrivateKey:
+					assert.Equals(t, p.Type, "PRIVATE KEY")
+					var actualBytes []byte
+					if test.pass == "" {
+						assert.False(t, x509.IsEncryptedPEMBlock(p))
+						actualBytes = p.Bytes
+					} else {
+						assert.True(t, x509.IsEncryptedPEMBlock(p))
+						assert.Equals(t, p.Headers["Proc-Type"], "4,ENCRYPTED")
+
+						actualBytes, err = x509.DecryptPEMBlock(p, []byte(test.pass))
+						assert.FatalError(t, err)
+					}
+
+					var priv pkcs8
+					_, err = asn1.Unmarshal(actualBytes, &priv)
+					assert.FatalError(t, err)
+					assert.Equals(t, priv.Version, 0)
+					assert.Equals(t, priv.Algo, pkix.AlgorithmIdentifier{
+						Algorithm:  asn1.ObjectIdentifier{1, 3, 101, 112},
+						Parameters: asn1.RawValue{},
+					})
+					assert.Equals(t, priv.PrivateKey[:2], []byte{4, 32})
+					assert.Equals(t, priv.PrivateKey[2:ed25519.SeedSize+2], k.Seed())
+				case ed25519.PublicKey:
+					assert.Equals(t, p.Type, "PUBLIC KEY")
+					assert.False(t, x509.IsEncryptedPEMBlock(p))
+
+					var pub publicKeyInfo
+					_, err = asn1.Unmarshal(p.Bytes, &pub)
+					assert.FatalError(t, err)
+					assert.Equals(t, pub.Algo, pkix.AlgorithmIdentifier{
+						Algorithm:  asn1.ObjectIdentifier{1, 3, 101, 112},
+						Parameters: asn1.RawValue{},
+					})
+					assert.Equals(t, pub.PublicKey, asn1.BitString{
+						Bytes:     k,
+						BitLength: ed25519.PublicKeySize * 8,
+					})
+				default:
+					t.Errorf("Unrecognized key - type: %T, value: %v", k, k)
+				}
+			}
+		}
+		if _, err := os.Stat("./test.key"); err == nil {
+			assert.FatalError(t, os.Remove("./test.key"))
+		}
+	}
+}
+
+/*
+func Test_WriteKey(t *testing.T) {
+	keyOut := "./test.key"
+	pass := "pass"
+
+	tests := map[string]struct {
+		key    func() (interface{}, error)
+		keyOut string
+		pass   string
+		err    error
+	}{
+		"success": {
+			key: func() (interface{}, error) {
+				return GenerateKey(DefaultKeyType, DefaultKeyCurve, 0)
+			},
+			keyOut: keyOut,
+			pass:   pass,
+			err:    errors.New("failed to convert private key to PEM block: encryption passphrase cannot be empty"),
+		},
+	}
+
+	for name, test := range tests {
+		t.Logf("Running test case: %s", name)
+
+		key, err := test.key()
+		assert.FatalError(t, err)
+
+		err = WritePrivateKey(key, test.pass, test.keyOut)
+		if err != nil {
+			if assert.NotNil(t, test.err) {
+				assert.HasPrefix(t, err.Error(), test.err.Error())
+			}
+		} else {
+			// Check key permissions
+			fileInfo, err := os.Stat(test.keyOut)
+			assert.FatalError(t, err)
+			fileMode := fileInfo.Mode()
+			if fileMode != 0600 {
+				t.Errorf("FileMode mismatch for file %s -- expected: `%d`, but got: `%d`",
+					test.keyOut, fileMode, 0600)
+			}
+
+			switch k := key.(type) {
+			case *ecdsa.PrivateKey:
+				// Verify that key written to file is correct
+				plain, err := x509.MarshalECPrivateKey(k)
+				assert.FatalError(t, err)
+				keyFileBytes, err := ioutil.ReadFile(test.keyOut)
+				assert.FatalError(t, err)
+				pemKey, _ := pem.Decode(keyFileBytes)
+				assert.True(t, x509.IsEncryptedPEMBlock(pemKey))
+				assert.Equals(t, pemKey.Type, "EC PRIVATE KEY")
+				assert.Equals(t, pemKey.Headers["Proc-Type"], "4,ENCRYPTED")
+				der, err := x509.DecryptPEMBlock(pemKey, []byte(pass))
+				assert.FatalError(t, err)
+				assert.Equals(t, der, plain)
+			default:
+				t.Errorf("unexpected key type %T", k)
+			}
+		}
+	}
+}
+*/
