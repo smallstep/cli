@@ -1,0 +1,64 @@
+#!/bin/sh
+
+OPENSSL="/usr/local/Cellar/openssl@1.1/1.1.1-pre8/bin/openssl"
+
+#######################################
+# PKCS#8                              #
+#######################################
+
+# EC
+$OPENSSL genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -pkeyopt ec_param_enc:named_curve -out pkcs8/openssl.p256.pem
+$OPENSSL genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-384 -pkeyopt ec_param_enc:named_curve -out pkcs8/openssl.p384.pem
+$OPENSSL genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-521 -pkeyopt ec_param_enc:named_curve -out pkcs8/openssl.p521.pem
+
+# Ed25519
+$OPENSSL genpkey -outform PEM -algorithm ED25519 -out pkcs8/openssl.ed25519.pem
+
+# RSA
+$OPENSSL genpkey -outform PEM -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out pkcs8/openssl.rsa2048.pem
+$OPENSSL genpkey -outform PEM -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out pkcs8/openssl.rsa4096.pem
+
+# Public
+NAMES="p256 p384 p521 ed25519 rsa2048 rsa4096"
+for name in $NAMES
+do
+	$OPENSSL pkey -outform PEM -in "pkcs8/openssl.$name.pem" -pubout -out "pkcs8/openssl.$name.pub.pem"
+done
+
+# Encrypted
+$OPENSSL pkey -outform PEM -in pkcs8/openssl.p256.pem -aes-128-cbc -passout pass:mypassword  -out pkcs8/openssl.p256.enc.pem
+$OPENSSL pkey -outform PEM -in pkcs8/openssl.ed25519.pem -aes-192-cbc -passout pass:mypassword  -out pkcs8/openssl.ed25519.enc.pem
+$OPENSSL pkey -outform PEM -in pkcs8/openssl.rsa2048.pem -aes-256-cbc -passout pass:mypassword  -out pkcs8/openssl.rsa2048.enc.pem
+$OPENSSL pkey -outform PEM -in pkcs8/openssl.p384.pem -des -passout pass:mypassword -out pkcs8/openssl.p384.enc.pem
+$OPENSSL pkey -outform PEM -in pkcs8/openssl.p521.pem -des3 -passout pass:mypassword -out pkcs8/openssl.p521.enc.pem
+
+#######################################
+# PKCS#1                              #
+#######################################
+
+$OPENSSL genrsa -out openssl.rsa1024.pem 1024
+$OPENSSL genrsa -out openssl.rsa2048.pem 2048
+
+$OPENSSL rsa -outform PEM -in openssl.rsa1024.pem -pubout -out openssl.rsa1024.pub.pem
+$OPENSSL rsa -outform PEM -in openssl.rsa2048.pem -pubout -out openssl.rsa2048.pub.pem
+
+# Encrypted
+$OPENSSL rsa -outform PEM -in openssl.rsa1024.pem -aes-128-cbc -passout pass:mypassword -out openssl.rsa1024.enc.pem
+$OPENSSL rsa -outform PEM -in openssl.rsa2048.pem -aes-192-cbc -passout pass:mypassword -out openssl.rsa2048.enc.pem
+
+#######################################
+# RFC 5915                            #
+#######################################
+
+# P-266, P-384, P-521:
+$OPENSSL ecparam -genkey -outform PEM -name prime256v1 -noout -out openssl.p256.pem
+$OPENSSL ecparam -genkey -outform PEM -name secp384r1 -noout -out openssl.p384.pem
+$OPENSSL ecparam -genkey -outform PEM -name secp521r1 -noout -out openssl.p521.pem
+
+$OPENSSL ec -outform PEM -in openssl.p256.pem -pubout -out openssl.p256.pub.pem
+$OPENSSL ec -outform PEM -in openssl.p384.pem -pubout -out openssl.p384.pub.pem
+$OPENSSL ec -outform PEM -in openssl.p521.pem -pubout -out openssl.p521.pub.pem
+
+$OPENSSL ec -outform PEM -in openssl.p256.pem -aes-256-cbc -passout pass:mypassword -out openssl.p256.enc.pem
+$OPENSSL ec -outform PEM -in openssl.p384.pem -des -passout pass:mypassword -out openssl.p384.enc.pem
+$OPENSSL ec -outform PEM -in openssl.p521.pem -des3 -passout pass:mypassword -out openssl.p521.enc.pem

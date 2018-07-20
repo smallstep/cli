@@ -76,7 +76,7 @@ func ParseKey(filename, use, alg, kid string, subtle bool) (*JSONWebKey, error) 
 			return nil, errors.Errorf("error reading %s: unsupported format", filename)
 		}
 	case pemKeyType:
-		if jwk.Key, err = pem.Parse(b, filename); err != nil {
+		if jwk.Key, err = pem.Parse(b, pem.WithFilename(filename)); err != nil {
 			return nil, err
 		}
 	case octKeyType:
