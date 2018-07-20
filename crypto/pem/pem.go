@@ -8,7 +8,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/utils"
@@ -145,8 +144,6 @@ func ParsePKCS8PrivateKey(der []byte) (key interface{}, err error) {
 		seed := make([]byte, ed25519.SeedSize)
 		copy(seed, privKey.PrivateKey[2:])
 		key = ed25519.NewKeyFromSeed(seed)
-		kk := key.(ed25519.PrivateKey)
-		fmt.Fprintf(os.Stderr, "% x\n% x\n", kk, kk.Public())
 		return key, nil
 	// Prove of concept for key agreement algorithm X25519.
 	// A real implementation would use their own types.
