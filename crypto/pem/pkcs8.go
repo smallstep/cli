@@ -34,10 +34,10 @@ type publicKeyInfo struct {
 }
 
 // Encrypted pkcs8
-// From https://github.com/youmark/pkcs8
+// Based on https://github.com/youmark/pkcs8
 // MIT license
 type prfParam struct {
-	IdPRF     asn1.ObjectIdentifier
+	Algo      asn1.ObjectIdentifier
 	NullParam asn1.RawValue
 }
 
@@ -48,7 +48,7 @@ type pbkdf2Params struct {
 }
 
 type pbkdf2Algorithms struct {
-	IdPBKDF2     asn1.ObjectIdentifier
+	Algo         asn1.ObjectIdentifier
 	PBKDF2Params pbkdf2Params
 }
 
@@ -161,6 +161,13 @@ func ParsePKIXPublicKey(derBytes []byte) (pub interface{}, err error) {
 	}
 }
 
+// DecryptPEMBlock takes a password encrypted PEM block and the password used
+// to encrypt it and returns a slice of decrypted DER encoded bytes.
+//
+// If the PEM blocks has the Proc-Type header set to "4,ENCRYPTED" it uses
+// x509.DecryptPEMBlock to decrypt the block. If not it tries to decrypt the
+// block using AES-128-CBC, AES-192-CBC, AES-256-CBC, DES, or 3DES using the
+// key derived using PBKDF2 over the given password.
 func DecryptPEMBlock(block *pem.Block, password []byte) ([]byte, error) {
 	if block.Headers["Proc-Type"] == "4,ENCRYPTED" {
 		return x509.DecryptPEMBlock(block, password)
@@ -177,7 +184,7 @@ func DecryptPEMBlock(block *pem.Block, password []byte) ([]byte, error) {
 			return nil, errors.New("unsupported encrypted PEM: only PBES2 is supported")
 		}
 
-		if !pki.Algo.Parameters.KeyDerivationFunc.IdPBKDF2.Equal(oidPKCS5PBKDF2) {
+		if !pki.Algo.Parameters.KeyDerivationFunc.Algo.Equal(oidPKCS5PBKDF2) {
 			return nil, errors.New("unsupported encrypted PEM: only PBKDF2 is supported")
 		}
 
@@ -190,7 +197,7 @@ func DecryptPEMBlock(block *pem.Block, password []byte) ([]byte, error) {
 
 		// pbkdf2 hash function
 		keyHash := sha1.New
-		if kdfParam.PrfParam.IdPRF.Equal(oidHMACWithSHA256) {
+		if kdfParam.PrfParam.Algo.Equal(oidHMACWithSHA256) {
 			keyHash = sha256.New
 		}
 
