@@ -6,7 +6,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/utils"
@@ -21,14 +20,6 @@ type context struct {
 // newContext initializes the context with a filename.
 func newContext(name string) *context {
 	return &context{filename: name}
-}
-
-// fail
-func (ctx *context) fail(message string) error {
-	if len(ctx.filename) > 0 {
-		message = strings.Replace(message, "PEM", ctx.filename, 1)
-	}
-	return errors.New(message)
 }
 
 // Options is the type to add attributes to the context.
