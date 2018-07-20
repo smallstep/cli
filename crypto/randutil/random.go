@@ -35,8 +35,9 @@ func Salt(size int) ([]byte, error) {
 func String(length int, chars string) (string, error) {
 	result := make([]rune, length)
 	runes := []rune(chars)
+	x := int64(len(runes))
 	for i := range result {
-		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(runes))))
+		num, err := rand.Int(rand.Reader, big.NewInt(x))
 		if err != nil {
 			return "", errors.Wrap(err, "error creating random number")
 		}
