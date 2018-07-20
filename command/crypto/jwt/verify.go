@@ -63,7 +63,7 @@ algorithm downgrade attacks. To disable this protection you can pass the
 				Usage: `The key to use to verify the JWS. The <key> argument should be the name of a
 file. The contents of the file can be a public or private JWK (or a JWK
 encrypted as a JWE payload) or a public or private PEM (or a private key
-encrypted using.`,
+encrypted using [TODO: insert private key encryption mechanism]).`,
 			},
 			cli.StringFlag{
 				Name: "jwks",
