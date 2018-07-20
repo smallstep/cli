@@ -112,7 +112,7 @@ func TestRead(t *testing.T) {
 			if pk, ok := key.(crypto.Signer); ok {
 				assert.Equals(t, k, pk.Public())
 			} else {
-				t.Errorf("key for %s does not satisfies the crypto.PublicKey interface", fn)
+				t.Errorf("key for %s does not satisfies the crypto.Signer interface", fn)
 			}
 		}
 	}
