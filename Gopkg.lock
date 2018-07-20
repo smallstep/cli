@@ -158,7 +158,7 @@
   branch = "master"
   name = "github.com/smallstep/assert"
   packages = ["."]
-  revision = "56bdbac904282a87cfca8f33ea25a6486419e64b"
+  revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
   branch = "master"
