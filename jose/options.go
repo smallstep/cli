@@ -3,6 +3,7 @@ package jose
 type context struct {
 	use, alg, kid    string
 	subtle, insecure bool
+	noDefaults       bool
 }
 
 // apply the options to the context and returns it.
@@ -48,5 +49,13 @@ func WithSubtle(subtle bool) Option {
 func WithInsecure(insecure bool) Option {
 	return func(ctx *context) {
 		ctx.insecure = insecure
+	}
+}
+
+// WithNoDefaults avoids that the parser loads defaults values, specially the
+// default algorithms.
+func WithNoDefaults(val bool) Option {
+	return func(ctx *context) {
+		ctx.noDefaults = val
 	}
 }

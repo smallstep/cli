@@ -156,6 +156,9 @@ func verifyAction(ctx *cli.Context) error {
 	if isSubtle {
 		options = append(options, jose.WithSubtle(true))
 	}
+	if !ctx.Bool("insecure") {
+		options = append(options, jose.WithNoDefaults(true))
+	}
 
 	// Read key from --key or --jwks
 	var jwk *jose.JSONWebKey

@@ -213,6 +213,11 @@ func guessJWKAlgorithm(ctx *context, jwk *jose.JSONWebKey) {
 			return
 		}
 
+		// skip if no defaults is enabled
+		if ctx.noDefaults {
+			return
+		}
+
 		// Use defaults for each key type
 		switch k := jwk.Key.(type) {
 		case []byte:
