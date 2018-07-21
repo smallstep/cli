@@ -56,14 +56,17 @@ func Decrypt(prompt string, data []byte) ([]byte, error) {
 
 // ParseKey returns a JSONWebKey from the given JWK file or a PEM file. For
 // password protected keys, it will ask the user for a password.
-func ParseKey(filename, use, alg, kid string, subtle bool) (*JSONWebKey, error) {
+// func ParseKey(filename, use, alg, kid string, subtle bool) (*JSONWebKey, error) {
+func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
+	ctx := new(context).apply(opts...)
+
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error reading %s", filename)
 	}
 
 	jwk := new(JSONWebKey)
-	switch guessKeyType(alg, b) {
+	switch guessKeyType(ctx, b) {
 	case jwkKeyType:
 		// Attempt to parse an encrypted file
 		prompt := fmt.Sprintf("Please enter the password to decrypt %s: ", filename)
@@ -84,25 +87,25 @@ func ParseKey(filename, use, alg, kid string, subtle bool) (*JSONWebKey, error) 
 	}
 
 	// Validate key id
-	if kid != "" && jwk.KeyID != "" && kid != jwk.KeyID {
-		return nil, errors.Errorf("kid %s does not match the kid on %s", kid, filename)
+	if ctx.kid != "" && jwk.KeyID != "" && ctx.kid != jwk.KeyID {
+		return nil, errors.Errorf("kid %s does not match the kid on %s", ctx.kid, filename)
 	}
 	if jwk.KeyID == "" {
-		jwk.KeyID = kid
+		jwk.KeyID = ctx.kid
 	}
 	if jwk.Use == "" {
-		jwk.Use = use
+		jwk.Use = ctx.use
 	}
 
 	// Set the algorithm if empty
-	guessJWKAlgorithm(jwk, alg)
+	guessJWKAlgorithm(ctx, jwk)
 
 	// Validate alg: if the flag '--subtle' is passed we will allow to overwrite it
-	if !subtle && alg != "" && jwk.Algorithm != "" && alg != jwk.Algorithm {
-		return nil, errors.Errorf("alg %s does not match the alg on %s", alg, filename)
+	if !ctx.subtle && ctx.alg != "" && jwk.Algorithm != "" && ctx.alg != jwk.Algorithm {
+		return nil, errors.Errorf("alg %s does not match the alg on %s", ctx.alg, filename)
 	}
-	if subtle && alg != "" {
-		jwk.Algorithm = alg
+	if ctx.subtle && ctx.alg != "" {
+		jwk.Algorithm = ctx.alg
 	}
 
 	return jwk, nil
@@ -131,7 +134,10 @@ func ReadJWKSet(filename string) ([]byte, error) {
 
 // ParseKeySet returns the JWK with the given key after parsing a JWKSet from
 // a given file.
-func ParseKeySet(filename, alg, kid string, isSubtle bool) (*jose.JSONWebKey, error) {
+// func ParseKeySet(filename, alg, kid string, isSubtle bool) (*jose.JSONWebKey, error) {
+func ParseKeySet(filename string, opts ...Option) (*jose.JSONWebKey, error) {
+	ctx := new(context).apply(opts...)
+
 	b, err := ReadJWKSet(filename)
 	if err != nil {
 		return nil, err
@@ -149,34 +155,34 @@ func ParseKeySet(filename, alg, kid string, isSubtle bool) (*jose.JSONWebKey, er
 		return nil, errors.Errorf("error reading %s: unsupported format", filename)
 	}
 
-	jwks := jwkSet.Key(kid)
+	jwks := jwkSet.Key(ctx.kid)
 	switch len(jwks) {
 	case 0:
-		return nil, errors.Errorf("cannot find key with kid %s on %s", kid, filename)
+		return nil, errors.Errorf("cannot find key with kid %s on %s", ctx.kid, filename)
 	case 1:
 		jwk := &jwks[0]
 
 		// Set the algorithm if empty
-		guessJWKAlgorithm(jwk, alg)
+		guessJWKAlgorithm(ctx, jwk)
 
 		// Validate alg: if the flag '--subtle' is passed we will allow the
 		// overwrite of the alg
-		if !isSubtle && alg != "" && jwk.Algorithm != "" && alg != jwk.Algorithm {
-			return nil, errors.Errorf("alg %s does not match the alg on %s", alg, filename)
+		if !ctx.subtle && ctx.alg != "" && jwk.Algorithm != "" && ctx.alg != jwk.Algorithm {
+			return nil, errors.Errorf("alg %s does not match the alg on %s", ctx.alg, filename)
 		}
-		if isSubtle && alg != "" {
-			jwk.Algorithm = alg
+		if ctx.subtle && ctx.alg != "" {
+			jwk.Algorithm = ctx.alg
 		}
 		return jwk, nil
 	default:
-		return nil, errors.Errorf("multiple keys with kid %s have been found on %s", kid, filename)
+		return nil, errors.Errorf("multiple keys with kid %s have been found on %s", ctx.kid, filename)
 	}
 }
 
 // guessKeyType returns the key type of the given data. Key types are JWK, PEM
 // or oct.
-func guessKeyType(alg string, data []byte) keyType {
-	switch alg {
+func guessKeyType(ctx *context, data []byte) keyType {
+	switch ctx.alg {
 	// jwk or file with oct data
 	case "HS256", "HS384", "HS512":
 		// Encrypted JWK ?
@@ -199,11 +205,11 @@ func guessKeyType(alg string, data []byte) keyType {
 }
 
 // guessJWKAlgorithm set the algorithm if it's not set and we can guess it
-func guessJWKAlgorithm(jwk *jose.JSONWebKey, defaultAlg string) {
+func guessJWKAlgorithm(ctx *context, jwk *jose.JSONWebKey) {
 	if jwk.Algorithm == "" {
 		// Force default algorithm if passed.
-		if defaultAlg != "" {
-			jwk.Algorithm = defaultAlg
+		if ctx.alg != "" {
+			jwk.Algorithm = ctx.alg
 			return
 		}
 

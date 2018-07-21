@@ -144,13 +144,26 @@ func verifyAction(ctx *cli.Context) error {
 		}
 	}
 
+	// Add parse options
+	var options []jose.Option
+	options = append(options, jose.WithUse("sig"))
+	if len(alg) > 0 {
+		options = append(options, jose.WithAlg(alg))
+	}
+	if len(kid) > 0 {
+		options = append(options, jose.WithKid(kid))
+	}
+	if isSubtle {
+		options = append(options, jose.WithSubtle(true))
+	}
+
 	// Read key from --key or --jwks
 	var jwk *jose.JSONWebKey
 	switch {
 	case key != "":
-		jwk, err = jose.ParseKey(key, "sig", alg, kid, isSubtle)
+		jwk, err = jose.ParseKey(key, options...)
 	case jwks != "":
-		jwk, err = jose.ParseKeySet(jwks, alg, kid, isSubtle)
+		jwk, err = jose.ParseKeySet(jwks, options...)
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwks")
 	}

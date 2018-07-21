@@ -88,14 +88,21 @@ func decryptAction(ctx *cli.Context) error {
 		return errs.RequiredWithFlag(ctx, "kid", "jwks")
 	}
 
+	// Add parse options
+	var options []jose.Option
+	options = append(options, jose.WithUse("enc"))
+	if len(kid) > 0 {
+		options = append(options, jose.WithKid(kid))
+	}
+
 	// Read key from --key or --jwks
 	var pbes2Key []byte
 	var jwk *jose.JSONWebKey
 	switch {
 	case key != "":
-		jwk, err = jose.ParseKey(key, "enc", "", kid, false)
+		jwk, err = jose.ParseKey(key, options...)
 	case jwks != "":
-		jwk, err = jose.ParseKeySet(jwks, "", kid, false)
+		jwk, err = jose.ParseKeySet(jwks, options...)
 	case isPBES2:
 		pbes2Key, err = utils.ReadPassword("Please enter the password to decrypt the content encryption key: ")
 	default:
