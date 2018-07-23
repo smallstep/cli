@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	md "github.com/smallstep/cli/pkg/blackfriday"
 	"github.com/urfave/cli"
 )
 
@@ -18,6 +19,15 @@ var sectionRe = regexp.MustCompile(`(?m:^##)`)
 func HelpPrinter(w io.Writer, templ string, data interface{}) {
 	b := helpPreprocessor(w, templ, data)
 	w.Write(Render(b))
+}
+
+func htmlHelpPrinter(w io.Writer, templ string, data interface{}) {
+	b := helpPreprocessor(w, templ, data)
+	w.Write([]byte(`<html><head><title>Step</title><style>`))
+	w.Write([]byte(css))
+	w.Write([]byte(`</style></head><body class="markdown-body">`))
+	w.Write(md.Run(b))
+	w.Write([]byte(`<br></body></html>`))
 }
 
 func helpPreprocessor(w io.Writer, templ string, data interface{}) []byte {

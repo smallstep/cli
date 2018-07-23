@@ -21,10 +21,21 @@ func HelpCommand() cli.Command {
 		Usage:     "displays help for the specified command or command group",
 		ArgsUsage: "[command]",
 		Action:    cli.ActionFunc(helpAction),
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "http",
+				Usage: "HTTP service address (e.g., ':8080')",
+			},
+		},
 	}
 }
 
 func helpAction(ctx *cli.Context) error {
+	// use html version
+	if ctx.IsSet("http") {
+		return htmlHelpAction(ctx)
+	}
+
 	args := ctx.Args()
 	if args.Present() {
 		last := len(args) - 1
