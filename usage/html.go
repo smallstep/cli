@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/smallstep/cli/errs"
-
 	"github.com/urfave/cli"
 )
 
