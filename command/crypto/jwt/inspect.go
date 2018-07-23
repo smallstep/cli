@@ -74,7 +74,7 @@ func printToken(token string) error {
 	if err != nil {
 		return errors.Wrapf(err, "error marshaling token data")
 	}
-	fmt.Fprintln(os.Stderr, string(b))
 
+	fmt.Println(string(b))
 	return nil
 }
