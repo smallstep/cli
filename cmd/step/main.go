@@ -1,15 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"reflect"
 	"regexp"
-	"strings"
 
 	"github.com/urfave/cli"
 
@@ -47,7 +44,7 @@ func main() {
 	cli.AppHelpTemplate = usage.AppHelpTemplate
 	cli.SubcommandHelpTemplate = usage.SubcommandHelpTemplate
 	cli.CommandHelpTemplate = usage.CommandHelpTemplate
-	cli.HelpPrinter = helpPrinter
+	cli.HelpPrinter = usage.HelpPrinter
 	cli.FlagNamePrefixer = usage.FlagNamePrefixer
 	cli.FlagStringer = stringifyFlag
 
@@ -83,80 +80,6 @@ func main() {
 		}
 		os.Exit(1)
 	}
-}
-
-var sectionRe = regexp.MustCompile(`(?m:^##)`)
-
-//var sectionRe = regexp.MustCompile(`^## [^\n]*$`)
-
-func findSectionEnd(h, s string) int {
-	start := strings.Index(s, fmt.Sprintf("## %s", h))
-	if start == -1 {
-		return start
-	}
-	nextSection := sectionRe.FindStringIndex(s[start+2:])
-	if nextSection == nil {
-		return len(s)
-	}
-	return start + 2 + nextSection[0]
-}
-
-// Convert some stuff that we can't easily write in help files because
-//  backticks and raw strings don't mix:
-// - "<foo>" to "`foo`"
-// - "'''" to "```"
-func markdownify(b []byte) []byte {
-	for i := 0; i < len(b); i++ {
-		switch b[i] {
-		case '<':
-			if b[i-1] != '\\' {
-				b[i] = '`'
-			}
-		case '>':
-			if b[i-1] != '\\' {
-				b[i] = '`'
-			}
-		case '\'':
-			if len(b) >= i+3 && string(b[i:i+3]) == "'''" {
-				b[i] = '`'
-				b[i+1] = '`'
-				b[i+2] = '`'
-				i += 2
-			}
-		}
-	}
-	return b
-}
-
-func helpPrinter(w io.Writer, templ string, data interface{}) {
-	buf := new(bytes.Buffer)
-	cli.HelpPrinterCustom(buf, templ, data, nil)
-	//w.Write(buf.Bytes())
-	s := string(markdownify(buf.Bytes()))
-	// Move the OPTIONS section to the right place. urfave puts them at the end
-	// of the file, we want them to be after POSITIONAL ARGUMENTS, DESCRIPTION,
-	// USAGE, or NAME (in that order, depending on which sections exist).
-	optLoc := strings.Index(s, "## OPTIONS")
-	if optLoc != -1 {
-		optEnd := findSectionEnd("OPTIONS", s)
-		if optEnd != -1 {
-			options := s[optLoc:optEnd]
-			s = s[:optLoc] + s[optEnd:]
-			if newLoc := findSectionEnd("POSITIONAL ARGUMENTS", s); newLoc != -1 {
-				s = s[:newLoc] + options + s[newLoc:]
-			} else if newLoc := findSectionEnd("DESCRIPTION", s); newLoc != -1 {
-				s = s[:newLoc] + options + s[newLoc:]
-			} else if newLoc := findSectionEnd("USAGE", s); newLoc != -1 {
-				s = s[:newLoc] + options + s[newLoc:]
-			} else if newLoc := findSectionEnd("NAME", s); newLoc != -1 {
-				s = s[:newLoc] + options + s[newLoc:]
-			} else {
-				// Keep it at the end I guess :/.
-				s = s + options
-			}
-		}
-	}
-	w.Write(usage.Render([]byte(s)))
 }
 
 func flagValue(f cli.Flag) reflect.Value {
