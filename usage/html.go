@@ -142,7 +142,7 @@ var htmlSubcommandHelpTemplate = `## NAME
 {{range .VisibleCategories}}{{if .Name}}{{.Name}}:{{end}}
 |||
 |---|---|{{range .VisibleCommands}}
-| **[{{join .Names ", "}}](./{{.Name}}/)** | {{.Usage}} |{{end}}
+| **[{{join .Names ", "}}]({{.Name}}/)** | {{.Usage}} |{{end}}
 {{end}}{{if .VisibleFlags}}
 
 ## OPTIONS
