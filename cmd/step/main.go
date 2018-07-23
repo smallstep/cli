@@ -60,7 +60,7 @@ func main() {
 	app.Copyright = "(c) 2018 Smallstep Inc."
 
 	// All non-successful output should be written to stderr
-	app.Writer = os.Stderr
+	app.Writer = os.Stdout
 	app.ErrWriter = os.Stderr
 
 	// Start the golang debug logger if environment variable is set.
