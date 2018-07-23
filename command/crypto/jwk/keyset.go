@@ -45,7 +45,7 @@ func keysetAddCommand() cli.Command {
 Set in <jwks-file>. Modifications to <jwks-file> are in-place. The file is
 'flock'd while it's being read and modified.
 
-## POSITIONAL ARGUMENTS:
+## POSITIONAL ARGUMENTS
 
 <jwks-file>
 : File containing a JWK Set`,
@@ -62,7 +62,7 @@ func keysetRemoveCommand() cli.Command {
 from the JWK Set stored in <jwks-file>. Modifications to <jwks-file> are
 in-place. The file is 'flock'd while it's being read and modified.
 
-## POSITONAL_ARGUMENTS:
+## POSITIONAL ARGUMENTS
 
 <jwks-file>
 : File containing a JWK Set`,
@@ -85,7 +85,7 @@ func keysetListCommand() cli.Command {
 		Description: `**step crypto jwk keyset list** lists the IDs ("kid" parameters) of JWKs in a
 JWK Set.
 
-## POSITONAL_ARGUMENTS:
+## POSITIONAL ARGUMENTS
 
 <jwks-file>
 : File containing a JWK Set`,
@@ -102,7 +102,7 @@ func keysetFindCommand() cli.Command {
 <kid> from the JWK Set stored in <jwks-file>. The matching JWK is printed to
 STDOUT.
 
-## POSITONAL_ARGUMENTS:
+## POSITIONAL ARGUMENTS
 
 <jwks-file>
 : File containing a JWK Set`,

@@ -27,7 +27,7 @@ in a CSR and signed by a CA to produce a certificate.
 Private keys are encrypted using a password. You'll be prompted for this
 password automatically when the key is used.
 
-## POSITIONAL ARGUMENTS:
+## POSITIONAL ARGUMENTS
 
 <pub_file>
 : The path to write the public key.
