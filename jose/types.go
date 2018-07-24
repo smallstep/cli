@@ -13,6 +13,9 @@ import (
 // password based cryptography algorithms.
 const SupportsPBKDF2 = true
 
+// JSONWebSignature represents a signed JWS object after parsing.
+type JSONWebSignature = jose.JSONWebSignature
+
 // JSONWebToken represents a JSON Web Token (as specified in RFC7519).
 type JSONWebToken = jwt.JSONWebToken
 
@@ -200,6 +203,11 @@ func ParseSigned(s string) (*JSONWebToken, error) {
 // Signed creates builder for signed tokens.
 func Signed(sig Signer) Builder {
 	return jwt.Signed(sig)
+}
+
+// ParseJWS parses a signed message in compact or full serialization format.
+func ParseJWS(s string) (*JSONWebSignature, error) {
+	return jose.ParseSigned(s)
 }
 
 // Determine whether a JSONWebKey is symmetric

@@ -1,0 +1,291 @@
+package jws
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
+
+	"github.com/smallstep/cli/utils"
+
+	"github.com/pkg/errors"
+	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/jose"
+	"github.com/urfave/cli"
+)
+
+func signCommand() cli.Command {
+	return cli.Command{
+		Name:   "sign",
+		Action: cli.ActionFunc(signAction),
+		Usage:  "create a signed JWT data structure",
+		UsageText: `**step crypto jwt sign** [- | <filename>]
+		[**--alg**=<algorithm>] [**--jku**=<jwk-url>] [**--jwk**] [**--typ**=<type>]
+		[**--cty=<content-type>] [**--key**=<jwk>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+		// others: x5u, x5c, x5t, x5t#S256, and crit
+		Description: `**step crypto jws sign** generates a signed JSON Web Signature (JWS) by
+computing a digital signature or message authentication code for an arbitrary
+payload. By default, the payload to sign is read from STDIN and the JWS will
+be written to STDOUT.`,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name: "alg, algorithm",
+				Usage: `The signature or MAC algorithm to use. Algorithms are case-sensitive strings
+defined in RFC7518. The selected algorithm must be compatible with the key
+type. This flag is optional. If not specified, the "alg" member of the JWK is
+used. If the JWK has no "alg" member then a default is selected depending on
+the JWK key type. If the JWK has an "alg" member and the "alg" flag is passed
+the two options must match unless the '--subtle' flag is also passed.
+
+: <algorithm> is a case-sensitive string and must be one of:
+
+    **HS256**
+    :  HMAC using SHA-256 (default for "oct" key type)
+
+    **HS384**
+    :  HMAC using SHA-384
+
+    **HS512**
+    :  HMAC using SHA-512
+
+    **RS256**
+    :  RSASSA-PKCS1-v1_5 using SHA-256 (default for "RSA" key type)
+
+    **RS384**
+    :  RSASSA-PKCS1-v1_5 using SHA-384
+
+    **RS512**
+    :  RSASSA-PKCS1-v1_5 using SHA-512
+
+    **ES256**
+    :  ECDSA using P-256 and SHA-256 (default for "EC" key type)
+
+    **ES384**
+    :  ECDSA using P-384 and SHA-384
+
+    **ES512**
+    :  ECDSA using P-521 and SHA-512
+
+    **PS256**
+    :  RSASSA-PSS using SHA-256 and MGF1 with SHA-256
+
+    **PS384**
+    :  RSASSA-PSS using SHA-384 and MGF1 with SHA-384
+
+    **PS512**
+    :  RSASSA-PSS using SHA-512 and MGF1 with SHA-512
+
+    **EdDSA**
+    :  EdDSA signature algorithm`,
+			},
+			cli.StringFlag{
+				Name: "jku",
+				Usage: `The "jku" (JWK Set URL) Header Parameter is a URI that refers to a resource
+for a set of JSON-encoded public keys, one of which corresponds to the key
+used to digitally sign the JWS. The keys MUST be encoded as a JWK Set (JWK).
+The protocol used to acquire the resource MUST provide integrity protection;
+an HTTP GET request to retrieve the JWK Set MUST use Transport Layer Security
+(TLS); and the identity of the server MUST be validated. Use of <jwk-url> is
+optional.`,
+			},
+			cli.BoolFlag{
+				Name: "jwk",
+				Usage: `The "jwk" (JSON Web Key) Header Parameter is the public key that corresponds
+to the key used to digitally sign the JWS. This key is represented as a JSON
+Web Key (JWK). Use of <jwk> is optional.`,
+			},
+			cli.StringFlag{
+				Name: "typ",
+				Usage: `The "typ" (type) Header Parameter is used by JWS applications to declare the
+media type of this complete JWS. This is intended for use by the application
+when more than one kind of object could be present in an application data
+structure that can contain a JWS; the application can use this value to
+disambiguate among the different kinds of objects that might be present. It
+will typically not be used by applications when the kind of object is already
+known. This parameter is ignored by JWS implementations; any processing of
+this parameter is performed by the JWS application. Use of <type> is
+optional.
+
+The "typ" value "JOSE" can be used by applications to indicate that this
+object is a JWS or JWE using the JWS Compact Serialization or the JWE Compact
+Serialization. The "typ" value "JOSE+JSON" can be used by applications to
+indicate that this object is a JWS or JWE using the JWS JSON Serialization or
+the JWE JSON Serialization. Other type values can also be used by
+applications.`,
+			},
+			cli.StringFlag{
+				Name: "cty",
+				Usage: `The "cty" (content type) Header Parameter is used by JWS applications to
+declare the media type of the secured content (the payload). This is intended
+for use by the application when more than one kind of object could be present
+in the JWS Payload; the application can use this value to disambiguate among
+the different kinds of objects that might be present. It will typically not be
+used by applications when the kind of object is already known. This parameter
+is ignored by JWS implementations; any processing of this parameter is
+performed by the JWS application. Use of <content-type> is optional.`,
+			},
+			cli.StringFlag{
+				Name: "key",
+				Usage: `The key to use to sign the JWT. The <key> argument should be the name of a file.
+JWTs can be signed using a private JWK (or a JWK encrypted as a JWE payload)
+or a PEM encoded private key (or a private key encrypted using [TODO: insert
+private key encryption mechanism]).`,
+			},
+			cli.StringFlag{
+				Name: "jwks",
+				Usage: `The JWK Set containing the key to use to sign the JWT. The <jwks> argument
+should be the name of a file. The file contents should be a JWK Set or a JWE
+with a JWK Set payload. The **--jwks** flag requires the use of the **--kid**
+flag to specify which key to use.`,
+			},
+			cli.StringFlag{
+				Name: "kid",
+				Usage: `The ID of the key used to sign the JWT. The <kid> argument is a case-sensitive
+string. When used with '--jwk' the <kid> value must match the **"kid"** member
+of the JWK. When used with **--jwks** (a JWK Set) the <kid> value must match
+the **"kid"** member of one of the JWKs in the JWK Set.`,
+			},
+			cli.BoolFlag{
+				Name:   "subtle",
+				Hidden: true,
+			},
+			cli.BoolFlag{
+				Name:   "no-kid",
+				Hidden: true,
+			},
+		},
+	}
+}
+
+func signAction(ctx *cli.Context) error {
+	var err error
+	var payload []byte
+
+	// Read payload if provided
+	args := ctx.Args()
+	switch len(args) {
+	case 0: // empty payload
+	case 1:
+		// read payload from file or stdin (-)
+		if payload, err = readPayload(args[0]); err != nil {
+			return err
+		}
+	default:
+		return errs.TooManyArguments(ctx)
+	}
+
+	isSubtle := ctx.Bool("subtle")
+	alg := ctx.String("alg")
+
+	// Validate key, jwks and kid
+	key := ctx.String("key")
+	jwks := ctx.String("jwks")
+	kid := ctx.String("kid")
+	switch {
+	case key == "" && jwks == "":
+		return errs.RequiredOrFlag(ctx, "key", "jwks")
+	case key != "" && jwks != "":
+		return errs.MutuallyExclusiveFlags(ctx, "key", "jwks")
+	case jwks != "" && kid == "":
+		return errs.RequiredWithFlag(ctx, "kid", "jwks")
+	}
+
+	// Add parse options
+	var options []jose.Option
+	options = append(options, jose.WithUse("sig"))
+	if len(alg) > 0 {
+		options = append(options, jose.WithAlg(alg))
+	}
+	if len(kid) > 0 {
+		options = append(options, jose.WithKid(kid))
+	}
+	if isSubtle {
+		options = append(options, jose.WithSubtle(true))
+	}
+
+	// Read key from --key or --jwks
+	var jwk *jose.JSONWebKey
+	switch {
+	case key != "":
+		jwk, err = jose.ParseKey(key, options...)
+	case jwks != "":
+		jwk, err = jose.ParseKeySet(jwks, options...)
+	default:
+		return errs.RequiredOrFlag(ctx, "key", "jwks")
+	}
+	if err != nil {
+		return err
+	}
+
+	// Public keys cannot be used for signing
+	if jwk.IsPublic() {
+		return errors.New("cannot use a public key for signing")
+	}
+
+	// Key "use" must be "sig" to use for signing
+	if jwk.Use != "sig" && jwk.Use != "" {
+		return errors.Errorf("invalid jwk use: found '%s', expecting 'sig' (signature)", jwk.Use)
+	}
+
+	// At this moment jwk.Algorithm should have an alg from:
+	//  * alg parameter
+	//  * jwk or jwkset
+	//  * guessed for ecdsa and Ed25519 keys
+	if jwk.Algorithm == "" {
+		return errors.New("flag '--alg' is required with the given key")
+	}
+	if err := jose.ValidateJWK(jwk); err != nil {
+		return err
+	}
+
+	// Sign
+	so := new(jose.SignerOptions)
+	if ctx.IsSet("typ") {
+		so.WithType(jose.ContentType(ctx.String("typ")))
+	}
+	if ctx.IsSet("cty") {
+		so.WithContentType(jose.ContentType(ctx.String("cty")))
+	}
+	if !ctx.Bool("no-kid") && jwk.KeyID != "" {
+		so.WithHeader("kid", jwk.KeyID)
+	}
+	if ctx.IsSet("jku") {
+		so.WithHeader("jku", ctx.String("jku"))
+	}
+	if ctx.Bool("jwk") {
+		so.WithHeader("jwk", jwk.Public())
+	}
+
+	signer, err := jose.NewSigner(jose.SigningKey{
+		Algorithm: jose.SignatureAlgorithm(jwk.Algorithm),
+		Key:       jwk.Key,
+	}, so)
+	if err != nil {
+		return errors.Wrap(err, "error creating JWT signer")
+	}
+
+	signed, err := signer.Sign(payload)
+	if err != nil {
+		return errors.Errorf("error signing payload: %s", strings.TrimPrefix(err.Error(), "square/go-jose: "))
+	}
+
+	raw, err := signed.CompactSerialize()
+	if err != nil {
+		return errors.Wrapf(err, "error serializing JWS")
+	}
+
+	fmt.Println(raw)
+	return nil
+}
+
+func readPayload(filename string) ([]byte, error) {
+	if filename == "-" {
+		return utils.ReadAll(os.Stdin)
+	}
+
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errs.FileError(err, filename)
+	}
+	return b, nil
+}
