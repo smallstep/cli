@@ -7,7 +7,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/pkg/errors"
 	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
@@ -266,14 +265,10 @@ func createAction(ctx *cli.Context) error {
 
 func loadIssuerIdentity(profile, caPath, caKeyPath string) (*stepx509.Identity, error) {
 	if caPath == "" {
-		return nil, errors.Errorf("Missing value for flag '--ca'.\n\nFlags "+
-			"'--ca' and '--ca-key' are required when creating a %s x509 Certificate.",
-			strings.Title(profile))
+		return nil, errs.RequiredWithFlagValue("profile", profile, "ca")
 	}
 	if caKeyPath == "" {
-		return nil, errors.Errorf("Missing value for flag '--ca-key'.\n\nFlags "+
-			"'--ca' and '--ca-key' are required when creating a %s x509 Certificate.",
-			strings.Title(profile))
+		return nil, errs.RequiredWithFlagValue("profile", profile, "ca-key")
 	}
 	return stepx509.LoadIdentityFromDisk(caPath, caKeyPath,
 		func() (string, error) {
