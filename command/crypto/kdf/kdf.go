@@ -3,12 +3,14 @@ package kdf
 import (
 	"crypto/subtle"
 	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 
+	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/scrypt"
 )
@@ -72,7 +74,13 @@ appear in places you might not expect. If omitted input is read from STDIN.`,
     :  A password-based KDF designed to use exponential time and memory.
 
     **bcrypt**
-    :  A password-based KDF designed to use exponential time.`,
+    :  A password-based KDF designed to use exponential time.
+
+    **argon2i**
+    : A password-based KDF optimized to resist side-channel attacks.
+
+    **argon2id**
+    : A password-based KDF optimized to resist GPU and side-channel attacks`,
 			},
 			cli.BoolFlag{
 				Name:   "insecure",
@@ -93,6 +101,10 @@ func hashAction(ctx *cli.Context) error {
 		kdf = doScrypt
 	case "bcrypt":
 		kdf = doBcrypt
+	case "argon2i":
+		kdf = doArgon2i
+	case "argon2id":
+		kdf = doArgon2id
 	default:
 		return errs.InvalidFlagValue(ctx, "alg", alg, "")
 	}
@@ -147,6 +159,30 @@ func doBcrypt(password []byte) (string, error) {
 
 	}
 	return string(hash), nil
+}
+
+func doArgon2i(password []byte) (string, error) {
+	salt, err := phcGetSalt(16)
+	if err != nil {
+		return "", errors.Wrap(err, "error creating salt")
+	}
+
+	p := argon2Params[argon2iHash]
+	hash := argon2.Key(password, salt, p.t, p.m, p.p, p.kl)
+	identifier := "argon2i$v=" + strconv.Itoa(argon2.Version)
+	return phcEncode(identifier, p.getParams(), salt, hash), nil
+}
+
+func doArgon2id(password []byte) (string, error) {
+	salt, err := phcGetSalt(16)
+	if err != nil {
+		return "", errors.Wrap(err, "error creating salt")
+	}
+
+	p := argon2Params[argon2idHash]
+	hash := argon2.IDKey(password, salt, p.t, p.m, p.p, p.kl)
+	identifier := "argon2id$v=" + strconv.Itoa(argon2.Version)
+	return phcEncode(identifier, p.getParams(), salt, hash), nil
 }
 
 func compareCommand() cli.Command {
@@ -213,7 +249,7 @@ func compareAction(ctx *cli.Context) error {
 		return errs.TooManyArguments(ctx)
 	}
 
-	id, params, salt, hash, err := phcDecode(hashStr)
+	id, version, params, salt, hash, err := phcDecode(hashStr)
 	if err != nil {
 		return errors.Wrap(err, "error decoding hash")
 	}
@@ -228,6 +264,32 @@ func compareAction(ctx *cli.Context) error {
 			return err
 		}
 		hashedPass, err := scrypt.Key(input, salt, p.N, p.r, p.p, len(hash))
+		if err != nil {
+			return errors.Wrap(err, "error deriving input")
+		}
+		valid = (subtle.ConstantTimeCompare(hash, hashedPass) == 1)
+	case argon2iHash:
+		p, err := newArgon2Params(params)
+		if err != nil {
+			return err
+		}
+		if version != 0 && version != argon2.Version {
+			return errors.Errorf("unsupported argon2 version '%d'", version)
+		}
+		hashedPass := argon2.Key(input, salt, p.t, p.m, p.p, uint32(len(hash)))
+		if err != nil {
+			return errors.Wrap(err, "error deriving input")
+		}
+		valid = (subtle.ConstantTimeCompare(hash, hashedPass) == 1)
+	case argon2idHash:
+		p, err := newArgon2Params(params)
+		if err != nil {
+			return err
+		}
+		if version != 0 && version != argon2.Version {
+			return errors.Errorf("unsupported argon2 version '%d'", version)
+		}
+		hashedPass := argon2.IDKey(input, salt, p.t, p.m, p.p, uint32(len(hash)))
 		if err != nil {
 			return errors.Wrap(err, "error deriving input")
 		}

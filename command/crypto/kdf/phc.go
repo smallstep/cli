@@ -65,33 +65,46 @@ func phcEncode(identifier, params string, salt, hash []byte) string {
 }
 
 // phcDecode returns the different parts of a PHC encoded string.
-func phcDecode(s string) (id string, params string, salt []byte, hash []byte, err error) {
-	subs := strings.SplitN(s, "$", 5)
+func phcDecode(s string) (id string, version int, params string, salt []byte, hash []byte, err error) {
+	subs := strings.SplitN(s, "$", 6)
 	if subs[0] != "" || len(subs) < 2 || (subs[1] == bcryptHash && len(subs) != 4) {
-		return "", "", nil, nil, errors.Errorf("cannot decode password hash %s", s)
+		return "", 0, "", nil, nil, errors.Errorf("cannot decode password hash %s", s)
 	}
 
 	// Special case for bcrypt
 	// return just the id and the full hash
 	if subs[1] == bcryptHash {
-		return bcryptHash, "", nil, []byte(s), nil
+		return bcryptHash, 0, "", nil, []byte(s), nil
 	}
 
 	switch len(subs) {
+	case 6: // id + version + params + salt + hash
+		// version: v=<dec>
+		m := phcParamsToMap(subs[2])
+		if version, err = phcAtoi(m["v"], 0); err != nil {
+			return "", 0, "", nil, nil, err
+		}
+		if hash, err = phcEncoding.DecodeString(subs[5]); err != nil {
+			return "", 0, "", nil, nil, err
+		}
+		if salt, err = phcEncoding.DecodeString(subs[4]); err != nil {
+			return "", 0, "", nil, nil, err
+		}
+		id, params = subs[1], subs[3]
 	case 5: // id + params + salt + hash
 		if hash, err = phcEncoding.DecodeString(subs[4]); err != nil {
-			return "", "", nil, nil, err
+			return "", 0, "", nil, nil, err
 		}
 		if salt, err = phcEncoding.DecodeString(subs[3]); err != nil {
-			return "", "", nil, nil, err
+			return "", 0, "", nil, nil, err
 		}
 		id, params = subs[1], subs[2]
 	case 4: // id + salt + hash
 		if hash, err = phcEncoding.DecodeString(subs[3]); err != nil {
-			return "", "", nil, nil, err
+			return "", 0, "", nil, nil, err
 		}
 		if salt, err = phcEncoding.DecodeString(subs[2]); err != nil {
-			return "", "", nil, nil, err
+			return "", 0, "", nil, nil, err
 		}
 		id = subs[1]
 	case 3: // id + params
@@ -99,7 +112,7 @@ func phcDecode(s string) (id string, params string, salt []byte, hash []byte, er
 	case 2: // id
 		id = subs[1]
 	default:
-		return "", "", nil, nil, errors.Errorf("cannot decode password hash %s", s)
+		return "", 0, "", nil, nil, errors.Errorf("cannot decode password hash %s", s)
 	}
 
 	return
