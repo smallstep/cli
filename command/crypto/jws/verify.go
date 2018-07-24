@@ -64,8 +64,9 @@ The KID argument is a case-sensitive string. If the input JWS has a "kid"
 member its value must match <kid> or verification will fail.`,
 			},
 			cli.BoolFlag{
-				Name:  "json",
-				Usage: `Outputs a JSON version of the token, the payload will be base64 encoded.`,
+				Name: "json",
+				Usage: `Displays the header, payload and signature as a JSON object. The payload will
+be encoded using Base64.`,
 			},
 			cli.BoolFlag{
 				Name:   "subtle",
