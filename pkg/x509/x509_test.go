@@ -19,6 +19,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
+	"io"
 
 	//"internal/testenv"
 	"math/big"
@@ -29,6 +30,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/crypto/curve25519"
+	"golang.org/x/crypto/ed25519"
 )
 
 func TestParsePKCS1PrivateKey(t *testing.T) {
@@ -496,6 +500,18 @@ func TestCreateSelfSignedCertificate(t *testing.T) {
 		t.Fatalf("Failed to generate ECDSA key: %s", err)
 	}
 
+	ed25519Pub, ed25519Priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("Failed to generate ED25519 key: %s", err)
+	}
+
+	var pubkey, privkey [32]byte
+	if _, err := io.ReadFull(rand.Reader, privkey[:]); err != nil {
+		panic(err)
+	}
+	curve25519.ScalarBaseMult(&pubkey, &privkey)
+	x25519Pub := X25519PublicKey(pubkey[:])
+
 	tests := []struct {
 		name      string
 		pub, priv interface{}
@@ -509,6 +525,8 @@ func TestCreateSelfSignedCertificate(t *testing.T) {
 		{"RSAPSS/RSAPSS", &testPrivateKey.PublicKey, testPrivateKey, true, SHA256WithRSAPSS},
 		{"ECDSA/RSAPSS", &ecdsaPriv.PublicKey, testPrivateKey, false, SHA256WithRSAPSS},
 		{"RSAPSS/ECDSA", &testPrivateKey.PublicKey, ecdsaPriv, false, ECDSAWithSHA384},
+		{"ED25519/ED25519", &ed25519Pub, ed25519Priv, true, ED25519SIG},
+		{"X25519/ED25519", &x25519Pub, ed25519Priv, false, ED25519SIG},
 	}
 
 	testExtKeyUsage := []ExtKeyUsage{ExtKeyUsageClientAuth, ExtKeyUsageServerAuth}
@@ -826,6 +844,99 @@ func TestECDSA(t *testing.T) {
 			t.Errorf("%d: public key algorithm is %v, want ECDSA", i, pka)
 		}
 		if err = cert.CheckSignatureFrom(cert); err != nil {
+			t.Errorf("%d: certificate verification failed: %s", i, err)
+		}
+	}
+}
+
+var ed25519CertPem = `-----BEGIN CERTIFICATE-----
+MIIBFTCByKADAgECAghNZYIhB/z9UjAFBgMrZXAwDzENMAsGA1UEAxMEcm9vdDAe
+Fw0xNzAyMTIxOTQ5NDVaFw0xNzAyMTMxOTQ5NDVaMA8xDTALBgNVBAMTBHJvb3Qw
+KjAFBgMrZXADIQB1mSjGpYU8nliw5Ah7Uq6pElOk/QofMn476Lr4CII0zKNCMEAw
+DgYDVR0PAQH/BAQDAgKEMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFKeTKKir
+Wabr+CP52M0stAf7KInwMAUGAytlcANBAFRwyNSg/F3Zfeqiptn99pbeQsoIApvb
+zKfb2zXCmF6OdhUSWrtHFY0y5rsCo1ha7cQQttRjOGiuKSKkjkmzHAg=
+-----END CERTIFICATE-----`
+
+var x25519CertPem = `-----BEGIN CERTIFICATE-----
+MIIBTDCB/6ADAgECAgh4YpoPXz8WTzAFBgMrZXAwDzENMAsGA1UEAxMEcm9vdDAe
+Fw0xNzAyMTIxOTQ5NDVaFw0xNzAyMTMxOTQ5NDVaMBMxETAPBgNVBAMTCHRlc3Qu
+Y29tMCowBQYDK2VuAyEAFKwi3LTY6apEQDNMrx2WagCHpGVFL7tIB/uTwzoyUiCj
+dTBzMA4GA1UdDwEB/wQEAwIHgDATBgNVHSUEDDAKBggrBgEFBQcDATAMBgNVHRMB
+Af8EAjAAMB0GA1UdDgQWBBQG9I1UYG2pAHSs6nYKQFo/YTAkpTAfBgNVHSMEGDAW
+gBSnkyioq1mm6/gj+djNLLQH+yiJ8DAFBgMrZXADQQBbuoByEYlgzxTskoUtCwBo
+dVaJPEZmR+AHGHAFcBTEISEK5sl6h9Z923i6xMwHTjWbYw3JYwqeuJUfm3qCncQL
+-----END CERTIFICATE-----`
+
+var ed25519Tests = []struct {
+	sigAlgo    SignatureAlgorithm
+	pemCert    string
+	signerCert string
+}{
+	{ED25519SIG, ed25519CertPem, ed25519CertPem},
+}
+
+func Test25519(t *testing.T) {
+	for i, test := range ed25519Tests {
+		pemBlock, _ := pem.Decode([]byte(test.pemCert))
+		cert, err := ParseCertificate(pemBlock.Bytes)
+		if err != nil {
+			t.Errorf("%d: failed to parse certificate: %s", i, err)
+			continue
+		}
+		pemBlock, _ = pem.Decode([]byte(test.signerCert))
+		signerCert, err := ParseCertificate(pemBlock.Bytes)
+		if err != nil {
+			t.Errorf("%d: failed to parse certificate: %s", i, err)
+			continue
+		}
+		if sa := cert.SignatureAlgorithm; sa != test.sigAlgo {
+			t.Errorf("%d: signature algorithm is %v, want %v", i, sa, test.sigAlgo)
+		}
+		if parsedKey, ok := cert.PublicKey.(*ed25519.PublicKey); !ok {
+			t.Errorf("%d: wanted an ED25519 public key but found: %#v", i, parsedKey)
+		}
+		if pka := cert.PublicKeyAlgorithm; pka != ED25519 {
+			t.Errorf("%d: public key algorithm is %v, want ED25519", i, pka)
+		}
+		if err = cert.CheckSignatureFrom(signerCert); err != nil {
+			t.Errorf("%d: certificate verification failed: %s", i, err)
+		}
+	}
+}
+
+var x25519Tests = []struct {
+	sigAlgo    SignatureAlgorithm
+	pemCert    string
+	signerCert string
+}{
+	{ED25519SIG, x25519CertPem, ed25519CertPem},
+}
+
+func TestX25519(t *testing.T) {
+	for i, test := range x25519Tests {
+		pemBlock, _ := pem.Decode([]byte(test.pemCert))
+		cert, err := ParseCertificate(pemBlock.Bytes)
+		if err != nil {
+			t.Errorf("%d: failed to parse certificate: %s", i, err)
+			continue
+		}
+		pemBlock, _ = pem.Decode([]byte(test.signerCert))
+		signerCert, err := ParseCertificate(pemBlock.Bytes)
+		if err != nil {
+			t.Errorf("%d: failed to parse certificate: %s", i, err)
+			continue
+		}
+		if sa := cert.SignatureAlgorithm; sa != test.sigAlgo {
+			t.Errorf("%d: signature algorithm is %v, want %v", i, sa, test.sigAlgo)
+		}
+		if parsedKey, ok := cert.PublicKey.(*X25519PublicKey); !ok {
+			t.Errorf("%d: wanted an ED25519 public key but found: %#v", i, parsedKey)
+		}
+		if pka := cert.PublicKeyAlgorithm; pka != X25519 {
+			t.Errorf("%d: public key algorithm is %v, want ED25519", i, pka)
+		}
+		if err = cert.CheckSignatureFrom(signerCert); err != nil {
 			t.Errorf("%d: certificate verification failed: %s", i, err)
 		}
 	}
