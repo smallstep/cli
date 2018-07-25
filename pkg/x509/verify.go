@@ -358,7 +358,7 @@ func domainToReverseLabels(domain string) (reverseLabels []string, ok bool) {
 			reverseLabels = append(reverseLabels, domain)
 			domain = ""
 		} else {
-			reverseLabels = append(reverseLabels, domain[i+1:])
+			reverseLabels = append(reverseLabels, domain[i+1:len(domain)])
 			domain = domain[:i]
 		}
 	}

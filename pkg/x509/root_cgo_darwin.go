@@ -16,11 +16,11 @@ package x509
 #include <CoreFoundation/CoreFoundation.h>
 #include <Security/Security.h>
 
-// FetchPEMRoots_MountainLion is the version of FetchPEMRoots from Go 1.6
+// _FetchPEMRoots_MountainLion is the version of _FetchPEMRoots from Go 1.6
 // which still works on OS X 10.8 (Mountain Lion).
 // It lacks support for admin & user cert domains.
 // See golang.org/issue/16473
-int FetchPEMRoots_MountainLion(CFDataRef *pemRoots) {
+int _FetchPEMRoots_MountainLion(CFDataRef *pemRoots) {
 	if (pemRoots == NULL) {
 		return -1;
 	}
@@ -54,12 +54,12 @@ int FetchPEMRoots_MountainLion(CFDataRef *pemRoots) {
 	return 0;
 }
 
-// useOldCode reports whether the running machine is OS X 10.8 Mountain Lion
+// _useOldCode reports whether the running machine is OS X 10.8 Mountain Lion
 // or older. We only support Mountain Lion and higher, but we'll at least try our
 // best on older machines and continue to use the old code path.
 //
 // See golang.org/issue/16473
-int useOldCode() {
+int _useOldCode() {
 	char str[256];
 	size_t size = sizeof(str);
 	memset(str, 0, size);
@@ -69,7 +69,7 @@ int useOldCode() {
 	return memcmp(str, "12.", 3) == 0 || memcmp(str, "11.", 3) == 0 || memcmp(str, "10.", 3) == 0;
 }
 
-// FetchPEMRoots fetches the system's list of trusted X.509 root certificates.
+// _FetchPEMRoots fetches the system's list of trusted X.509 root certificates.
 //
 // On success it returns 0 and fills pemRoots with a CFDataRef that contains the extracted root
 // certificates of the system. On failure, the function returns -1.
@@ -77,9 +77,9 @@ int useOldCode() {
 //
 // Note: The CFDataRef returned in pemRoots and untrustedPemRoots must
 // be released (using CFRelease) after we've consumed its content.
-int FetchPEMRoots(CFDataRef *pemRoots, CFDataRef *untrustedPemRoots) {
-	if (useOldCode()) {
-		return FetchPEMRoots_MountainLion(pemRoots);
+int _FetchPEMRoots(CFDataRef *pemRoots, CFDataRef *untrustedPemRoots) {
+	if (_useOldCode()) {
+		return _FetchPEMRoots_MountainLion(pemRoots);
 	}
 
 	// Get certificates from all domains, not just System, this lets
@@ -223,7 +223,7 @@ func loadSystemRoots() (*CertPool, error) {
 
 	var data C.CFDataRef = 0
 	var untrustedData C.CFDataRef = 0
-	err := C.FetchPEMRoots(&data, &untrustedData)
+	err := C._FetchPEMRoots(&data, &untrustedData)
 	if err == -1 {
 		// TODO: better error message
 		return nil, errors.New("crypto/x509: failed to load darwin system roots with cgo")

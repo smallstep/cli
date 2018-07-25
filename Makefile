@@ -115,8 +115,7 @@ gofmt-bin vet-bin:
 
 $(LINTERS): %: vendor/bin/gometalinter %-bin vendor
 	$Q PATH=`pwd`/vendor/bin:$$PATH gometalinter --tests --disable-all --vendor \
-	     --deadline=5m -s data -s pkg -s crypto/certificates/go-x509 \
-		 --enable $@ ./...
+	     --deadline=5m -s data -s pkg --enable $@ ./...
 fmt:
 	$Q gofmt -l -w $(SRC)
 
