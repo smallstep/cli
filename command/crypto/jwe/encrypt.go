@@ -21,7 +21,9 @@ func encryptCommand() cli.Command {
   		[**--key**=<jwk>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jwe encrypt** encrypts a payload using JSON Web Encryption
 (JWE). By default, the payload to encrypt is read from STDIN and the JWE data
-structure will be written to STDOUT.`,
+structure will be written to STDOUT.
+
+For examples, see **step help crypto jwe**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "alg, algorithm",

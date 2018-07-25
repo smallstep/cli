@@ -21,7 +21,9 @@ func decryptCommand() cli.Command {
 		[**--key**=<jwk>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jwe decrypt** verifies a JWE read from STDIN and decrypts the
 ciphertext printing it to STDOUT. If verification fails a non-zero failure
-code is returned. If verification succeeds the command returns 0.`,
+code is returned. If verification succeeds the command returns 0.
+
+For examples, see **step help crypto jwe**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "key",

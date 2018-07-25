@@ -96,7 +96,50 @@ produce the ciphertext and authentication tag.
        48V1_ALb6US04U3b.
        5eym8TW_c8SuK0ltJ3rpYIzOeDQz7TALvtu6UG9oMo4vpzs9tX_EFShS8iB7j6ji
        SdiwkIr3ajwQzaBtQD_A.
-       XFBoMYUZodetZdvTiFvSkQ`,
+       XFBoMYUZodetZdvTiFvSkQ
+
+Create a JWK for encryption use:
+'''
+$ step crypto jwk create --use enc p256.enc.pub p256.enc.priv
+'''
+
+Encrypt a message using the previous public key (output indented for display purposes):
+'''
+$ echo The message | step crypto jwe encrypt --key p256.enc.pub
+{
+  "protected":"eyJhbGciOiJFQ0RILUVTIiwiZW5jIjoiQTI1NkdDTSIsImVwayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6Ii1hakZFVlZaSWNRa0RxbkhpZ0NOWU5fa29nZkhxZnRGX1N3c2ZQeXlSRUUiLCJ5IjoicGpjVnJJZHRHSVpka05HS1FETEpIdG5SLUxudUI2V3k4bHpuX3REdm9BUSJ9LCJraWQiOiJHd0tSTUdXY1pWNFE2dGZZblpjZm90N090N2hjQ0t2cUJPVWljX0JoZ0gwIn0",
+  "iv":"-10PlAIteHLVABtt",
+  "ciphertext":"_xnGoE7vPCrXRRlK",
+  "tag":"wcvj4sXXMc9qII_ySYNYGA"
+}
+'''
+
+Decrypt the previous message using the private key:
+'''
+$ step crypto jwe decrypt --key p256.enc.priv \< message.json
+Please enter the password to decrypt p256.enc.priv: ********
+The message
+'''
+
+Encrypt a message using a shared password:
+'''
+$ echo The message | step crypto jwe encrypt --alg PBES2-HS256+A128KW
+Please enter the password to encrypt the content encryption key: ********
+{
+  "protected":"eyJhbGciOiJQQkVTMi1IUzI1NitBMTI4S1ciLCJlbmMiOiJBMjU2R0NNIiwicDJjIjoxMDAwMDAsInAycyI6ImpKMnJpejJGZnhoSXVOS3JSYUJqc2cifQ",
+  "encrypted_key":"p4xazaWvaAYC7NbHoAQTC4DxCX-rEjs7wvRF-OvaVliYzhdRtEdgzA",
+  "iv":"Jw4JCCr-lLrE0irT",
+  "ciphertext":"jcb3wKopsHmClh7s",
+  "tag":"7ttDDDfuqA45puDu7KbVkA"
+}
+'''
+
+Decrypt a message protected with shared password:
+'''
+$ step crypto jwe decrypt \< message.json
+Please enter the password to decrypt the content encryption key: ********
+The message
+'''`,
 		Subcommands: cli.Commands{
 			encryptCommand(),
 			decryptCommand(),
