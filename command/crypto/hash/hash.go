@@ -287,21 +287,49 @@ func hashDir(hc hashConstructor, dirname string) ([]byte, error) {
 	binary.LittleEndian.PutUint32(mode, uint32(st.Mode()))
 	h.Write(mode)
 	for _, fi := range files {
-		if fi.IsDir() {
-			sum, err = hashDir(hc, path.Join(dirname, fi.Name()))
-			if err != nil {
-				return nil, err
-			}
-		} else {
+		name := path.Join(dirname, fi.Name())
+		switch {
+		case fi.IsDir():
+			sum, err = hashDir(hc, name)
+		case fi.Mode()&os.ModeSymlink != 0:
 			binary.LittleEndian.PutUint32(mode, uint32(fi.Mode()))
 			h.Write(mode)
-			sum, err = hashFile(hc(), path.Join(dirname, fi.Name()))
-			if err != nil {
-				return nil, err
-			}
+			sum, err = hashSymlink(hc, name)
+		default:
+			binary.LittleEndian.PutUint32(mode, uint32(fi.Mode()))
+			h.Write(mode)
+			sum, err = hashFile(hc(), name)
+		}
+		if err != nil {
+			return nil, err
 		}
 		h.Write(sum)
 	}
 
 	return h.Sum(nil), nil
+}
+
+func hashSymlink(hc hashConstructor, symname string) ([]byte, error) {
+	fullname, err := os.Readlink(symname)
+	if err != nil {
+		return nil, errs.FileError(err, symname)
+	}
+	if !path.IsAbs(fullname) {
+		fullname = path.Join(path.Dir(symname), fullname)
+	}
+
+	// Fails if the link points to a file that does not exist.
+	// TODO: Should we ignore it?
+	st, err := os.Stat(fullname)
+	if err != nil {
+		return nil, errs.FileError(err, fullname)
+	}
+	switch {
+	case st.Mode()&os.ModeSymlink != 0:
+		return hashSymlink(hc, fullname)
+	case st.IsDir():
+		return hashDir(hc, fullname)
+	default:
+		return hashFile(hc(), fullname)
+	}
 }
