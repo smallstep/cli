@@ -18,7 +18,9 @@ func publicCommand() cli.Command {
 		Usage:     "extract a public JSON Web Key (JWK) from a private JWK",
 		UsageText: `**step crypto jwk public**`,
 		Description: `**step crypto jwk public** command reads a JWK from STDIN, derives the
-corresponding public JWK, and prints the derived JWK to STDOUT.`,
+corresponding public JWK, and prints the derived JWK to STDOUT.
+
+For examples, see **step help crypto jwk**.`,
 	}
 }
 

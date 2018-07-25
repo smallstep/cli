@@ -23,7 +23,68 @@ identifiers for Edwards-curve Digial Signatures.
 
 JWKs and JWK Sets are used in the JSON Web Signature (JWS; RFC7515) and JSON
 Web Encryption (JWE; RFC7516) specifications for signing and encrypting JSON
-data, respectively.`,
+data, respectively.
+
+## EXAMPLES
+
+Create a JWK using the default parameters (NIST P-256 curve):
+'''
+$ step crypto jwk create pub.json priv.json
+'''
+
+Add the previous public keys to a JWK Set (JWKS):
+'''
+$ cat pub.json | step crypto jwk keyset add ks.json
+'''
+
+List the keys in a JWKS:
+'''
+step crypto jwk keyset list ks.json
+ZI9Ku2jJQL84ewxVn8C_67iDaTN_DFTXE9Gypo6-3YE
+L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY
+'''
+
+Remove a JWK from a JWKS:
+'''
+$ step crypto jwk keyset remove ks.json --kid ZI9Ku2jJQL84ewxVn8C_67iDaTN_DFTXE9Gypo6-3YE
+
+$ step crypto jwk keyset list ks.json
+L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY
+'''
+
+Extract a JWK from a JWKS:
+'''
+$ step crypto jwk keyset find ks.json --kid L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY
+{
+  "use": "sig",
+  "kty": "EC",
+  "kid": "L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY",
+  "crv": "P-256",
+  "alg": "ES256",
+  "x": "n_vvepi2bAby8LhsmY396msumgs4EQGoNNzar6wtyAc",
+  "y": "hDRyGFO3M0-4_4MReiwbwXvh6XL3PMh4BAPu0qnTItM"
+}
+'''
+
+See the public version of a private JWK:
+'''
+$ cat priv.json | run crypto jwk public
+{
+  "use": "sig",
+  "kty": "EC",
+  "kid": "L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY",
+  "crv": "P-256",
+  "alg": "ES256",
+  "x": "n_vvepi2bAby8LhsmY396msumgs4EQGoNNzar6wtyAc",
+  "y": "hDRyGFO3M0-4_4MReiwbwXvh6XL3PMh4BAPu0qnTItM"
+}
+'''
+
+Create a JWK Thumbprint for a JWK:
+'''
+$ cat priv.json | run crypto jwk thumbprint
+L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY
+'''`,
 		Subcommands: cli.Commands{
 			createCommand(),
 			keysetCommand(),

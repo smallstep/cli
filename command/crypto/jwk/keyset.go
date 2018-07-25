@@ -25,7 +25,9 @@ are defined in RFC7517.
 
 A JWK Set is simply a JSON object with a "keys" member whose value is an array
 of JWKs. Additional members are allowed in the object. They will be preserved
-by this tool, but otherwise ignored. Duplicate member names are not allowed.`,
+by this tool, but otherwise ignored. Duplicate member names are not allowed.
+
+For examples, see **step help crypto jwk**.`,
 		Subcommands: cli.Commands{
 			keysetAddCommand(),
 			keysetRemoveCommand(),

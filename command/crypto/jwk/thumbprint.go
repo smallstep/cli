@@ -21,7 +21,9 @@ func thumbprintCommand() cli.Command {
 		UsageText: `**step crypto jwk thumbprint**`,
 		Description: `**step crypto jwk thumbprint** reads a JWK from STDINT, derives the
 corresponding JWK Thumbprint (RFC7638), and prints the base64-urlencoded
-thumbprint to STDOUT.`,
+thumbprint to STDOUT.
+
+For examples, see **step help crypto jwk**.`,
 	}
 }
 
