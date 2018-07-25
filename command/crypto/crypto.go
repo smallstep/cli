@@ -3,6 +3,7 @@ package crypto
 import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/crypto/hash"
+	"github.com/smallstep/cli/command/crypto/jose"
 	"github.com/smallstep/cli/command/crypto/jwe"
 	"github.com/smallstep/cli/command/crypto/jwk"
 	"github.com/smallstep/cli/command/crypto/jws"
@@ -156,6 +157,7 @@ risks. That said, many of these factors are beyond the scope of this tool.
 			jwt.Command(),
 			jwe.Command(),
 			jws.Command(),
+			jose.Command(),
 			hash.Command(),
 			kdf.Command(),
 			nacl.Command(),

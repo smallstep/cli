@@ -3,6 +3,8 @@
 package jose
 
 import (
+	"errors"
+	"strings"
 	"time"
 
 	jose "gopkg.in/square/go-jose.v2"
@@ -223,4 +225,12 @@ func IsSymmetric(k *JSONWebKey) bool {
 // Determine whether a JSONWebKey is asymmetric
 func IsAsymmetric(k *JSONWebKey) bool {
 	return !IsSymmetric(k)
+}
+
+// TrimPrefix removes the string "square/go-jose" from all errors.
+func TrimPrefix(err error) error {
+	if err == nil {
+		return nil
+	}
+	return errors.New(strings.TrimPrefix(err.Error(), "square/go-jose: "))
 }
