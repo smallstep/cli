@@ -29,6 +29,46 @@ func Command() cli.Command {
 		Name:      "hash",
 		Usage:     "generates and checks hashes of files and directories",
 		UsageText: "step crypto hash <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step crypto hash** command group provides facilities for generating and
+checking hashes of files and directories.
+
+## EXAMPLES
+
+SHA-256 digest and compare of a file:
+'''
+$ step crypto hash digest foo.crt
+1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3  foo.crt
+
+$ step crypto hash compare 1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3 foo.crt
+ok
+'''
+
+SHA-1 digest and compare of a directory:
+'''
+$ step crypto hash digest --alg sha1 config/
+d419284e29382983683c294f9593183f7e00961b  config/
+
+$ step crypto hash compare --alg sha1 d419284e29382983683c294f9593183f7e00961b config
+ok
+'''
+
+MD5 of a file:
+'''
+$ step crypto hash digest --alg md5 --insecure foo.crt
+a2c5dae8eae7d116019f0478e8b0a35a  foo.crt
+'''
+
+SHA-512/256 of a list of files:
+'''
+$ find . -type f | xargs step crypto hash digest --alg sha512-256
+'''
+
+Compare a previously created checksum file:
+'''
+$ find path -type f | xargs step crypto hash digest --alg sha512-256 \> checksums.txt
+
+$ cat checksums.txt | xargs -n 2 step crypto hash compare --alg sha512-256
+'''`,
 		Subcommands: cli.Commands{
 			digestCommand(),
 			compareCommand(),
@@ -47,41 +87,12 @@ func digestCommand() cli.Command {
 directory. For a file, the output is the same as tools like 'shasum'. For
 directories, the tool computes a hash tree and outputs a single hash digest.
 
+For examples, see **step help crypto hash**.
+
 ## POSITIONAL ARGUMENTS
 
 <file-or-directory>
-: The path to a file or directory to hash.
-
-## EXAMPLES
-
-SHA-256 digest and compare of a file:
-'''
-$ step crypto hash digest foo.crt
-1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3  foo.crt
-
-$ step crypto hash compare 1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3 foo.crt
-ok
-'''
-
-SHA-1 digest and of a directory:
-'''
-$ step crypto hash digest --alg sha1 config/
-d419284e29382983683c294f9593183f7e00961b  config/
-
-$ step crypto hash compare --alg sha1 d419284e29382983683c294f9593183f7e00961b config
-ok
-'''
-
-MD5 of a file:
-'''
-$ step crypto hash digest --alg md5 --insecure foo.crt
-a2c5dae8eae7d116019f0478e8b0a35a  foo.crt
-'''
-
-SHA-512/256 of a list of files:
-'''
-$ find . -type f | xargs step crypto hash digest --alg sha512-256
-'''`,
+: The path to a file or directory to hash.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "alg",
@@ -132,31 +143,15 @@ func compareCommand() cli.Command {
 		Description: `**step crypto hash compare** verifies that the expected hash value matches the
 computed hash value for a file or directory.
 
+For examples, see **step help crypto hash**.
+
 ## POSITIONAL ARGUMENTS
 
 <hash>
 : The expected hash digest
 
 <file-or-directory>
-: The path to a file or directory to hash.
-
-## EXAMPLES
-
-SHA-256 digest and compare of a file:
-'''
-$ step crypto hash digest foo.crt
-1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3  foo.crt
-
-$ step crypto hash compare 1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3 foo.crt
-ok
-'''
-
-Compare a previously created checksum file:
-'''
-$ find path -type f | xargs step crypto hash digest --alg sha512-256 \> checksumfile.txt
-
-$ cat checksumfile.txt | xargs -n 2 step crypto hash compare --alg sha512-256
-'''`,
+: The path to a file or directory to hash.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "alg",
