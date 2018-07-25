@@ -33,8 +33,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"golang_org/x/crypto/cryptobyte"
-	cryptobyte_asn1 "golang_org/x/crypto/cryptobyte/asn1"
+	"golang.org/x/crypto/cryptobyte"
+	cryptobyte_asn1 "golang.org/x/crypto/cryptobyte/asn1"
 )
 
 // pkixPublicKey reflects a PKIX public key structure. See SubjectPublicKeyInfo

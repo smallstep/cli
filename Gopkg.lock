@@ -205,6 +205,8 @@
   packages = [
     "bcrypt",
     "blowfish",
+    "cryptobyte",
+    "cryptobyte/asn1",
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
@@ -300,6 +302,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "86a4b88d567307222c35b2e3f6dd391141bed7a86020f4140673087f82b4aa89"
+  inputs-digest = "9518cee002f69eb62134c655cf4f2e3bbb54c751c6d3adb52f7da88b2444c675"
   solver-name = "gps-cdcl"
   solver-version = 1
