@@ -84,10 +84,14 @@ func markdownify(b []byte) []byte {
 		case '<':
 			if b[i-1] != '\\' {
 				b[i] = '`'
+			} else {
+				copy(b[i-1:], b[i:])
 			}
 		case '>':
 			if b[i-1] != '\\' {
 				b[i] = '`'
+			} else {
+				copy(b[i-1:], b[i:])
 			}
 		case '\'':
 			if len(b) >= i+3 && string(b[i:i+3]) == "'''" {
