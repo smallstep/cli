@@ -898,22 +898,25 @@ func checkSignature(algo SignatureAlgorithm, signed, signature []byte, publicKey
 	var hashType crypto.Hash
 	var pubKeyAlgo PublicKeyAlgorithm
 
+	algoSupported := false
 	for _, details := range signatureAlgorithmDetails {
 		if details.algo == algo {
 			hashType = details.hash
 			pubKeyAlgo = details.pubKeyAlgo
+			algoSupported = true
 		}
 	}
-
-	switch hashType {
-	case crypto.Hash(0):
+	if !algoSupported {
 		return ErrUnsupportedAlgorithm
-	case crypto.MD5:
-		return InsecureAlgorithmError(algo)
 	}
 
-	digest := signed
-	if hashType != 0 {
+	var digest []byte
+	switch hashType {
+	case crypto.MD5:
+		return InsecureAlgorithmError(algo)
+	case 0: // *25519
+		digest = signed
+	default:
 		if !hashType.Available() {
 			return ErrUnsupportedAlgorithm
 		}
