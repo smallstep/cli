@@ -50,7 +50,38 @@ directories, the tool computes a hash tree and outputs a single hash digest.
 ## POSITIONAL ARGUMENTS
 
 <file-or-directory>
-: The path to a file or directory to hash.`,
+: The path to a file or directory to hash.
+
+## EXAMPLES
+
+SHA-256 digest and compare of a file:
+'''
+$ step crypto hash digest foo.crt
+1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3  foo.crt
+
+$ step crypto hash compare 1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3 foo.crt
+ok
+'''
+
+SHA-1 digest and of a directory:
+'''
+$ step crypto hash digest --alg sha1 config/
+d419284e29382983683c294f9593183f7e00961b  config/
+
+$ step crypto hash compare --alg sha1 d419284e29382983683c294f9593183f7e00961b config
+ok
+'''
+
+MD5 of a file:
+'''
+$ step crypto hash digest --alg md5 --insecure foo.crt
+a2c5dae8eae7d116019f0478e8b0a35a  foo.crt
+'''
+
+SHA-512/256 of a list of files:
+'''
+$ find . -type f | xargs step crypto hash digest --alg sha512-256
+'''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "alg",
@@ -107,7 +138,25 @@ computed hash value for a file or directory.
 : The expected hash digest
 
 <file-or-directory>
-: The path to a file or directory to hash.`,
+: The path to a file or directory to hash.
+
+## EXAMPLES
+
+SHA-256 digest and compare of a file:
+'''
+$ step crypto hash digest foo.crt
+1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3  foo.crt
+
+$ step crypto hash compare 1d14bfeab8532f0fca6220f6a870d069496798e92520c4437e13b9921a3cb7f3 foo.crt
+ok
+'''
+
+Compare a previously created checksum file:
+'''
+$ find path -type f | xargs step crypto hash digest --alg sha512-256 \> checksumfile.txt
+
+$ cat checksumfile.txt | xargs -n 2 step crypto hash compare --alg sha512-256
+'''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "alg",
@@ -212,6 +261,8 @@ func compareAction(ctx *cli.Context) error {
 		return err
 	}
 
+	// TODO: should add the filename?
+	// fmt.Printf("%s: ok\n", filename)
 	if subtle.ConstantTimeCompare(sum, hashBytes) == 1 {
 		fmt.Println("ok")
 		return nil
