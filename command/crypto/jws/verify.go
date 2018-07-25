@@ -173,7 +173,7 @@ func verifyAction(ctx *cli.Context) error {
 	}
 
 	if ctx.Bool("json") {
-		return printToken(token)
+		return printToken(tok)
 	}
 
 	os.Stdout.Write(payload)

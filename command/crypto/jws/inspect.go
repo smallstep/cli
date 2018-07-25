@@ -52,20 +52,25 @@ func inspectAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if ctx.Bool("json") {
-		return printToken(token)
-	}
-
 	tok, err := jose.ParseJWS(token)
 	if err != nil {
-		return errors.Errorf("error parsing token: %s", strings.TrimPrefix(err.Error(), "square/go-jose: "))
+		return errors.Wrap(jose.TrimPrefix(err), "error parsing token")
+	}
+
+	if ctx.Bool("json") {
+		return printToken(tok)
 	}
 
 	os.Stdout.Write(tok.UnsafePayloadWithoutVerification())
 	return nil
 }
 
-func printToken(token string) error {
+func printToken(tok *jose.JSONWebSignature) error {
+	token, err := tok.CompactSerialize()
+	if err != nil {
+		return errors.Wrap(jose.TrimPrefix(err), "error serializing token")
+	}
+
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return errors.New("error decoding token: JWS must have three parts")
