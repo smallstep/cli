@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -50,6 +51,16 @@ func inspectAction(ctx *cli.Context) error {
 }
 
 func printToken(token string) error {
+	tok, err := jose.ParseJWS(token)
+	if err != nil {
+		return errors.Wrap(jose.TrimPrefix(err), "error parsing token")
+	}
+
+	token, err = tok.CompactSerialize()
+	if err != nil {
+		return errors.Wrap(jose.TrimPrefix(err), "error serializing token")
+	}
+
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return errors.New("error decoding token: JWT must have three parts")
