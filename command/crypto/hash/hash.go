@@ -41,7 +41,7 @@ func digestCommand() cli.Command {
 		Name:   "digest",
 		Action: cli.ActionFunc(digestAction),
 		Usage:  "generate a hash digest of a file or directory",
-		UsageText: `**step crypto hash digest** <file-or-directory>
+		UsageText: `**step crypto hash digest** <file-or-directory>...
 		[**--alg**=<algorithm>]`,
 		Description: `**step crypto hash digest** generates a hash digest for a given file or
 directory. For a file, the output is the same as tools like 'shasum'. For
@@ -149,8 +149,8 @@ computed hash value for a file or directory.
 }
 
 func digestAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
-		return err
+	if ctx.NArg() == 0 {
+		return errs.TooFewArguments(ctx)
 	}
 
 	hc, err := getHash(ctx, ctx.String("alg"), ctx.Bool("insecure"))
@@ -158,23 +158,24 @@ func digestAction(ctx *cli.Context) error {
 		return err
 	}
 
-	filename := ctx.Args().Get(0)
-	st, err := os.Stat(filename)
-	if err != nil {
-		return errs.FileError(err, filename)
-	}
+	for _, filename := range ctx.Args() {
+		st, err := os.Stat(filename)
+		if err != nil {
+			return errs.FileError(err, filename)
+		}
 
-	var sum []byte
-	if st.IsDir() {
-		sum, err = hashDir(hc, filename)
-	} else {
-		sum, err = hashFile(hc(), filename)
-	}
-	if err != nil {
-		return err
-	}
+		var sum []byte
+		if st.IsDir() {
+			sum, err = hashDir(hc, filename)
+		} else {
+			sum, err = hashFile(hc(), filename)
+		}
+		if err != nil {
+			return err
+		}
 
-	fmt.Printf("%x  %s\n", sum, filename)
+		fmt.Printf("%x  %s\n", sum, filename)
+	}
 
 	return err
 }
