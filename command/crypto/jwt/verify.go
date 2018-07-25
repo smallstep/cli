@@ -36,7 +36,9 @@ For a JWT to be verified successfully:
   * The <kid> must match the **"kid"** member in the JWT header (if both are
     present) and must match the **"kid"** in the JWK or the **"kid"** of one of the
     JWKs in JWKS
-  * The JWT signature must be successfully verified`,
+  * The JWT signature must be successfully verified
+
+For examples, see **step help crypto jwt**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "iss, issuer",

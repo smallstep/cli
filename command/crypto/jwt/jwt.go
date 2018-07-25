@@ -28,7 +28,63 @@ A JWT signed using JWS has three parts:
        and Encryption) header that describes the cryptographic operations
        applied to the JWT Claims Set
     2. A base64 encoded JSON object representing the JWT Claims Set
-    3. A base64 encoded digital signature of message authentication code`,
+    3. A base64 encoded digital signature of message authentication code
+
+## EXAMPLES
+
+Create a signed JWT using a JWK (with line breaks for display purposes only):
+
+'''
+$ step crypto jwt sign --key p256.priv.json --iss "joe@example.com" \
+      --aud "https://example.com" --sub auth --exp $(date -v+1m +"%s")
+eyJhbGciOiJFUzI1NiIsImtpZCI6IlpqR1g5N0xtY2ZsUG9sV3Zzb0FXekM1V1BXa05GRkgzUWRLTFVXOTc4aGsiLCJ0eXAiOiJKV1QifQ
+.
+eyJhdWQiOiJodHRwczovL2V4YW1wbGUuY29tIiwiZXhwIjoxNTM1MjM2MTUyLCJpYXQiOjE1MzI1NTc3NTQsImlzcyI6ImpvZUBleGFtcGxlLmNvbSIsIm5iZiI6MTUzMjU1Nzc1NCwic3ViIjoiYXV0aCJ9
+.
+Z4veKtRmZLoqHNlTrcYo2W1ikLkDcSNfrT52zAGS9cF90Zi3aTXt_75pkikREvMrkC4mhGDdqxCf9ZHq4VnSvg
+'''
+
+Verify the the previous token:
+'''
+$ echo $TOKEN | step crypto jwt verify --key p256.pub.json --iss "joe@example.com" --aud "https://example.com"
+{
+  "header": {
+    "alg": "ES256",
+    "kid": "ZjGX97LmcflPolWvsoAWzC5WPWkNFFH3QdKLUW978hk",
+    "typ": "JWT"
+  },
+  "payload": {
+    "aud": "https://example.com",
+    "exp": 1535236152,
+    "iat": 1532557754,
+    "iss": "joe@example.com",
+    "nbf": 1532557754,
+    "sub": "auth"
+  },
+  "signature": "Z4veKtRmZLoqHNlTrcYo2W1ikLkDcSNfrT52zAGS9cF90Zi3aTXt_75pkikREvMrkC4mhGDdqxCf9ZHq4VnSvg"
+}
+'''
+
+Read the information in the previous token without verifying it:
+'''
+$ echo $TOKEN | step crypto jwt inspect --insecure
+{
+  "header": {
+    "alg": "ES256",
+    "kid": "ZjGX97LmcflPolWvsoAWzC5WPWkNFFH3QdKLUW978hk",
+    "typ": "JWT"
+  },
+  "payload": {
+    "aud": "https://example.com",
+    "exp": 1535236152,
+    "iat": 1532557754,
+    "iss": "joe@example.com",
+    "nbf": 1532557754,
+    "sub": "auth"
+  },
+  "signature": "Z4veKtRmZLoqHNlTrcYo2W1ikLkDcSNfrT52zAGS9cF90Zi3aTXt_75pkikREvMrkC4mhGDdqxCf9ZHq4VnSvg"
+}
+'''`,
 		Subcommands: cli.Commands{
 			signCommand(),
 			verifyCommand(),

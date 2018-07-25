@@ -23,7 +23,9 @@ func inspectCommand() cli.Command {
 		**--insecure**`,
 		Description: `**step crypto jwt inspect** reads a JWT data structure from STDIN, decodes it,
 and outputs the header and payload on STDERR. Since this command does not
-verify the JWT you must pass **--insecure** as a misuse prevention mechanism.`,
+verify the JWT you must pass **--insecure** as a misuse prevention mechanism.
+
+For examples, see **step help crypto jwt**.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:   "insecure",

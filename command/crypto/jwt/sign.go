@@ -47,13 +47,15 @@ These considerations should be carefully analyzed. Therefore, omitting <subtle>
 arguments requires the use of the **--subtle** flag as a misuse prevention
 mechanism.
 
-  A JWT signed using JWS has three parts:
+A JWT signed using JWS has three parts:
 
     1. A base64 encoded JSON object representing the JOSE (JSON Object Signing
        and Encryption) header that describes the cryptographic operations
        applied to the JWT Claims Set
     2. A base64 encoded JSON object representing the JWT Claims Set
-    3. A base64 encoded digital signature of message authentication code`,
+    3. A base64 encoded digital signature of message authentication code
+
+For examples, see **step help crypto jwt**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "alg, algorithm",
