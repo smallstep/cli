@@ -118,7 +118,7 @@ func InvalidFlagValue(ctx *cli.Context, flag string, value string, options strin
 		return errors.New(format)
 	}
 
-	return errors.New(format + " options are " + options)
+	return errors.New(format + "; options are " + options)
 }
 
 // IncompatibleFlag returns an error with the flag being incompatible with the

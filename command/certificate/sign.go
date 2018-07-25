@@ -7,9 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
-	"github.com/smallstep/cli/crypto/keys"
+	spem "github.com/smallstep/cli/crypto/pem"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/utils/reader"
 	"github.com/urfave/cli"
 )
 
@@ -79,15 +78,7 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	key, err := keys.LoadPrivateKey(keyBytes, func() (string, error) {
-		var pass string
-		if err := reader.ReadPasswordSubtle(
-			fmt.Sprintf("Password with which to decrypt private key %s: ", keyFile),
-			&pass, "Password", reader.RetryOnEmpty); err != nil {
-			return "", err
-		}
-		return pass, nil
-	})
+	key, err := spem.Parse(keyBytes)
 	if err != nil {
 		return errors.WithStack(err)
 	}

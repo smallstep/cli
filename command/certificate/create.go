@@ -25,7 +25,8 @@ func createCommand() cli.Command {
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
 		[**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
-		[**no-password**] [**--profile**=<profile>]`,
+		[**--curve**=<curve] [**no-password**] [**--profile**=<profile>]
+		[**--size**=<size>] [**--type**=<type>]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing requests (CSR) that can be signed later using 'step
 certificates sign' (or some other tool) to produce a certificate.
@@ -122,6 +123,50 @@ recommended. Requires **--insecure** flag.`,
     **root-ca**
     :  Generate a new self-signed root certificate suitable for use as a root CA.`,
 			},
+			cli.StringFlag{
+				Name:  "kty",
+				Value: "EC",
+				Usage: `The <kty> to build the certificate upon.
+If unset, default is EC.
+
+: <kty> is a case-sensitive string and must be one of:
+
+    **EC**
+    :  Create an **elliptic curve** keypair
+
+    **OKP**
+    :  Create an octet key pair (for **"Ed25519"** curve)
+
+    **RSA**
+    :  Create an **RSA** keypair
+`,
+			},
+			cli.IntFlag{
+				Name: "size",
+				Usage: `The <size> (in bits) of the key for RSA and oct key types. RSA keys require a
+minimum key size of 2048 bits. If unset, default is 2048 bits for RSA keys and 128 bits for oct keys.`,
+			},
+			cli.StringFlag{
+				Name: "crv, curve",
+				Usage: `The elliptic <curve> to use for EC and OKP key types. Corresponds
+to the **"crv"** JWK parameter. Valid curves are defined in JWA [RFC7518]. If
+unset, default is P-256 for EC keys and Ed25519 for OKP keys.
+
+: <curve> is a case-sensitive string and must be one of:
+
+    **P-256**
+    :  NIST P-256 Curve
+
+    **P-384**
+    :  NIST P-384 Curve
+
+    **P-521**
+    :  NIST P-521 Curve
+
+    **Ed25519**
+    :  Ed25519 Curve
+`,
+			},
 		},
 	}
 }
@@ -135,6 +180,64 @@ func createAction(ctx *cli.Context) error {
 	noPass := ctx.Bool("no-password")
 	if noPass && !insecure {
 		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
+	}
+
+	var (
+		crv  = ctx.String("curve")
+		size = ctx.Int("size")
+		kty  = ctx.String("kty")
+	)
+
+	if ctx.IsSet("kty") {
+		switch kty {
+		case "RSA":
+			if size < 2048 && !insecure {
+				return errs.MinSizeInsecureFlag(ctx, "size", "2048")
+			}
+			if size <= 0 {
+				return errs.MinSizeFlag(ctx, "size", "0")
+			}
+			if ctx.IsSet("curve") {
+				return errs.IncompatibleFlagValue(ctx, "curve", "kty", kty)
+			}
+		case "EC":
+			if ctx.IsSet("size") {
+				return errs.IncompatibleFlagValue(ctx, "size", "kty", kty)
+			}
+			if !ctx.IsSet("curve") {
+				return errs.RequiredWithFlagValue(ctx, "kty", kty, "curve")
+			}
+			switch crv {
+			case "P-256", "P-384", "P-521": //ok
+			default:
+				return errs.InvalidFlagValue(ctx, "curve", crv, "P-256, P-384, P-251")
+			}
+		case "OKP":
+			if ctx.IsSet("size") {
+				return errs.IncompatibleFlagValue(ctx, "size", "kty", kty)
+			}
+			if !ctx.IsSet("curve") {
+				return errs.RequiredWithFlagValue(ctx, "kty", kty, "curve")
+			}
+			switch crv {
+			case "Ed25519": //ok
+			default:
+				return errs.IncompatibleFlagValues(ctx, "curve", crv, "kty", kty)
+			}
+		default:
+			return errs.InvalidFlagValue(ctx, "--kty", kty, "RSA, EC, OKP")
+		}
+	} else {
+		if ctx.IsSet("curve") {
+			errs.RequiredWithFlag(ctx, "curve", "kty")
+		}
+		if ctx.IsSet("size") {
+			errs.RequiredWithFlag(ctx, "size", "kty")
+		}
+		// Set default key type | curve | size.
+		kty = "EC"
+		crv = "P-256"
+		size = 0
 	}
 
 	subject := ctx.Args().Get(0)
@@ -196,17 +299,17 @@ func createAction(ctx *cli.Context) error {
 		)
 		switch prof {
 		case "leaf":
-			issIdentity, err := loadIssuerIdentity(prof, caPath, caKeyPath)
+			issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			profile, err = stepx509.NewLeafProfile(subject, issIdentity.Crt,
-				issIdentity.Key)
+				issIdentity.Key, stepx509.GenerateKeyPair(kty, crv, size))
 			if err != nil {
 				return errors.WithStack(err)
 			}
 		case "intermediate-ca":
-			issIdentity, err := loadIssuerIdentity(prof, caPath, caKeyPath)
+			issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -214,12 +317,14 @@ func createAction(ctx *cli.Context) error {
 				return errors.WithStack(err)
 			}
 			profile, err = stepx509.NewIntermediateProfile(subject,
-				issIdentity.Crt, issIdentity.Key)
+				issIdentity.Crt, issIdentity.Key,
+				stepx509.GenerateKeyPair(kty, crv, size))
 			if err != nil {
 				return errors.WithStack(err)
 			}
 		case "root-ca":
-			profile, err = stepx509.NewRootProfile(subject)
+			profile, err = stepx509.NewRootProfile(subject,
+				stepx509.GenerateKeyPair(kty, crv, size))
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -263,22 +368,12 @@ func createAction(ctx *cli.Context) error {
 	return nil
 }
 
-func loadIssuerIdentity(profile, caPath, caKeyPath string) (*stepx509.Identity, error) {
+func loadIssuerIdentity(ctx *cli.Context, profile, caPath, caKeyPath string) (*stepx509.Identity, error) {
 	if caPath == "" {
-		return nil, errs.RequiredWithFlagValue("profile", profile, "ca")
+		return nil, errs.RequiredWithFlagValue(ctx, "profile", profile, "ca")
 	}
 	if caKeyPath == "" {
-		return nil, errs.RequiredWithFlagValue("profile", profile, "ca-key")
+		return nil, errs.RequiredWithFlagValue(ctx, "profile", profile, "ca-key")
 	}
-	return stepx509.LoadIdentityFromDisk(caPath, caKeyPath,
-		func() (string, error) {
-			var pass string
-			if err := reader.ReadPasswordSubtle(
-				fmt.Sprintf("Password with which to decrypt CA private key file `%s`: ", caKeyPath),
-				&pass, "Password", reader.RetryOnEmpty); err != nil {
-				return "", errors.WithStack(err)
-			}
-			return pass, nil
-		})
-
+	return stepx509.LoadIdentityFromDisk(caPath, caKeyPath)
 }

@@ -1,7 +1,9 @@
 package x509
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -15,6 +17,7 @@ import (
 	"github.com/smallstep/cli/crypto/keys"
 	spem "github.com/smallstep/cli/crypto/pem"
 	"github.com/smallstep/cli/utils"
+	"golang.org/x/crypto/ed25519"
 )
 
 // Profile is an interface that certificate profiles (e.g. leaf,
@@ -146,9 +149,17 @@ func newBase(sub, iss *x509.Certificate, withOps ...WithOption) (*base, error) {
 	}
 
 	if b.sub.SubjectKeyId == nil {
-		pubBytes, err := x509.MarshalPKIXPublicKey(b.SubjectPublicKey())
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to marshal public key to bytes")
+		var pubBytes []byte
+		switch pk := b.SubjectPublicKey().(type) {
+		case *rsa.PublicKey, *ecdsa.PublicKey:
+			pubBytes, err = x509.MarshalPKIXPublicKey(b.SubjectPublicKey())
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to marshal public key to bytes")
+			}
+		case ed25519.PublicKey:
+			pubBytes = []byte(pk)
+		default:
+			return nil, errors.Errorf("Cannot calculate SubjectKeyId for key of type %T", pk)
 		}
 		hash := sha1.Sum(pubBytes)
 		b.sub.SubjectKeyId = hash[:] // takes slice over the whole array
@@ -241,8 +252,9 @@ func (b *base) CreateCertificate() ([]byte, error) {
 	if b.issPriv == nil {
 		return nil, errors.Errorf("Profile does not have issuer private key. Use setters to populate this field.")
 	}
-	return x509.CreateCertificate(rand.Reader, b.Subject(), b.Issuer(),
+	bytes, err := x509.CreateCertificate(rand.Reader, b.Subject(), b.Issuer(),
 		b.SubjectPublicKey(), b.issPriv)
+	return bytes, errors.WithStack(err)
 }
 
 // Create Certificate from profile and write the certificate and private key

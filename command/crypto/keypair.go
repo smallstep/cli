@@ -75,9 +75,9 @@ $ step crypto keypair foo.pub foo.key --type OKP --curve Ed25519
 `,
 		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:  "kty, type",
+				Name:  "type",
 				Value: "EC",
-				Usage: `The <type> of key to create. Corresponds to the **"kty"** JWK parameter.
+				Usage: `The <type> of key to create.
 If unset, default is EC.
 
 : <type> is a case-sensitive string and must be one of:
@@ -190,6 +190,7 @@ func createAction(ctx *cli.Context) error {
 			return errs.IncompatibleFlagValues(ctx, "curve", crv, "type", typ)
 		}
 	default:
+		return errs.InvalidFlagValue(ctx, "--type", typ, "RSA, EC, OKP")
 	}
 
 	pub, priv, err := keys.GenerateKeyPair(typ, crv, size)

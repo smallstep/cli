@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
+	spem "github.com/smallstep/cli/crypto/pem"
 )
 
 func Test_LoadIdentityFromDisk(t *testing.T) {
@@ -32,7 +33,7 @@ func Test_LoadIdentityFromDisk(t *testing.T) {
 			crtPath: testCert,
 			keyPath: testNoPasscodeBadKey,
 			pass:    "",
-			err:     errors.Errorf("error parsing RSA key"),
+			err:     errors.Errorf("error parsing PEM: asn1"),
 		},
 		"success": {
 			crtPath: testCert,
@@ -44,18 +45,25 @@ func Test_LoadIdentityFromDisk(t *testing.T) {
 	for name, test := range tests {
 		t.Logf("Running test case: %s", name)
 
-		kp, err := LoadIdentityFromDisk(test.crtPath, test.keyPath, func() (string, error) {
-			return test.pass, nil
-		})
+		var (
+			err error
+			i   *Identity
+		)
+		if test.pass == "" {
+			i, err = LoadIdentityFromDisk(test.crtPath, test.keyPath)
+		} else {
+			i, err = LoadIdentityFromDisk(test.crtPath, test.keyPath,
+				spem.WithPassword([]byte(test.pass)))
+		}
 		if err != nil {
 			if assert.NotNil(t, test.err) {
 				assert.HasPrefix(t, err.Error(), test.err.Error())
 			}
 		} else {
 			assert.FatalError(t, err)
-			assert.NotNil(t, kp.Crt)
-			assert.NotNil(t, kp.CrtPem)
-			assert.NotNil(t, kp.Key)
+			assert.NotNil(t, i.Crt)
+			assert.NotNil(t, i.CrtPem)
+			assert.NotNil(t, i.Key)
 		}
 	}
 }

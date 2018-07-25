@@ -219,7 +219,7 @@
     "scrypt",
     "ssh/terminal"
   ]
-  revision = "a2144134853fc9a27a7b1e3eb4f19f1a76df13c9"
+  revision = "c126467f60eb25f8f27e5a981f32a87e3965053f"
 
 [[projects]]
   branch = "master"
@@ -240,7 +240,7 @@
     "unix",
     "windows"
   ]
-  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
+  revision = "e072cadbbdc8dd3d3ffa82b8b4b9304c261d9311"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -272,7 +272,7 @@
     "go/internal/gcimporter",
     "go/types/typeutil"
   ]
-  revision = "99195f4d4ffa6331a9bc856c72697a15d9842950"
+  revision = "ded554d0681e0cba3cf074977cdc12e2c0906fe6"
 
 [[projects]]
   name = "gopkg.in/alecthomas/kingpin.v3-unstable"
@@ -300,6 +300,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a2caa7c8a4ce0905072974adbdf9b94bd1aa1b47332627aff5b9a6703b6ac0b3"
+  inputs-digest = "86a4b88d567307222c35b2e3f6dd391141bed7a86020f4140673087f82b4aa89"
   solver-name = "gps-cdcl"
   solver-version = 1

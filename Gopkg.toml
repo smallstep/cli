@@ -40,10 +40,6 @@ required = [
   revision = "63abe20a23e29e80bbef8089bd3dee3ac25e5306"
 
 [[constraint]]
-  name = "github.com/google/go-cmp"
-  version = "0.2.0"
-
-[[constraint]]
   name = "github.com/pkg/errors"
   version = "0.8.0"
 

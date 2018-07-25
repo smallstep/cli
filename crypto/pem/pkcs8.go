@@ -111,7 +111,7 @@ func ParsePKCS8PrivateKey(der []byte) (key interface{}, err error) {
 		copy(seed, privKey.PrivateKey[2:])
 		key = ed25519.NewKeyFromSeed(seed)
 		return key, nil
-	// Prove of concept for key agreement algorithm X25519.
+	// Proof of concept for key agreement algorithm X25519.
 	// A real implementation would use their own types.
 	//
 	// case privKey.Algo.Algorithm.Equal(oidX25519):

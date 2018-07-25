@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/keys"
+	spem "github.com/smallstep/cli/crypto/pem"
 )
 
 // Identity contains a public/private x509 certificate/key pair.
@@ -25,17 +25,12 @@ func NewIdentity(c *x509.Certificate, b *pem.Block, k interface{}) *Identity {
 	}
 }
 
-// LoadIdentityFromDisk load a public certificate and private key from disk.
-func LoadIdentityFromDisk(crtPath, keyPath string, getPass func() (string, error)) (*Identity, error) {
-	var (
-		err          error
-		caCert       *x509.Certificate
-		caPrivateKey interface{}
-		publicPem    *pem.Block
-	)
-
+// LoadIdentityFromDisk load a public certificate and private key (both in PEM
+// format) from disk.
+func LoadIdentityFromDisk(crtPath, keyPath string, pemOpts ...spem.Options) (*Identity, error) {
 	// load crt
-	if caCert, publicPem, err = LoadCertificate(crtPath); err != nil {
+	crt, pubPEM, err := LoadCertificate(crtPath)
+	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
@@ -44,9 +39,10 @@ func LoadIdentityFromDisk(crtPath, keyPath string, getPass func() (string, error
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if caPrivateKey, err = keys.LoadPrivateKey(keyBytes, getPass); err != nil {
+	key, err := spem.Parse(keyBytes, pemOpts...)
+	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return NewIdentity(caCert, publicPem, caPrivateKey), nil
+	return NewIdentity(crt, pubPEM, key), nil
 }
