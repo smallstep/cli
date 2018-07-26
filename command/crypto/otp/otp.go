@@ -17,7 +17,7 @@ func Command() cli.Command {
 
 Generate a new TOTP token and it's QR Code to scan:
 '''
-$ step crypto otp generate --issuer smallstep.com --account mariano@smallstep.com -qr smallstep.png \> smallstep.totp
+$ step crypto otp generate --issuer smallstep.com --account name@smallstep.com -qr smallstep.png \> smallstep.totp
 
 $ cat smallstep.totp
 55RU6WTUISKKGEYVNSSI7H6FTJWJ4IPP
