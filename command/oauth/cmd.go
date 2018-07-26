@@ -2,7 +2,6 @@ package oauth
 
 import (
 	"bufio"
-	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -21,6 +20,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/exec"
+	"github.com/smallstep/cli/pkg/x509"
 	jose "gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )

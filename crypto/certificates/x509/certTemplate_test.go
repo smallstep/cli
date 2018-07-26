@@ -1,7 +1,6 @@
 package x509
 
 import (
-	"crypto/x509"
 	"math/big"
 	"net"
 	"reflect"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	cmp "github.com/google/go-cmp/cmp"
+	"github.com/smallstep/cli/pkg/x509"
 )
 
 func Test_NotBeforeAfter(t *testing.T) {

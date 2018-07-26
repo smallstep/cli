@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ed25519"
 )

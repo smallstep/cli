@@ -1,12 +1,12 @@
 package x509
 
 import (
-	"crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
 
 	"github.com/pkg/errors"
 	spem "github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/pkg/x509"
 )
 
 // Identity contains a public/private x509 certificate/key pair.

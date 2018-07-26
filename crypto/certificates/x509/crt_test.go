@@ -2,7 +2,6 @@ package x509
 
 import (
 	"crypto/sha1"
-	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"io/ioutil"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
+	"github.com/smallstep/cli/pkg/x509"
 )
 
 func Test_WriteCertificate(t *testing.T) {

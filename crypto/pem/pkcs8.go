@@ -6,12 +6,12 @@ import (
 	"crypto/des"
 	"crypto/sha1"
 	"crypto/sha256"
-	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/pbkdf2"
 )

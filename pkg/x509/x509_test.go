@@ -525,8 +525,8 @@ func TestCreateSelfSignedCertificate(t *testing.T) {
 		{"RSAPSS/RSAPSS", &testPrivateKey.PublicKey, testPrivateKey, true, SHA256WithRSAPSS},
 		{"ECDSA/RSAPSS", &ecdsaPriv.PublicKey, testPrivateKey, false, SHA256WithRSAPSS},
 		{"RSAPSS/ECDSA", &testPrivateKey.PublicKey, ecdsaPriv, false, ECDSAWithSHA384},
-		{"ED25519/ED25519", &ed25519Pub, ed25519Priv, true, ED25519SIG},
-		{"X25519/ED25519", &x25519Pub, ed25519Priv, false, ED25519SIG},
+		{"ED25519/ED25519", ed25519Pub, ed25519Priv, true, ED25519SIG},
+		{"X25519/ED25519", x25519Pub, ed25519Priv, false, ED25519SIG},
 	}
 
 	testExtKeyUsage := []ExtKeyUsage{ExtKeyUsageClientAuth, ExtKeyUsageServerAuth}
@@ -893,7 +893,7 @@ func Test25519(t *testing.T) {
 		if sa := cert.SignatureAlgorithm; sa != test.sigAlgo {
 			t.Errorf("%d: signature algorithm is %v, want %v", i, sa, test.sigAlgo)
 		}
-		if parsedKey, ok := cert.PublicKey.(*ed25519.PublicKey); !ok {
+		if parsedKey, ok := cert.PublicKey.(ed25519.PublicKey); !ok {
 			t.Errorf("%d: wanted an ED25519 public key but found: %#v", i, parsedKey)
 		}
 		if pka := cert.PublicKeyAlgorithm; pka != ED25519 {
@@ -930,7 +930,7 @@ func TestX25519(t *testing.T) {
 		if sa := cert.SignatureAlgorithm; sa != test.sigAlgo {
 			t.Errorf("%d: signature algorithm is %v, want %v", i, sa, test.sigAlgo)
 		}
-		if parsedKey, ok := cert.PublicKey.(*X25519PublicKey); !ok {
+		if parsedKey, ok := cert.PublicKey.(X25519PublicKey); !ok {
 			t.Errorf("%d: wanted an ED25519 public key but found: %#v", i, parsedKey)
 		}
 		if pka := cert.PublicKeyAlgorithm; pka != X25519 {

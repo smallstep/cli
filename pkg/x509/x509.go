@@ -94,12 +94,12 @@ func marshalPublicKey(pub interface{}) (publicKeyBytes []byte, publicKeyAlgorith
 			return
 		}
 		publicKeyAlgorithm.Parameters.FullBytes = paramBytes
-	case *ed25519.PublicKey:
+	case ed25519.PublicKey:
 		publicKeyAlgorithm.Algorithm = oidKeyEd25519
-		return []byte(*pub), publicKeyAlgorithm, nil
-	case *X25519PublicKey:
+		return []byte(pub), publicKeyAlgorithm, nil
+	case X25519PublicKey:
 		publicKeyAlgorithm.Algorithm = oidKeyX25519
-		return []byte(*pub), publicKeyAlgorithm, nil
+		return []byte(pub), publicKeyAlgorithm, nil
 	default:
 		return nil, pkix.AlgorithmIdentifier{}, errors.New("x509: only RSA, ECDSA, ed25519, or X25519 public keys supported")
 	}
@@ -970,8 +970,8 @@ func checkSignature(algo SignatureAlgorithm, signed, signature []byte, publicKey
 			return errors.New("x509: ECDSA verification failure")
 		}
 		return
-	case *ed25519.PublicKey:
-		if !ed25519.Verify(*pub, digest, signature) {
+	case ed25519.PublicKey:
+		if !ed25519.Verify(pub, digest, signature) {
 			return errors.New("x509: ED25519 verification failure")
 		}
 		return
@@ -1117,13 +1117,13 @@ func parsePublicKey(algo PublicKeyAlgorithm, keyData *publicKeyInfo) (interface{
 		if len(p) > ed25519.PublicKeySize {
 			return nil, errors.New("x509: trailing data after Ed25519 data")
 		}
-		return &p, nil
+		return p, nil
 	case X25519:
 		p := X25519PublicKey(asn1Data)
 		if len(p) > 32 {
 			return nil, errors.New("x509: trailing data after X25519 public key")
 		}
-		return &p, nil
+		return p, nil
 	default:
 		return nil, nil
 	}
@@ -2045,7 +2045,7 @@ func signingParamsForPublicKey(pub interface{}, requestedSigAlgo SignatureAlgori
 			err = errors.New("x509: unknown elliptic curve")
 		}
 
-	case *ed25519.PublicKey, ed25519.PublicKey:
+	case ed25519.PublicKey:
 		// ed25519.PublicKey doesn't return a pointer to the key so we check for both
 		pubType = ED25519
 		hashFunc = 0

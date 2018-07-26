@@ -2,12 +2,12 @@ package x509
 
 import (
 	"crypto/rand"
-	"crypto/x509"
 	"crypto/x509/pkix"
 	"math/big"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/pkg/x509"
 )
 
 // Root implements the Profile for a root certificate.
@@ -58,7 +58,8 @@ func defaultRootTemplate(cn string) (*x509.Certificate, error) {
 		// 10 year root certificate validity.
 		NotAfter: notBefore.Add(time.Hour * 24 * 365 * 10),
 		KeyUsage: x509.KeyUsageKeyEncipherment |
-			x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+			x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign |
+			x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 		MaxPathLen:            1,
 		MaxPathLenZero:        false,

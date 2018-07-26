@@ -3,13 +3,13 @@ package x509
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"testing"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
+	"github.com/smallstep/cli/pkg/x509"
 )
 
 func Test_CSR_LoadCSRFromBytes(t *testing.T) {

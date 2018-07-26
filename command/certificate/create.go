@@ -2,7 +2,6 @@ package certificate
 
 import (
 	"crypto/rand"
-	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"github.com/smallstep/cli/crypto/keys"
 	spem "github.com/smallstep/cli/crypto/pem"
 	"github.com/smallstep/cli/errs"
+	x509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/reader"
 	"github.com/urfave/cli"

@@ -2,12 +2,12 @@ package x509
 
 import (
 	"crypto/rand"
-	"crypto/x509"
 	"crypto/x509/pkix"
 	"math/big"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/pkg/x509"
 )
 
 // Intermediate implements the Profile for a intermediate certificate.

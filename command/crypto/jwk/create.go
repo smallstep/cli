@@ -3,6 +3,7 @@ package jwk
 import (
 	"bytes"
 	gocrypto "crypto"
+	realx509 "crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -523,7 +524,13 @@ func createAction(ctx *cli.Context) error {
 	// Add x5c (X.509 Certificate Chain) parameter
 	crtFiles := ctx.StringSlice("from-certificate")
 	for _, name := range crtFiles {
-		crt, err := pem.ReadCertificate(name)
+		_crt, err := pem.ReadCertificate(name)
+		if err != nil {
+			return err
+		}
+		// have: step-cli x509 Certificate
+		// want: crypto/x509 Certificate
+		crt, err := realx509.ParseCertificate(_crt.Raw)
 		if err != nil {
 			return err
 		}

@@ -2,7 +2,7 @@ package certificate
 
 import (
 	"crypto/tls"
-	"crypto/x509"
+	realx509 "crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -126,7 +126,7 @@ func inspectAction(ctx *cli.Context) error {
 	if strings.HasPrefix(crtFile, "https://") {
 		var (
 			err     error
-			rootCAs *x509.CertPool
+			rootCAs *realx509.CertPool
 		)
 		if roots := ctx.String("roots"); roots != "" {
 			rootCAs, err = stepx509.ReadCertPool(roots)
@@ -164,7 +164,7 @@ func inspectAction(ctx *cli.Context) error {
 	case "CERTIFICATE":
 		switch format {
 		case "text":
-			crt, err := x509.ParseCertificate(block.Bytes)
+			crt, err := realx509.ParseCertificate(block.Bytes)
 			if err != nil {
 				return errors.WithStack(err)
 			}

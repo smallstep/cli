@@ -1,7 +1,7 @@
 package x509
 
 import (
-	"crypto/x509"
+	realx509 "crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
 	"os"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/pkg/x509"
 )
 
 // WriteCertificate encodes a x509 Certificate to a file on disk in PEM format.
@@ -50,7 +51,7 @@ func LoadCertificate(crtPath string) (*x509.Certificate, *pem.Block, error) {
 }
 
 // ReadCertPool loads a certificate pool from disk.
-func ReadCertPool(path string) (*x509.CertPool, error) {
+func ReadCertPool(path string) (*realx509.CertPool, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -58,7 +59,7 @@ func ReadCertPool(path string) (*x509.CertPool, error) {
 
 	var (
 		files []string
-		pool  = x509.NewCertPool()
+		pool  = realx509.NewCertPool()
 	)
 	if info.IsDir() {
 		finfos, err := ioutil.ReadDir(path)

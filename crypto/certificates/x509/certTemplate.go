@@ -2,7 +2,6 @@ package x509
 
 import (
 	"crypto/rand"
-	"crypto/x509"
 	"crypto/x509/pkix"
 	"math/big"
 	"net"
@@ -12,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/pkg/x509"
 )
 
 const (

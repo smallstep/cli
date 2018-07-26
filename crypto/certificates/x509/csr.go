@@ -1,9 +1,10 @@
 package x509
 
 import (
-	"crypto/x509"
 	"encoding/pem"
 	"errors"
+
+	"github.com/smallstep/cli/pkg/x509"
 )
 
 // LoadCSRFromBytes loads a CSR given the ASN.1 DER format.

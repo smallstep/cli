@@ -233,7 +233,7 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["idna"]
-  revision = "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1"
+  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
 
 [[projects]]
   branch = "master"
@@ -274,7 +274,7 @@
     "go/internal/gcimporter",
     "go/types/typeutil"
   ]
-  revision = "ded554d0681e0cba3cf074977cdc12e2c0906fe6"
+  revision = "475b7a1e12f029fbb4d210958352057952ea9f7a"
 
 [[projects]]
   name = "gopkg.in/alecthomas/kingpin.v3-unstable"
