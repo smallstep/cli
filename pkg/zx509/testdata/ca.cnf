@@ -1,0 +1,80 @@
+SUBJECT_NAME = req_dn
+KEY_SIZE = 2048
+
+[req]
+default_bits       = ${ENV::KEY_SIZE}
+default_md         = sha256
+string_mask        = utf8only
+prompt             = no
+encrypt_key        = no
+distinguished_name = ${ENV::SUBJECT_NAME}
+req_extensions     = req_extensions
+
+[req_extensions]
+subjectAltName = IP:127.0.0.1
+
+[root_extensions]
+basicConstraints = critical, CA:true
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+keyUsage = critical, cRLSign, keyCertSign
+
+[intermediate_extensions]
+basicConstraints = critical, CA:true
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+keyUsage = critical, cRLSign, keyCertSign
+
+[leaf_extensions]
+basicConstraints = critical, CA:FALSE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = digitalSignature, keyEncipherment, dataEncipherment
+
+[root_ca]
+new_certs_dir = out
+unique_subject = no
+database = out/root.index
+serial = out/root.serial
+default_days = 1825
+default_md = sha256
+policy = root_ca_policy
+email_in_dn = no
+
+[intermediate_ca]
+new_certs_dir = out
+unique_subject = no
+database = out/intermediate.index
+serial = out/intermediate.serial
+default_days = 1825
+default_md = sha256
+policy = intermediate_ca_policy
+email_in_dn = no
+
+[root_ca_policy]
+commonName = supplied
+
+[intermediate_ca_policy]
+commonName = supplied
+
+[root_subject]
+C  = US
+ST = Michigan
+L  = Ann Arbor
+O  = ZCrypto
+CN = ZCrypto Root Authority
+
+[intermediate_subject]
+C  = US
+ST = Michigan
+L  = Ann Arbor
+O  = ZCrypto
+CN = ZCrypto Intermediate Authority
+
+[leaf_never_valid]
+C  = US
+ST = Michigan
+L  = Ann Arbor
+O  = Test
+CN = never-valid.example.com
+

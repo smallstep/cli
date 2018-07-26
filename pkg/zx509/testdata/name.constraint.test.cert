@@ -1,0 +1,110 @@
+-----BEGIN CERTIFICATE-----
+MIIFNDCCBB6gAwIBAgIFBDFmk+0wCwYJKoZIhvcNAQELMFYxCzAJBgNVBAYTAlVT
+MRYwFAYDVQQKEw1Nb3RoZXIgTmF0dXJlMRMwEQYDVQQLEwpFdmVyeXRoaW5nMRgw
+FgYDVQQDEw9OYW1lIGNvbnN0cmFpbnQxADAiGA8yMDU1MTIwMTA2MDcwOFoYDzIw
+NTYwOTAxMjE1ODMyWjCBmzELMAkGA1UEBhMCVVMxGDAWBgNVBAoTD0V4dHJlbWUg
+RGlzY29yZDEOMAwGA1UECxMFQ2hhb3MxFDASBgNVBAcTC1RhbGxhaGFzc2VlMQsw
+CQYDVQQIEwJGTDEcMBoGA1UECRMTMzIxMCBIb2xseSBNaWxsIFJ1bjEOMAwGA1UE
+ERMFMzAwNjIxDzANBgNVBAMTBmdvdi51czEAMIIBIjANBgkqhkiG9w0BAQEFAAOC
+AQ8AMIIBCgKCAQEAn+JmzHjuCRUfD7xtSNdfRcWjSmr1g13nDYYn/2dfMBz4AxYd
+lQEiB0/7dcEU7oC1LX+j0RvZW8RzASv/0drgN2WWarUrUmqR1Ka8NzYLyfz0cSoZ
+HnymzSUsTAIqIlrNgbTkOHfYo6wVmIZn1Nrj69ucF/I6oHYmeS/6QrSuPHKMw7rd
+MkBMs8ydMFAZmBORBxrA1btpxr7OyjYoxaICISzKV3vcC1kC4RRyDp7aqbDM3XaI
+dioUhLc4R3begfg1N1ouwHMCGyis4RKZSku9sFf537juNeFarBK3YJ7ElSxEpK5+
+kg7rDNjuUDfzSnk77Ege0K6+a0GHyyT5Ual1BwIDAQABo4IBwTCCAb0wDgYDVR0P
+AQH/BAQDAgCkMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDATAPBgNVHRMB
+Af8EBTADAQH/MA4GA1UdIwQHMAWAAwECAzBiBggrBgEFBQcBAQRWMFQwIQYIKwYB
+BQUHMAGGFWh0dHA6Ly90aGVjYS5uZXQvb2NzcDAvBggrBgEFBQcwAoYjaHR0cDov
+L3RoZWNhLm5ldC90b3RhbGx5dGhlY2VydC5jcnQwGwYDVR0gBBQwEjAIBgZngQwB
+AgIwBgYEKgMEBTCB1gYDVR0eBIHOMIHLoIGsMAWIAyoDBDAHgQVlbWFpbDAJgQdM
+dWxNYWlsMIGOpIGLMIGIMQswCQYDVQQGEwJVUzENMAsGA1UEChMEVUlVQzEMMAoG
+A1UECxMDRUNFMRIwEAYDVQQHEwlDaGFtcGFpZ24xCzAJBgNVBAgTAklMMRYwFAYD
+VQQJEw02MDEgV3JpZ2h0IFN0MQ4wDAYDVQQREwU2MTgyMDERMA8GA1UEAxMIdWl1
+Yy5uZXQxAKEaMAyCCmJhbm5lZC5jb20wCocIwKgBAf//AAAwEQYDVR0RBAowCIIG
+Z292LnVzMAsGCSqGSIb3DQEBCwOCAQEASxvJhcCgxbENfrLmAjWN6K7UFstegR1Q
+1w+kMBhXmP+mXhGQS/YQRdXuXoFSHgoVpoAj+WpMM4PT3oJBBr15M+bkddJQE8tB
+pBh1w4RJMRTPZg3jNvbtj0Hii0icLfcxVFl9C9tIFMd+AR/24fjbXHcmwr+S4CDn
+1x0FiruMxgHm0XJ7bKTdAkuGQmZNlifg8tW5MiKt4jFw2qL0l4w28oG85jGObeFa
+p95BsrVwjpV9xAlPGTo2W40AX8n7gsDDlIQ6U199vIrV3AHIYp4us7jbDQxgKEh9
+rR2lmDhRgyTnMyNNwdN4IYIu4EO+M3HMgSXE/Uq7luYRawlstr0hRQ==
+-----END CERTIFICATE-----
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            04:31:66:93:ed
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=US, O=Mother Nature, OU=Everything, CN=Name constraint
+        Validity
+            Not Before: Dec  1 06:07:08 2055 GMT
+            Not After : Sep  1 21:58:32 2056 GMT
+        Subject: C=US, O=Extreme Discord, OU=Chaos, L=Tallahassee, ST=FL/street=3210 Holly Mill Run/postalCode=30062, CN=gov.us
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (2048 bit)
+                Modulus (2048 bit):
+                    00:9f:e2:66:cc:78:ee:09:15:1f:0f:bc:6d:48:d7:
+                    5f:45:c5:a3:4a:6a:f5:83:5d:e7:0d:86:27:ff:67:
+                    5f:30:1c:f8:03:16:1d:95:01:22:07:4f:fb:75:c1:
+                    14:ee:80:b5:2d:7f:a3:d1:1b:d9:5b:c4:73:01:2b:
+                    ff:d1:da:e0:37:65:96:6a:b5:2b:52:6a:91:d4:a6:
+                    bc:37:36:0b:c9:fc:f4:71:2a:19:1e:7c:a6:cd:25:
+                    2c:4c:02:2a:22:5a:cd:81:b4:e4:38:77:d8:a3:ac:
+                    15:98:86:67:d4:da:e3:eb:db:9c:17:f2:3a:a0:76:
+                    26:79:2f:fa:42:b4:ae:3c:72:8c:c3:ba:dd:32:40:
+                    4c:b3:cc:9d:30:50:19:98:13:91:07:1a:c0:d5:bb:
+                    69:c6:be:ce:ca:36:28:c5:a2:02:21:2c:ca:57:7b:
+                    dc:0b:59:02:e1:14:72:0e:9e:da:a9:b0:cc:dd:76:
+                    88:76:2a:14:84:b7:38:47:76:de:81:f8:35:37:5a:
+                    2e:c0:73:02:1b:28:ac:e1:12:99:4a:4b:bd:b0:57:
+                    f9:df:b8:ee:35:e1:5a:ac:12:b7:60:9e:c4:95:2c:
+                    44:a4:ae:7e:92:0e:eb:0c:d8:ee:50:37:f3:4a:79:
+                    3b:ec:48:1e:d0:ae:be:6b:41:87:cb:24:f9:51:a9:
+                    75:07
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Key Usage: critical
+                Digital Signature, Key Encipherment, Certificate Sign
+            X509v3 Extended Key Usage:
+                TLS Web Client Authentication, TLS Web Server Authentication
+            X509v3 Basic Constraints: critical
+                CA:TRUE
+            X509v3 Authority Key Identifier:
+                keyid:01:02:03
+
+            Authority Information Access:
+                OCSP - URI:http://theca.net/ocsp
+                CA Issuers - URI:http://theca.net/totallythecert.crt
+
+            X509v3 Certificate Policies:
+                Policy: 2.23.140.1.2.2
+                Policy: 1.2.3.4.5
+
+            X509v3 Name Constraints:
+                Permitted:
+                  Registered ID1.2.3.4
+                  email:email
+                  email:LulMail
+                  DirName: C = US, O = UIUC, OU = ECE, L = Champaign, ST = IL, street = 601 Wright St, postalCode = 61820, CN = uiuc.net
+                Excluded:
+                  DNS:banned.com
+                  IP:192.168.1.1/255.255.0.0
+
+            X509v3 Subject Alternative Name:
+                DNS:gov.us
+    Signature Algorithm: sha256WithRSAEncryption
+        4b:1b:c9:85:c0:a0:c5:b1:0d:7e:b2:e6:02:35:8d:e8:ae:d4:
+        16:cb:5e:81:1d:50:d7:0f:a4:30:18:57:98:ff:a6:5e:11:90:
+        4b:f6:10:45:d5:ee:5e:81:52:1e:0a:15:a6:80:23:f9:6a:4c:
+        33:83:d3:de:82:41:06:bd:79:33:e6:e4:75:d2:50:13:cb:41:
+        a4:18:75:c3:84:49:31:14:cf:66:0d:e3:36:f6:ed:8f:41:e2:
+        8b:48:9c:2d:f7:31:54:59:7d:0b:db:48:14:c7:7e:01:1f:f6:
+        e1:f8:db:5c:77:26:c2:bf:92:e0:20:e7:d7:1d:05:8a:bb:8c:
+        c6:01:e6:d1:72:7b:6c:a4:dd:02:4b:86:42:66:4d:96:27:e0:
+        f2:d5:b9:32:22:ad:e2:31:70:da:a2:f4:97:8c:36:f2:81:bc:
+        e6:31:8e:6d:e1:5a:a7:de:41:b2:b5:70:8e:95:7d:c4:09:4f:
+        19:3a:36:5b:8d:00:5f:c9:fb:82:c0:c3:94:84:3a:53:5f:7d:
+        bc:8a:d5:dc:01:c8:62:9e:2e:b3:b8:db:0d:0c:60:28:48:7d:
+        ad:1d:a5:98:38:51:83:24:e7:33:23:4d:c1:d3:78:21:82:2e:
+        e0:43:be:33:71:cc:81:25:c4:fd:4a:bb:96:e6:11:6b:09:6c:
+        b6:bd:21:45

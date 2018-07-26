@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
 	"github.com/smallstep/cli/errs"
+	zx509 "github.com/smallstep/cli/pkg/zx509"
 	"github.com/urfave/cli"
-	zx509 "github.com/zmap/zcrypto/x509"
 )
 
 func inspectCommand() cli.Command {
