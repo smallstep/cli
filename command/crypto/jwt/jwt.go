@@ -33,7 +33,6 @@ A JWT signed using JWS has three parts:
 ## EXAMPLES
 
 Create a signed JWT using a JWK (with line breaks for display purposes only):
-
 '''
 $ step crypto jwt sign --key p256.priv.json --iss "joe@example.com" \
       --aud "https://example.com" --sub auth --exp $(date -v+1m +"%s")
@@ -42,6 +41,18 @@ eyJhbGciOiJFUzI1NiIsImtpZCI6IlpqR1g5N0xtY2ZsUG9sV3Zzb0FXekM1V1BXa05GRkgzUWRLTFVX
 eyJhdWQiOiJodHRwczovL2V4YW1wbGUuY29tIiwiZXhwIjoxNTM1MjM2MTUyLCJpYXQiOjE1MzI1NTc3NTQsImlzcyI6ImpvZUBleGFtcGxlLmNvbSIsIm5iZiI6MTUzMjU1Nzc1NCwic3ViIjoiYXV0aCJ9
 .
 Z4veKtRmZLoqHNlTrcYo2W1ikLkDcSNfrT52zAGS9cF90Zi3aTXt_75pkikREvMrkC4mhGDdqxCf9ZHq4VnSvg
+'''
+
+Create a signed JWT using a JWK and a custom payload:
+'''
+$ echo '{"srv":"https://srv.example.com"}' | run crypto jwt sign \
+      --key p256.priv.json --iss "joe@example.com" \
+      --aud "https://example.com" --sub auth --exp $(date -v+1m +"%s") -
+eyJhbGciOiJFUzI1NiIsImtpZCI6IlpqR1g5N0xtY2ZsUG9sV3Zzb0FXekM1V1BXa05GRkgzUWRLTFVXOTc4aGsiLCJ0eXAiOiJKV1QifQ
+.
+eyJhdWQiOiJodHRwczovL2V4YW1wbGUuY29tIiwiZXhwIjoxNTM1MjQyNDcyLCJpYXQiOjE1MzI1NjQwNzMsImlzcyI6ImpvZUBleGFtcGxlLmNvbSIsIm5iZiI6MTUzMjU2NDA3Mywic3J2IjoiaHR0cHM6Ly9zcnYuZXhhbXBsZS5jb20iLCJzdWIiOiJhdXRoIn0
+.
+DlSkxICjk2h1LarwJgXPbXQe7DwpLMOCvWp3I4GMcBP_5_QYPhVNBPQEeTKAUuQjYwlxZ5zVQnyp8ujvyf1Lqw
 '''
 
 Verify the the previous token:
@@ -55,13 +66,14 @@ $ echo $TOKEN | step crypto jwt verify --key p256.pub.json --iss "joe@example.co
   },
   "payload": {
     "aud": "https://example.com",
-    "exp": 1535236152,
-    "iat": 1532557754,
+    "exp": 1535242472,
+    "iat": 1532564073,
     "iss": "joe@example.com",
-    "nbf": 1532557754,
+    "nbf": 1532564073,
+    "srv": "https://srv.example.com",
     "sub": "auth"
   },
-  "signature": "Z4veKtRmZLoqHNlTrcYo2W1ikLkDcSNfrT52zAGS9cF90Zi3aTXt_75pkikREvMrkC4mhGDdqxCf9ZHq4VnSvg"
+  "signature": "DlSkxICjk2h1LarwJgXPbXQe7DwpLMOCvWp3I4GMcBP_5_QYPhVNBPQEeTKAUuQjYwlxZ5zVQnyp8ujvyf1Lqw"
 }
 '''
 
@@ -76,13 +88,14 @@ $ echo $TOKEN | step crypto jwt inspect --insecure
   },
   "payload": {
     "aud": "https://example.com",
-    "exp": 1535236152,
-    "iat": 1532557754,
+    "exp": 1535242472,
+    "iat": 1532564073,
     "iss": "joe@example.com",
-    "nbf": 1532557754,
+    "nbf": 1532564073,
+    "srv": "https://srv.example.com",
     "sub": "auth"
   },
-  "signature": "Z4veKtRmZLoqHNlTrcYo2W1ikLkDcSNfrT52zAGS9cF90Zi3aTXt_75pkikREvMrkC4mhGDdqxCf9ZHq4VnSvg"
+  "signature": "DlSkxICjk2h1LarwJgXPbXQe7DwpLMOCvWp3I4GMcBP_5_QYPhVNBPQEeTKAUuQjYwlxZ5zVQnyp8ujvyf1Lqw"
 }
 '''`,
 		Subcommands: cli.Commands{
