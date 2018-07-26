@@ -19,6 +19,47 @@ func Command() cli.Command {
 		Name:      "kdf",
 		Usage:     "key derivation functions for password hashing and verification",
 		UsageText: "step crypto kdf <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step crypto kdf** command group creates and verifies passwords using key
+derivation functions.
+
+## EXAMPLES
+
+Derive a password using scrypt:
+'''
+$ step crypto kdf hash
+Enter password to hash: ********
+$scrypt$ln=15,r=8,p=1$3TCG+xs8HWSIHonnqTp6Xg$UI8CYfz6koUaRMjDWEFgujIxM63fYnAcc0HhpUryFn8
+
+$ step crypto kdf hash --insecure password
+$scrypt$ln=15,r=8,p=1$U8Fl1sO6LWkFeXs5GQS0vA$Rj8nPeaBFQUzbU21N+hhm3I/s1WTxao7Dje4G6ZvO9Q
+'''
+
+Derive a password using bcrypt:
+'''
+$ step crypto kdf hash --alg bcrypt
+Enter password to hash: ********
+$2a$10$EgTYeokp/EhvlMpaDYX56O67M/Ve4JyTl9DHwailYYFOBT3COSTuy
+
+$ step crypto kdf hash --alg bcrypt --insecure password
+$2a$10$kgYs5dEKs2C6Y5PXnU7eTuPzHMeSoCnkvtTL7ghsPDdSSmw5ec/sS
+'''
+
+Validate a hash:
+'''
+$ step crypto kdf compare '$scrypt$ln=15,r=8,p=1$3TCG+xs8HWSIHonnqTp6Xg$UI8CYfz6koUaRMjDWEFgujIxM63fYnAcc0HhpUryFn8'
+Enter password to compare: ********
+ok
+
+$ step crypto kdf compare --insecure '$scrypt$ln=15,r=8,p=1$3TCG+xs8HWSIHonnqTp6Xg$UI8CYfz6koUaRMjDWEFgujIxM63fYnAcc0HhpUryFn8' password
+ok
+
+$ step crypto kdf compare '$2a$10$EgTYeokp/EhvlMpaDYX56O67M/Ve4JyTl9DHwailYYFOBT3COSTuy'
+Enter password to compare: ********
+ok
+
+$ step crypto kdf compare --insecure '$2a$10$EgTYeokp/EhvlMpaDYX56O67M/Ve4JyTl9DHwailYYFOBT3COSTuy' password
+ok
+'''`,
 		Subcommands: cli.Commands{
 			hashCommand(),
 			compareCommand(),
@@ -52,6 +93,8 @@ format.
 The KDFs are run with parameters that are considered safe. The 'scrypt'
 parameters are currently fixed at N=32768, r=8 and p=1. The 'bcrypt' work
 factor is currently fixed at 10.
+
+For examples, see **step help crypto kdf**.
 
 ## POSITIONAL ARGUMENTS
 
@@ -168,6 +211,8 @@ return code.
 TTY (i.e., you're running the command in an interactive terminal and not
 piping input to it) you'll be prompted to enter a value on STDERR. If STDIN is
 not a TTY it will be read without prompting.
+
+For examples, see **step help crypto kdf**.
 
 POSITIONAL ARGUMENTS
 
