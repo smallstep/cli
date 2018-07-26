@@ -18,6 +18,35 @@ func signCommand() cli.Command {
 		Name:      "sign",
 		Usage:     "signs small messages using public-key cryptography",
 		UsageText: "step crypto nacl sign <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `
+**step crypto nacl sign** command group uses public-key cryptography to sign
+and verify messages.
+
+TODO
+
+## EXAMPLES
+
+Create a keypair for verifying amd signing messages:
+'''
+$ step crypto nacl sign keypair nacl.sign.pub nacl.sign.priv
+'''
+
+Sign a message using the private key:
+'''
+$ step crypto nacl sign sign nacl.sign.priv
+Write text to sign: ********
+rNrOfqsv4svlRnVPSVYe2REXodL78yEMHtNkzAGNp4MgHuVGoyayp0zx4D5rjTzYVVrD2HRP306ZILT62ohvCG1lc3NhZ2U
+
+$ cat message.txt | step crypto nacl sign sign ~/step/keys/nacl.recipient.sign.priv
+rNrOfqsv4svlRnVPSVYe2REXodL78yEMHtNkzAGNp4MgHuVGoyayp0zx4D5rjTzYVVrD2HRP306ZILT62ohvCG1lc3NhZ2U
+'''
+
+Verify the signed message using the public key:
+'''
+$ echo rNrOfqsv4svlRnVPSVYe2REXodL78yEMHtNkzAGNp4MgHuVGoyayp0zx4D5rjTzYVVrD2HRP306ZILT62ohvCG1lc3NhZ2U \
+     | step crypto nacl sign open nacl.sign.pub
+message
+'''`,
 		Subcommands: cli.Commands{
 			signKeypairCommand(),
 			signOpenCommand(),
@@ -32,6 +61,10 @@ func signKeypairCommand() cli.Command {
 		Action:    cli.ActionFunc(signKeypairAction),
 		Usage:     "generates a pair for use with sign and open",
 		UsageText: "**step crypto nacl sign keypair** <pub-file> <priv-file>",
+		Description: `**step crypto nacl sign keypair** generates a secret key and a corresponding
+public key valid for verifying and signing messages.
+
+For examples, see **step help crypto nacl sign**.`,
 	}
 }
 
@@ -41,6 +74,10 @@ func signOpenCommand() cli.Command {
 		Action:    cli.ActionFunc(signOpenAction),
 		Usage:     "verifies a signed message produced by sign",
 		UsageText: "**step crypto nacl sign open** <pub-file>",
+		Description: `**step crypto nacl sign open** verifies the signature of a message using the
+signer's public key.
+
+For examples, see **step help crypto nacl sign**.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "raw",
@@ -56,6 +93,10 @@ func signSignCommand() cli.Command {
 		Action:    cli.ActionFunc(signSignAction),
 		Usage:     "signs a message using Ed25519",
 		UsageText: "**step crypto nacl sign sign** <priv-file>",
+		Description: `**step crypto nacl sign keypair** signs a message m using the signer's private
+key.
+
+For examples, see **step help crypto nacl sign**.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "raw",
@@ -105,7 +146,7 @@ func signOpenAction(ctx *cli.Context) error {
 		return errors.New("invalid public key: key size is not 32 bytes")
 	}
 
-	input, err := utils.ReadAll(os.Stdin)
+	input, err := utils.ReadInput("Write signed message to open: ")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

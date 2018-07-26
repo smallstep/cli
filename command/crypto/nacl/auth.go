@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
@@ -18,6 +17,33 @@ func authCommand() cli.Command {
 		Name:      "auth",
 		Usage:     "authenticates a message using a secret key",
 		UsageText: "step crypto nacl auth <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step crypto nacl auth** command group uses secret key cryptography to
+authenticate and verify messages using a secret key.
+
+TODO
+
+## EXAMPLES
+
+Authenticate a message using a 256-bit key, a new nacl box private key can be
+used as the secret:
+'''
+$ step crypto nacl auth digest auth.key
+Write text to authenticate: ********
+33c54aeb54077808fcfccadcd2f01971b120e314dffa61516b0738b74fdc8ff1
+
+$ cat message.txt | step crypto nacl auth digest auth.key
+33c54aeb54077808fcfccadcd2f01971b120e314dffa61516b0738b74fdc8ff1
+'''
+
+Verify the message with the hash:
+'''
+$ step crypto nacl auth verify auth.key 33c54aeb54077808fcfccadcd2f01971b120e314dffa61516b0738b74fdc8ff1
+Write text to verify: ********
+ok
+
+$ cat message.txt | step crypto nacl auth verify auth.key 33c54aeb54077808fcfccadcd2f01971b120e314dffa61516b0738b74fdc8ff1
+ok
+'''`,
 		Subcommands: cli.Commands{
 			authDigestCommand(),
 			authVerifyCommand(),
@@ -27,21 +53,31 @@ func authCommand() cli.Command {
 
 func authDigestCommand() cli.Command {
 	return cli.Command{
-		Name:        "digest",
-		Action:      cli.ActionFunc(authDigestAction),
-		Usage:       "generates a 32-byte digest for a message",
-		UsageText:   "**step crypto nacl auth digest** <key-file>",
-		Description: `TODO`,
+		Name:      "digest",
+		Action:    cli.ActionFunc(authDigestAction),
+		Usage:     "generates a 32-byte digest for a message",
+		UsageText: "**step crypto nacl auth digest** <key-file>",
+		Description: `**step crypto nacl auth digest** creates a digest to authenticate of a message
+using a secret key.
+
+TODO
+
+For examples, see **step help crypto nacl auth**.`,
 	}
 }
 
 func authVerifyCommand() cli.Command {
 	return cli.Command{
-		Name:        "verify",
-		Action:      cli.ActionFunc(authVerifyAction),
-		Usage:       "checks digest is a valid for a message",
-		UsageText:   "**step crypto nacl auth verify** <key-file> <digest>",
-		Description: `TODO`,
+		Name:      "verify",
+		Action:    cli.ActionFunc(authVerifyAction),
+		Usage:     "checks digest is a valid for a message",
+		UsageText: "**step crypto nacl auth verify** <key-file> <digest>",
+		Description: `**step crypto nacl auth verify** verifies the digest of a message with a secret
+key.
+
+TODO
+
+For examples, see **step help crypto nacl auth**.`,
 	}
 }
 
@@ -59,9 +95,9 @@ func authDigestAction(ctx *cli.Context) error {
 		return errors.Errorf("invalid key file: key size is not %d bytes", auth.KeySize)
 	}
 
-	input, err := utils.ReadAll(os.Stdin)
+	input, err := utils.ReadInput("Write text to digest: ")
 	if err != nil {
-		return errs.Wrap(err, "error reading from STDIN")
+		return errors.Wrap(err, "error reading input")
 	}
 
 	var k [32]byte
@@ -92,9 +128,9 @@ func authVerifyAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error decoding digest")
 	}
 
-	input, err := utils.ReadAll(os.Stdin)
+	input, err := utils.ReadInput("Write text to verify: ")
 	if err != nil {
-		return errs.Wrap(err, "error reading from STDIN")
+		return errors.Wrap(err, "error reading input")
 	}
 
 	var k [32]byte

@@ -14,10 +14,32 @@ import (
 
 func secretboxCommand() cli.Command {
 	return cli.Command{
-		Name:        "secretbox",
-		Usage:       "encrypts and authenticates small messages using secret-key cryptography",
-		UsageText:   "step crypto nacl secretbox <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `TODO`,
+		Name:      "secretbox",
+		Usage:     "encrypts and authenticates small messages using secret-key cryptography",
+		UsageText: "step crypto nacl secretbox <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step crypto nacl secretbox** command group uses secret-key cryptography to
+encrypt, decrypt and authenticate messages.
+
+TODO
+
+## EXAMPLES
+
+Encrypt a message using a 256-bit secret key, a new nacl box private key can
+be used as the secret:
+'''
+$ step crypto nacl secretbox seal nonce secretbox.key
+Write text to seal: ********
+o2NJTsIJsk0dl4epiBwS1mM4xFED7iE
+
+$ cat message.txt | step crypto nacl secretbox seal nonce secretbox.key
+o2NJTsIJsk0dl4epiBwS1mM4xFED7iE
+'''
+
+Decrypt and authenticate the message:
+'''
+$ echo o2NJTsIJsk0dl4epiBwS1mM4xFED7iE | step crypto nacl secretbox open nonce secretbox.key
+message
+'''`,
 		Subcommands: cli.Commands{
 			secretboxOpenCommand(),
 			secretboxSealCommand(),
@@ -32,7 +54,12 @@ func secretboxOpenCommand() cli.Command {
 		Usage:  "authenticates and decrypts a box produced by seal",
 		UsageText: `**step crypto nacl secretbox open** <nonce> <key-file>
 		[--raw]`,
-		Description: `TODO`,
+		Description: `**step crypto nacl secretbox open** verifies and decrypts a ciphertext using a
+secret key and a nonce.
+
+TODO
+
+For examples, see **step help crypto nacl secretbox**.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "raw",
@@ -49,7 +76,12 @@ func secretboxSealCommand() cli.Command {
 		Usage:  "produces an encrypted ciphertext",
 		UsageText: `**step crypto nacl secretbox seal** <nonce> <key-file>
 		[--raw]`,
-		Description: `TODO`,
+		Description: `**step crypto nacl secretbox seal** encrypts and authenticates a message using
+a secret key and a nonce.
+
+TODO
+
+For examples, see **step help crypto nacl secretbox**.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "raw",

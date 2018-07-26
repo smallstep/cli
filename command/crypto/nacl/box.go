@@ -18,6 +18,33 @@ func boxCommand() cli.Command {
 		Name:      "box",
 		Usage:     "authenticate and encrypt small messages using public-key cryptography",
 		UsageText: "step crypto nacl box <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step crypto nacl box** command group uses public-key cryptography to
+encrypt, decrypt and authenticate messages.
+
+## EXAMPLES
+
+Create a keypair for encrypting/decrypting messages:
+'''
+# Bob
+$ step crypto nacl box keypair bob.box.pub bob.box.priv
+
+# Alice
+$ step crypto nacl box keypair alice.box.pub alice.box.priv
+'''
+
+Bob encrypts a message for Alice using her public key and signs it using his
+private key:
+'''
+$ echo message | step crypto nacl box seal nonce alice.box.pub bob.box.priv
+0oM0A6xIezA6iMYssZECmbMRQh77mzDt
+'''
+
+Alice receives the encrypted message and the nonce and decrypts with her
+private key and validates the message from Bob using his public key:
+'''
+$ echo 0oM0A6xIezA6iMYssZECmbMRQh77mzDt | step crypto nacl box open nonce bob.box.pub alice.box.priv
+message
+'''`,
 		Subcommands: cli.Commands{
 			boxKeypairCommand(),
 			boxOpenCommand(),
@@ -34,6 +61,8 @@ func boxKeypairCommand() cli.Command {
 		UsageText: "**step crypto nacl box keypair** <pub-file> <priv-file>",
 		Description: `Generates a new public/private keypair suitable for use with seal and open.
 The private key is encrypted using a password in a nacl secretbox.
+
+For examples, see **step help crypto nacl box**.
 
 ## POSITIONAL ARGUMENTS
 
@@ -55,6 +84,8 @@ func boxOpenCommand() cli.Command {
 		Description: `Authenticate and decrypt a box produced by seal using the specified KEY. If
 PRIV_KEY is encrypted you will be prompted for the password. The sealed box is
 read from STDIN and the decrypted plaintext is written to STDOUT.
+
+For examples, see **step help crypto nacl box**.
 
 ## POSITIONAL ARGUMENTS
 
