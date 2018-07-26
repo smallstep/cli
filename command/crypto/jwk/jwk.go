@@ -68,7 +68,7 @@ $ step crypto jwk keyset find ks.json --kid L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB
 
 See the public version of a private JWK:
 '''
-$ cat priv.json | run crypto jwk public
+$ cat priv.json | step crypto jwk public
 {
   "use": "sig",
   "kty": "EC",
@@ -82,7 +82,7 @@ $ cat priv.json | run crypto jwk public
 
 Create a JWK Thumbprint for a JWK:
 '''
-$ cat priv.json | run crypto jwk thumbprint
+$ cat priv.json | step crypto jwk thumbprint
 L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY
 '''`,
 		Subcommands: cli.Commands{

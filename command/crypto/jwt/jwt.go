@@ -45,7 +45,7 @@ Z4veKtRmZLoqHNlTrcYo2W1ikLkDcSNfrT52zAGS9cF90Zi3aTXt_75pkikREvMrkC4mhGDdqxCf9ZHq
 
 Create a signed JWT using a JWK and a custom payload:
 '''
-$ echo '{"srv":"https://srv.example.com"}' | run crypto jwt sign \
+$ echo '{"srv":"https://srv.example.com"}' | step crypto jwt sign \
       --key p256.priv.json --iss "joe@example.com" \
       --aud "https://example.com" --sub auth --exp $(date -v+1m +"%s") -
 eyJhbGciOiJFUzI1NiIsImtpZCI6IlpqR1g5N0xtY2ZsUG9sV3Zzb0FXekM1V1BXa05GRkgzUWRLTFVXOTc4aGsiLCJ0eXAiOiJKV1QifQ
