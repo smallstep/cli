@@ -205,8 +205,10 @@ func signAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	switch len(args) {
 	case 0:
-		// empty extra payload
-		payload = make(map[string]interface{})
+		// read payload from stdin if there is data
+		if payload, err = readPayload(""); err != nil {
+			return err
+		}
 	case 1:
 		// read payload from file or stdin (-)
 		if payload, err = readPayload(args[0]); err != nil {
@@ -352,9 +354,19 @@ func signAction(ctx *cli.Context) error {
 
 func readPayload(filename string) (interface{}, error) {
 	var r io.Reader
-	if filename == "-" {
+	switch filename {
+	case "":
+		st, err := os.Stdin.Stat()
+		if err != nil {
+			return nil, errors.Wrap(err, "error reading data")
+		}
+		if st.Size() == 0 {
+			return make(map[string]interface{}), nil
+		}
 		r = os.Stdin
-	} else {
+	case "-":
+		r = os.Stdin
+	default:
 		b, err := ioutil.ReadFile(filename)
 		if err != nil {
 			return nil, errs.FileError(err, filename)
@@ -364,7 +376,7 @@ func readPayload(filename string) (interface{}, error) {
 
 	v := make(map[string]interface{})
 	if err := json.NewDecoder(r).Decode(&v); err != nil {
-		if filename == "-" {
+		if filename == "" || filename == "-" {
 			return nil, errors.Wrap(err, "error decoding JSON from STDIN")
 		}
 		return nil, errors.Wrapf(err, "error decoding JSON from %s", filename)
