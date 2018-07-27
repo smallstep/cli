@@ -12,9 +12,9 @@ import (
 	"github.com/pkg/errors"
 	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
 	"github.com/smallstep/cli/errs"
+	zx509 "github.com/smallstep/zcrypto/x509"
+	"github.com/smallstep/zlint"
 	"github.com/urfave/cli"
-	zx509 "github.com/zmap/zcrypto/x509"
-	"github.com/zmap/zlint"
 )
 
 func lintCommand() cli.Command {

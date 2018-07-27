@@ -15,7 +15,7 @@ import (
 	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
 	"github.com/smallstep/cli/errs"
 	x509 "github.com/smallstep/cli/pkg/x509"
-	zx509 "github.com/smallstep/cli/pkg/zx509"
+	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
 )
 

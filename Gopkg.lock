@@ -179,6 +179,27 @@
   revision = "ffb96c45c4dc20b1e91a9106edeee278c65f3bcc"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/smallstep/zcrypto"
+  packages = [
+    "json",
+    "x509",
+    "x509/ct",
+    "x509/pkix"
+  ]
+  revision = "1328e3bc4465a400be1fef13183e3e539932ab91"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/smallstep/zlint"
+  packages = [
+    ".",
+    "lints",
+    "util"
+  ]
+  revision = "d84eaafe274f9dc1f811ebfbb073e18c466e2a44"
+
+[[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
@@ -212,16 +233,6 @@
     "x509/pkix"
   ]
   revision = "8a129f796df4f732131f4617e81a0ea3c9dc63cf"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/zmap/zlint"
-  packages = [
-    ".",
-    "lints",
-    "util"
-  ]
-  revision = "12b8dc0338e6261fb4ad6a623c0a4c1bc99b3dfe"
 
 [[projects]]
   branch = "master"
@@ -326,6 +337,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bcf91b0bbae8aab0bcd8f4ccd1cd94067c3ccdc5b5bb8128994855e65ebe587d"
+  inputs-digest = "ac4ad97a742ebc02f138de9a1bd647eded322cbb3d2c8168e4d564dc041e74ed"
   solver-name = "gps-cdcl"
   solver-version = 1
