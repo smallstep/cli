@@ -1,9 +1,7 @@
 package kdf
 
 import (
-	"crypto/rand"
 	"encoding/base64"
-	"io"
 	"strconv"
 	"strings"
 
@@ -15,15 +13,6 @@ import (
 //
 // https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md
 var phcEncoding = base64.RawStdEncoding
-
-// phcGetSalt is a helper that returns a random slice of n bytes.
-func phcGetSalt(n int) ([]byte, error) {
-	salt := make([]byte, n)
-	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
-		return nil, err
-	}
-	return salt, nil
-}
 
 // phcAtoi returns the number in the string value or n if value is empty.
 func phcAtoi(value string, n int) (int, error) {
@@ -68,7 +57,7 @@ func phcEncode(identifier, params string, salt, hash []byte) string {
 func phcDecode(s string) (id string, version int, params string, salt []byte, hash []byte, err error) {
 	subs := strings.SplitN(s, "$", 6)
 	if subs[0] != "" || len(subs) < 2 || (subs[1] == bcryptHash && len(subs) != 4) {
-		return "", 0, "", nil, nil, errors.Errorf("cannot decode password hash %s", s)
+		return "", 0, "", nil, nil, errors.New("cannot decode password hash")
 	}
 
 	// Special case for bcrypt
@@ -112,7 +101,7 @@ func phcDecode(s string) (id string, version int, params string, salt []byte, ha
 	case 2: // id
 		id = subs[1]
 	default:
-		return "", 0, "", nil, nil, errors.Errorf("cannot decode password hash %s", s)
+		return "", 0, "", nil, nil, errors.New("cannot decode password hash")
 	}
 
 	return

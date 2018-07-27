@@ -2,7 +2,6 @@ package kdf
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/pkg/errors"
 )
@@ -10,6 +9,21 @@ import (
 const (
 	argon2iHash  = "argon2i"
 	argon2idHash = "argon2id"
+)
+
+var (
+	// Argon2MaxMemory indicates the maximum amount of memory that Argon2 KDFs
+	// can support. It defines the maximum value for the parameter m.  The
+	// current value is set to 16GB.
+	Argon2MaxMemory = 16 * 1048576
+
+	// Argon2MaxParallelism is the maximum number of threads used. It's the
+	// maximum value for the parameter p.
+	Argon2MaxParallelism = 32
+
+	// Argon2MaxParallelism is the maximum number of threads used. It's the
+	// maximum value for the parameter t.
+	Argon2MaxIterations = 128
 )
 
 type argon2Param struct {
@@ -33,7 +47,7 @@ func newArgon2Params(s string) (*argon2Param, error) {
 
 	if t, err := phcAtoi(params["t"], 3); err != nil {
 		return nil, err
-	} else if t < 1 {
+	} else if t < 1 || t > Argon2MaxIterations {
 		return nil, errors.Errorf("invalid argon2 parameter t=%s", params["t"])
 	} else {
 		ap.t = uint32(t)
@@ -41,16 +55,16 @@ func newArgon2Params(s string) (*argon2Param, error) {
 
 	if m, err := phcAtoi(params["m"], 12); err != nil {
 		return nil, err
-	} else if m < 8 || m > math.MaxUint32 {
-		return nil, errors.Errorf("invalid argon2 parameter m=%s", params[","])
+	} else if m < 8 || m > Argon2MaxMemory {
+		return nil, errors.Errorf("invalid argon2 parameter m=%s", params["m"])
 	} else {
 		ap.m = uint32(m)
 	}
 
 	if p, err := phcAtoi(params["p"], 1); err != nil {
 		return nil, err
-	} else if p < 1 || p > math.MaxUint8 {
-		return nil, errors.Errorf("invalid argon2 parameter p=%s", params["r"])
+	} else if p < 1 || p > Argon2MaxParallelism {
+		return nil, errors.Errorf("invalid argon2 parameter p=%s", params["p"])
 	} else {
 		ap.p = uint8(p)
 	}
