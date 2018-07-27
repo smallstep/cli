@@ -227,9 +227,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
-    "argon2",
     "bcrypt",
-    "blake2b",
     "blowfish",
     "cryptobyte",
     "cryptobyte/asn1",
@@ -265,7 +263,6 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = [
-    "cpu",
     "unix",
     "windows"
   ]
@@ -329,6 +326,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "773a0b5b5c3b09287189e9c99fcd7063ca8a75b36b45d16f140ed9a036b266d5"
+  inputs-digest = "bcf91b0bbae8aab0bcd8f4ccd1cd94067c3ccdc5b5bb8128994855e65ebe587d"
   solver-name = "gps-cdcl"
   solver-version = 1
