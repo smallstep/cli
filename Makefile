@@ -65,7 +65,7 @@ simple:
 	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -i -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
 	@echo "Build Complete!"
 
-.PHONY: build
+.PHONY: build simple
 
 #########################################
 # Go generate
