@@ -21,7 +21,7 @@ var (
 	// maximum value for the parameter p.
 	Argon2MaxParallelism = 32
 
-	// Argon2MaxParallelism is the maximum number of threads used. It's the
+	// Argon2MaxIterations is the maximum number of iterations to run. It's the
 	// maximum value for the parameter t.
 	Argon2MaxIterations = 128
 )
