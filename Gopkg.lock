@@ -56,12 +56,6 @@
   revision = "2b8494104d86337cdd41d0a49cbed8e4583c0ab4"
 
 [[projects]]
-  name = "github.com/davecgh/go-spew"
-  packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/golang/lint"
   packages = ["golint"]
@@ -121,12 +115,6 @@
   version = "v1.10.0"
 
 [[projects]]
-  name = "github.com/op/go-logging"
-  packages = ["."]
-  revision = "b2cb9fa56473e98db8caba80237377e83fe44db5"
-  version = "v1"
-
-[[projects]]
   name = "github.com/pelletier/go-toml"
   packages = ["."]
   revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
@@ -137,12 +125,6 @@
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
-
-[[projects]]
-  name = "github.com/pmezard/go-difflib"
-  packages = ["difflib"]
-  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
-  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/pquerna/otp"
@@ -200,12 +182,6 @@
   revision = "d84eaafe274f9dc1f811ebfbb073e18c466e2a44"
 
 [[projects]]
-  name = "github.com/stretchr/testify"
-  packages = ["assert"]
-  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
-  version = "v1.2.2"
-
-[[projects]]
   branch = "master"
   name = "github.com/tsenart/deadcode"
   packages = ["."]
@@ -222,17 +198,6 @@
   packages = ["publicsuffix"]
   revision = "386050f8211b04c965721c3591e7d96650a1ea86"
   version = "v0.4.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/zmap/zcrypto"
-  packages = [
-    "json",
-    "x509",
-    "x509/ct",
-    "x509/pkix"
-  ]
-  revision = "8a129f796df4f732131f4617e81a0ea3c9dc63cf"
 
 [[projects]]
   branch = "master"
@@ -337,6 +302,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ac4ad97a742ebc02f138de9a1bd647eded322cbb3d2c8168e4d564dc041e74ed"
+  inputs-digest = "dcc141b40cbb4b3920fb42bf231962fee9cb0bafa496347ed7548c48db18f1da"
   solver-name = "gps-cdcl"
   solver-version = 1
