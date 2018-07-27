@@ -2046,7 +2046,6 @@ func signingParamsForPublicKey(pub interface{}, requestedSigAlgo SignatureAlgori
 		}
 
 	case ed25519.PublicKey:
-		// ed25519.PublicKey doesn't return a pointer to the key so we check for both
 		pubType = ED25519
 		hashFunc = 0
 		shouldHash = false
@@ -2094,6 +2093,16 @@ func signingParamsForPublicKey(pub interface{}, requestedSigAlgo SignatureAlgori
 // emptyASN1Subject is the ASN.1 DER encoding of an empty Subject, which is
 // just an empty SEQUENCE.
 var emptyASN1Subject = []byte{0x30, 0}
+
+func hash(hashFunc crypto.Hash, raw []byte) []byte {
+	digest := raw
+	if hashFunc != 0 {
+		h := hashFunc.New()
+		h.Write(raw)
+		digest = h.Sum(nil)
+	}
+	return digest
+}
 
 // CreateCertificate creates a new X.509v3 certificate based on a template.
 // The following members of template are used: AuthorityKeyId,
@@ -2173,12 +2182,7 @@ func CreateCertificate(rand io.Reader, template, parent *Certificate, pub, priv 
 
 	c.Raw = tbsCertContents
 
-	digest := tbsCertContents
-	if hashFunc != 0 {
-		h := hashFunc.New()
-		h.Write(tbsCertContents)
-		digest = h.Sum(nil)
-	}
+	digest := hash(hashFunc, c.Raw)
 
 	var signerOpts crypto.SignerOpts
 	signerOpts = hashFunc
@@ -2280,9 +2284,7 @@ func (c *Certificate) CreateCRL(rand io.Reader, priv interface{}, revokedCerts [
 		return
 	}
 
-	h := hashFunc.New()
-	h.Write(tbsCertListContents)
-	digest := h.Sum(nil)
+	digest := hash(hashFunc, tbsCertListContents)
 
 	var signature []byte
 	signature, err = key.Sign(rand, digest, hashFunc)
@@ -2439,9 +2441,7 @@ func CreateCertificateRequest(rand io.Reader, template *CertificateRequest, priv
 		return nil, errors.New("x509: certificate private key does not implement crypto.Signer")
 	}
 
-	var hashFunc crypto.Hash
-	var sigAlgo pkix.AlgorithmIdentifier
-	hashFunc, sigAlgo, err = signingParamsForPublicKey(key.Public(), template.SignatureAlgorithm)
+	hashFunc, sigAlgo, err := signingParamsForPublicKey(key.Public(), template.SignatureAlgorithm)
 	if err != nil {
 		return nil, err
 	}
@@ -2560,9 +2560,7 @@ func CreateCertificateRequest(rand io.Reader, template *CertificateRequest, priv
 	}
 	tbsCSR.Raw = tbsCSRContents
 
-	h := hashFunc.New()
-	h.Write(tbsCSRContents)
-	digest := h.Sum(nil)
+	digest := hash(hashFunc, tbsCSRContents)
 
 	var signature []byte
 	signature, err = key.Sign(rand, digest, hashFunc)

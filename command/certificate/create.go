@@ -247,17 +247,6 @@ func createAction(ctx *cli.Context) error {
 		return errs.EqualArguments(ctx, "CRT_FILE", "KEY_FILE")
 	}
 
-	prof := ctx.String("profile")
-	caPath := ctx.String("ca")
-	caKeyPath := ctx.String("ca-key")
-	if prof != "root-ca" {
-		if caPath == "" {
-			return errs.RequiredWithFlagValue(ctx, "profile", prof, "ca")
-		}
-		if caKeyPath == "" {
-			return errs.RequiredWithFlagValue(ctx, "profile", prof, "ca-key")
-		}
-	}
 	var typ string
 	if ctx.Bool("csr") {
 		typ = "x509-csr"
@@ -272,7 +261,7 @@ func createAction(ctx *cli.Context) error {
 	)
 	switch typ {
 	case "x509-csr":
-		priv, err = keys.GenerateDefaultKey()
+		priv, err = keys.GenerateKey(kty, crv, size)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -294,9 +283,20 @@ func createAction(ctx *cli.Context) error {
 		}
 	case "x509":
 		var (
-			err     error
-			profile stepx509.Profile
+			err       error
+			prof      = ctx.String("profile")
+			caPath    = ctx.String("ca")
+			caKeyPath = ctx.String("ca-key")
+			profile   stepx509.Profile
 		)
+		if prof != "root-ca" {
+			if caPath == "" {
+				return errs.RequiredWithFlagValue(ctx, "profile", prof, "ca")
+			}
+			if caKeyPath == "" {
+				return errs.RequiredWithFlagValue(ctx, "profile", prof, "ca-key")
+			}
+		}
 		switch prof {
 		case "leaf":
 			issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
