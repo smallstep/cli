@@ -193,7 +193,15 @@ func inspectAction(ctx *cli.Context) error {
 	case "CSR":
 		switch format {
 		case "text":
-			return errors.Errorf("Not implemented. Come back later :)")
+			csr, err := x509.ParseCertificateRequest(block.Bytes)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			result, err := certinfo.CertificateRequestText(csr)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			fmt.Print(result)
 		case "json":
 			zcsr, err := zx509.ParseCertificateRequest(block.Bytes)
 			if err != nil {
