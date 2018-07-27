@@ -10,10 +10,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grantae/certinfo"
 	"github.com/pkg/errors"
+	"github.com/smallstep/certinfo"
 	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
 	"github.com/smallstep/cli/errs"
+	x509 "github.com/smallstep/cli/pkg/x509"
 	zx509 "github.com/smallstep/cli/pkg/zx509"
 	"github.com/urfave/cli"
 )
@@ -164,7 +165,7 @@ func inspectAction(ctx *cli.Context) error {
 	case "CERTIFICATE":
 		switch format {
 		case "text":
-			crt, err := realx509.ParseCertificate(block.Bytes)
+			crt, err := x509.ParseCertificate(block.Bytes)
 			if err != nil {
 				return errors.WithStack(err)
 			}

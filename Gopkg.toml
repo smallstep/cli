@@ -64,10 +64,6 @@ required = [
 
 [[constraint]]
   branch = "master"
-  name = "github.com/grantae/certinfo"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/zmap/zcrypto"
 
 [[constraint]]
