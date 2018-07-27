@@ -79,6 +79,18 @@ Inspect a remote certificate using a custom directory of root certificates to ve
 '''
 $ step certificate inspect https://smallstep.com --roots "./path/to/certificates/"
 '''
+
+Inspect a local CSR in text format (default):
+
+'''
+$ step certificate inspect foo.csr
+'''
+
+Inspect a local CSR in json:
+
+'''
+$ step certificate inspect foo.csr --format json
+'''
 `,
 
 		Flags: []cli.Flag{
