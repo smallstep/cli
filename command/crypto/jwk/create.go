@@ -575,10 +575,10 @@ func createAction(ctx *cli.Context) error {
 			}
 
 			rcpt = jose.Recipient{
-				Algorithm: jose.PBES2_HS256_A128KW,
-				Key:       []byte(key),
-				P2C:       pbkdf2Iterations,
-				P2S:       salt,
+				Algorithm:  jose.PBES2_HS256_A128KW,
+				Key:        []byte(key),
+				PBES2Count: pbkdf2Iterations,
+				PBES2Salt:  salt,
 			}
 		} else {
 			key, err := randutil.Alphanumeric(32)

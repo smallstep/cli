@@ -227,7 +227,9 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
+    "argon2",
     "bcrypt",
+    "blake2b",
     "blowfish",
     "cryptobyte",
     "cryptobyte/asn1",
@@ -263,6 +265,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = [
+    "cpu",
     "unix",
     "windows"
   ]
@@ -314,7 +317,7 @@
     "json",
     "jwt"
   ]
-  revision = "dac1c778d6ac5c3ef8150b3e331ed944179f56e9"
+  revision = "3a85db9ce924afbde513e34c5c8f39a57a73e793"
   source = "github.com/maraino/go-jose"
 
 [[projects]]
@@ -326,6 +329,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bcf91b0bbae8aab0bcd8f4ccd1cd94067c3ccdc5b5bb8128994855e65ebe587d"
+  inputs-digest = "773a0b5b5c3b09287189e9c99fcd7063ca8a75b36b45d16f140ed9a036b266d5"
   solver-name = "gps-cdcl"
   solver-version = 1
