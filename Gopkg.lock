@@ -93,12 +93,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/grantae/certinfo"
-  packages = ["."]
-  revision = "59d56a35515b3ab2326749924739cfe58facc991"
-
-[[projects]]
-  branch = "master"
   name = "github.com/icrowley/fake"
   packages = ["."]
   revision = "4178557ae428460c3780a381c824a1f3aceb6325"
@@ -177,6 +171,12 @@
   name = "github.com/smallstep/assert"
   packages = ["."]
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/smallstep/certinfo"
+  packages = ["."]
+  revision = "ffb96c45c4dc20b1e91a9106edeee278c65f3bcc"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -326,6 +326,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ff8e1fa64086f67666a11bf2ccd880bd58810e6ddbc8239dd7a30832fbe863d5"
+  inputs-digest = "bcf91b0bbae8aab0bcd8f4ccd1cd94067c3ccdc5b5bb8128994855e65ebe587d"
   solver-name = "gps-cdcl"
   solver-version = 1
