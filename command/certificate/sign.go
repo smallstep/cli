@@ -7,7 +7,6 @@ import (
 
 	"github.com/pkg/errors"
 	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
-	spem "github.com/smallstep/cli/crypto/pem"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
@@ -66,24 +65,14 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	// Load the Issuer Certificate.
 
-	issuerCrt, _, err := stepx509.LoadCertificate(crtFile)
+	issuerIdentity, err := stepx509.LoadIdentityFromDisk(crtFile, keyFile)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	// Load the Issuer Private Key.
-	keyBytes, err := ioutil.ReadFile(keyFile)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	key, err := spem.Parse(keyBytes)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	leafProfile, err := stepx509.NewLeafProfileWithCSR(csr, issuerCrt, key)
+	leafProfile, err := stepx509.NewLeafProfileWithCSR(csr, issuerIdentity.Crt,
+		issuerIdentity.Key)
 	if err != nil {
 		return errors.WithStack(err)
 	}

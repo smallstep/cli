@@ -39,6 +39,11 @@ func LoadIdentityFromDisk(crtPath, keyPath string, pemOpts ...spem.Options) (*Id
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	if len(pemOpts) == 0 {
+		pemOpts = []spem.Options{spem.WithFilename(keyPath)}
+	} else {
+		pemOpts = append(pemOpts, spem.WithFilename(keyPath))
+	}
 	key, err := spem.Parse(keyBytes, pemOpts...)
 	if err != nil {
 		return nil, errors.WithStack(err)

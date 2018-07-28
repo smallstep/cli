@@ -81,6 +81,33 @@ Create an intermediate certificate and key:
 $ step certificate create foo foo.crt foo.key --profile intermediate-ca \
 --ca ./root-ca.crt --ca-key ./root-ca.key
 '''
+
+Create a root certificate and key with underlying OKP Ed25519:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile root-ca \
+--kty OKP --curve Ed25519
+'''
+
+Create an intermeidate certificate and key with underlying EC P-256 key pair:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile intermediate-ca \
+--ca ./root-ca.crt --ca-key ./root-ca.key --kty EC --curve P-256
+'''
+
+Create a leaf certificate and key with underlying RSA 2048 key pair:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile leaf \
+--ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key --kty RSA --size 2048
+'''
+
+Create a CSR and key with underlying OKP Ed25519:
+
+'''
+$ step certificate create foo foo.csr foo.key --csr --kty OKP --curve Ed25519
+'''
 `,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -191,14 +218,17 @@ func createAction(ctx *cli.Context) error {
 	if ctx.IsSet("kty") {
 		switch kty {
 		case "RSA":
+			if !ctx.IsSet("size") {
+				return errs.RequiredWithFlagValue(ctx, "kty", kty, "size")
+			}
+			if ctx.IsSet("curve") {
+				return errs.IncompatibleFlagValue(ctx, "curve", "kty", kty)
+			}
 			if size < 2048 && !insecure {
 				return errs.MinSizeInsecureFlag(ctx, "size", "2048")
 			}
 			if size <= 0 {
 				return errs.MinSizeFlag(ctx, "size", "0")
-			}
-			if ctx.IsSet("curve") {
-				return errs.IncompatibleFlagValue(ctx, "curve", "kty", kty)
 			}
 		case "EC":
 			if ctx.IsSet("size") {
@@ -210,7 +240,8 @@ func createAction(ctx *cli.Context) error {
 			switch crv {
 			case "P-256", "P-384", "P-521": //ok
 			default:
-				return errs.InvalidFlagValue(ctx, "curve", crv, "P-256, P-384, P-251")
+				return errs.IncompatibleFlagValueWithFlagValue(ctx, "kty", kty,
+					"curve", crv, "P-256, P-384, P-251")
 			}
 		case "OKP":
 			if ctx.IsSet("size") {
@@ -222,7 +253,8 @@ func createAction(ctx *cli.Context) error {
 			switch crv {
 			case "Ed25519": //ok
 			default:
-				return errs.IncompatibleFlagValues(ctx, "curve", crv, "kty", kty)
+				return errs.IncompatibleFlagValueWithFlagValue(ctx, "curve",
+					crv, "kty", kty, "Ed25519")
 			}
 		default:
 			return errs.InvalidFlagValue(ctx, "--kty", kty, "RSA, EC, OKP")
@@ -261,6 +293,9 @@ func createAction(ctx *cli.Context) error {
 	)
 	switch typ {
 	case "x509-csr":
+		if ctx.IsSet("profile") {
+			return errs.IncompatibleFlagWithFlag(ctx, "profile", "csr")
+		}
 		priv, err = keys.GenerateKey(kty, crv, size)
 		if err != nil {
 			return errors.WithStack(err)

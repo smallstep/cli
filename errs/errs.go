@@ -127,6 +127,12 @@ func IncompatibleFlag(ctx *cli.Context, flag string, value string) error {
 	return errors.Errorf("flag '--%s' is incompatible with '%s'", flag, value)
 }
 
+// IncompatibleFlagWithFlag returns an error with the flag being incompatible with the
+// given value.
+func IncompatibleFlagWithFlag(ctx *cli.Context, flag string, withFlag string) error {
+	return errors.Errorf("flag '--%s' is incompatible with '--%s'", flag, withFlag)
+}
+
 // IncompatibleFlagValue returns an error with the flag being incompatible with the
 // given value.
 func IncompatibleFlagValue(ctx *cli.Context, flag, incompatibleWith,
@@ -141,6 +147,21 @@ func IncompatibleFlagValues(ctx *cli.Context, flag, value, incompatibleWith,
 	incompatibleWithValue string) error {
 	return errors.Errorf("flag '--%s %s' is incompatible with flag '--%s %s'",
 		flag, value, incompatibleWith, incompatibleWithValue)
+}
+
+// IncompatibleFlagValueWithFlagValue returns an error with the given value being missing or
+// invalid for the given flag. Optionally it lists the given formated options
+// at the end.
+func IncompatibleFlagValueWithFlagValue(ctx *cli.Context, flag string, value string,
+	withFlag string, withValue, options string) error {
+	format := fmt.Sprintf("flag '--%s %s' is incompatible with flag '--%s %s'",
+		flag, value, withFlag, withValue)
+
+	if len(options) == 0 {
+		return errors.New(format)
+	}
+
+	return errors.Errorf("%s\n\n  Option(s): --%s %v", format, flag, strings.Split(options, ","))
 }
 
 // RequiredFlag returns an error with the required flag message.

@@ -12,15 +12,58 @@ func init() {
 		Usage:     "create, revoke, validate, bundle, and otherwise manage certificates.",
 		UsageText: "step certificate SUBCOMMAND [ARGUMENTS] [GLOBAL_FLAGS] [SUBCOMMAND_FLAGS]",
 		Description: `**step certificates** command group provides facilities for creating
-  certificate signing requests (CSRs), creating self-signed certificates
-  (e.g., for use as a root certificate authority), generating leaf or
-  intermediate CA certificate by signing a CSR, validating certificates,
-  renewing certificates, generating certificate bundles, and key-wrapping
-  of private keys.
+certificate signing requests (CSRs), creating self-signed certificates
+(e.g., for use as a root certificate authority), generating leaf or
+intermediate CA certificate by signing a CSR, validating certificates,
+renewing certificates, generating certificate bundles, and key-wrapping
+of private keys.
 
-  More information about certificates in general (as opposed to the
-  **step certificate** sub-commands) can be found at **step help topics certificate**
-  or online at [URL].`,
+More information about certificates in general (as opposed to the
+**step certificate** sub-commands) can be found at **step help topics certificate**
+or online at [URL].
+
+## EXAMPLES
+
+Create a root certifciate and private key using the default parameters (EC P-256 curve):
+'''
+$ step certificate create foo foo.crt foo.key --profile root-ca
+'''
+
+Create a leaf certificate and private key using the default parameters (EC P-256 curve):
+'''
+$ step certificate create baz baz.crt baz.key --ca ./foo.crt --ca-key ./foo.key
+'''
+
+Create a CSR and private key using the default parameters (EC P-256 curve):
+'''
+$ step certificate create zap zap.csr zap.key --csr
+'''
+
+Sign a CSR and generate a signed certificate:
+'''
+$ step certificate sign zap.csr foo.crt foo.key
+'''
+
+Inspect the contents of a certificate:
+'''
+$ step certificate inspect ./baz.crt
+'''
+
+Verify the signature of a certificate:
+'''
+$ step certificate verify ./baz.crt
+'''
+
+Lint the contents of a certificate to check for common errors and missing fields:
+'''
+$ step certificate lint ./baz.crt
+'''
+
+Bundle an end certificate with the issuing certificate:
+'''
+$ step certificate bundle ./baz.crt ./foo.crt bundle.crt
+'''
+`,
 
 		Subcommands: cli.Commands{
 			bundleCommand(),
