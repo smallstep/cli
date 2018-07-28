@@ -11,7 +11,7 @@ _cli_bash_autocomplete() {
 	then
 		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 	else
-		COMPREPLY=( $(compgen -d -f -- ${cur}) )
+		_filedir
 	fi
 	return 0
 }
