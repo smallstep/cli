@@ -33,7 +33,7 @@ func Test_LoadIdentityFromDisk(t *testing.T) {
 			crtPath: testCert,
 			keyPath: testNoPasscodeBadKey,
 			pass:    "",
-			err:     errors.Errorf("error parsing PEM: asn1"),
+			err:     errors.Errorf("error parsing ./test_files/noPasscodeBadCa.key: asn1:"),
 		},
 		"success": {
 			crtPath: testCert,
