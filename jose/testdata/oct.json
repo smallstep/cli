@@ -1,0 +1,6 @@
+{
+  "use": "sig",
+  "kty": "oct",
+  "alg": "HS256",
+  "k": "TUE5VnJDa3gzbDRtc3lWa1liRW1pUDVZNHBBRnNUNXo"
+}

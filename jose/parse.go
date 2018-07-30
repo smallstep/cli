@@ -32,7 +32,9 @@ const MaxDecryptTries = 3
 // Decrypt returns the decrypted version of the given data if it's encrypted,
 // it will return the raw data if it's not encrypted or the format is not
 // valid.
-func Decrypt(prompt string, data []byte) ([]byte, error) {
+func Decrypt(prompt string, data []byte, opts ...Option) ([]byte, error) {
+	ctx := new(context).apply(opts...)
+
 	enc, err := jose.ParseEncrypted(string(data))
 	if err != nil {
 		return data, nil
@@ -41,9 +43,13 @@ func Decrypt(prompt string, data []byte) ([]byte, error) {
 	// Decrypt flow
 	var pass []byte
 	for i := 0; i < MaxDecryptTries; i++ {
-		pass, err = utils.ReadPassword(prompt)
-		if err != nil {
-			return nil, err
+		if len(ctx.password) == 0 {
+			pass, err = utils.ReadPassword(prompt)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			pass = ctx.password
 		}
 
 		if data, err = enc.Decrypt(pass); err == nil {
@@ -70,7 +76,7 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 	case jwkKeyType:
 		// Attempt to parse an encrypted file
 		prompt := fmt.Sprintf("Please enter the password to decrypt %s: ", filename)
-		if b, err = Decrypt(prompt, b); err != nil {
+		if b, err = Decrypt(prompt, b, opts...); err != nil {
 			return nil, err
 		}
 
@@ -79,7 +85,7 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 			return nil, errors.Errorf("error reading %s: unsupported format", filename)
 		}
 	case pemKeyType:
-		if jwk.Key, err = pem.Parse(b, pem.WithFilename(filename)); err != nil {
+		if jwk.Key, err = pem.Parse(b, pem.WithFilename(filename), pem.WithPassword(ctx.password)); err != nil {
 			return nil, err
 		}
 	case octKeyType:

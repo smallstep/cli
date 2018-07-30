@@ -1,0 +1,35 @@
+{
+  "keys": [
+    {
+      "use": "sig",
+      "kty": "OKP",
+      "kid": "VjIIRw8jzUM58xrVkc4_g9Tfe2MrPPr8GM8Kjijzqus",
+      "crv": "Ed25519",
+      "alg": "EdDSA",
+      "x": "kqyKV4yXV8viKLPp4HazFzvBkZi0wMKZ3iLXwtWqgvA"
+    },
+    {
+      "use": "sig",
+      "kty": "EC",
+      "kid": "V93A-Yh7Bhw1W2E0igFciviJzX4PXPswoVgriehm9Co",
+      "crv": "P-256",
+      "alg": "ES256",
+      "x": "JtPSvIKayHsCHobDnNWtOdoroh-MDwKQSYMW6Mo4cfU",
+      "y": "tP7xR5rpu6azzZsozdmzouyVByuTUDYSSAELTOAtu7g"
+    },
+    {
+      "use": "sig",
+      "kty": "oct",
+      "alg": "HS256",
+      "kid": "duplicated",
+      "k": "TUE5VnJDa3gzbDRtc3lWa1liRW1pUDVZNHBBRnNUNXo"
+    },
+    {
+      "use": "sig",
+      "kty": "oct",
+      "alg": "HS256",
+      "kid": "duplicated",
+      "k": "SzhwbXo1bXNZMWtmeVhrTnpHNDZZNkdLUE1NTTRWYUw"
+    }
+  ]
+}

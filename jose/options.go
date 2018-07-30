@@ -4,6 +4,7 @@ type context struct {
 	use, alg, kid    string
 	subtle, insecure bool
 	noDefaults       bool
+	password         []byte
 }
 
 // apply the options to the context and returns it.
@@ -57,5 +58,12 @@ func WithInsecure(insecure bool) Option {
 func WithNoDefaults(val bool) Option {
 	return func(ctx *context) {
 		ctx.noDefaults = val
+	}
+}
+
+// WithPassword is a method that adds the given password to the context.
+func WithPassword(pass []byte) Option {
+	return func(ctx *context) {
+		ctx.password = pass
 	}
 }
