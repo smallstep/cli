@@ -22,7 +22,7 @@ derivation functions.
 
 ## EXAMPLES
 
-Derive a password using scrypt:
+Derive a password using **scrypt**:
 '''
 $ step crypto kdf hash
 Enter password to hash: ********
@@ -32,7 +32,7 @@ $ step crypto kdf hash --insecure password
 $scrypt$ln=15,r=8,p=1$U8Fl1sO6LWkFeXs5GQS0vA$Rj8nPeaBFQUzbU21N+hhm3I/s1WTxao7Dje4G6ZvO9Q
 '''
 
-Derive a password using bcrypt:
+Derive a password using **bcrypt**:
 '''
 $ step crypto kdf hash --alg bcrypt
 Enter password to hash: ********
@@ -40,6 +40,20 @@ $2a$10$EgTYeokp/EhvlMpaDYX56O67M/Ve4JyTl9DHwailYYFOBT3COSTuy
 
 $ step crypto kdf hash --alg bcrypt --insecure password
 $2a$10$kgYs5dEKs2C6Y5PXnU7eTuPzHMeSoCnkvtTL7ghsPDdSSmw5ec/sS
+'''
+
+Derive a password using **argon2i**:
+'''
+$ step crypto kdf hash --alg argon2i
+Enter password to hash: ********
+$argon2i$v=19$m=32768,t=3,p=4$H0IxAhFFO7fOu5K2RYTxxA$ULEz/79vh3BtCcm7W/zRfJSpiEGULirrZ+PnHfspWKA
+'''
+
+Derive a password using **argon2id**:
+'''
+$ step crypto kdf hash --alg argon2id
+Enter password to hash: ********
+$argon2id$v=19$m=65536,t=1,p=4$HDi5gI15NwJrKveh2AAa9Q$30haKRwwUe5I4WfkPZPGmhJKTRTO+98x+sVnHhOHdK8
 '''
 
 Validate a hash:
@@ -56,6 +70,20 @@ Enter password to compare: ********
 ok
 
 $ step crypto kdf compare --insecure '$2a$10$EgTYeokp/EhvlMpaDYX56O67M/Ve4JyTl9DHwailYYFOBT3COSTuy' password
+ok
+
+$ step crypto kdf compare '$argon2i$v=19$m=32768,t=3,p=4$H0IxAhFFO7fOu5K2RYTxxA$ULEz/79vh3BtCcm7W/zRfJSpiEGULirrZ+PnHfspWKA'
+Enter password to compare: ********
+ok
+
+$ step crypto kdf compare --insecure '$argon2i$v=19$m=32768,t=3,p=4$H0IxAhFFO7fOu5K2RYTxxA$ULEz/79vh3BtCcm7W/zRfJSpiEGULirrZ+PnHfspWKA' password
+ok
+
+$ step crypto kdf compare --insecure '$argon2id$v=19$m=65536,t=1,p=4$HDi5gI15NwJrKveh2AAa9Q$30haKRwwUe5I4WfkPZPGmhJKTRTO+98x+sVnHhOHdK8'
+Enter password to compare: ********
+ok
+
+$ step crypto kdf compare --insecure '$argon2id$v=19$m=65536,t=1,p=4$HDi5gI15NwJrKveh2AAa9Q$30haKRwwUe5I4WfkPZPGmhJKTRTO+98x+sVnHhOHdK8' password
 ok
 '''`,
 		Subcommands: cli.Commands{
