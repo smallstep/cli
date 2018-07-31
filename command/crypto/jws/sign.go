@@ -26,7 +26,9 @@ func signCommand() cli.Command {
 		Description: `**step crypto jws sign** generates a signed JSON Web Signature (JWS) by
 computing a digital signature or message authentication code for an arbitrary
 payload. By default, the payload to sign is read from STDIN and the JWS will
-be written to STDOUT.`,
+be written to STDOUT.
+
+For examples, see **step help crypto jws**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "alg, algorithm",
@@ -95,7 +97,7 @@ to the key used to digitally sign the JWS. This key is represented as a JSON
 Web Key (JWK). Use of <jwk> is optional.`,
 			},
 			cli.StringFlag{
-				Name: "typ",
+				Name: "typ, type",
 				Usage: `The "typ" (type) Header Parameter is used by JWS applications to declare the
 media type of this complete JWS. This is intended for use by the application
 when more than one kind of object could be present in an application data
@@ -164,9 +166,11 @@ func signAction(ctx *cli.Context) error {
 	// Read payload if provided
 	args := ctx.Args()
 	switch len(args) {
-	case 0: // empty payload
-	case 1:
-		// read payload from file or stdin (-)
+	case 0: // read payload from stdin
+		if payload, err = readPayload(""); err != nil {
+			return err
+		}
+	case 1: // read payload from file or stdin (-)
 		if payload, err = readPayload(args[0]); err != nil {
 			return err
 		}
@@ -279,13 +283,23 @@ func signAction(ctx *cli.Context) error {
 }
 
 func readPayload(filename string) ([]byte, error) {
-	if filename == "-" {
+	switch filename {
+	case "":
+		st, err := os.Stdin.Stat()
+		if err != nil {
+			return nil, errors.Wrap(err, "error reading data")
+		}
+		if st.Size() == 0 {
+			return []byte{}, nil
+		}
 		return utils.ReadAll(os.Stdin)
+	case "-":
+		return utils.ReadAll(os.Stdin)
+	default:
+		b, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return nil, errs.FileError(err, filename)
+		}
+		return b, nil
 	}
-
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, errs.FileError(err, filename)
-	}
-	return b, nil
 }

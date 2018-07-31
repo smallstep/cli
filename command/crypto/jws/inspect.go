@@ -23,7 +23,9 @@ func inspectCommand() cli.Command {
 		**--insecure**`,
 		Description: `**step crypto jws inspect** reads a JWS data structure from STDIN, decodes it,
 and outputs the payload on STDERR. Since this command does not verify the JWS
-you must pass **--insecure** as a misuse prevention mechanism.`,
+you must pass **--insecure** as a misuse prevention mechanism.
+
+For examples, see **step help crypto jws**.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name: "json",

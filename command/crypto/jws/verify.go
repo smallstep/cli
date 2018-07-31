@@ -31,7 +31,9 @@ For a JWS to be verified successfully:
   * The <kid> must match the **"kid"** member in the JWS header (if both are
     present) and must match the **"kid"** in the JWK or the **"kid"** of one of the
     JWKs in JWKS
-  * The JWS signature must be successfully verified`,
+  * The JWS signature must be successfully verified
+
+For examples, see **step help crypto jws**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "alg, algorithm",
