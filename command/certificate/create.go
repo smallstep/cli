@@ -209,69 +209,6 @@ func createAction(ctx *cli.Context) error {
 		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
 	}
 
-	var (
-		crv  = ctx.String("curve")
-		size = ctx.Int("size")
-		kty  = ctx.String("kty")
-	)
-
-	if ctx.IsSet("kty") {
-		switch kty {
-		case "RSA":
-			if !ctx.IsSet("size") {
-				return errs.RequiredWithFlagValue(ctx, "kty", kty, "size")
-			}
-			if ctx.IsSet("curve") {
-				return errs.IncompatibleFlagValue(ctx, "curve", "kty", kty)
-			}
-			if size < 2048 && !insecure {
-				return errs.MinSizeInsecureFlag(ctx, "size", "2048")
-			}
-			if size <= 0 {
-				return errs.MinSizeFlag(ctx, "size", "0")
-			}
-		case "EC":
-			if ctx.IsSet("size") {
-				return errs.IncompatibleFlagValue(ctx, "size", "kty", kty)
-			}
-			if !ctx.IsSet("curve") {
-				return errs.RequiredWithFlagValue(ctx, "kty", kty, "curve")
-			}
-			switch crv {
-			case "P-256", "P-384", "P-521": //ok
-			default:
-				return errs.IncompatibleFlagValueWithFlagValue(ctx, "kty", kty,
-					"curve", crv, "P-256, P-384, P-251")
-			}
-		case "OKP":
-			if ctx.IsSet("size") {
-				return errs.IncompatibleFlagValue(ctx, "size", "kty", kty)
-			}
-			if !ctx.IsSet("curve") {
-				return errs.RequiredWithFlagValue(ctx, "kty", kty, "curve")
-			}
-			switch crv {
-			case "Ed25519": //ok
-			default:
-				return errs.IncompatibleFlagValueWithFlagValue(ctx, "curve",
-					crv, "kty", kty, "Ed25519")
-			}
-		default:
-			return errs.InvalidFlagValue(ctx, "--kty", kty, "RSA, EC, OKP")
-		}
-	} else {
-		if ctx.IsSet("curve") {
-			errs.RequiredWithFlag(ctx, "curve", "kty")
-		}
-		if ctx.IsSet("size") {
-			errs.RequiredWithFlag(ctx, "size", "kty")
-		}
-		// Set default key type | curve | size.
-		kty = "EC"
-		crv = "P-256"
-		size = 0
-	}
-
 	subject := ctx.Args().Get(0)
 	crtFile := ctx.Args().Get(1)
 	keyFile := ctx.Args().Get(2)
@@ -286,8 +223,12 @@ func createAction(ctx *cli.Context) error {
 		typ = "x509"
 	}
 
+	kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty", "curve", "size")
+	if err != nil {
+		return err
+	}
+
 	var (
-		err    error
 		priv   interface{}
 		pubPEM *pem.Block
 	)

@@ -7,6 +7,7 @@ import (
 	"github.com/smallstep/cli/crypto/keys"
 	spem "github.com/smallstep/cli/crypto/pem"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/reader"
 	"github.com/urfave/cli"
 )
@@ -18,7 +19,7 @@ func createKeyPairCommand() cli.Command {
 		Usage:  "generate a public /private keypair in PEM format.",
 		UsageText: `**step crypto keypair** <pub_file> <priv_file>
 [**--curve**=<curve>] [**--no-password**] [**--size**=<size>]
-[**--type**=<type>]`,
+[**--kty**=<key-type>]`,
 		Description: `**step crypto keypair** generates a raw public /
 private keypair in PEM format. These keys can be used by other operations
 to sign and encrypt data, and the public key can be bound to an identity
@@ -44,43 +45,43 @@ This command returns 0 on success and \>0 if any error occurs.
 Create an RSA public / private key pair with 4096 bits:
 
 '''
-$ step crypto keypair foo.pub foo.key --type RSA --size 4096
+$ step crypto keypair foo.pub foo.key --kty RSA --size 4096
 '''
 
 Create an RSA public / private key with fewer than the recommended number of
 bits (recommended >= 2048 bits):
 
 '''
-$ step crypto keypair foo.pub foo.key --type RSA --size 1024 --insecure
+$ step crypto keypair foo.pub foo.key --kty RSA --size 1024 --insecure
 '''
 
 Create an EC public / private key pair with curve P-521:
 
 '''
-$ step crypto keypair foo.pub foo.key --type EC --curve "P-521"
+$ step crypto keypair foo.pub foo.key --kty EC --curve "P-521"
 '''
 
 Create an EC public / private key pair but do not encrypt the private key file:
 
 '''
-$ step crypto keypair foo.pub foo.key --type EC --curve "P-256" \
+$ step crypto keypair foo.pub foo.key --kty EC --curve "P-256" \
 --no-password --insecure
 '''
 
 Create an Octet Key Pair with curve Ed25519:
 
 '''
-$ step crypto keypair foo.pub foo.key --type OKP --curve Ed25519
+$ step crypto keypair foo.pub foo.key --kty OKP --curve Ed25519
 '''
 `,
 		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:  "type",
+				Name:  "kty",
 				Value: "EC",
-				Usage: `The <type> of key to create.
+				Usage: `The <kty> (key type) to create.
 If unset, default is EC.
 
-: <type> is a case-sensitive string and must be one of:
+: <kty> is a case-sensitive string and must be one of:
 
     **EC**
     :  Create an **elliptic curve** keypair
@@ -149,51 +150,13 @@ func createAction(ctx *cli.Context) error {
 		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
 	}
 
-	var (
-		crv  = ctx.String("curve")
-		size = ctx.Int("size")
-		typ  = ctx.String("type")
-	)
-	switch typ {
-	case "RSA":
-		if size < 2048 && !insecure {
-			return errs.MinSizeInsecureFlag(ctx, "size", "2048")
-		}
-		if size <= 0 {
-			return errs.MinSizeFlag(ctx, "size", "0")
-		}
-		if ctx.IsSet("curve") {
-			return errs.IncompatibleFlagValue(ctx, "curve", "type", typ)
-		}
-	case "EC":
-		if ctx.IsSet("size") {
-			return errs.IncompatibleFlagValue(ctx, "size", "type", typ)
-		}
-		if !ctx.IsSet("curve") {
-			return errs.RequiredWithFlagValue(ctx, "type", typ, "curve")
-		}
-		switch crv {
-		case "P-256", "P-384", "P-521": //ok
-		default:
-			return errs.IncompatibleFlagValues(ctx, "curve", crv, "type", typ)
-		}
-	case "OKP":
-		if ctx.IsSet("size") {
-			return errs.IncompatibleFlagValue(ctx, "size", "type", typ)
-		}
-		if !ctx.IsSet("curve") {
-			return errs.RequiredWithFlagValue(ctx, "type", typ, "curve")
-		}
-		switch crv {
-		case "Ed25519": //ok
-		default:
-			return errs.IncompatibleFlagValues(ctx, "curve", crv, "type", typ)
-		}
-	default:
-		return errs.InvalidFlagValue(ctx, "--type", typ, "RSA, EC, OKP")
+	kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
+		"curve", "size")
+	if err != nil {
+		return err
 	}
 
-	pub, priv, err := keys.GenerateKeyPair(typ, crv, size)
+	pub, priv, err := keys.GenerateKeyPair(kty, crv, size)
 	if err != nil {
 		return errors.WithStack(err)
 	}
