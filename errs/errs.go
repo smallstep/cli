@@ -25,6 +25,9 @@ func NewExitError(err error, exitCode int) error {
 // used. If the given error is wrapped by a package name, the error wrapped
 // will be the string after the last colon.
 func Wrap(err error, format string, args ...interface{}) error {
+	if err == nil {
+		return nil
+	}
 	cause := errors.Cause(err)
 	if cause == err {
 		str := err.Error()
@@ -231,6 +234,9 @@ func usage(ctx *cli.Context) string {
 
 // FileError is a wrapper for errors of the os package.
 func FileError(err error, filename string) error {
+	if err == nil {
+		return nil
+	}
 	switch e := errors.Cause(err).(type) {
 	case *os.PathError:
 		return errors.Errorf("%s %s failed: %v", e.Op, e.Path, e.Err)
