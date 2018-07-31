@@ -265,38 +265,39 @@ func createAction(ctx *cli.Context) error {
 			caKeyPath = ctx.String("ca-key")
 			profile   stepx509.Profile
 		)
-		if prof != "root-ca" {
+		switch prof {
+		case "leaf", "intermediate-ca":
 			if caPath == "" {
 				return errs.RequiredWithFlagValue(ctx, "profile", prof, "ca")
 			}
 			if caKeyPath == "" {
 				return errs.RequiredWithFlagValue(ctx, "profile", prof, "ca-key")
 			}
-		}
-		switch prof {
-		case "leaf":
-			issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			profile, err = stepx509.NewLeafProfile(subject, issIdentity.Crt,
-				issIdentity.Key, stepx509.GenerateKeyPair(kty, crv, size))
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		case "intermediate-ca":
-			issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			profile, err = stepx509.NewIntermediateProfile(subject,
-				issIdentity.Crt, issIdentity.Key,
-				stepx509.GenerateKeyPair(kty, crv, size))
-			if err != nil {
-				return errors.WithStack(err)
+			switch prof {
+			case "leaf":
+				issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				profile, err = stepx509.NewLeafProfile(subject, issIdentity.Crt,
+					issIdentity.Key, stepx509.GenerateKeyPair(kty, crv, size))
+				if err != nil {
+					return errors.WithStack(err)
+				}
+			case "intermediate-ca":
+				issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				profile, err = stepx509.NewIntermediateProfile(subject,
+					issIdentity.Crt, issIdentity.Key,
+					stepx509.GenerateKeyPair(kty, crv, size))
+				if err != nil {
+					return errors.WithStack(err)
+				}
 			}
 		case "root-ca":
 			profile, err = stepx509.NewRootProfile(subject,
