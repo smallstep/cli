@@ -15,6 +15,19 @@ const (
 	scryptHash65536 = "scrypt-65536"
 )
 
+var (
+	// ScryptMaxCost the the maximum value for ln. Maximum is set to avoid
+	// panics due to not enough memory errors. Memory used is ~4*32*(2^ln)*r
+	// bytes.
+	ScryptMaxCost = 20
+	// ScryptMaxBlockSize is the maximum value for r. The maximum is set to
+	// avoid panics due to not enough memory errors. Memory used is
+	// ~4*32*(2^ln)*r bytes.
+	ScryptMaxBlockSize = 32
+	// ScryptMaxParallelism is the maximum value for p.
+	ScryptMaxParallelism = 32
+)
+
 var scryptParams = map[string]scryptParam{
 	scryptHash16384: {16384, 8, 1, 32},
 	scryptHash32768: {32768, 8, 1, 32},
@@ -32,7 +45,7 @@ func newScryptParams(s string) (*scryptParam, error) {
 
 	if ln, err := phcAtoi(params["ln"], 16); err != nil {
 		return nil, err
-	} else if ln < 1 {
+	} else if ln < 1 || ln > ScryptMaxCost {
 		return nil, errors.Errorf("invalid scrypt parameter ln=%s", params["ln"])
 	} else {
 		sp.N = int(math.Pow(2, float64(ln)))
@@ -40,7 +53,7 @@ func newScryptParams(s string) (*scryptParam, error) {
 
 	if r, err := phcAtoi(params["r"], 8); err != nil {
 		return nil, err
-	} else if r < 1 {
+	} else if r < 1 || r > ScryptMaxBlockSize {
 		return nil, errors.Errorf("invalid scrypt parameter r=%s", params["r"])
 	} else {
 		sp.r = r
@@ -48,7 +61,7 @@ func newScryptParams(s string) (*scryptParam, error) {
 
 	if p, err := phcAtoi(params["p"], 1); err != nil {
 		return nil, err
-	} else if p < 1 {
+	} else if p < 1 || p > ScryptMaxParallelism {
 		return nil, errors.Errorf("invalid scrypt parameter p=%s", params["p"])
 	} else {
 		sp.p = p
