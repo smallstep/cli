@@ -23,9 +23,9 @@ func HelpPrinter(w io.Writer, templ string, data interface{}) {
 
 func htmlHelpPrinter(w io.Writer, templ string, data interface{}) {
 	b := helpPreprocessor(w, templ, data)
-	w.Write([]byte(`<html><head><title>Step</title><style>`))
-	w.Write([]byte(css))
-	w.Write([]byte(`</style></head><body class="markdown-body">`))
+	w.Write([]byte(`<html><head><title>Step</title>`))
+	w.Write([]byte(`<link href="/style.css" rel="stylesheet" type="text/css">`))
+	w.Write([]byte(`</head><body class="markdown-body">`))
 	w.Write(md.Run(b))
 	w.Write([]byte(`<br></body></html>`))
 }

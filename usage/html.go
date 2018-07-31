@@ -2,7 +2,9 @@ package usage
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 
@@ -10,7 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-func htmlHelpAction(ctx *cli.Context) error {
+func httpHelpAction(ctx *cli.Context) error {
 	addr := ctx.String("http")
 	if addr == "" {
 		return errs.RequiredFlag(ctx, "http")
@@ -20,6 +22,70 @@ func htmlHelpAction(ctx *cli.Context) error {
 	return http.ListenAndServe(addr, &htmlHelpHandler{
 		cliApp: ctx.App,
 	})
+}
+
+func htmlHelpAction(ctx *cli.Context) error {
+	dir := path.Clean(ctx.String("html"))
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return errs.FileError(err, dir)
+	}
+
+	// app index
+	index := path.Join(dir, "index.html")
+	w, err := os.Create(index)
+	if err != nil {
+		return errs.FileError(err, index)
+	}
+	htmlHelpPrinter(w, htmlAppHelpTemplate, ctx.App)
+	if err := w.Close(); err != nil {
+		return errs.FileError(err, index)
+	}
+
+	// css style
+	cssFile := path.Join(dir, "style.css")
+	if err := ioutil.WriteFile(cssFile, []byte(css), 0666); err != nil {
+		return errs.FileError(err, cssFile)
+	}
+
+	// Subcommands
+	for _, cmd := range ctx.App.Commands {
+		if err := htmlHelpCommand(ctx.App, cmd, path.Join(dir, cmd.Name)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func htmlHelpCommand(app *cli.App, cmd cli.Command, base string) error {
+	if err := os.MkdirAll(base, 0755); err != nil {
+		return errs.FileError(err, base)
+	}
+
+	index := path.Join(base, "index.html")
+	w, err := os.Create(index)
+	if err != nil {
+		return errs.FileError(err, index)
+	}
+
+	if len(cmd.Subcommands) == 0 {
+		htmlHelpPrinter(w, htmlCommandHelpTemplate, cmd)
+		return errs.FileError(w.Close(), index)
+	}
+
+	ctx := cli.NewContext(app, nil, nil)
+	ctx.App = createCliApp(ctx, cmd)
+	htmlHelpPrinter(w, htmlSubcommandHelpTemplate, ctx.App)
+	if err := w.Close(); err != nil {
+		return errs.FileError(err, index)
+	}
+
+	for _, sub := range cmd.Subcommands {
+		if err := htmlHelpCommand(app, sub, path.Join(base, sub.Name)); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type htmlHelpHandler struct {
@@ -33,6 +99,12 @@ func (h *htmlHelpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	requestURI := path.Clean(req.RequestURI)
 	if requestURI == "/" {
 		htmlHelpPrinter(w, htmlAppHelpTemplate, ctx.App)
+		return
+	}
+
+	if requestURI == "/style.css" {
+		w.Header().Set("Content-Type", `text/css; charset="utf-8"`)
+		w.Write([]byte(css))
 		return
 	}
 

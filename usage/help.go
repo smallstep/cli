@@ -26,6 +26,10 @@ func HelpCommand() cli.Command {
 				Name:  "http",
 				Usage: "HTTP service address (e.g., ':8080')",
 			},
+			cli.StringFlag{
+				Name:  "html",
+				Usage: "The export <directory> for HTML docs.",
+			},
 		},
 	}
 }
@@ -33,6 +37,10 @@ func HelpCommand() cli.Command {
 func helpAction(ctx *cli.Context) error {
 	// use html version
 	if ctx.IsSet("http") {
+		return httpHelpAction(ctx)
+	}
+
+	if ctx.IsSet("html") {
 		return htmlHelpAction(ctx)
 	}
 
