@@ -6,6 +6,7 @@ import (
 	"github.com/smallstep/cli/command/crypto/jose"
 	"github.com/smallstep/cli/command/crypto/jwe"
 	"github.com/smallstep/cli/command/crypto/jwk"
+	"github.com/smallstep/cli/command/crypto/jws"
 	"github.com/smallstep/cli/command/crypto/jwt"
 	"github.com/smallstep/cli/command/crypto/kdf"
 	"github.com/smallstep/cli/command/crypto/nacl"
@@ -155,6 +156,7 @@ risks. That said, many of these factors are beyond the scope of this tool.
 			jwk.Command(),
 			jwt.Command(),
 			jwe.Command(),
+			jws.Command(),
 			jose.Command(),
 			hash.Command(),
 			kdf.Command(),
