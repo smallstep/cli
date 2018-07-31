@@ -57,7 +57,7 @@ func main() {
 	app.Commands = command.Retrieve()
 	app.Flags = append(app.Flags, cli.HelpFlag)
 	app.EnableBashCompletion = true
-	app.Copyright = "(c) 2018 Smallstep Inc."
+	app.Copyright = "(c) 2018 Smallstep Labs, Inc."
 
 	// All non-successful output should be written to stderr
 	app.Writer = os.Stdout
