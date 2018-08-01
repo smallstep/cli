@@ -30,6 +30,10 @@ func HelpCommand() cli.Command {
 				Name:  "html",
 				Usage: "The export <directory> for HTML docs.",
 			},
+			cli.StringFlag{
+				Name:  "markdown",
+				Usage: "The export <directory> for Markdown docs.",
+			},
 		},
 	}
 }
@@ -42,6 +46,10 @@ func helpAction(ctx *cli.Context) error {
 
 	if ctx.IsSet("html") {
 		return htmlHelpAction(ctx)
+	}
+
+	if ctx.IsSet("markdown") {
+		return markdownHelpAction(ctx)
 	}
 
 	args := ctx.Args()

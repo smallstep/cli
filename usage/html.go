@@ -24,6 +24,65 @@ func httpHelpAction(ctx *cli.Context) error {
 	})
 }
 
+func markdownHelpAction(ctx *cli.Context) error {
+	dir := path.Clean(ctx.String("markdown"))
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return errs.FileError(err, dir)
+	}
+
+	// app index
+	index := path.Join(dir, "index.md")
+	w, err := os.Create(index)
+	if err != nil {
+		return errs.FileError(err, index)
+	}
+	markdownHelpPrinter(w, mdAppHelpTemplate, ctx.App)
+	if err := w.Close(); err != nil {
+		return errs.FileError(err, index)
+	}
+
+	// Subcommands
+	for _, cmd := range ctx.App.Commands {
+		if err := markdownHelpCommand(ctx.App, cmd, path.Join(dir, cmd.Name)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func markdownHelpCommand(app *cli.App, cmd cli.Command, base string) error {
+	if err := os.MkdirAll(base, 0755); err != nil {
+		return errs.FileError(err, base)
+	}
+
+	index := path.Join(base, "index.md")
+	w, err := os.Create(index)
+	if err != nil {
+		return errs.FileError(err, index)
+	}
+
+	if len(cmd.Subcommands) == 0 {
+		markdownHelpPrinter(w, mdCommandHelpTemplate, cmd)
+		return errs.FileError(w.Close(), index)
+	}
+
+	ctx := cli.NewContext(app, nil, nil)
+	ctx.App = createCliApp(ctx, cmd)
+	markdownHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
+	if err := w.Close(); err != nil {
+		return errs.FileError(err, index)
+	}
+
+	for _, sub := range cmd.Subcommands {
+		sub.HelpName = fmt.Sprintf("%s %s", cmd.HelpName, sub.Name)
+		if err := markdownHelpCommand(app, sub, path.Join(base, sub.Name)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func htmlHelpAction(ctx *cli.Context) error {
 	dir := path.Clean(ctx.String("html"))
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -136,7 +195,7 @@ func (h *htmlHelpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 
 			ctx.App = createCliApp(ctx, cmd)
-			htmlHelpPrinter(w, htmlSubcommandHelpTemplate, ctx.App)
+			htmlHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
 			return
 		}
 	}
@@ -149,6 +208,7 @@ var mdAppHelpTemplate = `## NAME
 **{{.HelpName}}** -- {{.Usage}}
 
 ## USAGE
+
 {{if .UsageText}}{{.UsageText}}{{else}}**{{.HelpName}}**{{if .Commands}} <command>{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}_[arguments]_{{end}}{{end}}{{if .Description}}
 
 ## STABILITY INDEX

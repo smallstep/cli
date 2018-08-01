@@ -30,6 +30,11 @@ func htmlHelpPrinter(w io.Writer, templ string, data interface{}) {
 	w.Write([]byte(`<br></body></html>`))
 }
 
+func markdownHelpPrinter(w io.Writer, templ string, data interface{}) {
+	b := helpPreprocessor(w, templ, data)
+	w.Write(b)
+}
+
 func helpPreprocessor(w io.Writer, templ string, data interface{}) []byte {
 	buf := new(bytes.Buffer)
 	cli.HelpPrinterCustom(buf, templ, data, nil)
