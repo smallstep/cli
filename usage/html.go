@@ -36,7 +36,7 @@ func htmlHelpAction(ctx *cli.Context) error {
 	if err != nil {
 		return errs.FileError(err, index)
 	}
-	htmlHelpPrinter(w, htmlAppHelpTemplate, ctx.App)
+	htmlHelpPrinter(w, mdAppHelpTemplate, ctx.App)
 	if err := w.Close(); err != nil {
 		return errs.FileError(err, index)
 	}
@@ -68,13 +68,13 @@ func htmlHelpCommand(app *cli.App, cmd cli.Command, base string) error {
 	}
 
 	if len(cmd.Subcommands) == 0 {
-		htmlHelpPrinter(w, htmlCommandHelpTemplate, cmd)
+		htmlHelpPrinter(w, mdCommandHelpTemplate, cmd)
 		return errs.FileError(w.Close(), index)
 	}
 
 	ctx := cli.NewContext(app, nil, nil)
 	ctx.App = createCliApp(ctx, cmd)
-	htmlHelpPrinter(w, htmlSubcommandHelpTemplate, ctx.App)
+	htmlHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
 	if err := w.Close(); err != nil {
 		return errs.FileError(err, index)
 	}
@@ -99,7 +99,7 @@ func (h *htmlHelpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// clean request URI
 	requestURI := path.Clean(req.RequestURI)
 	if requestURI == "/" {
-		htmlHelpPrinter(w, htmlAppHelpTemplate, ctx.App)
+		htmlHelpPrinter(w, mdAppHelpTemplate, ctx.App)
 		return
 	}
 
@@ -131,7 +131,7 @@ func (h *htmlHelpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 			ctx.Command = cmd
 			if len(cmd.Subcommands) == 0 {
-				htmlHelpPrinter(w, htmlCommandHelpTemplate, cmd)
+				htmlHelpPrinter(w, mdCommandHelpTemplate, cmd)
 				return
 			}
 
@@ -144,8 +144,8 @@ func (h *htmlHelpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	http.NotFound(w, req)
 }
 
-// htmlAppHelpTemplate contains the modified template for the main app
-var htmlAppHelpTemplate = `## NAME
+// AppHelpTemplate contains the modified template for the main app
+var mdAppHelpTemplate = `## NAME
 **{{.HelpName}}** -- {{.Usage}}
 
 ## USAGE
@@ -199,7 +199,7 @@ A version of this document typeset for printing is available online at ...pdf
 
 // SubcommandHelpTemplate contains the modified template for a sub command
 // Note that the weird "|||\n|---|---|" syntax sets up a markdown table with empty headers.
-var htmlSubcommandHelpTemplate = `## NAME
+var mdSubcommandHelpTemplate = `## NAME
 **{{.HelpName}}** -- {{.Usage}}
 
 ## USAGE
@@ -226,7 +226,7 @@ var htmlSubcommandHelpTemplate = `## NAME
 `
 
 // CommandHelpTemplate contains the modified template for a command
-var htmlCommandHelpTemplate = `## NAME
+var mdCommandHelpTemplate = `## NAME
 **{{.HelpName}}** -- {{.Usage}}
 
 ## USAGE
