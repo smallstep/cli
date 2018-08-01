@@ -40,7 +40,7 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 			case "P-256", "P-384", "P-521": //ok
 			default:
 				return kty, crv, size, errs.IncompatibleFlagValueWithFlagValue(ctx, ktyKey, kty,
-					curveKey, crv, "P-256, P-384, P-251")
+					curveKey, crv, "P-256, P-384, P-521")
 			}
 		case "OKP":
 			if ctx.IsSet("size") {
