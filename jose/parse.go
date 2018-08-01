@@ -219,8 +219,9 @@ func guessJWKAlgorithm(ctx *context, jwk *jose.JSONWebKey) {
 			return
 		}
 
-		// skip if no defaults is enabled
+		// Guess only fixed algorithms if no defaults is enabled
 		if ctx.noDefaults {
+			guessKnownJWKAlgorithm(ctx, jwk)
 			return
 		}
 
@@ -253,7 +254,20 @@ func guessJWKAlgorithm(ctx *context, jwk *jose.JSONWebKey) {
 		// Ed25519 can only be used for signing operations
 		case ed25519.PrivateKey, ed25519.PublicKey:
 			jwk.Algorithm = EdDSA
-		case *ed25519.PrivateKey, *ed25519.PublicKey:
+		}
+	}
+}
+
+// guessKnownJWKAlgorithm sets the algorithm for keys that only have one
+// possible algorithm.
+func guessKnownJWKAlgorithm(ctx *context, jwk *jose.JSONWebKey) {
+	if jwk.Algorithm == "" && jwk.Use != "enc" {
+		switch k := jwk.Key.(type) {
+		case *ecdsa.PrivateKey:
+			jwk.Algorithm = getECAlgorithm(k.Curve)
+		case *ecdsa.PublicKey:
+			jwk.Algorithm = getECAlgorithm(k.Curve)
+		case ed25519.PrivateKey, ed25519.PublicKey:
 			jwk.Algorithm = EdDSA
 		}
 	}
