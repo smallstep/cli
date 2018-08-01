@@ -164,7 +164,7 @@ func IncompatibleFlagValueWithFlagValue(ctx *cli.Context, flag string, value str
 		return errors.New(format)
 	}
 
-	return errors.Errorf("%s\n\n  Option(s): --%s %v", format, flag, strings.Split(options, ","))
+	return errors.Errorf("%s\n\n  Option(s): --%s %s", format, withFlag, options)
 }
 
 // RequiredFlag returns an error with the required flag message.
