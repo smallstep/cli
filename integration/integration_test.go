@@ -41,7 +41,7 @@ func TestVersion(t *testing.T) {
 func TestCryptoJWTSign(t *testing.T) {
 	out, err := Output("step crypto jwt sign -key testdata/p256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf 1 -iat 1 -exp 1 -subtle")
 	assert.FatalError(t, err)
-	assert.True(t, strings.HasPrefix(string(out), "eyJhbGciOiJFUzI1NiIsImtpZCI6IiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiVGVzdEF1ZGllbmNlIl0sImV4cCI6MSwiaWF0IjoxLCJpc3MiOiJUZXN0SXNzdWVyIiwibmJmIjoxLCJzdWIiOiJUZXN0U3ViamVjdCJ9."))
+	assert.True(t, strings.HasPrefix(string(out), "eyJhbGciOiJFUzI1NiIsImtpZCI6IiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJUZXN0QXVkaWVuY2UiLCJleHAiOjEsImlhdCI6MSwiaXNzIjoiVGVzdElzc3VlciIsIm5iZiI6MSwic3ViIjoiVGVzdFN1YmplY3QifQ."))
 }
 
 func TestCryptoJWTVerifyWithPrivate(t *testing.T) {
