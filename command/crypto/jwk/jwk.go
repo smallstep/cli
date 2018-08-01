@@ -7,7 +7,7 @@ func Command() cli.Command {
 	return cli.Command{
 		Name:      "jwk",
 		Usage:     "create JWKs (JSON Web Keys) and manage JWK Key Sets",
-		UsageText: "step crypto jwk SUBCOMMAND [ARGUMENTS] [GLOBAL_FLAGS] [SUBCOMMAND_FLAGS]",
+		UsageText: "step crypto jwk <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `The **step crypto jwk** command group provides facilities for creating JWKs
 (JSON Web Keys) as defined in RFC7517. It also includes command line utilities
 for managing Key Sets and working with encrypted keys.
