@@ -7,6 +7,8 @@ import (
 
 // DefaultRSASize sets the default key size for RSA to 2048 bits.
 const DefaultRSASize = 2048
+
+// DefaultECCurve sets the default curve for EC to P-256.
 const DefaultECCurve = "P-256"
 
 // GetKeyDetailsFromCLI gets the key pair algorithm, curve, and size inputs
