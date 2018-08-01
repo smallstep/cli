@@ -6,6 +6,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"text/template"
 
 	md "github.com/smallstep/cli/pkg/blackfriday"
 	"github.com/urfave/cli"
@@ -32,6 +33,20 @@ func htmlHelpPrinter(w io.Writer, templ string, data interface{}) {
 
 func markdownHelpPrinter(w io.Writer, templ string, data interface{}) {
 	b := helpPreprocessor(w, templ, data)
+	var frontMatterTemplate = `---
+layout: auto-doc
+title: {{.HelpName}}
+---
+
+`
+	t, err := template.New("frontmatter").Parse(frontMatterTemplate)
+	if err != nil {
+		panic(err)
+	}
+	err = t.Execute(w, data)
+	if err != nil {
+		panic(err)
+	}
 	w.Write(b)
 }
 
