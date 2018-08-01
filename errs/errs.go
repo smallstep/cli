@@ -183,16 +183,28 @@ func RequiredWithFlagValue(ctx *cli.Context, flag, value, required string) error
 	return errors.Errorf("'--%s %s' requires the '--%s' flag", flag, value, required)
 }
 
-// RequiredInsecureFlag returns an error with the required flag message unless
-// the insecure flag is used.
+// RequiredInsecureFlag returns an error with the given flag requiring the
+// insecure flag message.
 func RequiredInsecureFlag(ctx *cli.Context, flag string) error {
 	return errors.Errorf("flag '--%s' requires the '--insecure' flag", flag)
 }
 
-// RequiredSubtleFlag returns an error with the required flag message unless
-// the subtle flag is used.
+// RequiredSubtleFlag returns an error with the given flag requiring the
+// subtle flag message..
 func RequiredSubtleFlag(ctx *cli.Context, flag string) error {
-	return errors.Errorf("flag '--%s' requires the --subtle' flag", flag)
+	return errors.Errorf("flag '--%s' requires the '--subtle' flag", flag)
+}
+
+// RequiredUnlessInsecureFlag returns an error with the required flag message unless
+// the insecure flag is used.
+func RequiredUnlessInsecureFlag(ctx *cli.Context, flag string) error {
+	return errors.Errorf("flag '--%s' is required unless the '--insecure' flag is provided", flag)
+}
+
+// RequiredUnlessSubtleFlag returns an error with the required flag message unless
+// the subtle flag is used.
+func RequiredUnlessSubtleFlag(ctx *cli.Context, flag string) error {
+	return errors.Errorf("flag '--%s' is required unless the '--subtle' flag is provided", flag)
 }
 
 // RequiredOrFlag returns an error with a list of flags being required messages.

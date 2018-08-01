@@ -140,9 +140,9 @@ func verifyAction(ctx *cli.Context) error {
 	if !isSubtle {
 		switch {
 		case len(iss) == 0:
-			return errs.RequiredSubtleFlag(ctx, "iss")
+			return errs.RequiredUnlessSubtleFlag(ctx, "iss")
 		case len(aud) == 0:
-			return errs.RequiredSubtleFlag(ctx, "aud")
+			return errs.RequiredUnlessSubtleFlag(ctx, "aud")
 		}
 	}
 
