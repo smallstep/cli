@@ -214,8 +214,8 @@ func verifyAction(ctx *cli.Context) error {
 	}
 	if !ctx.Bool("no-exp-check") {
 		// TODO: The `go-jose` library makes it hard for us to differentiate
-		// between a JWT that has no "exp" paramater and one that has an "exp"
-		// paramater set to 0. We conflate the two cases here. This is
+		// between a JWT that has no "exp" parameter and one that has an "exp"
+		// parameter set to 0. We conflate the two cases here. This is
 		// definitely not correct as an explicit 0 should be rejected.
 		if claims.Expiry == 0 {
 			if !ctx.Bool("subtle") {
