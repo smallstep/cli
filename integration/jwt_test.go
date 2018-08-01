@@ -24,7 +24,7 @@ import (
 	"github.com/icrowley/fake"
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
-	"github.com/smallstep/cli/crypto/keys"
+	pemutil "github.com/smallstep/cli/crypto/pem"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
@@ -59,7 +59,7 @@ func (j JWK) pem() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	b, err := keys.PrivatePEM(jwk.Key, keys.InsecureEncOpts())
+	b, err := pemutil.Serialize(jwk.Key)
 	if err != nil {
 		return "", err
 	}

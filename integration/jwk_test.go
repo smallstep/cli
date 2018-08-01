@@ -9,10 +9,10 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/smallstep/assert"
+	"github.com/smallstep/cli/crypto/randutil"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
@@ -58,30 +58,25 @@ func (j JWKTest) run() (CLIOutput, error) {
 func (j JWKTest) test(t *testing.T, msg ...interface{}) (CLIOutput, string) {
 	var out CLIOutput
 	var pass string
+
 	t.Run(j.name, func(t *testing.T) {
-		//fmt.Printf("Running command: %s", j.cmd())
-		out, err := j.run()
-		assert.FatalError(t, err, fmt.Sprintf("`%s`: returned error '%s'\n\nOutput:\n%s", j.cmd(), err, out.combined))
+		// fmt.Printf("Running command: %s\n", j.cmd())
+		e, err := j.command.spawn()
+		assert.FatalError(t, err)
+		if _, ok := j.command.flags["no-password"]; !ok {
+			pass, err = randutil.ASCII(16)
+			assert.FatalError(t, err)
+			e.Expect("Please enter the password to encrypt the private JWK:")
+			e.SendLine(pass)
+			e.Interact()
+		} else {
+			e.Wait()
+		}
+
 		AssertFileExists(t, j.pubfile, fmt.Sprintf("step crypto jwk create should create public JWK at %s", j.pubfile))
 		AssertFileExists(t, j.prvfile, fmt.Sprintf("step crypto jwk create should create private JWK at %s", j.prvfile))
 		j.checkPublic(t)
-		if _, ok := j.command.flags["no-password"]; ok {
-			j.checkPrivate(t, "")
-			assert.Equals(t, out.combined, "", msg)
-		} else {
-			// Output should be look like:
-			//   Private JWK file '<j.prvfile>' will be encrypted with the key:
-			//   <password>
-			lines := strings.Split(out.stdout, "\n")
-			outMsg := fmt.Sprintf("Unexpected output from `%s`:\n\n%s", j.cmd(), out.stdout)
-			assert.Equals(t, 3, len(lines), outMsg)
-			if len(lines) == 3 {
-				assert.Equals(t, fmt.Sprintf("Private JWK file '%s' will be encrypted with the key:", j.prvfile), lines[0])
-				assert.Equals(t, "", out.stderr)
-				pass = lines[1]
-				j.checkPrivate(t, pass)
-			}
-		}
+		j.checkPrivate(t, pass)
 	})
 	return out, pass
 }
@@ -281,7 +276,8 @@ func (j JWKTest) checkPrivate(t *testing.T, password string) {
 		assert.True(t, ok, "missing protected header attribute in JWE")
 		hdr, err := base64.RawURLEncoding.DecodeString(hdrb.(string))
 		assert.FatalError(t, err)
-		assert.Equals(t, string(hdr), `{"alg":"A128KW","enc":"A128GCM"}`)
+		// assert.Equals(t, string(hdr), `{"alg":"A128KW","enc":"A128GCM"}`)
+		assert.HasPrefix(t, string(hdr), `{"alg":"PBES2-HS256+A128KW","enc":"A128GCM","p2c":100000,"p2s":"`)
 		m = j.decryptJWEPayload(t, password)
 	} else {
 		assert.True(t, nopass, "JWKs should be encrypted in JWE unless --no-password flag is passed")
@@ -329,7 +325,7 @@ func TestCryptoJWK(t *testing.T) {
 			NewJWKTest("RSA-2048-PS256").setFlag("kty", "RSA").setFlag("size", "2048").setFlag("alg", "PS256").test(t)
 			NewJWKTest("RSA-2048-PS384").setFlag("type", "RSA").setFlag("size", "2048").setFlag("alg", "PS384").test(t)
 			NewJWKTest("RSA-2048-PS512").setFlag("kty", "RSA").setFlag("size", "2048").setFlag("alg", "PS512").test(t)
-			NewJWKTest("RSA-1024-PS256-fail").setFlag("kty", "RSA").setFlag("size", "1024").setFlag("alg", "PS512").fail(t, "minimum '--size' for RSA keys is 2048 bits without '--insecure' flag\n")
+			NewJWKTest("RSA-1024-PS256-fail").setFlag("kty", "RSA").setFlag("size", "1024").setFlag("alg", "PS512").fail(t, "flag '--size' requires at least 2048 unless '--insecure' flag is provided\n")
 			NewJWKTest("RSA-1024-PS256").setFlag("type", "RSA").setFlag("size", "1024").setFlag("alg", "PS512").setFlag("insecure", "").test(t)
 			NewJWKTest("RSA-16-PS256").setFlag("kty", "RSA").setFlag("size", "16").setFlag("alg", "PS512").setFlag("insecure", "").test(t)
 			// Broken - actual size is 16. Needs to be multiple of 8?
@@ -337,7 +333,7 @@ func TestCryptoJWK(t *testing.T) {
 			// Broken - fails in crypto/rsa
 			//NewJWKTest("RSA-11-PS256").setFlag("kty", "RSA").setFlag("size", "11").setFlag("alg", "PS512").setFlag("insecure", "").test(t)
 			//NewJWKTest("RSA-0-PS256").setFlag("kty", "RSA").setFlag("size", "0").setFlag("alg", "PS512").setFlag("insecure", "").test(t)
-			NewJWKTest("RSA-0-PS256").setFlag("kty", "RSA").setFlag("size", "-1").setFlag("alg", "PS512").setFlag("insecure", "").fail(t, "flag '--size' must be >= 0\n")
+			NewJWKTest("RSA-0-PS256").setFlag("kty", "RSA").setFlag("size", "-1").setFlag("alg", "PS512").setFlag("insecure", "").fail(t, "flag '--size' must be greater or equal than 0\n")
 			NewJWKTest("RSA-2048-PS256-enc-bad-alg").setFlag("type", "RSA").setFlag("size", "2048").setFlag("alg", "PS256").setFlag("use", "enc").fail(t, "alg 'PS256' is not compatible with kty 'RSA'\n")
 			NewJWKTest("RSA-2048-A128KW-enc-bad-alg").setFlag("type", "RSA").setFlag("size", "2048").setFlag("alg", "A128KW").setFlag("use", "enc").fail(t, "alg 'A128KW' is not compatible with kty 'RSA'\n")
 			NewJWKTest("RSA-2048-RSAOAEP-enc").setFlag("type", "RSA").setFlag("size", "2048").setFlag("alg", "RSA-OAEP").setFlag("use", "enc").test(t)
@@ -348,17 +344,17 @@ func TestCryptoJWK(t *testing.T) {
 			NewJWKTest("alg=ES256").setFlag("kty", "RSA").setFlag("alg", "ES256").setFlag("size", "2048").fail(t, "alg 'ES256' is not compatible with kty 'RSA'\n")
 			NewJWKTest("alg=HS384").setFlag("type", "RSA").setFlag("alg", "HS384").setFlag("size", "2048").fail(t, "alg 'HS384' is not compatible with kty 'RSA'\n")
 			NewJWKTest("RSA-2048-PS256-crv").setFlag("kty", "RSA").setFlag("size", "2048").setFlag("alg", "PS256").setFlag("crv", "P-521").fail(t, "flag '--crv' is incompatible with '--kty RSA'\n")
-			NewJWKTest("RSA-128-PS256").setFlag("kty", "RSA").setFlag("size", "128").setFlag("alg", "PS256").fail(t, "minimum '--size' for RSA keys is 2048 bits without '--insecure' flag\n")
-			NewJWKTest("rsa").setFlag("kty", "rsa").fail(t, "missing or invalid value for flag '--kty'\n")
+			NewJWKTest("RSA-128-PS256").setFlag("kty", "RSA").setFlag("size", "128").setFlag("alg", "PS256").fail(t, "flag '--size' requires at least 2048 unless '--insecure' flag is provided\n")
+			NewJWKTest("rsa").setFlag("kty", "rsa").fail(t, "invalid value 'rsa' for flag '--kty'; options are EC, RSA, OKP, or oct\n")
 			NewJWKTest("RSA-nopass-fail").setFlag("kty", "RSA").setFlag("no-password", "").fail(t, "flag '--no-password' requires the '--insecure' flag\n")
 			NewJWKTest("RSA-nopass").setFlag("kty", "RSA").setFlag("no-password", "").setFlag("insecure", "").test(t)
 		})
 		t.Run("kty=oct", func(t *testing.T) {
 			NewJWKTest("oct-default").setFlag("kty", "oct").test(t)
-			NewJWKTest("oct-32-fail").setFlag("type", "oct").setFlag("size", "4").fail(t, "minimum '--size' for oct keys is 16 bytes without '--insecure' flag\n")
+			NewJWKTest("oct-32-fail").setFlag("type", "oct").setFlag("size", "4").fail(t, "flag '--size' requires at least 16 unless '--insecure' flag is provided\n")
 			NewJWKTest("oct-32").setFlag("kty", "oct").setFlag("size", "4").setFlag("insecure", "").test(t)
 			NewJWKTest("oct-16").setFlag("kty", "oct").setFlag("size", "2").setFlag("insecure", "").test(t)
-			NewJWKTest("oct-0").setFlag("kty", "oct").setFlag("size", "0").setFlag("insecure", "").fail(t, "flag '--size' must be >= 0\n")
+			NewJWKTest("oct-0").setFlag("kty", "oct").setFlag("size", "0").setFlag("insecure", "").fail(t, "flag '--size' must be greater or equal than 0\n")
 			NewJWKTest("oct-512-HS256").setFlag("type", "oct").setFlag("alg", "HS256").setFlag("size", "64").test(t)
 			NewJWKTest("oct-512-HS384").setFlag("kty", "oct").setFlag("alg", "HS384").setFlag("size", "64").test(t)
 			NewJWKTest("oct-512-HS512").setFlag("kty", "oct").setFlag("alg", "HS512").setFlag("size", "64").test(t)
@@ -373,7 +369,7 @@ func TestCryptoJWK(t *testing.T) {
 			NewJWKTest("oct-256-HS256-kid-foo").setFlag("kty", "oct").setFlag("alg", "HS256").setFlag("size", "32").setFlag("kid", "foo").test(t)
 			NewJWKTest("alg=RS256").setFlag("kty", "oct").setFlag("alg", "RS256").setFlag("size", "64").fail(t, "alg 'RS256' is not compatible with kty 'oct'\n")
 			NewJWKTest("oct-512-HS256-crv").setFlag("kty", "oct").setFlag("alg", "HS256").setFlag("size", "64").setFlag("crv", "P-256").fail(t, "flag '--crv' is incompatible with '--kty oct'\n")
-			NewJWKTest("OCT").setFlag("kty", "OCT").fail(t, "missing or invalid value for flag '--kty'\n")
+			NewJWKTest("OCT").setFlag("kty", "OCT").fail(t, "invalid value 'OCT' for flag '--kty'; options are EC, RSA, OKP, or oct\n")
 		})
 		t.Run("kty=EC", func(t *testing.T) {
 			NewJWKTest("EC-default").setFlag("kty", "EC").test(t)
@@ -391,7 +387,7 @@ func TestCryptoJWK(t *testing.T) {
 			NewJWKTest("EC-P256").setFlag("kty", "EC").setFlag("crv", "P-256").test(t)
 			NewJWKTest("EC-P384").setFlag("kty", "EC").setFlag("crv", "P-384").test(t)
 			NewJWKTest("EC-P521").setFlag("kty", "EC").setFlag("crv", "P-521").test(t)
-			NewJWKTest("ec").setFlag("kty", "ec").fail(t, "missing or invalid value for flag '--kty'\n")
+			NewJWKTest("ec").setFlag("kty", "ec").fail(t, "invalid value 'ec' for flag '--kty'; options are EC, RSA, OKP, or oct\n")
 		})
 		t.Run("kty=OKP", func(t *testing.T) {
 			NewJWKTest("OKP-Ed25519-default").setFlag("kty", "OKP").setFlag("crv", "Ed25519").test(t)
@@ -399,20 +395,20 @@ func TestCryptoJWK(t *testing.T) {
 			NewJWKTest("OKP-Ed25519-EdDSA").setFlag("type", "OKP").setFlag("crv", "Ed25519").setFlag("alg", "EdDSA").test(t)
 			NewJWKTest("OKP-Ed25519-EdDSA").setFlag("kty", "OKP").setFlag("crv", "Ed25519").setFlag("alg", "ES256").fail(t, "alg 'ES256' is not compatible with kty 'OKP' and crv 'Ed25519'\n")
 			NewJWKTest("OKP-Ed25519-EdDSA").setFlag("kty", "OKP").setFlag("crv", "Ed25519").setFlag("size", "256").fail(t, "flag '--size' is incompatible with '--kty OKP'\n")
-			NewJWKTest("okp").setFlag("kty", "okp").fail(t, "missing or invalid value for flag '--kty'\n")
+			NewJWKTest("okp").setFlag("kty", "okp").fail(t, "invalid value 'okp' for flag '--kty'; options are EC, RSA, OKP, or oct\n")
 		})
-		NewJWKTest("kty=FOO").setFlag("kty", "FOO").fail(t, "missing or invalid value for flag '--kty'\n")
-		NewJWKTest("kty=ec").setFlag("kty", "ec").fail(t, "missing or invalid value for flag '--kty'\n", "kty flag is case-sensitive")
+		NewJWKTest("kty=FOO").setFlag("kty", "FOO").fail(t, "invalid value 'FOO' for flag '--kty'; options are EC, RSA, OKP, or oct\n")
+		NewJWKTest("kty=ec").setFlag("kty", "ec").fail(t, "invalid value 'ec' for flag '--kty'; options are EC, RSA, OKP, or oct\n", "kty flag is case-sensitive")
 		NewJWKTest("alg=rs256").setFlag("kty", "RSA").setFlag("size", "2048").setFlag("alg", "rs256").fail(t, "alg 'rs256' is not compatible with kty 'RSA'\n", "alg flag is case-sensitive")
 		NewJWKTest("alg=snarf").setFlag("kty", "RSA").setFlag("size", "2048").setFlag("alg", "snarf").fail(t, "alg 'snarf' is not compatible with kty 'RSA'\n")
 		NewJWKTest("alg=rs256").setFlag("alg", "rs256").fail(t, "alg 'rs256' is not compatible with kty 'EC' and crv 'P-256'\n", "alg flag is case-sensitive")
 		// Broken - prints usage
 		//NewJWKTest("type-and-kty").setFlag("type", "RSA").setFlag("kty", "RSA").fail(t, "Cannot use two forms of the same flag: type kty")
 
-		NewCLICommand().setCommand("step crypto jwk create").fail(t, "missing-args#1", "missing positional arguments 'PUB_FILE' 'PRIV_FILE'\n")
-		NewCLICommand().setCommand("step crypto jwk create").setArguments("foo.json").fail(t, "missing-args#2", "missing positional argument 'PRIV_FILE'\n")
-		NewCLICommand().setCommand("step crypto jwk create").setArguments("foo.1.json foo.2.json foo.3.json").fail(t, "too-many-args", "too many positional arguments use only 'PUB_FILE' 'PRIV_FILE'\n")
-		NewCLICommand().setCommand("step crypto jwk create").setArguments("foo.json foo.json").fail(t, "pub-priv-same", "positional arguments 'PUB_FILE' 'PRIV_FILE' cannot be equal\n")
+		NewCLICommand().setCommand("step crypto jwk create").fail(t, "missing-args#1", "not enough positional arguments were provided in 'step crypto jwk create <public-jwk-file> <private-jwk-file>'\n")
+		NewCLICommand().setCommand("step crypto jwk create").setArguments("foo.json").fail(t, "missing-args#2", "not enough positional arguments were provided in 'step crypto jwk create <public-jwk-file> <private-jwk-file>'\n")
+		NewCLICommand().setCommand("step crypto jwk create").setArguments("foo.1.json foo.2.json foo.3.json").fail(t, "too-many-args", "too many positional arguments were provided in 'step crypto jwk create <public-jwk-file> <private-jwk-file>'\n")
+		NewCLICommand().setCommand("step crypto jwk create").setArguments("foo.json foo.json").fail(t, "pub-priv-same", "positional arguments <public-jwk-file> and <private-jwk-file> cannot be equal in 'step crypto jwk create <public-jwk-file> <private-jwk-file>'\n")
 		// Broken - prints usage
 		//NewCLICommand().setCommand("step crypto jwk create").setArguments("foo.json bar.json").setFlag("size", "blort").fail(t, "non-int-size", "invalid value \"blort\" for flag -size: strconv.ParseInt: parsing \"blort\": invalid syntax")
 	})

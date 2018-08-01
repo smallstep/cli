@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ThomasRooney/gexpect"
 	"github.com/smallstep/assert"
 )
 
@@ -101,6 +102,10 @@ func (c CLICommand) run() (CLIOutput, error) {
 	cmd.Stdin = c.stdin
 	err := cmd.Run()
 	return CLIOutput{string(stdout.Bytes()), string(stderr.Bytes()), string(combined.Bytes())}, err
+}
+
+func (c CLICommand) spawn() (*gexpect.ExpectSubprocess, error) {
+	return gexpect.Spawn(c.cmd())
 }
 
 func (c CLICommand) test(t *testing.T, name string, expected string, msg ...interface{}) {
