@@ -5,6 +5,10 @@ import (
 	"github.com/urfave/cli"
 )
 
+// DefaultRSASize sets the default key size for RSA to 2048 bits.
+const DefaultRSASize = 2048
+const DefaultECCurve = "P-256"
+
 // GetKeyDetailsFromCLI gets the key pair algorithm, curve, and size inputs
 // from the CLI context.
 func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, sizeKey string) (string, string, int, error) {
@@ -18,7 +22,7 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 		switch kty {
 		case "RSA":
 			if !ctx.IsSet(sizeKey) {
-				return kty, crv, size, errs.RequiredWithFlagValue(ctx, ktyKey, kty, sizeKey)
+				size = DefaultRSASize
 			}
 			if ctx.IsSet(curveKey) {
 				return kty, crv, size, errs.IncompatibleFlagValue(ctx, curveKey, ktyKey, kty)
@@ -34,7 +38,7 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 				return kty, crv, size, errs.IncompatibleFlagValue(ctx, sizeKey, ktyKey, kty)
 			}
 			if !ctx.IsSet("curve") {
-				return kty, crv, size, errs.RequiredWithFlagValue(ctx, ktyKey, kty, curveKey)
+				crv = DefaultECCurve
 			}
 			switch crv {
 			case "P-256", "P-384", "P-521": //ok
