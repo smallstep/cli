@@ -230,7 +230,7 @@ func inspectJWT(jwt string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	inspect := make(map[string]interface{})
-	err = json.Unmarshal([]byte(out.stderr), &inspect)
+	err = json.Unmarshal([]byte(out.stdout), &inspect)
 	return inspect, err
 }
 

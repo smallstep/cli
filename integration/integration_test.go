@@ -46,7 +46,7 @@ func TestCryptoJWTSign(t *testing.T) {
 
 func TestCryptoJWTVerifyWithPrivate(t *testing.T) {
 	exp := time.Now().Add(1 * time.Minute)
-	out, err := CombinedOutput(fmt.Sprintf("step crypto jwt sign -key testdata/p256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -exp %d | step crypto jwt verify -key testdata/p256.pem -alg ES256 -subtle", exp.Unix()))
+	out, err := CombinedOutput(fmt.Sprintf("step crypto jwt sign -key testdata/p256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -exp %d | step crypto jwt verify -key testdata/p256.pem -subtle", exp.Unix()))
 	assert.FatalError(t, err)
 	m := make(map[string]interface{})
 	assert.FatalError(t, json.Unmarshal(out, &m))
