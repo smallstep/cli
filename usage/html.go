@@ -31,7 +31,7 @@ func markdownHelpAction(ctx *cli.Context) error {
 	}
 
 	// app index
-	index := path.Join(dir, "index.md")
+	index := path.Join(dir, "step.md")
 	w, err := os.Create(index)
 	if err != nil {
 		return errs.FileError(err, index)
