@@ -146,6 +146,11 @@ func verifyAction(ctx *cli.Context) error {
 		}
 	}
 
+	// Validate no-exp-check with insecure
+	if ctx.Bool("no-exp-check") && !ctx.Bool("insecure") {
+		return errs.RequiredInsecureFlag(ctx, "no-exp-check")
+	}
+
 	// Add parse options
 	var options []jose.Option
 	options = append(options, jose.WithUse("sig"))
@@ -208,26 +213,27 @@ func verifyAction(ctx *cli.Context) error {
 		}
 	}
 
+	// Check exp and nbf presence
+	// There's no need to do the verification again.
+	expClaim := struct {
+		Expiry    *int64 `json:"exp,omitempty"`
+		NotBefore *int64 `json:"nbf,omitempty"`
+	}{}
+	if err := tok.UnsafeClaimsWithoutVerification(&expClaim); err != nil {
+		switch err {
+		case jose.ErrCryptoFailure:
+			return errors.New("validation failed: invalid signature")
+		default:
+			return errors.Wrap(err, "claim verify failed")
+		}
+	}
+
 	expected := jose.Expected{Issuer: iss}
 	if aud != "" {
 		expected.Audience = jose.Audience{aud}
 	}
-	if !ctx.Bool("no-exp-check") {
-		// TODO: The `go-jose` library makes it hard for us to differentiate
-		// between a JWT that has no "exp" parameter and one that has an "exp"
-		// parameter set to 0. We conflate the two cases here. This is
-		// definitely not correct as an explicit 0 should be rejected.
-		if claims.Expiry == 0 {
-			if !ctx.Bool("subtle") {
-				return errors.New(`jwt must have "exp" property unless '--subtle' is used`)
-			}
-		} else {
-			expected.Time = time.Now()
-		}
-	} else {
-		if !ctx.Bool("insecure") {
-			return errs.RequiredInsecureFlag(ctx, "no-exp-check")
-		}
+	if expClaim.Expiry != nil || expClaim.NotBefore != nil {
+		expected.Time = time.Now()
 	}
 
 	if err := claims.ValidateWithLeeway(expected, 0); err != nil {
@@ -236,10 +242,15 @@ func verifyAction(ctx *cli.Context) error {
 			return errors.New("validation failed: invalid issuer claim (iss)")
 		case jose.ErrInvalidAudience:
 			return errors.New("validation failed: invalid audience claim (aud)")
-		case jose.ErrNotValidYet:
-			return errors.New("validation failed: token not valid yet (nbf)")
+		case jose.ErrNotValidYet: // skip if not set, just in case is tested in time <0 :)
+			if expClaim.NotBefore != nil {
+				return errors.New("validation failed: token not valid yet (nbf)")
+			}
 		case jose.ErrExpired:
-			return errors.Errorf("validation failed: token is expired by %s (exp)", expected.Time.Sub(claims.Expiry.Time()).Round(time.Millisecond))
+			// skip if not set or no-exp-check
+			if expClaim.Expiry != nil && !ctx.Bool("no-exp-check") {
+				return errors.Errorf("validation failed: token is expired by %s (exp)", expected.Time.Sub(claims.Expiry.Time()).Round(time.Millisecond))
+			}
 		case jose.ErrInvalidSubject: // we're not currently checking the subject
 			return errors.New("validation failed: invalid subject subject (sub)")
 		case jose.ErrInvalidID: // we're not currently checking the id
