@@ -399,10 +399,12 @@ func (j JWTVerifyTest) test(t *testing.T, name, jwt string) {
 		if hiat {
 			assert.True(t, math.Abs(now-iat.(float64)) < 10)
 		}
-		if hnbf {
+		if hnbf && nbf.(float64) != 0 {
 			assert.True(t, math.Abs(now-nbf.(float64)) < 10)
 		}
-		if hexp {
+		_, noExp := j.command.flags["no-exp-check"]
+		_, insecure := j.command.flags["insecure"]
+		if hexp && !(noExp && insecure) {
 			assert.True(t, exp.(float64) > now)
 		}
 	})
@@ -569,7 +571,8 @@ func TestCryptoJWT(t *testing.T) {
 			mkjwt(JWK{"testdata/es256-enc.pub", "testdata/es256-enc.pem", "password", true, false}).sign.setFlag("alg", "ES256").test(t, "pem-encrypted")
 			mkjwt(JWK{"testdata/es256-enc.pub", "testdata/es256-enc.pem", "password", true, false}).sign.setFlag("alg", "RS256").fail(t, "pem-bad-alg", "alg 'RS256' is not compatible with kty 'EC' and crv 'P-256'\n")
 
-			mkjwt(jwkrsa).exp(-1*time.Minute).sign.fail(t, "exp-in-past", "flag '--exp' must be in the future unless '--subtle' is used\n")
+			fmt.Println(mkjwt(jwkrsa).exp(-1 * time.Minute).sign.command.cmd())
+			mkjwt(jwkrsa).exp(-1*time.Minute).sign.fail(t, "exp-in-past", "flag '--exp' must be in the future unless the '--subtle' flag is provided\n")
 			mkjwt(jwkrsa).exp(-1*time.Minute).setFlag("subtle", "").sign.test(t, "exp-in-past-subtle")
 
 			mkjwt(jwkrsa).setSFlag("jti", "foo").test(t, "jti")
@@ -671,12 +674,15 @@ func TestCryptoJWT(t *testing.T) {
 			NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("subtle", "").setFlag("alg", "RS256").fail(t, "expired-zero", expiredZero, regexp.MustCompile(`^validation failed: token is expired by (\d+h\d+m\d+\.\d+s) \(exp\)\n`))
 			expired := mkossljwt(t, `{"typ": "JWT", "alg": "RS256"}`, `{"exp": 12345}`, "testdata/rsa2048.pem")
 			NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("subtle", "").setFlag("alg", "RS256").fail(t, "expired", expired, regexp.MustCompile(`^validation failed: token is expired by (\d+h\d+m\d+\.\d+s) \(exp\)\n`))
+			NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("subtle", "").setFlag("alg", "RS256").setFlag("no-exp-check", "").fail(t, "no-exp-fail", expired, "flag '--no-exp-check' requires the '--insecure' flag\n")
+			NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("subtle", "").setFlag("alg", "RS256").setFlag("no-exp-check", "").setFlag("insecure", "").test(t, "no-exp-check", expired)
 			noexp := mkossljwt(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "foo", "aud": "bar"}`, "testdata/rsa2048.pem")
-			NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("no-exp-check", "").setFlag("iss", "foo").setFlag("aud", "bar").setFlag("alg", "RS256").setFlag("no-exp-check", "").fail(t, "no-exp-fail", noexp, "flag '--no-exp-check' requires the '--insecure' flag\n")
-			NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("no-exp-check", "").setFlag("iss", "foo").setFlag("aud", "bar").setFlag("alg", "RS256").setFlag("no-exp-check", "").setFlag("insecure", "").test(t, "no-exp", noexp)
+			NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("iss", "foo").setFlag("aud", "bar").setFlag("alg", "RS256").test(t, "no-exp", noexp)
+			notBeforeZero := mkossljwt(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "foo", "aud": "bar", "nbf": 0}`, "testdata/rsa2048.pem")
+			NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("iss", "foo").setFlag("aud", "bar").setFlag("alg", "RS256").test(t, "not-before-zero", notBeforeZero)
 			texp := NewJWTTest(jwkrsa).setSFlag("sub", FakePrincipal()).setFlag("aud", FakePrincipal()).setFlag("iss", FakePrincipal())
 			jwt = texp.sign.setFlag("subtle", "").test(t, "no-exp-sign")
-			texp.verify.fail(t, "no-exp-verify-fail", jwt, "jwt must have \"exp\" property unless '--subtle' is used\n")
+			texp.verify.test(t, "no-exp-verify", jwt)
 			texp.verify.setFlag("no-exp-check", "").setFlag("insecure", "").test(t, "empty-exp-in-jwt", jwt)
 			texp.verify.setFlag("subtle", "").test(t, "no-exp-verify-subtle", jwt)
 
@@ -703,20 +709,20 @@ func TestCryptoJWT(t *testing.T) {
 			t.Parallel()
 			mkjwt(jwkrsa).iat(1*time.Second).test(t, "iat")
 			t.Run("nbf", func(t *testing.T) {
-				tst := mkjwt(jwkec).nbf(1 * time.Second)
+				tst := mkjwt(jwkec).nbf(2 * time.Second)
 				jwt := tst.nbf(1*time.Second).sign.test(t, "sign")
 				tst.verify.fail(t, "verify-tosoon", jwt, "validation failed: token not valid yet (nbf)\n")
-				time.Sleep(1 * time.Second)
+				time.Sleep(2 * time.Second)
 				tst.verify.test(t, "verify-succeed", jwt)
 				if t.Failed() {
 					t.Logf("jwt: %s", jwt)
 				}
 			})
 			t.Run("exp", func(t *testing.T) {
-				tst := mkjwt(jwkec).exp(1 * time.Second)
+				tst := mkjwt(jwkec).exp(2 * time.Second)
 				jwt := tst.sign.test(t, "sign")
 				tst.verify.test(t, "verify-succeed", jwt)
-				time.Sleep(1 * time.Second)
+				time.Sleep(2 * time.Second)
 				tst.verify.fail(t, "verify-expired", jwt, regexp.MustCompile(`^validation failed: token is expired by (\d\d\dms|\d\.\d+s) \(exp\)\n`))
 				if t.Failed() {
 					t.Logf("jwt: %s", jwt)
@@ -729,11 +735,11 @@ func TestCryptoJWT(t *testing.T) {
 			cmd, err := gexpect.Spawn(tst.sign.command.cmd())
 			assert.FatalError(t, err)
 			prompt := "Please enter the password to decrypt " + tst.sign.jwk.prvfile + ": "
-			assert.FatalError(t, cmd.ExpectTimeout(prompt, 1*time.Second))
-			assert.FatalError(t, cmd.SendLine("foo"))
-			assert.FatalError(t, cmd.ExpectTimeout(fmt.Sprintf("failed to decrypt %s: square/go-jose: error in cryptographic primitive", tst.sign.jwk.prvfile), 1*time.Second))
-			// TODO: This should re-prompt for the password, not fail!
-			//assert.FatalError(t, cmd.SendLine(t.jwk.password))
+			for i := 0; i < 3; i++ {
+				assert.FatalError(t, cmd.ExpectTimeout(prompt, 1*time.Second))
+				assert.FatalError(t, cmd.SendLine("foo"))
+			}
+			assert.FatalError(t, cmd.ExpectTimeout("failed to decrypt JWK: invalid password", 1*time.Second))
 		})
 
 		t.Run("inspect", func(t *testing.T) {
