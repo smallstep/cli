@@ -236,7 +236,7 @@ func inspectJWT(jwt string) (map[string]interface{}, error) {
 
 func (j JWTSignTest) checkJwt(t *testing.T, jwt string) {
 	header, payload, signature, err := decodeJWT(jwt)
-	assert.FatalError(t, err)
+	assert.FatalError(t, err, jwt)
 
 	inspect, err := inspectJWT(strings.Trim(jwt, " \r\n"))
 	assert.FatalError(t, err)
@@ -537,7 +537,7 @@ func TestCryptoJWT(t *testing.T) {
 			jwtrsa := mkjwt(jwkrsa).sign
 			jwtrsa.setFlag("alg", "RS384").fail(t, "wrong-alg", "alg RS384 does not match the alg on testdata-tmp/jwt-jwk-RSA-prv.json\n")
 
-			mkjwt(JWKFromTest(t, NewJWKTest("jwt-jwk-enc").setFlag("use", "enc").setFlag("no-password", "").setFlag("insecure", ""))).sign.fail(t, "use-enc", "cannot sign using key with intended use \"enc\" (must be \"sig\")\n")
+			mkjwt(JWKFromTest(t, NewJWKTest("jwt-jwk-enc").setFlag("use", "enc").setFlag("no-password", "").setFlag("insecure", ""))).sign.fail(t, "use-enc", "invalid jwk use: found 'enc', expecting 'sig' (signature)\n")
 
 			subtle := NewJWTTest(jwkrsa).sign
 			subtle.fail(t, "no-aud-iss-sub-exp", "flag '--iss' is required unless '--subtle' is used\n")
@@ -562,12 +562,12 @@ func TestCryptoJWT(t *testing.T) {
 			mkjwt(JWK{"testdata/bad-key.pub.json", "testdata/bad-key.json", "", true, false}).sign.fail(t, "bad-key-file-pem", "error reading testdata/bad-key.json: unsupported format\n")
 			mkjwt(JWK{"testdata/jwk-pGoLJDgF5fgTNnB47SKMnVUzVNdu6MF0.pub.json", "testdata/jwk-pGoLJDgF5fgTNnB47SKMnVUzVNdu6MF0.pub.json", "", false, false}).sign.fail(t, "sign-with-pubkey", "cannot use a public key for signing\n")
 			mkjwt(JWK{"testdata/p256.pem.pub", "testdata/p256.pem.pub", "", true, false}).sign.fail(t, "sign-with-pubkey-pem", "cannot use a public key for signing\n")
-			mkjwt(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).sign.fail(t, "pem-alg-required", "flag '--alg' is required with the given key\n")
+			mkjwt(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).sign.test(t, "sign-with-rsa-default")
 			mkjwt(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).sign.setFlag("alg", "RS256").test(t, "pem-alg-required")
-			mkjwt(JWK{"testdata/rsa2048.pub", "testdata/twopems.pem", "", true, false}).sign.setFlag("alg", "RS256").fail(t, "multiple-keys", "error decoding PEM: file 'testdata/twopems.pem' contains more than one key\n")
-			mkjwt(JWK{"testdata/rsa2048.pub", "testdata/badheader.pem", "", true, false}).sign.setFlag("alg", "RS256").fail(t, "multiple-keys", "error decoding PEM: file 'testdata/badheader.pem' contains an unexpected header 'FOO PRIVATE KEY'\n")
+			mkjwt(JWK{"testdata/rsa2048.pub", "testdata/twopems.pem", "", true, false}).sign.setFlag("alg", "RS256").fail(t, "multiple-keys", "error decoding testdata/twopems.pem: contains more than one key\n")
+			mkjwt(JWK{"testdata/rsa2048.pub", "testdata/badheader.pem", "", true, false}).sign.setFlag("alg", "RS256").fail(t, "multiple-keys", "error decoding testdata/badheader.pem: contains an unexpected header 'FOO PRIVATE KEY'\n")
 			mkjwt(JWK{"testdata/es256-enc.pub", "testdata/es256-enc.pem", "password", true, false}).sign.setFlag("alg", "ES256").test(t, "pem-encrypted")
-			mkjwt(JWK{"testdata/es256-enc.pub", "testdata/es256-enc.pem", "password", true, false}).sign.setFlag("alg", "RS256").fail(t, "pem-bad-alg", "alg RS256 does not match the alg on testdata/es256-enc.pem\n")
+			mkjwt(JWK{"testdata/es256-enc.pub", "testdata/es256-enc.pem", "password", true, false}).sign.setFlag("alg", "RS256").fail(t, "pem-bad-alg", "alg 'RS256' is not compatible with kty 'EC' and crv 'P-256'\n")
 
 			mkjwt(jwkrsa).exp(-1*time.Minute).sign.fail(t, "exp-in-past", "flag '--exp' must be in the future unless '--subtle' is used\n")
 			mkjwt(jwkrsa).exp(-1*time.Minute).setFlag("subtle", "").sign.test(t, "exp-in-past-subtle")
@@ -576,12 +576,12 @@ func TestCryptoJWT(t *testing.T) {
 
 			keyset := JWTSignTest{NewCLICommand().setCommand("step crypto jwt sign").setFlag("jwks", "testdata/jwks.json"), JWK{"testdata/jwks.pub.json", "testdata/jwks.json", "", false, true}}
 			keyset = keyset.setFlag("aud", FakePrincipal()).setFlag("iss", FakePrincipal()).setFlag("sub", FakePrincipal()).exp(1 * time.Minute)
-			keyset.fail(t, "keyset-no-kid", "flag `--kid` is required with `--jwks`\n")
+			keyset.fail(t, "keyset-no-kid", "flag '--kid' requires the '--jwks' flag\n")
 			keyset.setFlag("kid", "1").test(t, "keyset-kid1")
 			keyset.setFlag("kid", "2").test(t, "keyset-kid2")
-			keyset.setFlag("kid", "3").fail(t, "keyset-kid3", "cannot sign using key with intended use \"enc\" (must be \"sig\")\n")
+			keyset.setFlag("kid", "3").fail(t, "keyset-kid3", "invalid jwk use: found 'enc', expecting 'sig' (signature)\n")
 			keyset.setFlag("kid", "4").fail(t, "keyset-kid4", "cannot find key with kid 4 on testdata/jwks.json\n")
-			keyset.setFlag("kid", "1").setFlag("key", "foo").fail(t, "keyset-and-key", "flags `--key` and `--jwks` are mutually exclusive\n")
+			keyset.setFlag("kid", "1").setFlag("key", "foo").fail(t, "keyset-and-key", "flag '--key' and flag '--jwks' are mutually exclusive\n")
 			keyset.setFlag("jwks", "foo").setFlag("kid", "1").fail(t, "nonexistent-keyset", "error reading foo: open foo: no such file or directory\n")
 			keyset.setFlag("jwks", "testdata/rsa2048.pem").setFlag("kid", "1").fail(t, "bad-keyset", "error reading testdata/rsa2048.pem: unsupported format\n")
 		})
@@ -626,9 +626,9 @@ func TestCryptoJWT(t *testing.T) {
 			tst.verify.fail(t, "invalid-jwt-payload", fakejwt(parts[0], "foo", parts[2]), "error parsing token: invalid character 'e' looking for beginning of value\n")
 
 			subtle := NewJWTTest(jwkokp).exp(1 * time.Minute).verify
-			subtle.fail(t, "no-aud-iss", jwt, "flag '--iss' is required unless '--subtle' is used\n")
-			subtle.setFlag("iss", tst.verify.command.flags["iss"]).fail(t, "no-aud", jwt, "flag '--aud' is required unless '--subtle' is used\n")
-			subtle.setFlag("aud", tst.verify.command.flags["aud"]).fail(t, "no-iss", jwt, "flag '--iss' is required unless '--subtle' is used\n")
+			subtle.fail(t, "no-aud-iss", jwt, "flag '--iss' is required unless the '--subtle' flag is provided\n")
+			subtle.setFlag("iss", tst.verify.command.flags["iss"]).fail(t, "no-aud", jwt, "flag '--aud' is required unless the '--subtle' flag is provided\n")
+			subtle.setFlag("aud", tst.verify.command.flags["aud"]).fail(t, "no-iss", jwt, "flag '--iss' is required unless the '--subtle' flag is provided\n")
 			subtle = subtle.setFlag("subtle", "")
 			subtle.test(t, "no-aud-iss-subtle", jwt)
 			subtle.setFlag("iss", tst.verify.command.flags["iss"]).test(t, "no-aud-subtle", jwt)
@@ -646,7 +646,7 @@ func TestCryptoJWT(t *testing.T) {
 				// "kid" should be optional if it's in the JWT, else required
 				keyset.test(t, "kid-in-jwt", jwt)
 				jwt = mkjwt(JWK{"testdata/jwks-key1.json", "testdata/jwks-key1.json", "", false, false}).sign.setFlag("aud", aud).setFlag("iss", iss).setFlag("sub", sub).setFlag("no-kid", "").exp(1*time.Minute).test(t, "keyset-key1")
-				keyset.fail(t, "no-kid-in-jwt", jwt, "flag `--kid` is required with `--jwks`\n")
+				keyset.fail(t, "no-kid-in-jwt", jwt, "flag '--kid' requires the '--jwks' flag\n")
 			})
 
 			// JWK without `alg` should require --alg flag
@@ -737,7 +737,7 @@ func TestCryptoJWT(t *testing.T) {
 		})
 
 		t.Run("inspect", func(t *testing.T) {
-			NewCLICommand().setCommand(`echo "foo" | step crypto jwt inspect`).fail(t, "requires-insecure", "'step crypto jwt inspect' must include the '--insecure' flag\n", "")
+			NewCLICommand().setCommand(`echo "foo" | step crypto jwt inspect`).fail(t, "requires-insecure", "'step crypto jwt inspect' requires the '--insecure' flag\n", "")
 		})
 	})
 }

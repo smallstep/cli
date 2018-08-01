@@ -80,6 +80,7 @@ func htmlHelpCommand(app *cli.App, cmd cli.Command, base string) error {
 	}
 
 	for _, sub := range cmd.Subcommands {
+		sub.HelpName = fmt.Sprintf("%s %s", cmd.HelpName, sub.Name)
 		if err := htmlHelpCommand(app, sub, path.Join(base, sub.Name)); err != nil {
 			return err
 		}
