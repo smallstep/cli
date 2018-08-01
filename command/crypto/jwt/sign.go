@@ -218,8 +218,8 @@ func signAction(ctx *cli.Context) error {
 		return errs.TooManyArguments(ctx)
 	}
 
-	isSubtle := ctx.Bool("subtle")
 	alg := ctx.String("alg")
+	isSubtle := ctx.Bool("subtle")
 
 	// Validate key, jwks and kid
 	key := ctx.String("key")
@@ -280,6 +280,11 @@ func signAction(ctx *cli.Context) error {
 	}
 	if err := jose.ValidateJWK(jwk); err != nil {
 		return err
+	}
+
+	// Validate exp
+	if !isSubtle && ctx.IsSet("exp") && jose.NumericDate(ctx.Int64("exp")).Time().Before(time.Now()) {
+		return errors.New("flag '--exp' must be in the future unless the '--subtle' flag is provided")
 	}
 
 	// Add claims
