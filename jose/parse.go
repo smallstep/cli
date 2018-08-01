@@ -57,7 +57,7 @@ func Decrypt(prompt string, data []byte, opts ...Option) ([]byte, error) {
 		}
 	}
 
-	return nil, errors.Wrap(err, "failed to decrypt")
+	return nil, errors.New("failed to decrypt JWK: invalid password")
 }
 
 // ParseKey returns a JSONWebKey from the given JWK file or a PEM file. For
