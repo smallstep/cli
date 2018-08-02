@@ -65,6 +65,9 @@ simple:
 	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -i -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
 	@echo "Build Complete!"
 
+install: $(PREFIX)bin/$(BINNAME)
+       $Q install -D $(PREFIX)bin/$(BINNAME) $(DESTDIR)/usr/local/bin/$(BINNAME)
+
 .PHONY: build simple
 
 #########################################

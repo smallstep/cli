@@ -1,4 +1,5 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@ --buildsystem=golang --with=golang
+	make bootstrap
+	dh $@

@@ -5,7 +5,7 @@ Maintainer: Mariano Cano <mariano@smallstep.com>
 Uploaders: Mariano Cano <mariano@smallstep.com>
 Build-Depends: debhelper (>= 10),
                dh-golang,
-               golang-any,
+               golang,
 Standards-Version: 3.9.8
 Homepage: https://github.com/smallstep/cli
 Vcs-Browser: https://github.com/smallstep/cli.git
