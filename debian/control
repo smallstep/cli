@@ -1,22 +1,15 @@
 Source: step
-Section: devel
-Priority: extra
-Maintainer: Mariano Cano <mariano@smallstep.com>
-Uploaders: Mariano Cano <mariano@smallstep.com>
-Build-Depends: debhelper (>= 10),
-               dh-golang,
-               golang,
-Standards-Version: 3.9.8
+Section: utils
+Priority: optional
+Maintainer: Smallstep Labs, Inc.
+Build-Depends: debhelper (>= 10), golang, git, bash-completion
+Standards-Version: 4.2.0
 Homepage: https://github.com/smallstep/cli
 Vcs-Browser: https://github.com/smallstep/cli.git
 Vcs-Git: https://github.com/smallstep/cli.git
-XS-Go-Import-Path: github.com/smallstep/cli
 
 Package: step
 Architecture: any
-Built-Using: ${misc:Built-Using}
-Depends: ${shlibs:Depends},
-         ${misc:Depends}
-Description:
+Depends: ${misc:Depends}
+Description: Plumbing for distributed systems
  TODO: long description
- plumbing for distributed systems

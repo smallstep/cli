@@ -144,7 +144,9 @@ uninstall:
 debian:
 	$Q PREFIX=/usr dpkg-buildpackage -b -rfakeroot -us -uc
 
-.PHONY: debian
+distclean: clean
+
+.PHONY: debian distclean
 
 #########################################
 # Clean
