@@ -4,7 +4,7 @@ BINNAME=step
 # Set V to 1 for verbose output from the Makefile
 Q=$(if $V,,@)
 SRC = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-PREFIX?=
+PREFIX?=/usr/local
 GOOS_OVERRIDE?=
 
 # Set shell to bash for `echo -e`
@@ -52,10 +52,10 @@ DATE    := $(shell date -u '+%Y-%m-%d %H:%M UTC')
 LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
 GOFLAGS := CGO_ENABLED=0
 
-build: $(PREFIX)bin/$(BINNAME)
+build: bin/$(BINNAME)
 	@echo "Build Complete!"
 
-$(PREFIX)bin/$(BINNAME): vendor $(call rwildcard,*.go)
+bin/$(BINNAME): vendor $(call rwildcard,*.go)
 	$Q mkdir -p $(@D)
 	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
 
@@ -95,7 +95,7 @@ vtest:
 
 integrate: integration
 
-integration: $(PREFIX)bin/$(BINNAME)
+integration: bin/$(BINNAME)
 	$Q $(GOFLAGS) go test -tags=integration ./integration/...
 
 .PHONY: integrate integration
@@ -124,6 +124,29 @@ fmt:
 lint: $(LINTERS)
 
 .PHONY: $(LINTERS) lint fmt
+
+#########################################
+# Install
+#########################################
+
+install: bin/$(BINNAME)
+	$Q install -D bin/$(BINNAME) $(DESTDIR)$(PREFIX)/bin/$(BINNAME)
+
+uninstall:
+	$Q rm -f $(DESTDIR)$(PREFIX)/bin/$(BINNAME)
+
+.PHONY: install uninstall
+
+#########################################
+# Debian
+#########################################
+
+debian:
+	$Q PREFIX=/usr dpkg-buildpackage -b -rfakeroot -us -uc
+
+distclean: clean
+
+.PHONY: debian distclean
 
 #########################################
 # Clean

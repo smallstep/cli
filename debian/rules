@@ -1,0 +1,5 @@
+#!/usr/bin/make -f
+
+%:
+	make bootstrap
+	dh $@ --with bash-completion

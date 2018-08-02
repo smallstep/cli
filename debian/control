@@ -1,0 +1,15 @@
+Source: step
+Section: utils
+Priority: optional
+Maintainer: Smallstep Labs, Inc.
+Build-Depends: debhelper (>= 10), golang, git, bash-completion
+Standards-Version: 4.2.0
+Homepage: https://github.com/smallstep/cli
+Vcs-Browser: https://github.com/smallstep/cli.git
+Vcs-Git: https://github.com/smallstep/cli.git
+
+Package: step
+Architecture: any
+Depends: ${misc:Depends}
+Description: Plumbing for distributed systems
+ TODO: long description
