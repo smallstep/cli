@@ -1,4 +1,4 @@
-package x509
+package x509util
 
 import (
 	"io/ioutil"

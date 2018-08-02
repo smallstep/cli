@@ -8,9 +8,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
 	"github.com/smallstep/cli/crypto/keys"
-	spem "github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	x509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
@@ -263,7 +263,7 @@ func createAction(ctx *cli.Context) error {
 			prof      = ctx.String("profile")
 			caPath    = ctx.String("ca")
 			caKeyPath = ctx.String("ca-key")
-			profile   stepx509.Profile
+			profile   x509util.Profile
 		)
 		switch prof {
 		case "leaf", "intermediate-ca":
@@ -279,8 +279,8 @@ func createAction(ctx *cli.Context) error {
 				if err != nil {
 					return errors.WithStack(err)
 				}
-				profile, err = stepx509.NewLeafProfile(subject, issIdentity.Crt,
-					issIdentity.Key, stepx509.GenerateKeyPair(kty, crv, size))
+				profile, err = x509util.NewLeafProfile(subject, issIdentity.Crt,
+					issIdentity.Key, x509util.GenerateKeyPair(kty, crv, size))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -292,16 +292,16 @@ func createAction(ctx *cli.Context) error {
 				if err != nil {
 					return errors.WithStack(err)
 				}
-				profile, err = stepx509.NewIntermediateProfile(subject,
+				profile, err = x509util.NewIntermediateProfile(subject,
 					issIdentity.Crt, issIdentity.Key,
-					stepx509.GenerateKeyPair(kty, crv, size))
+					x509util.GenerateKeyPair(kty, crv, size))
 				if err != nil {
 					return errors.WithStack(err)
 				}
 			}
 		case "root-ca":
-			profile, err = stepx509.NewRootProfile(subject,
-				stepx509.GenerateKeyPair(kty, crv, size))
+			profile, err = x509util.NewRootProfile(subject,
+				x509util.GenerateKeyPair(kty, crv, size))
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -328,7 +328,7 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	if noPass {
-		_, err = spem.Serialize(priv, spem.ToFile(keyFile, 0600))
+		_, err = pemutil.Serialize(priv, pemutil.ToFile(keyFile, 0600))
 	} else {
 		var pass string
 		if err := reader.ReadPasswordSubtle(
@@ -336,8 +336,8 @@ func createAction(ctx *cli.Context) error {
 			&pass, "Password", reader.RetryOnEmpty); err != nil {
 			return errors.WithStack(err)
 		}
-		_, err = spem.Serialize(priv, spem.WithEncryption(pass),
-			spem.ToFile(keyFile, 0600))
+		_, err = pemutil.Serialize(priv, pemutil.WithEncryption(pass),
+			pemutil.ToFile(keyFile, 0600))
 	}
 	if err != nil {
 		return errors.WithStack(err)
@@ -345,12 +345,12 @@ func createAction(ctx *cli.Context) error {
 	return nil
 }
 
-func loadIssuerIdentity(ctx *cli.Context, profile, caPath, caKeyPath string) (*stepx509.Identity, error) {
+func loadIssuerIdentity(ctx *cli.Context, profile, caPath, caKeyPath string) (*x509util.Identity, error) {
 	if caPath == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "profile", profile, "ca")
 	}
 	if caKeyPath == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "profile", profile, "ca-key")
 	}
-	return stepx509.LoadIdentityFromDisk(caPath, caKeyPath)
+	return x509util.LoadIdentityFromDisk(caPath, caKeyPath)
 }

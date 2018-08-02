@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/pkg/errors"
-	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
+	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
@@ -132,7 +132,7 @@ func verifyAction(ctx *cli.Context) error {
 	)
 
 	if roots != "" {
-		rootPool, err = stepx509.ReadCertPool(roots)
+		rootPool, err = x509util.ReadCertPool(roots)
 		if err != nil {
 			errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
 		}

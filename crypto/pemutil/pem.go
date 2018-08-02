@@ -1,4 +1,4 @@
-package pem
+package pemutil
 
 import (
 	"bytes"

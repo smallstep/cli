@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
@@ -524,7 +524,7 @@ func createAction(ctx *cli.Context) error {
 	// Add x5c (X.509 Certificate Chain) parameter
 	crtFiles := ctx.StringSlice("from-certificate")
 	for _, name := range crtFiles {
-		_crt, err := pem.ReadCertificate(name)
+		_crt, err := pemutil.ReadCertificate(name)
 		if err != nil {
 			return err
 		}

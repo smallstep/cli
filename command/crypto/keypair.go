@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
-	spem "github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/reader"
@@ -161,13 +161,13 @@ func createAction(ctx *cli.Context) error {
 		return errors.WithStack(err)
 	}
 
-	_, err = spem.Serialize(pub, spem.ToFile(pubFile, 0600))
+	_, err = pemutil.Serialize(pub, pemutil.ToFile(pubFile, 0600))
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	if noPass {
-		_, err = spem.Serialize(priv, spem.ToFile(privFile, 0600))
+		_, err = pemutil.Serialize(priv, pemutil.ToFile(privFile, 0600))
 	} else {
 		var pass string
 		if err := reader.ReadPasswordSubtle(
@@ -175,8 +175,8 @@ func createAction(ctx *cli.Context) error {
 			&pass, "Password", reader.RetryOnEmpty); err != nil {
 			return errors.WithStack(err)
 		}
-		_, err = spem.Serialize(priv, spem.WithEncryption(pass),
-			spem.ToFile(privFile, 0600))
+		_, err = pemutil.Serialize(priv, pemutil.WithEncryption(pass),
+			pemutil.ToFile(privFile, 0600))
 	}
 	if err != nil {
 		return errors.WithStack(err)
