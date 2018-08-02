@@ -54,7 +54,7 @@ NO9FfC25Ow9ogzq1.6M3Jiy_osGwlioJjXPyl9w
 Transform a compact token to the JSON serialization format:
 '''
 $ step crypto jwt sign --key p256.priv.json --iss "joe" --aud "bob" \
-      --sub "hello" --exp $(date -v+1m +"%s") | step crypto jose format
+      --sub "hello" --exp $(date -v+1M +"%s") | step crypto jose format
 {
   "payload":"eyJhdWQiOiJib2IiLCJleHAiOjE1MzUyNDE4OTYsImlhdCI6MTUzMjU2MzQ5OCwiaXNzIjoiam9lIiwibmJmIjoxNTMyNTYzNDk4LCJzdWIiOiJoZWxsbyJ9",
   "protected":"eyJhbGciOiJFUzI1NiIsImtpZCI6IlpqR1g5N0xtY2ZsUG9sV3Zzb0FXekM1V1BXa05GRkgzUWRLTFVXOTc4aGsiLCJ0eXAiOiJKV1QifQ",

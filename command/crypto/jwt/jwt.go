@@ -35,7 +35,7 @@ A JWT signed using JWS has three parts:
 Create a signed JWT using a JWK (with line breaks for display purposes only):
 '''
 $ step crypto jwt sign --key p256.priv.json --iss "joe@example.com" \
-      --aud "https://example.com" --sub auth --exp $(date -v+1m +"%s")
+      --aud "https://example.com" --sub auth --exp $(date -v+1M +"%s")
 eyJhbGciOiJFUzI1NiIsImtpZCI6IlpqR1g5N0xtY2ZsUG9sV3Zzb0FXekM1V1BXa05GRkgzUWRLTFVXOTc4aGsiLCJ0eXAiOiJKV1QifQ
 .
 eyJhdWQiOiJodHRwczovL2V4YW1wbGUuY29tIiwiZXhwIjoxNTM1MjM2MTUyLCJpYXQiOjE1MzI1NTc3NTQsImlzcyI6ImpvZUBleGFtcGxlLmNvbSIsIm5iZiI6MTUzMjU1Nzc1NCwic3ViIjoiYXV0aCJ9
@@ -47,7 +47,7 @@ Create a signed JWT using a JWK and a custom payload:
 '''
 $ echo '{"srv":"https://srv.example.com"}' | step crypto jwt sign \
       --key p256.priv.json --iss "joe@example.com" \
-      --aud "https://example.com" --sub auth --exp $(date -v+1m +"%s")
+      --aud "https://example.com" --sub auth --exp $(date -v+1M +"%s")
 eyJhbGciOiJFUzI1NiIsImtpZCI6IlpqR1g5N0xtY2ZsUG9sV3Zzb0FXekM1V1BXa05GRkgzUWRLTFVXOTc4aGsiLCJ0eXAiOiJKV1QifQ
 .
 eyJhdWQiOiJodHRwczovL2V4YW1wbGUuY29tIiwiZXhwIjoxNTM1MjQyNDcyLCJpYXQiOjE1MzI1NjQwNzMsImlzcyI6ImpvZUBleGFtcGxlLmNvbSIsIm5iZiI6MTUzMjU2NDA3Mywic3J2IjoiaHR0cHM6Ly9zcnYuZXhhbXBsZS5jb20iLCJzdWIiOiJhdXRoIn0
