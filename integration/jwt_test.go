@@ -707,22 +707,23 @@ func TestCryptoJWT(t *testing.T) {
 		// Should fail (token not yet valid)
 		t.Run("timestamps", func(t *testing.T) {
 			t.Parallel()
+			var extraTime = 5 * time.Second
 			mkjwt(jwkrsa).iat(1*time.Second).test(t, "iat")
 			t.Run("nbf", func(t *testing.T) {
-				tst := mkjwt(jwkec).nbf(2 * time.Second)
+				tst := mkjwt(jwkec).nbf(extraTime)
 				jwt := tst.nbf(1*time.Second).sign.test(t, "sign")
 				tst.verify.fail(t, "verify-tosoon", jwt, "validation failed: token not valid yet (nbf)\n")
-				time.Sleep(2 * time.Second)
+				time.Sleep(extraTime)
 				tst.verify.test(t, "verify-succeed", jwt)
 				if t.Failed() {
 					t.Logf("jwt: %s", jwt)
 				}
 			})
 			t.Run("exp", func(t *testing.T) {
-				tst := mkjwt(jwkec).exp(2 * time.Second)
+				tst := mkjwt(jwkec).exp(extraTime)
 				jwt := tst.sign.test(t, "sign")
 				tst.verify.test(t, "verify-succeed", jwt)
-				time.Sleep(2 * time.Second)
+				time.Sleep(extraTime)
 				tst.verify.fail(t, "verify-expired", jwt, regexp.MustCompile(`^validation failed: token is expired by (\d\d\dms|\d\.\d+s) \(exp\)\n`))
 				if t.Failed() {
 					t.Logf("jwt: %s", jwt)
