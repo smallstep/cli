@@ -1,4 +1,4 @@
-package x509
+package x509util
 
 import (
 	realx509 "crypto/x509"

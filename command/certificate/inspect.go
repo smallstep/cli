@@ -12,7 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certinfo"
-	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
+	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	x509 "github.com/smallstep/cli/pkg/x509"
 	zx509 "github.com/smallstep/zcrypto/x509"
@@ -142,7 +142,7 @@ func inspectAction(ctx *cli.Context) error {
 			rootCAs *realx509.CertPool
 		)
 		if roots := ctx.String("roots"); roots != "" {
-			rootCAs, err = stepx509.ReadCertPool(roots)
+			rootCAs, err = x509util.ReadCertPool(roots)
 			if err != nil {
 				errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
 			}

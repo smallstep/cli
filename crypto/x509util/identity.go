@@ -1,11 +1,11 @@
-package x509
+package x509util
 
 import (
 	"encoding/pem"
 	"io/ioutil"
 
 	"github.com/pkg/errors"
-	spem "github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/pkg/x509"
 )
 
@@ -27,7 +27,7 @@ func NewIdentity(c *x509.Certificate, b *pem.Block, k interface{}) *Identity {
 
 // LoadIdentityFromDisk load a public certificate and private key (both in PEM
 // format) from disk.
-func LoadIdentityFromDisk(crtPath, keyPath string, pemOpts ...spem.Options) (*Identity, error) {
+func LoadIdentityFromDisk(crtPath, keyPath string, pemOpts ...pemutil.Options) (*Identity, error) {
 	// load crt
 	crt, pubPEM, err := LoadCertificate(crtPath)
 	if err != nil {
@@ -40,11 +40,11 @@ func LoadIdentityFromDisk(crtPath, keyPath string, pemOpts ...spem.Options) (*Id
 		return nil, errors.WithStack(err)
 	}
 	if len(pemOpts) == 0 {
-		pemOpts = []spem.Options{spem.WithFilename(keyPath)}
+		pemOpts = []pemutil.Options{pemutil.WithFilename(keyPath)}
 	} else {
-		pemOpts = append(pemOpts, spem.WithFilename(keyPath))
+		pemOpts = append(pemOpts, pemutil.WithFilename(keyPath))
 	}
-	key, err := spem.Parse(keyBytes, pemOpts...)
+	key, err := pemutil.Parse(keyBytes, pemOpts...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

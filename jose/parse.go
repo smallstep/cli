@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ed25519"
 	jose "gopkg.in/square/go-jose.v2"
@@ -85,7 +85,8 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 			return nil, errors.Errorf("error reading %s: unsupported format", filename)
 		}
 	case pemKeyType:
-		if jwk.Key, err = pem.Parse(b, pem.WithFilename(filename), pem.WithPassword(ctx.password)); err != nil {
+		if jwk.Key, err = pemutil.Parse(b, pemutil.WithFilename(filename),
+			pemutil.WithPassword(ctx.password)); err != nil {
 			return nil, err
 		}
 	case octKeyType:

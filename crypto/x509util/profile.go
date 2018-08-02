@@ -1,4 +1,4 @@
-package x509
+package x509util
 
 import (
 	"crypto/rand"
@@ -12,7 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
-	spem "github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 )
@@ -261,8 +261,8 @@ func (b *base) CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, erro
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = spem.Serialize(b.SubjectPrivateKey(),
-		spem.WithEncryption(pass), spem.ToFile(keyOut, 0600))
+	_, err = pemutil.Serialize(b.SubjectPrivateKey(),
+		pemutil.WithEncryption(pass), pemutil.ToFile(keyOut, 0600))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

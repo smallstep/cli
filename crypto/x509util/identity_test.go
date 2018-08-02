@@ -1,11 +1,11 @@
-package x509
+package x509util
 
 import (
 	"testing"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
-	spem "github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/pemutil"
 )
 
 func Test_LoadIdentityFromDisk(t *testing.T) {
@@ -53,7 +53,7 @@ func Test_LoadIdentityFromDisk(t *testing.T) {
 			i, err = LoadIdentityFromDisk(test.crtPath, test.keyPath)
 		} else {
 			i, err = LoadIdentityFromDisk(test.crtPath, test.keyPath,
-				spem.WithPassword([]byte(test.pass)))
+				pemutil.WithPassword([]byte(test.pass)))
 		}
 		if err != nil {
 			if assert.NotNil(t, test.err) {

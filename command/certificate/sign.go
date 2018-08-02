@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/pkg/errors"
-	stepx509 "github.com/smallstep/cli/crypto/certificates/x509"
+	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
@@ -61,17 +61,17 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	csr, err := stepx509.LoadCSRFromBytes(csrBytes)
+	csr, err := x509util.LoadCSRFromBytes(csrBytes)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	issuerIdentity, err := stepx509.LoadIdentityFromDisk(crtFile, keyFile)
+	issuerIdentity, err := x509util.LoadIdentityFromDisk(crtFile, keyFile)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	leafProfile, err := stepx509.NewLeafProfileWithCSR(csr, issuerIdentity.Crt,
+	leafProfile, err := x509util.NewLeafProfileWithCSR(csr, issuerIdentity.Crt,
 		issuerIdentity.Key)
 	if err != nil {
 		return errors.WithStack(err)
