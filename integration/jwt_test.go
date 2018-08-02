@@ -24,7 +24,7 @@ import (
 	"github.com/icrowley/fake"
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
-	pemutil "github.com/smallstep/cli/crypto/pem"
+	"github.com/smallstep/cli/crypto/pemutil"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
