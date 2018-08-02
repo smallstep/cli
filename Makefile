@@ -93,10 +93,12 @@ vtest:
 
 .PHONY: test vtest
 
+integrate: integration
+
 integration: $(PREFIX)bin/$(BINNAME)
 	$Q $(GOFLAGS) go test -tags=integration ./integration/...
 
-.PHONY: integration
+.PHONY: integrate integration
 
 #########################################
 # Linting
