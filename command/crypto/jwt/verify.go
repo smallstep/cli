@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -95,6 +96,11 @@ member its value must match <kid> or verification will fail.`,
 			},
 		},
 	}
+}
+
+type timeClaims struct {
+	Expiry    *int64 `json:"exp,omitempty"`
+	NotBefore *int64 `json:"nbf,omitempty"`
 }
 
 // Get the public key for a JWK.
@@ -215,11 +221,8 @@ func verifyAction(ctx *cli.Context) error {
 
 	// Check exp and nbf presence
 	// There's no need to do the verification again.
-	expClaim := struct {
-		Expiry    *int64 `json:"exp,omitempty"`
-		NotBefore *int64 `json:"nbf,omitempty"`
-	}{}
-	if err := tok.UnsafeClaimsWithoutVerification(&expClaim); err != nil {
+	var tClaims timeClaims
+	if err := tok.UnsafeClaimsWithoutVerification(&tClaims); err != nil {
 		switch err {
 		case jose.ErrCryptoFailure:
 			return errors.New("validation failed: invalid signature")
@@ -232,33 +235,62 @@ func verifyAction(ctx *cli.Context) error {
 	if aud != "" {
 		expected.Audience = jose.Audience{aud}
 	}
-	if expClaim.Expiry != nil || expClaim.NotBefore != nil {
+	if tClaims.Expiry != nil || tClaims.NotBefore != nil {
 		expected.Time = time.Now()
 	}
 
-	if err := claims.ValidateWithLeeway(expected, 0); err != nil {
-		switch err {
-		case jose.ErrInvalidIssuer:
-			return errors.New("validation failed: invalid issuer claim (iss)")
-		case jose.ErrInvalidAudience:
-			return errors.New("validation failed: invalid audience claim (aud)")
-		case jose.ErrNotValidYet: // skip if not set, just in case is tested in time <0 :)
-			if expClaim.NotBefore != nil {
-				return errors.New("validation failed: token not valid yet (nbf)")
-			}
-		case jose.ErrExpired:
-			// skip if not set or no-exp-check
-			if expClaim.Expiry != nil && !ctx.Bool("no-exp-check") {
-				return errors.Errorf("validation failed: token is expired by %s (exp)", expected.Time.Sub(claims.Expiry.Time()).Round(time.Millisecond))
-			}
-		case jose.ErrInvalidSubject: // we're not currently checking the subject
-			return errors.New("validation failed: invalid subject subject (sub)")
-		case jose.ErrInvalidID: // we're not currently checking the id
-			return errors.New("validation failed: invalid ID claim (jti)")
-		default:
-			return errors.Wrap(err, "validation failed")
-		}
+	if err := validateClaimsWithLeeway(ctx, claims, expected, tClaims, 0); err != nil {
+		return err
 	}
 
 	return printToken(token)
+}
+
+// validateClaimsWithLeeway is a custom implementation of go-jose
+// jwt.Claims.ValidateWithLeeway that returns all the errors found.
+func validateClaimsWithLeeway(ctx *cli.Context, c jose.Claims, e jose.Expected, t timeClaims, leeway time.Duration) error {
+	var errs []string
+
+	if e.Issuer != "" && e.Issuer != c.Issuer {
+		errs = append(errs, "invalid issuer claim (iss)")
+	}
+
+	// we're not currently checking the subject
+	if e.Subject != "" && e.Subject != c.Subject {
+		errs = append(errs, "invalid subject subject (sub)")
+	}
+
+	// we're not currently checking the id
+	if e.ID != "" && e.ID != c.ID {
+		errs = append(errs, "invalid ID claim (jti)")
+	}
+
+	if len(e.Audience) != 0 {
+		for _, v := range e.Audience {
+			if !c.Audience.Contains(v) {
+				errs = append(errs, "invalid audience claim (aud)")
+				break
+			}
+		}
+	}
+
+	// Only if nbf is defined, just in case is tested in time <0 :)
+	if t.NotBefore != nil {
+		if !e.Time.IsZero() && e.Time.Add(leeway).Before(c.NotBefore.Time()) {
+			errs = append(errs, "token not valid yet (nbf)")
+		}
+	}
+
+	// Only if exp is defined and no-exp-check is not used
+	if t.Expiry != nil && !ctx.Bool("no-exp-check") {
+		if !e.Time.IsZero() && e.Time.Add(-leeway).After(c.Expiry.Time()) {
+			errs = append(errs, fmt.Sprintf("token is expired by %s (exp)", e.Time.Sub(c.Expiry.Time()).Round(time.Millisecond)))
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.Errorf("validation failed: %s", strings.Join(errs, ", "))
+	}
+
+	return nil
 }
