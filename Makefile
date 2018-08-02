@@ -65,9 +65,6 @@ simple:
 	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -i -v -o bin/$(BINNAME) $(LDFLAGS) $(PKG)
 	@echo "Build Complete!"
 
-install: bin/$(BINNAME)
-	$Q install -D bin/$(BINNAME) $(DESTDIR)$(PREFIX)/bin/$(BINNAME)
-
 .PHONY: build simple
 
 #########################################
@@ -127,6 +124,27 @@ fmt:
 lint: $(LINTERS)
 
 .PHONY: $(LINTERS) lint fmt
+
+#########################################
+# Install
+#########################################
+
+install: bin/$(BINNAME)
+	$Q install -D bin/$(BINNAME) $(DESTDIR)$(PREFIX)/bin/$(BINNAME)
+
+uninstall:
+	$Q rm -f $(DESTDIR)$(PREFIX)/bin/$(BINNAME)
+
+.PHONY: install uninstall
+
+#########################################
+# Debian
+#########################################
+
+debian:
+	$Q PREFIX=/usr dpkg-buildpackage -b -rfakeroot -us -uc
+
+.PHONY: debian
 
 #########################################
 # Clean
