@@ -4,7 +4,7 @@ BINNAME=step
 # Set V to 1 for verbose output from the Makefile
 Q=$(if $V,,@)
 SRC = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-PREFIX?=
+PREFIX?=/usr/local
 GOOS_OVERRIDE?=
 
 # Set shell to bash for `echo -e`
@@ -52,21 +52,21 @@ DATE    := $(shell date -u '+%Y-%m-%d %H:%M UTC')
 LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
 GOFLAGS := CGO_ENABLED=0
 
-build: $(PREFIX)bin/$(BINNAME)
+build: bin/$(BINNAME)
 	@echo "Build Complete!"
 
-$(PREFIX)bin/$(BINNAME): vendor $(call rwildcard,*.go)
+bin/$(BINNAME): vendor $(call rwildcard,*.go)
 	$Q mkdir -p $(@D)
-	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -i -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
+	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -i -v -o bin/$(BINNAME) $(LDFLAGS) $(PKG)
 
 # Target for building without calling dep ensure
 simple:
-	$Q mkdir -p $(PREFIX)bin/
-	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -i -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
+	$Q mkdir -p bin/
+	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -i -v -o bin/$(BINNAME) $(LDFLAGS) $(PKG)
 	@echo "Build Complete!"
 
-install: $(PREFIX)bin/$(BINNAME)
-	$Q install -D $(PREFIX)bin/$(BINNAME) $(DESTDIR)/usr/local/bin/$(BINNAME)
+install: bin/$(BINNAME)
+	$Q install -D bin/$(BINNAME) $(DESTDIR)$(PREFIX)/bin/$(BINNAME)
 
 .PHONY: build simple
 
@@ -98,7 +98,7 @@ vtest:
 
 integrate: integration
 
-integration: $(PREFIX)bin/$(BINNAME)
+integration: bin/$(BINNAME)
 	$Q $(GOFLAGS) go test -tags=integration ./integration/...
 
 .PHONY: integrate integration
