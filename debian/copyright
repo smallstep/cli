@@ -1,0 +1,12 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: step
+Source: https://github.com/smallstep/cli
+
+Files: *
+Copyright: 2018 Smallstep Labs, Inc.
+License: MIT
+
+Files: debian/*
+Copyright: 2018 Smallstep Labs, Inc.
+License: MIT
+Comment: Debian packaging is licensed under the same terms as upstream
