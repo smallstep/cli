@@ -66,7 +66,7 @@ simple:
 	@echo "Build Complete!"
 
 install: $(PREFIX)bin/$(BINNAME)
-       $Q install -D $(PREFIX)bin/$(BINNAME) $(DESTDIR)/usr/local/bin/$(BINNAME)
+	$Q install -D $(PREFIX)bin/$(BINNAME) $(DESTDIR)/usr/local/bin/$(BINNAME)
 
 .PHONY: build simple
 
