@@ -57,12 +57,12 @@ build: $(PREFIX)bin/$(BINNAME)
 
 $(PREFIX)bin/$(BINNAME): vendor $(call rwildcard,*.go)
 	$Q mkdir -p $(@D)
-	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -i -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
+	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
 
 # Target for building without calling dep ensure
 simple:
 	$Q mkdir -p $(PREFIX)bin/
-	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -i -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
+	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
 	@echo "Build Complete!"
 
 .PHONY: build simple
