@@ -1,8 +1,10 @@
 language: go
 go:
 - 1.10.x
-before_install:
-- sudo apt-get install -y fakeroot
+addons:
+  apt:
+    packages:
+    - fakeroot
 before_script:
 - make bootstrap
 script:
