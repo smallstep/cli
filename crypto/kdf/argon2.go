@@ -42,32 +42,23 @@ var argon2Params = map[string]argon2Param{
 }
 
 func newArgon2Params(s string) (*argon2Param, error) {
-	ap := new(argon2Param)
 	params := phcParamsToMap(s)
-
-	if t, err := phcAtoi(params["t"], 3); err != nil {
-		return nil, err
-	} else if t < 1 || t > Argon2MaxIterations {
+	t, err := phcAtoi(params["t"], 3)
+	if err != nil || t < 1 || t > Argon2MaxIterations {
 		return nil, errors.Errorf("invalid argon2 parameter t=%s", params["t"])
-	} else {
-		ap.t = uint32(t)
 	}
-
-	if m, err := phcAtoi(params["m"], 12); err != nil {
-		return nil, err
-	} else if m < 8 || m > Argon2MaxMemory {
+	m, err := phcAtoi(params["m"], 12)
+	if err != nil || m < 8 || m > Argon2MaxMemory {
 		return nil, errors.Errorf("invalid argon2 parameter m=%s", params["m"])
-	} else {
-		ap.m = uint32(m)
 	}
-
-	if p, err := phcAtoi(params["p"], 1); err != nil {
-		return nil, err
-	} else if p < 1 || p > Argon2MaxParallelism {
+	p, err := phcAtoi(params["p"], 1)
+	if err != nil || p < 1 || p > Argon2MaxParallelism {
 		return nil, errors.Errorf("invalid argon2 parameter p=%s", params["p"])
-	} else {
-		ap.p = uint8(p)
 	}
 
-	return ap, nil
+	return &argon2Param{
+		t: uint32(t),
+		m: uint32(m),
+		p: uint8(p),
+	}, nil
 }

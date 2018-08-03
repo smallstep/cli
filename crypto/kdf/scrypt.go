@@ -40,34 +40,25 @@ type scryptParam struct {
 }
 
 func newScryptParams(s string) (*scryptParam, error) {
-	sp := new(scryptParam)
 	params := phcParamsToMap(s)
-
-	if ln, err := phcAtoi(params["ln"], 16); err != nil {
-		return nil, err
-	} else if ln < 1 || ln > ScryptMaxCost {
+	ln, err := phcAtoi(params["ln"], 16)
+	if err != nil || ln < 1 || ln > ScryptMaxCost {
 		return nil, errors.Errorf("invalid scrypt parameter ln=%s", params["ln"])
-	} else {
-		sp.N = int(math.Pow(2, float64(ln)))
 	}
-
-	if r, err := phcAtoi(params["r"], 8); err != nil {
-		return nil, err
-	} else if r < 1 || r > ScryptMaxBlockSize {
+	r, err := phcAtoi(params["r"], 8)
+	if err != nil || r < 1 || r > ScryptMaxBlockSize {
 		return nil, errors.Errorf("invalid scrypt parameter r=%s", params["r"])
-	} else {
-		sp.r = r
 	}
-
-	if p, err := phcAtoi(params["p"], 1); err != nil {
-		return nil, err
-	} else if p < 1 || p > ScryptMaxParallelism {
+	p, err := phcAtoi(params["p"], 1)
+	if err != nil || p < 1 || p > ScryptMaxParallelism {
 		return nil, errors.Errorf("invalid scrypt parameter p=%s", params["p"])
-	} else {
-		sp.p = p
 	}
 
-	return sp, nil
+	return &scryptParam{
+		N: int(math.Pow(2, float64(ln))),
+		r: r,
+		p: p,
+	}, nil
 }
 
 func (s *scryptParam) getParams() string {

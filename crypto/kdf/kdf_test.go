@@ -68,6 +68,9 @@ func TestCompare(t *testing.T) {
 		{"$scrypt$ln=21,r=8,p=1$3ZHBQhuxmarEmhzCdQ0JRQ$FzNGtwDLay5mHJIfc+L8qzOQrOG8RhR865Dr8GfyEK4", "invalid scrypt parameter ln=21"},
 		{"$scrypt$ln=16,r=33,p=1$3ZHBQhuxmarEmhzCdQ0JRQ$FzNGtwDLay5mHJIfc+L8qzOQrOG8RhR865Dr8GfyEK4", "invalid scrypt parameter r=33"},
 		{"$scrypt$ln=16,r=8,p=33$3ZHBQhuxmarEmhzCdQ0JRQ$FzNGtwDLay5mHJIfc+L8qzOQrOG8RhR865Dr8GfyEK4", "invalid scrypt parameter p=33"},
+		{"$scrypt$ln=a,r=8,p=1$3ZHBQhuxmarEmhzCdQ0JRQ$FzNGtwDLay5mHJIfc+L8qzOQrOG8RhR865Dr8GfyEK4", "invalid scrypt parameter ln=a"},
+		{"$scrypt$ln=16,r=b,p=1$3ZHBQhuxmarEmhzCdQ0JRQ$FzNGtwDLay5mHJIfc+L8qzOQrOG8RhR865Dr8GfyEK4", "invalid scrypt parameter r=b"},
+		{"$scrypt$ln=16,r=8,p=c$3ZHBQhuxmarEmhzCdQ0JRQ$FzNGtwDLay5mHJIfc+L8qzOQrOG8RhR865Dr8GfyEK4", "invalid scrypt parameter p=c"},
 		// version
 		{"$argon2i$v=10$m=32768,t=3,p=4$kAaLk++2eObkl3QhDhabKA$IiL7+VDQV/YbDQMREkAhsWjX7GQy1ks0QiJ0YfkeA+w", "unsupported argon2 version '10'"},
 		{"$argon2id$v=10$m=65536,t=1,p=4$mm6faLHx88uYB5m+04udUg$9deA/VOr2HEOb5JSZ0E6t+SVzV1iPpOuyr+jUhcPAWY", "unsupported argon2 version '10'"},
@@ -78,6 +81,12 @@ func TestCompare(t *testing.T) {
 		{"$argon2id$v=19$m=16777217,t=3,p=4$kAaLk++2eObkl3QhDhabKA$IiL7+VDQV/YbDQMREkAhsWjX7GQy1ks0QiJ0YfkeA+w", "invalid argon2 parameter m=16777217"},
 		{"$argon2id$v=19$m=65536,t=129,p=1$kAaLk++2eObkl3QhDhabKA$IiL7+VDQV/YbDQMREkAhsWjX7GQy1ks0QiJ0YfkeA+w", "invalid argon2 parameter t=129"},
 		{"$argon2id$v=19$m=65536,t=1,p=33$kAaLk++2eObkl3QhDhabKA$IiL7+VDQV/YbDQMREkAhsWjX7GQy1ks0QiJ0YfkeA+w", "invalid argon2 parameter p=33"},
+		{"$argon2i$v=19$m=a,t=3,p=4$kAaLk++2eObkl3QhDhabKA$IiL7+VDQV/YbDQMREkAhsWjX7GQy1ks0QiJ0YfkeA+w", "invalid argon2 parameter m=a"},
+		{"$argon2i$v=19$m=32768,t=b,p=4$kAaLk++2eObkl3QhDhabKA$IiL7+VDQV/YbDQMREkAhsWjX7GQy1ks0QiJ0YfkeA+w", "invalid argon2 parameter t=b"},
+		{"$argon2i$v=19$m=32768,t=3,p=c$kAaLk++2eObkl3QhDhabKA$IiL7+VDQV/YbDQMREkAhsWjX7GQy1ks0QiJ0YfkeA+w", "invalid argon2 parameter p=c"},
+		{"$argon2id$v=19$m=a,t=1,p=4$mm6faLHx88uYB5m+04udUg$9deA/VOr2HEOb5JSZ0E6t+SVzV1iPpOuyr+jUhcPAWY", "invalid argon2 parameter m=a"},
+		{"$argon2id$v=19$m=65536,t=b,p=4$mm6faLHx88uYB5m+04udUg$9deA/VOr2HEOb5JSZ0E6t+SVzV1iPpOuyr+jUhcPAWY", "invalid argon2 parameter t=b"},
+		{"$argon2id$v=19$m=65536,t=1,p=c$mm6faLHx88uYB5m+04udUg$9deA/VOr2HEOb5JSZ0E6t+SVzV1iPpOuyr+jUhcPAWY", "invalid argon2 parameter p=c"},
 	}
 
 	for i, tc := range tests {
