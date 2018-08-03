@@ -10,7 +10,7 @@ addons:
 before_script:
 - make bootstrap
 script:
-- make
+- make debian
 after_success:
 - bash <(curl -s https://codecov.io/bash) -t "$CODECOV_KEY" || echo "Codecov did not collect
   coverage reports"
