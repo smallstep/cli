@@ -9,7 +9,7 @@ import (
 
 var testdata = "testdata"
 
-type CertificateCreateCmd struct {
+type CertificateSignCmd struct {
 	name      string
 	command   CLICommand
 	csr       string
@@ -18,12 +18,12 @@ type CertificateCreateCmd struct {
 	pass      string
 }
 
-func (k CertificateCreateCmd) setPass(pass string) CertificateCreateCmd {
-	return CertificateCreateCmd{k.name, k.command, k.csr, k.issuerCrt, k.issuerKey, pass}
+func (k CertificateSignCmd) setPass(pass string) CertificateSignCmd {
+	return CertificateSignCmd{k.name, k.command, k.csr, k.issuerCrt, k.issuerKey, pass}
 }
 
 /*
-func (k CertificateCreateCmd) test(t *testing.T) {
+func (k CertificateSignCmd) test(t *testing.T) {
 	t.Run(k.name, func(t *testing.T) {
 		cmd, err := gexpect.Spawn(k.command.cmd())
 		assert.FatalError(t, err)
@@ -34,30 +34,30 @@ func (k CertificateCreateCmd) test(t *testing.T) {
 	})
 }
 
-func (k CertificateCreateCmd) testNoPass(t *testing.T) {
+func (k CertificateSignCmd) testNoPass(t *testing.T) {
 	k.command.test(t, k.name, "", "")
 	k.testJwtSignVerify(t)
 }
 */
 
-func (k CertificateCreateCmd) fail(t *testing.T, expected string) {
+func (k CertificateSignCmd) fail(t *testing.T, expected string) {
 	k.command.fail(t, k.name, expected, "")
 }
 
-func (k CertificateCreateCmd) failNoPass(t *testing.T, expected string) {
+func (k CertificateSignCmd) failNoPass(t *testing.T, expected string) {
 	k.command.fail(t, k.name, expected, "")
 }
 
-func NewCertificateCreateCmd(name, csr, crt, key string) CertificateCreateCmd {
+func NewCertificateSignCmd(name, csr, crt, key string) CertificateSignCmd {
 	csrFile := fmt.Sprintf("%s/%s", testdata, csr)
 	crtFile := fmt.Sprintf("%s/%s", testdata, crt)
 	keyFile := fmt.Sprintf("%s/%s", testdata, key)
 	command := NewCLICommand().setCommand(fmt.Sprintf("step certificate sign %s %s %s",
 		csrFile, crtFile, keyFile))
-	return CertificateCreateCmd{name, command, csrFile, crtFile, keyFile, "password"}
+	return CertificateSignCmd{name, command, csrFile, crtFile, keyFile, "password"}
 }
 
 func TestCertificate(t *testing.T) {
-	NewCertificateCreateCmd("bad-sig", "certificate-create-bad-sig.csr", "intermediate_ca.crt", "intermediate_ca_key").failNoPass(t, "Certificate Request has invalid signature: crypto/rsa: verification error\n")
+	NewCertificateSignCmd("bad-sig", "certificate-create-bad-sig.csr", "intermediate_ca.crt", "intermediate_ca_key").failNoPass(t, "Certificate Request has invalid signature: crypto/rsa: verification error\n")
 	//NewKeypairCmd("success", "foo.csr", "intermediate_ca.crt", "intermediate_ca_key").setPass("pass").test(t)
 }
