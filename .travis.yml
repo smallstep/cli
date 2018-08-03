@@ -4,7 +4,9 @@ go:
 addons:
   apt:
     packages:
+    - debhelper
     - fakeroot
+    - bash-completion
 before_script:
 - make bootstrap
 script:
