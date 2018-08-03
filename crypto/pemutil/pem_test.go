@@ -126,6 +126,32 @@ func TestRead(t *testing.T) {
 	}
 }
 
+func TestReadCertificate(t *testing.T) {
+	tests := []struct {
+		fn  string
+		err error
+	}{
+		{"testdata/ca.crt", nil},
+		{"testdata/ca.der", nil},
+		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
+		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
+		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded key")},
+		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
+	}
+
+	for _, tc := range tests {
+		crt, err := ReadCertificate(tc.fn)
+		if tc.err != nil {
+			if assert.Error(t, err) {
+				assert.HasPrefix(t, err.Error(), tc.err.Error())
+			}
+		} else {
+			assert.NoError(t, err)
+			assert.Type(t, &x509.Certificate{}, crt)
+		}
+	}
+}
+
 func Test_Serialize(t *testing.T) {
 	tests := map[string]struct {
 		in   func() (interface{}, error)

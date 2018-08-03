@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
@@ -29,14 +28,6 @@ type context struct {
 // newContext initializes the context with a filename.
 func newContext(name string) *context {
 	return &context{filename: name}
-}
-
-// fail
-func (ctx *context) fail(message string) error {
-	if len(ctx.filename) > 0 {
-		message = strings.Replace(message, "PEM", ctx.filename, 1)
-	}
-	return errors.New(message)
 }
 
 // Options is the type to add attributes to the context.
@@ -61,7 +52,7 @@ func WithPassword(pass []byte) Options {
 func ReadCertificate(filename string) (*x509.Certificate, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error reading %s", filename)
+		return nil, errs.FileError(err, filename)
 	}
 
 	// PEM format
@@ -133,7 +124,7 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 		priv, err := ParsePKCS8PrivateKey(block.Bytes)
 		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE":
-		crt, err := x509.ParseCertificate(b)
+		crt, err := x509.ParseCertificate(block.Bytes)
 		return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	default:
 		return nil, errors.Errorf("error decoding %s: contains an unexpected header '%s'", ctx.filename, block.Type)
@@ -150,7 +141,7 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 func Read(filename string, opts ...Options) (interface{}, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error reading %s", filename)
+		return nil, errs.FileError(err, filename)
 	}
 
 	// force given filename
