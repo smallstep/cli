@@ -56,7 +56,6 @@ func signAction(ctx *cli.Context) error {
 	crtFile := ctx.Args().Get(1)
 	keyFile := ctx.Args().Get(2)
 
-	// Load the CSR into an x509 Certificate Template.
 	csrBytes, err := ioutil.ReadFile(csrFile)
 	if err != nil {
 		return errors.WithStack(err)
@@ -64,6 +63,9 @@ func signAction(ctx *cli.Context) error {
 	csr, err := x509util.LoadCSRFromBytes(csrBytes)
 	if err != nil {
 		return errors.WithStack(err)
+	}
+	if err := csr.CheckSignature(); err != nil {
+		return errors.Wrapf(err, "Certificate Request has invalid signature")
 	}
 
 	issuerIdentity, err := x509util.LoadIdentityFromDisk(crtFile, keyFile)

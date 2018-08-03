@@ -202,7 +202,7 @@ func inspectAction(ctx *cli.Context) error {
 			return errors.Errorf("invalid value for '--format'. '--format' must be "+
 				"one of 'text'(default) or 'json', but got '%s'", format)
 		}
-	case "CSR", "CERTIFICATE REQUEST":
+	case "CERTIFICATE REQUEST":
 		switch format {
 		case "text":
 			csr, err := x509.ParseCertificateRequest(block.Bytes)
