@@ -253,7 +253,7 @@ func createAction(ctx *cli.Context) error {
 		}
 
 		pubPEM = &pem.Block{
-			Type:    "CSR",
+			Type:    "CERTIFICATE REQUEST",
 			Bytes:   csrBytes,
 			Headers: map[string]string{},
 		}
