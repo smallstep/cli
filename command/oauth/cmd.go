@@ -60,7 +60,7 @@ type token struct {
 func init() {
 	cmd := cli.Command{
 		Name:  "oauth",
-		Usage: "Authenticate to Smallstep using OAuth OIDC",
+		Usage: "authorization and single sign-on using OAuth & OIDC",
 		UsageText: `
 **step oauth** [**--provider**=<provider>] [**--client-id**=<client-id> **--client-secret**=<client-secret>]
   [**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
