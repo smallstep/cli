@@ -1,4 +1,4 @@
-# Step
+# Step CLI
 
 `step` is a zero trust swiss army knife. It’s an easy-to-use and hard-to-misuse utility for building, operating, and automating systems that use zero trust technologies like authenticated encryption (X.509, TLS), single sign-on (OAuth OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML assertions)
 [One Paragraph of project description goes here]
