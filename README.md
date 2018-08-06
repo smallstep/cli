@@ -27,7 +27,7 @@ brew install smallstep/smallstep/step
 Test:
 
 ```
-step --help
+step certificate inspect https://smallstep.com
 ```
 
 ### Linux
@@ -47,7 +47,7 @@ sudo dpkg -s step_X.Y.Z_amd64.deb
 Test:
 
 ```
-step --help
+step certificate inspect https://smallstep.com
 ```
 
 ## Getting Started with Development
