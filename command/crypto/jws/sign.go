@@ -18,8 +18,8 @@ func signCommand() cli.Command {
 	return cli.Command{
 		Name:   "sign",
 		Action: cli.ActionFunc(signAction),
-		Usage:  "create a signed JWT data structure",
-		UsageText: `**step crypto jwt sign** [- | <filename>]
+		Usage:  "create a signed JWS data structure",
+		UsageText: `**step crypto jws sign** [- | <filename>]
 		[**--alg**=<algorithm>] [**--jku**=<jwk-url>] [**--jwk**] [**--typ**=<type>]
 		[**--cty=<content-type>] [**--key**=<jwk>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		// others: x5u, x5c, x5t, x5t#S256, and crit
@@ -128,21 +128,21 @@ performed by the JWS application. Use of <content-type> is optional.`,
 			},
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The key to use to sign the JWT. The <key> argument should be the name of a file.
-JWTs can be signed using a private JWK (or a JWK encrypted as a JWE payload)
+				Usage: `The key to use to sign the JWS. The <key> argument should be the name of a file.
+JWSs can be signed using a private JWK (or a JWK encrypted as a JWE payload)
 or a PEM encoded private key (or a private key encrypted using [TODO: insert
 private key encryption mechanism]).`,
 			},
 			cli.StringFlag{
 				Name: "jwks",
-				Usage: `The JWK Set containing the key to use to sign the JWT. The <jwks> argument
+				Usage: `The JWK Set containing the key to use to sign the JWS. The <jwks> argument
 should be the name of a file. The file contents should be a JWK Set or a JWE
 with a JWK Set payload. The **--jwks** flag requires the use of the **--kid**
 flag to specify which key to use.`,
 			},
 			cli.StringFlag{
 				Name: "kid",
-				Usage: `The ID of the key used to sign the JWT. The <kid> argument is a case-sensitive
+				Usage: `The ID of the key used to sign the JWS. The <kid> argument is a case-sensitive
 string. When used with '--jwk' the <kid> value must match the **"kid"** member
 of the JWK. When used with **--jwks** (a JWK Set) the <kid> value must match
 the **"kid"** member of one of the JWKs in the JWK Set.`,
@@ -265,7 +265,7 @@ func signAction(ctx *cli.Context) error {
 		Key:       jwk.Key,
 	}, so)
 	if err != nil {
-		return errors.Wrap(err, "error creating JWT signer")
+		return errors.Wrap(err, "error creating JWS signer")
 	}
 
 	signed, err := signer.Sign(payload)
