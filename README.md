@@ -1,7 +1,11 @@
 # Step CLI
 
-`step` is a zero trust swiss army knife. It’s an easy-to-use and hard-to-misuse utility for building, operating, and automating systems that use zero trust technologies like authenticated encryption (X.509, TLS), single sign-on (OAuth OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML assertions)
-[One Paragraph of project description goes here]
+`step` is a zero trust swiss army knife. It’s an easy-to-use and hard-to-misuse
+utility for building, operating, and automating systems that use zero trust
+technologies like authenticated encryption (X.509, TLS), single sign-on (OAuth
+OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption
+mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML
+assertions).
 
 ### Table of Contents
 
@@ -14,7 +18,8 @@
 
 ## Installing
 
-These instructions will install an OS specific version of the `step` binary on your local machine.
+These instructions will install an OS specific version of the `step` binary on
+your local machine.
 
 ### Mac OS
 
@@ -148,9 +153,11 @@ it in the `Gopkg.toml` file and run `dep ensure` which will remove it from the
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/smallstep/cli).
+We use [SemVer](http://semver.org/) for versioning. For the versions available,
+see the [tags on this repository](https://github.com/smallstep/cli).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License - see the
+[LICENSE.md](./LICENSE.md) file for details
 
