@@ -47,7 +47,7 @@ $(foreach pkg,$(BOOTSTRAP),$(eval $(call VENDOR_BIN_TMPL,$(pkg))))
 #########################################
 
 # Version flags to embed in the binaries
-VERSION := $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
+VERSION := $(shell [ -d .git ] && git describe --tags --always --dirty="-dev" | sed 's/^v//')
 DATE    := $(shell date -u '+%Y-%m-%d %H:%M UTC')
 LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
 GOFLAGS := CGO_ENABLED=0
