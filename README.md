@@ -78,7 +78,7 @@ To get started with local development, you will need three things:
 - The repository checked out in the appropriate location of your `$GOPATH`.
 
 Ensure you've checked out the repository into the appropriate path inside your
-`$GOPATH`. For example, if your `$GOPATH` is set to `~/code`, then you'd check
+`$GOPATH`. For example, if your `$GOPATH` is set to `~/go`, then you'd check
 this repository out at `~/code/src/github.com/smallstep/cli`. You can
 learn more about `$GOPATH` in the
 [documentation](https://golang.org/doc/code.html#GOPATH).
@@ -159,4 +159,4 @@ see the [tags on this repository](https://github.com/smallstep/cli).
 ## License
 
 This project is licensed under the MIT License - see the
-[LICENSE.md](./LICENSE.md) file for details
+[LICENSE](./LICENSE) file for details
