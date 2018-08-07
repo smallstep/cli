@@ -37,7 +37,7 @@ step certificate inspect https://smallstep.com
 
 ### Linux
 
-Download the Debian package:
+Download the latest Debian package from [releases](https://github.com/smallstep/cli/releases):
 
 ```
 wget https://github.com/smallstep/cli/releases/download/X.Y.Z/step_X.Y.Z_amd64.deb
