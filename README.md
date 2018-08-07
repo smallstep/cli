@@ -7,6 +7,8 @@ OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption
 mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML
 assertions).
 
+![Alt Text](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
+
 ### Table of Contents
 
 - [Installing](#installing)
