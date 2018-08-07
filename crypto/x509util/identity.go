@@ -28,13 +28,15 @@ func NewIdentity(c *x509.Certificate, b *pem.Block, k interface{}) *Identity {
 // LoadIdentityFromDisk load a public certificate and private key (both in PEM
 // format) from disk.
 func LoadIdentityFromDisk(crtPath, keyPath string, pemOpts ...pemutil.Options) (*Identity, error) {
-	// load crt
-	crt, pubPEM, err := LoadCertificate(crtPath)
+	crt, err := pemutil.ReadCertificate(crtPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	pubPEM := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: crt.Raw,
+	}
 
-	// load private key
 	keyBytes, err := ioutil.ReadFile(keyPath)
 	if err != nil {
 		return nil, errors.WithStack(err)

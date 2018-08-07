@@ -14,7 +14,7 @@ import (
 	"github.com/smallstep/cli/pkg/x509"
 )
 
-func Test_WriteCertificate(t *testing.T) {
+func TestWriteCertificate(t *testing.T) {
 	certPath := "./test.crt"
 
 	tests := map[string]struct {
@@ -117,49 +117,6 @@ func Test_WriteCertificate(t *testing.T) {
 			ctv.NotAfter = fileCert.NotAfter
 
 			assert.NoError(t, ctv.Compare(CertTemplate(*fileCert)))
-		}
-	}
-}
-
-func Test_LoadCertificate(t *testing.T) {
-	var (
-		testBadCert    = "./test_files/badca.crt"
-		testBadPEMCert = "./test_files/badpem.crt"
-		testCert       = "./test_files/ca.crt"
-	)
-
-	tests := map[string]struct {
-		crtPath string
-		err     error
-	}{
-		"certificate file does not exist": {
-			crtPath: "<path>",
-			err:     errors.New("open <path> failed: no such file or directory"),
-		},
-		"certificate poorly formatted - PEM decode failure": {
-			crtPath: testBadPEMCert,
-			err:     errors.New("error decoding certificate file"),
-		},
-		"certificate parse failure": {
-			crtPath: testBadCert,
-			err:     errors.New("error parsing x509 certificate file"),
-		},
-		"success": {
-			crtPath: testCert,
-		},
-	}
-
-	for name, test := range tests {
-		t.Logf("Running test case: %s", name)
-
-		crt, block, err := LoadCertificate(test.crtPath)
-		if err != nil {
-			if assert.NotNil(t, test.err) {
-				assert.HasPrefix(t, err.Error(), test.err.Error())
-			}
-		} else {
-			assert.Equals(t, crt.Subject.CommonName, "internal.smallstep.com")
-			assert.NotNil(t, block)
 		}
 	}
 }

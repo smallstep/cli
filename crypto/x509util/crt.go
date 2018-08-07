@@ -10,7 +10,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/pkg/x509"
 )
 
 // WriteCertificate encodes a x509 Certificate to a file on disk in PEM format.
@@ -30,24 +29,6 @@ func WriteCertificate(crt []byte, out string) error {
 	}
 	certOut.Close()
 	return nil
-}
-
-// LoadCertificate load a certificate.
-func LoadCertificate(crtPath string) (*x509.Certificate, *pem.Block, error) {
-	publicBytes, err := ioutil.ReadFile(crtPath)
-	if err != nil {
-		return nil, nil, errs.FileError(err, crtPath)
-	}
-	publicPEM, _ := pem.Decode(publicBytes)
-	if publicPEM == nil {
-		return nil, nil, errors.Errorf("error decoding certificate file %s", crtPath)
-	}
-	crt, err := x509.ParseCertificate(publicPEM.Bytes)
-	if err != nil {
-		return nil, nil, errors.Wrapf(err, "error parsing x509 certificate file %s", crtPath)
-	}
-
-	return crt, publicPEM, nil
 }
 
 // ReadCertPool loads a certificate pool from disk.
