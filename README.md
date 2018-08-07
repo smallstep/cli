@@ -79,7 +79,7 @@ To get started with local development, you will need three things:
 
 Ensure you've checked out the repository into the appropriate path inside your
 `$GOPATH`. For example, if your `$GOPATH` is set to `~/go`, then you'd check
-this repository out at `~/code/src/github.com/smallstep/cli`. You can
+this repository out at `~/go/src/github.com/smallstep/cli`. You can
 learn more about `$GOPATH` in the
 [documentation](https://golang.org/doc/code.html#GOPATH).
 
