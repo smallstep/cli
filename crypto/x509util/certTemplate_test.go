@@ -12,7 +12,7 @@ import (
 	"github.com/smallstep/cli/pkg/x509"
 )
 
-func Test_NotBeforeAfter(t *testing.T) {
+func TestNotBeforeAfter(t *testing.T) {
 	var expected string
 	var ctv *CertTemplate
 
@@ -111,7 +111,7 @@ func Test_NotBeforeAfter(t *testing.T) {
 	}
 }
 
-func Test_CRLSign(t *testing.T) {
+func TestCRLSign(t *testing.T) {
 	var ctv *CertTemplate
 
 	// false
@@ -173,7 +173,7 @@ func Test_CRLSign(t *testing.T) {
 	}
 }
 
-func Test_Hosts(t *testing.T) {
+func TestHosts(t *testing.T) {
 	var ctv *CertTemplate
 	var ct *CertTemplate
 
@@ -239,7 +239,7 @@ func Test_Hosts(t *testing.T) {
 		}
 	}
 }
-func Test_SerialNumber(t *testing.T) {
+func TestSerialNumber(t *testing.T) {
 	var ctv *CertTemplate
 	var err error
 	var expected string
@@ -305,7 +305,7 @@ func Test_SerialNumber(t *testing.T) {
 	}
 }
 
-func Test_Subject(t *testing.T) {
+func TestSubject(t *testing.T) {
 	var ctv *CertTemplate
 	var pn PkixName
 
@@ -348,7 +348,7 @@ func Test_Subject(t *testing.T) {
 	}
 }
 
-func Test_Issuer(t *testing.T) {
+func TestIssuer(t *testing.T) {
 	var ctv *CertTemplate
 	var pn PkixName
 
@@ -391,7 +391,7 @@ func Test_Issuer(t *testing.T) {
 	}
 }
 
-func Test_BasicConstraints(t *testing.T) {
+func TestBasicConstraints(t *testing.T) {
 	var ctv *CertTemplate
 	var ct *CertTemplate
 	var err error
@@ -564,7 +564,7 @@ func Test_BasicConstraints(t *testing.T) {
 	}
 }
 
-func Test_NewCertTemplate(t *testing.T) {
+func TestNewCertTemplate(t *testing.T) {
 	var ctv *CertTemplate
 
 	// empty
@@ -642,7 +642,7 @@ func Test_NewCertTemplate(t *testing.T) {
 	}
 }
 
-func Test_Locality(t *testing.T) {
+func TestLocality(t *testing.T) {
 	var err error
 	var expected string
 	var pn, pnv *PkixName
@@ -698,7 +698,7 @@ func Test_Locality(t *testing.T) {
 	}
 }
 
-func Test_Country(t *testing.T) {
+func TestCountry(t *testing.T) {
 	var err error
 	var expected string
 	var pn, pnv *PkixName
@@ -756,7 +756,7 @@ func Test_Country(t *testing.T) {
 	}
 }
 
-func Test_Organization(t *testing.T) {
+func TestOrganization(t *testing.T) {
 	var err error
 	var expected string
 	var orgs string
@@ -816,7 +816,7 @@ func Test_Organization(t *testing.T) {
 	}
 }
 
-func Test_CommonName(t *testing.T) {
+func TestCommonName(t *testing.T) {
 	var err error
 	var expected string
 	var pn, pnv *PkixName
@@ -863,7 +863,7 @@ func Test_CommonName(t *testing.T) {
 	}
 }
 
-func Test_NewPkixName(t *testing.T) {
+func TestNewPkixName(t *testing.T) {
 	cn := "internal.smallstep.com"
 	country := "brazil,italy,sudan"
 	org := "smallstep,betable,oracle"

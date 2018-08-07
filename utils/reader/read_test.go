@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func Test_CurrentDirectoryOnEmpty(t *testing.T) {
+func TestCurrentDirectoryOnEmpty(t *testing.T) {
 	// nil pointer
 	var ptr *string
 	if err := CurrentDirectoryOnEmpty(ptr, ""); err == nil {
@@ -54,7 +54,7 @@ func Test_CurrentDirectoryOnEmpty(t *testing.T) {
 	}
 }
 
-func Test_FailOnEmpty(t *testing.T) {
+func TestFailOnEmpty(t *testing.T) {
 	key := "Country"
 
 	// nil pointer
@@ -93,7 +93,7 @@ func Test_FailOnEmpty(t *testing.T) {
 	}
 }
 
-func Test_GeneratePasswordOnEmpty(t *testing.T) {
+func TestGeneratePasswordOnEmpty(t *testing.T) {
 	// nil pointer
 	var ptr *string
 	if err := GeneratePasswordOnEmpty(ptr, ""); err == nil {
@@ -166,7 +166,7 @@ func (r *ErrorReader) Read(p []byte) (n int, err error) {
 	return 0, errors.Errorf("bad read")
 }
 
-func Test_ReadString(t *testing.T) {
+func TestReadString(t *testing.T) {
 	// nil reader
 	if err := ReadString(nil, "", nil, "", CurrentDirectoryOnEmpty); err == nil {
 		t.Errorf("expected: `error`, but got: `nil`")
@@ -250,7 +250,7 @@ func Test_ReadString(t *testing.T) {
 	}
 }
 
-func Test_ReadString_retryOnEmpty(t *testing.T) {
+func TestReadString_retryOnEmpty(t *testing.T) {
 	i := true
 	f := ReadString
 	temp := ""
@@ -273,7 +273,7 @@ func Test_ReadString_retryOnEmpty(t *testing.T) {
 	monkey.Unpatch(ReadString)
 }
 
-func Test_ReadPassword_nilPtr(t *testing.T) {
+func TestReadPassword_nilPtr(t *testing.T) {
 	// nil ptr
 	monkey.Patch(terminal.ReadPassword, func(i int) ([]uint8, error) {
 		return ([]uint8)("current"), nil
@@ -290,7 +290,7 @@ func Test_ReadPassword_nilPtr(t *testing.T) {
 	monkey.Unpatch(terminal.ReadPassword)
 }
 
-func Test_ReadPassword_onEmptyError(t *testing.T) {
+func TestReadPassword_onEmptyError(t *testing.T) {
 	monkey.Patch(terminal.ReadPassword, func(i int) ([]uint8, error) {
 		return ([]uint8)(""), nil
 	})
@@ -306,7 +306,7 @@ func Test_ReadPassword_onEmptyError(t *testing.T) {
 	monkey.Unpatch(terminal.ReadPassword)
 }
 
-func Test_ReadPassword_spacesIsStillEmpty(t *testing.T) {
+func TestReadPassword_spacesIsStillEmpty(t *testing.T) {
 	monkey.Patch(terminal.ReadPassword, func(i int) ([]uint8, error) {
 		return ([]uint8)("   "), nil
 	})
@@ -322,7 +322,7 @@ func Test_ReadPassword_spacesIsStillEmpty(t *testing.T) {
 	monkey.Unpatch(terminal.ReadPassword)
 }
 
-func Test_ReadPassword_nilPtrOverwrittenByInput(t *testing.T) {
+func TestReadPassword_nilPtrOverwrittenByInput(t *testing.T) {
 	// also tests trim space
 	monkey.Patch(terminal.ReadPassword, func(i int) ([]uint8, error) {
 		return ([]uint8)("shake and bake"), nil
@@ -341,7 +341,7 @@ func Test_ReadPassword_nilPtrOverwrittenByInput(t *testing.T) {
 	monkey.Unpatch(terminal.ReadPassword)
 }
 
-func Test_ReadPassword_retryOnEmpty(t *testing.T) {
+func TestReadPassword_retryOnEmpty(t *testing.T) {
 	i := true
 	f := ReadPassword
 	// also tests trim space

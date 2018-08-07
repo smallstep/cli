@@ -8,7 +8,7 @@ import (
 	"github.com/smallstep/assert"
 )
 
-func Test_GenerateKey_unrecognizedkt(t *testing.T) {
+func TestGenerateKey_unrecognizedkt(t *testing.T) {
 	var failTests = []struct {
 		kt       string
 		crv      string

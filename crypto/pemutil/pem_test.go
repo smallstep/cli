@@ -152,7 +152,7 @@ func TestReadCertificate(t *testing.T) {
 	}
 }
 
-func Test_Serialize(t *testing.T) {
+func TestSerialize(t *testing.T) {
 	tests := map[string]struct {
 		in   func() (interface{}, error)
 		pass string
@@ -361,7 +361,7 @@ func Test_Serialize(t *testing.T) {
 }
 
 /*
-func Test_WriteKey(t *testing.T) {
+func TestWriteKey(t *testing.T) {
 	keyOut := "./test.key"
 	pass := "pass"
 

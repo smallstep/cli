@@ -8,7 +8,7 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 )
 
-func Test_LoadIdentityFromDisk(t *testing.T) {
+func TestLoadIdentityFromDisk(t *testing.T) {
 	var (
 		testBadCert          = "./test_files/badca.crt"
 		testCert             = "./test_files/ca.crt"
@@ -26,14 +26,14 @@ func Test_LoadIdentityFromDisk(t *testing.T) {
 			crtPath: testBadCert,
 			keyPath: "",
 			pass:    "",
-			err: errors.Errorf("error parsing x509 certificate file %s",
+			err: errors.Errorf("error parsing %s: asn1: syntax error: trailing data",
 				testBadCert),
 		},
 		"error parsing rsa key": {
 			crtPath: testCert,
 			keyPath: testNoPasscodeBadKey,
 			pass:    "",
-			err:     errors.Errorf("error parsing ./test_files/noPasscodeBadCa.key: asn1:"),
+			err:     errors.Errorf("error parsing %s: asn1:", testNoPasscodeBadKey),
 		},
 		"success": {
 			crtPath: testCert,

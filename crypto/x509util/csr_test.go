@@ -12,7 +12,7 @@ import (
 	"github.com/smallstep/cli/pkg/x509"
 )
 
-func Test_CSR_LoadCSRFromBytes(t *testing.T) {
+func TestCSR_LoadCSRFromBytes(t *testing.T) {
 	tests := map[string]struct {
 		der func() ([]byte, error)
 		err error
