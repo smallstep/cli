@@ -39,7 +39,7 @@ func NewCertificateSignCmd(name, csr, crt, key string) CertificateSignCmd {
 	return CertificateSignCmd{name, command, csrFile, crtFile, keyFile, "password"}
 }
 
-func TestCertificate(t *testing.T) {
+func TestCertificateSign(t *testing.T) {
 	NewCertificateSignCmd("bad-sig", "certificate-create-bad-sig.csr", "intermediate_ca.crt", "intermediate_ca_key").failNoPass(t, "Certificate Request has invalid signature: crypto/rsa: verification error\n")
 	//NewKeypairCmd("success", "foo.csr", "intermediate_ca.crt", "intermediate_ca_key").setPass("pass").test(t)
 }
