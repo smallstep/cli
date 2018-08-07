@@ -51,7 +51,7 @@ $ step certificate inspect ./baz.crt
 
 Verify the signature of a certificate:
 '''
-$ step certificate verify ./baz.crt
+$ step certificate verify ./baz.crt --roots ./foo.crt
 '''
 
 Lint the contents of a certificate to check for common errors and missing fields:

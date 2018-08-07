@@ -107,7 +107,7 @@ func verifyAction(ctx *cli.Context) error {
 	for len(crtBytes) > 0 {
 		block, crtBytes = pem.Decode(crtBytes)
 		if block == nil {
-			break
+			return errors.Errorf("%s contains an invalid PEM block", crtFile)
 		}
 		if block.Type != "CERTIFICATE" {
 			continue
@@ -120,6 +120,9 @@ func verifyAction(ctx *cli.Context) error {
 		} else {
 			ipems = append(ipems, pem.EncodeToMemory(block)...)
 		}
+	}
+	if crt == nil {
+		return errors.Errorf("%s contains no PEM certificate blocks", crtFile)
 	}
 	if len(ipems) > 0 && !intermediatePool.AppendCertsFromPEM(ipems) {
 		return errors.Errorf("failure creating intermediate list from certificate '%s'", crtFile)
