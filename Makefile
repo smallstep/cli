@@ -59,6 +59,14 @@ bin/$(BINNAME): vendor $(call rwildcard,*.go)
 	$Q mkdir -p $(@D)
 	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o bin/$(BINNAME) $(LDFLAGS) $(PKG)
 
+output/binary/linux/bin/$(BINNAME): vendor $(call rwildcard,*.go)
+	$Q mkdir -p $(@D)
+	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o output/binary/linux/bin/$(BINNAME) $(LDFLAGS) $(PKG)
+
+output/binary/darwin/bin/$(BINNAME): vendor $(call rwildcard,*.go)
+	$Q mkdir -p $(@D)
+	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o output/binary/darwin/bin/$(BINNAME) $(LDFLAGS) $(PKG)
+
 # Target for building without calling dep ensure
 simple:
 	$Q mkdir -p bin/
@@ -147,6 +155,43 @@ debian:
 distclean: clean
 
 .PHONY: debian distclean
+
+#################################################
+# build statically compiled step binary for various operating systems
+#################################################
+
+OUTPUT_ROOT=output/
+BINARY_OUTPUT=$(OUTPUT_ROOT)binary/
+BUNDLE_MAKE=v=$v GOOS_OVERRIDE='GOOS=$(1) GOARCH=$(2)' PREFIX=$(3) make $(3)bin/step
+
+binary-linux:
+	$(call BUNDLE_MAKE,linux,amd64,$(BINARY_OUTPUT)linux/)
+
+binary-darwin:
+	$(call BUNDLE_MAKE,darwin,amd64,$(BINARY_OUTPUT)darwin/)
+
+
+define BUNDLE
+	$(q)BUNDLE_DIR=$(BINARY_OUTPUT)$(1)/bundle; \
+	stepName=smallstep_$(2); \
+ 	mkdir -p $$BUNDLE_DIR; \
+	TMP=$$(mktemp -d $$BUNDLE_DIR/tmp.XXXX); \
+	trap "rm -rf $$TMP" EXIT INT QUIT TERM; \
+	newdir=$$TMP/$$stepName; \
+	mkdir -p $$newdir/bin; \
+	cp $(BINARY_OUTPUT)$(1)/bin/step $$newdir/bin/; \
+	cp README.md $$newdir/; \
+	NEW_BUNDLE=$$BUNDLE_DIR/smallstep_$(2)-$(1)-$(3).tar.gz; \
+	rm -f $$NEW_BUNDLE; \
+    tar -zcvf $$NEW_BUNDLE -C $$TMP $$stepName; \
+	cp $$NEW_BUNDLE $$BUNDLE_DIR/smallstep_latest-$(1)-$(3).tar.gz;
+endef
+
+bundle-linux: binary-linux
+	$(call BUNDLE,linux,$(VERSION),amd64)
+
+bundle-darwin: binary-darwin
+	$(call BUNDLE,darwin,$(VERSION),amd64)
 
 #########################################
 # Clean
