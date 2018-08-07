@@ -11,7 +11,7 @@ func init() {
 		Name:      "certificate",
 		Usage:     "create, revoke, validate, bundle, and otherwise manage certificates.",
 		UsageText: "step certificate SUBCOMMAND [ARGUMENTS] [GLOBAL_FLAGS] [SUBCOMMAND_FLAGS]",
-		Description: `**step certificates** command group provides facilities for creating
+		Description: `**step certificate** command group provides facilities for creating
 certificate signing requests (CSRs), creating self-signed certificates
 (e.g., for use as a root certificate authority), generating leaf or
 intermediate CA certificate by signing a CSR, validating certificates,
