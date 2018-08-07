@@ -24,9 +24,9 @@ func createCommand() cli.Command {
 		Action: cli.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
-		[**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
-		[**--curve**=<curve] [**no-password**] [**--profile**=<profile>]
-		[**--size**=<size>] [**--type**=<type>]`,
+[**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
+[**--curve**=<curve>] [**no-password**] [**--profile**=<profile>]
+[**--size**=<size>] [**--type**=<type>]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing requests (CSR) that can be signed later using 'step
 certificates sign' (or some other tool) to produce a certificate.
