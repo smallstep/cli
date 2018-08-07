@@ -173,7 +173,7 @@ binary-darwin:
 
 define BUNDLE
 	$(q)BUNDLE_DIR=$(BINARY_OUTPUT)$(1)/bundle; \
-	stepName=smallstep_$(2); \
+	stepName=step_$(2); \
  	mkdir -p $$BUNDLE_DIR; \
 	TMP=$$(mktemp -d $$BUNDLE_DIR/tmp.XXXX); \
 	trap "rm -rf $$TMP" EXIT INT QUIT TERM; \
@@ -181,10 +181,10 @@ define BUNDLE
 	mkdir -p $$newdir/bin; \
 	cp $(BINARY_OUTPUT)$(1)/bin/step $$newdir/bin/; \
 	cp README.md $$newdir/; \
-	NEW_BUNDLE=$$BUNDLE_DIR/smallstep_$(2)-$(1)-$(3).tar.gz; \
+	NEW_BUNDLE=$$BUNDLE_DIR/$$stepName-$(1)-$(3).tar.gz; \
 	rm -f $$NEW_BUNDLE; \
     tar -zcvf $$NEW_BUNDLE -C $$TMP $$stepName; \
-	cp $$NEW_BUNDLE $$BUNDLE_DIR/smallstep_latest-$(1)-$(3).tar.gz;
+	cp $$NEW_BUNDLE $$BUNDLE_DIR/step_latest-$(1)-$(3).tar.gz;
 endef
 
 bundle-linux: binary-linux
