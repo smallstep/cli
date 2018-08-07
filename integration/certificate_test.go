@@ -22,24 +22,6 @@ func (k CertificateSignCmd) setPass(pass string) CertificateSignCmd {
 	return CertificateSignCmd{k.name, k.command, k.csr, k.issuerCrt, k.issuerKey, pass}
 }
 
-/*
-func (k CertificateSignCmd) test(t *testing.T) {
-	t.Run(k.name, func(t *testing.T) {
-		cmd, err := gexpect.Spawn(k.command.cmd())
-		assert.FatalError(t, err)
-		prompt := fmt.Sprintf("Password with which to encrypt private key file `%s`: ", k.issuerKey)
-		assert.FatalError(t, cmd.ExpectTimeout(prompt, 10*time.Second))
-		assert.FatalError(t, cmd.SendLine(k.pass))
-		k.testJwtSignVerify(t)
-	})
-}
-
-func (k CertificateSignCmd) testNoPass(t *testing.T) {
-	k.command.test(t, k.name, "", "")
-	k.testJwtSignVerify(t)
-}
-*/
-
 func (k CertificateSignCmd) fail(t *testing.T, expected string) {
 	k.command.fail(t, k.name, expected, "")
 }

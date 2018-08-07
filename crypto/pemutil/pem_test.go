@@ -239,9 +239,9 @@ func Test_Serialize(t *testing.T) {
 		if test.pass == "" && test.file == "" {
 			p, err = Serialize(in)
 		} else if test.pass != "" && test.file != "" {
-			p, err = Serialize(in, WithEncryption(test.pass), ToFile(test.file, 0600))
+			p, err = Serialize(in, WithEncryption([]byte(test.pass)), ToFile(test.file, 0600))
 		} else if test.pass != "" {
-			p, err = Serialize(in, WithEncryption(test.pass))
+			p, err = Serialize(in, WithEncryption([]byte(test.pass)))
 		} else {
 			p, err = Serialize(in, ToFile(test.file, 0600))
 		}

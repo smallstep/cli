@@ -151,9 +151,9 @@ func Read(filename string, opts ...Options) (interface{}, error) {
 
 // WithEncryption is a modifier for **Serialize** that will encrypt the
 // PEM formatted data using the given key and a sane default cipher.
-func WithEncryption(pass string) func(*pem.Block) error {
+func WithEncryption(pass []byte) func(*pem.Block) error {
 	return func(p *pem.Block) error {
-		_p, err := x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, []byte(pass),
+		_p, err := x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, pass,
 			x509.PEMCipherAES128)
 		if err != nil {
 			return err

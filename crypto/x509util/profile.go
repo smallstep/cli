@@ -262,7 +262,7 @@ func (b *base) CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, erro
 	}
 
 	_, err = pemutil.Serialize(b.SubjectPrivateKey(),
-		pemutil.WithEncryption(pass), pemutil.ToFile(keyOut, 0600))
+		pemutil.WithEncryption([]byte(pass)), pemutil.ToFile(keyOut, 0600))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

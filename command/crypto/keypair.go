@@ -1,14 +1,11 @@
 package crypto
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
-	"github.com/smallstep/cli/utils/reader"
 	"github.com/urfave/cli"
 )
 
@@ -169,11 +166,9 @@ func createAction(ctx *cli.Context) error {
 	if noPass {
 		_, err = pemutil.Serialize(priv, pemutil.ToFile(privFile, 0600))
 	} else {
-		var pass string
-		if err := reader.ReadPasswordSubtle(
-			fmt.Sprintf("Password with which to encrypt private key file `%s`: ", privFile),
-			&pass, "Password", reader.RetryOnEmpty); err != nil {
-			return errors.WithStack(err)
+		pass, err := utils.ReadPassword("Please enter the password to encrypt the private key: ")
+		if err != nil {
+			return errors.Wrap(err, "error reading password")
 		}
 		_, err = pemutil.Serialize(priv, pemutil.WithEncryption(pass),
 			pemutil.ToFile(privFile, 0600))
