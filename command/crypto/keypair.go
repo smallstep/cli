@@ -165,6 +165,9 @@ func createAction(ctx *cli.Context) error {
 
 	if noPass {
 		_, err = pemutil.Serialize(priv, pemutil.ToFile(privFile, 0600))
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	} else {
 		pass, err := utils.ReadPassword("Please enter the password to encrypt the private key: ")
 		if err != nil {
@@ -172,9 +175,9 @@ func createAction(ctx *cli.Context) error {
 		}
 		_, err = pemutil.Serialize(priv, pemutil.WithEncryption(pass),
 			pemutil.ToFile(privFile, 0600))
-	}
-	if err != nil {
-		return errors.WithStack(err)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil
