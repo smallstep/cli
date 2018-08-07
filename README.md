@@ -127,13 +127,13 @@ make integration
 
 These tests apply the following `Go` linters to verify code style and formatting:
 
-* [deadcode]("https://github.com/tsenart/deadcode")
+* [deadcode](https://github.com/tsenart/deadcode)
 * [gofmt](https://golang.org/cmd/gofmt/)
-* [golint]("https://github.com/golang/lint/golint")
-* [ineffassign]("https://github.com/gordonklaus/ineffassign")
-* [metalinter]("https://github.com/alecthomas/gometalinter")
-* [misspell]("https://github.com/client9/misspell/cmd/misspell")
-* [vet]("https://golang.org/cmd/vet/")
+* [golint](https://github.com/golang/lint/golint)
+* [ineffassign](https://github.com/gordonklaus/ineffassign)
+* [metalinter](https://github.com/alecthomas/gometalinter)
+* [misspell](https://github.com/client9/misspell/cmd/misspell)
+* [vet](https://golang.org/cmd/vet/)
 
 ```
 make lint
@@ -160,4 +160,3 @@ see the [tags on this repository](https://github.com/smallstep/cli).
 
 This project is licensed under the MIT License - see the
 [LICENSE.md](./LICENSE.md) file for details
-
