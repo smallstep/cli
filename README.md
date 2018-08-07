@@ -7,12 +7,17 @@ OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption
 mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML
 assertions).
 
+For more information and docs see [the step website](https://smallstep.com/cli/)
+and the [blog post](https://smallstep.com/blog/zero-trust-swiss-army-knife.html)
+announcing step.
+
 ![Alt Text](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
 
 ### Table of Contents
 
 - [Installing](#installing)
-- [Getting Started](#getting-started-with-development)
+- [Examples](#examples)
+- [Getting Started with Development](#getting-started-with-development)
 - [How to add a new Command](./command/README.md)
 - [Versioning](#versioning)
 - [LICENSE](./LICENSE)
@@ -21,7 +26,9 @@ assertions).
 ## Installing
 
 These instructions will install an OS specific version of the `step` binary on
-your local machine.
+your local machine. To build from source see [getting started with
+development](#getting-started-with-development) below.
+
 
 ### Mac OS
 
@@ -55,6 +62,108 @@ Test:
 
 ```
 step certificate inspect https://smallstep.com
+```
+
+## Examples
+
+### X.509 Certificates
+
+Create a root CA, an intermediate, and a leaf X.509 certificate. Bundle the
+leaf with the intermediate for use with TLS:
+
+```
+$ step certificate create --profile root-ca \
+    "Example Root CA" root-ca.crt root-ca.key 
+$ step certificate create \
+    "Example Intermediate CA 1" intermediate-ca.crt intermediate-ca.key \
+    --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key
+$ step certificate create \
+    example.com example.com.crt example.com.key \
+    --profile leaf --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
+$ step certificate bundle \
+    example.com.crt intermediate-ca.crt example.com-bundle.crt
+```
+
+Extract the expiration date from a certificate (requires
+[`jq`](https://stedolan.github.io/jq/)):
+
+```
+$ step certificate inspect example.com.crt --format json | jq -r .validity.end
+$ step certificate inspect https://smallstep.com --format json | jq -r .validity.end
+```
+
+### JSON Object Signing & Encryption (JOSE)
+
+Create a [JSON Web Key](https://tools.ietf.org/html/rfc7517) (JWK), add the
+public key to a keyset, and sign a [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT):
+
+```
+$ step crypto jwk create pub.json key.json
+$ cat pub.json | step crypto jwk keyset add keys.json
+$ JWT=$(step crypto jwt sign \
+    --key key.json \
+    --iss "issuer@example.com" \
+    --aud "audience@example.com" \
+    --sub "subject@example.com" \
+    --exp $(date -v+15M +"%s"))
+```
+
+Verify your JWT and return the payload:
+
+```
+$ echo $JWT | step crypto jwt verify \
+    --jwks keys.json --iss "issuer@example.com" --aud "audience@example.com"
+```
+
+### Single Sign-On
+
+Login with Google, get an access token, and use it to make a request to
+Google's APIs:
+
+```
+curl -H"$(step oauth --header)" https://www.googleapis.com/oauth2/v3/userinfo
+```
+
+Login with Google and obtain an OAuth OIDC identity token for single sign-on:
+
+```
+$ step oauth \
+    --provider https://accounts.google.com \
+    --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
+    --client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
+    --bare --oidc
+```
+
+Obtain and verify a Google-issued OAuth OIDC identity token:
+
+```
+$ step oauth \
+    --provider https://accounts.google.com \
+    --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
+    --client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
+    --bare --oidc \
+ | step crypto jwt verify \
+   --jwks https://www.googleapis.com/oauth2/v3/certs \
+   --iss https://accounts.google.com \
+   --aud 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com
+```
+
+### Multi-factor Authentication
+
+Generate a [TOTP](https://en.wikipedia.org/wiki/Time-based_One-time_Password_algorithm)
+token and a QR code:
+
+```
+$ step crypto otp generate \
+    --issuer smallstep.com --account name@smallstep.com \
+    --qr smallstep.png > smallstep.totp
+```
+
+Scan the QR Code using Google Authenticator, Authy or similar software and use
+it to verify the TOTP token:
+
+```
+$ step crypto otp verify --secret smallstep.totp
 ```
 
 ## Getting Started with Development
@@ -151,7 +260,6 @@ and running `dep ensure`.
 To remove a dependency, simply remove it from the codebase and any mention of
 it in the `Gopkg.toml` file and run `dep ensure` which will remove it from the
 `vendor` folder while updating the `Gopkg.lock` file.
-
 
 ## Versioning
 
