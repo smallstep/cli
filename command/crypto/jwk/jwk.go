@@ -39,7 +39,7 @@ $ cat pub.json | step crypto jwk keyset add ks.json
 
 List the keys in a JWKS:
 '''
-step crypto jwk keyset list ks.json
+$ step crypto jwk keyset list ks.json
 ZI9Ku2jJQL84ewxVn8C_67iDaTN_DFTXE9Gypo6-3YE
 L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY
 '''
