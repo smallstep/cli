@@ -3,8 +3,8 @@ BINNAME=step
 
 # Set V to 1 for verbose output from the Makefile
 Q=$(if $V,,@)
+PREFIX?=
 SRC = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-PREFIX?=/usr/local
 GOOS_OVERRIDE?=
 
 # Set shell to bash for `echo -e`
@@ -53,20 +53,12 @@ DATE    := $(shell date -u '+%Y-%m-%d %H:%M UTC')
 LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
 GOFLAGS := CGO_ENABLED=0
 
-build: bin/$(BINNAME)
+build: $(PREFIX)bin/$(BINNAME)
 	@echo "Build Complete!"
 
-bin/$(BINNAME): vendor $(call rwildcard,*.go)
+$(PREFIX)bin/$(BINNAME): vendor $(call rwildcard,*.go)
 	$Q mkdir -p $(@D)
-	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o bin/$(BINNAME) $(LDFLAGS) $(PKG)
-
-output/binary/linux/bin/$(BINNAME): vendor $(call rwildcard,*.go)
-	$Q mkdir -p $(@D)
-	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o output/binary/linux/bin/$(BINNAME) $(LDFLAGS) $(PKG)
-
-output/binary/darwin/bin/$(BINNAME): vendor $(call rwildcard,*.go)
-	$Q mkdir -p $(@D)
-	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o output/binary/darwin/bin/$(BINNAME) $(LDFLAGS) $(PKG)
+	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
 
 # Target for building without calling dep ensure
 simple:
@@ -138,11 +130,13 @@ lint: $(LINTERS)
 # Install
 #########################################
 
+INSTALL_PREFIX?=/usr/local
+
 install: bin/$(BINNAME)
-	$Q install -D bin/$(BINNAME) $(DESTDIR)$(PREFIX)/bin/$(BINNAME)
+	$Q install -D bin/$(BINNAME) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BINNAME)
 
 uninstall:
-	$Q rm -f $(DESTDIR)$(PREFIX)/bin/$(BINNAME)
+	$Q rm -f $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BINNAME)
 
 .PHONY: install uninstall
 
@@ -158,7 +152,7 @@ distclean: clean
 .PHONY: debian distclean
 
 #################################################
-# build statically compiled step binary for various operating systems
+# Build statically compiled step binary for various operating systems
 #################################################
 
 OUTPUT_ROOT=output/
@@ -170,7 +164,6 @@ binary-linux:
 
 binary-darwin:
 	$(call BUNDLE_MAKE,darwin,amd64,$(BINARY_OUTPUT)darwin/)
-
 
 define BUNDLE
 	$(q)BUNDLE_DIR=$(BINARY_OUTPUT)$(1)/bundle; \
@@ -193,6 +186,64 @@ bundle-linux: binary-linux
 
 bundle-darwin: binary-darwin
 	$(call BUNDLE,darwin,$(VERSION),amd64)
+
+#################################################
+# Upload statically compiled step binary for various operating systems
+#################################################
+
+# http://tmont.com/blargh/2014/1/uploading-to-s3-in-bash
+define AWS_UPLOAD
+	$(Q)fn="smallstep_$(1)-$(2)-$(3).tar.gz"; \
+	resource="/$(4)/$$fn"; \
+	contentType="application/x-compressed-tar"; \
+	dateValue=$$(date -R); \
+	access="x-amz-acl:public-read"; \
+	stringToSign="PUT\n\n$$contentType\n$$dateValue\n$$access\n$$resource"; \
+	signature=$$(echo -en $$stringToSign | openssl sha1 -hmac $(AWS_SECRET_ACCESS_KEY) -binary | base64); \
+	curl -X PUT -T $(BINARY_OUTPUT)$(2)/bundle/$$fn \
+	  -H "Host: $(4).s3.amazonaws.com" \
+	  -H "Date: $$dateValue" \
+	  -H "Content-Type: $$contentType" \
+	  -H "Authorization: AWS $(AWS_ACCESS_KEY_ID):$$signature" \
+	  -H "x-amz-acl: public-read" \
+	  https://$(4).s3.amazonaws.com/$$fn
+endef
+
+AWS_BUCKET=smallstep-downloads
+
+upload-linux-tag: bundle-linux
+	$(call AWS_UPLOAD,$(VERSION),linux,amd64,$(AWS_BUCKET))
+
+upload-linux-latest: bundle-linux
+	$(call AWS_UPLOAD,latest,linux,amd64,$(AWS_BUCKET))
+
+upload-darwin-tag: bundle-darwin
+	$(call AWS_UPLOAD,$(VERSION),darwin,amd64,$(AWS_BUCKET))
+
+upload-darwin-latest: bundle-darwin
+	$(call AWS_UPLOAD,latest,darwin,amd64,$(AWS_BUCKET))
+
+upload-tag: upload-linux-tag upload-darwin-tag
+
+upload-latest: upload-linux-latest upload-linux-tag upload-darwin-latest upload-darwin-tag
+
+#################################################
+# Targets for uploading the step binary
+#################################################
+
+# For all builds that are not tagged
+upload-push-master:
+
+# For all builds on the master branch with an rc tag
+upload-push-release-candidate: upload-tag
+
+# For all builds on the master branch with a release tag
+upload-push-prod-release: upload-push-release-candidate upload-latest
+
+# This command is called by travis directly *after* a successful build
+upload-push: upload-push-$(PUSHTYPE)
+
+.PHONY: upload-push-release-candidate upload-push-prod-release upload-push
 
 #########################################
 # Clean
