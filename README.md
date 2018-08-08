@@ -18,8 +18,9 @@ announcing step.
 - [Installing](#installing)
 - [Examples](#examples)
 - [Getting Started with Development](#getting-started-with-development)
-- [How to add a new Command](./command/README.md)
+- [How To Add A New Command](./command/README.md)
 - [Versioning](#versioning)
+- [How To Create A New Release](./distribution.md)
 - [LICENSE](./LICENSE)
 - [CHANGELOG](./CHANGELOG.md)
 
@@ -73,7 +74,7 @@ leaf with the intermediate for use with TLS:
 
 ```
 $ step certificate create --profile root-ca \
-    "Example Root CA" root-ca.crt root-ca.key 
+    "Example Root CA" root-ca.crt root-ca.key
 $ step certificate create \
     "Example Intermediate CA 1" intermediate-ca.crt intermediate-ca.key \
     --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key
@@ -265,6 +266,7 @@ it in the `Gopkg.toml` file and run `dep ensure` which will remove it from the
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available,
 see the [tags on this repository](https://github.com/smallstep/cli).
+
 
 ## License
 
