@@ -60,45 +60,45 @@ Create a CSR and key - do not encrypt the key when writing to disk:
 $ step certificate create foo foo.csr foo.key --csr --no-password --insecure
 '''
 
-Create a leaf certificate and key:
-
-'''
-$ step certificate create foo foo.crt foo.key intermediate-ca \
---ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
-'''
-
 Create a root certificate and key:
 
 '''
-$ step certificate create foo foo.crt foo.key --profile root-ca
+$ step certificate create root-ca root-ca.crt root-ca.key --profile root-ca
 '''
 
 Create an intermediate certificate and key:
 
 '''
-$ step certificate create foo foo.crt foo.key --profile intermediate-ca \
---ca ./root-ca.crt --ca-key ./root-ca.key
+$ step certificate create intermediate-ca intermediate-ca.crt intermediate-ca.key \
+  --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key
+'''
+
+Create a leaf certificate and key:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile leaf \
+  --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
 '''
 
 Create a root certificate and key with underlying OKP Ed25519:
 
 '''
-$ step certificate create foo foo.crt foo.key --profile root-ca \
---kty OKP --curve Ed25519
+$ step certificate create root-ca root-ca.crt root-ca.key --profile root-ca \
+  --kty OKP --curve Ed25519
 '''
 
 Create an intermeidate certificate and key with underlying EC P-256 key pair:
 
 '''
-$ step certificate create foo foo.crt foo.key --profile intermediate-ca \
---ca ./root-ca.crt --ca-key ./root-ca.key --kty EC --curve P-256
+$ step certificate create intermediate-ca intermediate-ca.crt intermediate-ca.key \
+  --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key --kty EC --curve P-256
 '''
 
 Create a leaf certificate and key with underlying RSA 2048 key pair:
 
 '''
 $ step certificate create foo foo.crt foo.key --profile leaf \
---ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key --kty RSA --size 2048
+  --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key --kty RSA --size 2048
 '''
 
 Create a CSR and key with underlying OKP Ed25519:
