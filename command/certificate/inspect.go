@@ -21,16 +21,20 @@ import (
 
 func inspectCommand() cli.Command {
 	return cli.Command{
-		Name:      "inspect",
-		Action:    cli.ActionFunc(inspectAction),
-		Usage:     `print certificate or CSR details in human readable format`,
-		UsageText: `**step certificate inspect** <crt_file> [**--format**=<format>]`,
+		Name:   "inspect",
+		Action: cli.ActionFunc(inspectAction),
+		Usage:  `print certificate or CSR details in human readable format`,
+		UsageText: `**step certificate inspect** <crt_file> [**--bundle**]
+[**--format**=<format>] [**--roots**=<root-bundle>]`,
 		Description: `**step certificate inspect** prints the details of a certificate
 or CSR in a human readable format. Output from the inspect command is printed to
 STDERR instead of STDOUT unless. This is an intentional barrier to accidental
 misuse: scripts should never rely on the contents of an unvalidated certificate.
 For scripting purposes, use **step certificate verify**.
 
+If crt_file contains multiple certificates (i.e., it is a certificate "bundle")
+the first certificate in the bundle will be output. Pass the --bundle option to
+print all certificates in the order in which they appear in the bundle.
 
 ## POSITIONAL ARGUMENTS
 
@@ -49,10 +53,22 @@ Inspect a local certificate (default to text format):
 $ step certificate inspect ./certificate.crt
 '''
 
+Inspect a local certificate bundle (default to text format):
+
+'''
+$ step certificate inspect ./certificate-bundle.crt --bundle
+'''
+
 Inspect a local certificate in json format:
 
 '''
 $ step certificate inspect ./certificate.crt --format json
+'''
+
+Inspect a local certificate bundle in json format:
+
+'''
+$ step certificate inspect ./certificate.crt --format json --bundle
 '''
 
 Inspect a remote certificate (using the default root certificate bundle to verify the server):
@@ -61,23 +77,38 @@ Inspect a remote certificate (using the default root certificate bundle to verif
 $ step certificate inspect https://smallstep.com
 '''
 
+Inspect a remote certificate chain (using the default root certificate bundle to verify the server):
+
+'''
+$ step certificate inspect https://google.com --bundle
+'''
+
 Inspect a remote certificate using a custom root certificate to verify the server:
 
 '''
-$ step certificate inspect https://smallstep.com --roots ./certificate.crt
+$ step certificate inspect https://smallstep.com --roots ./root-ca.crt
 '''
 
 Inspect a remote certificate using a custom list of root certificates to verify the server:
 
 '''
 $ step certificate inspect https://smallstep.com \
---roots "./certificate.crt,./certificate2.crt,/certificate3.crt"
+--roots "./root-ca.crt,./root-ca2.crt,/root-ca3.crt"
 '''
 
 Inspect a remote certificate using a custom directory of root certificates to verify the server:
 
 '''
-$ step certificate inspect https://smallstep.com --roots "./path/to/certificates/"
+$ step certificate inspect https://smallstep.com \
+--roots "./path/to/root/certificates/"
+'''
+
+Inspect a remote certificate chain in json format using a custom directory of
+root certificates to verify the server:
+
+'''
+$ step certificate inspect https://google.com --format json \
+--roots "./path/to/root/certificates/" --bundle
 '''
 
 Inspect a local CSR in text format (default):
@@ -123,6 +154,13 @@ authenticity of the remote server.
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
+			cli.BoolFlag{
+				Name: `bundle`,
+				Usage: `Print all certificates in the order in which they appear in the bundle.
+If the output format is 'json' then output a list of certificates, even if
+the bundle only contains one certificate. This flag will result in an error
+if the input bundle includes any PEM that does not have type CERTIFICATE.`,
+			},
 		},
 	}
 }
@@ -134,105 +172,188 @@ func inspectAction(ctx *cli.Context) error {
 
 	var (
 		crtFile = ctx.Args().Get(0)
-		block   *pem.Block
+		bundle  = ctx.Bool("bundle")
+		format  = ctx.String("format")
+		roots   = ctx.String("roots")
 	)
-	if strings.HasPrefix(crtFile, "https://") {
-		var (
-			err     error
-			rootCAs *realx509.CertPool
-		)
-		if roots := ctx.String("roots"); roots != "" {
-			rootCAs, err = x509util.ReadCertPool(roots)
-			if err != nil {
-				errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
-			}
-		}
-		addr := strings.TrimPrefix(crtFile, "https://")
-		if !strings.Contains(addr, ":") {
-			addr += ":443"
-		}
-		conn, err := tls.Dial("tcp", addr, &tls.Config{RootCAs: rootCAs})
-		if err != nil {
-			return errors.Wrapf(err, "failed to connect")
-		}
-		conn.Close()
-		crt := conn.ConnectionState().PeerCertificates[0]
-		block = &pem.Block{
-			Type:  "CERTIFICATE",
-			Bytes: crt.Raw,
-		}
-	} else {
-		crtBytes, err := ioutil.ReadFile(crtFile)
-		if err != nil {
-			return errs.FileError(err, crtFile)
-		}
-		block, _ = pem.Decode(crtBytes)
-		if block == nil {
-			return errors.Errorf("could not parse certificate file '%s'", crtFile)
-		}
+
+	if format != "text" && format != "json" {
+		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
 	}
 
-	format := ctx.String("format")
-	switch block.Type {
-	case "CERTIFICATE":
+	if bundle {
+		var blocks []*pem.Block
+		if strings.HasPrefix(crtFile, "https://") {
+			peerCertificates, err := getPeerCertificates(crtFile, roots)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			for _, crt := range peerCertificates {
+				blocks = append(blocks, &pem.Block{
+					Type:  "CERTIFICATE",
+					Bytes: crt.Raw,
+				})
+			}
+		} else {
+			crtBytes, err := ioutil.ReadFile(crtFile)
+			if err != nil {
+				return errs.FileError(err, crtFile)
+			}
+
+			var block *pem.Block
+			for len(crtBytes) > 0 {
+				block, crtBytes = pem.Decode(crtBytes)
+				if block == nil {
+					return errors.Errorf("%s contains an invalid PEM block", crtFile)
+				}
+				if block.Type != "CERTIFICATE" {
+					return errors.Errorf("certificate bundle %s contains an "+
+						"unexpected PEM block of type %s\n\n  expected type: "+
+						"CERTIFICATE", crtFile, block.Type)
+				}
+				blocks = append(blocks, block)
+			}
+		}
+
 		switch format {
 		case "text":
-			crt, err := x509.ParseCertificate(block.Bytes)
-			if err != nil {
-				return errors.WithStack(err)
+			for _, block := range blocks {
+				crt, err := x509.ParseCertificate(block.Bytes)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				result, err := certinfo.CertificateText(crt)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				fmt.Print(result)
 			}
-			result, err := certinfo.CertificateText(crt)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			fmt.Print(result)
 		case "json":
-			zcrt, err := zx509.ParseCertificate(block.Bytes)
-			if err != nil {
-				return errors.WithStack(err)
+			var zcrts []*zx509.Certificate
+			for _, block := range blocks {
+				zcrt, err := zx509.ParseCertificate(block.Bytes)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				zcrts = append(zcrts, zcrt)
 			}
-			b, err := json.MarshalIndent(struct {
-				*zx509.Certificate
-			}{zcrt}, "", "  ")
+			b, err := json.MarshalIndent(zcrts, "", "  ")
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			os.Stdout.Write(b)
 		default:
-			return errors.Errorf("invalid value for '--format'. '--format' must be "+
-				"one of 'text'(default) or 'json', but got '%s'", format)
+			return errs.InvalidFlagValue(ctx, "format", format, "text, json")
 		}
-	case "CERTIFICATE REQUEST":
-		switch format {
-		case "text":
-			csr, err := x509.ParseCertificateRequest(block.Bytes)
+	} else {
+		// Only inspect the leaf certificate
+		var block *pem.Block
+
+		if strings.HasPrefix(crtFile, "https://") {
+			peerCertificates, err := getPeerCertificates(crtFile, roots)
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			result, err := certinfo.CertificateRequestText(csr)
-			if err != nil {
-				return errors.WithStack(err)
+			block = &pem.Block{
+				Type: "CERTIFICATE",
+				// leaf certificate should be first in PeerCertificates returned
+				// by tls.Conn.
+				Bytes: peerCertificates[0].Raw,
 			}
-			fmt.Print(result)
-		case "json":
-			zcsr, err := zx509.ParseCertificateRequest(block.Bytes)
+		} else {
+			crtBytes, err := ioutil.ReadFile(crtFile)
 			if err != nil {
-				return errors.WithStack(err)
+				return errs.FileError(err, crtFile)
 			}
-			b, err := json.MarshalIndent(struct {
-				*zx509.CertificateRequest
-			}{zcsr}, "", "  ")
-			if err != nil {
-				return errors.WithStack(err)
+
+			// leaf certificate should be the first in the file
+			block, _ = pem.Decode(crtBytes)
+			if block == nil {
+				return errors.Errorf("%s contains an invalid PEM block", crtFile)
 			}
-			os.Stdout.Write(b)
+		}
+		switch block.Type {
+		case "CERTIFICATE":
+			switch format {
+			case "text":
+				crt, err := x509.ParseCertificate(block.Bytes)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				result, err := certinfo.CertificateText(crt)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				fmt.Print(result)
+			case "json":
+				zcrt, err := zx509.ParseCertificate(block.Bytes)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				b, err := json.MarshalIndent(struct {
+					*zx509.Certificate
+				}{zcrt}, "", "  ")
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				os.Stdout.Write(b)
+			default:
+				return errs.InvalidFlagValue(ctx, "format", format, "text, json")
+			}
+		case "CERTIFICATE REQUEST":
+			switch format {
+			case "text":
+				csr, err := x509.ParseCertificateRequest(block.Bytes)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				result, err := certinfo.CertificateRequestText(csr)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				fmt.Print(result)
+			case "json":
+				zcsr, err := zx509.ParseCertificateRequest(block.Bytes)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				b, err := json.MarshalIndent(struct {
+					*zx509.CertificateRequest
+				}{zcsr}, "", "  ")
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				os.Stdout.Write(b)
+			default:
+				return errs.InvalidFlagValue(ctx, "format", format, "text, json")
+			}
 		default:
-			return errors.Errorf("invalid value for '--format'. '--format' must be "+
-				"one of 'text'(default) or 'json', but got '%s'", format)
+			return errors.Errorf("Invalid PEM type in %s. Expected [CERTIFICATE|CSR] but got %s)", crtFile, block.Type)
 		}
-	default:
-		return errors.Errorf("Invalid PEM type in '%s'. Expected ['CERTIFICATE'|'CSR'] but got '%s')", crtFile, block.Type)
 	}
 
 	return nil
+}
+
+func getPeerCertificates(url, roots string) ([]*realx509.Certificate, error) {
+	var (
+		err     error
+		rootCAs *realx509.CertPool
+	)
+	if roots != "" {
+		rootCAs, err = x509util.ReadCertPool(roots)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
+		}
+	}
+	addr := strings.TrimPrefix(url, "https://")
+	if !strings.Contains(addr, ":") {
+		addr += ":443"
+	}
+	conn, err := tls.Dial("tcp", addr, &tls.Config{RootCAs: rootCAs})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to connect")
+	}
+	conn.Close()
+	return conn.ConnectionState().PeerCertificates, nil
 }
