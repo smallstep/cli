@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	x509 "github.com/smallstep/cli/pkg/x509"
+	"github.com/smallstep/cli/utils"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
 )
@@ -39,7 +39,7 @@ print all certificates in the order in which they appear in the bundle.
 ## POSITIONAL ARGUMENTS
 
 <crt_file>
-:  Path to a certificate or certificate signing request (CSR) to inspect.
+:  Path to a certificate or certificate signing request (CSR) to inspect. A hyphen ("-") indicates STDIN as <crt_file>.
 
 ## EXIT CODES
 
@@ -195,7 +195,7 @@ func inspectAction(ctx *cli.Context) error {
 				})
 			}
 		} else {
-			crtBytes, err := ioutil.ReadFile(crtFile)
+			crtBytes, err := utils.ReadFile(crtFile)
 			if err != nil {
 				return errs.FileError(err, crtFile)
 			}
@@ -261,7 +261,7 @@ func inspectAction(ctx *cli.Context) error {
 				Bytes: peerCertificates[0].Raw,
 			}
 		} else {
-			crtBytes, err := ioutil.ReadFile(crtFile)
+			crtBytes, err := utils.ReadFile(crtFile)
 			if err != nil {
 				return errs.FileError(err, crtFile)
 			}

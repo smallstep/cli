@@ -249,13 +249,13 @@ func FileError(err error, filename string) error {
 	if err == nil {
 		return nil
 	}
-	switch e := errors.Cause(err).(type) {
+	switch e := err.(type) {
 	case *os.PathError:
 		return errors.Errorf("%s %s failed: %v", e.Op, e.Path, e.Err)
 	case *os.LinkError:
-		return errors.Errorf("%s %s %s failed %v:", e.Op, e.Old, e.New, e.Err)
+		return errors.Errorf("%s %s %s failed: %v", e.Op, e.Old, e.New, e.Err)
 	case *os.SyscallError:
-		return errors.Errorf("%s failed %v:", e.Syscall, e.Err)
+		return errors.Errorf("%s failed: %v", e.Syscall, e.Err)
 	default:
 		return Wrap(err, "unexpected error on %s", filename)
 	}

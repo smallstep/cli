@@ -72,6 +72,14 @@
   revision = "2b8494104d86337cdd41d0a49cbed8e4583c0ab4"
 
 [[projects]]
+  digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  pruneopts = "UT"
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   branch = "master"
   digest = "1:4ee452f8994700dcab9e816aef1cb9eb2317218734c6ccf5135746e6c19f3dce"
   name = "github.com/golang/lint"
@@ -163,6 +171,14 @@
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  pruneopts = "UT"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:6c7a3f738e37a1c7ad3d56122a34932140654d51a57e01f8613cdf3eaf050911"
   name = "github.com/pquerna/otp"
   packages = [
@@ -230,6 +246,17 @@
   ]
   pruneopts = "UT"
   revision = "d84eaafe274f9dc1f811ebfbb073e18c466e2a44"
+
+[[projects]]
+  digest = "1:c40d65817cdd41fac9aa7af8bed56927bb2d6d47e4fea566a74880f5c2b1c41e"
+  name = "github.com/stretchr/testify"
+  packages = [
+    "assert",
+    "require",
+  ]
+  pruneopts = "UT"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
@@ -398,6 +425,7 @@
     "github.com/smallstep/certinfo",
     "github.com/smallstep/zcrypto/x509",
     "github.com/smallstep/zlint",
+    "github.com/stretchr/testify/require",
     "github.com/tsenart/deadcode",
     "github.com/urfave/cli",
     "golang.org/x/crypto/argon2",

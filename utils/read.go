@@ -10,8 +10,13 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/errs"
 	"golang.org/x/crypto/ssh/terminal"
 )
+
+// In command line utilities, it is a de facto standard that a hyphen "-"
+// indicates STDIN as a file to be read.
+const stdinFilename = "-"
 
 // ReadAll returns a slice of bytes with the content of the given reader.
 func ReadAll(r io.Reader) ([]byte, error) {
@@ -68,4 +73,21 @@ func ReadInput(prompt string) ([]byte, error) {
 	}
 
 	return ReadPassword(prompt)
+}
+
+var _osStdin = os.Stdin
+
+// ReadFile returns the contents of the file identified by name. It reads from
+// STDIN if name is a hyphen ("-").
+func ReadFile(name string) (b []byte, err error) {
+	if name == stdinFilename {
+		name = "/dev/stdin"
+		b, err = ioutil.ReadAll(_osStdin)
+	} else {
+		b, err = ioutil.ReadFile(name)
+	}
+	if err != nil {
+		return nil, errs.FileError(err, name)
+	}
+	return b, nil
 }
