@@ -130,7 +130,7 @@ lint: $(LINTERS)
 # Install
 #########################################
 
-INSTALL_PREFIX?=/usr/local/
+INSTALL_PREFIX?=/usr/
 
 install: $(PREFIX)bin/$(BINNAME)
 	$Q install -D $(PREFIX)bin/$(BINNAME) $(DESTDIR)$(INSTALL_PREFIX)bin/$(BINNAME)
