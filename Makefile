@@ -130,10 +130,10 @@ lint: $(LINTERS)
 # Install
 #########################################
 
-INSTALL_PREFIX?=/usr/local
+INSTALL_PREFIX?=/usr/local/
 
-install: bin/$(BINNAME)
-	$Q install -D bin/$(BINNAME) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BINNAME)
+install: $(PREFIX)bin/$(BINNAME)
+	$Q install -D $(PREFIX)bin/$(BINNAME) $(DESTDIR)$(INSTALL_PREFIX)bin/$(BINNAME)
 
 uninstall:
 	$Q rm -f $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BINNAME)
@@ -145,7 +145,7 @@ uninstall:
 #########################################
 
 debian:
-	$Q PREFIX=/usr dpkg-buildpackage -b -rfakeroot -us -uc
+	$Q dpkg-buildpackage -b -rfakeroot -us -uc
 
 distclean: clean
 
