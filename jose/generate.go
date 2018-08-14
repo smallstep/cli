@@ -1,14 +1,17 @@
 package jose
 
 import (
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	realx509 "crypto/x509"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
+	"github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -38,25 +41,38 @@ func GenerateJWKFromPEM(filename string) (*JSONWebKey, error) {
 	}
 
 	switch key := key.(type) {
-	case *rsa.PrivateKey, *rsa.PublicKey:
-		return &JSONWebKey{Key: key}, nil
-	case *ecdsa.PrivateKey:
+	case *rsa.PrivateKey, *rsa.PublicKey, *ecdsa.PrivateKey, *ecdsa.PublicKey, ed25519.PrivateKey, ed25519.PublicKey:
 		return &JSONWebKey{
 			Key:       key,
-			Algorithm: getECAlgorithm(key.Curve),
+			Algorithm: algForKey(key),
 		}, nil
-	case *ecdsa.PublicKey:
+	case *x509.Certificate:
+		// have: step-cli x509 Certificate
+		// want: crypto/x509 Certificate
+		crt, err := realx509.ParseCertificate(key.Raw)
+		if err != nil {
+			return nil, err
+		}
 		return &JSONWebKey{
-			Key:       key,
-			Algorithm: getECAlgorithm(key.Curve),
-		}, nil
-	case ed25519.PrivateKey, ed25519.PublicKey:
-		return &JSONWebKey{
-			Key:       key,
-			Algorithm: EdDSA,
+			Key:          key.PublicKey,
+			Certificates: []*realx509.Certificate{crt},
+			Algorithm:    algForKey(key.PublicKey),
 		}, nil
 	default:
 		return nil, errors.Errorf("error parsing %s: unsupported key type '%T'", filename, key)
+	}
+}
+
+func algForKey(key crypto.PublicKey) string {
+	switch key := key.(type) {
+	case *ecdsa.PrivateKey:
+		return getECAlgorithm(key.Curve)
+	case *ecdsa.PublicKey:
+		return getECAlgorithm(key.Curve)
+	case ed25519.PrivateKey, ed25519.PublicKey:
+		return EdDSA
+	default:
+		return ""
 	}
 }
 
