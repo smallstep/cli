@@ -42,6 +42,26 @@ $(foreach pkg,$(BOOTSTRAP),$(eval $(call VENDOR_BIN_TMPL,$(pkg))))
 
 .PHONY: bootstrap vendor
 
+#################################################
+# Determine the type of `push`
+#################################################
+
+VERSION?=$(shell git describe --tags --dirty | sed 's/^v//')
+NOT_RC=$(shell git tag --points-at HEAD | grep -v -e -rc)
+
+# If TRAVIS_TAG is set then we know this ref has been tagged, so we just need
+# to determine whether or not we're looking at an rc tag or regular tag.
+ifdef TRAVIS_TAG
+	VERSION=$(shell echo $(TRAVIS_TAG) | sed 's/^v//')
+	ifeq ($(NOT_RC),)
+		PUSHTYPE=release-candidate
+	else
+		PUSHTYPE?=prod-release
+	endif
+else
+	PUSHTYPE=master
+endif
+
 #########################################
 # Build
 #########################################
