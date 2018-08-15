@@ -46,18 +46,9 @@ $(foreach pkg,$(BOOTSTRAP),$(eval $(call VENDOR_BIN_TMPL,$(pkg))))
 # Determine the type of `push`
 #################################################
 
-VERSION?=$(shell git describe --tags --dirty | sed 's/^v//')
-NOT_RC=$(shell git tag --points-at HEAD | grep -v -e -rc)
-
-# If TRAVIS_TAG is set then we know this ref has been tagged, so we just need
-# to determine whether or not we're looking at an rc tag or regular tag.
+# If TRAVIS_TAG is set then we know this ref has been tagged.
 ifdef TRAVIS_TAG
-	VERSION=$(shell echo $(TRAVIS_TAG) | sed 's/^v//')
-	ifeq ($(NOT_RC),)
-		PUSHTYPE=release-candidate
-	else
-		PUSHTYPE?=prod-release
-	endif
+	PUSHTYPE=release
 else
 	PUSHTYPE=master
 endif
@@ -195,10 +186,9 @@ define BUNDLE
 	mkdir -p $$newdir/bin; \
 	cp $(BINARY_OUTPUT)$(1)/bin/step $$newdir/bin/; \
 	cp README.md $$newdir/; \
-	NEW_BUNDLE=$$BUNDLE_DIR/$$stepName_$(1)_$(3).tar.gz; \
+	NEW_BUNDLE=$$BUNDLE_DIR/step_$(2)_$(1)_$(3).tar.gz; \
 	rm -f $$NEW_BUNDLE; \
-    tar -zcvf $$NEW_BUNDLE -C $$TMP $$stepName; \
-	cp $$NEW_BUNDLE $$BUNDLE_DIR/step_latest_$(1)_$(3).tar.gz;
+    tar -zcvf $$NEW_BUNDLE -C $$TMP $$stepName;
 endef
 
 bundle-linux: binary-linux
@@ -208,60 +198,27 @@ bundle-darwin: binary-darwin
 	$(call BUNDLE,darwin,$(VERSION),amd64)
 
 #################################################
-# Upload statically compiled step binary for various operating systems
+# Targets for creating OS specific artifacts
 #################################################
 
-AWS_BUCKET=smallstep-downloads
+artifacts-linux-tag: bundle-linux debian
 
-# http://tmont.com/blargh/2014/1/uploading-to-s3-in-bash
-define AWS_UPLOAD
-	$(Q)resource="/$(3)/$(1)"; \
-	contentType="application/$(4)"; \
-	dateValue=$$(date -R); \
-	access="x-amz-acl:public-read"; \
-	stringToSign="PUT\n\n$$contentType\n$$dateValue\n$$access\n$$resource"; \
-	signature=$$(echo -en $$stringToSign | openssl sha1 -hmac $(AWS_SECRET_ACCESS_KEY) -binary | base64); \
-	curl -X PUT -T $(2)$(1) \
-	  -H "Host: $(3).s3.amazonaws.com" \
-	  -H "Date: $$dateValue" \
-	  -H "Content-Type: $$contentType" \
-	  -H "Authorization: AWS $(AWS_ACCESS_KEY_ID):$$signature" \
-	  -H "x-amz-acl: public-read" \
-	  https://$(3).s3.amazonaws.com/$(1)
-endef
+artifacts-darwin-tag: bundle-darwin
 
-upload-linux-tag: bundle-linux debian
-	$(call AWS_UPLOAD,step_$(VERSION)_linux_amd64.tar.gz,$(BINARY_OUTPUT)linux/bundle/,$(AWS_BUCKET),x-compressed-tar)
-	$(call AWS_UPLOAD,step_$(VERSION)_amd64.deb,../,$(AWS_BUCKET),x-debian-package)
-
-upload-linux-latest: bundle-linux
-	$(call AWS_UPLOAD,step_latest_linux_amd64.tar.gz,$(BINARY_OUTPUT)linux/bundle/,$(AWS_BUCKET),x-compressed-tar)
-
-upload-darwin-tag: bundle-darwin
-	$(call AWS_UPLOAD,step_$(VERSION)_darwin_amd64.tar.gz,$(BINARY_OUTPUT)darwin/bundle/,$(AWS_BUCKET),x-compressed-tar)
-
-upload-darwin-latest: bundle-darwin
-	$(call AWS_UPLOAD,step_latest_darwin_amd64.tar.gz,$(BINARY_OUTPUT)darwin/bundle/,$(AWS_BUCKET),x-compressed-tar)
-
-upload-tag: upload-linux-tag upload-darwin-tag
-
-upload-latest: upload-linux-latest upload-linux-tag upload-darwin-latest upload-darwin-tag
+artifacts-tag: artifacts-linux-tag artifacts-darwin-tag
 
 #################################################
-# Targets for uploading the step binary
+# Targets for creating step artifacts
 #################################################
 
 # For all builds that are not tagged
-upload-push-master:
+artifacts-master:
 
-# For all builds with an rc tag
-upload-push-release-candidate: upload-tag
-
-# For all builds with a release tag (not rc)
-upload-push-prod-release: upload-push-release-candidate upload-latest
+# For all builds with a release tag
+artifacts-release: artifacts-tag
 
 # This command is called by travis directly *after* a successful build
-upload-push: upload-push-$(PUSHTYPE)
+artifacts: artifacts-$(PUSHTYPE)
 
 .PHONY: upload-push-release-candidate upload-push-prod-release upload-push
 

@@ -7,28 +7,29 @@ addons:
     - debhelper
     - fakeroot
     - bash-completion
+env:
+  global:
+  - V=1
 before_script:
 - make bootstrap
 script:
 - make
+- make artifacts
 after_success:
-- bash <(curl -s https://codecov.io/bash) -t "$CODECOV_KEY" || echo "Codecov did not collect
-  coverage reports"
-env:
-  global:
-  - V=1
-deploy:
-- provider: script
-  script: make upload-push
-  skip_cleanup: true
-  on:
-    branch: master
-    repo: smallstep/cli
-- provider: script
-  script: make upload-push
-  skip_cleanup: true
-  on:
-    tags: true
-    repo: smallstep/cli
+- bash <(curl -s https://codecov.io/bash) -t "$CODECOV_KEY" || echo "Codecov did not
+  collect coverage reports"
 notifications:
-    email: false
+  email: false
+stage: Github Release
+deploy:
+  provider: releases
+  api_key:
+    secure: R+A7IWdpNWxwDmEDj5PqT2c/sWRw8acP/KgwLTPzNPquLMyfI76ukc9iiPOTuLs8IzQhnh9XsCw4llybs+TvusrQoP/njjycA4p49jnBSZLidcbjffgijhzCPrrWGkXMEnyqMY2l32w9LQyTs3QJd/CalBsZanpvVmanSvMOxXmkgwQskWseVjwoA4b9M/Bt06wne4Qr1jNQcyyff/KAfczhyXcFwYVoOy8KY2KYU/66udYgNRCXrfzXCAF9sRne+0W+y3wWvJJJrZSzGPkszST0Yt8EPP3xmzdXfU7uB/y8yrkNccS3do8AM/tuPSRoG/WRaHm02b+GpVVW8XlIbWnc+DEEMFNduLqi+5MlYPcUSMo2HPntpfzHbomXwzriB2JYNt+k5MGzbvT5WwzQm5l2Cq2R1GxdEE31THrZsHu174Crda9lXBjilhbvriQkZAZpRLEWDBQrkojq2RrMNcAEX/YPFc1WnKivtiuWAHGmsgHJKhiitAQH08QAYxDSKnKNs1TmcNwbzZ6S+I7aL/L2lizVQu7q9Xih5oJLnkiXACmjmFy/8+BmRjdlMGDm/1x2HOmzpshtF+TyVAl/2O/HdCPl4kdtCMPT7/rNEFVrpFq5N34cQavtMYwMW6wRCjCXo1Ibgrige/FQypVykhk8I3/eoIusR/CUXhuMClw=
+  file_glob: true
+  file:
+    - ../step_*.deb
+    - output/binary/linux/bundle/step_*.tar.gz
+    - output/binary/darwin/bundle/step_*.tar.gz
+  on:
+    repo: smallstep/cli
+    tags: true
