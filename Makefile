@@ -157,7 +157,7 @@ uninstall:
 #########################################
 
 debian:
-	$Q dpkg-buildpackage -b -rfakeroot -us -uc
+	$Q dpkg-buildpackage -b -rfakeroot -us -uc && cp ../step_*.deb $(RELEASES)/
 
 distclean: clean
 
@@ -170,6 +170,7 @@ distclean: clean
 OUTPUT_ROOT=output/
 BINARY_OUTPUT=$(OUTPUT_ROOT)binary/
 BUNDLE_MAKE=v=$v GOOS_OVERRIDE='GOOS=$(1) GOARCH=$(2)' PREFIX=$(3) make $(3)bin/step
+RELEASE=./.travis-releases
 
 binary-linux:
 	$(call BUNDLE_MAKE,linux,amd64,$(BINARY_OUTPUT)linux/)
@@ -180,14 +181,14 @@ binary-darwin:
 define BUNDLE
 	$(q)BUNDLE_DIR=$(BINARY_OUTPUT)$(1)/bundle; \
 	stepName=step_$(2); \
- 	mkdir -p $$BUNDLE_DIR; \
+ 	mkdir -p $(RELEASE); \
 	TMP=$$(mktemp -d $$BUNDLE_DIR/tmp.XXXX); \
 	trap "rm -rf $$TMP" EXIT INT QUIT TERM; \
 	newdir=$$TMP/$$stepName; \
 	mkdir -p $$newdir/bin; \
 	cp $(BINARY_OUTPUT)$(1)/bin/step $$newdir/bin/; \
 	cp README.md $$newdir/; \
-	NEW_BUNDLE=$$BUNDLE_DIR/step_$(2)_$(1)_$(3).tar.gz; \
+	NEW_BUNDLE=$(RELEASE)/step_$(2)_$(1)_$(3).tar.gz; \
 	rm -f $$NEW_BUNDLE; \
     tar -zcvf $$NEW_BUNDLE -C $$TMP $$stepName;
 endef
