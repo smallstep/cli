@@ -17,5 +17,18 @@ after_success:
 env:
   global:
   - V=1
+deploy:
+- provider: script
+  script: make debian
+  skip_cleanup: true
+  on:
+    branch: master
+    repo: smallstep/cli
+- provider: script
+  script: make debian
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: smallstep/cli
 notifications:
     email: false
