@@ -157,7 +157,7 @@ uninstall:
 #########################################
 
 debian:
-	$Q dpkg-buildpackage -b -rfakeroot -us -uc && cp ../step_*.deb $(RELEASES)/
+	$Q dpkg-buildpackage -b -rfakeroot -us -uc && mkdir -p $(RELEASE) && cp ../step_*.deb $(RELEASE)/
 
 distclean: clean
 
