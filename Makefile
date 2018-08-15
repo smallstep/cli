@@ -157,7 +157,10 @@ uninstall:
 #########################################
 
 debian:
-	$Q dpkg-buildpackage -b -rfakeroot -us -uc && mkdir -p $(RELEASE) && cp ../step_*.deb $(RELEASE)/
+	$Q mkdir -p $(RELEASE); \
+	OUTPUT=../step_*.deb; \
+	rm $$OUTPUT; \
+	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
 distclean: clean
 
@@ -181,7 +184,7 @@ binary-darwin:
 define BUNDLE
 	$(q)BUNDLE_DIR=$(BINARY_OUTPUT)$(1)/bundle; \
 	stepName=step_$(2); \
- 	mkdir -p $(RELEASE); \
+ 	mkdir -p $$BUNDLE_DIR $(RELEASE); \
 	TMP=$$(mktemp -d $$BUNDLE_DIR/tmp.XXXX); \
 	trap "rm -rf $$TMP" EXIT INT QUIT TERM; \
 	newdir=$$TMP/$$stepName; \
