@@ -191,37 +191,37 @@ bundle-darwin: binary-darwin
 # Upload statically compiled step binary for various operating systems
 #################################################
 
+AWS_BUCKET=smallstep-downloads
+
 # http://tmont.com/blargh/2014/1/uploading-to-s3-in-bash
 define AWS_UPLOAD
-	$(Q)fn="smallstep_$(1)-$(2)-$(3).tar.gz"; \
-	resource="/$(4)/$$fn"; \
-	contentType="application/x-compressed-tar"; \
+	$(Q)resource="/$(3)/$(1)"; \
+	contentType="application/$(4)"; \
 	dateValue=$$(date -R); \
 	access="x-amz-acl:public-read"; \
 	stringToSign="PUT\n\n$$contentType\n$$dateValue\n$$access\n$$resource"; \
 	signature=$$(echo -en $$stringToSign | openssl sha1 -hmac $(AWS_SECRET_ACCESS_KEY) -binary | base64); \
-	curl -X PUT -T $(BINARY_OUTPUT)$(2)/bundle/$$fn \
-	  -H "Host: $(4).s3.amazonaws.com" \
+	curl -X PUT -T $(2)/bundle/$(1) \
+	  -H "Host: $(3).s3.amazonaws.com" \
 	  -H "Date: $$dateValue" \
 	  -H "Content-Type: $$contentType" \
 	  -H "Authorization: AWS $(AWS_ACCESS_KEY_ID):$$signature" \
 	  -H "x-amz-acl: public-read" \
-	  https://$(4).s3.amazonaws.com/$$fn
+	  https://$(3).s3.amazonaws.com/$(1)
 endef
 
-AWS_BUCKET=smallstep-downloads
-
-upload-linux-tag: bundle-linux
-	$(call AWS_UPLOAD,$(VERSION),linux,amd64,$(AWS_BUCKET))
+upload-linux-tag: bundle-linux debian
+	$(call AWS_UPLOAD,step_$(VERSION)_linux_amd64.tar.gz,$(BINARY_OUTPUT)linux/bundle/,$(AWS_BUCKET),x-compressed-tar)
+	$(call AWS_UPLOAD,step_$(VERSION)_amd64.deb,../,$(AWS_BUCKET),x-debian-package)
 
 upload-linux-latest: bundle-linux
-	$(call AWS_UPLOAD,latest,linux,amd64,$(AWS_BUCKET))
+	$(call AWS_UPLOAD,step_latest_linux_amd64.tar.gz,$(BINARY_OUTPUT)linux/bundle/,$(AWS_BUCKET),x-compressed-tar)
 
 upload-darwin-tag: bundle-darwin
-	$(call AWS_UPLOAD,$(VERSION),darwin,amd64,$(AWS_BUCKET))
+	$(call AWS_UPLOAD,step_$(VERSION)_darwin_amd64.tar.gz,$(BINARY_OUTPUT)darwin/bundle/,$(AWS_BUCKET),x-compressed-tar)
 
 upload-darwin-latest: bundle-darwin
-	$(call AWS_UPLOAD,latest,darwin,amd64,$(AWS_BUCKET))
+	$(call AWS_UPLOAD,step_latest_darwin_amd64.tar.gz,$(BINARY_OUTPUT)darwin/bundle/,$(AWS_BUCKET),x-compressed-tar)
 
 upload-tag: upload-linux-tag upload-darwin-tag
 

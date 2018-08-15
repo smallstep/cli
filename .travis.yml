@@ -19,13 +19,13 @@ env:
   - V=1
 deploy:
 - provider: script
-  script: make debian
+  script: make upload-push
   skip_cleanup: true
   on:
     branch: master
     repo: smallstep/cli
 - provider: script
-  script: make debian
+  script: make upload-push
   skip_cleanup: true
   on:
     tags: true
