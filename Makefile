@@ -221,7 +221,7 @@ define AWS_UPLOAD
 	access="x-amz-acl:public-read"; \
 	stringToSign="PUT\n\n$$contentType\n$$dateValue\n$$access\n$$resource"; \
 	signature=$$(echo -en $$stringToSign | openssl sha1 -hmac $(AWS_SECRET_ACCESS_KEY) -binary | base64); \
-	curl -X PUT -T $(2)/bundle/$(1) \
+	curl -X PUT -T $(2)$(1) \
 	  -H "Host: $(3).s3.amazonaws.com" \
 	  -H "Date: $$dateValue" \
 	  -H "Content-Type: $$contentType" \
