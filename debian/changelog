@@ -1,9 +1,5 @@
-step (0.0.2) UNRELEASED; urgency=medium
+step (0.0.2-rc.4) UNRELEASED; urgency=medium
 
   * added stuff
-
-step (0.0.1) UNRELEASED; urgency=medium
-
-  * Initial release
 
  -- Smallstep Labs, Inc. <techadmin@smallstep.com>  Tue, 7 Aug 2018 00:00:00 +0000

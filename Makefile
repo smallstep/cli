@@ -254,10 +254,10 @@ upload-latest: upload-linux-latest upload-linux-tag upload-darwin-latest upload-
 # For all builds that are not tagged
 upload-push-master:
 
-# For all builds on the master branch with an rc tag
+# For all builds with an rc tag
 upload-push-release-candidate: upload-tag
 
-# For all builds on the master branch with a release tag
+# For all builds with a release tag (not rc)
 upload-push-prod-release: upload-push-release-candidate upload-latest
 
 # This command is called by travis directly *after* a successful build
