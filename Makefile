@@ -4,11 +4,11 @@ BINNAME=step
 # Set V to 1 for verbose output from the Makefile
 Q=$(if $V,,@)
 PREFIX?=
-SRC = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-GOOS_OVERRIDE?=
+SRC=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
+GOOS_OVERRIDE ?=
 
 # Set shell to bash for `echo -e`
-SHELL:=/bin/bash
+SHELL := /bin/bash
 
 all: build lint test
 
@@ -43,8 +43,12 @@ $(foreach pkg,$(BOOTSTRAP),$(eval $(call VENDOR_BIN_TMPL,$(pkg))))
 .PHONY: bootstrap vendor
 
 #################################################
-# Determine the type of `push`
+# Determine the type of `push` and `version`
 #################################################
+
+# Version flags to embed in the binaries
+VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
+VERSION := $(shell echo $(VERSION) | sed 's/^v//')
 
 # If TRAVIS_TAG is set then we know this ref has been tagged.
 ifdef TRAVIS_TAG
@@ -57,9 +61,6 @@ endif
 # Build
 #########################################
 
-# Version flags to embed in the binaries
-VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
-VERSION := $(shell echo $(VERSION) | sed 's/^v//')
 DATE    := $(shell date -u '+%Y-%m-%d %H:%M UTC')
 LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
 GOFLAGS := CGO_ENABLED=0
@@ -197,6 +198,8 @@ bundle-linux: binary-linux
 bundle-darwin: binary-darwin
 	$(call BUNDLE,darwin,$(VERSION),amd64)
 
+.PHONY: binary-linux binary-darwin bundle-linux bundle-darwin
+
 #################################################
 # Targets for creating OS specific artifacts
 #################################################
@@ -206,6 +209,8 @@ artifacts-linux-tag: bundle-linux debian
 artifacts-darwin-tag: bundle-darwin
 
 artifacts-tag: artifacts-linux-tag artifacts-darwin-tag
+
+.PHONY: artifacts-linux-tag artifacts-darwin-tag artifacts-tag
 
 #################################################
 # Targets for creating step artifacts
@@ -220,7 +225,7 @@ artifacts-release: artifacts-tag
 # This command is called by travis directly *after* a successful build
 artifacts: artifacts-$(PUSHTYPE)
 
-.PHONY: upload-push-release-candidate upload-push-prod-release upload-push
+.PHONY: artifacts-master artifacts-release artifacts
 
 #########################################
 # Clean
@@ -233,4 +238,4 @@ ifneq ($(BINNAME),"")
 	$Q rm -f bin/$(BINNAME)
 endif
 
-.PHOMY: clean
+.PHONY: clean
