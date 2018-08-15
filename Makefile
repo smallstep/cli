@@ -195,10 +195,10 @@ define BUNDLE
 	mkdir -p $$newdir/bin; \
 	cp $(BINARY_OUTPUT)$(1)/bin/step $$newdir/bin/; \
 	cp README.md $$newdir/; \
-	NEW_BUNDLE=$$BUNDLE_DIR/$$stepName-$(1)-$(3).tar.gz; \
+	NEW_BUNDLE=$$BUNDLE_DIR/$$stepName_$(1)_$(3).tar.gz; \
 	rm -f $$NEW_BUNDLE; \
     tar -zcvf $$NEW_BUNDLE -C $$TMP $$stepName; \
-	cp $$NEW_BUNDLE $$BUNDLE_DIR/step_latest-$(1)-$(3).tar.gz;
+	cp $$NEW_BUNDLE $$BUNDLE_DIR/step_latest_$(1)_$(3).tar.gz;
 endef
 
 bundle-linux: binary-linux
