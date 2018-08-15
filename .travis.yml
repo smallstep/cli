@@ -24,12 +24,12 @@ stage: Github Release
 deploy:
   provider: releases
   api_key:
-    secure: atqUUxF4a/1wQ+Uz+n4VnbnQgFVCa3OJ6gg4+2mBApxLMiJhztYErElloky8qJL8i8vkx0XV1wo8QRUotCsS1mIsmyXfUJd+fM3623WPsAoeKG3P8lwIuJIljkvZLA2dSrnrWN1hZ0k/z1H297eb7XeqcoVGNamqJIb+3v2GN5U4ZJykhCV+H8KHtBXd/SNpzhlUI4cXss4em1QS5AyNECwVVmnnQaapdfsFszZ4MRNvoSxCVMjCb857KOelR/w/cKyScvywURGgs0isaCdkqMBg2/LDM2EnD1M5T42YVSFG6b6AeOhWAeJxrZEYLZ/G8S7EdPOfJA1OjiONcW5zd98s8BIlnwiFa3nRLd5IzUQlK99xr9A/lAWhE0igGaF1fr863mrGhcFFhbJn7aPXO2vvUolzc0uFTbuBuBbgB1x5mORwFa+Sdg01yCwpvnHTjXeWPmGICfsUn36W7fgP1S81ztmD45vSXLB3MVGkwf66RZrTheKrQqhGXB7I6W9FOjQ6TRHV08vQj8XJrsYmY3Yfy7fPLbKkOBMVOlTd+jTGdbl2W0h7cmwsSxLCdBimT51IFr5wA281OxkPDdyLT2dqszqJZmguZlxzKPepvzeARXZ3qqxK0FXP8TygTO05lai3LPMZWmVKEU+CFlrCL44crM7Qg9d0vfHZQ/XIqMQ=
+    secure: hhImQaihsD4fwTSBu9jRIfhQ2yctWPiE26s8Rdn7KouZPzJJ/uiFHcsyLi92/jb3AGug1RSpX+P+wZuAq6iM7lAZCpHkpMlivmtbpcMHXUl4oSp/5svw7UqT4oczoxiaw7m01eWH7GMovfNCvqnKKLtV7WQBLO8JkeaeQGTrjP+71h5n+FM3M54suaQEaENCZD8UYZ5X62/32x2hPA4KeCu7YXZJraOFSMqV0PARKFuXh5Ijx0PBVwQwdhXlGb0Ncl/AJ1ldVzv5gBHHJYJY9TjOJDmcEmsxPABM7lMbmZlqy2OV50i4r17d6r0ZyF4JmdAraH263+f7L90hoPT4nRa+DOErDZdZPcnBhFgjhyZG9mHyhtMazYC8PBP7QQ9nRSWda98Hh+sKnr/lGBUBT6egh0LN/Hw6tS5WvpQlfAyqy66D16mlz7iCGO51dF9N4X/wLpXkVG/XIkeQxJqAuOIr4J42PD9OCAII1GnKGE6/DYsOT3I2bs12y1F/XxEVGCguLGvQKweUdtQwQowqBGuu68Amxe9MfDnZkLCeyt1tSCzQWpSR2dDQxzo4Yjfh7xPDWasJRAxnMEuUffC41oqmUiGC0gGeOyCp6JzcqiMeMhwwGnWeLs2KedtLTycBC97N1fdmPMVNspn9+kGGMiPpgZMZBtrvUo8MJJNtGvs=
   file_glob: true
   file:
-    - ../step_*.deb
-    - output/binary/linux/bundle/step_*.tar.gz
-    - output/binary/darwin/bundle/step_*.tar.gz
+  - "../step_*.deb"
+  - output/binary/linux/bundle/step_*.tar.gz
+  - output/binary/darwin/bundle/step_*.tar.gz
   on:
     repo: smallstep/cli
     tags: true
