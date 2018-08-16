@@ -16,6 +16,7 @@ announcing step.
 ### Table of Contents
 
 - [Installing](#installing)
+- [Documentation](#documentation)
 - [Examples](#examples)
 - [Getting Started with Development](#getting-started-with-development)
 - [How to add a new Command](./command/README.md)
@@ -63,6 +64,16 @@ Test:
 ```
 step certificate inspect https://smallstep.com
 ```
+
+## Documentation
+
+Documentation can be found in three places:
+
+1. On the command line with `step help xxx` where `xxx` is the subcommand you are interested in. Ex: `step help crypto jwk`
+
+2. On the web at https://smallstep.com/docs/cli
+
+3. In your browser with `step help --http :8080` and visiting http://localhost:8080
 
 ## Examples
 
