@@ -24,11 +24,11 @@ func HelpPrinter(w io.Writer, templ string, data interface{}) {
 
 func htmlHelpPrinter(w io.Writer, templ string, data interface{}) {
 	b := helpPreprocessor(w, templ, data)
-	w.Write([]byte(`<html><head><title>Step</title>`))
+	w.Write([]byte(`<html><head><title>step command line documentation</title>`))
 	w.Write([]byte(`<link href="/style.css" rel="stylesheet" type="text/css">`))
-	w.Write([]byte(`</head><body class="markdown-body">`))
+	w.Write([]byte(`</head><body><div class="wrapper markdown-body command">`))
 	w.Write(md.Run(b))
-	w.Write([]byte(`<br></body></html>`))
+	w.Write([]byte(`</div></body></html>`))
 }
 
 func markdownHelpPrinter(w io.Writer, templ string, data interface{}) {
