@@ -11,7 +11,7 @@ For more information and docs see [the step website](https://smallstep.com/cli/)
 and the [blog post](https://smallstep.com/blog/zero-trust-swiss-army-knife.html)
 announcing step.
 
-![Alt Text](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
+![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
 
 ### Table of Contents
 
