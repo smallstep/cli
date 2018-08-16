@@ -581,9 +581,9 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte(`<html><head><title>OAuth Request Successfulh</title>`))
-	w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #222; width: 400px; margin: 0 auto; text-align: center; line-height: 1.5; padding: 20px;'>`))
-	w.Write([]byte(`<strong>Success!</strong><br />Look for the token on the command line`))
+	w.Write([]byte(`<html><head><title>OAuth Request Successful</title>`))
+	w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
+	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />Look for the token on the command line`))
 	w.Write([]byte(`</p></body></html>`))
 	o.tokCh <- tok
 }
@@ -637,8 +637,9 @@ func (o *oauth) Exchange(tokenEndpoint, code string) (*token, error) {
 func (o *oauth) badRequest(w http.ResponseWriter, msg string) {
 	w.WriteHeader(http.StatusBadRequest)
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte(`<html><head><title>OAuth Request Successfulh</title>`))
-	w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: red; width: 400px; margin: 0 auto; text-align: center; line-height: 1.5; padding: 20px;'>`))
+	w.Write([]byte(`<html><head><title>OAuth Request Unsuccessful</title>`))
+	w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
+	w.Write([]byte(`<strong style='font-size: 28px; color: red;'>Failure</strong><br />`))
 	w.Write([]byte(msg))
 	w.Write([]byte(`</p></body></html>`))
 	o.errCh <- errors.New(msg)
