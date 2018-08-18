@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
+	realx509 "crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
@@ -239,7 +240,16 @@ func Serialize(in interface{}, opts ...func(*pem.Block) error) (*pem.Block, erro
 			Type:  "PUBLIC KEY",
 			Bytes: b,
 		}
-
+	case *x509.Certificate:
+		p = &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: k.Raw,
+		}
+	case *realx509.Certificate:
+		p = &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: k.Raw,
+		}
 	default:
 		return nil, errors.Errorf("cannot serialize type '%T', value '%v'", k, k)
 	}
