@@ -78,7 +78,7 @@ func ReadPasswordGenerate(prompt string) ([]byte, error) {
 			return nil, errors.WithStack(err)
 		}
 		pass = []byte(_pass)
-		fmt.Fprintf(os.Stderr, "\n\npassword: %s\n\n", pass)
+		fmt.Fprintf(os.Stderr, "\npassword: %s\n\n", pass)
 	}
 	return pass, errors.Wrap(err, "error reading password")
 }
