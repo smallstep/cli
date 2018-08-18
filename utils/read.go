@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -57,6 +58,28 @@ func ReadPassword(prompt string) ([]byte, error) {
 
 	pass, err := terminal.ReadPassword(fd)
 	fmt.Fprintln(os.Stderr)
+	return pass, errors.Wrap(err, "error reading password")
+}
+
+// ReadPasswordGenerate asks the user for a password using the given prompt.
+// **Do Not** use this method from within another script. It may print a
+// generated password to stdout. Instead use ReadPassword.
+//
+// This solution works on darwin and linux, but it might not work on other
+// OSs.
+func ReadPasswordGenerate(prompt string) ([]byte, error) {
+	fmt.Fprint(os.Stderr, prompt)
+
+	pass, err := terminal.ReadPassword(syscall.Stdin)
+	fmt.Fprintln(os.Stderr)
+	if pass == nil {
+		_pass, err := randutil.ASCII(32)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		pass = []byte(_pass)
+		fmt.Fprintf(os.Stderr, "\n\npassword: %s\n\n", pass)
+	}
 	return pass, errors.Wrap(err, "error reading password")
 }
 
