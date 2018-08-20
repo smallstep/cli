@@ -11,11 +11,12 @@ For more information and docs see [the step website](https://smallstep.com/cli/)
 and the [blog post](https://smallstep.com/blog/zero-trust-swiss-army-knife.html)
 announcing step.
 
-![Alt Text](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
+![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
 
 ### Table of Contents
 
 - [Installing](#installing)
+- [Documentation](#documentation)
 - [Examples](#examples)
 - [Getting Started with Development](#getting-started-with-development)
 - [How To Add A New Command](./command/README.md)
@@ -64,6 +65,16 @@ Test:
 ```
 step certificate inspect https://smallstep.com
 ```
+
+## Documentation
+
+Documentation can be found in three places:
+
+1. On the command line with `step help xxx` where `xxx` is the subcommand you are interested in. Ex: `step help crypto jwk`
+
+2. On the web at https://smallstep.com/docs/cli
+
+3. In your browser with `step help --http :8080` and visiting http://localhost:8080
 
 ## Examples
 

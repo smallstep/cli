@@ -239,7 +239,7 @@ FOO BAR BAZ
 
 ## ONLINE
 
-This documentation is available online at https://smallstep.com/documentation
+This documentation is available online at https://smallstep.com/docs/cli
 
 ## PRINTING
 
