@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ "$1" = "configure" ]; then
+    update-alternatives \
+        --install /usr/bin/step step /usr/bin/step-cli 50 \
+        --slave /usr/share/bash-completion/completions/step step.bash-completion /usr/share/bash-completion/completions/step-cli
+fi

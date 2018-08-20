@@ -158,7 +158,7 @@ uninstall:
 
 debian:
 	$Q mkdir -p $(RELEASE); \
-	OUTPUT=../step_*.deb; \
+	OUTPUT=../step-cli_*.deb; \
 	rm $$OUTPUT; \
 	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
