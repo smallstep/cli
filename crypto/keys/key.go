@@ -13,10 +13,7 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
-// DefaultPEMCipher is the default algorithm used when encrypting PEM blocks
-// by the CA.
 var (
-	DefaultPEMCipher = x509.PEMCipherAES128
 	// DefaultKeyType is the default type of a private key.
 	DefaultKeyType = "EC"
 	// DefaultKeySize is the default size (in # of bits) of a private key.

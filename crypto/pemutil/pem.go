@@ -20,6 +20,10 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
+// DefaultEncCipher is the default algorithm used when encrypting sensitive
+// data in the PEM format.
+var DefaultEncCipher = x509.PEMCipherAES256
+
 // context add options to the pem methods.
 type context struct {
 	filename string
@@ -155,7 +159,7 @@ func Read(filename string, opts ...Options) (interface{}, error) {
 func WithEncryption(pass []byte) func(*pem.Block) error {
 	return func(p *pem.Block) error {
 		_p, err := x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, pass,
-			x509.PEMCipherAES128)
+			DefaultEncCipher)
 		if err != nil {
 			return err
 		}
