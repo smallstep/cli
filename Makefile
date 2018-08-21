@@ -18,7 +18,7 @@ all: build lint test
 # Bootstrapping
 #########################################
 
-bootstrap:
+bootstra%:
 	$Q which dep || go get github.com/golang/dep/cmd/dep
 	$Q dep ensure
 
@@ -40,7 +40,7 @@ endef
 
 $(foreach pkg,$(BOOTSTRAP),$(eval $(call VENDOR_BIN_TMPL,$(pkg))))
 
-.PHONY: bootstrap vendor
+.PHONY: bootstra% vendor
 
 #################################################
 # Determine the type of `push` and `version`
