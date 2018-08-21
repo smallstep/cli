@@ -398,12 +398,10 @@ key material will be written to disk unencrypted. This is not
 recommended. Requires **--insecure** flag.`,
 			},
 			cli.BoolFlag{
-				Name:   "subtle",
-				Hidden: true,
+				Name: "subtle",
 			},
 			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
+				Name: "insecure",
 			},
 		},
 	}
@@ -483,7 +481,7 @@ func createAction(ctx *cli.Context) error {
 	var jwk *jose.JSONWebKey
 	switch {
 	case pemFile != "":
-		jwk, err = jose.GenerateJWKFromPEM(pemFile)
+		jwk, err = jose.GenerateJWKFromPEM(pemFile, ctx.Bool("subtle"))
 	default:
 		jwk, err = jose.GenerateJWK(kty, crv, alg, use, kid, size)
 	}
