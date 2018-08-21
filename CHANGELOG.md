@@ -12,6 +12,7 @@ certificate.
 - distribution.md with documentation on how to create releases.
 - travis build and upload artifacts to Github Releases on tagged pushes.
 ### Changed
+- default PEM format encryption alg AES128 -> AES256
 ### Deprecated
 ### Removed
 ### Fixed
