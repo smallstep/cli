@@ -97,7 +97,7 @@ have been committed.
 
     Travis will build and upload the following artifacts:
 
-    * *step_1.0.3_amd64.deb*: debian package for installation on linux.
+    * *step-cli_1.0.3_amd64.deb*: debian package for installation on linux.
     * *step_1.0.3_linux_amd64.tar.gz*: tarball containing a statically compiled linux binary.
     * *step_1.0.3_darwin_amd64.tar.gz*: tarball containing a statically compiled darwin binary.
 
