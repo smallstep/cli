@@ -20,6 +20,7 @@ e.g. `v1.0.2`
 
     ```
     git fetch --tags
+    git tag
     ```
 
     The new tag needs to be the logical successor of the most recent existing tag.
@@ -49,14 +50,14 @@ e.g. `v1.0.2`
     off the `v` prefix.
 
         ```
-        step (1.0.2) UNRELEASED; urgency=medium
+        step-cli (1.0.2) UNRELEASED; urgency=medium
         ...
         ```
 
         becomes...
 
         ```
-        step (1.0.3) UNRELEASED; urgency=medium
+        step-cli (1.0.3) UNRELEASED; urgency=medium
         ...
         ```
 
