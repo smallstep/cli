@@ -41,7 +41,11 @@ func GenerateJWKFromPEM(filename string) (*JSONWebKey, error) {
 	}
 
 	switch key := key.(type) {
-	case *rsa.PrivateKey, *rsa.PublicKey, *ecdsa.PrivateKey, *ecdsa.PublicKey, ed25519.PrivateKey, ed25519.PublicKey:
+	case *rsa.PrivateKey, *rsa.PublicKey:
+		return &JSONWebKey{
+			Key: key,
+		}, nil
+	case *ecdsa.PrivateKey, *ecdsa.PublicKey, ed25519.PrivateKey, ed25519.PublicKey:
 		return &JSONWebKey{
 			Key:       key,
 			Algorithm: algForKey(key),
