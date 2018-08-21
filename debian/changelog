@@ -1,4 +1,4 @@
-step-cli (0.0.2-rc.9) UNRELEASED; urgency=medium
+step-cli (0.0.2-rc.11) UNRELEASED; urgency=medium
 
   [ max furman ]
   * add unfurl gif to README
@@ -33,7 +33,7 @@ step-cli (0.0.2-rc.9) UNRELEASED; urgency=medium
   [ Mariano Cano ]
   * Fixes #26: rename debian package to step-cli.
 
- -- Smallstep Labs, Inc. <techadmin@smallstep.com>  Mon, 20 Aug 2018 23:46:20 +0000
+ -- Smallstep Labs, Inc. <techadmin@smallstep.com>  Tue, 21 Aug 2018 01:20:49 +0000
 
 step-cli (0.0.1) unstable; urgency=medium
 
