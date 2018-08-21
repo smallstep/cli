@@ -57,7 +57,7 @@ wget https://github.com/smallstep/cli/releases/download/X.Y.Z/step_X.Y.Z_amd64.d
 Install the Debian package:
 
 ```
-sudo dpkg -s step_X.Y.Z_amd64.deb
+sudo dpkg -i step_X.Y.Z_amd64.deb
 ```
 
 Test:
