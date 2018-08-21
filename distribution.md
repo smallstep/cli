@@ -67,9 +67,15 @@ e.g. `v1.0.2`
 
     3. Commit the changes.
 
-3. Make sure that your branch is up-to-date with
-[origin](https://github.com/smallstep/cli) and that all necessary local changes
-have been committed.
+3. Update the remote origin with your commits.
+
+    Make sure that the local checkout is up to date with
+    with the remote origin and that all local changes have been pushed.
+
+    ```
+    git pull --rebase origin master
+    git push
+    ```
 
 4. Create a local tag.
 

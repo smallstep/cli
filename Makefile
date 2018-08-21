@@ -1,4 +1,4 @@
-PKG=github.com/smallstep/cli/cmd/step
+PKG?=github.com/smallstep/cli/cmd/step
 BINNAME=step
 
 # Set V to 1 for verbose output from the Makefile
