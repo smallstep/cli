@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
+	realx509 "crypto/x509"
 	"testing"
 
 	"github.com/smallstep/assert"
@@ -85,6 +86,58 @@ func TestGenerateJWK(t *testing.T) {
 			assert.Equals(t, tc.expectedSize, len(key))
 		default:
 			t.Errorf("unexpected key type %T", key)
+		}
+	}
+}
+
+func TestKeyUsageForCert(t *testing.T) {
+	tests := []struct {
+		Cert      *realx509.Certificate
+		ExpectUse string
+		ExpectErr error
+	}{
+		{
+			Cert: &realx509.Certificate{
+				KeyUsage: realx509.KeyUsageDigitalSignature,
+			},
+			ExpectUse: jwksUsageSig,
+		},
+		{
+			Cert: &realx509.Certificate{
+				KeyUsage: realx509.KeyUsageDigitalSignature | realx509.KeyUsageContentCommitment,
+			},
+			ExpectUse: jwksUsageSig,
+		},
+		{
+			Cert: &realx509.Certificate{
+				KeyUsage: realx509.KeyUsageDataEncipherment | realx509.KeyUsageKeyAgreement,
+			},
+			ExpectUse: jwksUsageEnc,
+		},
+		{
+			Cert: &realx509.Certificate{
+				KeyUsage: realx509.KeyUsageDataEncipherment,
+			},
+			ExpectUse: jwksUsageEnc,
+		},
+		{
+			Cert:      &realx509.Certificate{},
+			ExpectErr: ErrNoCertKeyUsage,
+		},
+		{
+			Cert: &realx509.Certificate{
+				KeyUsage: realx509.KeyUsageDigitalSignature | realx509.KeyUsageDataEncipherment,
+			},
+			ExpectErr: ErrAmbiguousCertKeyUsage,
+		},
+	}
+
+	for _, tt := range tests {
+		use, err := keyUsageForCert(tt.Cert)
+		if tt.ExpectErr != nil {
+			assert.Equals(t, tt.ExpectErr, err)
+		} else {
+			assert.Equals(t, tt.ExpectUse, use)
 		}
 	}
 }

@@ -15,6 +15,16 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
+const (
+	jwksUsageSig = "sig"
+	jwksUsageEnc = "enc"
+)
+
+var (
+	ErrAmbiguousCertKeyUsage = errors.New("jose/generate: certificate's key usage is ambiguous, it should be for signature or encipherment, but not both (use --subtle to ignore usage field)")
+	ErrNoCertKeyUsage        = errors.New("jose/generate: certificate doesn't contain any key usage (use --subtle to ignore usage field)")
+)
+
 // GenerateJWK generates a JWK given the key type, curve, alg, use, kid and
 // the size of the RSA or oct keys if necessary.
 func GenerateJWK(kty, crv, alg, use, kid string, size int) (jwk *JSONWebKey, err error) {
@@ -57,10 +67,15 @@ func GenerateJWKFromPEM(filename string) (*JSONWebKey, error) {
 		if err != nil {
 			return nil, err
 		}
+		use, err := keyUsageForCert(crt)
+		if err != nil {
+			return nil, err
+		}
 		return &JSONWebKey{
 			Key:          key.PublicKey,
 			Certificates: []*realx509.Certificate{crt},
 			Algorithm:    algForKey(key.PublicKey),
+			Use:          use,
 		}, nil
 	default:
 		return nil, errors.Errorf("error parsing %s: unsupported key type '%T'", filename, key)
@@ -78,6 +93,41 @@ func algForKey(key crypto.PublicKey) string {
 	default:
 		return ""
 	}
+}
+
+func keyUsageForCert(cert *realx509.Certificate) (string, error) {
+	isDigitalSignature := containsUsage(cert.KeyUsage,
+		realx509.KeyUsageDigitalSignature,
+		realx509.KeyUsageContentCommitment,
+		realx509.KeyUsageCertSign,
+		realx509.KeyUsageCRLSign,
+	)
+	isEncipherment := containsUsage(cert.KeyUsage,
+		realx509.KeyUsageKeyEncipherment,
+		realx509.KeyUsageDataEncipherment,
+		realx509.KeyUsageKeyAgreement,
+		realx509.KeyUsageEncipherOnly,
+		realx509.KeyUsageDecipherOnly,
+	)
+	if isDigitalSignature && isEncipherment {
+		return "", ErrAmbiguousCertKeyUsage
+	}
+	if isDigitalSignature {
+		return jwksUsageSig, nil
+	}
+	if isEncipherment {
+		return jwksUsageEnc, nil
+	}
+	return "", ErrNoCertKeyUsage
+}
+
+func containsUsage(usage realx509.KeyUsage, queries ...realx509.KeyUsage) bool {
+	for _, query := range queries {
+		if usage&query == query {
+			return true
+		}
+	}
+	return false
 }
 
 func generateECKey(crv, alg, use, kid string) (*JSONWebKey, error) {
