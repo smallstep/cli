@@ -149,8 +149,6 @@ var SubcommandHelpTemplate = `## NAME
 {{range .VisibleFlags}}
 {{.}}
 {{end}}{{end}}
-
-## SUBCOMMAND TEMPLATE
 `
 
 // CommandHelpTemplate contains the modified template for a command
@@ -174,8 +172,6 @@ var CommandHelpTemplate = `## NAME
 {{range .VisibleFlags}}
 {{.}}
 {{end}}{{end}}
-
-## COMMAND TEMPLATE
 `
 
 // FlagNamePrefixer converts a full flag name and its placeholder into the help
