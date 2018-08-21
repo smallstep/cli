@@ -1,5 +1,13 @@
 #!/usr/bin/make -f
 
-%:
+override_dh_install-arch:
+	dh_install --arch
+	# Rename step to step-cli.
+	mv debian/step-cli/usr/bin/step debian/step-cli/usr/bin/step-cli
+
+build:
 	make bootstrap
+	dh build
+
+%:
 	dh $@ --with bash-completion
