@@ -5,11 +5,9 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
-	"encoding/pem"
 	"math/big"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -34,19 +32,6 @@ func PublicKey(priv interface{}) (interface{}, error) {
 	default:
 		return nil, errors.Errorf("unrecognized key type: %T", priv)
 	}
-}
-
-// PublicPEM returns the public key in PEM block format.
-func PublicPEM(pub interface{}) (*pem.Block, error) {
-	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return &pem.Block{
-		Bytes: pubBytes,
-		Type:  "PUBLIC KEY",
-	}, nil
 }
 
 // GenerateDefaultKey generates a public/private key pair using sane defaults
