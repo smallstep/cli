@@ -115,6 +115,10 @@ func init() {
 				Name:  "oidc",
 				Usage: "Output OIDC Token instead of OAuth Access Token",
 			},
+			cli.StringFlag{
+				Name:  "aud, audience",
+				Usage: "Audience of OAuth OIDC Token",
+			},
 			cli.BoolFlag{
 				Name:  "bare",
 				Usage: "Only output the token",
@@ -202,8 +206,9 @@ func oauthCmd(c *cli.Context) error {
 	if c.IsSet("scope") {
 		scope = strings.Join(c.StringSlice("scope"), " ")
 	}
+	audience := c.String("aud")
 
-	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, opts.Email)
+	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, audience, opts.Email)
 	if err != nil {
 		return err
 	}
@@ -211,7 +216,11 @@ func oauthCmd(c *cli.Context) error {
 	var tok *token
 	if do2lo {
 		if c.Bool("jwt") {
-			tok, err = o.DoJWTAuthorization(issuer, scope)
+			if c.IsSet("aud") {
+				tok, err = o.DoJWTAuthorization(issuer, audience)
+			} else {
+				tok, err = o.DoJWTAuthorization(issuer, scope)
+			}
 		} else {
 			tok, err = o.DoTwoLeggedAuthorization(issuer)
 		}
@@ -269,6 +278,7 @@ type oauth struct {
 	clientID         string
 	clientSecret     string
 	scope            string
+	audience         string
 	loginHint        string
 	redirectURI      string
 	tokenEndpoint    string
@@ -280,7 +290,7 @@ type oauth struct {
 	tokCh            chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHint string) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, audience, loginHint string) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -298,6 +308,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHi
 			clientID:         clientID,
 			clientSecret:     clientSecret,
 			scope:            scope,
+			audience:         audience,
 			authzEndpoint:    "https://accounts.google.com/o/oauth2/v2/auth",
 			tokenEndpoint:    "https://www.googleapis.com/oauth2/v4/token",
 			userInfoEndpoint: "https://www.googleapis.com/oauth2/v3/userinfo",
@@ -330,6 +341,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHi
 			clientID:         clientID,
 			clientSecret:     clientSecret,
 			scope:            scope,
+			audience:         audience,
 			authzEndpoint:    authzEp,
 			tokenEndpoint:    tokenEp,
 			userInfoEndpoint: userinfoEp,
@@ -616,6 +628,9 @@ func (o *oauth) Exchange(tokenEndpoint, code string) (*token, error) {
 	data.Set("redirect_uri", o.redirectURI)
 	data.Set("grant_type", "authorization_code")
 	data.Set("code_verifier", o.codeChallenge)
+	if o.audience != "" {
+		data.Set("audience", o.audience)
+	}
 
 	resp, err := http.PostForm(tokenEndpoint, data)
 	if err != nil {
