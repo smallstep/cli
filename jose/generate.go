@@ -21,8 +21,8 @@ const (
 )
 
 var (
-	ErrAmbiguousCertKeyUsage = errors.New("jose/generate: certificate's key usage is ambiguous, it should be for signature or encipherment, but not both (use --subtle to ignore usage field)")
-	ErrNoCertKeyUsage        = errors.New("jose/generate: certificate doesn't contain any key usage (use --subtle to ignore usage field)")
+	errAmbiguousCertKeyUsage = errors.New("jose/generate: certificate's key usage is ambiguous, it should be for signature or encipherment, but not both (use --subtle to ignore usage field)")
+	errNoCertKeyUsage        = errors.New("jose/generate: certificate doesn't contain any key usage (use --subtle to ignore usage field)")
 )
 
 // GenerateJWK generates a JWK given the key type, curve, alg, use, kid and
@@ -112,7 +112,7 @@ func keyUsageForCert(cert *realx509.Certificate) (string, error) {
 		realx509.KeyUsageDecipherOnly,
 	)
 	if isDigitalSignature && isEncipherment {
-		return "", ErrAmbiguousCertKeyUsage
+		return "", errAmbiguousCertKeyUsage
 	}
 	if isDigitalSignature {
 		return jwksUsageSig, nil
@@ -120,7 +120,7 @@ func keyUsageForCert(cert *realx509.Certificate) (string, error) {
 	if isEncipherment {
 		return jwksUsageEnc, nil
 	}
-	return "", ErrNoCertKeyUsage
+	return "", errNoCertKeyUsage
 }
 
 func containsUsage(usage realx509.KeyUsage, queries ...realx509.KeyUsage) bool {

@@ -122,13 +122,13 @@ func TestKeyUsageForCert(t *testing.T) {
 		},
 		{
 			Cert:      &realx509.Certificate{},
-			ExpectErr: ErrNoCertKeyUsage,
+			ExpectErr: errNoCertKeyUsage,
 		},
 		{
 			Cert: &realx509.Certificate{
 				KeyUsage: realx509.KeyUsageDigitalSignature | realx509.KeyUsageDataEncipherment,
 			},
-			ExpectErr: ErrAmbiguousCertKeyUsage,
+			ExpectErr: errAmbiguousCertKeyUsage,
 		},
 	}
 
