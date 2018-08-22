@@ -3,14 +3,12 @@ package jwk
 import (
 	"bytes"
 	gocrypto "crypto"
-	realx509 "crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
@@ -388,11 +386,6 @@ multiple algorithms.
 '--subtle' flag is required as you must verify that the operations are
 related.`,
 			},
-			cli.StringSliceFlag{
-				Name:   "from-certificate",
-				Usage:  `TODO: usage is missing.`,
-				Hidden: true,
-			},
 			cli.StringFlag{
 				Name: "from-pem",
 				Usage: `Create a JWK representing the key encoded in an
@@ -405,12 +398,10 @@ key material will be written to disk unencrypted. This is not
 recommended. Requires **--insecure** flag.`,
 			},
 			cli.BoolFlag{
-				Name:   "subtle",
-				Hidden: true,
+				Name: "subtle",
 			},
 			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
+				Name: "insecure",
 			},
 		},
 	}
@@ -490,7 +481,7 @@ func createAction(ctx *cli.Context) error {
 	var jwk *jose.JSONWebKey
 	switch {
 	case pemFile != "":
-		jwk, err = jose.GenerateJWKFromPEM(pemFile)
+		jwk, err = jose.GenerateJWKFromPEM(pemFile, ctx.Bool("subtle"))
 	default:
 		jwk, err = jose.GenerateJWK(kty, crv, alg, use, kid, size)
 	}
@@ -519,22 +510,6 @@ func createAction(ctx *cli.Context) error {
 
 	if err := jose.ValidateJWK(jwk); err != nil {
 		return err
-	}
-
-	// Add x5c (X.509 Certificate Chain) parameter
-	crtFiles := ctx.StringSlice("from-certificate")
-	for _, name := range crtFiles {
-		_crt, err := pemutil.ReadCertificate(name)
-		if err != nil {
-			return err
-		}
-		// have: step-cli x509 Certificate
-		// want: crypto/x509 Certificate
-		crt, err := realx509.ParseCertificate(_crt.Raw)
-		if err != nil {
-			return err
-		}
-		jwk.Certificates = append(jwk.Certificates, crt)
 	}
 
 	var jwkPub jose.JSONWebKey

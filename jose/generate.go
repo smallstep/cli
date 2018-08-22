@@ -1,15 +1,28 @@
 package jose
 
 import (
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	realx509 "crypto/x509"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
+	"github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
+)
+
+const (
+	jwksUsageSig = "sig"
+	jwksUsageEnc = "enc"
+)
+
+var (
+	errAmbiguousCertKeyUsage = errors.New("jose/generate: certificate's key usage is ambiguous, it should be for signature or encipherment, but not both (use --subtle to ignore usage field)")
+	errNoCertKeyUsage        = errors.New("jose/generate: certificate doesn't contain any key usage (use --subtle to ignore usage field)")
 )
 
 // GenerateJWK generates a JWK given the key type, curve, alg, use, kid and
@@ -31,7 +44,7 @@ func GenerateJWK(kty, crv, alg, use, kid string, size int) (jwk *JSONWebKey, err
 
 // GenerateJWKFromPEM returns an incomplete JSONWebKey using the key from a
 // PEM file.
-func GenerateJWKFromPEM(filename string) (*JSONWebKey, error) {
+func GenerateJWKFromPEM(filename string, subtle bool) (*JSONWebKey, error) {
 	key, err := pemutil.Read(filename)
 	if err != nil {
 		return nil, err
@@ -39,25 +52,85 @@ func GenerateJWKFromPEM(filename string) (*JSONWebKey, error) {
 
 	switch key := key.(type) {
 	case *rsa.PrivateKey, *rsa.PublicKey:
-		return &JSONWebKey{Key: key}, nil
-	case *ecdsa.PrivateKey:
 		return &JSONWebKey{
-			Key:       key,
-			Algorithm: getECAlgorithm(key.Curve),
+			Key: key,
 		}, nil
-	case *ecdsa.PublicKey:
+	case *ecdsa.PrivateKey, *ecdsa.PublicKey, ed25519.PrivateKey, ed25519.PublicKey:
 		return &JSONWebKey{
 			Key:       key,
-			Algorithm: getECAlgorithm(key.Curve),
+			Algorithm: algForKey(key),
 		}, nil
-	case ed25519.PrivateKey, ed25519.PublicKey:
+	case *x509.Certificate:
+		// have: step-cli x509 Certificate
+		// want: crypto/x509 Certificate
+		crt, err := realx509.ParseCertificate(key.Raw)
+		if err != nil {
+			return nil, err
+		}
+		var use string
+		if !subtle {
+			use, err = keyUsageForCert(crt)
+			if err != nil {
+				return nil, err
+			}
+		}
 		return &JSONWebKey{
-			Key:       key,
-			Algorithm: EdDSA,
+			Key:          key.PublicKey,
+			Certificates: []*realx509.Certificate{crt},
+			Algorithm:    algForKey(key.PublicKey),
+			Use:          use,
 		}, nil
 	default:
 		return nil, errors.Errorf("error parsing %s: unsupported key type '%T'", filename, key)
 	}
+}
+
+func algForKey(key crypto.PublicKey) string {
+	switch key := key.(type) {
+	case *ecdsa.PrivateKey:
+		return getECAlgorithm(key.Curve)
+	case *ecdsa.PublicKey:
+		return getECAlgorithm(key.Curve)
+	case ed25519.PrivateKey, ed25519.PublicKey:
+		return EdDSA
+	default:
+		return ""
+	}
+}
+
+func keyUsageForCert(cert *realx509.Certificate) (string, error) {
+	isDigitalSignature := containsUsage(cert.KeyUsage,
+		realx509.KeyUsageDigitalSignature,
+		realx509.KeyUsageContentCommitment,
+		realx509.KeyUsageCertSign,
+		realx509.KeyUsageCRLSign,
+	)
+	isEncipherment := containsUsage(cert.KeyUsage,
+		realx509.KeyUsageKeyEncipherment,
+		realx509.KeyUsageDataEncipherment,
+		realx509.KeyUsageKeyAgreement,
+		realx509.KeyUsageEncipherOnly,
+		realx509.KeyUsageDecipherOnly,
+	)
+	if isDigitalSignature && isEncipherment {
+		return "", errAmbiguousCertKeyUsage
+	}
+	if isDigitalSignature {
+		return jwksUsageSig, nil
+	}
+	if isEncipherment {
+		return jwksUsageEnc, nil
+	}
+	return "", errNoCertKeyUsage
+}
+
+func containsUsage(usage realx509.KeyUsage, queries ...realx509.KeyUsage) bool {
+	for _, query := range queries {
+		if usage&query == query {
+			return true
+		}
+	}
+	return false
 }
 
 func generateECKey(crv, alg, use, kid string) (*JSONWebKey, error) {
