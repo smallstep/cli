@@ -67,9 +67,10 @@ func GenerateJWKFromPEM(filename string, subtle bool) (*JSONWebKey, error) {
 		if err != nil {
 			return nil, err
 		}
-		use, err := keyUsageForCert(crt)
-		if err != nil {
-			if !subtle {
+		var use string
+		if !subtle {
+			use, err = keyUsageForCert(crt)
+			if err != nil {
 				return nil, err
 			}
 		}
