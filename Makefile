@@ -1,5 +1,5 @@
 PKG?=github.com/smallstep/cli/cmd/step
-BINNAME=step
+BINNAME?=step
 
 # Set V to 1 for verbose output from the Makefile
 Q=$(if $V,,@)
