@@ -77,6 +77,12 @@ Inspect a remote certificate (using the default root certificate bundle to verif
 $ step certificate inspect https://smallstep.com
 '''
 
+Inspect an invalid remote certificate:
+
+'''
+$ step certificate inspect --insecure https://expired.badssl.com
+'''
+
 Inspect a remote certificate chain (using the default root certificate bundle to verify the server):
 
 '''
@@ -161,6 +167,11 @@ If the output format is 'json' then output a list of certificates, even if
 the bundle only contains one certificate. This flag will result in an error
 if the input bundle includes any PEM that does not have type CERTIFICATE.`,
 			},
+			cli.BoolFlag{
+				Name: "insecure",
+				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
+debugging invalid certificates remotely.`,
+			},
 		},
 	}
 }
@@ -171,10 +182,11 @@ func inspectAction(ctx *cli.Context) error {
 	}
 
 	var (
-		crtFile = ctx.Args().Get(0)
-		bundle  = ctx.Bool("bundle")
-		format  = ctx.String("format")
-		roots   = ctx.String("roots")
+		crtFile  = ctx.Args().Get(0)
+		bundle   = ctx.Bool("bundle")
+		format   = ctx.String("format")
+		roots    = ctx.String("roots")
+		insecure = ctx.Bool("insecure")
 	)
 
 	if format != "text" && format != "json" {
@@ -184,7 +196,7 @@ func inspectAction(ctx *cli.Context) error {
 	if bundle {
 		var blocks []*pem.Block
 		if strings.HasPrefix(crtFile, "https://") {
-			peerCertificates, err := getPeerCertificates(crtFile, roots)
+			peerCertificates, err := getPeerCertificates(crtFile, roots, insecure)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -245,12 +257,11 @@ func inspectAction(ctx *cli.Context) error {
 		default:
 			return errs.InvalidFlagValue(ctx, "format", format, "text, json")
 		}
-	} else {
-		// Only inspect the leaf certificate
+	} else { // Only inspect the leaf certificate.
 		var block *pem.Block
 
 		if strings.HasPrefix(crtFile, "https://") {
-			peerCertificates, err := getPeerCertificates(crtFile, roots)
+			peerCertificates, err := getPeerCertificates(crtFile, roots, insecure)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -335,7 +346,7 @@ func inspectAction(ctx *cli.Context) error {
 	return nil
 }
 
-func getPeerCertificates(url, roots string) ([]*realx509.Certificate, error) {
+func getPeerCertificates(url, roots string, insecure bool) ([]*realx509.Certificate, error) {
 	var (
 		err     error
 		rootCAs *realx509.CertPool
@@ -350,7 +361,11 @@ func getPeerCertificates(url, roots string) ([]*realx509.Certificate, error) {
 	if !strings.Contains(addr, ":") {
 		addr += ":443"
 	}
-	conn, err := tls.Dial("tcp", addr, &tls.Config{RootCAs: rootCAs})
+	tlsConfig := &tls.Config{RootCAs: rootCAs}
+	if insecure {
+		tlsConfig.InsecureSkipVerify = true
+	}
+	conn, err := tls.Dial("tcp", addr, tlsConfig)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect")
 	}
