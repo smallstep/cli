@@ -573,6 +573,7 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	tok, err := o.Exchange(o.tokenEndpoint, code)
 	if err != nil {
 		o.badRequest(w, "Failed exchanging authorization code: "+err.Error())
+		return
 	}
 	if tok.Err != "" || tok.ErrDesc != "" {
 		o.badRequest(w, fmt.Sprintf("Failed exchanging authorization code: %s. %s", tok.Err, tok.ErrDesc))
