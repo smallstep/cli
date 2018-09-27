@@ -382,8 +382,7 @@
   revision = "63abe20a23e29e80bbef8089bd3dee3ac25e5306"
 
 [[projects]]
-  branch = "v2"
-  digest = "1:b57bb9a6a2a03558d63166f1afc3c0c4f91ad137f63bf2bee995e9baeb976a9c"
+  digest = "1:7fbe10f3790dc4e6296c7c844c5a9b35513e5521c29c47e10ba99cd2956a2719"
   name = "gopkg.in/square/go-jose.v2"
   packages = [
     ".",
@@ -392,8 +391,8 @@
     "jwt",
   ]
   pruneopts = "UT"
-  revision = "3a85db9ce924afbde513e34c5c8f39a57a73e793"
-  source = "github.com/maraino/go-jose"
+  revision = "ef984e69dd356202fd4e4910d4d9c24468bdf0b8"
+  version = "v2.1.9"
 
 [[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"

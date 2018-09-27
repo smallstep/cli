@@ -53,10 +53,7 @@ required = [
 
 [[constraint]]
   name = "gopkg.in/square/go-jose.v2"
-  # version = "2.1.6"
-  # Using special branch with pbkdf2 support
-  source = "github.com/maraino/go-jose"
-  branch = "v2"
+  version = "2.1.9"
 
 [[constraint]]
   branch = "master"
