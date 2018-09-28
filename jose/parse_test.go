@@ -207,13 +207,15 @@ func TestGuessJWKAlgorithm(t *testing.T) {
 	}
 
 	// With context
-	ctx := new(context).apply(WithAlg(HS256))
+	ctx, err := new(context).apply(WithAlg(HS256))
+	assert.NoError(t, err)
 	jwk := &JSONWebKey{Key: []byte("password")}
 	guessJWKAlgorithm(ctx, jwk)
 	assert.Equals(t, HS256, jwk.Algorithm)
 
 	// With algorithm set
-	ctx = new(context).apply(WithAlg(HS256))
+	ctx, err = new(context).apply(WithAlg(HS256))
+	assert.NoError(t, err)
 	jwk = &JSONWebKey{Key: []byte("password"), Algorithm: HS384}
 	guessJWKAlgorithm(ctx, jwk)
 	assert.Equals(t, HS384, jwk.Algorithm)

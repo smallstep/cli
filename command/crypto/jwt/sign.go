@@ -185,6 +185,10 @@ string. When used with '--jwk' the <kid> value must match the **"kid"** member
 of the JWK. When used with **--jwks** (a JWK Set) the <kid> value must match
 the **"kid"** member of one of the JWKs in the JWK Set.`,
 			},
+			cli.StringFlag{
+				Name:  "password-file",
+				Usage: `The path to the <file> containing the password to decrypt the key.`,
+			},
 			cli.BoolFlag{
 				Name:   "subtle",
 				Hidden: true,
@@ -245,6 +249,9 @@ func signAction(ctx *cli.Context) error {
 	}
 	if isSubtle {
 		options = append(options, jose.WithSubtle(true))
+	}
+	if passwordFile := ctx.String("password-file"); len(passwordFile) > 0 {
+		options = append(options, jose.WithPasswordFile(passwordFile))
 	}
 
 	// Read key from --key or --jwks

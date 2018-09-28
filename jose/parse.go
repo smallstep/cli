@@ -33,7 +33,10 @@ const MaxDecryptTries = 3
 // it will return the raw data if it's not encrypted or the format is not
 // valid.
 func Decrypt(prompt string, data []byte, opts ...Option) ([]byte, error) {
-	ctx := new(context).apply(opts...)
+	ctx, err := new(context).apply(opts...)
+	if err != nil {
+		return nil, err
+	}
 
 	enc, err := jose.ParseEncrypted(string(data))
 	if err != nil {
@@ -64,7 +67,10 @@ func Decrypt(prompt string, data []byte, opts ...Option) ([]byte, error) {
 // password protected keys, it will ask the user for a password.
 // func ParseKey(filename, use, alg, kid string, subtle bool) (*JSONWebKey, error) {
 func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
-	ctx := new(context).apply(opts...)
+	ctx, err := new(context).apply(opts...)
+	if err != nil {
+		return nil, err
+	}
 
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -143,7 +149,10 @@ func ReadJWKSet(filename string) ([]byte, error) {
 // a given file.
 // func ParseKeySet(filename, alg, kid string, isSubtle bool) (*jose.JSONWebKey, error) {
 func ParseKeySet(filename string, opts ...Option) (*jose.JSONWebKey, error) {
-	ctx := new(context).apply(opts...)
+	ctx, err := new(context).apply(opts...)
+	if err != nil {
+		return nil, err
+	}
 
 	b, err := ReadJWKSet(filename)
 	if err != nil {

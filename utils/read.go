@@ -2,12 +2,14 @@ package utils
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 	"syscall"
+	"unicode"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/randutil"
@@ -81,6 +83,17 @@ func ReadPasswordGenerate(prompt string) ([]byte, error) {
 		fmt.Fprintf(os.Stderr, "\npassword: %s\n\n", pass)
 	}
 	return pass, errors.Wrap(err, "error reading password")
+}
+
+// ReadPasswordFromFile reads and returns the password from the given filename.
+// The contents of the file will be trimmed at the right.
+func ReadPasswordFromFile(filename string) ([]byte, error) {
+	password, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errs.FileError(err, filename)
+	}
+	password = bytes.TrimRightFunc(password, unicode.IsSpace)
+	return password, nil
 }
 
 // ReadInput from stdin if something is detected or ask the user for an input

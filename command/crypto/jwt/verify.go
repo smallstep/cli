@@ -82,6 +82,10 @@ a "kid" member the '--kid' flag can be used.`,
 The KID argument is a case-sensitive string. If the input JWS has a "kid"
 member its value must match <kid> or verification will fail.`,
 			},
+			cli.StringFlag{
+				Name:  "password-file",
+				Usage: `The path to the <file> containing the password to decrypt the key.`,
+			},
 			cli.BoolFlag{
 				Name:   "subtle",
 				Hidden: true,
@@ -171,6 +175,9 @@ func verifyAction(ctx *cli.Context) error {
 	}
 	if !ctx.Bool("insecure") {
 		options = append(options, jose.WithNoDefaults(true))
+	}
+	if passwordFile := ctx.String("password-file"); len(passwordFile) > 0 {
+		options = append(options, jose.WithPasswordFile(passwordFile))
 	}
 
 	// Read key from --key or --jwks

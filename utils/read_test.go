@@ -38,6 +38,16 @@ func TestReadFileStdin(t *testing.T) {
 	require.True(t, bytes.Equal(content, b), "expected %s to equal %s", b, content)
 }
 
+func TestReadPasswordFromFile(t *testing.T) {
+	content := []byte("my-password-on-file\n")
+	f, cleanup := newFile(t, content)
+	defer cleanup()
+
+	b, err := ReadPasswordFromFile(f.Name())
+	require.NoError(t, err)
+	require.True(t, bytes.Equal([]byte("my-password-on-file"), b), "expected %s to equal %s", b, content)
+}
+
 // Returns a temp file and a cleanup function to delete it.
 func newFile(t *testing.T, data []byte) (file *os.File, cleanup func()) {
 	f, err := ioutil.TempFile("" /* dir */, "utils-read-test")
