@@ -551,6 +551,11 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 // ServeHTTP is the handler that performs the OAuth 2.0 dance and returns the
 // tokens using channels.
 func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != "/" {
+		http.NotFound(w, req)
+		return
+	}
+
 	q := req.URL.Query()
 	errStr := q.Get("error")
 	if errStr != "" {
@@ -559,12 +564,11 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	code, state := q.Get("code"), q.Get("state")
-
 	if code == "" || state == "" {
-		fmt.Printf("Invalid request received from: %v%v\n\n", req.RemoteAddr, req.RequestURI)
-		if req.RequestURI == "/robots.txt" {
-			fmt.Printf("** You may have an app or browser plugin that needs to be turned off **\n\n")
-		}
+		fmt.Fprintf(os.Stderr, "Invalid request received: http://%s%s\n", req.RemoteAddr, req.URL.String())
+		fmt.Fprintf(os.Stderr, "You may have an app or browser plugin that needs to be turned off\n")
+		http.Error(w, "400 bad request", http.StatusBadRequest)
+		return
 	}
 
 	if code == "" {
