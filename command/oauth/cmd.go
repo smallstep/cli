@@ -558,13 +558,20 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	code := q.Get("code")
+	code, state := q.Get("code"), q.Get("state")
+
+	if code == "" || state == "" {
+		fmt.Printf("Invalid request received from: %v%v\n\n", req.RemoteAddr, req.RequestURI)
+		if req.RequestURI == "/robots.txt" {
+			fmt.Printf("** You may have an app or browser plugin that needs to be turned off **\n\n")
+		}
+	}
+
 	if code == "" {
 		o.badRequest(w, "Failed to authenticate: missing or invalid code")
 		return
 	}
 
-	state := q.Get("state")
 	if state == "" || state != o.state {
 		o.badRequest(w, "Failed to authenticate: missing or invalid state")
 		return
