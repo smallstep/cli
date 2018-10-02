@@ -20,6 +20,9 @@ import (
 	_ "github.com/smallstep/cli/command/crypto"
 	_ "github.com/smallstep/cli/command/oauth"
 
+	// Work in progress ...
+	_ "github.com/smallstep/cli/command/ca"
+
 	// Profiling and debugging
 	_ "net/http/pprof"
 )
