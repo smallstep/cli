@@ -14,6 +14,7 @@ func init() {
 		Description: `**step ca** command group provides facilities ... TODO`,
 		Subcommands: cli.Commands{
 			initCommand(),
+			newTokenCommand(),
 		},
 	}
 
