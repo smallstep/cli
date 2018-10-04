@@ -101,16 +101,24 @@ func TestClaims_Sign(t *testing.T) {
 	}
 }
 
+func withFixedTime(c *Claims, t time.Time) {
+	if c == nil {
+		return
+	}
+	c.IssuedAt = jose.NewNumericDate(t)
+}
+
 func TestNewClaims(t *testing.T) {
 	type args struct {
 		opts []Options
 	}
-	now := time.Now()
 
+	now := time.Now()
 	want := DefaultClaims()
 	want.Subject = "subject"
+	want.IssuedAt = jose.NewNumericDate(now)
 	want.NotBefore = jose.NewNumericDate(now)
-	want.Expiry = jose.NewNumericDate(now.Add(5 * time.Minute))
+	want.Expiry = jose.NewNumericDate(now.Add(10 * time.Minute))
 
 	tests := []struct {
 		name    string
@@ -118,12 +126,13 @@ func TestNewClaims(t *testing.T) {
 		want    *Claims
 		wantErr bool
 	}{
-		{"ok", args{[]Options{WithSubject("subject"), WithValidity(now, now.Add(5*time.Minute))}}, want, false},
+		{"ok", args{[]Options{WithSubject("subject"), WithValidity(now, now.Add(10*time.Minute))}}, want, false},
 		{"fail", args{[]Options{WithSubject("")}}, nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewClaims(tt.args.opts...)
+			withFixedTime(got, now)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewClaims() error = %v, wantErr %v", err, tt.wantErr)
 				return
