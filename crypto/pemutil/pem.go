@@ -36,19 +36,33 @@ func newContext(name string) *context {
 }
 
 // Options is the type to add attributes to the context.
-type Options func(o *context)
+type Options func(o *context) error
 
 // WithFilename is a method that adds the given filename to the context.
 func WithFilename(name string) Options {
-	return func(ctx *context) {
+	return func(ctx *context) error {
 		ctx.filename = name
+		return nil
 	}
 }
 
 // WithPassword is a method that adds the given password to the context.
 func WithPassword(pass []byte) Options {
-	return func(ctx *context) {
+	return func(ctx *context) error {
 		ctx.password = pass
+		return nil
+	}
+}
+
+// WithPasswordFile is a method that adds the password in a file to the context.
+func WithPasswordFile(filename string) Options {
+	return func(ctx *context) error {
+		b, err := utils.ReadPasswordFromFile(filename)
+		if err != nil {
+			return err
+		}
+		ctx.password = b
+		return nil
 	}
 }
 
@@ -84,7 +98,9 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 	// Populate options
 	ctx := newContext("PEM")
 	for _, f := range opts {
-		f(ctx)
+		if err := f(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	block, rest := pem.Decode(b)
