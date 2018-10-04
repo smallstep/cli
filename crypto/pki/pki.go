@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
@@ -15,6 +16,48 @@ import (
 	"github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ssh"
 )
+
+const (
+	// ConfigPath is the directory name under the step path where the configuration
+	// files will be stored.
+	configPath = "config"
+	// PublicPath is the directory name under the step path where the public keys
+	// will be stored.
+	publicPath = "secrets"
+	// PublicPath is the directory name under the step path where the private keys
+	// will be stored.
+	privatePath = "secrets"
+)
+
+// GetConfigPath returns the directory where the configuration files are stored
+// based on the STEPPATH environment variable.
+func GetConfigPath() string {
+	return filepath.Join(config.StepPath(), configPath)
+}
+
+// GetPublicPath returns the directory where the public keys are stored based on
+// the STEPPATH environment variable.
+func GetPublicPath() string {
+	return filepath.Join(config.StepPath(), publicPath)
+}
+
+// GetSecretsPath returns the directory where the private keys are stored based
+// on the STEPPATH environment variable.
+func GetSecretsPath() string {
+	return filepath.Join(config.StepPath(), privatePath)
+}
+
+// GetRootCAPath returns the path where the root CA is stored based on the
+// STEPPATH environment variable.
+func GetRootCAPath() string {
+	return filepath.Join(config.StepPath(), publicPath, "root_ca.crt")
+}
+
+// GetOTTKeyPath returns the path where the ont-time token key is stored based
+// on the STEPPATH environment variable.
+func GetOTTKeyPath() string {
+	return filepath.Join(config.StepPath(), privatePath, "ott_key")
+}
 
 // PKI represents the Public Key Infrastructure used by a certificate authority.
 type PKI struct {

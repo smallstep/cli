@@ -3,8 +3,8 @@ package ca
 import (
 	"fmt"
 
-	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
@@ -63,8 +63,7 @@ func newTokenAction(ctx *cli.Context) error {
 		pemOptions = append(pemOptions, pemutil.WithPasswordFile(passwordFile))
 	}
 
-	ottPrivateKey := config.StepPath() + "/secrets/ott_key"
-	key, err := pemutil.Read(ottPrivateKey, pemOptions...)
+	key, err := pemutil.Read(pki.GetOTTKeyPath(), pemOptions...)
 	if err != nil {
 		return err
 	}

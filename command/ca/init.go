@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
@@ -29,10 +28,6 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	stepPath := config.StepPath()
-	defaultSecrets := stepPath + "/secrets"
-	defaultConfig := stepPath + "/config"
-
 	fmt.Fprintf(os.Stderr, "What would you like to name your new PKI? (e.g. Smallstep): ")
 	name, err := utils.ReadString(os.Stdin)
 	if err != nil {
@@ -44,7 +39,7 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	p, err := pki.New(defaultSecrets, defaultSecrets, defaultConfig)
+	p, err := pki.New(pki.GetPublicPath(), pki.GetSecretsPath(), pki.GetConfigPath())
 	if err != nil {
 		return err
 	}
