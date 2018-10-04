@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/smallstep/cli/config"
+	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -43,7 +44,7 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	p, err := newPKI(defaultSecrets, defaultSecrets, defaultConfig)
+	p, err := pki.New(defaultSecrets, defaultSecrets, defaultConfig)
 	if err != nil {
 		return err
 	}

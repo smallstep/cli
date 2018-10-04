@@ -1,4 +1,4 @@
-package ca
+package pki
 
 import (
 	"encoding/json"
@@ -16,7 +16,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-type pki struct {
+// PKI represents the Public Key Infrastructure used by a certificate authority.
+type PKI struct {
 	root, rootKey                   string
 	intermediate, intermediateKey   string
 	ottPublicKey, ottPrivateKey     string
@@ -25,7 +26,8 @@ type pki struct {
 	config                          string
 }
 
-func newPKI(public, private, config string) (*pki, error) {
+// New creates a new PKI configuration.
+func New(public, private, config string) (*PKI, error) {
 	var err error
 
 	if _, err = os.Stat(public); os.IsNotExist(err) {
@@ -50,7 +52,7 @@ func newPKI(public, private, config string) (*pki, error) {
 		return s, errors.Wrapf(err, "error getting absolute path for %s", name)
 	}
 
-	p := new(pki)
+	p := new(PKI)
 	if p.root, err = getPath(public, "root_ca.crt"); err != nil {
 		return nil, err
 	}
@@ -83,7 +85,7 @@ func newPKI(public, private, config string) (*pki, error) {
 }
 
 // GenerateKeyPairs generates the key pairs used by the certificate authority.
-func (p *pki) GenerateKeyPairs(pass []byte) error {
+func (p *PKI) GenerateKeyPairs(pass []byte) error {
 	// Create OTT key pair, the user doesn't need to know about this.
 	// Created in default secrets directory because it is required by `new-token`.
 	if err := generateOTTKeyPair(p.ottPublicKey, p.ottPrivateKey, pass); err != nil {
@@ -104,7 +106,7 @@ func (p *pki) GenerateKeyPairs(pass []byte) error {
 }
 
 // GenerateRootCertificate generates a root certificate with the given name.
-func (p *pki) GenerateRootCertificate(name string, pass []byte) (*x509.Certificate, interface{}, error) {
+func (p *PKI) GenerateRootCertificate(name string, pass []byte) (*x509.Certificate, interface{}, error) {
 	rootProfile, err := x509util.NewRootProfile(name)
 	if err != nil {
 		return nil, nil, err
@@ -125,7 +127,7 @@ func (p *pki) GenerateRootCertificate(name string, pass []byte) (*x509.Certifica
 
 // GenerateIntermediateCertificate generates an intermediate certificate with
 // the given name.
-func (p *pki) GenerateIntermediateCertificate(name string, rootCrt *x509.Certificate, rootKey interface{}, pass []byte) error {
+func (p *PKI) GenerateIntermediateCertificate(name string, rootCrt *x509.Certificate, rootKey interface{}, pass []byte) error {
 	interProfile, err := x509util.NewIntermediateProfile(name, rootCrt, rootKey)
 	if err != nil {
 		return err
@@ -136,7 +138,7 @@ func (p *pki) GenerateIntermediateCertificate(name string, rootCrt *x509.Certifi
 
 // Save stores the pki on a json file that will be used as the certificate
 // authority configuration.
-func (p *pki) Save() error {
+func (p *PKI) Save() error {
 	fmt.Println()
 	fmt.Printf("Root certificate: %s\n", p.root)
 	fmt.Printf("Root private key: %s\n", p.rootKey)
