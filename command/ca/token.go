@@ -70,7 +70,7 @@ func newTokenAction(ctx *cli.Context) error {
 	}
 
 	// A random jwt id will be used to identify duplicated tokens
-	jwtID, err := randutil.ASCII(64)
+	jwtID, err := randutil.Hex(64) // 256 bits
 	if err != nil {
 		return err
 	}
