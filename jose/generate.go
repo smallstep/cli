@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
-	"github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -60,23 +59,17 @@ func GenerateJWKFromPEM(filename string, subtle bool) (*JSONWebKey, error) {
 			Key:       key,
 			Algorithm: algForKey(key),
 		}, nil
-	case *x509.Certificate:
-		// have: step-cli x509 Certificate
-		// want: crypto/x509 Certificate
-		crt, err := realx509.ParseCertificate(key.Raw)
-		if err != nil {
-			return nil, err
-		}
+	case *realx509.Certificate:
 		var use string
 		if !subtle {
-			use, err = keyUsageForCert(crt)
+			use, err = keyUsageForCert(key)
 			if err != nil {
 				return nil, err
 			}
 		}
 		return &JSONWebKey{
 			Key:          key.PublicKey,
-			Certificates: []*realx509.Certificate{crt},
+			Certificates: []*realx509.Certificate{key},
 			Algorithm:    algForKey(key.PublicKey),
 			Use:          use,
 		}, nil

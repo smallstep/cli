@@ -92,7 +92,7 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 		}
 	case pemKeyType:
 		if jwk.Key, err = pemutil.Parse(b, pemutil.WithFilename(filename),
-			pemutil.WithPassword(ctx.password)); err != nil {
+			pemutil.WithPassword(ctx.password), pemutil.WithStepCrypto()); err != nil {
 			return nil, err
 		}
 	case octKeyType:

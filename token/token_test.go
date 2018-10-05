@@ -11,7 +11,6 @@ import (
 
 	"golang.org/x/crypto/ed25519"
 
-	"github.com/maraino/dbg"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/jose"
 )
@@ -98,7 +97,6 @@ func TestClaims_Sign(t *testing.T) {
 				return
 			}
 			if got != tt.want {
-				dbg.DD(err)
 				t.Errorf("Claims.Sign() = %v, want %v", got, tt.want)
 			}
 		})

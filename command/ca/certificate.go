@@ -187,7 +187,7 @@ func signCertificateAction(ctx *cli.Context) error {
 		return errs.RequiredFlag(ctx, "token")
 	}
 
-	csrInt, err := pemutil.Read(csrFile, pemutil.WithStdLib())
+	csrInt, err := pemutil.Read(csrFile)
 	if err != nil {
 		return err
 	}
@@ -264,7 +264,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error loading certificates")
 	}
 
-	rootInt, err := pemutil.Read(root, pemutil.WithStdLib())
+	rootInt, err := pemutil.Read(root)
 	if err != nil {
 		return err
 	}

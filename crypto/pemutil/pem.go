@@ -26,9 +26,9 @@ var DefaultEncCipher = x509.PEMCipherAES256
 
 // context add options to the pem methods.
 type context struct {
-	filename string
-	password []byte
-	stdLib   bool
+	filename   string
+	password   []byte
+	stepCrypto bool
 }
 
 // newContext initializes the context with a filename.
@@ -67,17 +67,18 @@ func WithPasswordFile(filename string) Options {
 	}
 }
 
-// WithStdLib returns cryptographic primitives of the standard library.
-func WithStdLib() Options {
+// WithStepCrypto returns cryptographic primitives of the modified step Crypto
+// library.
+func WithStepCrypto() Options {
 	return func(ctx *context) error {
-		ctx.stdLib = true
+		ctx.stepCrypto = true
 		return nil
 	}
 }
 
 // ReadCertificate returns a *x509.Certificate from the given filename. It
 // supports certificates formats PEM and DER.
-func ReadCertificate(filename string) (*x509.Certificate, error) {
+func ReadCertificate(filename string) (*realx509.Certificate, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errs.FileError(err, filename)
@@ -86,6 +87,33 @@ func ReadCertificate(filename string) (*x509.Certificate, error) {
 	// PEM format
 	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
 		crt, err := Read(filename)
+		if err != nil {
+			return nil, err
+		}
+		switch crt := crt.(type) {
+		case *realx509.Certificate:
+			return crt, nil
+		default:
+			return nil, errors.Errorf("error decoding PEM: file '%s' does not contain a certificate", filename)
+		}
+	}
+
+	// DER format (binary)
+	crt, err := realx509.ParseCertificate(b)
+	return crt, errors.Wrapf(err, "error parsing %s", filename)
+}
+
+// ReadStepCertificate returns a *x509.Certificate from the given filename. It
+// supports certificates formats PEM and DER.
+func ReadStepCertificate(filename string) (*x509.Certificate, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errs.FileError(err, filename)
+	}
+
+	// PEM format
+	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
+		crt, err := Read(filename, []Options{WithStepCrypto()}...)
 		if err != nil {
 			return nil, err
 		}
@@ -154,18 +182,18 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 		priv, err := ParsePKCS8PrivateKey(block.Bytes)
 		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE":
-		if ctx.stdLib {
-			crt, err := realx509.ParseCertificate(block.Bytes)
+		if ctx.stepCrypto {
+			crt, err := x509.ParseCertificate(block.Bytes)
 			return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
 		}
-		crt, err := x509.ParseCertificate(block.Bytes)
+		crt, err := realx509.ParseCertificate(block.Bytes)
 		return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE REQUEST":
-		if ctx.stdLib {
-			csr, err := realx509.ParseCertificateRequest(block.Bytes)
+		if ctx.stepCrypto {
+			csr, err := x509.ParseCertificateRequest(block.Bytes)
 			return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
 		}
-		csr, err := x509.ParseCertificateRequest(block.Bytes)
+		csr, err := realx509.ParseCertificateRequest(block.Bytes)
 		return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	default:
 		return nil, errors.Errorf("error decoding %s: contains an unexpected header '%s'", ctx.filename, block.Type)

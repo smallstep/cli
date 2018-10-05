@@ -81,6 +81,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:b9914f85d95a0968bafd1be1908ba29e2eafafd88d6fd13696be42bf5368c380"
+  name = "github.com/go-chi/chi"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "235fa5d9ba51003bd4c40a69bb9e7c4d82a5ef39"
+
+[[projects]]
+  branch = "master"
   digest = "1:4ee452f8994700dcab9e816aef1cb9eb2317218734c6ccf5135746e6c19f3dce"
   name = "github.com/golang/lint"
   packages = ["golint"]
@@ -134,12 +142,36 @@
   revision = "95032a82bc518f77982ea72343cc1ade730072f0"
 
 [[projects]]
+  digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:094e04c4742b596bce4455eb535d4e4365016b44016db76f8593211406d77299"
   name = "github.com/kr/pty"
   packages = ["."]
   pruneopts = "UT"
   revision = "fa756f09eeb418bf1cc6268c66ceaad9bb98f598"
   version = "v1.1.2"
+
+[[projects]]
+  digest = "1:266d082179f3a29a4bdcf1dcc49d4a304f5c7107e65bd22d1fecacf45f1ac348"
+  name = "github.com/newrelic/go-agent"
+  packages = [
+    ".",
+    "internal",
+    "internal/cat",
+    "internal/jsonx",
+    "internal/logger",
+    "internal/sysinfo",
+    "internal/utilization",
+  ]
+  pruneopts = "UT"
+  revision = "f5bce3387232559bcbe6a5f8227c4bf508dac1ba"
+  version = "v1.11.0"
 
 [[projects]]
   digest = "1:07140002dbf37da92090f731b46fa47be4820b82fe5c14a035203b0e813d0ec2"
@@ -191,6 +223,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:2e76a73cb51f42d63a2a1a85b3dc5731fd4faf6821b434bd0ef2c099186031d6"
+  name = "github.com/rs/xid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "15d26544def341f036c5f8dca987a4cbe575032c"
+  version = "v1.2.1"
+
+[[projects]]
   branch = "master"
   digest = "1:8baa3b16f20963c54e296627ea1dabfd79d1b486f81baf8759e99d73bddf2687"
   name = "github.com/samfoo/ansi"
@@ -207,6 +247,14 @@
   revision = "86672fcb3f950f35f2e675df2240550f2a50762f"
 
 [[projects]]
+  digest = "1:dc2d85c13ac22c22a1f3170a41a8e1b897fa05134aaf533f16df44f66a25b4a1"
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a67f783a3814b8729bd2dac5780b5f78f8dbd64d"
+  version = "v1.1.0"
+
+[[projects]]
   branch = "master"
   digest = "1:4d1f0640875aefefdb2151f297c144518a71f5729c4b9f9423f09df501f699c5"
   name = "github.com/smallstep/assert"
@@ -221,6 +269,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "ffb96c45c4dc20b1e91a9106edeee278c65f3bcc"
+
+[[projects]]
+  branch = "master"
+  digest = "1:890057b620c30eaaa7e6c479ea13c71445c6b135584c6030b68623130bddec22"
+  name = "github.com/smallstep/jwx"
+  packages = ["jwa"]
+  pruneopts = "UT"
+  revision = "32d46be2a09283638606f1dcbceda1d17775d88e"
 
 [[projects]]
   branch = "master"
@@ -284,7 +340,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2f87cf7c69807dcfd3118a6c560eb6dae52a33fd4f2b9a66ce51a330a4c0e7eb"
+  digest = "1:6a22670863213d614c7942cbd2eabdfab95bfa55ef725b2c07b61ad49a9dfcca"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
@@ -296,6 +352,7 @@
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
+    "internal/chacha20",
     "internal/subtle",
     "nacl/auth",
     "nacl/box",
@@ -305,6 +362,7 @@
     "poly1305",
     "salsa20/salsa",
     "scrypt",
+    "ssh",
     "ssh/terminal",
   ]
   pruneopts = "UT"
@@ -421,9 +479,13 @@
     "github.com/samfoo/ansi",
     "github.com/shurcooL/sanitized_anchor_name",
     "github.com/smallstep/assert",
+    "github.com/smallstep/ca-component/api",
+    "github.com/smallstep/ca-component/authority",
+    "github.com/smallstep/ca-component/ca",
     "github.com/smallstep/certinfo",
     "github.com/smallstep/zcrypto/x509",
     "github.com/smallstep/zlint",
+    "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "github.com/tsenart/deadcode",
     "github.com/urfave/cli",
@@ -439,6 +501,7 @@
     "golang.org/x/crypto/nacl/sign",
     "golang.org/x/crypto/pbkdf2",
     "golang.org/x/crypto/scrypt",
+    "golang.org/x/crypto/ssh",
     "golang.org/x/crypto/ssh/terminal",
     "gopkg.in/square/go-jose.v2",
     "gopkg.in/square/go-jose.v2/jwt",
