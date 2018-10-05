@@ -17,6 +17,7 @@ func init() {
 			newTokenCommand(),
 			newCertificateCommand(),
 			signCertificateCommand(),
+			rootComand(),
 		},
 	}
 
