@@ -21,18 +21,18 @@ func newTokenCommand() cli.Command {
 		Action: cli.ActionFunc(newTokenAction),
 		Usage:  "generates an OTT granting access to the CA",
 		UsageText: `**step ca new-token** <hostname>
-		[**--ca**=<file>] [**--ca-url**=<uri>] 
+		[**--ca-url**=<uri>] [**--root**=<file>] 
 		[**--password-file**=<file>] [**--output-file**=<file>]`,
 		Description: `**step ca new-token** command generates a one-time token granting access to the
 certificates authority`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:  "ca",
-				Usage: "The path to the PEM <file> used as the root certificate authority.",
-			},
-			cli.StringFlag{
 				Name:  "ca-url",
 				Usage: "<URI> of the targeted Step Certificate Authority.",
+			},
+			cli.StringFlag{
+				Name:  "root",
+				Usage: "The path to the PEM <file> used as the root certificate authority.",
 			},
 			cli.StringFlag{
 				Name: "password-file",
@@ -52,7 +52,7 @@ func newTokenAction(ctx *cli.Context) error {
 		return err
 	}
 
-	ca := ctx.String("ca")
+	root := ctx.String("root")
 	caURL := ctx.String("ca-url")
 	passwordFile := ctx.String("password-file")
 	outputFile := ctx.String("output-file")
@@ -79,8 +79,8 @@ func newTokenAction(ctx *cli.Context) error {
 	tokOptions := []token.Options{
 		token.WithJWTID(jwtID),
 	}
-	if len(ca) > 0 {
-		tokOptions = append(tokOptions, token.WithRootCA(ca))
+	if len(root) > 0 {
+		tokOptions = append(tokOptions, token.WithRootCA(root))
 	}
 	if len(caURL) > 0 {
 		tokOptions = append(tokOptions, token.WithCA(caURL))
