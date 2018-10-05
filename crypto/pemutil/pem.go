@@ -28,6 +28,7 @@ var DefaultEncCipher = x509.PEMCipherAES256
 type context struct {
 	filename string
 	password []byte
+	stdLib   bool
 }
 
 // newContext initializes the context with a filename.
@@ -62,6 +63,14 @@ func WithPasswordFile(filename string) Options {
 			return err
 		}
 		ctx.password = b
+		return nil
+	}
+}
+
+// WithStdLib returns cryptographic primitives of the standard library.
+func WithStdLib() Options {
+	return func(ctx *context) error {
+		ctx.stdLib = true
 		return nil
 	}
 }
@@ -145,8 +154,19 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 		priv, err := ParsePKCS8PrivateKey(block.Bytes)
 		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE":
+		if ctx.stdLib {
+			crt, err := realx509.ParseCertificate(block.Bytes)
+			return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
+		}
 		crt, err := x509.ParseCertificate(block.Bytes)
 		return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
+	case "CERTIFICATE REQUEST":
+		if ctx.stdLib {
+			csr, err := realx509.ParseCertificateRequest(block.Bytes)
+			return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
+		}
+		csr, err := x509.ParseCertificateRequest(block.Bytes)
+		return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	default:
 		return nil, errors.Errorf("error decoding %s: contains an unexpected header '%s'", ctx.filename, block.Type)
 	}
@@ -268,6 +288,16 @@ func Serialize(in interface{}, opts ...func(*pem.Block) error) (*pem.Block, erro
 	case *realx509.Certificate:
 		p = &pem.Block{
 			Type:  "CERTIFICATE",
+			Bytes: k.Raw,
+		}
+	case *x509.CertificateRequest:
+		p = &pem.Block{
+			Type:  "CERTIFICATE REQUEST",
+			Bytes: k.Raw,
+		}
+	case *realx509.CertificateRequest:
+		p = &pem.Block{
+			Type:  "CERTIFICATE REQUEST",
 			Bytes: k.Raw,
 		}
 	default:
