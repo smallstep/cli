@@ -5,6 +5,7 @@ import (
 
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
+	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
@@ -68,8 +69,16 @@ func newTokenAction(ctx *cli.Context) error {
 		return err
 	}
 
+	// A random jwt id will be used to identify duplicated tokens
+	jwtID, err := randutil.ASCII(64)
+	if err != nil {
+		return err
+	}
+
 	// Generate token
-	var tokOptions []token.Options
+	tokOptions := []token.Options{
+		token.WithJWTID(jwtID),
+	}
 	if len(ca) > 0 {
 		tokOptions = append(tokOptions, token.WithRootCA(ca))
 	}
