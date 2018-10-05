@@ -83,7 +83,7 @@ func TestToken_SignedString(t *testing.T) {
 	}
 
 	rsaPublic := rsaKey.(*rsa.PrivateKey).Public()
-	expected := "eyJhbGciOiJSUzI1NiIsImtpZCI6ImEwZWY0OTUyNzhjMWMwOTM4OGUyMmU5ZGZhNjMwZTM0Nzk5MGMyYjU0NDlkZDE4Njc1OWJiMjEwODMwZmFmODEiLCJ0eXAiOiJKV1QifQ.e30.P2-HezWGsTMB_kQfiixxm3XzZ1_ZdXyPbsIIIW0QxtO4oBZhcfMunotZcIauEMS3enoG4AzaYEZr1Qru9Q8712tKkdergvrX5c-kgHXRgAEWXat9It4kqJdZicyPOvBjtNdL_xycrkRLyekRJe6fNBT-rwc3FjzbfaAvZrPD2s4"
+	expected := "eyJhbGciOiJSUzI1NiIsImtpZCI6Im50U2lnZFFZNHRLOFlmTDdHQjZjNGRuZzhvSGVGOU5VMkl0QUlVOGtHZGciLCJ0eXAiOiJKV1QifQ.e30.spzx_GFrhXg_LTPBIE3z3uWaA-GH7G0rbPdskxbUahJnXRLwF8S_AAQMTjtsWY9iELwOQQUXW7aPES-jONCebTpXl00RYP7maiS87wcGW6nZ0ICmsbS5NnCDJIKpV4Ei3MZ4MXfZ4vLaONaR5BunHYkicMDqWif_2v8yvxebh7c"
 
 	tests := []struct {
 		name    string
