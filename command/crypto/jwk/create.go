@@ -2,7 +2,7 @@ package jwk
 
 import (
 	"bytes"
-	gocrypto "crypto"
+	"crypto"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -495,7 +495,7 @@ func createAction(ctx *cli.Context) error {
 	} else {
 		// A hash of a symmetric key can leak information, so we only thumbprint asymmetric keys.
 		if kty != "oct" {
-			hash, err := jwk.Thumbprint(gocrypto.SHA256)
+			hash, err := jwk.Thumbprint(crypto.SHA256)
 			if err != nil {
 				return errors.Wrap(err, "error generating JWK thumbprint")
 			}
