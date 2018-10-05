@@ -1,9 +1,8 @@
 package token
 
 import (
-	"crypto/sha256"
-	"crypto/x509"
-	"encoding/hex"
+	"crypto"
+	"encoding/base64"
 	"time"
 
 	"github.com/pkg/errors"
@@ -116,12 +115,10 @@ func GenerateKeyID(priv interface{}) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "error generating kid")
 	}
-
-	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
+	jwk := jose.JSONWebKey{Key: pub}
+	keyID, err := jwk.Thumbprint(crypto.SHA256)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating kid")
 	}
-
-	pubChecksum := sha256.Sum256(pubBytes)
-	return hex.EncodeToString(pubChecksum[:]), nil
+	return base64.RawURLEncoding.EncodeToString(keyID), nil
 }

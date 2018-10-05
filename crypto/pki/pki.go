@@ -1,18 +1,24 @@
 package pki
 
 import (
+	"crypto"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/smallstep/ca-component/authority"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/crypto/tlsutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ssh"
 )
@@ -188,27 +194,33 @@ func (p *PKI) Save() error {
 	fmt.Printf("Intermediate certificate: %s\n", p.intermediate)
 	fmt.Printf("Intermediate private key: %s\n", p.intermediateKey)
 
-	config := map[string]interface{}{
-		"root":     p.root,
-		"crt":      p.intermediate,
-		"key":      p.intermediateKey,
-		"address":  "127.0.0.1:9000",
-		"dnsNames": []string{"127.0.0.1"},
-		"logger":   map[string]interface{}{"format": "text"},
-		"tls": map[string]interface{}{
-			"minVersion":    x509util.DefaultTLSMinVersion,
-			"maxVersion":    x509util.DefaultTLSMaxVersion,
-			"renegotiation": x509util.DefaultTLSRenegotiation,
-			"cipherSuites":  x509util.DefaultTLSCipherSuites,
-		},
-		"authority": map[string]interface{}{
-			"type": "jwt",
-			"key":  p.ottPublicKey,
-			"template": map[string]interface{}{
-				"country":      p.country,
-				"locality":     p.locality,
-				"organization": p.organization,
+	jwk, err := jose.GenerateJWKFromPEM(p.ottPublicKey, false)
+	if err != nil {
+		return err
+	}
+	hash, err := jwk.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return errors.Wrap(err, "error generating JWK thumbprint")
+	}
+	jwk.KeyID = base64.RawURLEncoding.EncodeToString(hash)
+
+	config := authority.Config{
+		Root:             p.root,
+		IntermediateCert: p.intermediate,
+		IntermediateKey:  p.intermediateKey,
+		Address:          "127.0.0.1:9000",
+		DNSNames:         []string{"127.0.0.1"},
+		Logger:           []byte(`{"format": "text"}`),
+		AuthorityConfig: &authority.AuthConfig{
+			Provisioners: []*authority.Provisioner{
+				{Issuer: "step-cli", Type: "jwk", Key: jwk},
 			},
+		},
+		TLS: &tlsutil.TLSOptions{
+			MinVersion:    x509util.DefaultTLSMinVersion,
+			MaxVersion:    x509util.DefaultTLSMaxVersion,
+			Renegotiation: x509util.DefaultTLSRenegotiation,
+			CipherSuites:  x509util.DefaultTLSCipherSuites,
 		},
 	}
 
