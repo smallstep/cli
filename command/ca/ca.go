@@ -15,6 +15,7 @@ func init() {
 		Subcommands: cli.Commands{
 			initCommand(),
 			newTokenCommand(),
+			newCertificateCommand(),
 		},
 	}
 
