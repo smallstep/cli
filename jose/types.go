@@ -155,6 +155,14 @@ const (
 	P521 = "P-521" // P-521 curve (FIPS 186-3)
 )
 
+// Key types
+const (
+	EC  = "EC"  // Elliptic curves
+	RSA = "RSA" // RSA
+	OKP = "OKP" // Ed25519
+	OCT = "oct" // Octet sequence
+)
+
 // Ed25519 is the EdDSA signature scheme using SHA-512/256 and Curve25519
 const Ed25519 = "Ed25519"
 
