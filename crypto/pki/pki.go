@@ -9,9 +9,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/smallstep/ca-component/authority"
-
 	"github.com/pkg/errors"
+	"github.com/smallstep/ca-component/authority"
+	"github.com/smallstep/ca-component/ca"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -75,6 +75,39 @@ func GetRootCAPath() string {
 // on the STEPPATH environment variable.
 func GetOTTKeyPath() string {
 	return filepath.Join(config.StepPath(), privatePath, "ott_key")
+}
+
+// GetProvisioners returns the map of provisioners on the given CA.
+func GetProvisioners(caURL, rootFile string) (map[string]*jose.JSONWebKeySet, error) {
+	if len(rootFile) == 0 {
+		rootFile = GetRootCAPath()
+	}
+	client, err := ca.NewClient(caURL, ca.WithRootFile(rootFile))
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Provisioners()
+	if err != nil {
+		return nil, err
+	}
+	return resp.Provisioners, nil
+}
+
+// GetProvisionerKey returns the encrypted provisioner key with the for the
+// given kid.
+func GetProvisionerKey(caURL, rootFile, kid string) (string, error) {
+	if len(rootFile) == 0 {
+		rootFile = GetRootCAPath()
+	}
+	client, err := ca.NewClient(caURL, ca.WithRootFile(rootFile))
+	if err != nil {
+		return "", err
+	}
+	resp, err := client.ProvisionerKey(kid)
+	if err != nil {
+		return "", err
+	}
+	return resp.Key, nil
 }
 
 // PKI represents the Public Key Infrastructure used by a certificate authority.
