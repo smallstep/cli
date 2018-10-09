@@ -20,6 +20,7 @@ func init() {
 			rootComand(),
 			renewCertificateCommand(),
 			provisionersCommand(),
+			provisioningKeyCommand(),
 		},
 	}
 
