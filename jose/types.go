@@ -15,6 +15,13 @@ import (
 // password based cryptography algorithms.
 const SupportsPBKDF2 = true
 
+// PBKDF2SaltSize is the default size of the salt for PBKDF2, 128-bit salt.
+const PBKDF2SaltSize = 16
+
+// PBKDF2Iterations is the default number of iterations for PBKDF2, 100k
+// iterations. Nist recommends at least 10k, 1Passsword uses 100k.
+const PBKDF2Iterations = 100000
+
 // JSONWebSignature represents a signed JWS object after parsing.
 type JSONWebSignature = jose.JSONWebSignature
 
