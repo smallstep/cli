@@ -19,6 +19,7 @@ func init() {
 			signCertificateCommand(),
 			rootComand(),
 			renewCertificateCommand(),
+			provisionersCommand(),
 		},
 	}
 
