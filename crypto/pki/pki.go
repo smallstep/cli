@@ -15,6 +15,7 @@ import (
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/crypto/tlsutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
@@ -33,6 +34,17 @@ const (
 	// PublicPath is the directory name under the step path where the private keys
 	// will be stored.
 	privatePath = "secrets"
+)
+
+const (
+	// OTTKeyType is the default type of the one-time token key.
+	OTTKeyType = jose.EC
+	// OTTKeyCurve is the default curve of the one-time token key.
+	OTTKeyCurve = jose.P256
+	// OTTKeyAlg is the default algorithm of the one-time token key.
+	OTTKeyAlg = jose.ES256
+	// OTTKeySize is the default size of the one-time token key.
+	OTTKeySize = 0
 )
 
 // GetConfigPath returns the directory where the configuration files are stored
@@ -69,10 +81,11 @@ func GetOTTKeyPath() string {
 type PKI struct {
 	root, rootKey                   string
 	intermediate, intermediateKey   string
-	ottPublicKey, ottPrivateKey     string
 	sshUserKey, sshHostKey          string
 	country, locality, organization string
 	config                          string
+	ottPublicKey                    *jose.JSONWebKey
+	ottPrivateKey                   *jose.JSONWebEncryption
 }
 
 // New creates a new PKI configuration.
@@ -114,19 +127,13 @@ func New(public, private, config string) (*PKI, error) {
 	if p.intermediateKey, err = getPath(private, "intermediate_ca_key"); err != nil {
 		return nil, err
 	}
-	if p.ottPublicKey, err = getPath(public, "ott_key.public"); err != nil {
-		return nil, err
-	}
-	if p.ottPrivateKey, err = getPath(private, "ott_key"); err != nil {
-		return nil, err
-	}
 	if p.sshUserKey, err = getPath(private, "ssh_user_key"); err != nil {
 		return nil, err
 	}
 	if p.sshHostKey, err = getPath(private, "ssh_host_key"); err != nil {
 		return nil, err
 	}
-	if p.config, err = getPath(config, "ca.step"); err != nil {
+	if p.config, err = getPath(config, "ca.json"); err != nil {
 		return nil, err
 	}
 
@@ -135,9 +142,11 @@ func New(public, private, config string) (*PKI, error) {
 
 // GenerateKeyPairs generates the key pairs used by the certificate authority.
 func (p *PKI) GenerateKeyPairs(pass []byte) error {
+	var err error
 	// Create OTT key pair, the user doesn't need to know about this.
 	// Created in default secrets directory because it is required by `new-token`.
-	if err := generateOTTKeyPair(p.ottPublicKey, p.ottPrivateKey, pass); err != nil {
+	p.ottPublicKey, p.ottPrivateKey, err = generateOTTKeyPair(pass)
+	if err != nil {
 		return err
 	}
 
@@ -194,15 +203,10 @@ func (p *PKI) Save() error {
 	fmt.Printf("Intermediate certificate: %s\n", p.intermediate)
 	fmt.Printf("Intermediate private key: %s\n", p.intermediateKey)
 
-	jwk, err := jose.GenerateJWKFromPEM(p.ottPublicKey, false)
+	key, err := p.ottPrivateKey.CompactSerialize()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error serializing private key")
 	}
-	hash, err := jwk.Thumbprint(crypto.SHA256)
-	if err != nil {
-		return errors.Wrap(err, "error generating JWK thumbprint")
-	}
-	jwk.KeyID = base64.RawURLEncoding.EncodeToString(hash)
 
 	config := authority.Config{
 		Root:             p.root,
@@ -213,7 +217,7 @@ func (p *PKI) Save() error {
 		Logger:           []byte(`{"format": "text"}`),
 		AuthorityConfig: &authority.AuthConfig{
 			Provisioners: []*authority.Provisioner{
-				{Issuer: "step-cli", Type: "jwk", Key: jwk},
+				{Issuer: "step-cli", Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
 			},
 		},
 		TLS: &tlsutil.TLSOptions{
@@ -244,22 +248,56 @@ func (p *PKI) Save() error {
 
 // generateOTTKeyPair generates a keypair using the default crypto algorithms.
 // This key pair will be used to sign/verify one-time-tokens.
-func generateOTTKeyPair(ottPublicKey, ottPrivateKey string, pass []byte) error {
+func generateOTTKeyPair(pass []byte) (*jose.JSONWebKey, *jose.JSONWebEncryption, error) {
 	if len(pass) == 0 {
-		return errors.New("password cannot be empty when initializing simple pki")
+		return nil, nil, errors.New("password cannot be empty when initializing simple pki")
 	}
 
-	pub, priv, err := keys.GenerateDefaultKeyPair()
+	// Generate the OTT key
+	jwk, err := jose.GenerateJWK(OTTKeyType, OTTKeyCurve, OTTKeyAlg, "sig", "", OTTKeySize)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	if _, err := pemutil.Serialize(pub, pemutil.ToFile(ottPublicKey, 0644)); err != nil {
-		return err
+	// The thumbprint is computed from the public key
+	hash, err := jwk.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error generating JWK thumbprint")
+	}
+	jwk.KeyID = base64.RawURLEncoding.EncodeToString(hash)
+
+	b, err := json.Marshal(jwk)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error marshaling JWK")
 	}
 
-	_, err = pemutil.Serialize(priv, pemutil.WithEncryption(pass), pemutil.ToFile(ottPrivateKey, 0644))
-	return err
+	// Encrypt private key using PBES2
+	salt, err := randutil.Salt(jose.PBKDF2SaltSize)
+	if err != nil {
+		return nil, nil, err
+	}
+	recipient := jose.Recipient{
+		Algorithm:  jose.PBES2_HS256_A128KW,
+		Key:        pass,
+		PBES2Count: jose.PBKDF2Iterations,
+		PBES2Salt:  salt,
+	}
+
+	opts := new(jose.EncrypterOptions)
+	opts.WithContentType(jose.ContentType("jwk+json"))
+
+	encrypter, err := jose.NewEncrypter(jose.DefaultEncAlgorithm, recipient, opts)
+	if err != nil {
+		return nil, nil, errs.Wrap(err, "error creating cipher")
+	}
+
+	jwe, err := encrypter.Encrypt(b)
+	if err != nil {
+		return nil, nil, errs.Wrap(err, "error encrypting data")
+	}
+
+	public := jwk.Public()
+	return &public, jwe, nil
 }
 
 // generateCASigningKeyPair generates a certificate signing public/private key
