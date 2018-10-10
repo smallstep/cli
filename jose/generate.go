@@ -6,7 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
-	realx509 "crypto/x509"
+	"crypto/x509"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -59,7 +59,7 @@ func GenerateJWKFromPEM(filename string, subtle bool) (*JSONWebKey, error) {
 			Key:       key,
 			Algorithm: algForKey(key),
 		}, nil
-	case *realx509.Certificate:
+	case *x509.Certificate:
 		var use string
 		if !subtle {
 			use, err = keyUsageForCert(key)
@@ -69,7 +69,7 @@ func GenerateJWKFromPEM(filename string, subtle bool) (*JSONWebKey, error) {
 		}
 		return &JSONWebKey{
 			Key:          key.PublicKey,
-			Certificates: []*realx509.Certificate{key},
+			Certificates: []*x509.Certificate{key},
 			Algorithm:    algForKey(key.PublicKey),
 			Use:          use,
 		}, nil
@@ -91,19 +91,19 @@ func algForKey(key crypto.PublicKey) string {
 	}
 }
 
-func keyUsageForCert(cert *realx509.Certificate) (string, error) {
+func keyUsageForCert(cert *x509.Certificate) (string, error) {
 	isDigitalSignature := containsUsage(cert.KeyUsage,
-		realx509.KeyUsageDigitalSignature,
-		realx509.KeyUsageContentCommitment,
-		realx509.KeyUsageCertSign,
-		realx509.KeyUsageCRLSign,
+		x509.KeyUsageDigitalSignature,
+		x509.KeyUsageContentCommitment,
+		x509.KeyUsageCertSign,
+		x509.KeyUsageCRLSign,
 	)
 	isEncipherment := containsUsage(cert.KeyUsage,
-		realx509.KeyUsageKeyEncipherment,
-		realx509.KeyUsageDataEncipherment,
-		realx509.KeyUsageKeyAgreement,
-		realx509.KeyUsageEncipherOnly,
-		realx509.KeyUsageDecipherOnly,
+		x509.KeyUsageKeyEncipherment,
+		x509.KeyUsageDataEncipherment,
+		x509.KeyUsageKeyAgreement,
+		x509.KeyUsageEncipherOnly,
+		x509.KeyUsageDecipherOnly,
 	)
 	if isDigitalSignature && isEncipherment {
 		return "", errAmbiguousCertKeyUsage
@@ -117,7 +117,7 @@ func keyUsageForCert(cert *realx509.Certificate) (string, error) {
 	return "", errNoCertKeyUsage
 }
 
-func containsUsage(usage realx509.KeyUsage, queries ...realx509.KeyUsage) bool {
+func containsUsage(usage x509.KeyUsage, queries ...x509.KeyUsage) bool {
 	for _, query := range queries {
 		if usage&query == query {
 			return true
