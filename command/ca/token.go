@@ -3,21 +3,27 @@ package ca
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
-	"github.com/smallstep/cli/jose"
-
+	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
 
 const defaultSignatureAlgorithm = "ES256"
+
+type provisionersSelect struct {
+	Name   string
+	Issuer string
+	JWK    jose.JSONWebKey
+}
 
 func newTokenCommand() cli.Command {
 	return cli.Command{
@@ -56,6 +62,7 @@ generating key.`,
 }
 
 func newTokenAction(ctx *cli.Context) error {
+	var issuer string
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
@@ -71,35 +78,50 @@ func newTokenAction(ctx *cli.Context) error {
 		return errs.RequiredFlag(ctx, "ca-url")
 	}
 
+	provisioners, err := pki.GetProvisioners(caURL, root)
+	if err != nil {
+		return err
+	}
+	if len(provisioners) == 0 {
+		return errors.New("cannot create a new token: the CA does not have any provisioner configured")
+	}
+
+	var items []*provisionersSelect
+	for issuer, keySet := range provisioners {
+		for _, key := range keySet.Keys {
+			items = append(items, &provisionersSelect{
+				Name:   key.KeyID + " (" + issuer + ")",
+				Issuer: issuer,
+				JWK:    key,
+			})
+		}
+	}
+
 	if len(kid) == 0 {
-		provisioners, err := pki.GetProvisioners(caURL, root)
+		prompt := promptui.Select{
+			Label:     "What provisioner key do you want to use?",
+			Items:     items,
+			Templates: ui.SelectTemplate("Key ID"),
+		}
+
+		i, _, err := prompt.Run()
 		if err != nil {
-			return err
-		}
-		if len(provisioners) == 0 {
-			return errors.New("cannot create a new token: the CA does not have any provisioner configured")
+			return errors.Wrap(err, "error running prompt")
 		}
 
-		keys := make(map[string]jose.JSONWebKey)
-		for issuer, keySet := range provisioners {
-			for _, key := range keySet.Keys {
-				keys[key.KeyID] = key
-				fmt.Fprintf(os.Stderr, "Issuer: %s \tKid: %s\n", issuer, key.KeyID)
-			}
-		}
-
-		for {
-			fmt.Fprintln(os.Stderr)
-			fmt.Fprint(os.Stderr, "What provisioner kid do you want to use? ")
-			kid, err = utils.ReadString(os.Stdin)
-			if err != nil {
-				return err
-			}
-			if _, ok := keys[kid]; ok {
+		kid = items[i].JWK.KeyID
+		issuer = items[i].Issuer
+	} else {
+		var found bool
+		for _, item := range items {
+			if kid == item.JWK.KeyID {
+				found = true
+				issuer = item.Issuer
 				break
-			} else {
-				fmt.Fprintln(os.Stderr, "The kid provided does not exist.")
 			}
+		}
+		if !found {
+			return errs.InvalidFlagValue(ctx, "kid", kid, "")
 		}
 	}
 
@@ -132,6 +154,8 @@ func newTokenAction(ctx *cli.Context) error {
 	// Generate token
 	tokOptions := []token.Options{
 		token.WithJWTID(jwtID),
+		token.WithIssuer(issuer),
+		token.WithAudience(caURL),
 	}
 	if len(root) > 0 {
 		tokOptions = append(tokOptions, token.WithRootCA(root))
