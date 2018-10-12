@@ -62,6 +62,11 @@ func main() {
 	app.EnableBashCompletion = true
 	app.Copyright = "(c) 2018 Smallstep Labs, Inc."
 
+	app.Flags = append(app.Flags, cli.StringFlag{
+		Name:  "config",
+		Usage: "path to the config file to use for CLI flags",
+	})
+
 	// All non-successful output should be written to stderr
 	app.Writer = os.Stdout
 	app.ErrWriter = os.Stderr

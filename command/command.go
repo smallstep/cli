@@ -1,8 +1,14 @@
 package command
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
+	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/usage"
 	"github.com/urfave/cli"
 )
@@ -27,6 +33,38 @@ func Retrieve() []cli.Command {
 	return cmds
 }
 
+// getConfigVars load the defaults.json file and sets the flags if they are not
+// already set.
+//
+// TODO(mariano): right now it only supports parameters at first level.
+func getConfigVars(ctx *cli.Context) error {
+	configFile := ctx.GlobalString("config")
+	if configFile == "" {
+		configFile = filepath.Join(config.StepPath(), "config", "defaults.json")
+	}
+
+	b, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil
+	}
+
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(b, &m); err != nil {
+		return errors.Wrapf(err, "error parsing %s", configFile)
+	}
+
+	for _, name := range ctx.FlagNames() {
+		if ctx.IsSet(name) {
+			continue
+		}
+		if v, ok := m[name]; ok {
+			ctx.Set(name, fmt.Sprintf("%v", v))
+		}
+	}
+
+	return nil
+}
+
 // getEnvVar generates the environment variable for the given flag name.
 func getEnvVar(name string) string {
 	parts := strings.Split(name, ",")
@@ -40,9 +78,16 @@ func setEnvVar(c *cli.Command) {
 	if c == nil {
 		return
 	}
-	for i, flag := range c.Flags {
-		envVar := getEnvVar(flag.GetName())
-		switch f := flag.(type) {
+
+	// Enable getting the flags from a json file
+	if c.Before == nil && c.Action != nil {
+		c.Before = getConfigVars
+	}
+
+	// Enable getting the flags from environment variables
+	for i := range c.Flags {
+		envVar := getEnvVar(c.Flags[i].GetName())
+		switch f := c.Flags[i].(type) {
 		case cli.BoolFlag:
 			if f.EnvVar == "" {
 				f.EnvVar = envVar
@@ -110,7 +155,8 @@ func setEnvVar(c *cli.Command) {
 			}
 		}
 	}
-	for _, cmd := range c.Subcommands {
-		setEnvVar(&cmd)
+
+	for i := range c.Subcommands {
+		setEnvVar(&c.Subcommands[i])
 	}
 }
