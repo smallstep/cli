@@ -163,6 +163,7 @@ risks. That said, many of these factors are beyond the scope of this tool.
 			nacl.Command(),
 			createKeyPairCommand(),
 			otp.Command(),
+			changePassCommand(),
 		},
 	}
 

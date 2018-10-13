@@ -18,7 +18,7 @@ func removeCommand() cli.Command {
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove one, or more, provisioners from the CA configuration",
 		UsageText: `**step ca provisioner remove** <issuer> [**--key-id**=<key-id>]
-[**--config**=<file>]`,
+[**--config**=<file>] [**--all**]`,
 		Description: `**step ca provisioner remove** removes one or more provisioners
 from the configuration and writes the new configuration back to the CA config`,
 		Flags: []cli.Flag{

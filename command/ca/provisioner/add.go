@@ -32,10 +32,6 @@ to the configuration and writes the new configuration back to the CA config`,
 				Name:  "key-id",
 				Usage: "Identifier of for the provisioner key to be removed.",
 			},
-			cli.BoolFlag{
-				Name:  "jwk-path",
-				Usage: `comma-separated list of public JWKs or pem encoded keys.`,
-			},
 			cli.StringFlag{
 				Name:  "ca-url",
 				Usage: "<URI> of the targeted Step Certificate Authority.",
