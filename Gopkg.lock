@@ -45,14 +45,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:d8abdc866ebbe05fa3bce50863e23afd4c73c804b90c908caa864e86df1db8a1"
-  name = "github.com/bouk/monkey"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "5df1f207ff77e025801505ae4d903133a0b4353f"
-
-[[projects]]
   digest = "1:848ef40f818e59905140552cc49ff3dc1a15f955e4b56d1c5c2cc4b54dbadf0c"
   name = "github.com/client9/misspell"
   packages = [
@@ -466,7 +458,6 @@
   input-imports = [
     "github.com/ThomasRooney/gexpect",
     "github.com/alecthomas/gometalinter",
-    "github.com/bouk/monkey",
     "github.com/client9/misspell/cmd/misspell",
     "github.com/golang/lint/golint",
     "github.com/google/go-cmp/cmp",
