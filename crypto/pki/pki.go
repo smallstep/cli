@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/ca-component/authority"
 	"github.com/smallstep/ca-component/ca"
+	"github.com/smallstep/ca-component/provisioner"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -78,7 +79,7 @@ func GetOTTKeyPath() string {
 }
 
 // GetProvisioners returns the map of provisioners on the given CA.
-func GetProvisioners(caURL, rootFile string) (map[string]*jose.JSONWebKeySet, error) {
+func GetProvisioners(caURL, rootFile string) ([]*provisioner.Provisioner, error) {
 	if len(rootFile) == 0 {
 		rootFile = GetRootCAPath()
 	}
@@ -249,7 +250,7 @@ func (p *PKI) Save() error {
 		DNSNames:         []string{"127.0.0.1"},
 		Logger:           []byte(`{"format": "text"}`),
 		AuthorityConfig: &authority.AuthConfig{
-			Provisioners: []*authority.Provisioner{
+			Provisioners: []*provisioner.Provisioner{
 				{Issuer: "step-cli", Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
 			},
 		},

@@ -87,14 +87,12 @@ func newTokenAction(ctx *cli.Context) error {
 	}
 
 	var items []*provisionersSelect
-	for issuer, keySet := range provisioners {
-		for _, key := range keySet.Keys {
-			items = append(items, &provisionersSelect{
-				Name:   key.KeyID + " (" + issuer + ")",
-				Issuer: issuer,
-				JWK:    key,
-			})
-		}
+	for _, p := range provisioners {
+		items = append(items, &provisionersSelect{
+			Name:   p.Key.KeyID + " (" + p.Issuer + ")",
+			Issuer: p.Issuer,
+			JWK:    *p.Key,
+		})
 	}
 
 	if len(kid) == 0 {

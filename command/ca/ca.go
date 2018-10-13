@@ -2,6 +2,7 @@ package ca
 
 import (
 	"github.com/smallstep/cli/command"
+	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/urfave/cli"
 )
 
@@ -19,8 +20,7 @@ func init() {
 			signCertificateCommand(),
 			rootComand(),
 			renewCertificateCommand(),
-			provisionersCommand(),
-			provisioningKeyCommand(),
+			provisioner.Command(),
 		},
 	}
 
