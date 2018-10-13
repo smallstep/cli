@@ -90,6 +90,7 @@ L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY
 			keysetCommand(),
 			publicCommand(),
 			thumbprintCommand(),
+			toPEMCommand(),
 		},
 	}
 }
