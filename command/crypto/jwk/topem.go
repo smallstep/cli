@@ -18,8 +18,6 @@ func toPEMCommand() cli.Command {
 		Action:    cli.ActionFunc(toPEMAction),
 		Usage:     "Extract key from JWK and write to disk as PEM",
 		UsageText: `**step crypto jwk to-pem** <key> <pem>`,
-		Description: `**step crypto jwk to-pem** extracts a key from a JWK
-(encrypted or plaintext) and writes the key to disk in PEM format.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:   "insecure",
@@ -32,6 +30,28 @@ Sensitive key material will be written to disk unencrypted. This is not
 recommended. Requires **--insecure** flag.`,
 			},
 		},
+		Description: `**step crypto jwk to-pem** extracts a key from a JWK
+(encrypted or plaintext) and writes the key to disk in PEM format.
+
+## POSITIONAL ARGUMENTS
+
+<key>
+: The file containing a JWK that will be extracted and written to disk in PEM format.
+
+<pem>
+: The file to which the PEM formatted key will be written.
+
+## EXAMPLES
+
+Convert a public jwk to PEM format:
+'''
+$ step crypto jwk to-pem public.jwk public-key.pem
+'''
+
+Convert a private jwk to PEM format:
+'''
+$ step crypto jwk to-pem private.jwk private-key.pem
+'''`,
 	}
 }
 

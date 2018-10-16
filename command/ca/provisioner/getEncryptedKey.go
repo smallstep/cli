@@ -11,13 +11,21 @@ import (
 
 func getEncryptedKeyCommand() cli.Command {
 	return cli.Command{
-		Name:   "provisioning-key",
+		Name:   "jwe-key",
 		Action: cli.ActionFunc(getEncryptedKeyAction),
 		Usage:  "retrieves and prints a provisioning key in the CA",
-		UsageText: `**step ca provisioner enc-key** <kid> [**--ca-url**=<uri>]
+		UsageText: `**step ca provisioner jwe-key** <kid> [**--ca-url**=<uri>]
 [**--root**=<file>]`,
-		Description: `**step ca provisioner enc-key** retrieists the provisioners configured on the certificate
-authority`,
+		Description: `**step ca provisioner jwe-key** returns the encrypted
+private jwk for the given key-id.
+
+## EXAMPLES
+
+Retrieve the encrypted private jwk for the given key-id:
+'''
+$ step ca provisioner jwe-key 1234 --ca-url https://127.0.0.1 --root ./root.crt
+'''
+`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "ca-url",

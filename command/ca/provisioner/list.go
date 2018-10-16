@@ -15,10 +15,8 @@ func listCommand() cli.Command {
 		Name:   "list",
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list provisioners configured in the CA",
-		UsageText: `**step ca provisioners** [**--ca-url**=<uri>]
+		UsageText: `**step ca provisioner list** [**--ca-url**=<uri>]
 [**--root**=<file>]`,
-		Description: `**step ca provisioners** lists the provisioners configured
-in the CA.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "ca-url",
@@ -29,6 +27,15 @@ in the CA.`,
 				Usage: "The path to the PEM <file> used as the root certificate authority.",
 			},
 		},
+		Description: `**step ca provisioner list** lists the provisioners configured
+in the CA.
+
+## EXAMPLES
+
+List the active provisioners:
+'''
+$ step ca provisioner list
+'''`,
 	}
 }
 

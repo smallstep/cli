@@ -18,9 +18,7 @@ func removeCommand() cli.Command {
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove one, or more, provisioners from the CA configuration",
 		UsageText: `**step ca provisioner remove** <issuer> [**--key-id**=<key-id>]
-[**--config**=<file>] [**--all**]`,
-		Description: `**step ca provisioner remove** removes one or more provisioners
-from the configuration and writes the new configuration back to the CA config`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--config**=<file>] [**--all**]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "config",
@@ -44,6 +42,27 @@ used in combination w/ the **--key-id** flag.`,
 				Usage: "The path to the PEM <file> used as the root certificate authority.",
 			},
 		},
+		Description: `**step ca provisioner remove** removes one or more provisioners
+from the configuration and writes the new configuration back to the CA config.
+
+## POSITIONAL ARGUMENTS
+
+<issuer>
+: The issuer field of the provisioner(s) to be removed.
+
+## EXAMPLES
+
+Remove all provisioners associated with a given issuer (max-laptop):
+'''
+$ step ca provisioner remove max–laptop --all --config ca.json \
+--ca-url https://127.0.0.1:8080 --root root.crt
+'''
+
+Remove the provisioner matching a given issuer and key-id:
+'''
+$ step ca provisioner remove max–laptop --key-id 1234 --config ca.json \
+--ca-url https://127.0.0.1:8080 --root root.crt
+'''`,
 	}
 }
 

@@ -21,8 +21,6 @@ func addCommand() cli.Command {
 		Usage:  "add one or more provisioners the CA configuration",
 		UsageText: `**step ca provisioner add** <issuer> <jwk-path> [**--key-id**=<key-id>]
 [**--config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
-		Description: `**step ca provisioner add** adds one or more provisioners
-to the configuration and writes the new configuration back to the CA config`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "config",
@@ -41,6 +39,36 @@ to the configuration and writes the new configuration back to the CA config`,
 				Usage: "The path to the PEM <file> used as the root certificate authority.",
 			},
 		},
+		Description: `**step ca provisioner add** adds one or more provisioners
+to the configuration and writes the new configuration back to the CA config.
+
+## POSITIONAL ARGUMENTS
+
+<issuer>
+: The issuer linked to all the keys.
+
+<jwk-path>
+: Comma-separated list of public keys in PEM or JWK format.
+
+## EXAMPLES
+
+Add a single provisioner:
+'''
+$ step ca provisioner add max–laptop ./max-laptop-pub.jwk --config ca.json \
+--ca-url https://127.0.0.1:8080 --root root.crt
+'''
+
+Add a single provisioner with a custom key-id:
+'''
+$ step ca provisioner add max–laptop ./max-laptop-pub.jwk --key-id 1234 --config ca.json \
+--ca-url https://127.0.0.1:8080 --root root.crt
+'''
+
+Add a list of provisioners for a single issuer:
+'''
+$ step ca provisioner add max ./max-laptop-pub.jwk,./max-phone-pub.pem,./max-work-pub.pem \
+--config ca.json --ca-url https://127.0.0.1:8080 --root root.crt
+'''`,
 	}
 }
 
