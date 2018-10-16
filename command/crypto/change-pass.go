@@ -20,12 +20,39 @@ func changePassCommand() cli.Command {
 	return cli.Command{
 		Name:   "change-pass",
 		Action: cli.ActionFunc(changePassAction),
-		Usage:  "Change password on a an encrypted private key (PEM or JWK format)",
+		Usage:  "Change password of an encrypted private key (PEM or JWK format)",
 		UsageText: `**step crypto change-pass** <key> [**--new-key**=<file>]
 [**type**=<string>]`,
-		Description: `**step crypto change-pass** encrypts a private key to disk
-by either overwriting the original encrypted key or writing a new file to disk.
-from the configuration and writes the new configuration back to the CA config`,
+		Description: `**step crypto change-pass** extracts the private key from
+a file and encrypts disk using a new password by either overwriting the original
+encrypted key or writing a new file to disk.
+
+## POSITIONAL ARGUMENTS
+
+<key>
+: The encrypted key
+
+## EXAMPLES
+
+Change password for PEM formatted key:
+'''
+$ step crypto change-pass key.pem
+'''
+
+Change password for PEM formatted key and write encrypted key to different file:
+'''
+$ step crypto change-pass key.pem --new-key new-key.pem
+'''
+
+Change password for JWK formatted key:
+'''
+$ step crypto change-pass key.jwk --type JWK
+'''
+
+Change password for JWK formatted key:
+'''
+$ step crypto change-pass key.jwk --type JWK --new-key new-key.jwk
+'''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "new-key",
