@@ -569,7 +569,9 @@ func createAction(ctx *cli.Context) error {
 			return errors.Wrap(err, "error marshaling JWK")
 		}
 
-		encrypter, err := jose.NewEncrypter(jose.A128GCM, rcpt, nil)
+		opts := new(jose.EncrypterOptions)
+		opts.WithContentType(jose.ContentType("jwk+json"))
+		encrypter, err := jose.NewEncrypter(jose.DefaultEncAlgorithm, rcpt, opts)
 		if err != nil {
 			return errors.Wrap(err, "error creating cipher")
 		}
