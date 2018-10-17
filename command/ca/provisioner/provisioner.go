@@ -23,21 +23,19 @@ List the active provisioners:
 $ step ca provisioner list
 '''
 
-Retrieve the encrypted private jwk for the given key-id:
+Retrieve the encrypted private jwk for the given kid:
 '''
 $ step ca provisioner jwe-key 1234 --ca-url https://127.0.0.1 --root ./root.crt
 '''
 
 Add a single provisioner:
 '''
-$ step ca provisioner add max–laptop ./max-laptop-pub.jwk --config ca.json \
---ca-url https://127.0.0.1:8080 --root root.crt
+$ step ca provisioner add max@smallstep.com max-laptop.jwk --ca-config ca.json
 '''
 
-Remove the provisioner matching a given issuer and key-id:
+Remove the provisioner matching a given issuer and kid:
 '''
-$ step ca provisioner remove max–laptop --key-id 1234 --config ca.json \
---ca-url https://127.0.0.1:8080 --root root.crt
+$ step ca provisioner remove max@smallstep.com --kid 1234 --ca-config ca.json
 '''`,
 	}
 }

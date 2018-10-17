@@ -1,13 +1,9 @@
 package provisioner
 
 import (
-	"encoding/json"
-	"io/ioutil"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/ca-component/authority"
 	"github.com/smallstep/ca-component/provisioner"
-	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
@@ -17,29 +13,21 @@ func removeCommand() cli.Command {
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove one, or more, provisioners from the CA configuration",
-		UsageText: `**step ca provisioner remove** <issuer> [**--key-id**=<key-id>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--config**=<file>] [**--all**]`,
+		UsageText: `**step ca provisioner remove** <issuer>
+		[**--kid**=<kid>] [**--config**=<file>] [**--all**]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:  "config",
-				Usage: "<file> containing the CA configuration.",
+				Name:  "ca-config",
+				Usage: "The <file> containing the CA configuration.",
 			},
 			cli.StringFlag{
-				Name:  "key-id",
-				Usage: "Identifier of for the provisioner key to be removed.",
+				Name:  "kid",
+				Usage: "The <kid> (Key ID) of for the provisioner key to be removed.",
 			},
 			cli.BoolFlag{
 				Name: "all",
 				Usage: `Remove all provisioners with a given issuer. Cannot be
-used in combination w/ the **--key-id** flag.`,
-			},
-			cli.StringFlag{
-				Name:  "ca-url",
-				Usage: "<URI> of the targeted Step Certificate Authority.",
-			},
-			cli.StringFlag{
-				Name:  "root",
-				Usage: "The path to the PEM <file> used as the root certificate authority.",
+used in combination w/ the **--kid** flag.`,
 			},
 		},
 		Description: `**step ca provisioner remove** removes one or more provisioners
@@ -52,16 +40,14 @@ from the configuration and writes the new configuration back to the CA config.
 
 ## EXAMPLES
 
-Remove all provisioners associated with a given issuer (max-laptop):
+Remove all provisioners associated with a given issuer (max@smallstep.com):
 '''
-$ step ca provisioner remove max–laptop --all --config ca.json \
---ca-url https://127.0.0.1:8080 --root root.crt
+$ step ca provisioner remove max@smallstep.com --all --ca-config ca.json
 '''
 
-Remove the provisioner matching a given issuer and key-id:
+Remove the provisioner matching a given issuer and kid:
 '''
-$ step ca provisioner remove max–laptop --key-id 1234 --config ca.json \
---ca-url https://127.0.0.1:8080 --root root.crt
+$ step ca provisioner remove max@smallstep. --kid 1234 --ca-config ca.json
 '''`,
 	}
 }
@@ -72,26 +58,21 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	issuer := ctx.Args().Get(0)
-	config := ctx.String("config")
+	config := ctx.String("ca-config")
 	all := ctx.Bool("all")
-	kid := ctx.String("key-id")
-	root := ctx.String("root")
-	caURL := ctx.String("ca-url")
+	kid := ctx.String("kid")
 
 	if len(config) == 0 {
-		return errs.RequiredFlag(ctx, "config")
-	}
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
+		return errs.RequiredFlag(ctx, "ca-config")
 	}
 
 	if all {
 		if len(kid) != 0 {
-			return errs.MutuallyExclusiveFlags(ctx, "all", "key-id")
+			return errs.MutuallyExclusiveFlags(ctx, "all", "kid")
 		}
 	} else {
 		if len(kid) == 0 {
-			return errs.RequiredUnlessFlag(ctx, "key-id", "all")
+			return errs.RequiredUnlessFlag(ctx, "kid", "all")
 		}
 	}
 
@@ -100,22 +81,17 @@ func removeAction(ctx *cli.Context) error {
 		return errors.Wrapf(err, "error loading configuration")
 	}
 
-	ps, err := pki.GetProvisioners(caURL, root)
-	if err != nil {
-		return errors.Wrap(err, "error getting the provisioners")
-	}
-
 	var (
-		newps []*provisioner.Provisioner
-		found = false
+		provisioners []*provisioner.Provisioner
+		found        = false
 	)
-	for _, p := range ps {
+	for _, p := range c.AuthorityConfig.Provisioners {
 		if p.Issuer != issuer {
-			newps = append(newps, p)
+			provisioners = append(provisioners, p)
 			continue
 		}
 		if !all && p.Key.KeyID != kid {
-			newps = append(newps, p)
+			provisioners = append(provisioners, p)
 			continue
 		}
 		found = true
@@ -123,20 +99,14 @@ func removeAction(ctx *cli.Context) error {
 
 	if !found {
 		if all {
-			return errors.Errorf("No provisioners with issuer %s found", issuer)
+			return errors.Errorf("no provisioners with issuer %s found", issuer)
 		}
-		return errors.Errorf("No provisioners with issuer %s and key-id %s", issuer, kid)
+		return errors.Errorf("no provisioners with issuer=%s and kid=%s found", issuer, kid)
 	}
 
-	c.AuthorityConfig.Provisioners = newps
-
-	b, err := json.MarshalIndent(c, "", "   ")
-	if err != nil {
-		return errors.Wrap(err, "error marshaling configuration")
-	}
-
-	if err = ioutil.WriteFile(config, b, 0666); err != nil {
-		return errs.FileError(err, config)
+	c.AuthorityConfig.Provisioners = provisioners
+	if err := c.Save(config); err != nil {
+		return err
 	}
 
 	return nil
