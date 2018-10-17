@@ -1,10 +1,14 @@
 package crypto
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -116,6 +120,11 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
     :  Ed25519 Curve
 `,
 			},
+			cli.StringFlag{
+				Name: "from-jwk",
+				Usage: `Create a PEM representing the key encoded in an
+existing <jwk-file> instead of creating a new key.`,
+			},
 			cli.BoolFlag{
 				Name:   "insecure",
 				Hidden: true,
@@ -147,26 +156,58 @@ func createAction(ctx *cli.Context) error {
 		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
 	}
 
-	kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
-		"curve", "size")
-	if err != nil {
-		return err
-	}
+	var err error
+	var pub, priv interface{}
+	fromJWK := ctx.String("from-jwk")
+	if len(fromJWK) > 0 {
+		switch {
+		case ctx.IsSet("kty"):
+			return errs.IncompatibleFlagWithFlag(ctx, "from-jwk", "kty")
+		case ctx.IsSet("curve"):
+			return errs.IncompatibleFlagWithFlag(ctx, "from-jwk", "curve")
+		case ctx.IsSet("size"):
+			return errs.IncompatibleFlagWithFlag(ctx, "from-jwk", "size")
+		}
 
-	pub, priv, err := keys.GenerateKeyPair(kty, crv, size)
-	if err != nil {
-		return errors.WithStack(err)
+		jwk, err := jose.ParseKey(fromJWK)
+		if err != nil {
+			return err
+		}
+
+		if jwk.IsPublic() {
+			pub = jwk.Key
+		} else {
+			pub = jwk.Public().Key
+			priv = jwk.Key
+		}
+	} else {
+		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
+			"curve", "size")
+		if err != nil {
+			return err
+		}
+
+		pub, priv, err = keys.GenerateKeyPair(kty, crv, size)
+		if err != nil {
+			return err
+		}
 	}
 
 	_, err = pemutil.Serialize(pub, pemutil.ToFile(pubFile, 0600))
 	if err != nil {
-		return errors.WithStack(err)
+		return err
+	}
+
+	if priv == nil {
+		fmt.Fprintln(os.Stderr, "Only the public PEM was generated.")
+		fmt.Fprintln(os.Stderr, "Cannot retrieve a private key from a public one.")
+		return nil
 	}
 
 	if noPass {
 		_, err = pemutil.Serialize(priv, pemutil.ToFile(privFile, 0600))
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	} else {
 		pass, err := utils.ReadPassword("Please enter the password to encrypt the private key: ")
@@ -176,7 +217,7 @@ func createAction(ctx *cli.Context) error {
 		_, err = pemutil.Serialize(priv, pemutil.WithEncryption(pass),
 			pemutil.ToFile(privFile, 0600))
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 
