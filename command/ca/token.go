@@ -3,6 +3,7 @@ package ca
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
@@ -34,7 +35,46 @@ func newTokenCommand() cli.Command {
 		[--**kid**=<kid>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--password-file**=<file>] [**--output-file**=<file>]`,
 		Description: `**step ca new-token** command generates a one-time token granting access to the
-certificates authority`,
+certificates authority
+
+## POSITIONAL ARGUMENTS
+
+<hostname>
+:  The DNS or IP address that will be set by the certificate authority.
+
+## EXAMPLES
+
+ Most of the following examples assumes that the **--ca-url** and **--root** are
+ set using environment variables or the default configuration file in
+ <$STEPPATH/config/defaults.json>.
+
+Get a new token for a DNS:
+'''
+$ step ca new-token internal.example.com
+'''
+
+Get a new token for an IP address:
+'''
+$ step ca new-token 192.168.10.10
+'''
+
+Get a new token that would be valid not, but expires in 30 minutes:
+'''
+$ step ca new-token --not-after 30m internal.example.com
+'''
+
+Get a new token that is not valid for 30 and expires 5 minutes after that:
+'''
+$ step ca new-token --not-before 30m --not-after 35m internal.example.com
+'''
+
+Get a new token for a specific provisioner kid, ca-url and root:
+'''
+$ step ca new-token internal.example.com \
+    --kid 4vn46fbZT68Uxfs9LBwHkTvrjEvxQqx-W8nnE-qDjts \
+    --ca-url https://ca.example.com \
+    --root /path/to/root_ca.crt internal.example.com
+'''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "kid",
@@ -57,6 +97,22 @@ generating key.`,
 				Name:  "output-file",
 				Usage: "The destination <file> of the generated one-time token.",
 			},
+			cli.StringFlag{
+				Name: "not-before",
+				Usage: `The <time|duration> set in the NotBefore (nbf) property of the token. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+			},
+			cli.StringFlag{
+				Name: "not-after",
+				Usage: `The <time|duration> set in the Expiration (exp) property of the token. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+			},
 		},
 	}
 }
@@ -67,12 +123,22 @@ func newTokenAction(ctx *cli.Context) error {
 		return err
 	}
 
+	subject := ctx.Args().Get(0)
 	root := ctx.String("root")
 	caURL := ctx.String("ca-url")
 	kid := ctx.String("kid")
 	passwordFile := ctx.String("password-file")
 	outputFile := ctx.String("output-file")
-	subject := ctx.Args().Get(0)
+
+	// parse times or durations
+	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, ok := parseTimeOrDuration(ctx.String("not-after"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
 
 	if len(caURL) == 0 {
 		return errs.RequiredFlag(ctx, "ca-url")
@@ -161,6 +227,15 @@ func newTokenAction(ctx *cli.Context) error {
 	if len(caURL) > 0 {
 		tokOptions = append(tokOptions, token.WithCA(caURL))
 	}
+	if !notBefore.IsZero() || !notAfter.IsZero() {
+		if notBefore.IsZero() {
+			notBefore = time.Now()
+		}
+		if notAfter.IsZero() {
+			notAfter = notBefore.Add(token.DefaultValidity)
+		}
+		tokOptions = append(tokOptions, token.WithValidity(notBefore, notAfter))
+	}
 
 	tok, err := provision.New(subject, tokOptions...)
 	if err != nil {
@@ -177,4 +252,20 @@ func newTokenAction(ctx *cli.Context) error {
 	}
 	fmt.Println(token)
 	return nil
+}
+
+func parseTimeOrDuration(s string) (time.Time, bool) {
+	if s == "" {
+		return time.Time{}, true
+	}
+
+	var t time.Time
+	if err := t.UnmarshalText([]byte(s)); err != nil {
+		d, err := time.ParseDuration(s)
+		if err != nil {
+			return time.Time{}, false
+		}
+		t = time.Now().Add(d)
+	}
+	return t, true
 }
