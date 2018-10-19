@@ -95,7 +95,10 @@ func htmlHelpAction(ctx *cli.Context) error {
 	if err != nil {
 		return errs.FileError(err, index)
 	}
-	htmlHelpPrinter(w, mdAppHelpTemplate, ctx.App)
+
+	tophelp := htmlHelpPrinter(w, mdAppHelpTemplate, ctx.App)
+	report := NewReport(ctx.App.Name, tophelp)
+
 	if err := w.Close(); err != nil {
 		return errs.FileError(err, index)
 	}
@@ -108,14 +111,30 @@ func htmlHelpAction(ctx *cli.Context) error {
 
 	// Subcommands
 	for _, cmd := range ctx.App.Commands {
-		if err := htmlHelpCommand(ctx.App, cmd, path.Join(dir, cmd.Name)); err != nil {
+		if err := htmlHelpCommand(ctx.App, cmd, path.Join(dir, cmd.Name), report); err != nil {
 			return err
 		}
 	}
+
+	// report
+	repjson := path.Join(dir, "report.json")
+	rjw, err := os.Create(repjson)
+	if err != nil {
+		return errs.FileError(err, repjson)
+	}
+
+	if err := report.Write(rjw); err != nil {
+		return err
+	}
+
+	if err := rjw.Close(); err != nil {
+		return errs.FileError(err, repjson)
+	}
+
 	return nil
 }
 
-func htmlHelpCommand(app *cli.App, cmd cli.Command, base string) error {
+func htmlHelpCommand(app *cli.App, cmd cli.Command, base string, report *Report) error {
 	if err := os.MkdirAll(base, 0755); err != nil {
 		return errs.FileError(err, base)
 	}
@@ -127,20 +146,22 @@ func htmlHelpCommand(app *cli.App, cmd cli.Command, base string) error {
 	}
 
 	if len(cmd.Subcommands) == 0 {
-		htmlHelpPrinter(w, mdCommandHelpTemplate, cmd)
+		cmdhelp := htmlHelpPrinter(w, mdCommandHelpTemplate, cmd)
+		report.Process(cmd.HelpName, cmdhelp)
 		return errs.FileError(w.Close(), index)
 	}
 
 	ctx := cli.NewContext(app, nil, nil)
 	ctx.App = createCliApp(ctx, cmd)
-	htmlHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
+	subhelp := htmlHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
+	report.Process(cmd.HelpName, subhelp)
 	if err := w.Close(); err != nil {
 		return errs.FileError(err, index)
 	}
 
 	for _, sub := range cmd.Subcommands {
 		sub.HelpName = fmt.Sprintf("%s %s", cmd.HelpName, sub.Name)
-		if err := htmlHelpCommand(app, sub, path.Join(base, sub.Name)); err != nil {
+		if err := htmlHelpCommand(app, sub, path.Join(base, sub.Name), report); err != nil {
 			return err
 		}
 	}
