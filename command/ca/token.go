@@ -3,6 +3,7 @@ package ca
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/pkg/errors"
@@ -124,10 +125,20 @@ func newTokenAction(ctx *cli.Context) error {
 
 	subject := ctx.Args().Get(0)
 	root := ctx.String("root")
-	caURL := ctx.String("ca-url")
 	kid := ctx.String("kid")
 	passwordFile := ctx.String("password-file")
 	outputFile := ctx.String("output-file")
+
+	caURL := ctx.String("ca-url")
+	if len(caURL) == 0 {
+		return errs.RequiredFlag(ctx, "ca-url")
+	}
+
+	audience, err := url.Parse(caURL)
+	if err != nil || audience.Scheme != "https" {
+		return errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
+	}
+	audience = audience.ResolveReference(&url.URL{Path: "/1.0/sign"})
 
 	// parse times or durations
 	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
@@ -137,10 +148,6 @@ func newTokenAction(ctx *cli.Context) error {
 	notAfter, ok := parseTimeOrDuration(ctx.String("not-after"))
 	if !ok {
 		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
-	}
-
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
 	}
 
 	provisioners, err := pki.GetProvisioners(caURL, root)
@@ -212,7 +219,7 @@ func newTokenAction(ctx *cli.Context) error {
 	tokOptions := []token.Options{
 		token.WithJWTID(jwtID),
 		token.WithIssuer(issuer),
-		token.WithAudience(caURL),
+		token.WithAudience(audience.String()),
 	}
 	if len(root) > 0 {
 		tokOptions = append(tokOptions, token.WithRootCA(root))
