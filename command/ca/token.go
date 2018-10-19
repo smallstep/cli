@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/randutil"
@@ -162,13 +161,7 @@ func newTokenAction(ctx *cli.Context) error {
 	}
 
 	if len(kid) == 0 {
-		prompt := promptui.Select{
-			Label:     "What provisioner key do you want to use?",
-			Items:     items,
-			Templates: ui.SelectTemplate("Key ID"),
-		}
-
-		i, _, err := prompt.Run()
+		i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
 		if err != nil {
 			return errors.Wrap(err, "error running prompt")
 		}
