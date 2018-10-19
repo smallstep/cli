@@ -120,6 +120,9 @@ type PKI struct {
 	config                          string
 	ottPublicKey                    *jose.JSONWebKey
 	ottPrivateKey                   *jose.JSONWebEncryption
+	issuer                          string
+	address                         string
+	dnsNames                        []string
 }
 
 // New creates a new PKI configuration.
@@ -148,7 +151,11 @@ func New(public, private, config string) (*PKI, error) {
 		return s, errors.Wrapf(err, "error getting absolute path for %s", name)
 	}
 
-	p := new(PKI)
+	p := &PKI{
+		issuer:   "step-cli",
+		address:  "127.0.0.1:9000",
+		dnsNames: []string{"127.0.0.1"},
+	}
 	if p.root, err = getPath(public, "root_ca.crt"); err != nil {
 		return nil, err
 	}
@@ -172,6 +179,21 @@ func New(public, private, config string) (*PKI, error) {
 	}
 
 	return p, nil
+}
+
+// SetIssuer sets the issuer of the OTT keys.
+func (p *PKI) SetIssuer(s string) {
+	p.issuer = s
+}
+
+// SetAddress sets the listening address of the CA.
+func (p *PKI) SetAddress(s string) {
+	p.address = s
+}
+
+// SetDNSNames sets the dns names of the CA.
+func (p *PKI) SetDNSNames(s []string) {
+	p.dnsNames = s
 }
 
 // GenerateKeyPairs generates the key pairs used by the certificate authority.
@@ -246,12 +268,12 @@ func (p *PKI) Save() error {
 		Root:             p.root,
 		IntermediateCert: p.intermediate,
 		IntermediateKey:  p.intermediateKey,
-		Address:          "127.0.0.1:9000",
-		DNSNames:         []string{"127.0.0.1"},
+		Address:          p.address,
+		DNSNames:         p.dnsNames,
 		Logger:           []byte(`{"format": "text"}`),
 		AuthorityConfig: &authority.AuthConfig{
 			Provisioners: []*provisioner.Provisioner{
-				{Issuer: "step-cli", Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
+				{Issuer: p.issuer, Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
 			},
 		},
 		TLS: &tlsutil.TLSOptions{

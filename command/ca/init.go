@@ -4,11 +4,11 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
-	"os"
+	"strings"
 
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
 )
 
@@ -28,13 +28,32 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	fmt.Fprintf(os.Stderr, "What would you like to name your new PKI? (e.g. Smallstep): ")
-	name, err := utils.ReadString(os.Stdin)
+	name, err := ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)", ui.WithValidateNotEmpty())
 	if err != nil {
 		return err
 	}
 
-	pass, err := utils.ReadPasswordGenerate("What do you want your password to be? [leave empty and we'll generate one]: ")
+	names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com)", ui.WithValidateNotEmpty())
+	if err != nil {
+		return err
+	}
+	names = strings.Replace(names, ",", " ", -1)
+	dnsNames := strings.Split(names, " ")
+	for i, name := range dnsNames {
+		dnsNames[i] = strings.TrimSpace(name)
+	}
+
+	address, err := ui.Prompt("What address would your new CA will be listening at? (e.g. :443)", ui.WithValidateNotEmpty())
+	if err != nil {
+		return err
+	}
+
+	issuer, err := ui.Prompt("What first issuer would like to add in the new CA? (e.g. mike@smallstep.com)", ui.WithValidateNotEmpty())
+	if err != nil {
+		return err
+	}
+
+	pass, err := ui.PromptPasswordGenerate("What do you want your password to be? [leave empty and we'll generate one]")
 	if err != nil {
 		return err
 	}
@@ -43,6 +62,10 @@ func initAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
+	p.SetIssuer(issuer)
+	p.SetAddress(address)
+	p.SetDNSNames(dnsNames)
 
 	// Generate ott and ssh key pairs
 	if err := p.GenerateKeyPairs(pass); err != nil {
