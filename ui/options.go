@@ -7,6 +7,7 @@ import (
 )
 
 type options struct {
+	mask            rune
 	defaultValue    string
 	allowEdit       bool
 	promptTemplates *promptui.PromptTemplates
@@ -23,6 +24,13 @@ func (o *options) apply(opts []Option) *options {
 
 // Option is the type of the functions that modify the prompt options.
 type Option func(*options)
+
+// WithMask adds a mask to a prompt.
+func WithMask(r rune) Option {
+	return func(o *options) {
+		o.mask = r
+	}
+}
 
 // WithDefaultValue adds a custom string as the default value.
 func WithDefaultValue(s string) Option {

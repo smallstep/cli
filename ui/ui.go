@@ -4,11 +4,10 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/smallstep/cli/crypto/randutil"
-
 	"github.com/chzyer/readline"
 	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto/randutil"
 )
 
 // stderr implements an io.WriteCloser that skips the terminal bell character
@@ -34,6 +33,7 @@ func init() {
 	readline.Stdout = &stderr{}
 }
 
+// Prompt creates a runs a promptui.Prompt with the given label.
 func Prompt(label string, opts ...Option) (string, error) {
 	clean, err := preparePromptTerminal()
 	if err != nil {
@@ -41,10 +41,11 @@ func Prompt(label string, opts ...Option) (string, error) {
 	}
 	defer clean()
 
-	o := new(options).apply(opts)
-	if o.promptTemplates == nil {
-		o.promptTemplates = PromptTemplates()
+	o := &options{
+		promptTemplates: PromptTemplates(),
 	}
+	o.apply(opts)
+
 	prompt := &promptui.Prompt{
 		Label:     label,
 		Default:   o.defaultValue,
@@ -59,6 +60,8 @@ func Prompt(label string, opts ...Option) (string, error) {
 	return value, nil
 }
 
+// PromptPassword creates a runs a promptui.Prompt with the given label. This
+// prompt will mask the key entries with \r.
 func PromptPassword(label string, opts ...Option) ([]byte, error) {
 	clean, err := preparePromptTerminal()
 	if err != nil {
@@ -66,13 +69,15 @@ func PromptPassword(label string, opts ...Option) ([]byte, error) {
 	}
 	defer clean()
 
-	o := new(options).apply(opts)
-	if o.promptTemplates == nil {
-		o.promptTemplates = PromptTemplates()
+	o := &options{
+		mask:            '\r',
+		promptTemplates: PromptTemplates(),
 	}
+	o.apply(opts)
+
 	prompt := &promptui.Prompt{
 		Label:     label,
-		Mask:      '\r',
+		Mask:      o.mask,
 		Default:   o.defaultValue,
 		AllowEdit: o.allowEdit,
 		Validate:  o.validateFunc,
@@ -85,6 +90,10 @@ func PromptPassword(label string, opts ...Option) ([]byte, error) {
 	return []byte(pass), nil
 }
 
+// PromptPasswordGenerate creaes a runs a promptui.Prompt with the given label.
+// This prompt will mask the key entries with \r. If the result password length
+// is 0, it will generate a new prompt with a generated password that can be
+// edited.
 func PromptPasswordGenerate(label string, opts ...Option) ([]byte, error) {
 	pass, err := PromptPassword(label, opts...)
 	if err != nil || len(pass) > 0 {
@@ -101,6 +110,7 @@ func PromptPasswordGenerate(label string, opts ...Option) ([]byte, error) {
 	return []byte(passString), nil
 }
 
+// Select creates and runs a promptui.Select with the given label and items.
 func Select(label string, items interface{}, opts ...Option) (int, string, error) {
 	clean, err := prepareSelectTerminal()
 	if err != nil {
@@ -108,10 +118,11 @@ func Select(label string, items interface{}, opts ...Option) (int, string, error
 	}
 	defer clean()
 
-	o := new(options).apply(opts)
-	if o.selectTemplates == nil {
-		o.selectTemplates = SelectTemplates(label)
+	o := &options{
+		selectTemplates: SelectTemplates(label),
 	}
+	o.apply(opts)
+
 	prompt := &promptui.Select{
 		Label:     label,
 		Items:     items,
