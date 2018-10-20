@@ -154,38 +154,47 @@ func newTokenAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if len(provisioners) == 0 {
 		return errors.New("cannot create a new token: the CA does not have any provisioner configured")
 	}
 
-	var items []*provisionersSelect
-	for _, p := range provisioners {
-		items = append(items, &provisionersSelect{
-			Name:   p.Key.KeyID + " (" + p.Issuer + ")",
-			Issuer: p.Issuer,
-			JWK:    *p.Key,
-		})
+	if len(provisioners) == 1 && len(kid) == 0 {
+		kid = provisioners[0].Key.KeyID
+		issuer = provisioners[0].Issuer
 	}
 
 	if len(kid) == 0 {
+		var items []*provisionersSelect
+		for _, p := range provisioners {
+			items = append(items, &provisionersSelect{
+				Name:   p.Key.KeyID + " (" + p.Issuer + ")",
+				Issuer: p.Issuer,
+				JWK:    *p.Key,
+			})
+		}
 		i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
 		if err != nil {
-			return errors.Wrap(err, "error running prompt")
+			return err
 		}
-
 		kid = items[i].JWK.KeyID
 		issuer = items[i].Issuer
 	} else {
 		var found bool
-		for _, item := range items {
-			if kid == item.JWK.KeyID {
+		for _, p := range provisioners {
+			if kid == p.Key.KeyID {
 				found = true
-				issuer = item.Issuer
+				issuer = p.Issuer
 				break
 			}
 		}
 		if !found {
 			return errs.InvalidFlagValue(ctx, "kid", kid, "")
+		}
+
+		// Prints kid/issuer used
+		if err := ui.PrintSelected("Key ID", kid+" ("+issuer+")"); err != nil {
+			return err
 		}
 	}
 
