@@ -25,20 +25,61 @@ func newCertificateCommand() cli.Command {
 		Usage:  "generate a new certificate pair signed by the root certificate",
 		UsageText: `**step ca new-certificate** <hostname> <crt-file> <key-file>
 		[**--ca-url**=<uri>] [**--token**=<token>] [**--root**=<file>] `,
-		Description: `**step ca new-certificate** command generates a new certificate pair`,
+		Description: `**step ca new-certificate** command generates a new certificate pair
+
+## POSITIONAL ARGUMENTS
+
+<hostname>
+:  The DNS or IP address that will be set as the subject for the certificate.
+
+<crt-file>
+:  File to write the certificate (PEM format)
+
+<key-file>
+:  File to write the private key (PEM format)
+
+## EXAMPLES
+
+Request a new certificate for a given domain:
+'''
+$ TOKEN=$(step ca new-token internal.example.com)
+$ step ca new-certificate --token $TOKEN internal.example.com internal.crt internal.key
+'''
+
+Request a new certificate with a 1h validity:
+'''
+$ TOKEN=$(step ca new-token internal.example.com)
+$ step ca new-certificate --token $TOKEN --not-after=1h internal.example.com internal.crt internal.key
+'''`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "ca-url",
-				Usage: "<URI> of the targeted Step Certificate Authority.",
-			},
 			cli.StringFlag{
 				Name: "token",
 				Usage: `The one-time <token> used to authenticate with the CA in order to create the
 certificate.`,
 			},
 			cli.StringFlag{
+				Name:  "ca-url",
+				Usage: "<URI> of the targeted Step Certificate Authority.",
+			},
+			cli.StringFlag{
 				Name:  "root",
 				Usage: "The path to the PEM <file> used as the root certificate authority.",
+			},
+			cli.StringFlag{
+				Name: "not-before",
+				Usage: `The <time|duration> set in the NotBefore (nbf) property of the token. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+			},
+			cli.StringFlag{
+				Name: "not-after",
+				Usage: `The <time|duration> set in the Expiration (exp) property of the token. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 		},
 	}
@@ -50,21 +91,37 @@ func signCertificateCommand() cli.Command {
 		Action: cli.ActionFunc(signCertificateAction),
 		Usage:  "generates a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
-		[**--ca-url**=<uri>] [**--token**=<token>] [**--root**=<file>] `,
+		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>] `,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "ca-url",
-				Usage: "<URI> of the targeted Step Certificate Authority.",
-			},
 			cli.StringFlag{
 				Name: "token",
 				Usage: `The one-time <token> used to authenticate with the CA in order to create the
 certificate.`,
 			},
 			cli.StringFlag{
+				Name:  "ca-url",
+				Usage: "<URI> of the targeted Step Certificate Authority.",
+			},
+			cli.StringFlag{
 				Name:  "root",
 				Usage: "The path to the PEM <file> used as the root certificate authority.",
+			},
+			cli.StringFlag{
+				Name: "not-before",
+				Usage: `The <time|duration> set in the NotBefore (nbf) property of the token. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+			},
+			cli.StringFlag{
+				Name: "not-after",
+				Usage: `The <time|duration> set in the Expiration (exp) property of the token. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 		},
 	}
@@ -115,6 +172,16 @@ func newCertificateAction(ctx *cli.Context) error {
 		return errs.RequiredFlag(ctx, "token")
 	}
 
+	// parse times or durations
+	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, ok := parseTimeOrDuration(ctx.String("not-after"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+
 	tok, err := jose.ParseSigned(token)
 	if err != nil {
 		return errors.Wrap(err, "error parsing flag '--token'")
@@ -135,6 +202,13 @@ func newCertificateAction(ctx *cli.Context) error {
 	req, pk, err := ca.CreateSignRequest(token)
 	if err != nil {
 		return err
+	}
+
+	if !notBefore.IsZero() {
+		req.NotBefore = notBefore
+	}
+	if !notAfter.IsZero() {
+		req.NotAfter = notAfter
 	}
 
 	resp, err := client.Sign(req)
@@ -197,6 +271,16 @@ func signCertificateAction(ctx *cli.Context) error {
 		return errors.Errorf("error parsing %s: file is not a certificate request", csrFile)
 	}
 
+	// parse times or durations
+	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, ok := parseTimeOrDuration(ctx.String("not-after"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+
 	tok, err := jose.ParseSigned(token)
 	if err != nil {
 		return errors.Wrap(err, "error parsing flag '--token'")
@@ -215,8 +299,10 @@ func signCertificateAction(ctx *cli.Context) error {
 	}
 
 	req := &api.SignRequest{
-		CsrPEM: api.NewCertificateRequest(csr),
-		OTT:    token,
+		CsrPEM:    api.NewCertificateRequest(csr),
+		OTT:       token,
+		NotBefore: notBefore,
+		NotAfter:  notAfter,
 	}
 
 	resp, err := client.Sign(req)
