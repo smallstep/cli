@@ -92,7 +92,29 @@ func signCertificateCommand() cli.Command {
 		Usage:  "generates a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>] `,
-		Description: `**step ca sign** command signs the given csr and generates a new certificate`,
+		Description: `**step ca sign** command signs the given csr and generates a new certificate
+
+## POSITIONAL ARGUMENTS
+
+<csr-file>
+:  File with the certificate signing request (PEM format)
+
+<crt-file>
+:  File to write the certificate (PEM format)
+
+## EXAMPLES
+
+Sign a new certificate for the given CSR:
+'''
+$ TOKEN=$(step ca new-token internal.example.com)
+$ step ca new-certificate --token $TOKEN internal.csr internal.crt
+'''
+
+Sign a new certificate with a 1h validity:
+'''
+$ TOKEN=$(step ca new-token internal.example.com)
+$ step ca new-certificate --token $TOKEN --not-after=1h internal.csr internal.crt
+'''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "token",
