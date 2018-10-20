@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"fmt"
 	"os"
 	"syscall"
+	"text/template"
 
 	"github.com/chzyer/readline"
 	"github.com/manifoldco/promptui"
@@ -33,6 +35,31 @@ func init() {
 	readline.Stdout = &stderr{}
 }
 
+// PrintSelected prints the given name and value as if they were selected from a
+// promptui.Select.
+func PrintSelected(name, value string, opts ...Option) error {
+	o := &options{
+		printTemplate: PrintSelectedTemplate(),
+	}
+	o.apply(opts)
+
+	t, err := template.New(name).Funcs(promptui.FuncMap).Parse(o.printTemplate)
+	if err != nil {
+		fmt.Println(err)
+		return errors.Wrap(err, "error parsing template")
+	}
+
+	data := struct {
+		Name  string
+		Value string
+	}{name, value}
+	if err := t.Execute(os.Stderr, data); err != nil {
+		return errors.Wrap(err, "error executing template")
+	}
+
+	return nil
+}
+
 // Prompt creates a runs a promptui.Prompt with the given label.
 func Prompt(label string, opts ...Option) (string, error) {
 	clean, err := preparePromptTerminal()
@@ -55,7 +82,7 @@ func Prompt(label string, opts ...Option) (string, error) {
 	}
 	value, err := prompt.Run()
 	if err != nil {
-		return "", errors.Wrap(err, "error reading prompt")
+		return "", errors.Wrap(err, "error running prompt")
 	}
 	return value, nil
 }
@@ -128,7 +155,11 @@ func Select(label string, items interface{}, opts ...Option) (int, string, error
 		Items:     items,
 		Templates: o.selectTemplates,
 	}
-	return prompt.Run()
+	n, s, err := prompt.Run()
+	if err != nil {
+		return 0, "", errors.Wrap(err, "error running prompt")
+	}
+	return n, s, nil
 }
 
 func preparePromptTerminal() (func(), error) {

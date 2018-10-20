@@ -10,6 +10,7 @@ type options struct {
 	mask            rune
 	defaultValue    string
 	allowEdit       bool
+	printTemplate   string
 	promptTemplates *promptui.PromptTemplates
 	selectTemplates *promptui.SelectTemplates
 	validateFunc    promptui.ValidateFunc
@@ -43,6 +44,13 @@ func WithDefaultValue(s string) Option {
 func WithAllowEdit(b bool) Option {
 	return func(o *options) {
 		o.allowEdit = b
+	}
+}
+
+// WithPrintTemplate sets the template to use on the print methods.
+func WithPrintTemplate(template string) Option {
+	return func(o *options) {
+		o.printTemplate = template
 	}
 }
 

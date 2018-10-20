@@ -6,6 +6,11 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+// PrintSelectedTemplate returns the default template used in PrintSelected.
+func PrintSelectedTemplate() string {
+	return fmt.Sprintf(`{{ "%s" | green }} {{ .Name | bold }}{{ ":" | bold }} {{ .Value }}`, promptui.IconGood) + "\n"
+}
+
 // PromptTemplates is the default style for a prompt.
 func PromptTemplates() *promptui.PromptTemplates {
 	bold := promptui.Styler(promptui.FGBold)
