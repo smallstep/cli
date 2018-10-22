@@ -69,7 +69,7 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com)", ui.WithValidateNotEmpty())
+	names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com)", ui.WithValidateFunc(ui.DNS()))
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func initAction(ctx *cli.Context) error {
 		dnsNames[i] = strings.TrimSpace(name)
 	}
 
-	address, err := ui.Prompt("What address would your new CA will be listening at? (e.g. :443)", ui.WithValidateNotEmpty())
+	address, err := ui.Prompt("What address would your new CA will be listening at? (e.g. :443)", ui.WithValidateFunc(ui.Address()))
 	if err != nil {
 		return err
 	}

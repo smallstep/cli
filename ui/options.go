@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/manifoldco/promptui"
 )
 
@@ -79,15 +77,4 @@ func WithValidateFunc(fn func(string) error) Option {
 // checks that the propted string is not empty.
 func WithValidateNotEmpty() Option {
 	return WithValidateFunc(NotEmpty())
-}
-
-// NotEmpty is a validation function that checks that the prompted string is not
-// empty.
-func NotEmpty() promptui.ValidateFunc {
-	return func(s string) error {
-		if len(s) > 0 {
-			return nil
-		}
-		return fmt.Errorf("value is empty")
-	}
 }
