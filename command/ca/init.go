@@ -73,10 +73,14 @@ func initAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	names = strings.Replace(names, ",", " ", -1)
-	dnsNames := strings.Split(names, " ")
-	for i, name := range dnsNames {
-		dnsNames[i] = strings.TrimSpace(name)
+	names = strings.Replace(names, " ", ",", -1)
+	parts := strings.Split(names, ",")
+	var dnsNames []string
+	for _, name := range parts {
+		if len(name) == 0 {
+			continue
+		}
+		dnsNames = append(dnsNames, strings.TrimSpace(name))
 	}
 
 	address, err := ui.Prompt("What address would your new CA will be listening at? (e.g. :443)", ui.WithValidateFunc(ui.Address()))
