@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -22,6 +23,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/pkg/x509"
+	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -237,6 +239,22 @@ func (p *PKI) GenerateRootCertificate(name string, pass []byte) (*x509.Certifica
 	}
 
 	return rootCrt, rootProfile.SubjectPrivateKey(), nil
+}
+
+// WriteRootCertificate writes to disk the given certificate and key.
+func (p *PKI) WriteRootCertificate(rootCrt *x509.Certificate, rootKey interface{}, pass []byte) error {
+	if err := utils.WriteFile(p.root, pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: rootCrt.Raw,
+	}), 0600); err != nil {
+		return err
+	}
+
+	_, err := pemutil.Serialize(rootKey, pemutil.WithEncryption([]byte(pass)), pemutil.ToFile(p.rootKey, 0600))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GenerateIntermediateCertificate generates an intermediate certificate with
