@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -13,9 +15,14 @@ import (
 	"github.com/urfave/cli"
 )
 
+// IgnoreEnvVar is a value added to a flag EnvVar to avoid the use of
+// environment variables or configuration files.
+const IgnoreEnvVar = "STEP_IGNORE_ENV_VAR"
+
 var cmds []cli.Command
 
 func init() {
+	os.Unsetenv(IgnoreEnvVar)
 	cmds = []cli.Command{
 		usage.HelpCommand(),
 	}
@@ -34,7 +41,7 @@ func Retrieve() []cli.Command {
 }
 
 // getConfigVars load the defaults.json file and sets the flags if they are not
-// already set.
+// already set or the EnvVar is set to IgnoreEnvVar.
 //
 // TODO(mariano): right now it only supports parameters at first level.
 func getConfigVars(ctx *cli.Context) error {
@@ -53,10 +60,24 @@ func getConfigVars(ctx *cli.Context) error {
 		return errors.Wrapf(err, "error parsing %s", configFile)
 	}
 
+	flags := make(map[string]cli.Flag)
+	for _, f := range ctx.Command.Flags {
+		name := strings.Split(f.GetName(), ",")[0]
+		flags[name] = f
+	}
+
 	for _, name := range ctx.FlagNames() {
 		if ctx.IsSet(name) {
 			continue
 		}
+
+		// Skip if EnvVar == IgnoreEnvVar
+		if f, ok := flags[name]; ok {
+			if getFlagEnvVar(f) == IgnoreEnvVar {
+				continue
+			}
+		}
+
 		if v, ok := m[name]; ok {
 			ctx.Set(name, fmt.Sprintf("%v", v))
 		}
@@ -71,6 +92,21 @@ func getEnvVar(name string) string {
 	name = strings.TrimSpace(parts[0])
 	name = strings.Replace(name, "-", "_", -1)
 	return "STEP_" + strings.ToUpper(name)
+}
+
+// getFlagEnvVar returns the value of the EnvVar field of a flag.
+func getFlagEnvVar(f cli.Flag) string {
+	v := reflect.ValueOf(f)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() == reflect.Struct {
+		envVar := v.FieldByName("EnvVar")
+		if envVar.IsValid() {
+			return envVar.String()
+		}
+	}
+	return ""
 }
 
 // setEnvVar sets the the EnvVar element to each flag recursively.
