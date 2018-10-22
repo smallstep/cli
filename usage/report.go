@@ -35,6 +35,7 @@ func NewReport(command string, top []byte) *Report {
 	return &report
 }
 
+// Write serializes the report to json
 func (report *Report) Write(w io.Writer) error {
 	j, err := json.MarshalIndent(report, "", "  ")
 
