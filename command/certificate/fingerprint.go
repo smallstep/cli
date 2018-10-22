@@ -29,7 +29,8 @@ certificate SHA256 of the raw certificate.
 
 Get the fingerprint for a root certificate:
 '''
-$ step certificate fingerprint root_ca.crt
+$ step certificate fingerprint /path/to/root_ca.crt
+0d7d3834cf187726cf331c40a31aa7ef6b29ba4df601416c9788f6ee01058cf3
 '''`,
 	}
 }
