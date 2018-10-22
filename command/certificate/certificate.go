@@ -69,6 +69,7 @@ $ step certificate bundle ./baz.crt ./foo.crt bundle.crt
 			bundleCommand(),
 			createCommand(),
 			inspectCommand(),
+			fingerprintCommand(),
 			lintCommand(),
 			//renewCommand(),
 			signCommand(),
