@@ -84,7 +84,11 @@ func markdownHelpCommand(app *cli.App, cmd cli.Command, base string) error {
 }
 
 func htmlHelpAction(ctx *cli.Context) error {
-	dir := path.Clean(ctx.String("html"))
+	dir := path.Clean(ctx.String("report"))
+	if len(ctx.String("html")) > 0 {
+		dir = path.Clean(ctx.String("html"))
+	}
+
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return errs.FileError(err, dir)
 	}
@@ -97,7 +101,10 @@ func htmlHelpAction(ctx *cli.Context) error {
 	}
 
 	tophelp := htmlHelpPrinter(w, mdAppHelpTemplate, ctx.App)
-	report := NewReport(ctx.App.Name, tophelp)
+	var report *Report
+	if ctx.IsSet("report") {
+		report = NewReport(ctx.App.Name, tophelp)
+	}
 
 	if err := w.Close(); err != nil {
 		return errs.FileError(err, index)
@@ -117,18 +124,20 @@ func htmlHelpAction(ctx *cli.Context) error {
 	}
 
 	// report
-	repjson := path.Join(dir, "report.json")
-	rjw, err := os.Create(repjson)
-	if err != nil {
-		return errs.FileError(err, repjson)
-	}
+	if report != nil {
+		repjson := path.Join(dir, "report.json")
+		rjw, err := os.Create(repjson)
+		if err != nil {
+			return errs.FileError(err, repjson)
+		}
 
-	if err := report.Write(rjw); err != nil {
-		return err
-	}
+		if err := report.Write(rjw); err != nil {
+			return err
+		}
 
-	if err := rjw.Close(); err != nil {
-		return errs.FileError(err, repjson)
+		if err := rjw.Close(); err != nil {
+			return errs.FileError(err, repjson)
+		}
 	}
 
 	return nil
@@ -147,14 +156,22 @@ func htmlHelpCommand(app *cli.App, cmd cli.Command, base string, report *Report)
 
 	if len(cmd.Subcommands) == 0 {
 		cmdhelp := htmlHelpPrinter(w, mdCommandHelpTemplate, cmd)
-		report.Process(cmd.HelpName, cmdhelp)
+
+		if report != nil {
+			report.Process(cmd.HelpName, cmdhelp)
+		}
+
 		return errs.FileError(w.Close(), index)
 	}
 
 	ctx := cli.NewContext(app, nil, nil)
 	ctx.App = createCliApp(ctx, cmd)
 	subhelp := htmlHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
-	report.Process(cmd.HelpName, subhelp)
+
+	if report != nil {
+		report.Process(cmd.HelpName, subhelp)
+	}
+
 	if err := w.Close(); err != nil {
 		return errs.FileError(err, index)
 	}
