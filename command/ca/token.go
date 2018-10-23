@@ -33,9 +33,9 @@ func newTokenCommand() cli.Command {
 		Usage:  "generates an OTT granting access to the CA",
 		UsageText: `**step ca new-token** <hostname>
 		[--**kid**=<kid>] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--password-file**=<file>] [**--output-file**=<file>]`,
+		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]`,
 		Description: `**step ca new-token** command generates a one-time token granting access to the
-certificates authority
+certificates authority.
 
 ## POSITIONAL ARGUMENTS
 
@@ -66,6 +66,12 @@ $ step ca new-token --not-after 30m internal.example.com
 Get a new token that is not valid for 30 and expires 5 minutes after that:
 '''
 $ step ca new-token --not-before 30m --not-after 35m internal.example.com
+'''
+
+Get a new token signed with the given private key, the public key must be
+configured in the certificate authority:
+'''
+$ step ca new-token internal.smallstep.com --key token.key
 '''
 
 Get a new token for a specific provisioner kid, ca-url and root:
@@ -113,6 +119,11 @@ used, it is a sequence of decimal numbers, each with optional fraction and a
 unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
+			cli.StringFlag{
+				Name: "key",
+				Usage: `The private key <file> used to sign the JWT. This is usually downloaded from
+the certificate authority.`,
+			},
 		},
 	}
 }
@@ -128,6 +139,7 @@ func newTokenAction(ctx *cli.Context) error {
 	kid := ctx.String("kid")
 	passwordFile := ctx.String("password-file")
 	outputFile := ctx.String("output-file")
+	keyFile := ctx.String("key")
 
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
@@ -198,24 +210,34 @@ func newTokenAction(ctx *cli.Context) error {
 		}
 	}
 
-	encrypted, err := pki.GetProvisionerKey(caURL, root, kid)
-	if err != nil {
-		return err
-	}
-
 	var opts []jose.Option
 	if len(passwordFile) != 0 {
 		opts = append(opts, jose.WithPasswordFile(passwordFile))
 	}
 
-	decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key:", []byte(encrypted), opts...)
-	if err != nil {
-		return err
-	}
+	var jwk *jose.JSONWebKey
+	if len(keyFile) == 0 {
+		// Get private key from CA
+		encrypted, err := pki.GetProvisionerKey(caURL, root, kid)
+		if err != nil {
+			return err
+		}
 
-	var jwk jose.JSONWebKey
-	if err := json.Unmarshal(decrypted, &jwk); err != nil {
-		return errors.Wrap(err, "error unmarshalling provisioning key")
+		decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key:", []byte(encrypted), opts...)
+		if err != nil {
+			return err
+		}
+
+		jwk = new(jose.JSONWebKey)
+		if err := json.Unmarshal(decrypted, jwk); err != nil {
+			return errors.Wrap(err, "error unmarshalling provisioning key")
+		}
+	} else {
+		// Get private key from given key file
+		jwk, err = jose.ParseKey(keyFile, opts...)
+		if err != nil {
+			return err
+		}
 	}
 
 	// A random jwt id will be used to identify duplicated tokens
