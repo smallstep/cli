@@ -31,12 +31,12 @@ func HelpCommand() cli.Command {
 				Usage: "The export <directory> for HTML docs.",
 			},
 			cli.StringFlag{
-				Name:  "report",
-				Usage: "The report <directory> for JSON report based on HTML docs.",
-			},
-			cli.StringFlag{
 				Name:  "markdown",
 				Usage: "The export <directory> for Markdown docs.",
+			},
+			cli.BoolFlag{
+				Name:  "report",
+				Usage: "Writes a JSON report to the HTML docs directory.",
 			},
 		},
 	}
@@ -48,7 +48,7 @@ func helpAction(ctx *cli.Context) error {
 		return httpHelpAction(ctx)
 	}
 
-	if ctx.IsSet("html") || ctx.IsSet("report") {
+	if ctx.IsSet("html") {
 		return htmlHelpAction(ctx)
 	}
 

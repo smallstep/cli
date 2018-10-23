@@ -84,10 +84,7 @@ func markdownHelpCommand(app *cli.App, cmd cli.Command, base string) error {
 }
 
 func htmlHelpAction(ctx *cli.Context) error {
-	dir := path.Clean(ctx.String("report"))
-	if len(ctx.String("html")) > 0 {
-		dir = path.Clean(ctx.String("html"))
-	}
+	dir := path.Clean(ctx.String("html"))
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return errs.FileError(err, dir)
