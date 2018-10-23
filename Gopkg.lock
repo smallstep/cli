@@ -119,6 +119,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:8dbe76014be3c83806abc61befcb5e1789d2d872bc8f98a8fb955405550c63be"
+  name = "github.com/grokify/html-strip-tags-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e9e44961e26f513866063f54bf85070db95600f7"
+
+[[projects]]
+  branch = "master"
   digest = "1:22725c01ecd8ed0c0f0078944305a57053340d92878b02db925c660cc4accf64"
   name = "github.com/icrowley/fake"
   packages = ["."]
@@ -320,9 +328,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:82491a0790e0945762096c875e2e14932a5d7b37a7ce3e83ef3b50437a71e09a"
+  digest = "1:aa865a7eb1321c57cf0bf45b2eed1432263a66b5fe6bd3a86044d2b02636d4ee"
   name = "golang.org/x/net"
-  packages = ["idna"]
+  packages = [
+    "html",
+    "html/atom",
+    "idna",
+  ]
   pruneopts = "UT"
   revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
 
@@ -414,6 +426,7 @@
     "github.com/google/go-cmp/cmp",
     "github.com/google/go-cmp/cmp/cmpopts",
     "github.com/gordonklaus/ineffassign",
+    "github.com/grokify/html-strip-tags-go",
     "github.com/icrowley/fake",
     "github.com/pkg/errors",
     "github.com/pquerna/otp",
@@ -440,6 +453,7 @@
     "golang.org/x/crypto/pbkdf2",
     "golang.org/x/crypto/scrypt",
     "golang.org/x/crypto/ssh/terminal",
+    "golang.org/x/net/html",
     "gopkg.in/square/go-jose.v2",
     "gopkg.in/square/go-jose.v2/jwt",
   ]

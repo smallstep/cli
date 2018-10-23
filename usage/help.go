@@ -34,6 +34,10 @@ func HelpCommand() cli.Command {
 				Name:  "markdown",
 				Usage: "The export <directory> for Markdown docs.",
 			},
+			cli.BoolFlag{
+				Name:  "report",
+				Usage: "Writes a JSON report to the HTML docs directory.",
+			},
 		},
 	}
 }
