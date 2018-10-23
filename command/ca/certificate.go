@@ -155,9 +155,44 @@ func renewCertificateCommand() cli.Command {
 		Action: cli.ActionFunc(renewCertificateAction),
 		Usage:  "renew a valid certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
-		[**--ca-url**=<uri>] [**--root**=<file>] `,
-		Description: `**step ca sign** command signs the given csr and generates a new certificate`,
+		[**--out**=<file>] [**--ca-url**=<uri>] [**--root**=<file>] `,
+		Description: `
+**step ca renew** command renews the given certificates on the certificate
+authority and writes the new certificate to disk either overwriting <crt-file>
+or using a new file if the **--out**=<file> flag is used.
+
+## POSITIONAL ARGUMENTS
+
+<crt-file>
+:  The certificate in PEM format that we want to renew.
+
+<key-file>
+:  They key file of the certificate.
+
+## EXAMPLES
+
+Renew a certificate with the configured CA:
+'''
+$ step ca renew internal.crt internal.key
+Would you like to overwrite internal.crt [Y/n]: y
+'''
+
+Renew a certificate without overwriting the previous certificate:
+'''
+$ step ca renew --out renewed.crt internal.crt internal.key
+'''
+
+Renew a certificate providing the <--ca-url> and <--root> flags:
+'''
+$ step ca renew --ca-url https://ca.smallstep.com:9000 \
+  --root /path/to/root_ca.crt internal.crt internal.key
+Would you like to overwrite internal.crt [Y/n]: y
+'''`,
 		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "out,output-file",
+				Usage: "The new certificate <file> path. Defaults to overwriting the <crt-file> positional argument",
+			},
 			cli.StringFlag{
 				Name:  "ca-url",
 				Usage: "<URI> of the targeted Step Certificate Authority.",
@@ -357,6 +392,11 @@ func renewCertificateAction(ctx *cli.Context) error {
 	crtFile := args.Get(0)
 	keyFile := args.Get(1)
 
+	outFile := ctx.String("out")
+	if len(outFile) == 0 {
+		outFile = crtFile
+	}
+
 	root := ctx.String("root")
 	if len(root) == 0 {
 		root = pki.GetRootCAPath()
@@ -412,7 +452,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
-	if err := utils.WriteFile(crtFile, data, 0600); err != nil {
+	if err := utils.WriteFile(outFile, data, 0600); err != nil {
 		return err
 	}
 
