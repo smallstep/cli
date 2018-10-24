@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -135,7 +136,6 @@ func newTokenAction(ctx *cli.Context) error {
 	}
 
 	subject := ctx.Args().Get(0)
-	root := ctx.String("root")
 	kid := ctx.String("kid")
 	passwordFile := ctx.String("password-file")
 	outputFile := ctx.String("output-file")
@@ -144,6 +144,14 @@ func newTokenAction(ctx *cli.Context) error {
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
 		return errs.RequiredFlag(ctx, "ca-url")
+	}
+
+	root := ctx.String("root")
+	if len(root) == 0 {
+		root = pki.GetRootCAPath()
+		if _, err := os.Stat(root); err != nil {
+			return errs.RequiredFlag(ctx, "root")
+		}
 	}
 
 	audience, err := url.Parse(caURL)
