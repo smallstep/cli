@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -14,6 +15,7 @@ import (
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -92,7 +94,7 @@ func signCertificateCommand() cli.Command {
 		Usage:  "generates a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>] `,
-		Description: `**step ca sign** command signs the given csr and generates a new certificate
+		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
 
@@ -107,13 +109,13 @@ func signCertificateCommand() cli.Command {
 Sign a new certificate for the given CSR:
 '''
 $ TOKEN=$(step ca new-token internal.example.com)
-$ step ca new-certificate --token $TOKEN internal.csr internal.crt
+$ step ca sign --token $TOKEN internal.csr internal.crt
 '''
 
 Sign a new certificate with a 1h validity:
 '''
 $ TOKEN=$(step ca new-token internal.example.com)
-$ step ca new-certificate --token $TOKEN --not-after=1h internal.csr internal.crt
+$ step ca sign --token $TOKEN --not-after=1h internal.csr internal.crt
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -214,46 +216,9 @@ func newCertificateAction(ctx *cli.Context) error {
 	hostname := args.Get(0)
 	crtFile, keyFile := args.Get(1), args.Get(2)
 
-	root := ctx.String("root")
-	if len(root) == 0 {
-		root = pki.GetRootCAPath()
-	}
-
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-
 	token := ctx.String("token")
 	if len(token) == 0 {
 		return errs.RequiredFlag(ctx, "token")
-	}
-
-	// parse times or durations
-	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
-	if !ok {
-		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
-	}
-	notAfter, ok := parseTimeOrDuration(ctx.String("not-after"))
-	if !ok {
-		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
-	}
-
-	tok, err := jose.ParseSigned(token)
-	if err != nil {
-		return errors.Wrap(err, "error parsing flag '--token'")
-	}
-	claims := new(jose.Claims)
-	if err := tok.UnsafeClaimsWithoutVerification(claims); err != nil {
-		return errors.Wrap(err, "error parsing flag '--token'")
-	}
-	if strings.ToLower(hostname) != strings.ToLower(claims.Subject) {
-		return errors.Errorf("token subject '%s' and flag '--hostname=%s' do not match", claims.Subject, hostname)
-	}
-
-	client, err := ca.NewClient(caURL, ca.WithRootFile(root))
-	if err != nil {
-		return err
 	}
 
 	req, pk, err := ca.CreateSignRequest(token)
@@ -261,28 +226,11 @@ func newCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if !notBefore.IsZero() {
-		req.NotBefore = notBefore
-	}
-	if !notAfter.IsZero() {
-		req.NotAfter = notAfter
+	if strings.ToLower(hostname) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
+		return errors.Errorf("token subject '%s' and hostname '%s' do not match", req.CsrPEM.Subject.CommonName, hostname)
 	}
 
-	resp, err := client.Sign(req)
-	if err != nil {
-		return err
-	}
-
-	serverBlock, err := pemutil.Serialize(resp.ServerPEM.Certificate)
-	if err != nil {
-		return err
-	}
-	caBlock, err := pemutil.Serialize(resp.CaPEM.Certificate)
-	if err != nil {
-		return err
-	}
-	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
-	if err := utils.WriteFile(crtFile, data, 0600); err != nil {
+	if err := signCertificateRequest(ctx, req.CsrPEM, crtFile); err != nil {
 		return err
 	}
 
@@ -303,16 +251,6 @@ func signCertificateAction(ctx *cli.Context) error {
 	csrFile := args.Get(0)
 	crtFile := args.Get(1)
 
-	root := ctx.String("root")
-	if len(root) == 0 {
-		root = pki.GetRootCAPath()
-	}
-
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-
 	token := ctx.String("token")
 	if len(token) == 0 {
 		return errs.RequiredFlag(ctx, "token")
@@ -326,6 +264,26 @@ func signCertificateAction(ctx *cli.Context) error {
 	csr, ok := csrInt.(*x509.CertificateRequest)
 	if !ok {
 		return errors.Errorf("error parsing %s: file is not a certificate request", csrFile)
+	}
+
+	if err := signCertificateRequest(ctx, api.NewCertificateRequest(csr), crtFile); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type customClaims struct {
+	SHA string `json:"sha"`
+}
+
+func signCertificateRequest(ctx *cli.Context, csr api.CertificateRequest, crtFile string) error {
+	root := ctx.String("root")
+	caURL := ctx.String("ca-url")
+
+	token := ctx.String("token")
+	if len(token) == 0 {
+		return errs.RequiredFlag(ctx, "token")
 	}
 
 	// parse times or durations
@@ -342,21 +300,44 @@ func signCertificateAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "error parsing flag '--token'")
 	}
-	claims := new(jose.Claims)
-	if err := tok.UnsafeClaimsWithoutVerification(claims); err != nil {
+	var claims jose.Claims
+	if err := tok.UnsafeClaimsWithoutVerification(&claims); err != nil {
 		return errors.Wrap(err, "error parsing flag '--token'")
 	}
-	if strings.ToLower(csr.Subject.CommonName) != strings.ToLower(claims.Subject) {
+	if strings.ToLower(claims.Subject) != strings.ToLower(csr.Subject.CommonName) {
 		return errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", claims.Subject, csr.Subject.CommonName)
 	}
+	var rootClaim customClaims
+	if err := tok.UnsafeClaimsWithoutVerification(&rootClaim); err != nil {
+		return errors.Wrap(err, "error parsing flag '--token'")
+	}
 
-	client, err := ca.NewClient(caURL, ca.WithRootFile(root))
+	// Prepare client for bootstrap or provisioning tokens
+	var options []ca.ClientOption
+	if len(rootClaim.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
+		caURL = claims.Audience[0]
+		options = append(options, ca.WithRootSHA256(rootClaim.SHA))
+	} else {
+		if len(caURL) == 0 {
+			return errs.RequiredFlag(ctx, "ca-url")
+		}
+		if len(root) == 0 {
+			root = pki.GetRootCAPath()
+			if _, err := os.Stat(root); err != nil {
+				return errs.RequiredFlag(ctx, "root")
+			}
+		}
+		options = append(options, ca.WithRootFile(root))
+	}
+
+	ui.PrintSelected("CA", caURL)
+	client, err := ca.NewClient(caURL, options...)
 	if err != nil {
 		return err
 	}
 
 	req := &api.SignRequest{
-		CsrPEM:    api.NewCertificateRequest(csr),
+		CsrPEM:    csr,
 		OTT:       token,
 		NotBefore: notBefore,
 		NotAfter:  notAfter,
