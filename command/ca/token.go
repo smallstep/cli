@@ -255,9 +255,6 @@ func newTokenAction(ctx *cli.Context) error {
 	if len(root) > 0 {
 		tokOptions = append(tokOptions, token.WithRootCA(root))
 	}
-	if len(caURL) > 0 {
-		tokOptions = append(tokOptions, token.WithCA(caURL))
-	}
 	if !notBefore.IsZero() || !notAfter.IsZero() {
 		if notBefore.IsZero() {
 			notBefore = time.Now()

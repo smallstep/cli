@@ -25,13 +25,8 @@ const (
 	MaxValidityDelay = 30 * time.Minute
 )
 
-const (
-	// CAClaim is the property name for a JWT claim that stores the address of a
-	// certificate authority.
-	CAClaim = "ca"
-	// RootSHAClaim is the property name for a JWT claim that stores the SHA256 of a root certificate.
-	RootSHAClaim = "sha"
-)
+// RootSHAClaim is the property name for a JWT claim that stores the SHA256 of a root certificate.
+const RootSHAClaim = "sha"
 
 // Token interface which all token types should attempt to implement.
 type Token interface {

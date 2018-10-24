@@ -24,18 +24,6 @@ func WithClaim(name string, value interface{}) Options {
 	}
 }
 
-// WithCA returns an Options function that sets the certificate authority
-// address to use in the token claims.
-func WithCA(s string) Options {
-	return func(c *Claims) error {
-		if s == "" {
-			return errors.New("ca cannot be empty")
-		}
-		c.Set(CAClaim, s)
-		return nil
-	}
-}
-
 // WithRootCA returns an Options function that calculates the SHA256 of the
 // given root certificate to be used in the token claims. If this method it's
 // not used the default root certificate in the $STEPPATH secrets directory will
