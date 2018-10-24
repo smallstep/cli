@@ -273,8 +273,9 @@ func signCertificateAction(ctx *cli.Context) error {
 	return nil
 }
 
-type customClaims struct {
+type tokenClaims struct {
 	SHA string `json:"sha"`
+	jose.Claims
 }
 
 func signCertificateRequest(ctx *cli.Context, csr api.CertificateRequest, crtFile string) error {
@@ -300,23 +301,19 @@ func signCertificateRequest(ctx *cli.Context, csr api.CertificateRequest, crtFil
 	if err != nil {
 		return errors.Wrap(err, "error parsing flag '--token'")
 	}
-	var claims jose.Claims
+	var claims tokenClaims
 	if err := tok.UnsafeClaimsWithoutVerification(&claims); err != nil {
 		return errors.Wrap(err, "error parsing flag '--token'")
 	}
 	if strings.ToLower(claims.Subject) != strings.ToLower(csr.Subject.CommonName) {
 		return errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", claims.Subject, csr.Subject.CommonName)
 	}
-	var rootClaim customClaims
-	if err := tok.UnsafeClaimsWithoutVerification(&rootClaim); err != nil {
-		return errors.Wrap(err, "error parsing flag '--token'")
-	}
 
 	// Prepare client for bootstrap or provisioning tokens
 	var options []ca.ClientOption
-	if len(rootClaim.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
+	if len(claims.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
 		caURL = claims.Audience[0]
-		options = append(options, ca.WithRootSHA256(rootClaim.SHA))
+		options = append(options, ca.WithRootSHA256(claims.SHA))
 	} else {
 		if len(caURL) == 0 {
 			return errs.RequiredFlag(ctx, "ca-url")
