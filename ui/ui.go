@@ -35,6 +35,32 @@ func init() {
 	readline.Stdout = &stderr{}
 }
 
+// Printf uses templates to print the string formated to os.Stderr.
+func Printf(format string, args ...interface{}) error {
+	text := fmt.Sprintf(format, args...)
+	t, err := template.New("Printf").Funcs(promptui.FuncMap).Parse(text)
+	if err != nil {
+		return errors.Wrap(err, "error parsing template")
+	}
+	if err := t.Execute(os.Stderr, nil); err != nil {
+		return errors.Wrap(err, "error executing template")
+	}
+	return nil
+}
+
+// Println uses templates to print the given arguments to os.Stderr
+func Println(args ...interface{}) error {
+	text := fmt.Sprintln(args...)
+	t, err := template.New("Println").Funcs(promptui.FuncMap).Parse(text)
+	if err != nil {
+		return errors.Wrap(err, "error parsing template")
+	}
+	if err := t.Execute(os.Stderr, nil); err != nil {
+		return errors.Wrap(err, "error executing template")
+	}
+	return nil
+}
+
 // PrintSelected prints the given name and value as if they were selected from a
 // promptui.Select.
 func PrintSelected(name, value string, opts ...Option) error {
@@ -45,7 +71,6 @@ func PrintSelected(name, value string, opts ...Option) error {
 
 	t, err := template.New(name).Funcs(promptui.FuncMap).Parse(o.printTemplate)
 	if err != nil {
-		fmt.Println(err)
 		return errors.Wrap(err, "error parsing template")
 	}
 
