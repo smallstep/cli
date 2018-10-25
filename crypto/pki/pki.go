@@ -13,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/ca-component/authority"
 	"github.com/smallstep/ca-component/ca"
-	"github.com/smallstep/ca-component/provisioner"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -81,7 +80,7 @@ func GetOTTKeyPath() string {
 }
 
 // GetProvisioners returns the map of provisioners on the given CA.
-func GetProvisioners(caURL, rootFile string) ([]*provisioner.Provisioner, error) {
+func GetProvisioners(caURL, rootFile string) ([]*authority.Provisioner, error) {
 	if len(rootFile) == 0 {
 		rootFile = GetRootCAPath()
 	}
@@ -291,7 +290,7 @@ func (p *PKI) Save() error {
 		Logger:           []byte(`{"format": "text"}`),
 		AuthorityConfig: &authority.AuthConfig{
 			DisableIssuedAtCheck: false,
-			Provisioners: []*provisioner.Provisioner{
+			Provisioners: []*authority.Provisioner{
 				{Issuer: p.issuer, Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
 			},
 		},

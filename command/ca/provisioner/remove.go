@@ -3,7 +3,6 @@ package provisioner
 import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/ca-component/authority"
-	"github.com/smallstep/ca-component/provisioner"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
@@ -82,7 +81,7 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	var (
-		provisioners []*provisioner.Provisioner
+		provisioners []*authority.Provisioner
 		found        = false
 	)
 	for _, p := range c.AuthorityConfig.Provisioners {

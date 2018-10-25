@@ -3,7 +3,6 @@ package provisioner
 import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/ca-component/authority"
-	"github.com/smallstep/ca-component/provisioner"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/urfave/cli"
@@ -14,7 +13,7 @@ func addCommand() cli.Command {
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add one or more provisioners the CA configuration",
-		UsageText: `**step ca provisioner add** <issuer> <jwk-file> [<jwk-file> ...] 
+		UsageText: `**step ca provisioner add** <issuer> <jwk-file> [<jwk-file> ...]
 		[**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -67,8 +66,8 @@ func addAction(ctx *cli.Context) error {
 		return errors.Wrapf(err, "error loading configuration")
 	}
 
-	var provisioners []*provisioner.Provisioner
-	provMap := make(map[string]*provisioner.Provisioner)
+	var provisioners []*authority.Provisioner
+	provMap := make(map[string]*authority.Provisioner)
 	for _, prov := range c.AuthorityConfig.Provisioners {
 		provisioners = append(provisioners, prov)
 		provMap[prov.Issuer+":"+prov.Key.KeyID] = prov
@@ -106,7 +105,7 @@ func addAction(ctx *cli.Context) error {
 			}
 		}
 		key := jwk.Public()
-		prov := &provisioner.Provisioner{
+		prov := &authority.Provisioner{
 			Issuer:       issuer,
 			Type:         "jwk",
 			Key:          &key,
