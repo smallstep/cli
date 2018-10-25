@@ -290,6 +290,7 @@ func (p *PKI) Save() error {
 		DNSNames:         p.dnsNames,
 		Logger:           []byte(`{"format": "text"}`),
 		AuthorityConfig: &authority.AuthConfig{
+			DisableIssuedAtCheck: false,
 			Provisioners: []*provisioner.Provisioner{
 				{Issuer: p.issuer, Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
 			},
