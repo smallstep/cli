@@ -88,11 +88,19 @@ func GetProvisioners(caURL, rootFile string) ([]*authority.Provisioner, error) {
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.Provisioners()
-	if err != nil {
-		return nil, err
+	cursor := ""
+	provisioners := []*authority.Provisioner{}
+	for {
+		resp, err := client.Provisioners(ca.WithProvisionerCursor(cursor), ca.WithProvisionerLimit(100))
+		if err != nil {
+			return nil, err
+		}
+		provisioners = append(provisioners, resp.Provisioners...)
+		if resp.NextCursor == "" {
+			return provisioners, nil
+		}
+		cursor = resp.NextCursor
 	}
-	return resp.Provisioners, nil
 }
 
 // GetProvisionerKey returns the encrypted provisioner key with the for the
