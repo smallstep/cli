@@ -128,3 +128,19 @@ func (report *Report) processNode(node *html.Node) (string, *html.Node) {
 
 	return text, node
 }
+
+// PerHeadline returns all sections across commands/pages with the same headline
+func (report *Report) PerHeadline(headline string) []Section {
+	var results []Section
+	for _, top := range report.Report {
+		for _, section := range top.Sections {
+			if section.Name != headline {
+				continue
+			}
+
+			results = append(results, *section)
+		}
+	}
+
+	return results
+}
