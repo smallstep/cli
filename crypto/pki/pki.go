@@ -14,7 +14,6 @@ import (
 	"github.com/smallstep/ca-component/authority"
 	"github.com/smallstep/ca-component/ca"
 	"github.com/smallstep/cli/config"
-	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/crypto/tlsutil"
@@ -23,7 +22,6 @@ import (
 	"github.com/smallstep/cli/jose"
 	stepX509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
-	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -124,7 +122,6 @@ func GetProvisionerKey(caURL, rootFile, kid string) (string, error) {
 type PKI struct {
 	root, rootKey                   string
 	intermediate, intermediateKey   string
-	sshUserKey, sshHostKey          string
 	country, locality, organization string
 	config                          string
 	ottPublicKey                    *jose.JSONWebKey
@@ -177,12 +174,6 @@ func New(public, private, config string) (*PKI, error) {
 	if p.intermediateKey, err = getPath(private, "intermediate_ca_key"); err != nil {
 		return nil, err
 	}
-	if p.sshUserKey, err = getPath(private, "ssh_user_key"); err != nil {
-		return nil, err
-	}
-	if p.sshHostKey, err = getPath(private, "ssh_host_key"); err != nil {
-		return nil, err
-	}
 	if p.config, err = getPath(config, "ca.json"); err != nil {
 		return nil, err
 	}
@@ -212,16 +203,6 @@ func (p *PKI) GenerateKeyPairs(pass []byte) error {
 	// Created in default secrets directory because it is required by `new-token`.
 	p.ottPublicKey, p.ottPrivateKey, err = generateOTTKeyPair(pass)
 	if err != nil {
-		return err
-	}
-
-	// Create ssh user certificate signing key pair, the user doesn't need to know about this.
-	if err := generateCASigningKeyPair(p.sshUserKey, pass); err != nil {
-		return err
-	}
-
-	// Create ssh host certificate signing key pair, the user doesn't need to know about this.
-	if err := generateCASigningKeyPair(p.sshHostKey, pass); err != nil {
 		return err
 	}
 
@@ -380,32 +361,4 @@ func generateOTTKeyPair(pass []byte) (*jose.JSONWebKey, *jose.JSONWebEncryption,
 
 	public := jwk.Public()
 	return &public, jwe, nil
-}
-
-// generateCASigningKeyPair generates a certificate signing public/private key
-// pair for signing ssh certificates.
-func generateCASigningKeyPair(keyFile string, pass []byte) error {
-	if len(pass) == 0 {
-		return errors.New("password cannot be empty when initializing simple pki")
-	}
-
-	pubFile := keyFile + ".pub"
-
-	pub, priv, err := keys.GenerateDefaultKeyPair()
-	if err != nil {
-		return err
-	}
-
-	sshPub, err := ssh.NewPublicKey(pub)
-	if err != nil {
-		return errors.Wrap(err, "error creating SSH public key")
-	}
-
-	err = ioutil.WriteFile(pubFile, ssh.MarshalAuthorizedKey(sshPub), os.FileMode(0644))
-	if err != nil {
-		return errs.FileError(err, pubFile)
-	}
-
-	_, err = pemutil.Serialize(priv, pemutil.WithEncryption([]byte(pass)), pemutil.ToFile(keyFile, 0644))
-	return err
 }
