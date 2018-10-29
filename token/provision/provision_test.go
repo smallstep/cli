@@ -38,7 +38,7 @@ func TestNew(t *testing.T) {
 	want.claims.Subject = "test.domain"
 	wantWithOptions.claims.Subject = "test.domain"
 	wantWithOptions.claims.Issuer = "new-issuer"
-	wantWithOptions.claims.ExtraClaims = map[string]interface{}{"ca": "ca"}
+	wantWithOptions.claims.ExtraClaims = map[string]interface{}{"sha": "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"}
 
 	tests := []struct {
 		name    string
@@ -48,7 +48,7 @@ func TestNew(t *testing.T) {
 	}{
 		{"ok", args{"test.domain", nil}, want, false},
 		{"ok empty options", args{"test.domain", []token.Options{}}, want, false},
-		{"ok with options", args{"test.domain", []token.Options{token.WithIssuer("new-issuer"), token.WithCA("ca")}}, wantWithOptions, false},
+		{"ok with options", args{"test.domain", []token.Options{token.WithIssuer("new-issuer"), token.WithClaim("sha", "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c")}}, wantWithOptions, false},
 		{"fail no subject", args{"", []token.Options{}}, nil, true},
 		{"fail bad option", args{"test.domain", []token.Options{token.WithIssuer("")}}, nil, true},
 	}
