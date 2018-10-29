@@ -19,8 +19,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-const defaultSignatureAlgorithm = "ES256"
-
 type provisionersSelect struct {
 	Name   string
 	Issuer string
