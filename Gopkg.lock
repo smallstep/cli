@@ -113,14 +113,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8dbe76014be3c83806abc61befcb5e1789d2d872bc8f98a8fb955405550c63be"
-  name = "github.com/grokify/html-strip-tags-go"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "e9e44961e26f513866063f54bf85070db95600f7"
-
-[[projects]]
-  branch = "master"
   digest = "1:22725c01ecd8ed0c0f0078944305a57053340d92878b02db925c660cc4accf64"
   name = "github.com/icrowley/fake"
   packages = ["."]
@@ -525,7 +517,6 @@
     "github.com/client9/misspell/cmd/misspell",
     "github.com/golang/lint/golint",
     "github.com/gordonklaus/ineffassign",
-    "github.com/grokify/html-strip-tags-go",
     "github.com/icrowley/fake",
     "github.com/manifoldco/promptui",
     "github.com/pkg/errors",
