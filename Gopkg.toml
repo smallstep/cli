@@ -47,13 +47,9 @@ required = [
   branch = "master"
   name = "golang.org/x/crypto"
 
-[[constraint]]
-  branch = "max/refactor"
+[[override]]
   name = "github.com/smallstep/ca-component"
-
-[prune]
-  go-tests = true
-  unused-packages = true
+  branch = "max/refactor"
 
 [[constraint]]
   name = "gopkg.in/square/go-jose.v2"
@@ -66,3 +62,7 @@ required = [
 [[constraint]]
   branch = "master"
   name = "github.com/smallstep/assert"
+
+[prune]
+  go-tests = true
+  unused-packages = true
