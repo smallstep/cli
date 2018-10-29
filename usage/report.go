@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
-	"github.com/grokify/html-strip-tags-go"
 	"golang.org/x/net/html"
 )
 
@@ -102,12 +102,14 @@ func (report *Report) processNode(node *html.Node) (string, *html.Node) {
 	text := ""
 	current := node.NextSibling
 
+	r, _ := regexp.Compile("<[^>]*>")
+
 	for current != nil {
 		var buf bytes.Buffer
 		w := io.Writer(&buf)
 		html.Render(w, current)
 
-		notags := strip.StripTags(buf.String())
+		notags := r.ReplaceAllString(buf.String(), "")
 		clean := strings.TrimSpace(notags)
 
 		if len(text) > 0 && len(clean) > 0 {
