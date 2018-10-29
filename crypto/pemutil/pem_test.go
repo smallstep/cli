@@ -187,7 +187,7 @@ func TestParsePEM(t *testing.T) {
 		err     error
 	}
 	tests := map[string]func(t *testing.T) *ParseTest{
-		"sucess-ecdsa-public-key": func(t *testing.T) *ParseTest {
+		"success-ecdsa-public-key": func(t *testing.T) *ParseTest {
 			b, err := ioutil.ReadFile("testdata/openssl.p256.pub.pem")
 			assert.FatalError(t, err)
 			return &ParseTest{
@@ -196,7 +196,7 @@ func TestParsePEM(t *testing.T) {
 				cmpType: &ecdsa.PublicKey{},
 			}
 		},
-		"sucess-rsa-public-key": func(t *testing.T) *ParseTest {
+		"success-rsa-public-key": func(t *testing.T) *ParseTest {
 			b, err := ioutil.ReadFile("testdata/openssl.rsa1024.pub.pem")
 			assert.FatalError(t, err)
 			return &ParseTest{
@@ -205,7 +205,7 @@ func TestParsePEM(t *testing.T) {
 				cmpType: &rsa.PublicKey{},
 			}
 		},
-		"sucess-rsa-private-key": func(t *testing.T) *ParseTest {
+		"success-rsa-private-key": func(t *testing.T) *ParseTest {
 			b, err := ioutil.ReadFile("testdata/openssl.rsa1024.pem")
 			assert.FatalError(t, err)
 			return &ParseTest{
@@ -214,7 +214,7 @@ func TestParsePEM(t *testing.T) {
 				cmpType: &rsa.PrivateKey{},
 			}
 		},
-		"sucess-ecdsa-private-key": func(t *testing.T) *ParseTest {
+		"success-ecdsa-private-key": func(t *testing.T) *ParseTest {
 			b, err := ioutil.ReadFile("testdata/openssl.p256.pem")
 			assert.FatalError(t, err)
 			return &ParseTest{
@@ -223,7 +223,7 @@ func TestParsePEM(t *testing.T) {
 				cmpType: &ecdsa.PrivateKey{},
 			}
 		},
-		"sucess-ed25519-private-key": func(t *testing.T) *ParseTest {
+		"success-ed25519-private-key": func(t *testing.T) *ParseTest {
 			b, err := ioutil.ReadFile("testdata/pkcs8/openssl.ed25519.pem")
 			assert.FatalError(t, err)
 			return &ParseTest{
@@ -232,7 +232,7 @@ func TestParsePEM(t *testing.T) {
 				cmpType: ed25519.PrivateKey{},
 			}
 		},
-		"sucess-ed25519-enc-private-key": func(t *testing.T) *ParseTest {
+		"success-ed25519-enc-private-key": func(t *testing.T) *ParseTest {
 			b, err := ioutil.ReadFile("testdata/pkcs8/openssl.ed25519.enc.pem")
 			assert.FatalError(t, err)
 			return &ParseTest{
@@ -241,7 +241,7 @@ func TestParsePEM(t *testing.T) {
 				cmpType: ed25519.PrivateKey{},
 			}
 		},
-		"sucess-x509-crt": func(t *testing.T) *ParseTest {
+		"success-x509-crt": func(t *testing.T) *ParseTest {
 			b, err := ioutil.ReadFile("testdata/ca.crt")
 			assert.FatalError(t, err)
 			return &ParseTest{
@@ -250,7 +250,7 @@ func TestParsePEM(t *testing.T) {
 				cmpType: &realx509.Certificate{},
 			}
 		},
-		"sucess-stepx509-crt": func(t *testing.T) *ParseTest {
+		"success-stepx509-crt": func(t *testing.T) *ParseTest {
 			b, err := ioutil.ReadFile("testdata/ca.crt")
 			assert.FatalError(t, err)
 			return &ParseTest{
