@@ -88,7 +88,7 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	issuer, err := ui.Prompt("What first provisioner name would like to add in the new CA? (e.g. you@smallstep.com)", ui.WithValidateNotEmpty())
+	provisioner, err := ui.Prompt("What first provisioner name would like to add in the new CA? (e.g. you@smallstep.com)", ui.WithValidateNotEmpty())
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	p.SetProvisioner(issuer)
+	p.SetProvisioner(provisioner)
 	p.SetAddress(address)
 	p.SetDNSNames(dnsNames)
 
