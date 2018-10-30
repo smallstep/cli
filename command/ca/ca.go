@@ -65,3 +65,56 @@ $ cat \> $STEPPATH/config/defaults.json
 
 	command.Register(cmd)
 }
+
+// common flags used in several commands
+var (
+	caURLFlag = cli.StringFlag{
+		Name:  "ca-url",
+		Usage: "<URI> of the targeted Step Certificate Authority.",
+	}
+
+	rootFlag = cli.StringFlag{
+		Name:  "root",
+		Usage: "The path to the PEM <file> used as the root certificate authority.",
+	}
+
+	fingerprintFlag = cli.StringFlag{
+		Name:  "fingerprint",
+		Usage: "The <fingerprint> of the targeted root certificate.",
+	}
+
+	tokenFlag = cli.StringFlag{
+		Name: "token",
+		Usage: `The one-time <token> used to authenticate with the CA in order to create the
+certificate.`,
+	}
+
+	notBeforeFlag = cli.StringFlag{
+		Name: "not-before",
+		Usage: `The <time|duration> set in the NotBefore (nbf) property of the token. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+	}
+
+	notAfterFlag = cli.StringFlag{
+		Name: "not-after",
+		Usage: `The <time|duration> set in the Expiration (exp) property of the token. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+	}
+
+	provisionerKidFlag = cli.StringFlag{
+		Name:  "kid",
+		Usage: "The provisioner <kid> to use.",
+	}
+
+	passwordFileFlag = cli.StringFlag{
+		Name: "password-file",
+		Usage: `The path to the <file> containing the password to decrypt the one-time token
+generating key.`,
+	}
+)

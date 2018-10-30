@@ -32,6 +32,7 @@ func newTokenCommand() cli.Command {
 		Usage:  "generates an OTT granting access to the CA",
 		UsageText: `**step ca new-token** <hostname>
 		[--**kid**=<kid>] [**--ca-url**=<uri>] [**--root**=<file>]
+		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]`,
 		Description: `**step ca new-token** command generates a one-time token granting access to the
 certificates authority.
@@ -81,42 +82,15 @@ $ step ca new-token internal.example.com \
     --root /path/to/root_ca.crt internal.example.com
 '''`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "kid",
-				Usage: "The provisioner <kid> to use.",
-			},
-			cli.StringFlag{
-				Name:  "ca-url",
-				Usage: "<URI> of the targeted Step Certificate Authority.",
-			},
-			cli.StringFlag{
-				Name:  "root",
-				Usage: "The path to the PEM <file> used as the root certificate authority.",
-			},
-			cli.StringFlag{
-				Name: "password-file",
-				Usage: `The path to the <file> containing the password to decrypt the one-time token
-generating key.`,
-			},
+			provisionerKidFlag,
+			caURLFlag,
+			rootFlag,
+			notBeforeFlag,
+			notAfterFlag,
+			passwordFileFlag,
 			cli.StringFlag{
 				Name:  "output-file",
 				Usage: "The destination <file> of the generated one-time token.",
-			},
-			cli.StringFlag{
-				Name: "not-before",
-				Usage: `The <time|duration> set in the NotBefore (nbf) property of the token. If a
-<time> is used it is expected to be in RFC 3339 format. If a <duration> is
-used, it is a sequence of decimal numbers, each with optional fraction and a
-unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".`,
-			},
-			cli.StringFlag{
-				Name: "not-after",
-				Usage: `The <time|duration> set in the Expiration (exp) property of the token. If a
-<time> is used it is expected to be in RFC 3339 format. If a <duration> is
-used, it is a sequence of decimal numbers, each with optional fraction and a
-unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 			cli.StringFlag{
 				Name: "key",

@@ -18,7 +18,7 @@ func rootComand() cli.Command {
 		Action: cli.ActionFunc(rootAction),
 		Usage:  "downloads and validates the root certificate",
 		UsageText: `**step ca root** <root-file>
-		[--fingerprint=<fingerprint>] [**--ca-url**=<uri>]`,
+		[**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>]`,
 		Description: `**step ca root** downloads and validates the root certificate from the
 certificate authority.
 
@@ -48,14 +48,8 @@ $ step ca root root_ca.crt \
   --fingerprint 0d7d3834cf187726cf331c40a31aa7ef6b29ba4df601416c9788f6ee01058cf3
 '''`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "fingerprint",
-				Usage: "The <fingerprint> of the targeted root certificate.",
-			},
-			cli.StringFlag{
-				Name:  "ca-url",
-				Usage: "<URI> of the targeted Step Certificate Authority.",
-			},
+			caURLFlag,
+			fingerprintFlag,
 		},
 	}
 }

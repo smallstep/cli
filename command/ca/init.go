@@ -18,10 +18,11 @@ import (
 
 func initCommand() cli.Command {
 	return cli.Command{
-		Name:      "init",
-		Action:    cli.ActionFunc(initAction),
-		Usage:     "initializes the CA PKI",
-		UsageText: `**step ca init**`,
+		Name:   "init",
+		Action: cli.ActionFunc(initAction),
+		Usage:  "initializes the CA PKI",
+		UsageText: `**step ca init**
+		[**--root**=<file>] [**--key**=<file>]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority`,
 		Flags: []cli.Flag{

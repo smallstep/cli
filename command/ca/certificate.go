@@ -26,7 +26,8 @@ func newCertificateCommand() cli.Command {
 		Action: cli.ActionFunc(newCertificateAction),
 		Usage:  "generate a new certificate pair signed by the root certificate",
 		UsageText: `**step ca new-certificate** <hostname> <crt-file> <key-file>
-		[**--ca-url**=<uri>] [**--token**=<token>] [**--root**=<file>] `,
+		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
+		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
 		Description: `**step ca new-certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -54,35 +55,11 @@ $ TOKEN=$(step ca new-token internal.example.com)
 $ step ca new-certificate --token $TOKEN --not-after=1h internal.example.com internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name: "token",
-				Usage: `The one-time <token> used to authenticate with the CA in order to create the
-certificate.`,
-			},
-			cli.StringFlag{
-				Name:  "ca-url",
-				Usage: "<URI> of the targeted Step Certificate Authority.",
-			},
-			cli.StringFlag{
-				Name:  "root",
-				Usage: "The path to the PEM <file> used as the root certificate authority.",
-			},
-			cli.StringFlag{
-				Name: "not-before",
-				Usage: `The <time|duration> set in the NotBefore (nbf) property of the token. If a
-<time> is used it is expected to be in RFC 3339 format. If a <duration> is
-used, it is a sequence of decimal numbers, each with optional fraction and a
-unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".`,
-			},
-			cli.StringFlag{
-				Name: "not-after",
-				Usage: `The <time|duration> set in the Expiration (exp) property of the token. If a
-<time> is used it is expected to be in RFC 3339 format. If a <duration> is
-used, it is a sequence of decimal numbers, each with optional fraction and a
-unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".`,
-			},
+			tokenFlag,
+			caURLFlag,
+			rootFlag,
+			notBeforeFlag,
+			notAfterFlag,
 		},
 	}
 }
@@ -93,7 +70,8 @@ func signCertificateCommand() cli.Command {
 		Action: cli.ActionFunc(signCertificateAction),
 		Usage:  "generates a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
-		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>] `,
+		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
+		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
@@ -118,35 +96,11 @@ $ TOKEN=$(step ca new-token internal.example.com)
 $ step ca sign --token $TOKEN --not-after=1h internal.csr internal.crt
 '''`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name: "token",
-				Usage: `The one-time <token> used to authenticate with the CA in order to create the
-certificate.`,
-			},
-			cli.StringFlag{
-				Name:  "ca-url",
-				Usage: "<URI> of the targeted Step Certificate Authority.",
-			},
-			cli.StringFlag{
-				Name:  "root",
-				Usage: "The path to the PEM <file> used as the root certificate authority.",
-			},
-			cli.StringFlag{
-				Name: "not-before",
-				Usage: `The <time|duration> set in the NotBefore (nbf) property of the token. If a
-<time> is used it is expected to be in RFC 3339 format. If a <duration> is
-used, it is a sequence of decimal numbers, each with optional fraction and a
-unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".`,
-			},
-			cli.StringFlag{
-				Name: "not-after",
-				Usage: `The <time|duration> set in the Expiration (exp) property of the token. If a
-<time> is used it is expected to be in RFC 3339 format. If a <duration> is
-used, it is a sequence of decimal numbers, each with optional fraction and a
-unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".`,
-			},
+			tokenFlag,
+			caURLFlag,
+			rootFlag,
+			notBeforeFlag,
+			notAfterFlag,
 		},
 	}
 }
@@ -157,7 +111,7 @@ func renewCertificateCommand() cli.Command {
 		Action: cli.ActionFunc(renewCertificateAction),
 		Usage:  "renew a valid certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
-		[**--out**=<file>] [**--ca-url**=<uri>] [**--root**=<file>] `,
+		[**--ca-url**=<uri>] [**--root**=<file>] [**--out**=<file>]`,
 		Description: `
 **step ca renew** command renews the given certificates on the certificate
 authority and writes the new certificate to disk either overwriting <crt-file>
@@ -191,17 +145,11 @@ $ step ca renew --ca-url https://ca.smallstep.com:9000 \
 Would you like to overwrite internal.crt [Y/n]: y
 '''`,
 		Flags: []cli.Flag{
+			caURLFlag,
+			rootFlag,
 			cli.StringFlag{
 				Name:  "out,output-file",
 				Usage: "The new certificate <file> path. Defaults to overwriting the <crt-file> positional argument",
-			},
-			cli.StringFlag{
-				Name:  "ca-url",
-				Usage: "<URI> of the targeted Step Certificate Authority.",
-			},
-			cli.StringFlag{
-				Name:  "root",
-				Usage: "The path to the PEM <file> used as the root certificate authority.",
 			},
 		},
 	}
