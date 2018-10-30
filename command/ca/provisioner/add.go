@@ -13,7 +13,7 @@ func addCommand() cli.Command {
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add one or more provisioners the CA configuration",
-		UsageText: `**step ca provisioner add** <issuer> <jwk-file> [<jwk-file> ...]
+		UsageText: `**step ca provisioner add** <name> <jwk-file> [<jwk-file> ...]
 		[**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -26,8 +26,8 @@ to the configuration and writes the new configuration back to the CA config.
 
 ## POSITIONAL ARGUMENTS
 
-<issuer>
-: The issuer linked to all the keys.
+<name>
+: The name linked to all the keys.
 
 <jwk-path>
 : List of private (or public) keys in JWK or PEM format.
@@ -39,7 +39,7 @@ Add a single provisioner:
 $ step ca provisioner add max@smallstep.com max-laptop.jwk --ca-config ca.json
 '''
 
-Add a list of provisioners for a single issuer:
+Add a list of provisioners for a single name:
 '''
 $ step ca provisioner add max@smallstep.com max-laptop.jwk max-phone.pem max-work.pem \
 --ca-config ca.json
@@ -53,7 +53,7 @@ func addAction(ctx *cli.Context) error {
 	}
 
 	args := ctx.Args()
-	issuer := args[0]
+	name := args[0]
 	jwkFiles := args[1:]
 
 	config := ctx.String("ca-config")
@@ -70,13 +70,13 @@ func addAction(ctx *cli.Context) error {
 	provMap := make(map[string]*authority.Provisioner)
 	for _, prov := range c.AuthorityConfig.Provisioners {
 		provisioners = append(provisioners, prov)
-		provMap[prov.Issuer+":"+prov.Key.KeyID] = prov
+		provMap[prov.Name+":"+prov.Key.KeyID] = prov
 	}
 
-	for _, name := range jwkFiles {
-		jwk, err := jose.ParseKey(name)
+	for _, filename := range jwkFiles {
+		jwk, err := jose.ParseKey(filename)
 		if err != nil {
-			return errs.FileError(err, name)
+			return errs.FileError(err, filename)
 		}
 		// Only use asymmetric cryptography
 		if _, ok := jwk.Key.([]byte); ok {
@@ -89,8 +89,8 @@ func addAction(ctx *cli.Context) error {
 			}
 		}
 		// Check for duplicates
-		if _, ok := provMap[issuer+":"+jwk.KeyID]; ok {
-			return errors.Errorf("duplicated provisioner: CA config has already a provisioner with issuer=%s and kid=%s", issuer, jwk.KeyID)
+		if _, ok := provMap[name+":"+jwk.KeyID]; ok {
+			return errors.Errorf("duplicated provisioner: CA config has already a provisioner with issuer=%s and kid=%s", name, jwk.KeyID)
 		}
 		// Encrypt JWK
 		var encryptedKey string
@@ -106,13 +106,13 @@ func addAction(ctx *cli.Context) error {
 		}
 		key := jwk.Public()
 		prov := &authority.Provisioner{
-			Issuer:       issuer,
+			Name:         name,
 			Type:         "jwk",
 			Key:          &key,
 			EncryptedKey: encryptedKey,
 		}
 		provisioners = append(provisioners, prov)
-		provMap[issuer+":"+jwk.KeyID] = prov
+		provMap[name+":"+jwk.KeyID] = prov
 	}
 
 	c.AuthorityConfig.Provisioners = provisioners

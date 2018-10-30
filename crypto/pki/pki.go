@@ -126,7 +126,7 @@ type PKI struct {
 	config                          string
 	ottPublicKey                    *jose.JSONWebKey
 	ottPrivateKey                   *jose.JSONWebEncryption
-	issuer                          string
+	provisioner                     string
 	address                         string
 	dnsNames                        []string
 }
@@ -158,9 +158,9 @@ func New(public, private, config string) (*PKI, error) {
 	}
 
 	p := &PKI{
-		issuer:   "step-cli",
-		address:  "127.0.0.1:9000",
-		dnsNames: []string{"127.0.0.1"},
+		provisioner: "step-cli",
+		address:     "127.0.0.1:9000",
+		dnsNames:    []string{"127.0.0.1"},
 	}
 	if p.root, err = getPath(public, "root_ca.crt"); err != nil {
 		return nil, err
@@ -181,9 +181,9 @@ func New(public, private, config string) (*PKI, error) {
 	return p, nil
 }
 
-// SetIssuer sets the issuer of the OTT keys.
-func (p *PKI) SetIssuer(s string) {
-	p.issuer = s
+// SetProvisioner sets the provisioner name of the OTT keys.
+func (p *PKI) SetProvisioner(s string) {
+	p.provisioner = s
 }
 
 // SetAddress sets the listening address of the CA.
@@ -280,7 +280,7 @@ func (p *PKI) Save() error {
 		AuthorityConfig: &authority.AuthConfig{
 			DisableIssuedAtCheck: false,
 			Provisioners: []*authority.Provisioner{
-				{Issuer: p.issuer, Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
+				{Name: p.provisioner, Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
 			},
 		},
 		TLS: &tlsutil.TLSOptions{

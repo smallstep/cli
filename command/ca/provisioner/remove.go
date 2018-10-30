@@ -12,7 +12,7 @@ func removeCommand() cli.Command {
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove one, or more, provisioners from the CA configuration",
-		UsageText: `**step ca provisioner remove** <issuer>
+		UsageText: `**step ca provisioner remove** <name>
 		[**--kid**=<kid>] [**--config**=<file>] [**--all**]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -25,7 +25,7 @@ func removeCommand() cli.Command {
 			},
 			cli.BoolFlag{
 				Name: "all",
-				Usage: `Remove all provisioners with a given issuer. Cannot be
+				Usage: `Remove all provisioners with a given name. Cannot be
 used in combination w/ the **--kid** flag.`,
 			},
 		},
@@ -34,17 +34,17 @@ from the configuration and writes the new configuration back to the CA config.
 
 ## POSITIONAL ARGUMENTS
 
-<issuer>
-: The issuer field of the provisioner(s) to be removed.
+<name>
+: The name field of the provisioner(s) to be removed.
 
 ## EXAMPLES
 
-Remove all provisioners associated with a given issuer (max@smallstep.com):
+Remove all provisioners associated with a given name (max@smallstep.com):
 '''
 $ step ca provisioner remove max@smallstep.com --all --ca-config ca.json
 '''
 
-Remove the provisioner matching a given issuer and kid:
+Remove the provisioner matching a given name and kid:
 '''
 $ step ca provisioner remove max@smallstep. --kid 1234 --ca-config ca.json
 '''`,
@@ -56,7 +56,7 @@ func removeAction(ctx *cli.Context) error {
 		return err
 	}
 
-	issuer := ctx.Args().Get(0)
+	name := ctx.Args().Get(0)
 	config := ctx.String("ca-config")
 	all := ctx.Bool("all")
 	kid := ctx.String("kid")
@@ -85,7 +85,7 @@ func removeAction(ctx *cli.Context) error {
 		found        = false
 	)
 	for _, p := range c.AuthorityConfig.Provisioners {
-		if p.Issuer != issuer {
+		if p.Name != name {
 			provisioners = append(provisioners, p)
 			continue
 		}
@@ -98,9 +98,9 @@ func removeAction(ctx *cli.Context) error {
 
 	if !found {
 		if all {
-			return errors.Errorf("no provisioners with issuer %s found", issuer)
+			return errors.Errorf("no provisioners with name %s found", name)
 		}
-		return errors.Errorf("no provisioners with issuer=%s and kid=%s found", issuer, kid)
+		return errors.Errorf("no provisioners with name=%s and kid=%s found", name, kid)
 	}
 
 	c.AuthorityConfig.Provisioners = provisioners

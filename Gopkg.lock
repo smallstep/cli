@@ -297,7 +297,7 @@
 
 [[projects]]
   branch = "max/refactor"
-  digest = "1:f7e5ef02869913c6576d836bcf9ce6779e54e802846d4d5154519950fd24f12f"
+  digest = "1:67590ad34c812f584517d1bb705a0cc6ada039b59bf04d02522f30b0920c4669"
   name = "github.com/smallstep/ca-component"
   packages = [
     "api",
@@ -308,7 +308,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "151ccdf65e3afba019683f0d78e89d2f083f050c"
+  revision = "0d5bd3a050f7e7a329a73c453f2054cad0246203"
 
 [[projects]]
   branch = "master"

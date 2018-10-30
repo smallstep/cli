@@ -177,17 +177,18 @@ func newTokenAction(ctx *cli.Context) error {
 		return errors.New("cannot create a new token: the CA does not have any provisioner configured")
 	}
 
+	// Provisioner name becomes the token issuer
 	if len(provisioners) == 1 && len(kid) == 0 {
 		kid = provisioners[0].Key.KeyID
-		issuer = provisioners[0].Issuer
+		issuer = provisioners[0].Name
 	}
 
 	if len(kid) == 0 {
 		var items []*provisionersSelect
 		for _, p := range provisioners {
 			items = append(items, &provisionersSelect{
-				Name:   p.Key.KeyID + " (" + p.Issuer + ")",
-				Issuer: p.Issuer,
+				Name:   p.Key.KeyID + " (" + p.Name + ")",
+				Issuer: p.Name,
 				JWK:    *p.Key,
 			})
 		}
@@ -202,7 +203,7 @@ func newTokenAction(ctx *cli.Context) error {
 		for _, p := range provisioners {
 			if kid == p.Key.KeyID {
 				found = true
-				issuer = p.Issuer
+				issuer = p.Name
 				break
 			}
 		}
