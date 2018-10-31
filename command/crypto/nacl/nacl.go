@@ -31,10 +31,7 @@ languages. For internal use cases where compatibility with open standards like
 JWT are not an issue, NaCl should be your default choice for cryptographic
 needs.
 
-TODO: Are we NaCl or libsodium compliant? Maybe have a flag at this level to
-decide? The golang default is libsodium compatible. I think all that changes
-are the defaults for the 'box' operations -- NaCl doesn't support Curve25519
-yet.`,
+For more information on NaCl visit https://nacl.cr.yp.to`,
 		Subcommands: cli.Commands{
 			authCommand(),
 			boxCommand(),
