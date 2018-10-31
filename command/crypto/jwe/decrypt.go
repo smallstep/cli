@@ -27,10 +27,10 @@ For examples, see **step help crypto jwe**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The JWE recipient's private key. The <key> argument should be the name of a
-file containing a private JWK (or a JWK encrypted as a JWE payload) or a PEM
-encoded private key (or a private key encrypted using [TODO: insert private
-key encryption mechanism]).`,
+				Usage: `The JWE recipient's private key. The <key> argument should be the name of a file
+containing a private JWK (or a JWK encrypted as a JWE payload) or a PEM encoded
+private key (or a private key encrypted using the modes described on RFC 1423 or
+with PBES2+PBKDF2 described in RFC 2898).`,
 			},
 			cli.StringFlag{
 				Name: "jwks",

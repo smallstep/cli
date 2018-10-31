@@ -129,9 +129,9 @@ performed by the JWS application. Use of <content-type> is optional.`,
 			cli.StringFlag{
 				Name: "key",
 				Usage: `The key to use to sign the JWS. The <key> argument should be the name of a file.
-JWSs can be signed using a private JWK (or a JWK encrypted as a JWE payload)
-or a PEM encoded private key (or a private key encrypted using [TODO: insert
-private key encryption mechanism]).`,
+JWSs can be signed using a private JWK (or a JWK encrypted as a JWE payload) or
+a PEM encoded private key (or a private key encrypted using the modes described
+on RFC 1423 or with PBES2+PBKDF2 described in RFC 2898).`,
 			},
 			cli.StringFlag{
 				Name: "jwks",
