@@ -166,7 +166,12 @@ func newCertificateAction(ctx *cli.Context) error {
 
 	token := ctx.String("token")
 	if len(token) == 0 {
-		return errs.RequiredFlag(ctx, "token")
+		// Start token flow
+		if tok, err := signCertificateTokenFlow(ctx); err == nil {
+			token = tok
+		} else {
+			return err
+		}
 	}
 
 	req, pk, err := ca.CreateSignRequest(token)
@@ -178,7 +183,7 @@ func newCertificateAction(ctx *cli.Context) error {
 		return errors.Errorf("token subject '%s' and hostname '%s' do not match", req.CsrPEM.Subject.CommonName, hostname)
 	}
 
-	if err := signCertificateRequest(ctx, req.CsrPEM, crtFile); err != nil {
+	if err := signCertificateRequest(ctx, token, req.CsrPEM, crtFile); err != nil {
 		return err
 	}
 
@@ -199,11 +204,6 @@ func signCertificateAction(ctx *cli.Context) error {
 	csrFile := args.Get(0)
 	crtFile := args.Get(1)
 
-	token := ctx.String("token")
-	if len(token) == 0 {
-		return errs.RequiredFlag(ctx, "token")
-	}
-
 	csrInt, err := pemutil.Read(csrFile)
 	if err != nil {
 		return err
@@ -214,7 +214,17 @@ func signCertificateAction(ctx *cli.Context) error {
 		return errors.Errorf("error parsing %s: file is not a certificate request", csrFile)
 	}
 
-	if err := signCertificateRequest(ctx, api.NewCertificateRequest(csr), crtFile); err != nil {
+	token := ctx.String("token")
+	if len(token) == 0 {
+		// Start token flow
+		if tok, err := signCertificateTokenFlow(ctx); err == nil {
+			token = tok
+		} else {
+			return err
+		}
+	}
+
+	if err := signCertificateRequest(ctx, token, api.NewCertificateRequest(csr), crtFile); err != nil {
 		return err
 	}
 
@@ -226,14 +236,41 @@ type tokenClaims struct {
 	jose.Claims
 }
 
-func signCertificateRequest(ctx *cli.Context, csr api.CertificateRequest, crtFile string) error {
+func signCertificateTokenFlow(ctx *cli.Context) (string, error) {
+	caURL := ctx.String("ca-url")
+	if len(caURL) == 0 {
+		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
+	}
+
+	root := ctx.String("root")
+	if len(root) == 0 {
+		root = pki.GetRootCAPath()
+		if _, err := os.Stat(root); err != nil {
+			return "", errs.RequiredUnlessFlag(ctx, "root", "token")
+		}
+	}
+
+	// parse times or durations
+	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
+	if !ok {
+		return "", errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, ok := parseTimeOrDuration(ctx.String("not-after"))
+	if !ok {
+		return "", errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+
+	subject, err := ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
+	if err != nil {
+		return "", err
+	}
+
+	return newTokenFlow(ctx, subject, caURL, root, "", "", "", notBefore, notAfter)
+}
+
+func signCertificateRequest(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {
 	root := ctx.String("root")
 	caURL := ctx.String("ca-url")
-
-	token := ctx.String("token")
-	if len(token) == 0 {
-		return errs.RequiredFlag(ctx, "token")
-	}
 
 	// parse times or durations
 	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))

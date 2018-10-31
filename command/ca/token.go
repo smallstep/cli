@@ -102,7 +102,6 @@ the certificate authority.`,
 }
 
 func newTokenAction(ctx *cli.Context) error {
-	var issuer string
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
@@ -126,12 +125,6 @@ func newTokenAction(ctx *cli.Context) error {
 		}
 	}
 
-	audience, err := url.Parse(caURL)
-	if err != nil || audience.Scheme != "https" {
-		return errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
-	}
-	audience = audience.ResolveReference(&url.URL{Path: "/1.0/sign"})
-
 	// parse times or durations
 	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
 	if !ok {
@@ -142,16 +135,36 @@ func newTokenAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 
-	provisioners, err := pki.GetProvisioners(caURL, root)
+	token, err := newTokenFlow(ctx, subject, caURL, root, kid, passwordFile, keyFile, notBefore, notAfter)
 	if err != nil {
 		return err
 	}
+	if len(outputFile) > 0 {
+		return utils.WriteFile(outputFile, []byte(token), 0600)
+	}
+	fmt.Println(token)
+	return nil
+}
+
+// newTokenFlow implements the common flow used to generate a token
+func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, passwordFile, keyFile string, notBefore, notAfter time.Time) (string, error) {
+	audience, err := url.Parse(caURL)
+	if err != nil || audience.Scheme != "https" {
+		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
+	}
+	audience = audience.ResolveReference(&url.URL{Path: "/1.0/sign"})
+
+	provisioners, err := pki.GetProvisioners(caURL, root)
+	if err != nil {
+		return "", err
+	}
 
 	if len(provisioners) == 0 {
-		return errors.New("cannot create a new token: the CA does not have any provisioner configured")
+		return "", errors.New("cannot create a new token: the CA does not have any provisioner configured")
 	}
 
 	// Provisioner name becomes the token issuer
+	var issuer string
 	if len(provisioners) == 1 && len(kid) == 0 {
 		kid = provisioners[0].Key.KeyID
 		issuer = provisioners[0].Name
@@ -168,7 +181,7 @@ func newTokenAction(ctx *cli.Context) error {
 		}
 		i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
 		if err != nil {
-			return err
+			return "", err
 		}
 		kid = items[i].JWK.KeyID
 		issuer = items[i].Issuer
@@ -182,12 +195,12 @@ func newTokenAction(ctx *cli.Context) error {
 			}
 		}
 		if !found {
-			return errs.InvalidFlagValue(ctx, "kid", kid, "")
+			return "", errs.InvalidFlagValue(ctx, "kid", kid, "")
 		}
 
 		// Prints kid/issuer used
 		if err := ui.PrintSelected("Key ID", kid+" ("+issuer+")"); err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -201,30 +214,30 @@ func newTokenAction(ctx *cli.Context) error {
 		// Get private key from CA
 		encrypted, err := pki.GetProvisionerKey(caURL, root, kid)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key:", []byte(encrypted), opts...)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		jwk = new(jose.JSONWebKey)
 		if err := json.Unmarshal(decrypted, jwk); err != nil {
-			return errors.Wrap(err, "error unmarshalling provisioning key")
+			return "", errors.Wrap(err, "error unmarshalling provisioning key")
 		}
 	} else {
 		// Get private key from given key file
 		jwk, err = jose.ParseKey(keyFile, opts...)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
 	// A random jwt id will be used to identify duplicated tokens
 	jwtID, err := randutil.Hex(64) // 256 bits
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Generate token
@@ -248,19 +261,10 @@ func newTokenAction(ctx *cli.Context) error {
 
 	tok, err := provision.New(subject, tokOptions...)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	token, err := tok.SignedString(jwk.Algorithm, jwk.Key)
-	if err != nil {
-		return err
-	}
-
-	if len(outputFile) > 0 {
-		return utils.WriteFile(outputFile, []byte(token), 0600)
-	}
-	fmt.Println(token)
-	return nil
+	return tok.SignedString(jwk.Algorithm, jwk.Key)
 }
 
 func parseTimeOrDuration(s string) (time.Time, bool) {
