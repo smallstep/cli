@@ -34,7 +34,7 @@ with the following properties:
 
 * **name**: the provisioner name, it will become the JWT issuer and a good
   practice is to use an email address for this.
-* **type**: the provisioner type, currently only "jwt" is supported.
+* **type**: the provisioner type, currently only "jwk" is supported.
 * **key**: the JWK public key used to verify the provisioning tokens.
 * **encryptedKey** (optional): the JWE compact serialization of the private key
   used to sign the provisioning tokens.
