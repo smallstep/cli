@@ -104,9 +104,5 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	c.AuthorityConfig.Provisioners = provisioners
-	if err := c.Save(config); err != nil {
-		return err
-	}
-
-	return nil
+	return c.Save(config)
 }

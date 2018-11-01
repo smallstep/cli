@@ -224,11 +224,7 @@ func signCertificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	if err := signCertificateRequest(ctx, token, api.NewCertificateRequest(csr), crtFile); err != nil {
-		return err
-	}
-
-	return nil
+	return signCertificateRequest(ctx, token, api.NewCertificateRequest(csr), crtFile)
 }
 
 type tokenClaims struct {
@@ -339,11 +335,7 @@ func signCertificateRequest(ctx *cli.Context, token string, csr api.CertificateR
 		return err
 	}
 	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
-	if err := utils.WriteFile(crtFile, data, 0600); err != nil {
-		return err
-	}
-
-	return nil
+	return utils.WriteFile(crtFile, data, 0600)
 }
 
 func renewCertificateAction(ctx *cli.Context) error {
@@ -415,9 +407,6 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
-	if err := utils.WriteFile(outFile, data, 0600); err != nil {
-		return err
-	}
 
-	return nil
+	return utils.WriteFile(outFile, data, 0600)
 }

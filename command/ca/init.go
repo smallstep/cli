@@ -143,11 +143,7 @@ func initAction(ctx *cli.Context) error {
 
 	fmt.Println("all done!")
 
-	if err = p.Save(); err != nil {
-		return err
-	}
-
-	return nil
+	return p.Save()
 }
 
 // assertCrytoRand asserts that a cryptographically secure random number
