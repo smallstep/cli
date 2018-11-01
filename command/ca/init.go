@@ -89,7 +89,7 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	provisioner, err := ui.Prompt("What first provisioner name would like to add in the new CA? (e.g. you@smallstep.com)", ui.WithValidateNotEmpty())
+	provisioner, err := ui.Prompt("What first provisioner name would you like to add in the new CA? (e.g. you@smallstep.com)", ui.WithValidateNotEmpty())
 	if err != nil {
 		return err
 	}
@@ -108,12 +108,12 @@ func initAction(ctx *cli.Context) error {
 	p.SetAddress(address)
 	p.SetDNSNames(dnsNames)
 
-	// Generate ott and ssh key pairs
+	// Generate ott key pairs.
 	if err := p.GenerateKeyPairs(pass); err != nil {
 		return err
 	}
 
-	// Generate root certificate if not set
+	// Generate root certificate if not set.
 	if rootCrt == nil && rootKey == nil {
 		fmt.Println()
 		fmt.Print("Generating root certificate... \n")

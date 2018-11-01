@@ -1,8 +1,6 @@
 package pki
 
 import (
-	"crypto"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -15,7 +13,6 @@ import (
 	"github.com/smallstep/ca-component/ca"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/crypto/tlsutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
@@ -34,17 +31,6 @@ const (
 	// PublicPath is the directory name under the step path where the private keys
 	// will be stored.
 	privatePath = "secrets"
-)
-
-const (
-	// OTTKeyType is the default type of the one-time token key.
-	OTTKeyType = jose.EC
-	// OTTKeyCurve is the default curve of the one-time token key.
-	OTTKeyCurve = jose.P256
-	// OTTKeyAlg is the default algorithm of the one-time token key.
-	OTTKeyAlg = jose.ES256
-	// OTTKeySize is the default size of the one-time token key.
-	OTTKeySize = 0
 )
 
 // GetConfigPath returns the directory where the configuration files are stored
@@ -200,8 +186,7 @@ func (p *PKI) SetDNSNames(s []string) {
 func (p *PKI) GenerateKeyPairs(pass []byte) error {
 	var err error
 	// Create OTT key pair, the user doesn't need to know about this.
-	// Created in default secrets directory because it is required by `new-token`.
-	p.ottPublicKey, p.ottPrivateKey, err = generateOTTKeyPair(pass)
+	p.ottPublicKey, p.ottPrivateKey, err = jose.GenerateDefaultKeyPair(pass)
 	if err != nil {
 		return err
 	}
@@ -307,58 +292,4 @@ func (p *PKI) Save() error {
 	fmt.Println("Your PKI is ready to go. To generate certificates for individual services see 'step help ca'.")
 
 	return nil
-}
-
-// generateOTTKeyPair generates a keypair using the default crypto algorithms.
-// This key pair will be used to sign/verify one-time-tokens.
-func generateOTTKeyPair(pass []byte) (*jose.JSONWebKey, *jose.JSONWebEncryption, error) {
-	if len(pass) == 0 {
-		return nil, nil, errors.New("password cannot be empty when initializing simple pki")
-	}
-
-	// Generate the OTT key
-	jwk, err := jose.GenerateJWK(OTTKeyType, OTTKeyCurve, OTTKeyAlg, "sig", "", OTTKeySize)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// The thumbprint is computed from the public key
-	hash, err := jwk.Thumbprint(crypto.SHA256)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "error generating JWK thumbprint")
-	}
-	jwk.KeyID = base64.RawURLEncoding.EncodeToString(hash)
-
-	b, err := json.Marshal(jwk)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "error marshaling JWK")
-	}
-
-	// Encrypt private key using PBES2
-	salt, err := randutil.Salt(jose.PBKDF2SaltSize)
-	if err != nil {
-		return nil, nil, err
-	}
-	recipient := jose.Recipient{
-		Algorithm:  jose.PBES2_HS256_A128KW,
-		Key:        pass,
-		PBES2Count: jose.PBKDF2Iterations,
-		PBES2Salt:  salt,
-	}
-
-	opts := new(jose.EncrypterOptions)
-	opts.WithContentType(jose.ContentType("jwk+json"))
-
-	encrypter, err := jose.NewEncrypter(jose.DefaultEncAlgorithm, recipient, opts)
-	if err != nil {
-		return nil, nil, errs.Wrap(err, "error creating cipher")
-	}
-
-	jwe, err := encrypter.Encrypt(b)
-	if err != nil {
-		return nil, nil, errs.Wrap(err, "error encrypting data")
-	}
-
-	public := jwk.Public()
-	return &public, jwe, nil
 }
