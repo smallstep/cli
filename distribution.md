@@ -44,7 +44,7 @@ e.g. `v1.0.2`
         is a release candidate, say `v1.0.2-rc.3`, then the version of the next
         standard release should be `v1.0.3`.
 
-3. Update the debian [changelog](./debian/changelog).
+3. Update the [debian/changelog](./debian/changelog).
 
     1. Update the version to match the tag selected in the previous step. Leave
     off the `v` prefix.
