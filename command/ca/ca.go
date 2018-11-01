@@ -10,10 +10,9 @@ import (
 func init() {
 	cmd := cli.Command{
 		Name:      "ca",
-		Usage:     "TODO",
+		Usage:     "initialize and manage a certificate authority",
 		UsageText: "step ca <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `
-**step ca** command group provides facilities initialize a certificate
+		Description: `**step ca** command group provides facilities initialize a certificate
 authority, sign and renew certificate, ...
 
 ## Examples
