@@ -2,7 +2,7 @@ package provisioner
 
 import (
 	"github.com/pkg/errors"
-	"github.com/smallstep/ca-component/authority"
+	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )

@@ -46,9 +46,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:454adc7f974228ff789428b6dc098638c57a64aa0718f0bd61e53d3cd39d7a75"
+  digest = "1:5f3371d6e432e3c4e0ceabb14b5c0679827ce8b96bbd963fa923977782e8e99b"
   name = "github.com/chzyer/readline"
-  packages = ["."]
+  packages = [
+    ".",
+    "runes",
+  ]
   pruneopts = "UT"
   revision = "2972be24d48e78746da79ba8e24e8b488c9880de"
 
@@ -72,12 +75,12 @@
   revision = "2b8494104d86337cdd41d0a49cbed8e4583c0ab4"
 
 [[projects]]
-  digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = "UT"
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -88,12 +91,15 @@
   revision = "0ebf7795c516423a110473652e9ba3a59a504863"
 
 [[projects]]
-  branch = "master"
-  digest = "1:4ee452f8994700dcab9e816aef1cb9eb2317218734c6ccf5135746e6c19f3dce"
+  branch = "travis-1.9"
+  digest = "1:e8f5d9c09a7209c740e769713376abda388c41b777ba8e9ed52767e21acf379f"
   name = "github.com/golang/lint"
-  packages = ["golint"]
+  packages = [
+    ".",
+    "golint",
+  ]
   pruneopts = "UT"
-  revision = "06c8688daad7faa9da5a0c2f163a3d14aac986ca"
+  revision = "883fe33ffc4344bad1ecd881f61afd5ec5d80e0a"
 
 [[projects]]
   branch = "master"
@@ -105,11 +111,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:78010c43f45797f252007611599b5eb3d3752775305f9aa68669c318a54c6230"
+  digest = "1:824d147914b40e56e9e1eebd602bc6bb9761989d52fd8e4a498428467980eb17"
   name = "github.com/gordonklaus/ineffassign"
   packages = ["."]
   pruneopts = "UT"
-  revision = "3fd9b69f2fb179405773f03d33c68a00f3a1ca4a"
+  revision = "1003c8bd00dc2869cb5ca5282e6ce33834fed514"
 
 [[projects]]
   branch = "master"
@@ -296,9 +302,9 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "max/refactor"
-  digest = "1:67590ad34c812f584517d1bb705a0cc6ada039b59bf04d02522f30b0920c4669"
-  name = "github.com/smallstep/ca-component"
+  branch = "master"
+  digest = "1:d8bad241aed7d771c1018f0f8985c189d73fa27a4fcdbeaf06d4e72d80e32d9a"
+  name = "github.com/smallstep/certificates"
   packages = [
     "api",
     "authority",
@@ -308,19 +314,19 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "0d5bd3a050f7e7a329a73c453f2054cad0246203"
+  revision = "05c82b2c5d89f6027305566da9401a628d035cd8"
 
 [[projects]]
   branch = "master"
-  digest = "1:f490007bef7b9bf8a00a944a344f4bdd492d912be561835740e20c9ad6682641"
+  digest = "1:c21748269676302d24f6c86cb11c95f9fb80a29750eb73b2ee89377a148d6378"
   name = "github.com/smallstep/certinfo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ffb96c45c4dc20b1e91a9106edeee278c65f3bcc"
+  revision = "b5f8cf3f6d0c3685fe68a2fdee7e0df32c2e6739"
 
 [[projects]]
   branch = "master"
-  digest = "1:18c8b38aecd468bbd496aab28789cc3d39b5df3b8f78b38e725f7dff8e713d53"
+  digest = "1:a269b4157cb66815858bf50ff738cc127003fa153f877eee97b99b9b3c86a3bf"
   name = "github.com/smallstep/zcrypto"
   packages = [
     "json",
@@ -329,7 +335,7 @@
     "x509/pkix",
   ]
   pruneopts = "UT"
-  revision = "1328e3bc4465a400be1fef13183e3e539932ab91"
+  revision = "bc17bc261e409b0d18f8101b81c8d09b67155953"
 
 [[projects]]
   branch = "master"
@@ -364,11 +370,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:189a0e6e9c657bb662bafc41a796360d11c88eed7614b1b6f003b8fbc8847e5e"
+  digest = "1:6743b69de0d73e91004e4e201cf4965b59a0fa5caf6f0ffbe0cb9ee8807738a7"
   name = "github.com/urfave/cli"
   packages = ["."]
   pruneopts = "UT"
-  revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
+  revision = "b67dcf995b6a7b7f14fad5fcb7cc5441b05e814b"
 
 [[projects]]
   digest = "1:85b62e63f8afa600b67a591be9152c6479ce4f796ba77d91bcb0b9132265cb24"
@@ -380,7 +386,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2f87cf7c69807dcfd3118a6c560eb6dae52a33fd4f2b9a66ce51a330a4c0e7eb"
+  digest = "1:f8b267e57349247df4ee850da3ea1f3301f3f4c2691a8dc6ce8c1226db35c3a7"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
@@ -404,19 +410,11 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "c126467f60eb25f8f27e5a981f32a87e3965053f"
+  revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
 
 [[projects]]
   branch = "master"
-  digest = "1:9238d4d6fdc7b3859e37764c86d02625b74e0c76cd1faae3677735d5c5129724"
-  name = "golang.org/x/lint"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "06c8688daad7faa9da5a0c2f163a3d14aac986ca"
-
-[[projects]]
-  branch = "master"
-  digest = "1:2ed8fddcbc6e5cc5a93587b762226e098bde951bf18845ec6d4afad9c457ca80"
+  digest = "1:acfafa29853fd970d5d5ac6ca3b7350b5aef5999196d32bb9b049e21c8caf726"
   name = "golang.org/x/net"
   packages = [
     "html",
@@ -427,11 +425,11 @@
     "idna",
   ]
   pruneopts = "UT"
-  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
+  revision = "c44066c5c816ec500d459a2a324a753f78531ae0"
 
 [[projects]]
   branch = "master"
-  digest = "1:9b8bb56f0e06c89f6ebfd381ffcac0dea3fb4b262be9bea2a941a6e4ec1842e1"
+  digest = "1:7e2cb6c95ac3f1ff730a61ec4ce423a1857c7c6c28abafd8fabae25d80ccb667"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -439,7 +437,7 @@
     "windows",
   ]
   pruneopts = "UT"
-  revision = "e072cadbbdc8dd3d3ffa82b8b4b9304c261d9311"
+  revision = "9b800f95dbbc54abff0acf7ee32d88ba4e328c89"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -466,7 +464,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f0115f93e7033e540d519256ce20b99fb8cf81f3bfe72dac00898df686890905"
+  digest = "1:384310e8a567edf6d5406d93318f9460c2d8db1a07ff5b6fece95b224343e7f1"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -475,7 +473,7 @@
     "go/types/typeutil",
   ]
   pruneopts = "UT"
-  revision = "475b7a1e12f029fbb4d210958352057952ea9f7a"
+  revision = "3a10b9bf0a52df7e992a8c3eb712a86d3c896c75"
 
 [[projects]]
   digest = "1:39efb07a0d773dc09785b237ada4e10b5f28646eb6505d97bc18f8d2ff439362"
@@ -523,9 +521,9 @@
     "github.com/samfoo/ansi",
     "github.com/shurcooL/sanitized_anchor_name",
     "github.com/smallstep/assert",
-    "github.com/smallstep/ca-component/api",
-    "github.com/smallstep/ca-component/authority",
-    "github.com/smallstep/ca-component/ca",
+    "github.com/smallstep/certificates/api",
+    "github.com/smallstep/certificates/authority",
+    "github.com/smallstep/certificates/ca",
     "github.com/smallstep/certinfo",
     "github.com/smallstep/zcrypto/x509",
     "github.com/smallstep/zlint",
