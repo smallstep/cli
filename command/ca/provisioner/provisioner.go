@@ -24,10 +24,10 @@ Provisioning credentials are simple JWK key pairs using public-key cryptography.
 The public key is used to verify a provisioning token while the private key is
 used to sign the provisioning token.
 
-Provisioning tokens are JWT tokens signed by the JWK private key and are used to
-get a valid TLS certificate from the certificate authority. Each provisioner
-manages a different set of rules that can be used to set the bounds of the
-certificate.
+Provisioning tokens are JWT tokens signed by the JWK private key. These JWT
+tokens are used to get a valid TLS certificate from the certificate authority.
+Each provisioner is able to manage a different set of rules that can be used to
+configure the bounds of the certificate.
 
 In the certificate authority, a provisioner is configured with a JSON object
 with the following properties:
