@@ -19,7 +19,7 @@ func signCommand() cli.Command {
 		Usage:     "signs small messages using public-key cryptography",
 		UsageText: "step crypto nacl sign <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto nacl sign** command group uses public-key cryptography to sign and
-verify messages. The implementation is based on NaCl crypto_sign functions.
+verify messages. The implementation is based on NaCl's crypto_sign function.
 
 NaCl crypto_sign function is designed to meet the standard notion of
 unforgeability for a public-key signature scheme under chosen-message attacks.
@@ -71,7 +71,7 @@ func signKeypairCommand() cli.Command {
 		Description: `**step crypto nacl sign keypair** generates a secret key and a corresponding
 public key valid for verifying and signing messages.
 
-This command uses an implementation of the NaCl crypto_sign_keypair function.
+This command uses an implementation of NaCl's crypto_sign_keypair function.
 
 For examples, see **step help crypto nacl sign**.`,
 	}
@@ -86,7 +86,7 @@ func signOpenCommand() cli.Command {
 		Description: `**step crypto nacl sign open** verifies the signature of a message using the
 signer's public key.
 
-This command uses an implementation of the NaCl crypto_sign_open function.
+This command uses an implementation of NaCl's crypto_sign_open function.
 
 For examples, see **step help crypto nacl sign**.`,
 		Flags: []cli.Flag{
@@ -107,7 +107,7 @@ func signSignCommand() cli.Command {
 		Description: `**step crypto nacl sign sign** signs a message m using the signer's private
 key.
 
-This command uses an implementation of the NaCl crypto_sign function.
+This command uses an implementation of NaCl's crypto_sign function.
 
 For examples, see **step help crypto nacl sign**.`,
 		Flags: []cli.Flag{

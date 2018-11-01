@@ -18,8 +18,8 @@ func authCommand() cli.Command {
 		Usage:     "authenticates a message using a secret key",
 		UsageText: "step crypto nacl auth <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto nacl auth** command group uses secret key cryptography to
-authenticate and verify messages using a secret key. The implementation is based on NaCl
-crypto_auth functions.
+authenticate and verify messages using a secret key. The implementation is based on NaCl's
+crypto_auth function.
 
 NaCl crypto_auth function, viewed as a function of the message for a uniform
 random key, is designed to meet the standard notion of unforgeability. This
@@ -79,7 +79,7 @@ func authDigestCommand() cli.Command {
 		Description: `**step crypto nacl auth digest** creates a digest to authenticate the message
 coming from STDIN using the given secret key.
 
-This command uses an implementation of the NaCl crypto_auth function.
+This command uses an implementation of NaCl's crypto_auth function.
 
 For examples, see **step help crypto nacl auth**.`,
 	}
@@ -94,7 +94,7 @@ func authVerifyCommand() cli.Command {
 		Description: `**step crypto nacl auth verify** checks that the digest is a valid authenticator
 of the message coming from STDIN under the given secret key file.
 
-This command uses an implementation of the NaCl crypto_auth_verify function.
+This command uses an implementation of NaCl's crypto_auth_verify function.
 
 For examples, see **step help crypto nacl auth**.`,
 	}

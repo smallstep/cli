@@ -19,8 +19,8 @@ func boxCommand() cli.Command {
 		Usage:     "authenticate and encrypt small messages using public-key cryptography",
 		UsageText: "step crypto nacl box <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto nacl box** command group uses public-key cryptography to encrypt,
-decrypt and authenticate messages. The implementation is based on NaCl
-crypto_box functions.
+decrypt and authenticate messages. The implementation is based on NaCl's
+crypto_box function.
 
 NaCl crypto_box function is designed to meet the standard notions of
 privacy and third-party unforgeability for a public-key authenticated-encryption
@@ -99,7 +99,7 @@ func boxKeypairCommand() cli.Command {
 		Description: `Generates a new public/private keypair suitable for use with seal and open.
 The private key is encrypted using a password in a nacl secretbox.
 
-This command uses an implementation of the NaCl crypto_box_keypair function.
+This command uses an implementation of NaCl's crypto_box_keypair function.
 
 For examples, see **step help crypto nacl box**.
 
@@ -124,7 +124,7 @@ func boxOpenCommand() cli.Command {
 PRIV_KEY is encrypted you will be prompted for the password. The sealed box is
 read from STDIN and the decrypted plaintext is written to STDOUT.
 
-This command uses an implementation of the NaCl crypto_box_open function.
+This command uses an implementation of NaCl's crypto_box_open function.
 
 For examples, see **step help crypto nacl box**.
 
@@ -158,7 +158,7 @@ func boxSealCommand() cli.Command {
 ciphertext to STDOUT. The "box" can be open by the a recipient who has access
 to the private key corresponding to <recipient-pub-key>.
 
-This command uses an implementation of the NaCl crypto_box function.
+This command uses an implementation of NaCl's crypto_box function.
 
 For examples, see **step help crypto nacl box**.
 

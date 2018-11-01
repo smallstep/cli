@@ -18,8 +18,8 @@ func secretboxCommand() cli.Command {
 		Usage:     "encrypts and authenticates small messages using secret-key cryptography",
 		UsageText: "step crypto nacl secretbox <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto nacl secretbox** command group uses secret-key cryptography to
-encrypt, decrypt and authenticate messages. The implementation is based on NaCl
-crypto_secretbox functions.
+encrypt, decrypt and authenticate messages. The implementation is based on NaCl's
+crypto_secretbox function.
 
 NaCl crypto_secretbox is designed to meet the standard notions of privacy and
 authenticity for a secret-key authenticated-encryption scheme using nonces. For
@@ -74,7 +74,7 @@ func secretboxOpenCommand() cli.Command {
 		Description: `**step crypto nacl secretbox open** verifies and decrypts a ciphertext using a
 secret key and a nonce.
 
-This command uses an implementation of the NaCl crypto_secretbox_open function.
+This command uses an implementation of NaCl's crypto_secretbox_open function.
 
 For examples, see **step help crypto nacl secretbox**.`,
 		Flags: []cli.Flag{
@@ -96,7 +96,7 @@ func secretboxSealCommand() cli.Command {
 		Description: `**step crypto nacl secretbox seal** encrypts and authenticates a message using
 a secret key and a nonce.
 
-This command uses an implementation of the NaCl crypto_secretbox function.
+This command uses an implementation of NaCl's crypto_secretbox function.
 
 For examples, see **step help crypto nacl secretbox**.`,
 		Flags: []cli.Flag{
