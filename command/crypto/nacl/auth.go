@@ -77,7 +77,7 @@ func authDigestCommand() cli.Command {
 		Usage:     "generates a 32-byte digest for a message",
 		UsageText: "**step crypto nacl auth digest** <key-file>",
 		Description: `**step crypto nacl auth digest** creates a digest to authenticate the message
-coming from STDIN using the given secret key.
+is read from STDIN using the given secret key.
 
 This command uses an implementation of NaCl's crypto_auth function.
 
@@ -92,7 +92,7 @@ func authVerifyCommand() cli.Command {
 		Usage:     "checks digest is a valid for a message",
 		UsageText: "**step crypto nacl auth verify** <key-file> <digest>",
 		Description: `**step crypto nacl auth verify** checks that the digest is a valid authenticator
-of the message coming from STDIN under the given secret key file.
+of the message is read from STDIN under the given secret key file.
 
 This command uses an implementation of NaCl's crypto_auth_verify function.
 
