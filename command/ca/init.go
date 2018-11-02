@@ -84,7 +84,7 @@ func initAction(ctx *cli.Context) error {
 		dnsNames = append(dnsNames, strings.TrimSpace(name))
 	}
 
-	address, err := ui.Prompt("What address would your new CA will be listening at? (e.g. :443)", ui.WithValidateFunc(ui.Address()))
+	address, err := ui.Prompt("What address will your new CA listen at? (e.g. :443)", ui.WithValidateFunc(ui.Address()))
 	if err != nil {
 		return err
 	}
