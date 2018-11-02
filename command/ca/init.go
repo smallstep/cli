@@ -70,7 +70,7 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com)", ui.WithValidateFunc(ui.DNS()))
+	names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])", ui.WithValidateFunc(ui.DNS()))
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	provisioner, err := ui.Prompt("What first provisioner name would you like to add in the new CA? (e.g. you@smallstep.com)", ui.WithValidateNotEmpty())
+	provisioner, err := ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)", ui.WithValidateNotEmpty())
 	if err != nil {
 		return err
 	}
