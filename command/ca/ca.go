@@ -111,6 +111,11 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 		Usage: "The provisioner <kid> to use.",
 	}
 
+	provisionerIssuerFlag = cli.StringFlag{
+		Name:  "issuer",
+		Usage: "The provisioner <name> to use.",
+	}
+
 	passwordFileFlag = cli.StringFlag{
 		Name: "password-file",
 		Usage: `The path to the <file> containing the password to decrypt the one-time token

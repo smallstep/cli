@@ -261,7 +261,7 @@ func signCertificateTokenFlow(ctx *cli.Context) (string, error) {
 		return "", err
 	}
 
-	return newTokenFlow(ctx, subject, caURL, root, "", "", "", notBefore, notAfter)
+	return newTokenFlow(ctx, subject, caURL, root, "", "", "", "", notBefore, notAfter)
 }
 
 func signCertificateRequest(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
@@ -31,7 +32,7 @@ func newTokenCommand() cli.Command {
 		Action: cli.ActionFunc(newTokenAction),
 		Usage:  "generates an OTT granting access to the CA",
 		UsageText: `**step ca new-token** <hostname>
-		[--**kid**=<kid>] [**--ca-url**=<uri>] [**--root**=<file>]
+		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]`,
 		Description: `**step ca new-token** command generates a one-time token granting access to the
@@ -83,6 +84,7 @@ $ step ca new-token internal.example.com \
 '''`,
 		Flags: []cli.Flag{
 			provisionerKidFlag,
+			provisionerIssuerFlag,
 			caURLFlag,
 			rootFlag,
 			notBeforeFlag,
@@ -108,6 +110,7 @@ func newTokenAction(ctx *cli.Context) error {
 
 	subject := ctx.Args().Get(0)
 	kid := ctx.String("kid")
+	issuer := ctx.String("issuer")
 	passwordFile := ctx.String("password-file")
 	outputFile := ctx.String("output-file")
 	keyFile := ctx.String("key")
@@ -135,7 +138,7 @@ func newTokenAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 
-	token, err := newTokenFlow(ctx, subject, caURL, root, kid, passwordFile, keyFile, notBefore, notAfter)
+	token, err := newTokenFlow(ctx, subject, caURL, root, kid, issuer, passwordFile, keyFile, notBefore, notAfter)
 	if err != nil {
 		return err
 	}
@@ -147,7 +150,7 @@ func newTokenAction(ctx *cli.Context) error {
 }
 
 // newTokenFlow implements the common flow used to generate a token
-func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, passwordFile, keyFile string, notBefore, notAfter time.Time) (string, error) {
+func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordFile, keyFile string, notBefore, notAfter time.Time) (string, error) {
 	audience, err := url.Parse(caURL)
 	if err != nil || audience.Scheme != "https" {
 		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
@@ -163,14 +166,34 @@ func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, passwordFile, key
 		return "", errors.New("cannot create a new token: the CA does not have any provisioner configured")
 	}
 
-	// Provisioner name becomes the token issuer
-	var issuer string
-	if len(provisioners) == 1 && len(kid) == 0 {
-		kid = provisioners[0].Key.KeyID
-		issuer = provisioners[0].Name
+	// Filter by kid
+	if len(kid) != 0 {
+		provisioners = provisionerFilter(provisioners, func(p *authority.Provisioner) bool {
+			return p.Key.KeyID == kid
+		})
+		if len(provisioners) == 0 {
+			return "", errs.InvalidFlagValue(ctx, "kid", kid, "")
+		}
 	}
 
-	if len(kid) == 0 {
+	// Filter by issuer (provisioner name)
+	if len(issuer) != 0 {
+		provisioners = provisionerFilter(provisioners, func(p *authority.Provisioner) bool {
+			return p.Name == issuer
+		})
+		if len(provisioners) == 0 {
+			return "", errs.InvalidFlagValue(ctx, "issuer", issuer, "")
+		}
+	}
+
+	if len(provisioners) == 1 {
+		kid = provisioners[0].Key.KeyID
+		issuer = provisioners[0].Name
+		// Prints kid/issuer used
+		if err := ui.PrintSelected("Key ID", kid+" ("+issuer+")"); err != nil {
+			return "", err
+		}
+	} else {
 		var items []*provisionersSelect
 		for _, p := range provisioners {
 			items = append(items, &provisionersSelect{
@@ -185,23 +208,6 @@ func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, passwordFile, key
 		}
 		kid = items[i].JWK.KeyID
 		issuer = items[i].Issuer
-	} else {
-		var found bool
-		for _, p := range provisioners {
-			if kid == p.Key.KeyID {
-				found = true
-				issuer = p.Name
-				break
-			}
-		}
-		if !found {
-			return "", errs.InvalidFlagValue(ctx, "kid", kid, "")
-		}
-
-		// Prints kid/issuer used
-		if err := ui.PrintSelected("Key ID", kid+" ("+issuer+")"); err != nil {
-			return "", err
-		}
 	}
 
 	var opts []jose.Option
@@ -243,6 +249,7 @@ func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, passwordFile, key
 	// Generate token
 	tokOptions := []token.Options{
 		token.WithJWTID(jwtID),
+		token.WithKid(kid),
 		token.WithIssuer(issuer),
 		token.WithAudience(audience.String()),
 	}
@@ -281,4 +288,15 @@ func parseTimeOrDuration(s string) (time.Time, bool) {
 		t = time.Now().Add(d)
 	}
 	return t, true
+}
+
+// provisionerFilter returns a slice of provisioners that pass the given filter.
+func provisionerFilter(provisioners []*authority.Provisioner, f func(*authority.Provisioner) bool) []*authority.Provisioner {
+	var result []*authority.Provisioner
+	for _, p := range provisioners {
+		if f(p) {
+			result = append(result, p)
+		}
+	}
+	return result
 }
