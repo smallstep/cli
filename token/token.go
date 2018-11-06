@@ -36,7 +36,8 @@ type Token interface {
 // Claims represents the claims that a token might have.
 type Claims struct {
 	jose.Claims
-	ExtraClaims map[string]interface{}
+	ExtraClaims  map[string]interface{}
+	ExtraHeaders map[string]interface{}
 }
 
 // Set adds the given key and value to the map of extra claims.
@@ -45,6 +46,14 @@ func (c *Claims) Set(key string, value interface{}) {
 		c.ExtraClaims = make(map[string]interface{})
 	}
 	c.ExtraClaims[key] = value
+}
+
+// SetHeader adds the given key and value to the map of extra headers.
+func (c *Claims) SetHeader(key string, value interface{}) {
+	if c.ExtraHeaders == nil {
+		c.ExtraHeaders = make(map[string]interface{})
+	}
+	c.ExtraHeaders[key] = value
 }
 
 // Sign creates a JWT with the claims and signs it with the given key.
@@ -57,6 +66,11 @@ func (c *Claims) Sign(alg jose.SignatureAlgorithm, key interface{}) (string, err
 	so := new(jose.SignerOptions)
 	so.WithType("JWT")
 	so.WithHeader("kid", kid)
+
+	// Used to override the kid too
+	for k, v := range c.ExtraHeaders {
+		so.WithHeader(jose.HeaderKey(k), v)
+	}
 
 	signer, err := jose.NewSigner(jose.SigningKey{
 		Algorithm: alg,

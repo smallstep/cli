@@ -111,3 +111,15 @@ func WithJWTID(s string) Options {
 		return nil
 	}
 }
+
+// WithKid returns a Options that sets the header kid claims.
+// If WithKid is not used a thumbprint using SHA256 will be used.
+func WithKid(s string) Options {
+	return func(c *Claims) error {
+		if s == "" {
+			return errors.New("kid cannot be empty")
+		}
+		c.SetHeader("kid", s)
+		return nil
+	}
+}

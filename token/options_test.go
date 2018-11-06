@@ -36,6 +36,8 @@ func TestOptions(t *testing.T) {
 		{"WithAudience fail", WithAudience(""), empty, true},
 		{"WithJWTID ok", WithJWTID("value"), &Claims{Claims: jose.Claims{ID: "value"}}, false},
 		{"WithJWTID fail", WithJWTID(""), empty, true},
+		{"WithKid ok", WithKid("value"), &Claims{ExtraHeaders: map[string]interface{}{"kid": "value"}}, false},
+		{"WithKid fail", WithKid(""), empty, true},
 	}
 
 	for _, tt := range tests {
