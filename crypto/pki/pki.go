@@ -18,6 +18,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	stepX509 "github.com/smallstep/cli/pkg/x509"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 )
 
@@ -131,9 +132,11 @@ func New(public, private, config string) (*PKI, error) {
 			return nil, errs.FileError(err, private)
 		}
 	}
-	if _, err = os.Stat(config); os.IsNotExist(err) {
-		if err = os.MkdirAll(config, 0700); err != nil {
-			return nil, errs.FileError(err, config)
+	if len(config) > 0 {
+		if _, err = os.Stat(config); os.IsNotExist(err) {
+			if err = os.MkdirAll(config, 0700); err != nil {
+				return nil, errs.FileError(err, config)
+			}
 		}
 	}
 
@@ -160,8 +163,10 @@ func New(public, private, config string) (*PKI, error) {
 	if p.intermediateKey, err = getPath(private, "intermediate_ca_key"); err != nil {
 		return nil, err
 	}
-	if p.config, err = getPath(config, "ca.json"); err != nil {
-		return nil, err
+	if len(config) > 0 {
+		if p.config, err = getPath(config, "ca.json"); err != nil {
+			return nil, err
+		}
 	}
 
 	return p, nil
@@ -241,14 +246,21 @@ func (p *PKI) GenerateIntermediateCertificate(name string, rootCrt *stepX509.Cer
 	return err
 }
 
+// TellPKI outputs the locations of public and private keys generated
+// generated for a new PKI. Generally this will consist of a root certificate
+// and key and an intermediate certificate and key.
+func (p *PKI) TellPKI() {
+	ui.Println()
+	ui.Printf("Root certificate: %s\n", p.root)
+	ui.Printf("Root private key: %s\n", p.rootKey)
+	ui.Printf("Intermediate certificate: %s\n", p.intermediate)
+	ui.Printf("Intermediate private key: %s\n", p.intermediateKey)
+}
+
 // Save stores the pki on a json file that will be used as the certificate
 // authority configuration.
 func (p *PKI) Save() error {
-	fmt.Println()
-	fmt.Printf("Root certificate: %s\n", p.root)
-	fmt.Printf("Root private key: %s\n", p.rootKey)
-	fmt.Printf("Intermediate certificate: %s\n", p.intermediate)
-	fmt.Printf("Intermediate private key: %s\n", p.intermediateKey)
+	p.TellPKI()
 
 	key, err := p.ottPrivateKey.CompactSerialize()
 	if err != nil {

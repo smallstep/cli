@@ -22,7 +22,7 @@ func initCommand() cli.Command {
 		Action: cli.ActionFunc(initAction),
 		Usage:  "initializes the CA PKI",
 		UsageText: `**step ca init**
-		[**--root**=<file>] [**--key**=<file>]`,
+		[**--root**=<file>] [**--key**=<file>] [**--pki**]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority`,
 		Flags: []cli.Flag{
@@ -35,6 +35,10 @@ func initCommand() cli.Command {
 				Name:   "key",
 				Usage:  "The path of an existing key <file> of the root certificate authority.",
 				EnvVar: command.IgnoreEnvVar,
+			},
+			cli.BoolFlag{
+				Name:  "pki",
+				Usage: "Generate only the PKI without the CA configuration",
 			},
 		},
 	}
@@ -50,6 +54,7 @@ func initAction(ctx *cli.Context) error {
 
 	root := ctx.String("root")
 	key := ctx.String("key")
+	configure := !ctx.Bool("pki")
 	switch {
 	case len(root) > 0 && len(key) == 0:
 		return errs.RequiredWithFlag(ctx, "root", "key")
@@ -65,33 +70,44 @@ func initAction(ctx *cli.Context) error {
 		}
 	}
 
+	p, err := pki.New(pki.GetPublicPath(), pki.GetSecretsPath(), pki.GetConfigPath())
+	if err != nil {
+		return err
+	}
+
 	name, err := ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)", ui.WithValidateNotEmpty())
 	if err != nil {
 		return err
 	}
 
-	names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])", ui.WithValidateFunc(ui.DNS()))
-	if err != nil {
-		return err
-	}
-	names = strings.Replace(names, " ", ",", -1)
-	parts := strings.Split(names, ",")
-	var dnsNames []string
-	for _, name := range parts {
-		if len(name) == 0 {
-			continue
+	if configure {
+		names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])", ui.WithValidateFunc(ui.DNS()))
+		if err != nil {
+			return err
 		}
-		dnsNames = append(dnsNames, strings.TrimSpace(name))
-	}
+		names = strings.Replace(names, " ", ",", -1)
+		parts := strings.Split(names, ",")
+		var dnsNames []string
+		for _, name := range parts {
+			if len(name) == 0 {
+				continue
+			}
+			dnsNames = append(dnsNames, strings.TrimSpace(name))
+		}
 
-	address, err := ui.Prompt("What address will your new CA listen at? (e.g. :443)", ui.WithValidateFunc(ui.Address()))
-	if err != nil {
-		return err
-	}
+		address, err := ui.Prompt("What address will your new CA listen at? (e.g. :443)", ui.WithValidateFunc(ui.Address()))
+		if err != nil {
+			return err
+		}
 
-	provisioner, err := ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)", ui.WithValidateNotEmpty())
-	if err != nil {
-		return err
+		provisioner, err := ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)", ui.WithValidateNotEmpty())
+		if err != nil {
+			return err
+		}
+
+		p.SetProvisioner(provisioner)
+		p.SetAddress(address)
+		p.SetDNSNames(dnsNames)
 	}
 
 	pass, err := ui.PromptPasswordGenerate("What do you want your password to be? [leave empty and we'll generate one]")
@@ -99,18 +115,11 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
-	p, err := pki.New(pki.GetPublicPath(), pki.GetSecretsPath(), pki.GetConfigPath())
-	if err != nil {
-		return err
-	}
-
-	p.SetProvisioner(provisioner)
-	p.SetAddress(address)
-	p.SetDNSNames(dnsNames)
-
-	// Generate ott key pairs.
-	if err := p.GenerateKeyPairs(pass); err != nil {
-		return err
+	if configure {
+		// Generate ott key pairs.
+		if err := p.GenerateKeyPairs(pass); err != nil {
+			return err
+		}
 	}
 
 	// Generate root certificate if not set.
@@ -143,6 +152,10 @@ func initAction(ctx *cli.Context) error {
 
 	fmt.Println("all done!")
 
+	if !configure {
+		p.TellPKI()
+		return nil
+	}
 	return p.Save()
 }
 
