@@ -28,14 +28,14 @@ type provisionersSelect struct {
 
 func newTokenCommand() cli.Command {
 	return cli.Command{
-		Name:   "new-token",
+		Name:   "token",
 		Action: cli.ActionFunc(newTokenAction),
 		Usage:  "generates an OTT granting access to the CA",
-		UsageText: `**step ca new-token** <hostname>
+		UsageText: `**step ca token** <hostname>
 		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]`,
-		Description: `**step ca new-token** command generates a one-time token granting access to the
+		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
 ## POSITIONAL ARGUMENTS
@@ -51,33 +51,33 @@ certificates authority.
 
 Get a new token for a DNS:
 '''
-$ step ca new-token internal.example.com
+$ step ca token internal.example.com
 '''
 
 Get a new token for an IP address:
 '''
-$ step ca new-token 192.168.10.10
+$ step ca token 192.168.10.10
 '''
 
 Get a new token that would be valid not, but expires in 30 minutes:
 '''
-$ step ca new-token --not-after 30m internal.example.com
+$ step ca token --not-after 30m internal.example.com
 '''
 
 Get a new token that is not valid for 30 and expires 5 minutes after that:
 '''
-$ step ca new-token --not-before 30m --not-after 35m internal.example.com
+$ step ca token --not-before 30m --not-after 35m internal.example.com
 '''
 
 Get a new token signed with the given private key, the public key must be
 configured in the certificate authority:
 '''
-$ step ca new-token internal.smallstep.com --key token.key
+$ step ca token internal.smallstep.com --key token.key
 '''
 
 Get a new token for a specific provisioner kid, ca-url and root:
 '''
-$ step ca new-token internal.example.com \
+$ step ca token internal.example.com \
     --kid 4vn46fbZT68Uxfs9LBwHkTvrjEvxQqx-W8nnE-qDjts \
     --ca-url https://ca.example.com \
     --root /path/to/root_ca.crt internal.example.com

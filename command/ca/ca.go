@@ -31,8 +31,8 @@ $ step ca root root_ca.crt \
 
 Create a new certificate using a token:
 '''
-$ TOKEN=$(step ca new-token internal.example.com)
-$ step ca new-certificate internal.example.com internal.crt internal.key \
+$ TOKEN=$(step ca token internal.example.com)
+$ step ca certificate internal.example.com internal.crt internal.key \
   --token $TOKEN --ca-url https://ca.smallstep.com --root root_ca.crt
 '''
 

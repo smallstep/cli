@@ -22,13 +22,13 @@ import (
 
 func newCertificateCommand() cli.Command {
 	return cli.Command{
-		Name:   "new-certificate",
+		Name:   "certificate",
 		Action: cli.ActionFunc(newCertificateAction),
 		Usage:  "generate a new certificate pair signed by the root certificate",
-		UsageText: `**step ca new-certificate** <hostname> <crt-file> <key-file>
+		UsageText: `**step ca certificate** <hostname> <crt-file> <key-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
-		Description: `**step ca new-certificate** command generates a new certificate pair
+		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
 
@@ -45,14 +45,14 @@ func newCertificateCommand() cli.Command {
 
 Request a new certificate for a given domain:
 '''
-$ TOKEN=$(step ca new-token internal.example.com)
-$ step ca new-certificate --token $TOKEN internal.example.com internal.crt internal.key
+$ TOKEN=$(step ca token internal.example.com)
+$ step ca certificate --token $TOKEN internal.example.com internal.crt internal.key
 '''
 
 Request a new certificate with a 1h validity:
 '''
-$ TOKEN=$(step ca new-token internal.example.com)
-$ step ca new-certificate --token $TOKEN --not-after=1h internal.example.com internal.crt internal.key
+$ TOKEN=$(step ca token internal.example.com)
+$ step ca certificate --token $TOKEN --not-after=1h internal.example.com internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
 			tokenFlag,
@@ -86,13 +86,13 @@ func signCertificateCommand() cli.Command {
 
 Sign a new certificate for the given CSR:
 '''
-$ TOKEN=$(step ca new-token internal.example.com)
+$ TOKEN=$(step ca token internal.example.com)
 $ step ca sign --token $TOKEN internal.csr internal.crt
 '''
 
 Sign a new certificate with a 1h validity:
 '''
-$ TOKEN=$(step ca new-token internal.example.com)
+$ TOKEN=$(step ca token internal.example.com)
 $ step ca sign --token $TOKEN --not-after=1h internal.csr internal.crt
 '''`,
 		Flags: []cli.Flag{
