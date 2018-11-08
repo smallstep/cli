@@ -157,9 +157,9 @@ uninstall:
 #########################################
 
 debian:
-	$Q mkdir -p $(RELEASE); \
+	$Q set -e; mkdir -p $(RELEASE); \
 	OUTPUT=../step-cli_*.deb; \
-	rm $$OUTPUT; \
+	rm -f $$OUTPUT; \
 	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
 distclean: clean
@@ -182,7 +182,7 @@ binary-darwin:
 	$(call BUNDLE_MAKE,darwin,amd64,$(BINARY_OUTPUT)darwin/)
 
 define BUNDLE
-	$(q)BUNDLE_DIR=$(BINARY_OUTPUT)$(1)/bundle; \
+	$(q)set -e; BUNDLE_DIR=$(BINARY_OUTPUT)$(1)/bundle; \
 	stepName=step_$(2); \
  	mkdir -p $$BUNDLE_DIR $(RELEASE); \
 	TMP=$$(mktemp -d $$BUNDLE_DIR/tmp.XXXX); \
@@ -196,13 +196,34 @@ define BUNDLE
     tar -zcvf $$NEW_BUNDLE -C $$TMP $$stepName;
 endef
 
+define BUNDLE_BREW
+	$(q)set -e; BREW_DIR=$(OUTPUT_ROOT)brew; \
+	mkdir -p $$BREW_DIR $(RELEASE); \
+	TMP=$$(mktemp -d $$BREW_DIR/tmp.XXXX); \
+	trap "rm -rf $$TMP" EXIT INT QUIT TERM; \
+	NAME=brew_step_$(VERSION); \
+	TAR_DIR=$$TMP/$$NAME; \
+	mkdir -p $$TAR_DIR; \
+	git clone https://github.com/smallstep/cli.git $$TAR_DIR/cli; \
+	git --git-dir="$$TAR_DIR/cli/.git" --work-tree="$$TAR_DIR/cli" checkout v$(VERSION); \
+	CERT_VERSION=$$(cat .COMPONENT_VERSIONS | grep "certificates" | tr -d "\r\n" | awk '{printf $$2}'); \
+	git clone https://github.com/smallstep/certificates.git $$TAR_DIR/certificates; \
+	git --git-dir="$$TAR_DIR/certificates/.git" --work-tree="$$TAR_DIR/certificates" checkout $$CERT_VERSION; \
+	BREW_TAR=$(RELEASE)/$$NAME.tar.gz; \
+	rm -f $$BREW_TAR; \
+	tar -zcvf $$BREW_TAR -C $$TMP $$NAME;
+endef
+
 bundle-linux: binary-linux
 	$(call BUNDLE,linux,$(VERSION),amd64)
 
 bundle-darwin: binary-darwin
 	$(call BUNDLE,darwin,$(VERSION),amd64)
 
-.PHONY: binary-linux binary-darwin bundle-linux bundle-darwin
+brew:
+	$(call BUNDLE_BREW)
+
+.PHONY: binary-linux binary-darwin bundle-linux bundle-darwin brew
 
 #################################################
 # Targets for creating OS specific artifacts
@@ -210,7 +231,7 @@ bundle-darwin: binary-darwin
 
 artifacts-linux-tag: bundle-linux debian
 
-artifacts-darwin-tag: bundle-darwin
+artifacts-darwin-tag: bundle-darwin brew
 
 artifacts-tag: artifacts-linux-tag artifacts-darwin-tag
 
