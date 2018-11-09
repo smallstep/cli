@@ -167,7 +167,7 @@ func newCertificateAction(ctx *cli.Context) error {
 	token := ctx.String("token")
 	if len(token) == 0 {
 		// Start token flow
-		if tok, err := signCertificateTokenFlow(ctx); err == nil {
+		if tok, err := signCertificateTokenFlow(ctx, hostname); err == nil {
 			token = tok
 		} else {
 			return err
@@ -216,8 +216,8 @@ func signCertificateAction(ctx *cli.Context) error {
 
 	token := ctx.String("token")
 	if len(token) == 0 {
-		// Start token flow
-		if tok, err := signCertificateTokenFlow(ctx); err == nil {
+		// Start token flow using common name as the hostname
+		if tok, err := signCertificateTokenFlow(ctx, csr.Subject.CommonName); err == nil {
 			token = tok
 		} else {
 			return err
@@ -232,7 +232,9 @@ type tokenClaims struct {
 	jose.Claims
 }
 
-func signCertificateTokenFlow(ctx *cli.Context) (string, error) {
+func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) {
+	var err error
+
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
@@ -256,9 +258,11 @@ func signCertificateTokenFlow(ctx *cli.Context) (string, error) {
 		return "", errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 
-	subject, err := ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
-	if err != nil {
-		return "", err
+	if subject == "" {
+		subject, err = ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return newTokenFlow(ctx, subject, caURL, root, "", "", "", "", notBefore, notAfter)
