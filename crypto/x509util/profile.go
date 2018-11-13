@@ -30,7 +30,7 @@ var (
 	// DefaultTLSCipherSuites specifies default step ciphersuite(s).
 	DefaultTLSCipherSuites = CipherSuites{
 		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
 	}
 	// ApprovedTLSCipherSuites smallstep approved ciphersuites.
 	ApprovedTLSCipherSuites = CipherSuites{
