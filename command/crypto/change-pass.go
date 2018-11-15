@@ -89,7 +89,7 @@ func changePassAction(ctx *cli.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}
-		if _, err := pemutil.Serialize(key, pemutil.WithEncryption(pass), pemutil.ToFile(keyPath, 0644)); err != nil {
+		if _, err := pemutil.Serialize(key, pemutil.WithEncryption(pass), pemutil.ToFile(newKeyPath, 0644)); err != nil {
 			return err
 		}
 	} else {
