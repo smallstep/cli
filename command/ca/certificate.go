@@ -4,9 +4,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -111,7 +114,8 @@ func renewCertificateCommand() cli.Command {
 		Action: cli.ActionFunc(renewCertificateAction),
 		Usage:  "renew a valid certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
-		[**--ca-url**=<uri>] [**--root**=<file>] [**--out**=<file>]`,
+		[**--ca-url**=<uri>] [**--root**=<file>]
+		[**--out**=<file>] [**--expires-in**=<duration>]`,
 		Description: `
 **step ca renew** command renews the given certificates on the certificate
 authority and writes the new certificate to disk either overwriting <crt-file>
@@ -143,6 +147,12 @@ Renew a certificate providing the <--ca-url> and <--root> flags:
 $ step ca renew --ca-url https://ca.smallstep.com:9000 \
   --root /path/to/root_ca.crt internal.crt internal.key
 Would you like to overwrite internal.crt [Y/n]: y
+'''
+
+Renew skipped because it was too early:
+'''
+$ step ca renew --expires-in 8h internal.crt internal.key
+certificate not renewed: expires in 10h52m5s
 '''`,
 		Flags: []cli.Flag{
 			caURLFlag,
@@ -150,6 +160,16 @@ Would you like to overwrite internal.crt [Y/n]: y
 			cli.StringFlag{
 				Name:  "out,output-file",
 				Usage: "The new certificate <file> path. Defaults to overwriting the <crt-file> positional argument",
+			},
+			cli.StringFlag{
+				Name: "expires-in",
+				Usage: `The <duration> check that will be performed before renewing the certificate. The
+certificate renew will be skipped if the time to expiration is greater than the
+passed one. A random jitter (duration/20) will be added to avoid multiple
+services hitting the renew endpoint at the same time. The <duration> is a
+sequence of decimal numbers, each with optional fraction and a unit suffix, such
+as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
+"s", "m", "h".`,
 			},
 		},
 	}
@@ -369,6 +389,29 @@ func renewCertificateAction(ctx *cli.Context) error {
 	cert, err := tls.LoadX509KeyPair(crtFile, keyFile)
 	if err != nil {
 		return errors.Wrap(err, "error loading certificates")
+	}
+	if len(cert.Certificate) == 0 {
+		return errors.New("error loading certificate: certificate chain is empty")
+	}
+
+	// Do not renew if (now - cert.notBefore) > (expiresIn + jitter)
+	if s := ctx.String("expires-in"); len(s) > 0 {
+		duration, err := time.ParseDuration(s)
+		if err != nil {
+			return errs.InvalidFlagValue(ctx, "expires-in", s, "")
+		}
+
+		leaf, err := x509.ParseCertificate(cert.Certificate[0])
+		if err != nil {
+			return errors.Wrap(err, "error parsing certificate")
+		}
+
+		now := time.Now()
+		jitter := rand.Int63n(int64(duration / 20))
+		if d := leaf.NotAfter.Sub(now); d > duration+time.Duration(jitter) {
+			fmt.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
+			return nil
+		}
 	}
 
 	rootInt, err := pemutil.Read(root)
