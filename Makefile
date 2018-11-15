@@ -210,10 +210,10 @@ docker-login:
 #################################################
 
 # For all builds on the master branch we build the container but do not push.
-docker-push-master: docker
+docker-master: docker
 
 # For all builds on the master branch with a tag we build and push the container.
-docker-push-release: docker-push-master docker-login docker-push-tag
+docker-release: docker-master docker-login docker-push-tag
 
 .PHONY: docker-push docker-push-prod-release docker-push-master
 
