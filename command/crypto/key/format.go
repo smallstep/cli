@@ -105,6 +105,9 @@ func formatAction(ctx *cli.Context) error {
 		default:
 			return errors.Errorf("Unsupoorted key type %T", key)
 		}
+		if err != nil {
+			return err
+		}
 	default: // assuming DER format
 		// Attempt to parse first as a PKCS8 formatted private key.
 		key, err := x509.ParsePKCS8PrivateKey(b)
@@ -122,10 +125,6 @@ func formatAction(ctx *cli.Context) error {
 			return err
 		}
 		ob = pem.EncodeToMemory(p)
-	}
-
-	if err != nil {
-		return err
 	}
 
 	if out == "" {
