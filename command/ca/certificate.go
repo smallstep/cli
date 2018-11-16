@@ -115,7 +115,7 @@ func renewCertificateCommand() cli.Command {
 		Usage:  "renew a valid certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
 		[**--ca-url**=<uri>] [**--root**=<file>]
-		[**--out**=<file>] [**--expires-in**=<duration>]`,
+		[**--out**=<file>] [**--expires-in**=<duration>] [**--force**]`,
 		Description: `
 **step ca renew** command renews the given certificates on the certificate
 authority and writes the new certificate to disk either overwriting <crt-file>
@@ -140,6 +140,11 @@ Would you like to overwrite internal.crt [Y/n]: y
 Renew a certificate without overwriting the previous certificate:
 '''
 $ step ca renew --out renewed.crt internal.crt internal.key
+'''
+
+Renew a certificate forcing the overwrite of the previous certificate:
+'''
+$ step ca renew --force internal.crt internal.key
 '''
 
 Renew a certificate providing the <--ca-url> and <--root> flags:
@@ -170,6 +175,10 @@ services hitting the renew endpoint at the same time. The <duration> is a
 sequence of decimal numbers, each with optional fraction and a unit suffix, such
 as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
 "s", "m", "h".`,
+			},
+			cli.BoolFlag{
+				Name:  "f,force",
+				Usage: "Force the overwrite of files without asking.",
 			},
 		},
 	}
@@ -455,5 +464,9 @@ func renewCertificateAction(ctx *cli.Context) error {
 	}
 	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
 
-	return utils.WriteFile(outFile, data, 0600)
+	if err := utils.WriteFileForce(outFile, data, 0600, ctx.Bool("force")); err != nil {
+		return errs.FileError(err, outFile)
+	}
+
+	return nil
 }

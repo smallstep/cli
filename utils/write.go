@@ -25,6 +25,18 @@ var (
 // file exists. It returns ErrFileExists if the user picks to not overwrite
 // the file.
 func WriteFile(filename string, data []byte, perm os.FileMode) error {
+	return WriteFileForce(filename, data, perm, false)
+}
+
+// WriteFileForce wraps ioutil.WriteFile with a prompt to overwrite a file if
+// the file exists. It returns ErrFileExists if the user picks to not overwrite
+// the file. If force is set to true, the prompt will not be presented and the
+// file if exists will be overwritten.
+func WriteFileForce(filename string, data []byte, perm os.FileMode, force bool) error {
+	if force {
+		return ioutil.WriteFile(filename, data, perm)
+	}
+
 	st, err := os.Stat(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
