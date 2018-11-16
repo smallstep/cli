@@ -34,7 +34,8 @@ func newTokenCommand() cli.Command {
 		UsageText: `**step ca token** <hostname>
 		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]`,
+		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]
+		[**--offline**]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
@@ -80,7 +81,18 @@ Get a new token for a specific provisioner kid, ca-url and root:
 $ step ca token internal.example.com \
     --kid 4vn46fbZT68Uxfs9LBwHkTvrjEvxQqx-W8nnE-qDjts \
     --ca-url https://ca.example.com \
-    --root /path/to/root_ca.crt internal.example.com
+    --root /path/to/root_ca.crt
+'''
+
+Get a new token using the offline mode:
+'''
+$ step ca token internal.example.com \
+    --offline \
+    --kid 4vn46fbZT68Uxfs9LBwHkTvrjEvxQqx-W8nnE-qDjts \
+    --issuer you@example.com \
+    --key provisioner.key \
+    --ca-url https://ca.example.com \
+    --root /path/to/root_ca.crt
 '''`,
 		Flags: []cli.Flag{
 			provisionerKidFlag,
@@ -99,6 +111,11 @@ $ step ca token internal.example.com \
 				Usage: `The private key <file> used to sign the JWT. This is usually downloaded from
 the certificate authority.`,
 			},
+			cli.BoolFlag{
+				Name: "offline",
+				Usage: `Creates a token without contacting the certificate authority. Offline mode
+requires the flags <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
+			},
 		},
 	}
 }
@@ -114,6 +131,7 @@ func newTokenAction(ctx *cli.Context) error {
 	passwordFile := ctx.String("password-file")
 	outputFile := ctx.String("output-file")
 	keyFile := ctx.String("key")
+	offline := ctx.Bool("offline")
 
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
@@ -138,15 +156,84 @@ func newTokenAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 
-	token, err := newTokenFlow(ctx, subject, caURL, root, kid, issuer, passwordFile, keyFile, notBefore, notAfter)
-	if err != nil {
-		return err
+	var err error
+	var token string
+	if offline {
+		switch {
+		case len(kid) == 0:
+			return errs.RequiredWithFlag(ctx, "offline", "kid")
+		case len(issuer) == 0:
+			return errs.RequiredWithFlag(ctx, "offline", "issuer")
+		case len(keyFile) == 0:
+			return errs.RequiredWithFlag(ctx, "offline", "key")
+		}
+
+		audience, err := url.Parse(caURL)
+		if err != nil || audience.Scheme != "https" {
+			return errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
+		}
+		audience = audience.ResolveReference(&url.URL{Path: "/1.0/sign"})
+
+		var opts []jose.Option
+		if len(passwordFile) != 0 {
+			opts = append(opts, jose.WithPasswordFile(passwordFile))
+		}
+		jwk, err := jose.ParseKey(keyFile, opts...)
+		if err != nil {
+			return err
+		}
+
+		token, err = generateToken(subject, kid, issuer, audience.String(), root, notBefore, notAfter, jwk)
+		if err != nil {
+			return err
+		}
+	} else {
+		token, err = newTokenFlow(ctx, subject, caURL, root, kid, issuer, passwordFile, keyFile, notBefore, notAfter)
+		if err != nil {
+			return err
+		}
 	}
 	if len(outputFile) > 0 {
 		return utils.WriteFile(outputFile, []byte(token), 0600)
 	}
 	fmt.Println(token)
 	return nil
+}
+
+// generateToken generates a provisioning or bootstrap token with the given
+// parameters.
+func generateToken(sub, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
+	// A random jwt id will be used to identify duplicated tokens
+	jwtID, err := randutil.Hex(64) // 256 bits
+	if err != nil {
+		return "", err
+	}
+
+	tokOptions := []token.Options{
+		token.WithJWTID(jwtID),
+		token.WithKid(kid),
+		token.WithIssuer(iss),
+		token.WithAudience(aud),
+	}
+	if len(root) > 0 {
+		tokOptions = append(tokOptions, token.WithRootCA(root))
+	}
+	if !notBefore.IsZero() || !notAfter.IsZero() {
+		if notBefore.IsZero() {
+			notBefore = time.Now()
+		}
+		if notAfter.IsZero() {
+			notAfter = notBefore.Add(token.DefaultValidity)
+		}
+		tokOptions = append(tokOptions, token.WithValidity(notBefore, notAfter))
+	}
+
+	tok, err := provision.New(sub, tokOptions...)
+	if err != nil {
+		return "", err
+	}
+
+	return tok.SignedString(jwk.Algorithm, jwk.Key)
 }
 
 // newTokenFlow implements the common flow used to generate a token
@@ -240,38 +327,7 @@ func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordF
 		}
 	}
 
-	// A random jwt id will be used to identify duplicated tokens
-	jwtID, err := randutil.Hex(64) // 256 bits
-	if err != nil {
-		return "", err
-	}
-
-	// Generate token
-	tokOptions := []token.Options{
-		token.WithJWTID(jwtID),
-		token.WithKid(kid),
-		token.WithIssuer(issuer),
-		token.WithAudience(audience.String()),
-	}
-	if len(root) > 0 {
-		tokOptions = append(tokOptions, token.WithRootCA(root))
-	}
-	if !notBefore.IsZero() || !notAfter.IsZero() {
-		if notBefore.IsZero() {
-			notBefore = time.Now()
-		}
-		if notAfter.IsZero() {
-			notAfter = notBefore.Add(token.DefaultValidity)
-		}
-		tokOptions = append(tokOptions, token.WithValidity(notBefore, notAfter))
-	}
-
-	tok, err := provision.New(subject, tokOptions...)
-	if err != nil {
-		return "", err
-	}
-
-	return tok.SignedString(jwk.Algorithm, jwk.Key)
+	return generateToken(subject, kid, issuer, audience.String(), root, notBefore, notAfter, jwk)
 }
 
 func parseTimeOrDuration(s string) (time.Time, bool) {
