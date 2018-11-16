@@ -62,14 +62,30 @@ func main() {
 	app.EnableBashCompletion = true
 	app.Copyright = "(c) 2018 Smallstep Labs, Inc."
 
+	// Flag of custom configuration flag
 	app.Flags = append(app.Flags, cli.StringFlag{
 		Name:  "config",
 		Usage: "path to the config file to use for CLI flags",
 	})
 
+	// Flag for printing the step path
+	app.Flags = append(app.Flags, cli.BoolFlag{
+		Name:  "steppath",
+		Usage: "print the configured step path and exit",
+	})
+
 	// All non-successful output should be written to stderr
 	app.Writer = os.Stdout
 	app.ErrWriter = os.Stderr
+
+	// Default action will print the steppath or help
+	app.Action = cli.ActionFunc(func(ctx *cli.Context) error {
+		if ctx.Bool("steppath") {
+			fmt.Println(config.StepPath())
+			return nil
+		}
+		return cli.HandleAction(usage.HelpCommandAction, ctx)
+	})
 
 	// Start the golang debug logger if environment variable is set.
 	// See https://golang.org/pkg/net/http/pprof/

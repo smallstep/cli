@@ -37,10 +37,13 @@ func init() {
 	stepPath = os.Getenv(StepPathEnv)
 	if stepPath == "" {
 		usr, err := user.Current()
-		if err != nil || usr.HomeDir == "" {
+		if err == nil && usr.HomeDir != "" {
+			stepPath = path.Join(usr.HomeDir, ".step")
+		} else if home := os.Getenv("HOME"); home != "" {
+			stepPath = path.Join(home, ".step")
+		} else {
 			l.Fatalf("Error obtaining home directory, please define environment variable %s.", StepPathEnv)
 		}
-		stepPath = path.Join(usr.HomeDir, ".step")
 	}
 
 	// Check for presence or create it if necessary
