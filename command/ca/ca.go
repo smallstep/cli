@@ -52,13 +52,14 @@ $ cat \> $STEPPATH/config/defaults.json
 }
 '''`,
 		Subcommands: cli.Commands{
+			healthCommand(),
 			initCommand(),
 			newTokenCommand(),
 			newCertificateCommand(),
-			signCertificateCommand(),
-			rootComand(),
 			renewCertificateCommand(),
+			rootComand(),
 			provisioner.Command(),
+			signCertificateCommand(),
 		},
 	}
 

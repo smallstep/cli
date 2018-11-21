@@ -46,7 +46,7 @@ certificates authority.
 
 ## EXAMPLES
 
- Most of the following examples assumes that the **--ca-url** and **--root** are
+ Most of the following examples assumes that **--ca-url** and **--root** are
  set using environment variables or the default configuration file in
  <$STEPPATH/config/defaults.json>.
 
