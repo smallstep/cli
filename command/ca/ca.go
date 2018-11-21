@@ -12,8 +12,8 @@ func init() {
 		Name:      "ca",
 		Usage:     "initialize and manage a certificate authority",
 		UsageText: "step ca <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**step ca** -- initialize a certificate authority. Manage, sign,
-		and renew certificates via the certificate authority.
+		Description: `**step ca** command group provides facilities initialize a certificate
+authority, sign and renew certificate, ...
 
 ## Examples
 
@@ -27,6 +27,11 @@ Download the root_ca.crt:
 $ step ca root root_ca.crt \
   --ca-url https://ca.smallstep.com \
   --fingerprint 0d7d3834cf187726cf331c40a31aa7ef6b29ba4df601416c9788f6ee01058cf3
+'''
+
+Get the Health status of the CA:
+'''
+$ step ca health --ca-url https://ca.smallstep.com
 '''
 
 Create a new certificate using a token:
