@@ -15,24 +15,35 @@ func healthCommand() cli.Command {
 		Name:      "health",
 		Action:    healthAction,
 		Usage:     "get the status of the CA",
-		UsageText: `**step ca health** [**--ca-url**=<url>]`,
+		UsageText: `**step ca health** [**--ca-url**=<URI>] [**--root**=<file>]`,
 		Description: `**step ca health** makes an API request to the /health
 endpoint of the Step CA to check if it is running. If the CA is healthy, the
 response will be 'ok'.
 
 ## EXAMPLES
 
+Using the required flags:
 '''
-$ step ca health --ca-url https://ca.smallstep.com:8080
+$ step ca health --ca-url https://ca.smallstep.com:8080 --root path/to/root_ca.crt
+ok
 '''
+
+With the required flags preconfigured:
 
 **--ca-url** is set using environment variables (as STEP_CA_URL) or the default
 configuration file in <$STEPPATH/config/defaults.json>.
+
+**--root** is set using environment variables (as STEP_ROOT), the default
+configuration file in <$STEPPATH/config/defaults.json> or the default root
+certificate located in <$STEPPATH/secrets/root_ca.crt>
+
 '''
 $ step ca health
+ok
 '''`,
 		Flags: []cli.Flag{
 			caURLFlag,
+			rootFlag,
 		},
 	}
 }
