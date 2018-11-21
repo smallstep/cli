@@ -1,12 +1,15 @@
 package pki
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
@@ -107,7 +110,7 @@ func GetProvisionerKey(caURL, rootFile, kid string) (string, error) {
 
 // PKI represents the Public Key Infrastructure used by a certificate authority.
 type PKI struct {
-	root, rootKey                   string
+	root, rootKey, rootFingerprint  string
 	intermediate, intermediateKey   string
 	country, locality, organization string
 	config                          string
@@ -216,6 +219,9 @@ func (p *PKI) GenerateRootCertificate(name string, pass []byte) (*stepX509.Certi
 		return nil, nil, errors.Wrap(err, "error parsing root certificate")
 	}
 
+	sum := sha256.Sum256(rootCrt.Raw)
+	p.rootFingerprint = strings.ToLower(hex.EncodeToString(sum[:]))
+
 	return rootCrt, rootProfile.SubjectPrivateKey(), nil
 }
 
@@ -251,10 +257,11 @@ func (p *PKI) GenerateIntermediateCertificate(name string, rootCrt *stepX509.Cer
 // and key and an intermediate certificate and key.
 func (p *PKI) TellPKI() {
 	ui.Println()
-	ui.Printf("Root certificate: %s\n", p.root)
-	ui.Printf("Root private key: %s\n", p.rootKey)
-	ui.Printf("Intermediate certificate: %s\n", p.intermediate)
-	ui.Printf("Intermediate private key: %s\n", p.intermediateKey)
+	ui.Printf("{{\"%s\"|green}} Root certificate: %s\n", ui.IconGood, p.root)
+	ui.Printf("{{\"%s\"|green}} Root private key: %s\n", ui.IconGood, p.rootKey)
+	ui.Printf("{{\"%s\"|green}} Root fingerprint: %s\n", ui.IconGood, p.rootFingerprint)
+	ui.Printf("{{\"%s\"|green}} Intermediate certificate: %s\n", ui.IconGood, p.intermediate)
+	ui.Printf("{{\"%s\"|green}} Intermediate private key: %s\n", ui.IconGood, p.intermediateKey)
 }
 
 // Save stores the pki on a json file that will be used as the certificate
@@ -297,9 +304,7 @@ func (p *PKI) Save() error {
 		return errs.FileError(err, p.config)
 	}
 
-	fmt.Println()
-	fmt.Printf("Certificate Authority configuration: %s\n", p.config)
-
+	ui.Printf("{{\"%s\"|green}} Certificate Authority configuration: %s\n", ui.IconGood, p.config)
 	fmt.Println()
 	fmt.Println("Your PKI is ready to go. To generate certificates for individual services see 'step help ca'.")
 
