@@ -17,7 +17,7 @@ func createKeyPairCommand() cli.Command {
 	return cli.Command{
 		Name:   "keypair",
 		Action: cli.ActionFunc(createAction),
-		Usage:  "generate a public /private keypair in PEM format.",
+		Usage:  "generate a public / private keypair in PEM format.",
 		UsageText: `**step crypto keypair** <pub_file> <priv_file>
 [**--curve**=<curve>] [**--no-password**] [**--size**=<size>]
 [**--kty**=<key-type>]`,
