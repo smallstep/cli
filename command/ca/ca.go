@@ -12,8 +12,8 @@ func init() {
 		Name:      "ca",
 		Usage:     "initialize and manage a certificate authority",
 		UsageText: "step ca <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**step ca** command group provides facilities initialize a certificate
-authority, sign and renew certificate, ...
+		Description: `**step ca** -- initialize a certificate authority. Manage, sign,
+		and renew certificates via the certificate authority.
 
 ## Examples
 
