@@ -16,12 +16,11 @@ import (
 	"github.com/smallstep/cli/usage"
 
 	// Enabled commands
+	_ "github.com/smallstep/cli/command/ca"
 	_ "github.com/smallstep/cli/command/certificate"
 	_ "github.com/smallstep/cli/command/crypto"
 	_ "github.com/smallstep/cli/command/oauth"
-
-	// Work in progress ...
-	_ "github.com/smallstep/cli/command/ca"
+	_ "github.com/smallstep/cli/command/path"
 
 	// Profiling and debugging
 	_ "net/http/pprof"
@@ -68,24 +67,9 @@ func main() {
 		Usage: "path to the config file to use for CLI flags",
 	})
 
-	// Flag for printing the step path
-	app.Flags = append(app.Flags, cli.BoolFlag{
-		Name:  "steppath",
-		Usage: "print the configured step path and exit",
-	})
-
 	// All non-successful output should be written to stderr
 	app.Writer = os.Stdout
 	app.ErrWriter = os.Stderr
-
-	// Default action will print the steppath or help
-	app.Action = cli.ActionFunc(func(ctx *cli.Context) error {
-		if ctx.Bool("steppath") {
-			fmt.Println(config.StepPath())
-			return nil
-		}
-		return cli.HandleAction(usage.HelpCommandAction, ctx)
-	})
 
 	// Start the golang debug logger if environment variable is set.
 	// See https://golang.org/pkg/net/http/pprof/
