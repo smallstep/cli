@@ -49,11 +49,11 @@ $ step ca renew internal.crt internal.key \
 
 Configure the ca-url and root in the environment:
 '''
-$ cp root_ca.crt $STEPPATH/secrets/
+$ cp root_ca.crt $STEPPATH/certs/
 $ cat \> $STEPPATH/config/defaults.json
 {
     "ca-url": "https://ca.smallstep.com",
-    "root": "/home/user/.step/secrets/root_ca.crt"
+    "root": "/home/user/.step/certs/root_ca.crt"
 }
 '''`,
 		Subcommands: cli.Commands{

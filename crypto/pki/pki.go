@@ -31,7 +31,7 @@ const (
 	configPath = "config"
 	// PublicPath is the directory name under the step path where the public keys
 	// will be stored.
-	publicPath = "secrets"
+	publicPath = "certs"
 	// PublicPath is the directory name under the step path where the private keys
 	// will be stored.
 	privatePath = "secrets"

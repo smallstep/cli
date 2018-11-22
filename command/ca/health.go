@@ -35,7 +35,7 @@ configuration file in <$STEPPATH/config/defaults.json>.
 
 **--root** is set using environment variables (as STEP_ROOT), the default
 configuration file in <$STEPPATH/config/defaults.json> or the default root
-certificate located in <$STEPPATH/secrets/root_ca.crt>
+certificate located in <$STEPPATH/certs/root_ca.crt>
 
 '''
 $ step ca health
