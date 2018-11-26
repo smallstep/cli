@@ -22,6 +22,19 @@ Create the configuration for a new certificate authority:
 $ step ca init
 '''
 
+Configure the ca-url and root in the environment:
+'''
+$ step ca bootstrap \
+  --ca-url https://ca.smallstep.com \
+  --fingerprint 0d7d3834cf187726cf331c40a31aa7ef6b29ba4df601416c9788f6ee01058cf3
+$ cat $STEPPATH/config/defaults.json
+{
+  "ca-url": "https://ca.smallstep.com",
+  "fingerprint": "0d7d3834cf187726cf331c40a31aa7ef6b29ba4df601416c9788f6ee01058cf3",
+  "root": "/home/user/.step/certs/root_ca.crt"
+}
+'''
+
 Download the root_ca.crt:
 '''
 $ step ca root root_ca.crt \
@@ -45,20 +58,11 @@ Renew the certificate while is still valid:
 '''
 $ step ca renew internal.crt internal.key \
   --ca-url https://ca.smallstep.com --root root_ca.crt
-'''
-
-Configure the ca-url and root in the environment:
-'''
-$ cp root_ca.crt $STEPPATH/certs/
-$ cat \> $STEPPATH/config/defaults.json
-{
-    "ca-url": "https://ca.smallstep.com",
-    "root": "/home/user/.step/certs/root_ca.crt"
-}
 '''`,
 		Subcommands: cli.Commands{
 			healthCommand(),
 			initCommand(),
+			bootstrapCommand(),
 			newTokenCommand(),
 			newCertificateCommand(),
 			renewCertificateCommand(),
