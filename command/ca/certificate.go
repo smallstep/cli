@@ -27,7 +27,7 @@ func newCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "certificate",
 		Action: cli.ActionFunc(newCertificateAction),
-		Usage:  "generate a new certificate pair signed by the root certificate",
+		Usage:  "generates a new certificate pair signed by the root certificate",
 		UsageText: `**step ca certificate** <hostname> <crt-file> <key-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
