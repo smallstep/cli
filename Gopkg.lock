@@ -46,12 +46,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5f3371d6e432e3c4e0ceabb14b5c0679827ce8b96bbd963fa923977782e8e99b"
+  digest = "1:454adc7f974228ff789428b6dc098638c57a64aa0718f0bd61e53d3cd39d7a75"
   name = "github.com/chzyer/readline"
-  packages = [
-    ".",
-    "runes",
-  ]
+  packages = ["."]
   pruneopts = "UT"
   revision = "2972be24d48e78746da79ba8e24e8b488c9880de"
 
@@ -303,7 +300,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d8bad241aed7d771c1018f0f8985c189d73fa27a4fcdbeaf06d4e72d80e32d9a"
+  digest = "1:46c14c1e0339fe0a4e607de7837d1b4d7a9881e730cb880aab79a8c2cc993572"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
@@ -314,7 +311,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "9d7e1ab9ec3bf62185dbc7f304f99a0f6b9a213f"
+  revision = "60fbed7da053054b48b7c7d7d6244c94eea2a27e"
 
 [[projects]]
   branch = "master"

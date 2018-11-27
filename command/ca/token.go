@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -168,11 +169,11 @@ func newTokenAction(ctx *cli.Context) error {
 			return errs.RequiredWithFlag(ctx, "offline", "key")
 		}
 
-		audience, err := url.Parse(caURL)
-		if err != nil || audience.Scheme != "https" {
-			return errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
+		// Get audience from ca-url
+		audience, err := parseAudience(ctx)
+		if err != nil {
+			return err
 		}
-		audience = audience.ResolveReference(&url.URL{Path: "/1.0/sign"})
 
 		var opts []jose.Option
 		if len(passwordFile) != 0 {
@@ -183,7 +184,7 @@ func newTokenAction(ctx *cli.Context) error {
 			return err
 		}
 
-		token, err = generateToken(subject, kid, issuer, audience.String(), root, notBefore, notAfter, jwk)
+		token, err = generateToken(subject, kid, issuer, audience, root, notBefore, notAfter, jwk)
 		if err != nil {
 			return err
 		}
@@ -198,6 +199,27 @@ func newTokenAction(ctx *cli.Context) error {
 	}
 	fmt.Println(token)
 	return nil
+}
+
+// parseAudience creates the ca audience url from the ca-url
+func parseAudience(ctx *cli.Context) (string, error) {
+	caURL := ctx.String("ca-url")
+	if len(caURL) == 0 {
+		return "", errs.RequiredFlag(ctx, "ca-url")
+	}
+
+	audience, err := url.Parse(caURL)
+	if err != nil {
+		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
+	}
+	switch strings.ToLower(audience.Scheme) {
+	case "https", "":
+		audience.Scheme = "https"
+		audience = audience.ResolveReference(&url.URL{Path: "/1.0/sign"})
+		return audience.String(), nil
+	default:
+		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
+	}
 }
 
 // generateToken generates a provisioning or bootstrap token with the given
@@ -238,11 +260,11 @@ func generateToken(sub, kid, iss, aud, root string, notBefore, notAfter time.Tim
 
 // newTokenFlow implements the common flow used to generate a token
 func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordFile, keyFile string, notBefore, notAfter time.Time) (string, error) {
-	audience, err := url.Parse(caURL)
-	if err != nil || audience.Scheme != "https" {
-		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
+	// Get audience from ca-url
+	audience, err := parseAudience(ctx)
+	if err != nil {
+		return "", err
 	}
-	audience = audience.ResolveReference(&url.URL{Path: "/1.0/sign"})
 
 	provisioners, err := pki.GetProvisioners(caURL, root)
 	if err != nil {
@@ -327,7 +349,7 @@ func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordF
 		}
 	}
 
-	return generateToken(subject, kid, issuer, audience.String(), root, notBefore, notAfter, jwk)
+	return generateToken(subject, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }
 
 func parseTimeOrDuration(s string) (time.Time, bool) {

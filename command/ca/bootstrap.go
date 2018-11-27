@@ -73,11 +73,19 @@ func bootstrapAction(ctx *cli.Context) error {
 		return errs.FileError(err, configFile)
 	}
 
+	// Serialize root
 	_, err = pemutil.Serialize(resp.RootPEM.Certificate, pemutil.ToFile(rootFile, 0600))
 	if err != nil {
 		return err
 	}
 
+	// make sure to store the url with https
+	caURL, err = completeURL(caURL)
+	if err != nil {
+		return err
+	}
+
+	// Serialize defaults.json
 	b, err := json.MarshalIndent(bootstrapConfig{
 		CA:          caURL,
 		Fingerprint: fingerprint,

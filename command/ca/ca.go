@@ -1,6 +1,10 @@
 package ca
 
 import (
+	"net/url"
+	"strings"
+
+	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/urfave/cli"
@@ -132,3 +136,41 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 generating key.`,
 	}
 )
+
+// completeURL parses and validates the given URL. It supports general
+// URLs like https://ca.smallstep.com[:port][/path], and incomplete URLs like
+// ca.smallstep.com[:port][/path].
+func completeURL(rawurl string) (string, error) {
+	u, err := url.Parse(rawurl)
+	if err != nil {
+		return "", errors.Wrapf(err, "error parsing url '%s'", rawurl)
+	}
+
+	// URLs are generally parsed as:
+	// [scheme:][//[userinfo@]host][/]path[?query][#fragment]
+	// But URLs that do not start with a slash after the scheme are interpreted as
+	// scheme:opaque[?query][#fragment]
+	if u.Opaque == "" {
+		if u.Scheme == "" {
+			u.Scheme = "https"
+		}
+		if u.Host == "" {
+			// rawurl looks like ca.smallstep.com or ca.smallstep.com/1.0/sign
+			if u.Path != "" {
+				parts := strings.SplitN(u.Path, "/", 2)
+				u.Host = parts[0]
+				if len(parts) == 2 {
+					u.Path = parts[1]
+				} else {
+					u.Path = ""
+				}
+				return completeURL(u.String())
+			}
+			return "", errors.Errorf("error parsing url '%s'", rawurl)
+		}
+		return u.String(), nil
+	}
+	// scheme:opaque[?query][#fragment]
+	// rawurl looks like ca.smallstep.com:443 or ca.smallstep.com:443/1.0/sign
+	return completeURL("https://" + rawurl)
+}
