@@ -27,7 +27,7 @@ type hashConstructor func() hash.Hash
 func Command() cli.Command {
 	return cli.Command{
 		Name:      "hash",
-		Usage:     "generates and checks hashes of files and directories",
+		Usage:     "generate and check hashes of files and directories",
 		UsageText: "step crypto hash <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto hash** command group provides facilities for generating and
 checking hashes of files and directories.

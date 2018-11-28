@@ -8,7 +8,7 @@ import (
 func Command() cli.Command {
 	return cli.Command{
 		Name:      "key",
-		Usage:     "manage keys.",
+		Usage:     "manage keys",
 		UsageText: "step crypto key SUBCOMMAND [ARGUMENTS] [GLOBAL_FLAGS] [SUBCOMMAND_FLAGS]",
 		Description: `**step crypto key** command group provides facilities for
 managing cryptographic keys.

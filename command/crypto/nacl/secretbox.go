@@ -15,7 +15,7 @@ import (
 func secretboxCommand() cli.Command {
 	return cli.Command{
 		Name:      "secretbox",
-		Usage:     "encrypts and authenticates small messages using secret-key cryptography",
+		Usage:     "encrypt and authenticate small messages using secret-key cryptography",
 		UsageText: "step crypto nacl secretbox <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto nacl secretbox** command group uses secret-key cryptography to
 encrypt, decrypt and authenticate messages. The implementation is based on NaCl's
@@ -68,7 +68,7 @@ func secretboxOpenCommand() cli.Command {
 	return cli.Command{
 		Name:   "open",
 		Action: cli.ActionFunc(secretboxOpenAction),
-		Usage:  "authenticates and decrypts a box produced by seal",
+		Usage:  "authenticate and decrypt a box produced by seal",
 		UsageText: `**step crypto nacl secretbox open** <nonce> <key-file>
 		[--raw]`,
 		Description: `**step crypto nacl secretbox open** verifies and decrypts a ciphertext using a
@@ -90,7 +90,7 @@ func secretboxSealCommand() cli.Command {
 	return cli.Command{
 		Name:   "seal",
 		Action: cli.ActionFunc(secretboxSealAction),
-		Usage:  "produces an encrypted ciphertext",
+		Usage:  "produce an encrypted ciphertext",
 		UsageText: `**step crypto nacl secretbox seal** <nonce> <key-file>
 		[--raw]`,
 		Description: `**step crypto nacl secretbox seal** encrypts and authenticates a message using

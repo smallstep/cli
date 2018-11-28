@@ -20,7 +20,7 @@ func initCommand() cli.Command {
 	return cli.Command{
 		Name:   "init",
 		Action: cli.ActionFunc(initAction),
-		Usage:  "initializes the CA PKI",
+		Usage:  "initialize the CA PKI",
 		UsageText: `**step ca init**
 		[**--root**=<file>] [**--key**=<file>] [**--pki**]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be

@@ -15,7 +15,7 @@ func signCommand() cli.Command {
 	return cli.Command{
 		Name:      "sign",
 		Action:    cli.ActionFunc(signAction),
-		Usage:     "sign a certificate signing request (CSR).",
+		Usage:     "sign a certificate signing request (CSR)",
 		UsageText: `**step certificate sign** <csr_file> <crt_file> <key_file>`,
 		Description: `**step certificate sign** generates a signed
 certificate from a certificate signing request (CSR).

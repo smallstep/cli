@@ -16,7 +16,7 @@ func verifyCommand() cli.Command {
 	return cli.Command{
 		Name:   "verify",
 		Action: cli.ActionFunc(verifyAction),
-		Usage:  `verify a certificate.`,
+		Usage:  `verify a certificate`,
 		UsageText: `**step certificate verify** <crt_file> [**--host**=<host>]
 		[**--roots**=<root-bundle>]`,
 		Description: `**step certificate verify** executes the certificate path

@@ -13,7 +13,7 @@ func getEncryptedKeyCommand() cli.Command {
 	return cli.Command{
 		Name:   "jwe-key",
 		Action: cli.ActionFunc(getEncryptedKeyAction),
-		Usage:  "retrieves and prints a provisioning key in the CA",
+		Usage:  "retrieve and print a provisioning key in the CA",
 		UsageText: `**step ca provisioner jwe-key** <kid> [**--ca-url**=<uri>]
 [**--root**=<file>]`,
 		Description: `**step ca provisioner jwe-key** returns the encrypted

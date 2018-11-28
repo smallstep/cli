@@ -21,7 +21,7 @@ func changePassCommand() cli.Command {
 	return cli.Command{
 		Name:      "change-pass",
 		Action:    command.ActionFunc(changePassAction),
-		Usage:     "Change password of an encrypted private key (PEM or JWK format)",
+		Usage:     "change password of an encrypted private key (PEM or JWK format)",
 		UsageText: `**step crypto change-pass** <key-file> [**--out**=<file>]`,
 		Description: `**step crypto change-pass** extracts the private key from
 a file and encrypts disk using a new password by either overwriting the original

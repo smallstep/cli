@@ -18,7 +18,7 @@ import (
 func signCommand() cli.Command {
 	return cli.Command{
 		Name:      "sign",
-		Usage:     "signs small messages using public-key cryptography",
+		Usage:     "sign small messages using public-key cryptography",
 		UsageText: "step crypto nacl sign <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto nacl sign** command group uses public-key cryptography to sign and
 verify messages. The implementation is based on NaCl's crypto_sign function.
@@ -68,7 +68,7 @@ func signKeypairCommand() cli.Command {
 	return cli.Command{
 		Name:      "keypair",
 		Action:    command.ActionFunc(signKeypairAction),
-		Usage:     "generates a pair for use with sign and open",
+		Usage:     "generate a pair for use with sign and open",
 		UsageText: "**step crypto nacl sign keypair** <pub-file> <priv-file>",
 		Description: `**step crypto nacl sign keypair** generates a secret key and a corresponding
 public key valid for verifying and signing messages.
@@ -84,7 +84,7 @@ func signOpenCommand() cli.Command {
 	return cli.Command{
 		Name:      "open",
 		Action:    cli.ActionFunc(signOpenAction),
-		Usage:     "verifies a signed message produced by sign",
+		Usage:     "verify a signed message produced by sign",
 		UsageText: "**step crypto nacl sign open** <pub-file>",
 		Description: `**step crypto nacl sign open** verifies the signature of a message using the
 signer's public key.
@@ -105,7 +105,7 @@ func signSignCommand() cli.Command {
 	return cli.Command{
 		Name:      "sign",
 		Action:    cli.ActionFunc(signSignAction),
-		Usage:     "signs a message using Ed25519",
+		Usage:     "sign a message using Ed25519",
 		UsageText: "**step crypto nacl sign sign** <priv-file>",
 		Description: `**step crypto nacl sign sign** signs a message m using the signer's private
 key.
