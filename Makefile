@@ -221,15 +221,22 @@ docker-release: docker-master docker-login docker-push-tag
 # Debian
 #########################################
 
-debian:
+changelog:
+	$Q echo "step-cli ($(VERSION)) unstable; urgency=medium" > debian/changelog
+	$Q echo >> debian/changelog
+	$Q echo "  * See https://github.com/smallstep/cli/releases" >> debian/changelog
+	$Q echo >> debian/changelog
+	$Q echo " -- Smallstep Labs, Inc. <techadmin@smallstep.com>  $(shell date -uR)" >> debian/changelog
+
+debian: changelog
 	$Q set -e; mkdir -p $(RELEASE); \
 	OUTPUT=../step-cli_*.deb; \
-	rm -f $$OUTPUT; \
+	rm $$OUTPUT; \
 	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
 distclean: clean
 
-.PHONY: debian distclean
+.PHONY: changelog debian distclean
 
 #################################################
 # Build statically compiled step binary for various operating systems
