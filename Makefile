@@ -231,7 +231,7 @@ changelog:
 debian: changelog
 	$Q set -e; mkdir -p $(RELEASE); \
 	OUTPUT=../step-cli_*.deb; \
-	rm $$OUTPUT; \
+	rm -f $$OUTPUT; \
 	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
 distclean: clean
