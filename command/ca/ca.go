@@ -20,7 +20,7 @@ func init() {
 authority, retrieve the root of trust, sign and renew certificates, and create
 and manage provisioners.
 
-## Examples
+## EXAMPLES
 
 Create the configuration for a new certificate authority:
 '''
