@@ -4,13 +4,14 @@ import (
 	"crypto/rand"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	x509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -19,7 +20,7 @@ import (
 func createCommand() cli.Command {
 	return cli.Command{
 		Name:   "create",
-		Action: cli.ActionFunc(createAction),
+		Action: command.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
 [**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
@@ -192,6 +193,7 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
     :  Ed25519 Curve
 `,
 			},
+			flags.Force,
 		},
 	}
 }
@@ -320,8 +322,7 @@ func createAction(ctx *cli.Context) error {
 		return errs.NewError("unexpected type: %s", typ)
 	}
 
-	if err := utils.WriteFile(crtFile, pem.EncodeToMemory(pubPEM),
-		os.FileMode(0600)); err != nil {
+	if err := utils.WriteFile(crtFile, pem.EncodeToMemory(pubPEM), 0600); err != nil {
 		return errs.FileError(err, crtFile)
 	}
 

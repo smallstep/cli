@@ -9,8 +9,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 )
@@ -18,7 +20,7 @@ import (
 func changePassCommand() cli.Command {
 	return cli.Command{
 		Name:      "change-pass",
-		Action:    cli.ActionFunc(changePassAction),
+		Action:    command.ActionFunc(changePassAction),
 		Usage:     "Change password of an encrypted private key (PEM or JWK format)",
 		UsageText: `**step crypto change-pass** <key-file> [**--out**=<file>]`,
 		Description: `**step crypto change-pass** extracts the private key from
@@ -56,6 +58,7 @@ $ step crypto change-pass key.jwk --out new-key.jwk
 				Name:  "out,output-file",
 				Usage: "The <file> new encrypted key path. Default to overwriting the <key> positional argument",
 			},
+			flags.Force,
 		},
 	}
 }

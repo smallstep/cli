@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/nacl/sign"
@@ -65,7 +67,7 @@ message
 func signKeypairCommand() cli.Command {
 	return cli.Command{
 		Name:      "keypair",
-		Action:    cli.ActionFunc(signKeypairAction),
+		Action:    command.ActionFunc(signKeypairAction),
 		Usage:     "generates a pair for use with sign and open",
 		UsageText: "**step crypto nacl sign keypair** <pub-file> <priv-file>",
 		Description: `**step crypto nacl sign keypair** generates a secret key and a corresponding
@@ -74,6 +76,7 @@ public key valid for verifying and signing messages.
 This command uses an implementation of NaCl's crypto_sign_keypair function.
 
 For examples, see **step help crypto nacl sign**.`,
+		Flags: []cli.Flag{flags.Force},
 	}
 }
 

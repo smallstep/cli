@@ -10,9 +10,10 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -20,7 +21,7 @@ import (
 func formatCommand() cli.Command {
 	return cli.Command{
 		Name:      "format",
-		Action:    cli.ActionFunc(formatAction),
+		Action:    command.ActionFunc(formatAction),
 		Usage:     `reformat certificate.`,
 		UsageText: `**step crypto key format** <key_file> [**--out**=<path>]`,
 		Description: `**step crypto key format** prints the key in
@@ -66,6 +67,7 @@ $ step crypto key format foo-key.pem --out foo-key.der
 				Name:  "password-file",
 				Usage: `location of file containing passphrase to decrypt private key`,
 			},
+			flags.Force,
 		},
 	}
 }

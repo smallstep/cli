@@ -7,10 +7,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -18,7 +20,7 @@ import (
 func bootstrapCommand() cli.Command {
 	return cli.Command{
 		Name:      "bootstrap",
-		Action:    cli.ActionFunc(bootstrapAction),
+		Action:    command.ActionFunc(bootstrapAction),
 		Usage:     "initializes the environment to use the CA commands",
 		UsageText: "**step ca bootstrap** [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>]",
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
@@ -30,7 +32,7 @@ url, the root certificate location and its fingerprint.
 
 After the bootstrap, ca commands do not need to specify the flags 
 --ca-url, --root or --fingerprint if we want to use the same environment.`,
-		Flags: []cli.Flag{caURLFlag, fingerprintFlag},
+		Flags: []cli.Flag{caURLFlag, fingerprintFlag, flags.Force},
 	}
 }
 

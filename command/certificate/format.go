@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -15,7 +17,7 @@ import (
 func formatCommand() cli.Command {
 	return cli.Command{
 		Name:      "format",
-		Action:    cli.ActionFunc(formatAction),
+		Action:    command.ActionFunc(formatAction),
 		Usage:     `reformat certificate.`,
 		UsageText: `**step certificate format** <crt_file> [**--out**=<path>]`,
 		Description: `**step certificate format** prints the certificate in
@@ -55,6 +57,7 @@ $ step certificate format foo.pem --out foo.der
 				Name:  "out",
 				Usage: `Path to write the reformatted result.`,
 			},
+			flags.Force,
 		},
 	}
 }

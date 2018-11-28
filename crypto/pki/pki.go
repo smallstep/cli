@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -300,7 +299,7 @@ func (p *PKI) Save() error {
 		return errors.Wrapf(err, "error marshalling %s", p.config)
 	}
 
-	if err = ioutil.WriteFile(p.config, b, 0666); err != nil {
+	if err = utils.WriteFile(p.config, b, 0666); err != nil {
 		return errs.FileError(err, p.config)
 	}
 

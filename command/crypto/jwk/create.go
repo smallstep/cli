@@ -9,8 +9,10 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -26,7 +28,7 @@ const (
 func createCommand() cli.Command {
 	return cli.Command{
 		Name:   "create",
-		Action: cli.ActionFunc(createAction),
+		Action: command.ActionFunc(createAction),
 		Usage:  "create a JWK (JSON Web Key)",
 		UsageText: `**step crypto jwk create** <public-jwk-file> <private-jwk-file>
     [**--kty**=<type>] [**--alg**=<algorithm>] [**--use**=<use>]
@@ -397,12 +399,9 @@ existing <pem-file> instead of creating a new key.`,
 key material will be written to disk unencrypted. This is not
 recommended. Requires **--insecure** flag.`,
 			},
-			cli.BoolFlag{
-				Name: "subtle",
-			},
-			cli.BoolFlag{
-				Name: "insecure",
-			},
+			flags.Subtle,
+			flags.Insecure,
+			flags.Force,
 		},
 	}
 }

@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/nacl/box"
@@ -93,7 +95,7 @@ message
 func boxKeypairCommand() cli.Command {
 	return cli.Command{
 		Name:      "keypair",
-		Action:    cli.ActionFunc(boxKeypairAction),
+		Action:    command.ActionFunc(boxKeypairAction),
 		Usage:     "generate a key for use with seal and open",
 		UsageText: "**step crypto nacl box keypair** <pub-file> <priv-file>",
 		Description: `Generates a new public/private keypair suitable for use with seal and open.
@@ -110,6 +112,7 @@ For examples, see **step help crypto nacl box**.
 
 <priv-file>
 :  The path to write the encrypted private key.`,
+		Flags: []cli.Flag{flags.Force},
 	}
 }
 

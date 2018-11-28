@@ -5,9 +5,11 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -16,7 +18,7 @@ import (
 func createKeyPairCommand() cli.Command {
 	return cli.Command{
 		Name:   "keypair",
-		Action: cli.ActionFunc(createAction),
+		Action: command.ActionFunc(createAction),
 		Usage:  "generate a public / private keypair in PEM format.",
 		UsageText: `**step crypto keypair** <pub_file> <priv_file>
 [**--curve**=<curve>] [**--no-password**] [**--size**=<size>]
@@ -135,6 +137,7 @@ existing <jwk-file> instead of creating a new key.`,
 Sensitive key material will be written to disk unencrypted. This is not
 recommended. Requires **--insecure** flag.`,
 			},
+			flags.Force,
 		},
 	}
 }

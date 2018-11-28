@@ -20,6 +20,7 @@ import (
 const IgnoreEnvVar = "STEP_IGNORE_ENV_VAR"
 
 var cmds []cli.Command
+var currentContext *cli.Context
 
 func init() {
 	os.Unsetenv(IgnoreEnvVar)
@@ -38,6 +39,19 @@ func Register(c cli.Command) {
 // Retrieve returns all commands
 func Retrieve() []cli.Command {
 	return cmds
+}
+
+// ActionFunc returns a cli.ActionFunc that stores the context.
+func ActionFunc(fn cli.ActionFunc) cli.ActionFunc {
+	return func(ctx *cli.Context) error {
+		currentContext = ctx
+		return fn(ctx)
+	}
+}
+
+// IsForce returns if the force flag was passed
+func IsForce() bool {
+	return currentContext != nil && currentContext.Bool("force")
 }
 
 // getConfigVars load the defaults.json file and sets the flags if they are not

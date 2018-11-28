@@ -14,9 +14,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
@@ -26,7 +28,7 @@ import (
 func newCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "certificate",
-		Action: cli.ActionFunc(newCertificateAction),
+		Action: command.ActionFunc(newCertificateAction),
 		Usage:  "generates a new certificate pair signed by the root certificate",
 		UsageText: `**step ca certificate** <hostname> <crt-file> <key-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -63,6 +65,7 @@ $ step ca certificate --token $TOKEN --not-after=1h internal.example.com interna
 			rootFlag,
 			notBeforeFlag,
 			notAfterFlag,
+			flags.Force,
 		},
 	}
 }
@@ -70,7 +73,7 @@ $ step ca certificate --token $TOKEN --not-after=1h internal.example.com interna
 func signCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "sign",
-		Action: cli.ActionFunc(signCertificateAction),
+		Action: command.ActionFunc(signCertificateAction),
 		Usage:  "generates a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -104,6 +107,7 @@ $ step ca sign --token $TOKEN --not-after=1h internal.csr internal.crt
 			rootFlag,
 			notBeforeFlag,
 			notAfterFlag,
+			flags.Force,
 		},
 	}
 }
@@ -111,7 +115,7 @@ $ step ca sign --token $TOKEN --not-after=1h internal.csr internal.crt
 func renewCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "renew",
-		Action: cli.ActionFunc(renewCertificateAction),
+		Action: command.ActionFunc(renewCertificateAction),
 		Usage:  "renew a valid certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
 		[**--ca-url**=<uri>] [**--root**=<file>]
@@ -176,10 +180,7 @@ sequence of decimal numbers, each with optional fraction and a unit suffix, such
 as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
 "s", "m", "h".`,
 			},
-			cli.BoolFlag{
-				Name:  "f,force",
-				Usage: "Force the overwrite of files without asking.",
-			},
+			flags.Force,
 		},
 	}
 }
@@ -464,7 +465,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	}
 	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
 
-	if err := utils.WriteFileForce(outFile, data, 0600, ctx.Bool("force")); err != nil {
+	if err := utils.WriteFile(outFile, data, 0600); err != nil {
 		return errs.FileError(err, outFile)
 	}
 

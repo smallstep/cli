@@ -10,9 +10,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
@@ -30,7 +32,7 @@ type provisionersSelect struct {
 func newTokenCommand() cli.Command {
 	return cli.Command{
 		Name:   "token",
-		Action: cli.ActionFunc(newTokenAction),
+		Action: command.ActionFunc(newTokenAction),
 		Usage:  "generates an OTT granting access to the CA",
 		UsageText: `**step ca token** <hostname>
 		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -117,6 +119,7 @@ the certificate authority.`,
 				Usage: `Creates a token without contacting the certificate authority. Offline mode
 requires the flags <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
 			},
+			flags.Force,
 		},
 	}
 }

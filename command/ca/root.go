@@ -7,15 +7,17 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
 func rootComand() cli.Command {
 	return cli.Command{
 		Name:   "root",
-		Action: cli.ActionFunc(rootAction),
+		Action: command.ActionFunc(rootAction),
 		Usage:  "downloads and validates the root certificate",
 		UsageText: `**step ca root** <root-file>
 		[**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>]`,
@@ -50,6 +52,7 @@ $ step ca root root_ca.crt \
 		Flags: []cli.Flag{
 			caURLFlag,
 			fingerprintFlag,
+			flags.Force,
 		},
 	}
 }
