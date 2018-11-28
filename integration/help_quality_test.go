@@ -21,6 +21,7 @@ func TestHelpQuality(t *testing.T) {
 	raw, _ := ioutil.ReadFile("./html/report.json")
 	var report *usage.Report
 	json.Unmarshal([]byte(raw), &report)
+	_ = 1
 
 	expectations := make(map[string]usage.Section)
 	expectations["COMMANDS"] = usage.Section{Name: "COMMANDS", Words: 0, Lines: 0}
@@ -34,7 +35,7 @@ func TestHelpQuality(t *testing.T) {
 	expectations["PRINTING"] = usage.Section{Name: "PRINTING", Words: 23, Lines: 1}
 	expectations["SECURITY CONSIDERATIONS"] = usage.Section{Name: "SECURITY CONSIDERATIONS", Words: 220, Lines: 25}
 	expectations["STANDARDS"] = usage.Section{Name: "STANDARDS", Words: 45, Lines: 10}
-	expectations["USAGE"] = usage.Section{Name: "USAGE", Words: 3, Lines: 1}
+	expectations["USAGE"] = usage.Section{Name: "USAGE", Words: 2, Lines: 1}
 	expectations["VERSION"] = usage.Section{Name: "VERSION", Words: 3, Lines: 1}
 
 	t.Run("Headlines consistency", func(t *testing.T) {

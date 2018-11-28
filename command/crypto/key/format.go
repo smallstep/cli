@@ -35,7 +35,7 @@ are converted to PEM format.
 ## POSITIONAL ARGUMENTS
 
 <crt_file>
-:  Path to a certificate.
+:  Path to a certificate file.
 
 ## EXIT CODES
 

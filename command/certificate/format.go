@@ -29,7 +29,7 @@ a certificate in one format to the other.
 ## POSITIONAL ARGUMENTS
 
 <crt_file>
-:  Path to a certificate.
+:  Path to a certificate file.
 
 ## EXIT CODES
 

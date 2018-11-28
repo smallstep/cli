@@ -32,7 +32,7 @@ in the CA.
 
 ## EXAMPLES
 
-List the active provisioners:
+Prints a JSON list with active provisioners:
 '''
 $ step ca provisioner list
 '''`,
