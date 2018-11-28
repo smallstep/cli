@@ -63,7 +63,7 @@ e.g. `v1.0.2`
 
     2. Update the change log.
 
-        *sigh* Honestly, this entire step should be handled programmatically.
+        (**sigh**) Honestly, this entire step should be handled programmatically.
 
     3. Commit the changes.
 
@@ -103,10 +103,10 @@ e.g. `v1.0.2`
 
     Travis will build and upload the following artifacts:
 
-    * *brew_step_1.0.3.tar.gz*: tarball used by the brew formula.
-    * *step-cli_1.0.3_amd64.deb*: debian package for installation on linux.
-    * *step_1.0.3_linux_amd64.tar.gz*: tarball containing a statically compiled linux binary.
-    * *step_1.0.3_darwin_amd64.tar.gz*: tarball containing a statically compiled darwin binary.
+    * **brew_step_1.0.3.tar.gz**: tarball used by the brew formula.
+    * **step-cli_1.0.3_amd64.deb**: debian package for installation on linux.
+    * **step_1.0.3_linux_amd64.tar.gz**: tarball containing a statically compiled linux binary.
+    * **step_1.0.3_darwin_amd64.tar.gz**: tarball containing a statically compiled darwin binary.
 
 7. Update the Homebrew formula.
 
