@@ -21,7 +21,6 @@ func TestHelpQuality(t *testing.T) {
 	raw, _ := ioutil.ReadFile("./html/report.json")
 	var report *usage.Report
 	json.Unmarshal([]byte(raw), &report)
-	_ = 1
 
 	expectations := make(map[string]usage.Section)
 	expectations["COMMANDS"] = usage.Section{Name: "COMMANDS", Words: 0, Lines: 0}
