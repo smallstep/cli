@@ -29,7 +29,7 @@ func newCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "certificate",
 		Action: command.ActionFunc(newCertificateAction),
-		Usage:  "generates a new certificate pair signed by the root certificate",
+		Usage:  "generate a new certificate pair signed by the root certificate",
 		UsageText: `**step ca certificate** <hostname> <crt-file> <key-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
@@ -74,7 +74,7 @@ func signCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "sign",
 		Action: command.ActionFunc(signCertificateAction),
-		Usage:  "generates a new certificate signing a certificate request",
+		Usage:  "generate a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,

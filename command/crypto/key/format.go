@@ -22,7 +22,7 @@ func formatCommand() cli.Command {
 	return cli.Command{
 		Name:      "format",
 		Action:    command.ActionFunc(formatAction),
-		Usage:     `reformat certificate.`,
+		Usage:     `reformat certificate`,
 		UsageText: `**step crypto key format** <key_file> [**--out**=<path>]`,
 		Description: `**step crypto key format** prints the key in
 a different format.

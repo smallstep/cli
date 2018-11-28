@@ -12,7 +12,7 @@ import (
 func init() {
 	cmd := cli.Command{
 		Name:   "version",
-		Usage:  "Displays the current version of the cli",
+		Usage:  "display the current version of the cli",
 		Action: Command,
 	}
 

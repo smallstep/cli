@@ -33,7 +33,7 @@ func newTokenCommand() cli.Command {
 	return cli.Command{
 		Name:   "token",
 		Action: command.ActionFunc(newTokenAction),
-		Usage:  "generates an OTT granting access to the CA",
+		Usage:  "generate an OTT granting access to the CA",
 		UsageText: `**step ca token** <hostname>
 		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]

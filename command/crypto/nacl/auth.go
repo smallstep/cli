@@ -15,7 +15,7 @@ import (
 func authCommand() cli.Command {
 	return cli.Command{
 		Name:      "auth",
-		Usage:     "authenticates a message using a secret key",
+		Usage:     "authenticate a message using a secret key",
 		UsageText: "step crypto nacl auth <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto nacl auth** command group uses secret key cryptography to
 authenticate and verify messages using a secret key. The implementation is based on NaCl's
@@ -74,7 +74,7 @@ func authDigestCommand() cli.Command {
 	return cli.Command{
 		Name:      "digest",
 		Action:    cli.ActionFunc(authDigestAction),
-		Usage:     "generates a 32-byte digest for a message",
+		Usage:     "generate a 32-byte digest for a message",
 		UsageText: "**step crypto nacl auth digest** <key-file>",
 		Description: `**step crypto nacl auth digest** creates a digest to authenticate the message
 is read from STDIN using the given secret key.
@@ -89,7 +89,7 @@ func authVerifyCommand() cli.Command {
 	return cli.Command{
 		Name:      "verify",
 		Action:    cli.ActionFunc(authVerifyAction),
-		Usage:     "checks digest is a valid for a message",
+		Usage:     "validate a digest for a message",
 		UsageText: "**step crypto nacl auth verify** <key-file> <digest>",
 		Description: `**step crypto nacl auth verify** checks that the digest is a valid authenticator
 of the message is read from STDIN under the given secret key file.

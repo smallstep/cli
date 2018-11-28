@@ -21,7 +21,7 @@ func bootstrapCommand() cli.Command {
 	return cli.Command{
 		Name:      "bootstrap",
 		Action:    command.ActionFunc(bootstrapAction),
-		Usage:     "initializes the environment to use the CA commands",
+		Usage:     "initialize the environment to use the CA commands",
 		UsageText: "**step ca bootstrap** [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>]",
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
 authority and sets up the current environment to use it.

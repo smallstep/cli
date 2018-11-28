@@ -9,7 +9,7 @@ import (
 func init() {
 	cmd := cli.Command{
 		Name:      "certificate",
-		Usage:     "create, revoke, validate, bundle, and otherwise manage certificates.",
+		Usage:     "create, revoke, validate, bundle, and otherwise manage certificates",
 		UsageText: "step certificate SUBCOMMAND [ARGUMENTS] [GLOBAL_FLAGS] [SUBCOMMAND_FLAGS]",
 		Description: `**step certificate** command group provides facilities for creating
 certificate signing requests (CSRs), creating self-signed certificates

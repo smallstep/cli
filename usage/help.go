@@ -21,7 +21,7 @@ func HelpCommand() cli.Command {
 	return cli.Command{
 		Name:      "help",
 		Aliases:   []string{"h"},
-		Usage:     "displays help for the specified command or command group",
+		Usage:     "display help for the specified command or command group",
 		ArgsUsage: "[command]",
 		Action:    HelpCommandAction,
 		Flags: []cli.Flag{

@@ -18,7 +18,7 @@ func rootComand() cli.Command {
 	return cli.Command{
 		Name:   "root",
 		Action: command.ActionFunc(rootAction),
-		Usage:  "downloads and validates the root certificate",
+		Usage:  "download and validate the root certificate",
 		UsageText: `**step ca root** <root-file>
 		[**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>]`,
 		Description: `**step ca root** downloads and validates the root certificate from the

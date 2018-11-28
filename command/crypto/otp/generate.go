@@ -19,7 +19,7 @@ func generateCommand() cli.Command {
 	return cli.Command{
 		Name:        "generate",
 		Action:      command.ActionFunc(generateAction),
-		Usage:       "one-time password",
+		Usage:       "generate a one-time password",
 		UsageText:   `**step crypto otp generate**`,
 		Description: `**step crypto otp generate** does TOTP and HTOP`,
 		Flags: []cli.Flag{
