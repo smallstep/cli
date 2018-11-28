@@ -62,7 +62,6 @@ func TestLoadIdentityFromDisk(t *testing.T) {
 		} else {
 			assert.FatalError(t, err)
 			assert.NotNil(t, i.Crt)
-			assert.NotNil(t, i.CrtPem)
 			assert.NotNil(t, i.Key)
 		}
 	}

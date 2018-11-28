@@ -1,3 +1,17 @@
+step-cli (0.0.2-rc.15) UNRELEASED; urgency=medium
+
+  [ max furman]
+  * step ca commands
+
+ -- Smallstep Labs, Inc. <techadmin@smallstep.com>  Thu, 8 Nov 2018 14:30:00 +0000
+
+step-cli (0.0.2-rc.15) UNRELEASED; urgency=medium
+
+  [ max furman]
+  * step ca commands
+
+ -- Smallstep Labs, Inc. <techadmin@smallstep.com>  Fri, 28 Aug 2018 23:38:00 +0000
+
 step-cli (0.0.2-rc.12) UNRELEASED; urgency=medium
 
   [ Mariano Cano ]

@@ -10,9 +10,17 @@ import (
 	"github.com/smallstep/cli/pkg/x509"
 )
 
+// DefaultRootCertValidity is the default validity of a root certificate in the step PKI.
+var DefaultRootCertValidity = time.Hour * 24 * 365 * 10
+
 // Root implements the Profile for a root certificate.
 type Root struct {
 	base
+}
+
+// DefaultDuration returns the default Root Certificate duration.
+func (r *Root) DefaultDuration() time.Duration {
+	return DefaultRootCertValidity
 }
 
 // NewRootProfile returns a new root x509 Certificate profile.

@@ -6,24 +6,88 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
-	realx509 "crypto/x509"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
-	"github.com/smallstep/cli/pkg/x509"
+	"github.com/smallstep/cli/errs"
 	"golang.org/x/crypto/ed25519"
 )
 
 const (
 	jwksUsageSig = "sig"
 	jwksUsageEnc = "enc"
+	// defaultKeyType is the default type of the one-time token key.
+	defaultKeyType = EC
+	// defaultKeyCurve is the default curve of the one-time token key.
+	defaultKeyCurve = P256
+	// defaultKeyAlg is the default algorithm of the one-time token key.
+	defaultKeyAlg = ES256
+	// defaultKeySize is the default size of the one-time token key.
+	defaultKeySize = 0
 )
 
 var (
 	errAmbiguousCertKeyUsage = errors.New("jose/generate: certificate's key usage is ambiguous, it should be for signature or encipherment, but not both (use --subtle to ignore usage field)")
 	errNoCertKeyUsage        = errors.New("jose/generate: certificate doesn't contain any key usage (use --subtle to ignore usage field)")
 )
+
+// GenerateDefaultKeyPair generates an asymmetric public/private key pair.
+// Returns the public key as a JWK and the private key as an encrypted JWE.
+func GenerateDefaultKeyPair(pass []byte) (*JSONWebKey, *JSONWebEncryption, error) {
+	if len(pass) == 0 {
+		return nil, nil, errors.New("step-jose: password cannot be empty when encryptying a JWK")
+	}
+
+	// Generate the OTT key
+	jwk, err := GenerateJWK(defaultKeyType, defaultKeyCurve, defaultKeyAlg, jwksUsageSig, "", defaultKeySize)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// The thumbprint is computed from the public key
+	hash, err := jwk.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error generating JWK thumbprint")
+	}
+	jwk.KeyID = base64.RawURLEncoding.EncodeToString(hash)
+
+	b, err := json.Marshal(jwk)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error marshaling JWK")
+	}
+
+	// Encrypt private key using PBES2
+	salt, err := randutil.Salt(PBKDF2SaltSize)
+	if err != nil {
+		return nil, nil, err
+	}
+	recipient := Recipient{
+		Algorithm:  PBES2_HS256_A128KW,
+		Key:        pass,
+		PBES2Count: PBKDF2Iterations,
+		PBES2Salt:  salt,
+	}
+
+	opts := new(EncrypterOptions)
+	opts.WithContentType(ContentType("jwk+json"))
+
+	encrypter, err := NewEncrypter(DefaultEncAlgorithm, recipient, opts)
+	if err != nil {
+		return nil, nil, errs.Wrap(err, "error creating cipher")
+	}
+
+	jwe, err := encrypter.Encrypt(b)
+	if err != nil {
+		return nil, nil, errs.Wrap(err, "error encrypting data")
+	}
+
+	public := jwk.Public()
+	return &public, jwe, nil
+}
 
 // GenerateJWK generates a JWK given the key type, curve, alg, use, kid and
 // the size of the RSA or oct keys if necessary.
@@ -61,22 +125,16 @@ func GenerateJWKFromPEM(filename string, subtle bool) (*JSONWebKey, error) {
 			Algorithm: algForKey(key),
 		}, nil
 	case *x509.Certificate:
-		// have: step-cli x509 Certificate
-		// want: crypto/x509 Certificate
-		crt, err := realx509.ParseCertificate(key.Raw)
-		if err != nil {
-			return nil, err
-		}
 		var use string
 		if !subtle {
-			use, err = keyUsageForCert(crt)
+			use, err = keyUsageForCert(key)
 			if err != nil {
 				return nil, err
 			}
 		}
 		return &JSONWebKey{
 			Key:          key.PublicKey,
-			Certificates: []*realx509.Certificate{crt},
+			Certificates: []*x509.Certificate{key},
 			Algorithm:    algForKey(key.PublicKey),
 			Use:          use,
 		}, nil
@@ -98,19 +156,19 @@ func algForKey(key crypto.PublicKey) string {
 	}
 }
 
-func keyUsageForCert(cert *realx509.Certificate) (string, error) {
+func keyUsageForCert(cert *x509.Certificate) (string, error) {
 	isDigitalSignature := containsUsage(cert.KeyUsage,
-		realx509.KeyUsageDigitalSignature,
-		realx509.KeyUsageContentCommitment,
-		realx509.KeyUsageCertSign,
-		realx509.KeyUsageCRLSign,
+		x509.KeyUsageDigitalSignature,
+		x509.KeyUsageContentCommitment,
+		x509.KeyUsageCertSign,
+		x509.KeyUsageCRLSign,
 	)
 	isEncipherment := containsUsage(cert.KeyUsage,
-		realx509.KeyUsageKeyEncipherment,
-		realx509.KeyUsageDataEncipherment,
-		realx509.KeyUsageKeyAgreement,
-		realx509.KeyUsageEncipherOnly,
-		realx509.KeyUsageDecipherOnly,
+		x509.KeyUsageKeyEncipherment,
+		x509.KeyUsageDataEncipherment,
+		x509.KeyUsageKeyAgreement,
+		x509.KeyUsageEncipherOnly,
+		x509.KeyUsageDecipherOnly,
 	)
 	if isDigitalSignature && isEncipherment {
 		return "", errAmbiguousCertKeyUsage
@@ -124,7 +182,7 @@ func keyUsageForCert(cert *realx509.Certificate) (string, error) {
 	return "", errNoCertKeyUsage
 }
 
-func containsUsage(usage realx509.KeyUsage, queries ...realx509.KeyUsage) bool {
+func containsUsage(usage x509.KeyUsage, queries ...x509.KeyUsage) bool {
 	for _, query := range queries {
 		if usage&query == query {
 			return true

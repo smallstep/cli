@@ -18,9 +18,28 @@ func authCommand() cli.Command {
 		Usage:     "authenticates a message using a secret key",
 		UsageText: "step crypto nacl auth <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto nacl auth** command group uses secret key cryptography to
-authenticate and verify messages using a secret key.
+authenticate and verify messages using a secret key. The implementation is based on NaCl's
+crypto_auth function.
 
-TODO
+NaCl crypto_auth function, viewed as a function of the message for a uniform
+random key, is designed to meet the standard notion of unforgeability. This
+means that an attacker cannot find authenticators for any messages not
+authenticated by the sender, even if the attacker has adaptively influenced the
+messages authenticated by the sender. For a formal definition see, e.g., Section
+2.4 of Bellare, Kilian, and Rogaway, "The security of the cipher block chaining
+message authentication code," Journal of Computer and System Sciences 61 (2000),
+362–399; http://www-cse.ucsd.edu/~mihir/papers/cbc.html.
+
+NaCl crypto_auth does not make any promises regarding "strong" unforgeability;
+perhaps one valid authenticator can be converted into another valid
+authenticator for the same message. NaCl auth also does not make any promises
+regarding "truncated unforgeability."
+
+NaCl crypto_auth is currently an implementation of HMAC-SHA-512-256, i.e., the
+first 256 bits of HMAC-SHA-512. HMAC-SHA-512-256 is conjectured to meet the
+standard notion of unforgeability.
+
+These commands are interoperable with NaCl: https://nacl.cr.yp.to/auth.html
 
 ## EXAMPLES
 
@@ -57,10 +76,10 @@ func authDigestCommand() cli.Command {
 		Action:    cli.ActionFunc(authDigestAction),
 		Usage:     "generates a 32-byte digest for a message",
 		UsageText: "**step crypto nacl auth digest** <key-file>",
-		Description: `**step crypto nacl auth digest** creates a digest to authenticate of a message
-using a secret key.
+		Description: `**step crypto nacl auth digest** creates a digest to authenticate the message
+is read from STDIN using the given secret key.
 
-TODO
+This command uses an implementation of NaCl's crypto_auth function.
 
 For examples, see **step help crypto nacl auth**.`,
 	}
@@ -72,10 +91,10 @@ func authVerifyCommand() cli.Command {
 		Action:    cli.ActionFunc(authVerifyAction),
 		Usage:     "checks digest is a valid for a message",
 		UsageText: "**step crypto nacl auth verify** <key-file> <digest>",
-		Description: `**step crypto nacl auth verify** verifies the digest of a message with a secret
-key.
+		Description: `**step crypto nacl auth verify** checks that the digest is a valid authenticator
+of the message is read from STDIN under the given secret key file.
 
-TODO
+This command uses an implementation of NaCl's crypto_auth_verify function.
 
 For examples, see **step help crypto nacl auth**.`,
 	}

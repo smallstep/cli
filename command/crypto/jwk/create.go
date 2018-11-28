@@ -2,15 +2,17 @@ package jwk
 
 import (
 	"bytes"
-	gocrypto "crypto"
+	"crypto"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -26,7 +28,7 @@ const (
 func createCommand() cli.Command {
 	return cli.Command{
 		Name:   "create",
-		Action: cli.ActionFunc(createAction),
+		Action: command.ActionFunc(createAction),
 		Usage:  "create a JWK (JSON Web Key)",
 		UsageText: `**step crypto jwk create** <public-jwk-file> <private-jwk-file>
     [**--kty**=<type>] [**--alg**=<algorithm>] [**--use**=<use>]
@@ -397,12 +399,9 @@ existing <pem-file> instead of creating a new key.`,
 key material will be written to disk unencrypted. This is not
 recommended. Requires **--insecure** flag.`,
 			},
-			cli.BoolFlag{
-				Name: "subtle",
-			},
-			cli.BoolFlag{
-				Name: "insecure",
-			},
+			flags.Subtle,
+			flags.Insecure,
+			flags.Force,
 		},
 	}
 }
@@ -495,7 +494,7 @@ func createAction(ctx *cli.Context) error {
 	} else {
 		// A hash of a symmetric key can leak information, so we only thumbprint asymmetric keys.
 		if kty != "oct" {
-			hash, err := jwk.Thumbprint(gocrypto.SHA256)
+			hash, err := jwk.Thumbprint(crypto.SHA256)
 			if err != nil {
 				return errors.Wrap(err, "error generating JWK thumbprint")
 			}
@@ -569,7 +568,9 @@ func createAction(ctx *cli.Context) error {
 			return errors.Wrap(err, "error marshaling JWK")
 		}
 
-		encrypter, err := jose.NewEncrypter(jose.A128GCM, rcpt, nil)
+		opts := new(jose.EncrypterOptions)
+		opts.WithContentType(jose.ContentType("jwk+json"))
+		encrypter, err := jose.NewEncrypter(jose.DefaultEncAlgorithm, rcpt, opts)
 		if err != nil {
 			return errors.Wrap(err, "error creating cipher")
 		}

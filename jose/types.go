@@ -15,6 +15,13 @@ import (
 // password based cryptography algorithms.
 const SupportsPBKDF2 = true
 
+// PBKDF2SaltSize is the default size of the salt for PBKDF2, 128-bit salt.
+const PBKDF2SaltSize = 16
+
+// PBKDF2Iterations is the default number of iterations for PBKDF2, 100k
+// iterations. Nist recommends at least 10k, 1Passsword uses 100k.
+const PBKDF2Iterations = 100000
+
 // JSONWebSignature represents a signed JWS object after parsing.
 type JSONWebSignature = jose.JSONWebSignature
 
@@ -81,6 +88,10 @@ type SigningKey = jose.SigningKey
 
 // SignerOptions represents options that can be set when creating signers.
 type SignerOptions = jose.SignerOptions
+
+// HeaderKey represents the type used as a key in the protected header of a JWS
+// object.
+type HeaderKey = jose.HeaderKey
 
 // ErrInvalidIssuer indicates invalid iss claim.
 var ErrInvalidIssuer = jwt.ErrInvalidIssuer
@@ -153,6 +164,14 @@ const (
 	P256 = "P-256" // P-256 curve (FIPS 186-3)
 	P384 = "P-384" // P-384 curve (FIPS 186-3)
 	P521 = "P-521" // P-521 curve (FIPS 186-3)
+)
+
+// Key types
+const (
+	EC  = "EC"  // Elliptic curves
+	RSA = "RSA" // RSA
+	OKP = "OKP" // Ed25519
+	OCT = "oct" // Octet sequence
 )
 
 // Ed25519 is the EdDSA signature scheme using SHA-512/256 and Curve25519

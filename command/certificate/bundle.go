@@ -5,14 +5,17 @@ import (
 	"io/ioutil"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
 
 func bundleCommand() cli.Command {
 	return cli.Command{
 		Name:      "bundle",
-		Action:    cli.ActionFunc(bundleAction),
+		Action:    command.ActionFunc(bundleAction),
 		Usage:     `bundle a certificate with intermediate certificate(s) needed for certificate path validation.`,
 		UsageText: `**step certificate bundle** <crt_file> <ca> <bundle_file>`,
 		Description: `**step certificate bundle** bundles a certificate
@@ -41,6 +44,7 @@ Bundle a certificate with the intermediate certificate authority (issuer):
 $ step certificate bundle foo.crt intermediate-ca.crt foo-bundle.crt
 '''
 `,
+		Flags: []cli.Flag{flags.Force},
 	}
 }
 
@@ -70,7 +74,7 @@ func bundleAction(ctx *cli.Context) error {
 	}
 
 	chainFile := ctx.Args().Get(2)
-	if err := ioutil.WriteFile(chainFile,
+	if err := utils.WriteFile(chainFile,
 		append(pem.EncodeToMemory(crtBlock), pem.EncodeToMemory(caBlock)...), 0600); err != nil {
 		return errs.FileError(err, chainFile)
 	}

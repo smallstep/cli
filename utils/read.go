@@ -77,7 +77,7 @@ func ReadPasswordGenerate(prompt string) ([]byte, error) {
 	if pass == nil {
 		_pass, err := randutil.ASCII(32)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		pass = []byte(_pass)
 		fmt.Fprintf(os.Stderr, "\npassword: %s\n\n", pass)

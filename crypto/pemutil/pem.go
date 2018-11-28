@@ -26,8 +26,9 @@ var DefaultEncCipher = x509.PEMCipherAES256
 
 // context add options to the pem methods.
 type context struct {
-	filename string
-	password []byte
+	filename   string
+	password   []byte
+	stepCrypto bool
 }
 
 // newContext initializes the context with a filename.
@@ -36,25 +37,48 @@ func newContext(name string) *context {
 }
 
 // Options is the type to add attributes to the context.
-type Options func(o *context)
+type Options func(o *context) error
 
 // WithFilename is a method that adds the given filename to the context.
 func WithFilename(name string) Options {
-	return func(ctx *context) {
+	return func(ctx *context) error {
 		ctx.filename = name
+		return nil
 	}
 }
 
 // WithPassword is a method that adds the given password to the context.
 func WithPassword(pass []byte) Options {
-	return func(ctx *context) {
+	return func(ctx *context) error {
 		ctx.password = pass
+		return nil
+	}
+}
+
+// WithPasswordFile is a method that adds the password in a file to the context.
+func WithPasswordFile(filename string) Options {
+	return func(ctx *context) error {
+		b, err := utils.ReadPasswordFromFile(filename)
+		if err != nil {
+			return err
+		}
+		ctx.password = b
+		return nil
+	}
+}
+
+// WithStepCrypto returns cryptographic primitives of the modified step Crypto
+// library.
+func WithStepCrypto() Options {
+	return func(ctx *context) error {
+		ctx.stepCrypto = true
+		return nil
 	}
 }
 
 // ReadCertificate returns a *x509.Certificate from the given filename. It
 // supports certificates formats PEM and DER.
-func ReadCertificate(filename string) (*x509.Certificate, error) {
+func ReadCertificate(filename string) (*realx509.Certificate, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errs.FileError(err, filename)
@@ -63,6 +87,33 @@ func ReadCertificate(filename string) (*x509.Certificate, error) {
 	// PEM format
 	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
 		crt, err := Read(filename)
+		if err != nil {
+			return nil, err
+		}
+		switch crt := crt.(type) {
+		case *realx509.Certificate:
+			return crt, nil
+		default:
+			return nil, errors.Errorf("error decoding PEM: file '%s' does not contain a certificate", filename)
+		}
+	}
+
+	// DER format (binary)
+	crt, err := realx509.ParseCertificate(b)
+	return crt, errors.Wrapf(err, "error parsing %s", filename)
+}
+
+// ReadStepCertificate returns a *x509.Certificate from the given filename. It
+// supports certificates formats PEM and DER.
+func ReadStepCertificate(filename string) (*x509.Certificate, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errs.FileError(err, filename)
+	}
+
+	// PEM format
+	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
+		crt, err := Read(filename, []Options{WithStepCrypto()}...)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +135,9 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 	// Populate options
 	ctx := newContext("PEM")
 	for _, f := range opts {
-		f(ctx)
+		if err := f(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	block, rest := pem.Decode(b)
@@ -129,8 +182,19 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 		priv, err := ParsePKCS8PrivateKey(block.Bytes)
 		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE":
-		crt, err := x509.ParseCertificate(block.Bytes)
+		if ctx.stepCrypto {
+			crt, err := x509.ParseCertificate(block.Bytes)
+			return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
+		}
+		crt, err := realx509.ParseCertificate(block.Bytes)
 		return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
+	case "CERTIFICATE REQUEST":
+		if ctx.stepCrypto {
+			csr, err := x509.ParseCertificateRequest(block.Bytes)
+			return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
+		}
+		csr, err := realx509.ParseCertificateRequest(block.Bytes)
+		return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	default:
 		return nil, errors.Errorf("error decoding %s: contains an unexpected header '%s'", ctx.filename, block.Type)
 	}
@@ -252,6 +316,16 @@ func Serialize(in interface{}, opts ...func(*pem.Block) error) (*pem.Block, erro
 	case *realx509.Certificate:
 		p = &pem.Block{
 			Type:  "CERTIFICATE",
+			Bytes: k.Raw,
+		}
+	case *x509.CertificateRequest:
+		p = &pem.Block{
+			Type:  "CERTIFICATE REQUEST",
+			Bytes: k.Raw,
+		}
+	case *realx509.CertificateRequest:
+		p = &pem.Block{
+			Type:  "CERTIFICATE REQUEST",
 			Bytes: k.Raw,
 		}
 	default:

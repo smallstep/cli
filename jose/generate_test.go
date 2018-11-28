@@ -5,7 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
-	realx509 "crypto/x509"
+	"crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
 	"math/big"
@@ -98,41 +98,41 @@ func TestGenerateJWK(t *testing.T) {
 
 func TestKeyUsageForCert(t *testing.T) {
 	tests := []struct {
-		Cert      *realx509.Certificate
+		Cert      *x509.Certificate
 		ExpectUse string
 		ExpectErr error
 	}{
 		{
-			Cert: &realx509.Certificate{
-				KeyUsage: realx509.KeyUsageDigitalSignature,
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDigitalSignature,
 			},
 			ExpectUse: jwksUsageSig,
 		},
 		{
-			Cert: &realx509.Certificate{
-				KeyUsage: realx509.KeyUsageDigitalSignature | realx509.KeyUsageContentCommitment,
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageContentCommitment,
 			},
 			ExpectUse: jwksUsageSig,
 		},
 		{
-			Cert: &realx509.Certificate{
-				KeyUsage: realx509.KeyUsageDataEncipherment | realx509.KeyUsageKeyAgreement,
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDataEncipherment | x509.KeyUsageKeyAgreement,
 			},
 			ExpectUse: jwksUsageEnc,
 		},
 		{
-			Cert: &realx509.Certificate{
-				KeyUsage: realx509.KeyUsageDataEncipherment,
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDataEncipherment,
 			},
 			ExpectUse: jwksUsageEnc,
 		},
 		{
-			Cert:      &realx509.Certificate{},
+			Cert:      &x509.Certificate{},
 			ExpectErr: errNoCertKeyUsage,
 		},
 		{
-			Cert: &realx509.Certificate{
-				KeyUsage: realx509.KeyUsageDigitalSignature | realx509.KeyUsageDataEncipherment,
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment,
 			},
 			ExpectErr: errAmbiguousCertKeyUsage,
 		},
@@ -151,29 +151,29 @@ func TestKeyUsageForCert(t *testing.T) {
 func TestGenerateJWKFromPEMSubtle(t *testing.T) {
 	tests := []struct {
 		Description string
-		KeyUsage    realx509.KeyUsage
+		KeyUsage    x509.KeyUsage
 		Subtle      bool
 		ExpectErr   error
 		ExpectSig   string
 	}{
 		{
 			Description: "single key usage without subtle",
-			KeyUsage:    realx509.KeyUsageDigitalSignature,
+			KeyUsage:    x509.KeyUsageDigitalSignature,
 			ExpectSig:   jwksUsageSig,
 		},
 		{
 			Description: "single key usage with subtle",
-			KeyUsage:    realx509.KeyUsageDigitalSignature,
+			KeyUsage:    x509.KeyUsageDigitalSignature,
 			Subtle:      true,
 		},
 		{
 			Description: "multiple key usage without subtle",
-			KeyUsage:    realx509.KeyUsageDigitalSignature | realx509.KeyUsageKeyEncipherment,
+			KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 			ExpectErr:   errAmbiguousCertKeyUsage,
 		},
 		{
 			Description: "multiple key usage with subtle",
-			KeyUsage:    realx509.KeyUsageDigitalSignature | realx509.KeyUsageKeyEncipherment,
+			KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 			Subtle:      true,
 		},
 	}
@@ -202,15 +202,15 @@ func TestGenerateJWKFromPEMSubtle(t *testing.T) {
 	}
 }
 
-func newCert(t *testing.T, keyUsage realx509.KeyUsage) []byte {
+func newCert(t *testing.T, keyUsage x509.KeyUsage) []byte {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	assert.NoError(t, err)
 
-	tmpl := realx509.Certificate{
+	tmpl := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		KeyUsage:     keyUsage,
 	}
-	cert, err := realx509.CreateCertificate(rand.Reader, &tmpl, &tmpl, key.Public(), key)
+	cert, err := x509.CreateCertificate(rand.Reader, &tmpl, &tmpl, key.Public(), key)
 	assert.NoError(t, err)
 	return cert
 }

@@ -246,10 +246,6 @@ var mdAppHelpTemplate = `## NAME
 
 {{if .UsageText}}{{.UsageText}}{{else}}**{{.HelpName}}**{{if .Commands}} <command>{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}_[arguments]_{{end}}{{end}}{{if .Description}}
 
-## STABILITY INDEX
-
-FOO BAR BAZ
-
 ## DESCRIPTION
 {{.Description}}{{end}}{{if .VisibleCommands}}
 

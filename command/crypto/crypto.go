@@ -9,6 +9,7 @@ import (
 	"github.com/smallstep/cli/command/crypto/jws"
 	"github.com/smallstep/cli/command/crypto/jwt"
 	"github.com/smallstep/cli/command/crypto/kdf"
+	"github.com/smallstep/cli/command/crypto/key"
 	"github.com/smallstep/cli/command/crypto/nacl"
 	"github.com/smallstep/cli/command/crypto/otp"
 	"github.com/urfave/cli"
@@ -153,6 +154,8 @@ risks. That said, many of these factors are beyond the scope of this tool.
    128 bit key in the context of a conventioanl attack.
 `,
 		Subcommands: cli.Commands{
+			changePassCommand(),
+			createKeyPairCommand(),
 			jwk.Command(),
 			jwt.Command(),
 			jwe.Command(),
@@ -160,8 +163,8 @@ risks. That said, many of these factors are beyond the scope of this tool.
 			jose.Command(),
 			hash.Command(),
 			kdf.Command(),
+			key.Command(),
 			nacl.Command(),
-			createKeyPairCommand(),
 			otp.Command(),
 		},
 	}

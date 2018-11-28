@@ -17,6 +17,38 @@ import (
 	"github.com/smallstep/cli/utils"
 )
 
+var (
+	// DefaultCertValidity is the minimum validity of an end-entity (not root or intermediate) certificate.
+	DefaultCertValidity = 24 * time.Hour
+
+	// DefaultTLSMinVersion default minimum version of TLS.
+	DefaultTLSMinVersion = TLSVersion(1.2)
+	// DefaultTLSMaxVersion default maximum version of TLS.
+	DefaultTLSMaxVersion = TLSVersion(1.2)
+	// DefaultTLSRenegotiation default TLS connection renegotiation policy.
+	DefaultTLSRenegotiation = false // Never regnegotiate.
+	// DefaultTLSCipherSuites specifies default step ciphersuite(s).
+	DefaultTLSCipherSuites = CipherSuites{
+		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+	}
+	// ApprovedTLSCipherSuites smallstep approved ciphersuites.
+	ApprovedTLSCipherSuites = CipherSuites{
+		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+	}
+)
+
 // Profile is an interface that certificate profiles (e.g. leaf,
 // intermediate, root) must implement.
 type Profile interface {
@@ -31,6 +63,7 @@ type Profile interface {
 	SetIssuerPrivateKey(interface{})
 	CreateCertificate() ([]byte, error)
 	GenerateKeyPair(string, string, int) error
+	DefaultDuration() time.Duration
 }
 
 type base struct {
@@ -80,11 +113,24 @@ func WithIssuer(iss pkix.Name) WithOption {
 	}
 }
 
-// WithNotBeforeAfter returns a Profile modifier that sets the `NotBefore` and
-// `NotAfter` attributes of the subject x509 Certificate.
-func WithNotBeforeAfter(nb, na time.Time) WithOption {
+// WithNotBeforeAfterDuration returns a Profile modifier that sets the
+// `NotBefore` and `NotAfter` attributes of the subject x509 Certificate.
+func WithNotBeforeAfterDuration(nb, na time.Time, d time.Duration) WithOption {
 	return func(p Profile) error {
 		crt := p.Subject()
+
+		now := time.Now()
+		if nb.IsZero() {
+			nb = now
+		}
+		if na.IsZero() {
+			if d == 0 {
+				na = nb.Add(p.DefaultDuration())
+			} else {
+				na = nb.Add(d)
+			}
+		}
+
 		crt.NotBefore = nb
 		crt.NotAfter = na
 		return nil
@@ -211,6 +257,10 @@ func (b *base) SetIssuerPrivateKey(priv interface{}) {
 
 func (b *base) SetSubjectPublicKey(pub interface{}) {
 	b.subPub = pub
+}
+
+func (b *base) DefaultDuration() time.Duration {
+	return DefaultCertValidity
 }
 
 func (b *base) GenerateKeyPair(kty, crv string, size int) error {

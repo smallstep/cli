@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
+	realx509 "crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
@@ -147,9 +148,135 @@ func TestReadCertificate(t *testing.T) {
 			}
 		} else {
 			assert.NoError(t, err)
+			assert.Type(t, &realx509.Certificate{}, crt)
+		}
+	}
+}
+
+func TestReadStepCertificate(t *testing.T) {
+	tests := []struct {
+		fn  string
+		err error
+	}{
+		{"testdata/ca.crt", nil},
+		{"testdata/ca.der", nil},
+		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
+		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
+		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded key")},
+		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
+	}
+
+	for _, tc := range tests {
+		crt, err := ReadStepCertificate(tc.fn)
+		if tc.err != nil {
+			if assert.Error(t, err) {
+				assert.HasPrefix(t, err.Error(), tc.err.Error())
+			}
+		} else {
+			assert.NoError(t, err)
 			assert.Type(t, &x509.Certificate{}, crt)
 		}
 	}
+}
+
+func TestParsePEM(t *testing.T) {
+	type ParseTest struct {
+		in      []byte
+		opts    []Options
+		cmpType interface{}
+		err     error
+	}
+	tests := map[string]func(t *testing.T) *ParseTest{
+		"success-ecdsa-public-key": func(t *testing.T) *ParseTest {
+			b, err := ioutil.ReadFile("testdata/openssl.p256.pub.pem")
+			assert.FatalError(t, err)
+			return &ParseTest{
+				in:      b,
+				opts:    nil,
+				cmpType: &ecdsa.PublicKey{},
+			}
+		},
+		"success-rsa-public-key": func(t *testing.T) *ParseTest {
+			b, err := ioutil.ReadFile("testdata/openssl.rsa1024.pub.pem")
+			assert.FatalError(t, err)
+			return &ParseTest{
+				in:      b,
+				opts:    nil,
+				cmpType: &rsa.PublicKey{},
+			}
+		},
+		"success-rsa-private-key": func(t *testing.T) *ParseTest {
+			b, err := ioutil.ReadFile("testdata/openssl.rsa1024.pem")
+			assert.FatalError(t, err)
+			return &ParseTest{
+				in:      b,
+				opts:    nil,
+				cmpType: &rsa.PrivateKey{},
+			}
+		},
+		"success-ecdsa-private-key": func(t *testing.T) *ParseTest {
+			b, err := ioutil.ReadFile("testdata/openssl.p256.pem")
+			assert.FatalError(t, err)
+			return &ParseTest{
+				in:      b,
+				opts:    nil,
+				cmpType: &ecdsa.PrivateKey{},
+			}
+		},
+		"success-ed25519-private-key": func(t *testing.T) *ParseTest {
+			b, err := ioutil.ReadFile("testdata/pkcs8/openssl.ed25519.pem")
+			assert.FatalError(t, err)
+			return &ParseTest{
+				in:      b,
+				opts:    nil,
+				cmpType: ed25519.PrivateKey{},
+			}
+		},
+		"success-ed25519-enc-private-key": func(t *testing.T) *ParseTest {
+			b, err := ioutil.ReadFile("testdata/pkcs8/openssl.ed25519.enc.pem")
+			assert.FatalError(t, err)
+			return &ParseTest{
+				in:      b,
+				opts:    []Options{WithPassword([]byte("mypassword"))},
+				cmpType: ed25519.PrivateKey{},
+			}
+		},
+		"success-x509-crt": func(t *testing.T) *ParseTest {
+			b, err := ioutil.ReadFile("testdata/ca.crt")
+			assert.FatalError(t, err)
+			return &ParseTest{
+				in:      b,
+				opts:    nil,
+				cmpType: &realx509.Certificate{},
+			}
+		},
+		"success-stepx509-crt": func(t *testing.T) *ParseTest {
+			b, err := ioutil.ReadFile("testdata/ca.crt")
+			assert.FatalError(t, err)
+			return &ParseTest{
+				in:      b,
+				opts:    []Options{WithStepCrypto()},
+				cmpType: &x509.Certificate{},
+			}
+		},
+	}
+	for name, genTestCase := range tests {
+		t.Run(name, func(t *testing.T) {
+			tc := genTestCase(t)
+
+			i, err := Parse(tc.in, tc.opts...)
+			if err != nil {
+				if assert.NotNil(t, tc.err) {
+					assert.HasPrefix(t, err.Error(), tc.err.Error())
+				}
+			} else {
+				if assert.Nil(t, tc.err) {
+					assert.Type(t, i, tc.cmpType)
+				}
+			}
+		})
+	}
+
 }
 
 func TestSerialize(t *testing.T) {

@@ -1,6 +1,6 @@
 language: go
 go:
-- 1.10.x
+- 1.11.x
 addons:
   apt:
     packages:
@@ -16,8 +16,7 @@ script:
 - make
 - make artifacts
 after_success:
-- bash <(curl -s https://codecov.io/bash) -t "$CODECOV_KEY" || echo "Codecov did not
-  collect coverage reports"
+- bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
 notifications:
   email: false
 stage: Github Release

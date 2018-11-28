@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -21,10 +22,15 @@ var (
 	ErrIsDir = errors.New("file is a directory")
 )
 
-// WriteFile wraps ioutil.WriteFile with a prompt to overwrite a file if the
-// file exists. It returns ErrFileExists if the user picks to not overwrite
-// the file.
+// WriteFile wraps ioutil.WriteFile with a prompt to overwrite a file if
+// the file exists. It returns ErrFileExists if the user picks to not overwrite
+// the file. If force is set to true, the prompt will not be presented and the
+// file if exists will be overwritten.
 func WriteFile(filename string, data []byte, perm os.FileMode) error {
+	if command.IsForce() {
+		return ioutil.WriteFile(filename, data, perm)
+	}
+
 	st, err := os.Stat(filename)
 	if err != nil {
 		if os.IsNotExist(err) {

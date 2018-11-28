@@ -277,7 +277,7 @@ func (j JWKTest) checkPrivate(t *testing.T, password string) {
 		hdr, err := base64.RawURLEncoding.DecodeString(hdrb.(string))
 		assert.FatalError(t, err)
 		// assert.Equals(t, string(hdr), `{"alg":"A128KW","enc":"A128GCM"}`)
-		assert.HasPrefix(t, string(hdr), `{"alg":"PBES2-HS256+A128KW","enc":"A128GCM","p2c":100000,"p2s":"`)
+		assert.HasPrefix(t, string(hdr), `{"alg":"PBES2-HS256+A128KW","cty":"jwk+json","enc":"A256GCM","p2c":100000,"p2s":"`)
 		m = j.decryptJWEPayload(t, password)
 	} else {
 		assert.True(t, nopass, "JWKs should be encrypted in JWE unless --no-password flag is passed")

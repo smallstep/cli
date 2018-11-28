@@ -18,9 +18,26 @@ func secretboxCommand() cli.Command {
 		Usage:     "encrypts and authenticates small messages using secret-key cryptography",
 		UsageText: "step crypto nacl secretbox <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto nacl secretbox** command group uses secret-key cryptography to
-encrypt, decrypt and authenticate messages.
+encrypt, decrypt and authenticate messages. The implementation is based on NaCl's
+crypto_secretbox function.
 
-TODO
+NaCl crypto_secretbox is designed to meet the standard notions of privacy and
+authenticity for a secret-key authenticated-encryption scheme using nonces. For
+formal definitions see, e.g., Bellare and Namprempre, "Authenticated encryption:
+relations among notions and analysis of the generic composition paradigm,"
+Lecture Notes in Computer Science 1976 (2000), 531–545,
+http://www-cse.ucsd.edu/~mihir/papers/oem.html. Note that the length is not
+hidden. Note also that it is the caller's responsibility to ensure the
+uniqueness of nonces—for example, by using nonce 1 for the first message, nonce
+2 for the second message, etc. Nonces are long enough that randomly generated
+nonces have negligible risk of collision.
+
+NaCl crypto_secretbox is crypto_secretbox_xsalsa20poly1305, a particular
+combination of Salsa20 and Poly1305 specified in "Cryptography in NaCl". This
+function is conjectured to meet the standard notions of privacy and
+authenticity.
+
+These commands are interoperable with NaCl: https://nacl.cr.yp.to/secretbox.html
 
 ## EXAMPLES
 
@@ -57,7 +74,7 @@ func secretboxOpenCommand() cli.Command {
 		Description: `**step crypto nacl secretbox open** verifies and decrypts a ciphertext using a
 secret key and a nonce.
 
-TODO
+This command uses an implementation of NaCl's crypto_secretbox_open function.
 
 For examples, see **step help crypto nacl secretbox**.`,
 		Flags: []cli.Flag{
@@ -79,7 +96,7 @@ func secretboxSealCommand() cli.Command {
 		Description: `**step crypto nacl secretbox seal** encrypts and authenticates a message using
 a secret key and a nonce.
 
-TODO
+This command uses an implementation of NaCl's crypto_secretbox function.
 
 For examples, see **step help crypto nacl secretbox**.`,
 		Flags: []cli.Flag{
