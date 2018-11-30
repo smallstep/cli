@@ -41,6 +41,16 @@ func PromptTemplates() *promptui.PromptTemplates {
 	}
 }
 
+// SimplePromptTemplates is a prompt with a simple style, used by default on password prompts.
+func SimplePromptTemplates() *promptui.PromptTemplates {
+	return &promptui.PromptTemplates{
+		Prompt:  "{{ . }}: ",
+		Success: "{{ . }}: ",
+		Valid:   "{{ . }}: ",
+		Invalid: "{{ . }}: ",
+	}
+}
+
 // SelectTemplates returns the default promptui.SelectTemplate for string
 // slices. The given name is the prompt of the selected option.
 func SelectTemplates(name string) *promptui.SelectTemplates {

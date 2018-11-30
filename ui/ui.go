@@ -123,7 +123,7 @@ func PromptPassword(label string, opts ...Option) ([]byte, error) {
 
 	o := &options{
 		mask:            '\r',
-		promptTemplates: PromptTemplates(),
+		promptTemplates: SimplePromptTemplates(),
 	}
 	o.apply(opts)
 
