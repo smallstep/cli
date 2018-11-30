@@ -476,6 +476,6 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errs.FileError(err, outFile)
 	}
 
-	ui.Printf("Your certificate has been saved to %s\n", outFile)
+	ui.Printf("Your certificate has been saved in %s.\n", outFile)
 	return nil
 }

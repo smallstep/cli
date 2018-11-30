@@ -90,7 +90,7 @@ func rootAction(ctx *cli.Context) error {
 		return err
 	}
 
-	ui.Printf("The root certificate has been saved to %s\n", rootFile)
+	ui.Printf("The root certificate has been saved in %s.\n", rootFile)
 	return nil
 }
 

@@ -81,7 +81,7 @@ func bootstrapAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	ui.Printf("The root certificate has been saved to %s\n", rootFile)
+	ui.Printf("The root certificate has been saved in %s.\n", rootFile)
 
 	// make sure to store the url with https
 	caURL, err = completeURL(caURL)
@@ -103,6 +103,6 @@ func bootstrapAction(ctx *cli.Context) error {
 		return err
 	}
 
-	ui.Printf("Your configuration has been saved to %s\n", configFile)
+	ui.Printf("Your configuration has been saved in %s.\n", configFile)
 	return nil
 }
