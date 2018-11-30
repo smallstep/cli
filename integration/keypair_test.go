@@ -44,7 +44,7 @@ func (k KeypairCmd) test(t *testing.T) {
 		cmd, err := gexpect.Spawn(k.command.cmd())
 		assert.FatalError(t, err)
 		prompt := fmt.Sprintf("Please enter the password to encrypt the private key: ")
-		assert.FatalError(t, cmd.ExpectTimeout(prompt, 10*time.Second))
+		assert.FatalError(t, cmd.ExpectTimeout(prompt, 15*time.Second))
 		assert.FatalError(t, cmd.SendLine(k.password))
 		k.testJwtSignVerify(t)
 	})

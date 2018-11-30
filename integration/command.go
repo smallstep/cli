@@ -13,6 +13,14 @@ import (
 	"github.com/smallstep/assert"
 )
 
+// CleanOutput returns the output from the cursor character.
+func CleanOutput(str string) string {
+	if i := strings.Index(str, "?25h"); i > 0 {
+		return str[i+4:]
+	}
+	return str
+}
+
 // Command executes a shell command.
 func Command(command string) *exec.Cmd {
 	return exec.Command("sh", "-c", command)
