@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -112,7 +113,7 @@ type PKI struct {
 	root, rootKey, rootFingerprint  string
 	intermediate, intermediateKey   string
 	country, locality, organization string
-	config                          string
+	config, defaults                string
 	ottPublicKey                    *jose.JSONWebKey
 	ottPrivateKey                   *jose.JSONWebEncryption
 	provisioner                     string
@@ -167,6 +168,9 @@ func New(public, private, config string) (*PKI, error) {
 	}
 	if len(config) > 0 {
 		if p.config, err = getPath(config, "ca.json"); err != nil {
+			return nil, err
+		}
+		if p.defaults, err = getPath(config, "defaults.json"); err != nil {
 			return nil, err
 		}
 	}
@@ -263,6 +267,13 @@ func (p *PKI) TellPKI() {
 	ui.Printf("{{\"%s\"|green}} Intermediate private key: %s\n", ui.IconGood, p.intermediateKey)
 }
 
+type caDefaults struct {
+	CAUrl       string `json:"ca-url"`
+	CAConfig    string `json:"ca-config"`
+	Fingerprint string `json:"fingerprint"`
+	Root        string `json:"root"`
+}
+
 // Save stores the pki on a json file that will be used as the certificate
 // authority configuration.
 func (p *PKI) Save() error {
@@ -298,9 +309,34 @@ func (p *PKI) Save() error {
 	if err != nil {
 		return errors.Wrapf(err, "error marshalling %s", p.config)
 	}
-
 	if err = utils.WriteFile(p.config, b, 0666); err != nil {
 		return errs.FileError(err, p.config)
+	}
+
+	// Generate the CA URL.
+	url := p.dnsNames[0]
+	_, port, err := net.SplitHostPort(p.address)
+	if err != nil {
+		return errors.Wrapf(err, "error parsing %s", p.address)
+	}
+	if port == "443" {
+		url = fmt.Sprintf("https://%s", url)
+	} else {
+		url = fmt.Sprintf("https://%s:%s", url, port)
+	}
+
+	defaults := &caDefaults{
+		Root:        p.root,
+		CAConfig:    p.config,
+		CAUrl:       url,
+		Fingerprint: p.rootFingerprint,
+	}
+	b, err = json.MarshalIndent(defaults, "", "   ")
+	if err != nil {
+		return errors.Wrapf(err, "error marshalling %s", p.defaults)
+	}
+	if err = utils.WriteFile(p.defaults, b, 0666); err != nil {
+		return errs.FileError(err, p.defaults)
 	}
 
 	ui.Printf("{{\"%s\"|green}} Certificate Authority configuration: %s\n", ui.IconGood, p.config)
