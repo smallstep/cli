@@ -1,6 +1,7 @@
 package jose
 
 import (
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 )
 
@@ -9,6 +10,7 @@ type context struct {
 	subtle, insecure bool
 	noDefaults       bool
 	password         []byte
+	uiOptions        []ui.Option
 }
 
 // apply the options to the context and returns an error if one of the options
@@ -90,6 +92,14 @@ func WithPasswordFile(filename string) Option {
 			return err
 		}
 		ctx.password = b
+		return nil
+	}
+}
+
+// WithUIOptions adds UI package options to the password prompts.
+func WithUIOptions(opts ...ui.Option) Option {
+	return func(ctx *context) error {
+		ctx.uiOptions = opts
 		return nil
 	}
 }

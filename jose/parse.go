@@ -47,7 +47,7 @@ func Decrypt(prompt string, data []byte, opts ...Option) ([]byte, error) {
 	var pass []byte
 	for i := 0; i < MaxDecryptTries; i++ {
 		if len(ctx.password) == 0 {
-			pass, err = ui.PromptPassword(prompt)
+			pass, err = ui.PromptPassword(prompt, ctx.uiOptions...)
 			if err != nil {
 				return nil, err
 			}
