@@ -11,6 +11,7 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
 )
 
@@ -85,8 +86,12 @@ func rootAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error downloading root certificate")
 	}
 
-	_, err = pemutil.Serialize(resp.RootPEM.Certificate, pemutil.ToFile(rootFile, 0600))
-	return err
+	if _, err := pemutil.Serialize(resp.RootPEM.Certificate, pemutil.ToFile(rootFile, 0600)); err != nil {
+		return err
+	}
+
+	ui.Printf("The root certificate has been saved to %s\n", rootFile)
+	return nil
 }
 
 func getInsecureTransport() *http.Transport {
