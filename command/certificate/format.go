@@ -18,7 +18,7 @@ func formatCommand() cli.Command {
 	return cli.Command{
 		Name:      "format",
 		Action:    command.ActionFunc(formatAction),
-		Usage:     `reformat certificate.`,
+		Usage:     `reformat certificate`,
 		UsageText: `**step certificate format** <crt_file> [**--out**=<path>]`,
 		Description: `**step certificate format** prints the certificate in
 a different format.
