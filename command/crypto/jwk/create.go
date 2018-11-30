@@ -597,6 +597,6 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	ui.Printf("Your public key has been saved in %s.\n", pubFile)
-	ui.Printf("Your private key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", privFile)
 	return nil
 }
