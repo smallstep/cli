@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/ui"
 )
 
 // Thumbprint computes the JWK Thumbprint of a key using SHA256 as the hash
@@ -24,7 +24,7 @@ func Thumbprint(jwk *JSONWebKey) (string, error) {
 // EncryptJWK returns the given JWK encrypted with the default encryption
 // algorithm (PBES2-HS256+A128KW).
 func EncryptJWK(jwk *JSONWebKey) (*JSONWebEncryption, error) {
-	key, err := utils.ReadPassword("Please enter the password to encrypt the private JWK: ")
+	key, err := ui.PromptPassword("Please enter the password to encrypt the private JWK")
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading password")
 	}

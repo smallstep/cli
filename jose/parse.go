@@ -13,7 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/ui"
 	"golang.org/x/crypto/ed25519"
 	jose "gopkg.in/square/go-jose.v2"
 )
@@ -47,7 +47,7 @@ func Decrypt(prompt string, data []byte, opts ...Option) ([]byte, error) {
 	var pass []byte
 	for i := 0; i < MaxDecryptTries; i++ {
 		if len(ctx.password) == 0 {
-			pass, err = utils.ReadPassword(prompt)
+			pass, err = ui.PromptPassword(prompt)
 			if err != nil {
 				return nil, err
 			}
@@ -81,7 +81,7 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 	switch guessKeyType(ctx, b) {
 	case jwkKeyType:
 		// Attempt to parse an encrypted file
-		prompt := fmt.Sprintf("Please enter the password to decrypt %s: ", filename)
+		prompt := fmt.Sprintf("Please enter the password to decrypt %s", filename)
 		if b, err = Decrypt(prompt, b, opts...); err != nil {
 			return nil, err
 		}
@@ -160,7 +160,7 @@ func ParseKeySet(filename string, opts ...Option) (*jose.JSONWebKey, error) {
 	}
 
 	// Attempt to parse an encrypted file
-	prompt := fmt.Sprintf("Please enter the password to decrypt %s: ", filename)
+	prompt := fmt.Sprintf("Please enter the password to decrypt %s", filename)
 	if b, err = Decrypt(prompt, b); err != nil {
 		return nil, err
 	}

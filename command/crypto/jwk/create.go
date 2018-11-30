@@ -14,6 +14,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -538,7 +539,7 @@ func createAction(ctx *cli.Context) error {
 		var rcpt jose.Recipient
 		// Generate JWE encryption key.
 		if jose.SupportsPBKDF2 {
-			key, err := utils.ReadPassword("Please enter the password to encrypt the private JWK: ")
+			key, err := ui.PromptPassword("Please enter the password to encrypt the private JWK")
 			if err != nil {
 				return errors.Wrap(err, "error reading password")
 			}

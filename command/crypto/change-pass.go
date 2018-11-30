@@ -14,6 +14,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 )
 
@@ -88,7 +89,7 @@ func changePassAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		pass, err := utils.ReadPassword(fmt.Sprintf("Please enter the password to encrypt %s: ", newKeyPath))
+		pass, err := ui.PromptPassword(fmt.Sprintf("Please enter the password to encrypt %s", newKeyPath))
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}

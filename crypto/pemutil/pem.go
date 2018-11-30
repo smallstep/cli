@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/pkg/x509"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ed25519"
 )
@@ -156,7 +157,7 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 		if len(ctx.password) > 0 {
 			pass = ctx.password
 		} else {
-			pass, err = utils.ReadPassword(fmt.Sprintf("Please enter the password to decrypt %s: ", ctx.filename))
+			pass, err = ui.PromptPassword(fmt.Sprintf("Please enter the password to decrypt %s", ctx.filename))
 			if err != nil {
 				return nil, err
 			}

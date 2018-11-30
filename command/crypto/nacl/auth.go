@@ -114,7 +114,7 @@ func authDigestAction(ctx *cli.Context) error {
 		return errors.Errorf("invalid key file: key size is not %d bytes", auth.KeySize)
 	}
 
-	input, err := utils.ReadInput("Write text to digest: ")
+	input, err := utils.ReadInput("Write text to digest")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}
@@ -147,7 +147,7 @@ func authVerifyAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error decoding digest")
 	}
 
-	input, err := utils.ReadInput("Write text to verify: ")
+	input, err := utils.ReadInput("Write text to verify")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

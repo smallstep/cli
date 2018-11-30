@@ -181,7 +181,7 @@ func secretboxSealAction(ctx *cli.Context) error {
 		return errors.New("invalid key: key size is not 32 bytes")
 	}
 
-	input, err := utils.ReadInput("Write text to seal: ")
+	input, err := utils.ReadInput("Write text to seal")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

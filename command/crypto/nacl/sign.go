@@ -162,7 +162,7 @@ func signOpenAction(ctx *cli.Context) error {
 		return errors.New("invalid public key: key size is not 32 bytes")
 	}
 
-	input, err := utils.ReadInput("Write signed message to open: ")
+	input, err := utils.ReadInput("Write signed message to open")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}
@@ -206,7 +206,7 @@ func signSignAction(ctx *cli.Context) error {
 		return errors.New("invalid private key: key size is not 64 bytes")
 	}
 
-	input, err := utils.ReadInput("Write text to sign: ")
+	input, err := utils.ReadInput("Write text to sign")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}
