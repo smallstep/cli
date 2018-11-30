@@ -1,9 +1,6 @@
 package crypto
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
@@ -203,8 +200,9 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	if priv == nil {
-		fmt.Fprintln(os.Stderr, "Only the public PEM was generated.")
-		fmt.Fprintln(os.Stderr, "Cannot retrieve a private key from a public one.")
+		ui.Printf("Your public key has been saved in %s.\n", pubFile)
+		ui.Println("Only the public PEM was generated.")
+		ui.Println("Cannot retrieve a private key from a public one.")
 		return nil
 	}
 
@@ -225,5 +223,7 @@ func createAction(ctx *cli.Context) error {
 		}
 	}
 
+	ui.Printf("Your public key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", privFile)
 	return nil
 }
