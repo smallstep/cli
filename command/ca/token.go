@@ -335,6 +335,11 @@ func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordF
 			return "", err
 		}
 
+		// Add template with check mark
+		opts = append(opts, jose.WithUIOptions(
+			ui.WithPromptTemplates(ui.PromptTemplates()),
+		))
+
 		decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key", []byte(encrypted), opts...)
 		if err != nil {
 			return "", err

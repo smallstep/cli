@@ -222,6 +222,8 @@ func newCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 
+	ui.PrintSelected("Certificate", crtFile)
+	ui.PrintSelected("Private Key", keyFile)
 	return nil
 }
 
@@ -254,7 +256,12 @@ func signCertificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	return signCertificateRequest(ctx, token, api.NewCertificateRequest(csr), crtFile)
+	if err := signCertificateRequest(ctx, token, api.NewCertificateRequest(csr), crtFile); err != nil {
+		return err
+	}
+
+	ui.PrintSelected("Certificate", crtFile)
+	return nil
 }
 
 type tokenClaims struct {
@@ -469,5 +476,6 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errs.FileError(err, outFile)
 	}
 
+	ui.Printf("Your certificate has been saved to %s\n", outFile)
 	return nil
 }
