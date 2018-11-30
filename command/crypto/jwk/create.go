@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
@@ -529,8 +528,9 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	if jwk.IsPublic() {
-		fmt.Fprintln(os.Stderr, "Only the public JWK was generated.")
-		fmt.Fprintln(os.Stderr, "Cannot retrieve a private key from a public one.")
+		ui.Printf("Your public key has been saved in %s.\n", pubFile)
+		ui.Println("Only the public JWK was generated.")
+		ui.Println("Cannot retrieve a private key from a public one.")
 		return nil
 	}
 
@@ -596,5 +596,7 @@ func createAction(ctx *cli.Context) error {
 		return errs.FileError(err, privFile)
 	}
 
+	ui.Printf("Your public key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", pubFile)
 	return nil
 }
