@@ -110,7 +110,7 @@ func initAction(ctx *cli.Context) error {
 		p.SetDNSNames(dnsNames)
 	}
 
-	pass, err := ui.PromptPasswordGenerate("What do you want your password to be? [leave empty and we'll generate one]")
+	pass, err := ui.PromptPasswordGenerate("What do you want your password to be? [leave empty and we'll generate one]", ui.WithRichPrompt())
 	if err != nil {
 		return err
 	}

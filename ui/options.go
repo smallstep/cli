@@ -78,3 +78,8 @@ func WithValidateFunc(fn func(string) error) Option {
 func WithValidateNotEmpty() Option {
 	return WithValidateFunc(NotEmpty())
 }
+
+// WithRichPrompt add the template option with rich templates.
+func WithRichPrompt() Option {
+	return WithPromptTemplates(PromptTemplates())
+}
