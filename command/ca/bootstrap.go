@@ -13,6 +13,7 @@ import (
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -80,6 +81,7 @@ func bootstrapAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	ui.Printf("The root certificate has been saved to %s\n", rootFile)
 
 	// make sure to store the url with https
 	caURL, err = completeURL(caURL)
@@ -97,5 +99,10 @@ func bootstrapAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error marshaling defaults.json")
 	}
 
-	return utils.WriteFile(configFile, b, 0644)
+	if err := utils.WriteFile(configFile, b, 0644); err != nil {
+		return err
+	}
+
+	ui.Printf("Your configuration has been saved to %s\n", configFile)
+	return nil
 }
