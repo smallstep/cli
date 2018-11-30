@@ -18,10 +18,6 @@ intermediate CA certificate by signing a CSR, validating certificates,
 renewing certificates, generating certificate bundles, and key-wrapping
 of private keys.
 
-More information about certificates in general (as opposed to the
-**step certificate** sub-commands) can be found at **step help topics certificate**
-or online at [URL].
-
 ## EXAMPLES
 
 Create a root certifciate and private key using the default parameters (EC P-256 curve):
