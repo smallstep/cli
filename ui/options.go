@@ -79,6 +79,12 @@ func WithValidateNotEmpty() Option {
 	return WithValidateFunc(NotEmpty())
 }
 
+// WithValidateYesNo adds a custom validation function to a prompt for a Yes/No
+// prompt.
+func WithValidateYesNo() Option {
+	return WithValidateFunc(YesNo())
+}
+
 // WithRichPrompt add the template option with rich templates.
 func WithRichPrompt() Option {
 	return WithPromptTemplates(PromptTemplates())
