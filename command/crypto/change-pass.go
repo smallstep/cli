@@ -114,5 +114,6 @@ func changePassAction(ctx *cli.Context) error {
 		}
 	}
 
+	ui.Printf("Your key has been saved in %s.\n", newKeyPath)
 	return nil
 }
