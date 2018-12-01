@@ -235,7 +235,6 @@ func inspectJWT(jwt string) (map[string]interface{}, error) {
 }
 
 func (j JWTSignTest) checkJwt(t *testing.T, jwt string) {
-	// dbg.Stack()
 	header, payload, signature, err := decodeJWT(jwt)
 	assert.FatalError(t, err, "Error:", err, "JWT:", jwt)
 
@@ -740,6 +739,7 @@ func TestCryptoJWT(t *testing.T) {
 			for i := 0; i < 3; i++ {
 				assert.FatalError(t, cmd.ExpectTimeout(prompt, DefaultTimeout))
 				assert.FatalError(t, cmd.SendLine("foo"))
+				time.Sleep(1 * time.Second)
 			}
 			assert.FatalError(t, cmd.ExpectTimeout("failed to decrypt JWK: invalid password", DefaultTimeout))
 		})

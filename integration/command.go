@@ -120,7 +120,7 @@ func (c CLICommand) test(t *testing.T, name string, expected string, msg ...inte
 	t.Run(name, func(t *testing.T) {
 		out, err := c.run()
 		assert.FatalError(t, err, fmt.Sprintf("`%s`: returned error '%s'\n\nOutput:\n%s", c.cmd(), err, out.combined))
-		assert.Equals(t, out.combined, expected, msg)
+		assert.Equals(t, out.combined, expected, msg...)
 	})
 }
 

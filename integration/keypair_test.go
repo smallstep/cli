@@ -51,16 +51,16 @@ func (k KeypairCmd) test(t *testing.T) {
 }
 
 func (k KeypairCmd) testNoPass(t *testing.T) {
-	k.command.test(t, k.name, "", "")
+	k.command.test(t, k.name, "Your public key has been saved in testdata-tmp/no-pass.pub.\nYour private key has been saved in testdata-tmp/no-pass.pem.\n")
 	k.testJwtSignVerify(t)
 }
 
 func (k KeypairCmd) fail(t *testing.T, expected string) {
-	k.command.fail(t, k.name, expected, "")
+	k.command.fail(t, k.name, expected)
 }
 
 func (k KeypairCmd) failNoPass(t *testing.T, expected string) {
-	k.command.fail(t, k.name, expected, "")
+	k.command.fail(t, k.name, expected)
 }
 
 func NewKeypairCmd(name string) KeypairCmd {
