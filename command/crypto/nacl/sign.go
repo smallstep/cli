@@ -44,7 +44,7 @@ $ step crypto nacl sign keypair nacl.sign.pub nacl.sign.priv
 Sign a message using the private key:
 '''
 $ step crypto nacl sign sign nacl.sign.priv
-Write text to sign: ********
+Please enter text to sign: ********
 rNrOfqsv4svlRnVPSVYe2REXodL78yEMHtNkzAGNp4MgHuVGoyayp0zx4D5rjTzYVVrD2HRP306ZILT62ohvCG1lc3NhZ2U
 
 $ cat message.txt | step crypto nacl sign sign ~/step/keys/nacl.recipient.sign.priv
@@ -209,7 +209,7 @@ func signSignAction(ctx *cli.Context) error {
 		return errors.New("invalid private key: key size is not 64 bytes")
 	}
 
-	input, err := utils.ReadInput("Write text to sign")
+	input, err := utils.ReadInput("Please enter text to sign")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}
