@@ -89,3 +89,8 @@ func WithValidateYesNo() Option {
 func WithRichPrompt() Option {
 	return WithPromptTemplates(PromptTemplates())
 }
+
+// WithSimplePrompt add the template option with simple templates.
+func WithSimplePrompt() Option {
+	return WithPromptTemplates(SimplePromptTemplates())
+}
