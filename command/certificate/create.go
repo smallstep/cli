@@ -343,6 +343,10 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 	}
+
+	ui.Printf("Your certificate has been saved in %s.\n", crtFile)
+	ui.Printf("Your private key has been saved in %s.\n", keyFile)
+
 	return nil
 }
 

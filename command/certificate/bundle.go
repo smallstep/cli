@@ -8,6 +8,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -76,8 +77,9 @@ func bundleAction(ctx *cli.Context) error {
 	chainFile := ctx.Args().Get(2)
 	if err := utils.WriteFile(chainFile,
 		append(pem.EncodeToMemory(crtBlock), pem.EncodeToMemory(caBlock)...), 0600); err != nil {
-		return errs.FileError(err, chainFile)
+		return err
 	}
 
+	ui.Printf("Your certificate has been saved in %s.\n", chainFile)
 	return nil
 }
