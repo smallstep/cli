@@ -10,6 +10,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/nacl/sign"
@@ -43,7 +44,7 @@ $ step crypto nacl sign keypair nacl.sign.pub nacl.sign.priv
 Sign a message using the private key:
 '''
 $ step crypto nacl sign sign nacl.sign.priv
-Write text to sign: ********
+Please enter text to sign: ********
 rNrOfqsv4svlRnVPSVYe2REXodL78yEMHtNkzAGNp4MgHuVGoyayp0zx4D5rjTzYVVrD2HRP306ZILT62ohvCG1lc3NhZ2U
 
 $ cat message.txt | step crypto nacl sign sign ~/step/keys/nacl.recipient.sign.priv
@@ -146,6 +147,8 @@ func signKeypairAction(ctx *cli.Context) error {
 		return errs.FileError(err, privFile)
 	}
 
+	ui.Printf("Your public key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", privFile)
 	return nil
 }
 
@@ -162,7 +165,7 @@ func signOpenAction(ctx *cli.Context) error {
 		return errors.New("invalid public key: key size is not 32 bytes")
 	}
 
-	input, err := utils.ReadInput("Write signed message to open: ")
+	input, err := utils.ReadInput("Write signed message to open")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}
@@ -206,7 +209,7 @@ func signSignAction(ctx *cli.Context) error {
 		return errors.New("invalid private key: key size is not 64 bytes")
 	}
 
-	input, err := utils.ReadInput("Write text to sign: ")
+	input, err := utils.ReadInput("Please enter text to sign")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

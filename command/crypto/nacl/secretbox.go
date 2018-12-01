@@ -45,7 +45,7 @@ Encrypt a message using a 256-bit secret key, a new nacl box private key can
 be used as the secret:
 '''
 $ step crypto nacl secretbox seal nonce secretbox.key
-Write text to seal: ********
+Please enter text to seal: ********
 o2NJTsIJsk0dl4epiBwS1mM4xFED7iE
 
 $ cat message.txt | step crypto nacl secretbox seal nonce secretbox.key
@@ -181,7 +181,7 @@ func secretboxSealAction(ctx *cli.Context) error {
 		return errors.New("invalid key: key size is not 32 bytes")
 	}
 
-	input, err := utils.ReadInput("Write text to seal: ")
+	input, err := utils.ReadInput("Please enter text to seal")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

@@ -260,11 +260,11 @@ func (p *PKI) GenerateIntermediateCertificate(name string, rootCrt *stepX509.Cer
 // and key and an intermediate certificate and key.
 func (p *PKI) TellPKI() {
 	ui.Println()
-	ui.Printf("{{\"%s\"|green}} Root certificate: %s\n", ui.IconGood, p.root)
-	ui.Printf("{{\"%s\"|green}} Root private key: %s\n", ui.IconGood, p.rootKey)
-	ui.Printf("{{\"%s\"|green}} Root fingerprint: %s\n", ui.IconGood, p.rootFingerprint)
-	ui.Printf("{{\"%s\"|green}} Intermediate certificate: %s\n", ui.IconGood, p.intermediate)
-	ui.Printf("{{\"%s\"|green}} Intermediate private key: %s\n", ui.IconGood, p.intermediateKey)
+	ui.PrintSelected("Root certificate", p.root)
+	ui.PrintSelected("Root private key", p.rootKey)
+	ui.PrintSelected("Root fingerprint", p.rootFingerprint)
+	ui.PrintSelected("Intermediate certificate", p.intermediate)
+	ui.PrintSelected("Intermediate private key", p.intermediateKey)
 }
 
 type caDefaults struct {
@@ -339,9 +339,10 @@ func (p *PKI) Save() error {
 		return errs.FileError(err, p.defaults)
 	}
 
-	ui.Printf("{{\"%s\"|green}} Certificate Authority configuration: %s\n", ui.IconGood, p.config)
-	fmt.Println()
-	fmt.Println("Your PKI is ready to go. To generate certificates for individual services see 'step help ca'.")
+	ui.PrintSelected("Default configuration", p.defaults)
+	ui.PrintSelected("Certificate Authority configuration", p.config)
+	ui.Println()
+	ui.Println("Your PKI is ready to go. To generate certificates for individual services see 'step help ca'.")
 
 	return nil
 }

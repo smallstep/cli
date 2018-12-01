@@ -54,3 +54,16 @@ func DNS() promptui.ValidateFunc {
 		return nil
 	}
 }
+
+// YesNo is a validation function that checks for a Yes/No answer.
+func YesNo() promptui.ValidateFunc {
+	return func(s string) error {
+		s = strings.ToLower(strings.TrimSpace(s))
+		switch s {
+		case "y", "yes", "n", "no":
+			return nil
+		default:
+			return fmt.Errorf("%s is not a valid answer", s)
+		}
+	}
+}

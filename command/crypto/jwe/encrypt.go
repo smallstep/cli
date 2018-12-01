@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -224,7 +225,7 @@ func encryptAction(ctx *cli.Context) error {
 	case jwks != "":
 		jwk, err = jose.ParseKeySet(jwks, options...)
 	case isPBES2:
-		pbes2Key, err = utils.ReadPassword("Please enter the password to encrypt the content encryption key: ")
+		pbes2Key, err = ui.PromptPassword("Please enter the password to encrypt the content encryption key")
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwks")
 	}

@@ -66,7 +66,7 @@ func (j JWKTest) test(t *testing.T, msg ...interface{}) (CLIOutput, string) {
 		if _, ok := j.command.flags["no-password"]; !ok {
 			pass, err = randutil.ASCII(16)
 			assert.FatalError(t, err)
-			e.Expect("Please enter the password to encrypt the private JWK:")
+			e.ExpectTimeout("Please enter the password to encrypt the private JWK: ", DefaultTimeout)
 			e.SendLine(pass)
 			e.Interact()
 		} else {

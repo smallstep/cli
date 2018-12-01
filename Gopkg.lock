@@ -540,7 +540,6 @@
     "golang.org/x/crypto/nacl/sign",
     "golang.org/x/crypto/pbkdf2",
     "golang.org/x/crypto/scrypt",
-    "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/net/html",
     "gopkg.in/square/go-jose.v2",
     "gopkg.in/square/go-jose.v2/jwt",

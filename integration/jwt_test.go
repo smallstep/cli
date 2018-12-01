@@ -113,8 +113,8 @@ func (j JWTSignTest) test(t *testing.T, name string) string {
 		if j.jwk.password != "" {
 			cmd, err := gexpect.Spawn(j.command.cmd())
 			assert.FatalError(t, err)
-			prompt := "Please enter the password to decrypt " + j.jwk.prvfile + ": "
-			assert.Nil(t, cmd.ExpectTimeout(prompt, 1*time.Second))
+			prompt := "Please enter the password to decrypt " + j.jwk.prvfile + ":"
+			assert.Nil(t, cmd.ExpectTimeout(prompt, DefaultTimeout))
 			assert.Nil(t, cmd.SendLine(j.jwk.password))
 
 			var lines []string
@@ -127,7 +127,7 @@ func (j JWTSignTest) test(t *testing.T, name string) string {
 				lines = append(lines, line)
 			}
 
-			jwt = strings.Trim(strings.Join(lines, "\n"), " \r\n")
+			jwt = CleanOutput(strings.Trim(strings.Join(lines, "\n"), " \r\n\u2588"))
 			err = cmd.Wait()
 			if assert.Nil(t, err) {
 				j.checkJwt(t, jwt)
@@ -155,7 +155,7 @@ func (j JWTSignTest) fail(t *testing.T, name, expected string) {
 			cmd, err := gexpect.Command(j.command.cmd())
 			assert.FatalError(t, err)
 			assert.FatalError(t, cmd.Start())
-			assert.FatalError(t, cmd.ExpectTimeout("Please enter the password to decrypt "+j.jwk.prvfile+": ", 1*time.Second))
+			assert.FatalError(t, cmd.ExpectTimeout("Please enter the password to decrypt "+j.jwk.prvfile+": ", DefaultTimeout))
 			assert.FatalError(t, cmd.SendLine(j.jwk.password))
 			_, err = cmd.ReadLine() // Prompt prints a newline
 			assert.FatalError(t, err)
@@ -170,7 +170,7 @@ func (j JWTSignTest) fail(t *testing.T, name, expected string) {
 				lines = append(lines, line)
 			}
 
-			actual := strings.Join(lines, "\n") + "\n"
+			actual := CleanOutput(strings.Join(lines, "\n") + "\n")
 			assert.Equals(t, expected, actual)
 
 			err = cmd.Wait()
@@ -236,7 +236,7 @@ func inspectJWT(jwt string) (map[string]interface{}, error) {
 
 func (j JWTSignTest) checkJwt(t *testing.T, jwt string) {
 	header, payload, signature, err := decodeJWT(jwt)
-	assert.FatalError(t, err, jwt)
+	assert.FatalError(t, err, "Error:", err, "JWT:", jwt)
 
 	inspect, err := inspectJWT(strings.Trim(jwt, " \r\n"))
 	assert.FatalError(t, err)
@@ -737,10 +737,11 @@ func TestCryptoJWT(t *testing.T) {
 			assert.FatalError(t, err)
 			prompt := "Please enter the password to decrypt " + tst.sign.jwk.prvfile + ": "
 			for i := 0; i < 3; i++ {
-				assert.FatalError(t, cmd.ExpectTimeout(prompt, 1*time.Second))
+				assert.FatalError(t, cmd.ExpectTimeout(prompt, DefaultTimeout))
 				assert.FatalError(t, cmd.SendLine("foo"))
+				time.Sleep(1 * time.Second)
 			}
-			assert.FatalError(t, cmd.ExpectTimeout("failed to decrypt JWK: invalid password", 1*time.Second))
+			assert.FatalError(t, cmd.ExpectTimeout("failed to decrypt JWK: invalid password", DefaultTimeout))
 		})
 
 		t.Run("inspect", func(t *testing.T) {

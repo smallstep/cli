@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/ui"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/jose"
@@ -106,7 +107,7 @@ func decryptAction(ctx *cli.Context) error {
 	case jwks != "":
 		jwk, err = jose.ParseKeySet(jwks, options...)
 	case isPBES2:
-		pbes2Key, err = utils.ReadPassword("Please enter the password to decrypt the content encryption key: ")
+		pbes2Key, err = ui.PromptPassword("Please enter the password to decrypt the content encryption key")
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwk")
 	}

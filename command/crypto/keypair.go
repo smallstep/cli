@@ -1,9 +1,6 @@
 package crypto
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
@@ -11,6 +8,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -202,8 +200,9 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	if priv == nil {
-		fmt.Fprintln(os.Stderr, "Only the public PEM was generated.")
-		fmt.Fprintln(os.Stderr, "Cannot retrieve a private key from a public one.")
+		ui.Printf("Your public key has been saved in %s.\n", pubFile)
+		ui.Println("Only the public PEM was generated.")
+		ui.Println("Cannot retrieve a private key from a public one.")
 		return nil
 	}
 
@@ -213,7 +212,7 @@ func createAction(ctx *cli.Context) error {
 			return err
 		}
 	} else {
-		pass, err := utils.ReadPassword("Please enter the password to encrypt the private key: ")
+		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key")
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}
@@ -224,5 +223,7 @@ func createAction(ctx *cli.Context) error {
 		}
 	}
 
+	ui.Printf("Your public key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", privFile)
 	return nil
 }

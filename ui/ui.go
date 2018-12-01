@@ -121,9 +121,10 @@ func PromptPassword(label string, opts ...Option) ([]byte, error) {
 	}
 	defer clean()
 
+	// Using a not printable character as they work better than \r
 	o := &options{
-		mask:            '\r',
-		promptTemplates: PromptTemplates(),
+		mask:            1,
+		promptTemplates: SimplePromptTemplates(),
 	}
 	o.apply(opts)
 

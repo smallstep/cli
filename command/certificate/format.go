@@ -10,6 +10,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -117,11 +118,10 @@ func formatAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		m := info.Mode()
-		err = utils.WriteFile(out, ob, m)
-		if err != nil {
+		if err := utils.WriteFile(out, ob, info.Mode()); err != nil {
 			return err
 		}
+		ui.Printf("Your certificate has been saved in %s.\n", out)
 	}
 
 	return nil

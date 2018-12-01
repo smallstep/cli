@@ -10,6 +10,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/nacl/box"
@@ -208,6 +209,8 @@ func boxKeypairAction(ctx *cli.Context) error {
 		return errs.FileError(err, privFile)
 	}
 
+	ui.Printf("Your public key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", privFile)
 	return nil
 }
 
@@ -299,7 +302,7 @@ func boxSealAction(ctx *cli.Context) error {
 		return errors.New("invalid private key: key size is not 32 bytes")
 	}
 
-	input, err := utils.ReadInput("Write text to seal: ")
+	input, err := utils.ReadInput("Please enter text to seal")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

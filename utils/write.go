@@ -1,17 +1,14 @@
 package utils
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"strings"
-	"syscall"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/smallstep/cli/ui"
 )
 
 var (
@@ -43,33 +40,14 @@ func WriteFile(filename string, data []byte, perm os.FileMode) error {
 		return ErrIsDir
 	}
 
-	// The file exists
-	var r io.Reader
-	if terminal.IsTerminal(syscall.Stdin) {
-		r = os.Stdin
-	} else {
-		tty, err := os.Open("/dev/tty")
-		if err != nil {
-			return errors.Wrap(err, "error allocating terminal")
-		}
-		r = tty
-		defer tty.Close()
+	str, err := ui.Prompt(fmt.Sprintf("Would you like to overwrite %s [y/n]", filename), ui.WithValidateYesNo())
+	if err != nil {
+		return err
 	}
-
-	br := bufio.NewReader(r)
-	for cont := true; cont; {
-		fmt.Fprintf(os.Stderr, "Would you like to overwrite %s [Y/n]: ", filename)
-		str, err := br.ReadString('\n')
-		if err != nil {
-			return errors.Wrap(err, "error reading line")
-		}
-		str = strings.ToLower(strings.TrimSpace(str))
-		switch str {
-		case "", "y", "yes":
-			cont = false
-		case "n", "no":
-			return ErrFileExists
-		}
+	switch strings.ToLower(strings.TrimSpace(str)) {
+	case "y", "yes":
+	case "n", "no":
+		return ErrFileExists
 	}
 
 	return ioutil.WriteFile(filename, data, perm)

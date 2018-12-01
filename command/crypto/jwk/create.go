@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
@@ -14,6 +13,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -528,8 +528,9 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	if jwk.IsPublic() {
-		fmt.Fprintln(os.Stderr, "Only the public JWK was generated.")
-		fmt.Fprintln(os.Stderr, "Cannot retrieve a private key from a public one.")
+		ui.Printf("Your public key has been saved in %s.\n", pubFile)
+		ui.Println("Only the public JWK was generated.")
+		ui.Println("Cannot retrieve a private key from a public one.")
 		return nil
 	}
 
@@ -538,7 +539,7 @@ func createAction(ctx *cli.Context) error {
 		var rcpt jose.Recipient
 		// Generate JWE encryption key.
 		if jose.SupportsPBKDF2 {
-			key, err := utils.ReadPassword("Please enter the password to encrypt the private JWK: ")
+			key, err := ui.PromptPassword("Please enter the password to encrypt the private JWK")
 			if err != nil {
 				return errors.Wrap(err, "error reading password")
 			}
@@ -595,5 +596,7 @@ func createAction(ctx *cli.Context) error {
 		return errs.FileError(err, privFile)
 	}
 
+	ui.Printf("Your public key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", privFile)
 	return nil
 }

@@ -47,7 +47,7 @@ Authenticate a message using a 256-bit key, a new nacl box private key can be
 used as the secret:
 '''
 $ step crypto nacl auth digest auth.key
-Write text to authenticate: ********
+Please enter text to authenticate: ********
 33c54aeb54077808fcfccadcd2f01971b120e314dffa61516b0738b74fdc8ff1
 
 $ cat message.txt | step crypto nacl auth digest auth.key
@@ -57,7 +57,7 @@ $ cat message.txt | step crypto nacl auth digest auth.key
 Verify the message with the hash:
 '''
 $ step crypto nacl auth verify auth.key 33c54aeb54077808fcfccadcd2f01971b120e314dffa61516b0738b74fdc8ff1
-Write text to verify: ********
+Please enter text to verify: ********
 ok
 
 $ cat message.txt | step crypto nacl auth verify auth.key 33c54aeb54077808fcfccadcd2f01971b120e314dffa61516b0738b74fdc8ff1
@@ -114,7 +114,7 @@ func authDigestAction(ctx *cli.Context) error {
 		return errors.Errorf("invalid key file: key size is not %d bytes", auth.KeySize)
 	}
 
-	input, err := utils.ReadInput("Write text to digest: ")
+	input, err := utils.ReadInput("Please enter text to digest")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}
@@ -147,7 +147,7 @@ func authVerifyAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error decoding digest")
 	}
 
-	input, err := utils.ReadInput("Write text to verify: ")
+	input, err := utils.ReadInput("Please enter text to verify")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

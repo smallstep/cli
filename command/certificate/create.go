@@ -13,6 +13,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	x509 "github.com/smallstep/cli/pkg/x509"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -332,7 +333,7 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 	} else {
-		pass, err := utils.ReadPassword("Please enter the password to encrypt the private key: ")
+		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key")
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}
@@ -342,6 +343,10 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 	}
+
+	ui.Printf("Your certificate has been saved in %s.\n", crtFile)
+	ui.Printf("Your private key has been saved in %s.\n", keyFile)
+
 	return nil
 }
 

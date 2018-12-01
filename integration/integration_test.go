@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	TempDirectory = "testdata-tmp"
+	TempDirectory  = "testdata-tmp"
+	DefaultTimeout = 2 * time.Second
 )
 
 func TestMain(m *testing.M) {
@@ -25,11 +26,17 @@ func TestMain(m *testing.M) {
 	if err := os.Mkdir(TempDirectory, os.ModeDir|os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
-	rval := m.Run()
-	if err := os.RemoveAll(TempDirectory); err != nil {
-		log.Fatal(err)
-	}
-	os.Exit(rval)
+	var rval int
+	defer func() {
+		if os.Getenv("STEP_INTEGRATION_DEBUG") != "1" {
+			os.RemoveAll(TempDirectory)
+		}
+		if err := recover(); err != nil {
+			log.Fatal(err)
+		}
+		os.Exit(rval)
+	}()
+	rval = m.Run()
 }
 
 func TestVersion(t *testing.T) {
