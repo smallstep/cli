@@ -230,8 +230,9 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	var (
-		priv   interface{}
-		pubPEM *pem.Block
+		priv       interface{}
+		pubPEM     *pem.Block
+		outputType string
 	)
 	switch typ {
 	case "x509-csr":
@@ -258,6 +259,7 @@ func createAction(ctx *cli.Context) error {
 			Bytes:   csrBytes,
 			Headers: map[string]string{},
 		}
+		outputType = "certificate signing request"
 	case "x509":
 		var (
 			err       error
@@ -319,6 +321,7 @@ func createAction(ctx *cli.Context) error {
 			Headers: map[string]string{},
 		}
 		priv = profile.SubjectPrivateKey()
+		outputType = "certificate"
 	default:
 		return errs.NewError("unexpected type: %s", typ)
 	}
@@ -344,7 +347,7 @@ func createAction(ctx *cli.Context) error {
 		}
 	}
 
-	ui.Printf("Your certificate has been saved in %s.\n", crtFile)
+	ui.Printf("Your %s has been saved in %s.\n", outputType, crtFile)
 	ui.Printf("Your private key has been saved in %s.\n", keyFile)
 
 	return nil
