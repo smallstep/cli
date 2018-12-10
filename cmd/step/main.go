@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"reflect"
 	"regexp"
+	"time"
 
 	"github.com/urfave/cli"
 
@@ -36,6 +38,7 @@ var BuildTime = "N/A"
 
 func init() {
 	config.Set(Version, BuildTime)
+	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
