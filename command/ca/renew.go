@@ -95,11 +95,6 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 }
 
 func renewCertificateAction(ctx *cli.Context) error {
-	jitter := rand.Int63n(int64(60))
-	fmt.Println(jitter)
-	if true {
-		return fmt.Errorf("fooo")
-	}
 	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
