@@ -38,7 +38,7 @@ func renewCertificateCommand() cli.Command {
 **step ca renew** command renews the given certificates on the certificate
 authority and writes the new certificate to disk either overwriting <crt-file>
 or using a new file if the **--out**=<file> flag is used.
-å
+
 With the **--daemon** flag the command will update periodically the given
 certificate. By default it will renew the certificate before 2/3 of the validity
 time of the certificate has passed. It uses a random jitter to avoid multiple
