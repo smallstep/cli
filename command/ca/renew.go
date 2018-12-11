@@ -38,6 +38,13 @@ func renewCertificateCommand() cli.Command {
 **step ca renew** command renews the given certificates on the certificate
 authority and writes the new certificate to disk either overwriting <crt-file>
 or using a new file if the **--out**=<file> flag is used.
+å
+With the **--daemon** flag the command will update periodically the given
+certificate. By default it will renew the certificate before 2/3 of the validity
+time of the certificate has passed. It uses a random jitter to avoid multiple
+instances running at the same time. The time before the expiration can be
+changed using the **--expires-in** flag, or a fixed period can be used with the
+**--renew-period** flag.
 
 ## POSITIONAL ARGUMENTS
 
@@ -78,6 +85,16 @@ $ step ca renew --expires-in 8h internal.crt internal.key
 certificate not renewed: expires in 10h52m5s
 '''
 
+Renew the certificate before 2/3 of the validity has passed:
+'''
+$ step ca renew --daemon internal.crt internal.key
+'''
+
+Renew the certificate before 8 hours and 30m of the expiration time:
+'''
+$ step ca renew --daemon --expires-in 8h30m internal.crt internal.key
+'''
+
 Renew the certificate every 16h:
 '''
 $ step ca renew --daemon --renew-period 16h internal.crt internal.key
@@ -116,7 +133,7 @@ configuration and load the new certificate.`,
 				Name: "daemon",
 				Usage: `Run the renew command as a daemon, renewing the certificate when required, and
 overwriting it if it's necessary. By default it will automatically renew the
-certificate after 2/3 of the time to expire has passed. This behavior can be
+certificate before 2/3 of the time to expire has passed. This behavior can be
 changed using the flags **--renew-period** or **--expires-in**.`,
 			},
 			cli.StringFlag{
@@ -136,6 +153,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	crtFile := args.Get(0)
 	keyFile := args.Get(1)
+	isDaemon := ctx.Bool("daemon")
 
 	outFile := ctx.String("out")
 	if len(outFile) == 0 {
@@ -166,6 +184,9 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if expiresIn > 0 && renewPeriod > 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "expires-in", "renew-period")
 	}
+	if renewPeriod > 0 && !isDaemon {
+		return errs.RequiredWithFlag(ctx, "renew-period", "daemon")
+	}
 
 	pid := ctx.Int("pid")
 	if ctx.IsSet("pid") && pid <= 0 {
@@ -192,6 +213,9 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if leaf.NotAfter.Before(time.Now()) {
 		return errors.New("cannot renew an expired certificate")
 	}
+	if renewPeriod > 0 && renewPeriod >= leaf.NotAfter.Sub(leaf.NotBefore) {
+		return errors.New("flag '--renew-period' must be lower than the certificate validity")
+	}
 
 	renewer, err := newRenewer(caURL, crtFile, keyFile, rootFile)
 	if err != nil {
@@ -199,7 +223,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	}
 
 	afterRenew := getAfterRenewFunc(pid, signum)
-	if ctx.Bool("daemon") {
+	if isDaemon {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
 		next := nextRenewDuration(leaf, expiresIn, renewPeriod)
@@ -225,6 +249,10 @@ func renewCertificateAction(ctx *cli.Context) error {
 
 func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Duration) time.Duration {
 	if renewPeriod > 0 {
+		// Renew now if it will be expired in renewPeriod
+		if (leaf.NotAfter.Sub(time.Now()) - renewPeriod) <= 0 {
+			return 0
+		}
 		return renewPeriod
 	}
 
