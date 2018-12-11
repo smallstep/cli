@@ -76,6 +76,11 @@ Renew skipped because it was too early:
 '''
 $ step ca renew --expires-in 8h internal.crt internal.key
 certificate not renewed: expires in 10h52m5s
+'''
+
+Renew the certificate every 16h:
+'''
+$ step ca renew --daemon --renew-period 16h internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
 			caURLFlag,
@@ -95,14 +100,6 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 "s", "m", "h".`,
 			},
 			flags.Force,
-			cli.BoolFlag{
-				Name: "daemon",
-				Usage: `Run the renew command as a daemon, renewing the certificate when required, and
-overwriting it if it's necessary. By default it will automatically renew the
-certificate after 2/3 of the time to expire has passed. This behavior can be
-changed using the flag **--expires-in**, in this case, it will only renew the
-certificate if the time to expiration is greater than the passed one.`,
-			},
 			cli.IntFlag{
 				Name: "pid",
 				Usage: `The process id to signal after the certificate has been renewed. By default it
@@ -114,6 +111,17 @@ flag.`,
 				Usage: `The signal <number> to send to the selected PID, so it can reload the
 configuration and load the new certificate.`,
 				Value: int(syscall.SIGHUP),
+			},
+			cli.BoolFlag{
+				Name: "daemon",
+				Usage: `Run the renew command as a daemon, renewing the certificate when required, and
+overwriting it if it's necessary. By default it will automatically renew the
+certificate after 2/3 of the time to expire has passed. This behavior can be
+changed using the flags **--renew-period** or **--expires-in**.`,
+			},
+			cli.StringFlag{
+				Name:  "renew-period",
+				Usage: `The <duration> period to renew the certificate on the daemon mode.`,
 			},
 		},
 	}
@@ -144,11 +152,19 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errs.RequiredFlag(ctx, "ca-url")
 	}
 
-	var expiresIn time.Duration
+	var expiresIn, renewPeriod time.Duration
 	if s := ctx.String("expires-in"); len(s) > 0 {
 		if expiresIn, err = time.ParseDuration(s); err != nil {
 			return errs.InvalidFlagValue(ctx, "expires-in", s, "")
 		}
+	}
+	if s := ctx.String("renew-period"); len(s) > 0 {
+		if renewPeriod, err = time.ParseDuration(s); err != nil {
+			return errs.InvalidFlagValue(ctx, "renew-period", s, "")
+		}
+	}
+	if expiresIn > 0 && renewPeriod > 0 {
+		return errs.IncompatibleFlagWithFlag(ctx, "expires-in", "renew-period")
 	}
 
 	pid := ctx.Int("pid")
@@ -186,8 +202,8 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if ctx.Bool("daemon") {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
-		next := nextRenewDuration(leaf, expiresIn)
-		return renewer.Daemon(outFile, next, expiresIn, afterRenew)
+		next := nextRenewDuration(leaf, expiresIn, renewPeriod)
+		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew)
 	}
 
 	// Do not renew if (now - cert.notAfter) > (expiresIn + jitter)
@@ -207,7 +223,11 @@ func renewCertificateAction(ctx *cli.Context) error {
 	return afterRenew()
 }
 
-func nextRenewDuration(leaf *x509.Certificate, expiresIn time.Duration) time.Duration {
+func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Duration) time.Duration {
+	if renewPeriod > 0 {
+		return renewPeriod
+	}
+
 	period := leaf.NotAfter.Sub(leaf.NotBefore)
 	if expiresIn == 0 {
 		expiresIn = period / 3
@@ -300,28 +320,30 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 	return resp, nil
 }
 
-func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn time.Duration) (time.Duration, error) {
+func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod time.Duration) (time.Duration, error) {
+	const durationOnErrors = 1 * time.Minute
+
 	resp, err := r.Renew(outFile)
 	if err != nil {
-		return 0, err
+		return durationOnErrors, err
 	}
 
 	cert, err := tls.LoadX509KeyPair(outFile, r.keyFile)
 	if err != nil {
-		return 0, errors.Wrap(err, "error loading certificates")
+		return durationOnErrors, errors.Wrap(err, "error loading certificates")
 	}
 	if len(cert.Certificate) == 0 {
-		return 0, errors.New("error loading certificate: certificate chain is empty")
+		return durationOnErrors, errors.New("error loading certificate: certificate chain is empty")
 	}
 
 	// Prepare next transport
 	r.transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
 
 	// Get next renew duration
-	return nextRenewDuration(resp.ServerPEM.Certificate, expiresIn), nil
+	return nextRenewDuration(resp.ServerPEM.Certificate, expiresIn, renewPeriod), nil
 }
 
-func (r *renewer) Daemon(outFile string, next, expiresIn time.Duration, afterRenew func() error) error {
+func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Duration, afterRenew func() error) error {
 	// Loggers
 	Info := log.New(os.Stdout, "INFO: ", log.LstdFlags)
 	Error := log.New(os.Stderr, "ERROR: ", log.LstdFlags)
@@ -331,27 +353,34 @@ func (r *renewer) Daemon(outFile string, next, expiresIn time.Duration, afterRen
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer signal.Stop(signals)
 
+	Info.Printf("first renewal in %s", next.Round(time.Second))
 	for {
 		select {
 		case sig := <-signals:
 			switch sig {
 			case syscall.SIGHUP:
-				if n, err := r.RenewAndPrepareNext(outFile, expiresIn); err != nil {
+				if n, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
 					Error.Println(err)
 				} else {
 					next = n
 					Info.Printf("certificate renewed, next in %s", next.Round(time.Second))
+					if err := afterRenew(); err != nil {
+						Error.Println(err)
+					}
 				}
 			case syscall.SIGINT, syscall.SIGTERM:
 				return nil
 			}
 		case <-time.After(next):
-			if n, err := r.RenewAndPrepareNext(outFile, expiresIn); err != nil {
+			if n, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
 				next = n
 				Error.Println(err)
 			} else {
 				next = n
 				Info.Printf("certificate renewed, next in %s", next.Round(time.Second))
+				if err := afterRenew(); err != nil {
+					Error.Println(err)
+				}
 			}
 		}
 	}
