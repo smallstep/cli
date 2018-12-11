@@ -1,2 +1,2 @@
--include make/docker.mk
 -include make/common.mk
+-include make/docker.mk
