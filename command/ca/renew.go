@@ -4,12 +4,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -90,12 +95,33 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 "s", "m", "h".`,
 			},
 			flags.Force,
+			cli.BoolFlag{
+				Name: "daemon",
+				Usage: `Run the renew command as a daemon, renewing the certificate when required, and
+overwriting it if it's necessary. By default it will automatically renew the
+certificate after 2/3 of the time to expire has passed. This behavior can be
+changed using the flag **--expires-in**, in this case, it will only renew the
+certificate if the time to expiration is greater than the passed one.`,
+			},
+			cli.IntFlag{
+				Name: "pid",
+				Usage: `The process id to signal after the certificate has been renewed. By default it
+will use the SIGHUP (1) signal, but it can be configured with the **--signal**
+flag.`,
+			},
+			cli.IntFlag{
+				Name: "signal",
+				Usage: `The signal <number> to send to the selected PID, so it can reload the
+configuration and load the new certificate.`,
+				Value: int(syscall.SIGHUP),
+			},
 		},
 	}
 }
 
 func renewCertificateAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 2); err != nil {
+	err := errs.NumberOfArguments(ctx, 2)
+	if err != nil {
 		return err
 	}
 
@@ -108,14 +134,31 @@ func renewCertificateAction(ctx *cli.Context) error {
 		outFile = crtFile
 	}
 
-	root := ctx.String("root")
-	if len(root) == 0 {
-		root = pki.GetRootCAPath()
+	rootFile := ctx.String("root")
+	if len(rootFile) == 0 {
+		rootFile = pki.GetRootCAPath()
 	}
 
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
 		return errs.RequiredFlag(ctx, "ca-url")
+	}
+
+	var expiresIn time.Duration
+	if s := ctx.String("expires-in"); len(s) > 0 {
+		if expiresIn, err = time.ParseDuration(s); err != nil {
+			return errs.InvalidFlagValue(ctx, "expires-in", s, "")
+		}
+	}
+
+	pid := ctx.Int("pid")
+	if ctx.IsSet("pid") && pid <= 0 {
+		return errs.InvalidFlagValue(ctx, "pid", strconv.Itoa(pid), "")
+	}
+
+	signum := ctx.Int("signal")
+	if ctx.IsSet("signal") && signum <= 0 {
+		return errs.InvalidFlagValue(ctx, "signal", strconv.Itoa(signum), "")
 	}
 
 	cert, err := tls.LoadX509KeyPair(crtFile, keyFile)
@@ -126,36 +169,91 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errors.New("error loading certificate: certificate chain is empty")
 	}
 
-	// Do not renew if (now - cert.notBefore) > (expiresIn + jitter)
-	if s := ctx.String("expires-in"); len(s) > 0 {
-		duration, err := time.ParseDuration(s)
-		if err != nil {
-			return errs.InvalidFlagValue(ctx, "expires-in", s, "")
-		}
-
-		leaf, err := x509.ParseCertificate(cert.Certificate[0])
-		if err != nil {
-			return errors.Wrap(err, "error parsing certificate")
-		}
-
-		now := time.Now()
-		jitter := rand.Int63n(int64(duration / 20))
-		if d := leaf.NotAfter.Sub(now); d > duration+time.Duration(jitter) {
-			fmt.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
-			return nil
-		}
+	leaf, err := x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		return errors.Wrap(err, "error parsing certificate")
+	}
+	if leaf.NotAfter.Before(time.Now()) {
+		return errors.New("cannot renew an expired certificate")
 	}
 
-	rootInt, err := pemutil.Read(root)
+	renewer, err := newRenewer(caURL, crtFile, keyFile, rootFile)
 	if err != nil {
 		return err
 	}
 
-	rootCert, ok := rootInt.(*x509.Certificate)
-	if !ok {
-		return errors.Errorf("error parsing %s: file is not a root certificate", root)
+	afterRenew := getAfterRenewFunc(pid, signum)
+	if ctx.Bool("daemon") {
+		// Force is always enabled when daemon mode is used
+		ctx.Set("force", "true")
+		next := nextRenewDuration(leaf, expiresIn)
+		return renewer.Daemon(outFile, next, expiresIn, afterRenew)
 	}
 
+	// Do not renew if (now - cert.notAfter) > (expiresIn + jitter)
+	if expiresIn > 0 {
+		jitter := rand.Int63n(int64(expiresIn / 20))
+		if d := leaf.NotAfter.Sub(time.Now()); d > expiresIn+time.Duration(jitter) {
+			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
+			return nil
+		}
+	}
+
+	if _, err := renewer.Renew(outFile); err != nil {
+		return err
+	}
+
+	ui.Printf("Your certificate has been saved in %s.\n", outFile)
+	return afterRenew()
+}
+
+func nextRenewDuration(leaf *x509.Certificate, expiresIn time.Duration) time.Duration {
+	period := leaf.NotAfter.Sub(leaf.NotBefore)
+	if expiresIn == 0 {
+		expiresIn = period / 3
+	}
+
+	d := leaf.NotAfter.Sub(time.Now()) - expiresIn
+	n := rand.Int63n(int64(period / 20))
+	d -= time.Duration(n)
+	if d < 0 {
+		d = 0
+	}
+	return d
+}
+
+func getAfterRenewFunc(pid, signum int) func() error {
+	if pid == 0 {
+		return func() error { return nil }
+	}
+
+	return func() error {
+		if err := syscall.Kill(pid, syscall.Signal(signum)); err != nil {
+			return errors.Wrapf(err, "kill %d with signal %d failed", pid, signum)
+		}
+		return nil
+	}
+}
+
+type renewer struct {
+	client    *ca.Client
+	transport *http.Transport
+	keyFile   string
+}
+
+func newRenewer(caURL, crtFile, keyFile, rootFile string) (*renewer, error) {
+	cert, err := tls.LoadX509KeyPair(crtFile, keyFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "error loading certificates")
+	}
+	if len(cert.Certificate) == 0 {
+		return nil, errors.New("error loading certificate: certificate chain is empty")
+	}
+
+	rootCert, err := pemutil.ReadCertificate(rootFile)
+	if err != nil {
+		return nil, err
+	}
 	pool := x509.NewCertPool()
 	pool.AddCert(rootCert)
 
@@ -169,28 +267,92 @@ func renewCertificateAction(ctx *cli.Context) error {
 
 	client, err := ca.NewClient(caURL, ca.WithTransport(tr))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	resp, err := client.Renew(tr)
+	return &renewer{
+		client:    client,
+		transport: tr,
+		keyFile:   keyFile,
+	}, nil
+}
+
+func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
+	resp, err := r.client.Renew(r.transport)
 	if err != nil {
-		return errors.Wrap(err, "error renewing certificate")
+		return nil, errors.Wrap(err, "error renewing certificate")
 	}
 
 	serverBlock, err := pemutil.Serialize(resp.ServerPEM.Certificate)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	caBlock, err := pemutil.Serialize(resp.CaPEM.Certificate)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
 
 	if err := utils.WriteFile(outFile, data, 0600); err != nil {
-		return errs.FileError(err, outFile)
+		return nil, errs.FileError(err, outFile)
 	}
 
-	ui.Printf("Your certificate has been saved in %s.\n", outFile)
-	return nil
+	return resp, nil
+}
+
+func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn time.Duration) (time.Duration, error) {
+	resp, err := r.Renew(outFile)
+	if err != nil {
+		return 0, err
+	}
+
+	cert, err := tls.LoadX509KeyPair(outFile, r.keyFile)
+	if err != nil {
+		return 0, errors.Wrap(err, "error loading certificates")
+	}
+	if len(cert.Certificate) == 0 {
+		return 0, errors.New("error loading certificate: certificate chain is empty")
+	}
+
+	// Prepare next transport
+	r.transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
+
+	// Get next renew duration
+	return nextRenewDuration(resp.ServerPEM.Certificate, expiresIn), nil
+}
+
+func (r *renewer) Daemon(outFile string, next, expiresIn time.Duration, afterRenew func() error) error {
+	// Loggers
+	Info := log.New(os.Stdout, "INFO: ", log.LstdFlags)
+	Error := log.New(os.Stderr, "ERROR: ", log.LstdFlags)
+
+	// Daemon loop
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer signal.Stop(signals)
+
+	for {
+		select {
+		case sig := <-signals:
+			switch sig {
+			case syscall.SIGHUP:
+				if n, err := r.RenewAndPrepareNext(outFile, expiresIn); err != nil {
+					Error.Println(err)
+				} else {
+					next = n
+					Info.Printf("certificate renewed, next in %s", next.Round(time.Second))
+				}
+			case syscall.SIGINT, syscall.SIGTERM:
+				return nil
+			}
+		case <-time.After(next):
+			if n, err := r.RenewAndPrepareNext(outFile, expiresIn); err != nil {
+				next = n
+				Error.Println(err)
+			} else {
+				next = n
+				Info.Printf("certificate renewed, next in %s", next.Round(time.Second))
+			}
+		}
+	}
 }
