@@ -21,6 +21,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
+	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
@@ -37,16 +38,16 @@ func renewCertificateCommand() cli.Command {
 		[**--ca-url**=<uri>] [**--root**=<file>]
 		[**--out**=<file>] [**--expires-in**=<duration>] [**--force**]`,
 		Description: `
-**step ca renew** command renews the given certificates on the certificate
-authority and writes the new certificate to disk either overwriting <crt-file>
-or using a new file if the **--out**=<file> flag is used.
+**step ca renew** command renews the given certificate (with a request to the
+certificate authority) and writes the new certificate to disk - either overwriting
+<crt-file> or using a new file when the **--out**=<file> flag is used.
 
-With the **--daemon** flag the command will update periodically the given
-certificate. By default it will renew the certificate before 2/3 of the validity
-time of the certificate has passed. It uses a random jitter to avoid multiple
-instances running at the same time. The time before the expiration can be
-changed using the **--expires-in** flag, or a fixed period can be used with the
-**--renew-period** flag.
+With the **--daemon** flag the command will periodically update the given
+certificate. By default, it will renew the certificate before 2/3 of the validity
+period of the certificate has elapsed. A random jitter is used to avoid multiple
+instances running at the same time. The amount of time between renewal and
+certificate expiration can be configured using the **--expires-in** flag, or a
+fixed period can be set with the **--renew-period** flag.
 
 The **--daemon** flag can be combined with **--pid**, **--signal**, or **--exec**
 to provide certificate reloads on your services.
@@ -125,25 +126,25 @@ $ step ca renew --daemon --renew-period 16h \
 			},
 			cli.StringFlag{
 				Name: "expires-in",
-				Usage: `The <duration> check that will be performed before renewing the certificate. The
-certificate renew will be skipped if the time to expiration is greater than the
-passed one. A random jitter (duration/20) will be added to avoid multiple
-services hitting the renew endpoint at the same time. The <duration> is a
-sequence of decimal numbers, each with optional fraction and a unit suffix, such
-as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
-"s", "m", "h".`,
+				Usage: `The amount of time remaining before certificate expiration,
+at which point a renewal should be attempted. The certificate renewal will not
+be performed if the time to expiration is greater than the **--expires-in** value.
+A random jitter (duration/20) will be added to avoid multiple services hitting the
+renew endpoint at the same time. The <duration> is a sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 			flags.Force,
 			cli.IntFlag{
 				Name: "pid",
-				Usage: `The process id to signal after the certificate has been renewed. By default it
-will use the SIGHUP (1) signal, but it can be configured with the **--signal**
+				Usage: `The process id to signal after the certificate has been renewed. By default the
+the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},
 			cli.IntFlag{
 				Name: "signal",
 				Usage: `The signal <number> to send to the selected PID, so it can reload the
-configuration and load the new certificate.`,
+configuration and load the new certificate. Default value is SIGHUP (1)`,
 				Value: int(syscall.SIGHUP),
 			},
 			cli.StringFlag{
@@ -152,14 +153,17 @@ configuration and load the new certificate.`,
 			},
 			cli.BoolFlag{
 				Name: "daemon",
-				Usage: `Run the renew command as a daemon, renewing the certificate when required, and
-overwriting it if it's necessary. By default it will automatically renew the
-certificate before 2/3 of the time to expire has passed. This behavior can be
-changed using the flags **--renew-period** or **--expires-in**.`,
+				Usage: `Run the renew command as a daemon, renewing and overwriting the certificate
+periodically. By default the daemon will renew a certificate before 2/3 of the
+time to expiration has elapsed. The period can be configured using the
+**--renew-period** or **--expires-in** flags.`,
 			},
 			cli.StringFlag{
-				Name:  "renew-period",
-				Usage: `The <duration> period to renew the certificate on the daemon mode.`,
+				Name: "renew-period",
+				Usage: `The period with which to schedule renewals of the certificate in daemon mode.
+Requires the **--daemon** flag. The <duration> is a sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as "300ms", "1.5h", or "2h45m".
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 		},
 	}
@@ -252,7 +256,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew)
 	}
 
-	// Do not renew if (now - cert.notAfter) > (expiresIn + jitter)
+	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
 		jitter := rand.Int63n(int64(expiresIn / 20))
 		if d := leaf.NotAfter.Sub(time.Now()); d > expiresIn+time.Duration(jitter) {
@@ -339,17 +343,15 @@ func newRenewer(caURL, crtFile, keyFile, rootFile string) (*renewer, error) {
 		return nil, errors.New("error loading certificate: certificate chain is empty")
 	}
 
-	rootCert, err := pemutil.ReadCertificate(rootFile)
+	rootCAs, err := x509util.ReadCertPool(rootFile)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "load root certificate pool (from %s) error", rootFile)
 	}
-	pool := x509.NewCertPool()
-	pool.AddCert(rootCert)
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			Certificates:             []tls.Certificate{cert},
-			RootCAs:                  pool,
+			RootCAs:                  rootCAs,
 			PreferServerCipherSuites: true,
 		},
 	}
