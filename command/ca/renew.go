@@ -108,14 +108,14 @@ $ step ca renew --daemon --renew-period 16h internal.crt internal.key
 
 Renew the certificate and reload nginx:
 '''
-$ step ca renew --daemon --exec "nginx -s reload" internal.crt internal.key 
+$ step ca renew --daemon --exec "nginx -s reload" internal.crt internal.key
 '''
 
 Renew the certificate and convert it to DER:
 '''
 $ step ca renew --daemon --renew-period 16h \
   --exec "step certificate format --force --out internal.der internal.crt" \
-  internal.crt internal.key 
+  internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
 			caURLFlag,
@@ -345,7 +345,7 @@ func newRenewer(caURL, crtFile, keyFile, rootFile string) (*renewer, error) {
 
 	rootCAs, err := x509util.ReadCertPool(rootFile)
 	if err != nil {
-		return nil, errors.Wrapf(err, "load root certificate pool (from %s) error", rootFile)
+		return nil, err
 	}
 
 	tr := &http.Transport{
