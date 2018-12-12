@@ -239,8 +239,10 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if leaf.NotAfter.Before(time.Now()) {
 		return errors.New("cannot renew an expired certificate")
 	}
-	if renewPeriod > 0 && renewPeriod >= leaf.NotAfter.Sub(leaf.NotBefore) {
-		return errors.New("flag '--renew-period' must be lower than the certificate validity")
+	cvp := leaf.NotAfter.Sub(leaf.NotBefore)
+	if renewPeriod > 0 && renewPeriod >= cvp {
+		return errors.Errorf("flag '--renew-period' must be within (lower than) the certificate "+
+			"validity period; renew-period=%v, cert-validity-period=%v", renewPeriod, cvp)
 	}
 
 	renewer, err := newRenewer(caURL, crtFile, keyFile, rootFile)
