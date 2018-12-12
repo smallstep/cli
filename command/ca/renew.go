@@ -8,8 +8,10 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -129,6 +131,10 @@ flag.`,
 configuration and load the new certificate.`,
 				Value: int(syscall.SIGHUP),
 			},
+			cli.StringFlag{
+				Name:  "exec",
+				Usage: "The <command> to run after the certificate has been renewed.",
+			},
 			cli.BoolFlag{
 				Name: "daemon",
 				Usage: `Run the renew command as a daemon, renewing the certificate when required, and
@@ -154,6 +160,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	crtFile := args.Get(0)
 	keyFile := args.Get(1)
 	isDaemon := ctx.Bool("daemon")
+	execCmd := ctx.String("exec")
 
 	outFile := ctx.String("out")
 	if len(outFile) == 0 {
@@ -222,7 +229,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	afterRenew := getAfterRenewFunc(pid, signum)
+	afterRenew := getAfterRenewFunc(pid, signum, execCmd)
 	if isDaemon {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
@@ -270,17 +277,36 @@ func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Durat
 	return d
 }
 
-func getAfterRenewFunc(pid, signum int) func() error {
-	if pid == 0 {
-		return func() error { return nil }
-	}
-
+func getAfterRenewFunc(pid, signum int, execCmd string) func() error {
 	return func() error {
-		if err := syscall.Kill(pid, syscall.Signal(signum)); err != nil {
-			return errors.Wrapf(err, "kill %d with signal %d failed", pid, signum)
+		if err := runKillPid(pid, signum); err != nil {
+			return err
 		}
+		return runExecCmd(execCmd)
+	}
+}
+
+func runKillPid(pid, signum int) error {
+	if pid == 0 {
 		return nil
 	}
+	if err := syscall.Kill(pid, syscall.Signal(signum)); err != nil {
+		return errors.Wrapf(err, "kill %d with signal %d failed", pid, signum)
+	}
+	return nil
+}
+
+func runExecCmd(execCmd string) error {
+	execCmd = strings.TrimSpace(execCmd)
+	if execCmd == "" {
+		return nil
+	}
+	parts := strings.Split(execCmd, " ")
+	cmd := exec.Command(parts[0], parts[1:]...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 type renewer struct {
