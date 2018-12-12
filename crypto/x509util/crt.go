@@ -13,17 +13,18 @@ import (
 )
 
 // ReadCertPool loads a certificate pool from disk.
+// *path*: a file, a directory, or a comma-separated list of files.
 func ReadCertPool(path string) (*realx509.CertPool, error) {
 	info, err := os.Stat(path)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, errors.Wrapf(err, "os.Stat %s failed", path)
 	}
 
 	var (
 		files []string
 		pool  = realx509.NewCertPool()
 	)
-	if info.IsDir() {
+	if info != nil && info.IsDir() {
 		finfos, err := ioutil.ReadDir(path)
 		if err != nil {
 			return nil, errs.FileError(err, path)
@@ -33,6 +34,9 @@ func ReadCertPool(path string) (*realx509.CertPool, error) {
 		}
 	} else {
 		files = strings.Split(path, ",")
+		for i := range files {
+			files[i] = strings.TrimSpace(files[i])
+		}
 	}
 
 	var pems []byte
