@@ -48,6 +48,9 @@ instances running at the same time. The time before the expiration can be
 changed using the **--expires-in** flag, or a fixed period can be used with the
 **--renew-period** flag.
 
+The **--daemon** flag can be combined with **--pid**, **--signal**, or **--exec**
+to provide certificate reloads on your services.
+
 ## POSITIONAL ARGUMENTS
 
 <crt-file>
@@ -100,6 +103,18 @@ $ step ca renew --daemon --expires-in 8h30m internal.crt internal.key
 Renew the certificate every 16h:
 '''
 $ step ca renew --daemon --renew-period 16h internal.crt internal.key
+'''
+
+Renew the certificate and reload nginx:
+'''
+$ step ca renew --daemon --exec "nginx -s reload" internal.crt internal.key 
+'''
+
+Renew the certificate and convert it to DER:
+'''
+$ step ca renew --daemon --renew-period 16h \
+  --exec "step certificate format --force --out internal.der internal.crt" \
+  internal.crt internal.key 
 '''`,
 		Flags: []cli.Flag{
 			caURLFlag,
