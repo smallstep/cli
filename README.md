@@ -278,8 +278,7 @@ it in the `Gopkg.toml` file and run `dep ensure` which will remove it from the
 We use [SemVer](http://semver.org/) for versioning. For the versions available,
 see the [tags on this repository](https://github.com/smallstep/cli).
 
-
 ## License
 
-This project is licensed under the MIT License - see the
+This project is licensed under the Apache 2.0 License - see the
 [LICENSE](./LICENSE) file for details
