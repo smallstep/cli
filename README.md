@@ -283,3 +283,5 @@ see the [tags on this repository](https://github.com/smallstep/cli).
 
 This project is licensed under the MIT License - see the
 [LICENSE](./LICENSE) file for details
+
+this is a test
