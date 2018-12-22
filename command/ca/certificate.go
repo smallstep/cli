@@ -208,11 +208,11 @@ func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) 
 	}
 
 	// parse times or durations
-	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
+	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
 	if !ok {
 		return "", errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
 	}
-	notAfter, ok := parseTimeOrDuration(ctx.String("not-after"))
+	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
 	if !ok {
 		return "", errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
@@ -232,11 +232,11 @@ func signCertificateRequest(ctx *cli.Context, token string, csr api.CertificateR
 	caURL := ctx.String("ca-url")
 
 	// parse times or durations
-	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
+	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
 	if !ok {
 		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
 	}
-	notAfter, ok := parseTimeOrDuration(ctx.String("not-after"))
+	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
 	if !ok {
 		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}

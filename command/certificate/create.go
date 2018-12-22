@@ -82,6 +82,14 @@ $ step certificate create foo foo.crt foo.key --profile leaf \
   --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
 '''
 
+Create a leaf certificate and key with custom validity:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile leaf \
+  --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key \
+  --not-before 24h --not-after 2160h
+'''
+
 Create a root certificate and key with underlying OKP Ed25519:
 
 '''
@@ -194,6 +202,22 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
     :  Ed25519 Curve
 `,
 			},
+			cli.StringFlag{
+				Name: "not-before",
+				Usage: `The <time|duration> set in the NotBefore property of the certificate. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+			},
+			cli.StringFlag{
+				Name: "not-after",
+				Usage: `The <time|duration> set in the NotAfter property of the certificate. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+			},
 			flags.Force,
 		},
 	}
@@ -215,6 +239,18 @@ func createAction(ctx *cli.Context) error {
 	keyFile := ctx.Args().Get(2)
 	if crtFile == keyFile {
 		return errs.EqualArguments(ctx, "CRT_FILE", "KEY_FILE")
+	}
+
+	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+	if !notAfter.IsZero() && !notBefore.IsZero() && notBefore.After(notAfter) {
+		return errs.IncompatibleFlagValues(ctx, "not-before", ctx.String("not-before"), "not-after", ctx.String("not-after"))
 	}
 
 	var typ string
@@ -283,7 +319,8 @@ func createAction(ctx *cli.Context) error {
 					return errors.WithStack(err)
 				}
 				profile, err = x509util.NewLeafProfile(subject, issIdentity.Crt,
-					issIdentity.Key, x509util.GenerateKeyPair(kty, crv, size))
+					issIdentity.Key, x509util.GenerateKeyPair(kty, crv, size),
+					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -297,14 +334,16 @@ func createAction(ctx *cli.Context) error {
 				}
 				profile, err = x509util.NewIntermediateProfile(subject,
 					issIdentity.Crt, issIdentity.Key,
-					x509util.GenerateKeyPair(kty, crv, size))
+					x509util.GenerateKeyPair(kty, crv, size),
+					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0))
 				if err != nil {
 					return errors.WithStack(err)
 				}
 			}
 		case "root-ca":
 			profile, err = x509util.NewRootProfile(subject,
-				x509util.GenerateKeyPair(kty, crv, size))
+				x509util.GenerateKeyPair(kty, crv, size),
+				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0))
 			if err != nil {
 				return errors.WithStack(err)
 			}
