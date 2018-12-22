@@ -151,11 +151,11 @@ func newTokenAction(ctx *cli.Context) error {
 	}
 
 	// parse times or durations
-	notBefore, ok := parseTimeOrDuration(ctx.String("not-before"))
+	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
 	if !ok {
 		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
 	}
-	notAfter, ok := parseTimeOrDuration(ctx.String("not-after"))
+	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
 	if !ok {
 		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
@@ -358,22 +358,6 @@ func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordF
 	}
 
 	return generateToken(subject, kid, issuer, audience, root, notBefore, notAfter, jwk)
-}
-
-func parseTimeOrDuration(s string) (time.Time, bool) {
-	if s == "" {
-		return time.Time{}, true
-	}
-
-	var t time.Time
-	if err := t.UnmarshalText([]byte(s)); err != nil {
-		d, err := time.ParseDuration(s)
-		if err != nil {
-			return time.Time{}, false
-		}
-		t = time.Now().Add(d)
-	}
-	return t, true
 }
 
 // provisionerFilter returns a slice of provisioners that pass the given filter.
