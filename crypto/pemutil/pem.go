@@ -219,12 +219,14 @@ func Read(filename string, opts ...Options) (interface{}, error) {
 	return Parse(b, opts...)
 }
 
+// SerializeOption is the type used as an option for the Serialize function.
+type SerializeOption func(*pem.Block) error
+
 // WithEncryption is a modifier for **Serialize** that will encrypt the
 // PEM formatted data using the given key and a sane default cipher.
-func WithEncryption(pass []byte) func(*pem.Block) error {
+func WithEncryption(pass []byte) SerializeOption {
 	return func(p *pem.Block) error {
-		_p, err := x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, pass,
-			DefaultEncCipher)
+		_p, err := x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, pass, DefaultEncCipher)
 		if err != nil {
 			return err
 		}
@@ -239,7 +241,7 @@ func WithEncryption(pass []byte) func(*pem.Block) error {
 // NOTE: This modifier should be the last in the list of options passed to
 // Serialize. Otherwise, transformation on the *pem.Block may not be completed
 // at the time of encoding to disk.
-func ToFile(f string, perm os.FileMode) func(*pem.Block) error {
+func ToFile(f string, perm os.FileMode) SerializeOption {
 	return func(p *pem.Block) error {
 		err := utils.WriteFile(f, pem.EncodeToMemory(p), perm)
 		if err != nil {
@@ -251,7 +253,7 @@ func ToFile(f string, perm os.FileMode) func(*pem.Block) error {
 
 // Serialize will serialize the input to a PEM formatted block and apply
 // modifiers.
-func Serialize(in interface{}, opts ...func(*pem.Block) error) (*pem.Block, error) {
+func Serialize(in interface{}, opts ...SerializeOption) (*pem.Block, error) {
 	var p *pem.Block
 
 	switch k := in.(type) {
@@ -279,14 +281,9 @@ func Serialize(in interface{}, opts ...func(*pem.Block) error) (*pem.Block, erro
 			Bytes: b,
 		}
 	case ed25519.PrivateKey:
-		var priv pkcs8
-		priv.PrivateKey = append([]byte{4, 32}, k.Seed()...)[:34]
-		priv.Algo = pkix.AlgorithmIdentifier{
-			Algorithm: asn1.ObjectIdentifier{1, 3, 101, 112},
-		}
-		b, err := asn1.Marshal(priv)
+		b, err := MarshalPKCS8PrivateKey(k)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		p = &pem.Block{
 			Type:  "PRIVATE KEY",
