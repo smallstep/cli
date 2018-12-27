@@ -6,8 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	realx509 "crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -290,17 +288,9 @@ func Serialize(in interface{}, opts ...SerializeOption) (*pem.Block, error) {
 			Bytes: b,
 		}
 	case ed25519.PublicKey:
-		var pub publicKeyInfo
-		pub.PublicKey = asn1.BitString{
-			Bytes:     k,
-			BitLength: 8 * ed25519.PublicKeySize,
-		}
-		pub.Algo = pkix.AlgorithmIdentifier{
-			Algorithm: asn1.ObjectIdentifier{1, 3, 101, 112},
-		}
-		b, err := asn1.Marshal(pub)
+		b, err := MarshalPKIXPublicKey(k)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		p = &pem.Block{
 			Type:  "PUBLIC KEY",

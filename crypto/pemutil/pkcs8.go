@@ -250,7 +250,7 @@ func MarshalPKIXPublicKey(pub interface{}) ([]byte, error) {
 		pkix.Algo.Algorithm = oidEd25519
 		pkix.PublicKey = asn1.BitString{
 			Bytes:     p,
-			BitLength: len(p),
+			BitLength: 8 * len(p),
 		}
 		return asn1.Marshal(pkix)
 	default:
