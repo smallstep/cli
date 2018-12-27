@@ -238,6 +238,26 @@ func ParsePKIXPublicKey(derBytes []byte) (pub interface{}, err error) {
 	}
 }
 
+// MarshalPKIXPublicKey serialises a public key to DER-encoded PKIX format. The
+// following key types are supported: *rsa.PublicKey, *ecdsa.PublicKey,
+// ed25519.Publickey. Unsupported key types result in an error.
+func MarshalPKIXPublicKey(pub interface{}) ([]byte, error) {
+	switch p := pub.(type) {
+	case *rsa.PublicKey, *ecdsa.PublicKey:
+		return x509.MarshalPKIXPublicKey(pub)
+	case ed25519.PublicKey:
+		var pkix publicKeyInfo
+		pkix.Algo.Algorithm = oidEd25519
+		pkix.PublicKey = asn1.BitString{
+			Bytes:     p,
+			BitLength: len(p),
+		}
+		return asn1.Marshal(pkix)
+	default:
+		return nil, errors.Errorf("x509: unknown public key type: %T", pub)
+	}
+}
+
 // MarshalPKCS8PrivateKey converts a private key to PKCS#8 encoded form. The
 // following key types are supported: *rsa.PrivateKey, *ecdsa.PublicKey,
 // ed25519.PrivateKey. Unsupported key types result in an error.
