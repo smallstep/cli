@@ -216,7 +216,7 @@ func createAction(ctx *cli.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}
-		_, err = pemutil.Serialize(priv, pemutil.WithEncryption(pass),
+		_, err = pemutil.Serialize(priv, pemutil.WithPassword(pass),
 			pemutil.ToFile(privFile, 0600))
 		if err != nil {
 			return err

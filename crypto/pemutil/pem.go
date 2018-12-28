@@ -2,12 +2,11 @@ package pemutil
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
 	realx509 "crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -28,13 +27,28 @@ var DefaultEncCipher = x509.PEMCipherAES256
 // context add options to the pem methods.
 type context struct {
 	filename   string
+	perm       os.FileMode
 	password   []byte
+	pkcs8      bool
 	stepCrypto bool
 }
 
 // newContext initializes the context with a filename.
 func newContext(name string) *context {
-	return &context{filename: name}
+	return &context{
+		filename: name,
+		perm:     0600,
+	}
+}
+
+// apply the context options and return the first error if exists.
+func (c *context) apply(opts []Options) error {
+	for _, fn := range opts {
+		if err := fn(c); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Options is the type to add attributes to the context.
@@ -44,6 +58,20 @@ type Options func(o *context) error
 func WithFilename(name string) Options {
 	return func(ctx *context) error {
 		ctx.filename = name
+		// Default perm mode if not set
+		if ctx.perm == 0 {
+			ctx.perm = 0600
+		}
+		return nil
+	}
+}
+
+// ToFile is a method that adds the given filename and permissions to the
+// context. It is used in the Serialize to store PEM in disk.
+func ToFile(name string, perm os.FileMode) Options {
+	return func(ctx *context) error {
+		ctx.filename = name
+		ctx.perm = perm
 		return nil
 	}
 }
@@ -64,6 +92,28 @@ func WithPasswordFile(filename string) Options {
 			return err
 		}
 		ctx.password = b
+		return nil
+	}
+}
+
+// WithPasswordPrompt ask the user for a password and adds it to the context.
+func WithPasswordPrompt(prompt string) Options {
+	return func(ctx *context) error {
+		b, err := ui.PromptPassword(prompt)
+		if err != nil {
+			return err
+		}
+		ctx.password = b
+		return nil
+	}
+}
+
+// WithPKCS8 with v set to true returns an option used in the Serialize method
+// to use the PKCS#8 encoding form on the private keys. With v set to false
+// default form will be used.
+func WithPKCS8(v bool) Options {
+	return func(ctx *context) error {
+		ctx.pkcs8 = v
 		return nil
 	}
 }
@@ -135,10 +185,8 @@ func ReadStepCertificate(filename string) (*x509.Certificate, error) {
 func Parse(b []byte, opts ...Options) (interface{}, error) {
 	// Populate options
 	ctx := newContext("PEM")
-	for _, f := range opts {
-		if err := f(ctx); err != nil {
-			return nil, err
-		}
+	if err := ctx.apply(opts); err != nil {
+		return nil, err
 	}
 
 	block, rest := pem.Decode(b)
@@ -219,49 +267,17 @@ func Read(filename string, opts ...Options) (interface{}, error) {
 	return Parse(b, opts...)
 }
 
-// WithEncryption is a modifier for **Serialize** that will encrypt the
-// PEM formatted data using the given key and a sane default cipher.
-func WithEncryption(pass []byte) func(*pem.Block) error {
-	return func(p *pem.Block) error {
-		_p, err := x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, pass,
-			DefaultEncCipher)
-		if err != nil {
-			return err
-		}
-		*p = *_p
-		return nil
-	}
-}
-
-// ToFile is modifier a for **Serialize** that will right the PEM formatted
-// data to disk.
-//
-// NOTE: This modifier should be the last in the list of options passed to
-// Serialize. Otherwise, transformation on the *pem.Block may not be completed
-// at the time of encoding to disk.
-func ToFile(f string, perm os.FileMode) func(*pem.Block) error {
-	return func(p *pem.Block) error {
-		err := utils.WriteFile(f, pem.EncodeToMemory(p), perm)
-		if err != nil {
-			return errs.FileError(err, f)
-		}
-		return nil
-	}
-}
-
 // Serialize will serialize the input to a PEM formatted block and apply
 // modifiers.
-func Serialize(in interface{}, opts ...func(*pem.Block) error) (*pem.Block, error) {
-	var p *pem.Block
+func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
+	ctx := new(context)
+	if err := ctx.apply(opts); err != nil {
+		return nil, err
+	}
 
 	switch k := in.(type) {
-	case *rsa.PrivateKey:
-		p = &pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(k),
-		}
-	case *rsa.PublicKey, *ecdsa.PublicKey:
-		b, err := x509.MarshalPKIXPublicKey(k)
+	case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey:
+		b, err := MarshalPKIXPublicKey(k)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -269,44 +285,50 @@ func Serialize(in interface{}, opts ...func(*pem.Block) error) (*pem.Block, erro
 			Type:  "PUBLIC KEY",
 			Bytes: b,
 		}
+	case *rsa.PrivateKey:
+		if ctx.pkcs8 {
+			b, err := MarshalPKCS8PrivateKey(k)
+			if err != nil {
+				return nil, err
+			}
+			p = &pem.Block{
+				Type:  "PRIVATE KEY",
+				Bytes: b,
+			}
+		} else {
+			p = &pem.Block{
+				Type:  "RSA PRIVATE KEY",
+				Bytes: x509.MarshalPKCS1PrivateKey(k),
+			}
+		}
 	case *ecdsa.PrivateKey:
-		b, err := x509.MarshalECPrivateKey(k)
+		if ctx.pkcs8 {
+			b, err := MarshalPKCS8PrivateKey(k)
+			if err != nil {
+				return nil, err
+			}
+			p = &pem.Block{
+				Type:  "PRIVATE KEY",
+				Bytes: b,
+			}
+		} else {
+			b, err := x509.MarshalECPrivateKey(k)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to marshal private key")
+			}
+			p = &pem.Block{
+				Type:  "EC PRIVATE KEY",
+				Bytes: b,
+			}
+		}
+	case ed25519.PrivateKey: // force the use of pkcs8
+		ctx.pkcs8 = true
+		b, err := MarshalPKCS8PrivateKey(k)
 		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		p = &pem.Block{
-			Type:  "EC PRIVATE KEY",
-			Bytes: b,
-		}
-	case ed25519.PrivateKey:
-		var priv pkcs8
-		priv.PrivateKey = append([]byte{4, 32}, k.Seed()...)[:34]
-		priv.Algo = pkix.AlgorithmIdentifier{
-			Algorithm: asn1.ObjectIdentifier{1, 3, 101, 112},
-		}
-		b, err := asn1.Marshal(priv)
-		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		p = &pem.Block{
 			Type:  "PRIVATE KEY",
-			Bytes: b,
-		}
-	case ed25519.PublicKey:
-		var pub publicKeyInfo
-		pub.PublicKey = asn1.BitString{
-			Bytes:     k,
-			BitLength: 8 * ed25519.PublicKeySize,
-		}
-		pub.Algo = pkix.AlgorithmIdentifier{
-			Algorithm: asn1.ObjectIdentifier{1, 3, 101, 112},
-		}
-		b, err := asn1.Marshal(pub)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		p = &pem.Block{
-			Type:  "PUBLIC KEY",
 			Bytes: b,
 		}
 	case *x509.Certificate:
@@ -333,10 +355,49 @@ func Serialize(in interface{}, opts ...func(*pem.Block) error) (*pem.Block, erro
 		return nil, errors.Errorf("cannot serialize type '%T', value '%v'", k, k)
 	}
 
-	for _, opt := range opts {
-		if err := opt(p); err != nil {
-			return nil, errors.WithStack(err)
+	// Apply options on the PEM blocks.
+	if ctx.password != nil {
+		if _, ok := in.(crypto.PrivateKey); ok && ctx.pkcs8 {
+			p, err = EncryptPKCS8PrivateKey(rand.Reader, p.Bytes, ctx.password, DefaultEncCipher)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			p, err = x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, ctx.password, DefaultEncCipher)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to serialze to PEM")
+			}
 		}
 	}
+
+	if ctx.filename != "" {
+		if err := utils.WriteFile(ctx.filename, pem.EncodeToMemory(p), ctx.perm); err != nil {
+			return nil, errs.FileError(err, ctx.filename)
+		}
+	}
+
 	return p, nil
+}
+
+// ParseDER parses the given DER-encoded bytes and results the public or private
+// key encoded.
+func ParseDER(b []byte) (interface{}, error) {
+	// Try private keys
+	key, err := ParsePKCS8PrivateKey(b)
+	if err != nil {
+		if key, err = x509.ParseECPrivateKey(b); err != nil {
+			key, err = x509.ParsePKCS1PrivateKey(b)
+		}
+	}
+
+	// Try public key
+	if err != nil {
+		if key, err = x509.ParsePKIXPublicKey(b); err != nil {
+			if key, err = x509.ParsePKCS1PublicKey(b); err != nil {
+				return nil, errors.New("error decoding DER; bad format")
+			}
+		}
+	}
+
+	return key, nil
 }

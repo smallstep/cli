@@ -237,7 +237,7 @@ func (p *PKI) WriteRootCertificate(rootCrt *stepX509.Certificate, rootKey interf
 		return err
 	}
 
-	_, err := pemutil.Serialize(rootKey, pemutil.WithEncryption([]byte(pass)), pemutil.ToFile(p.rootKey, 0600))
+	_, err := pemutil.Serialize(rootKey, pemutil.WithPassword([]byte(pass)), pemutil.ToFile(p.rootKey, 0600))
 	if err != nil {
 		return err
 	}

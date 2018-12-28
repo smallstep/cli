@@ -32,6 +32,10 @@ $OPENSSL pkey -outform PEM -in pkcs8/openssl.rsa2048.pem -aes-256-cbc -passout p
 $OPENSSL pkey -outform PEM -in pkcs8/openssl.p384.pem -des -passout pass:mypassword -out pkcs8/openssl.p384.enc.pem
 $OPENSSL pkey -outform PEM -in pkcs8/openssl.p521.pem -des3 -passout pass:mypassword -out pkcs8/openssl.p521.enc.pem
 
+# Ed25519 DER
+$OPENSSL pkey -outform DER -in pkcs8/openssl.ed25519.pem -out pkcs8/openssl.ed25519.der
+$OPENSSL pkey -outform DER -in pkcs8/openssl.ed25519.pem -pubout -out pkcs8/openssl.ed25519.pub.der
+
 #######################################
 # PKCS#1                              #
 #######################################
