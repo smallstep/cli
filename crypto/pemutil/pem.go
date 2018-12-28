@@ -2,6 +2,7 @@ package pemutil
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -28,6 +29,7 @@ type context struct {
 	filename   string
 	perm       os.FileMode
 	password   []byte
+	pkcs8      bool
 	stepCrypto bool
 }
 
@@ -90,6 +92,16 @@ func WithPasswordFile(filename string) Options {
 			return err
 		}
 		ctx.password = b
+		return nil
+	}
+}
+
+// WithPKCS8 with v set to true returns an option used in the Serialize method
+// to use the PKCS#8 encoding form on the private keys. With v set to false
+// default form will be used.
+func WithPKCS8(v bool) Options {
+	return func(ctx *context) error {
+		ctx.pkcs8 = v
 		return nil
 	}
 }
@@ -252,13 +264,8 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 	}
 
 	switch k := in.(type) {
-	case *rsa.PrivateKey:
-		p = &pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(k),
-		}
-	case *rsa.PublicKey, *ecdsa.PublicKey:
-		b, err := x509.MarshalPKIXPublicKey(k)
+	case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey:
+		b, err := MarshalPKIXPublicKey(k)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -266,31 +273,50 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 			Type:  "PUBLIC KEY",
 			Bytes: b,
 		}
+	case *rsa.PrivateKey:
+		if ctx.pkcs8 {
+			b, err := MarshalPKCS8PrivateKey(k)
+			if err != nil {
+				return nil, err
+			}
+			p = &pem.Block{
+				Type:  "PRIVATE KEY",
+				Bytes: b,
+			}
+		} else {
+			p = &pem.Block{
+				Type:  "RSA PRIVATE KEY",
+				Bytes: x509.MarshalPKCS1PrivateKey(k),
+			}
+		}
 	case *ecdsa.PrivateKey:
-		b, err := x509.MarshalECPrivateKey(k)
-		if err != nil {
-			return nil, errors.WithStack(err)
+		if ctx.pkcs8 {
+			b, err := MarshalPKCS8PrivateKey(k)
+			if err != nil {
+				return nil, err
+			}
+			p = &pem.Block{
+				Type:  "PRIVATE KEY",
+				Bytes: b,
+			}
+		} else {
+			b, err := x509.MarshalECPrivateKey(k)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to marshal private key")
+			}
+			p = &pem.Block{
+				Type:  "EC PRIVATE KEY",
+				Bytes: b,
+			}
 		}
-		p = &pem.Block{
-			Type:  "EC PRIVATE KEY",
-			Bytes: b,
-		}
-	case ed25519.PrivateKey:
+	case ed25519.PrivateKey: // force the use of pkcs8
+		ctx.pkcs8 = true
 		b, err := MarshalPKCS8PrivateKey(k)
 		if err != nil {
 			return nil, err
 		}
 		p = &pem.Block{
 			Type:  "PRIVATE KEY",
-			Bytes: b,
-		}
-	case ed25519.PublicKey:
-		b, err := MarshalPKIXPublicKey(k)
-		if err != nil {
-			return nil, err
-		}
-		p = &pem.Block{
-			Type:  "PUBLIC KEY",
 			Bytes: b,
 		}
 	case *x509.Certificate:
@@ -319,9 +345,16 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 
 	// Apply options on the PEM blocks.
 	if ctx.password != nil {
-		p, err = x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, ctx.password, DefaultEncCipher)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to serialze to PEM")
+		if _, ok := in.(crypto.PrivateKey); ok && ctx.pkcs8 {
+			p, err = EncryptPKCS8PrivateKey(rand.Reader, p.Bytes, ctx.password, DefaultEncCipher)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			p, err = x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, ctx.password, DefaultEncCipher)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to serialze to PEM")
+			}
 		}
 	}
 

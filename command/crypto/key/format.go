@@ -158,7 +158,9 @@ func formatAction(ctx *cli.Context) error {
 			}
 		}
 
-		var opts []pemutil.Options
+		opts := []pemutil.Options{
+			pemutil.WithPKCS8(pkcs8),
+		}
 		if _, ok := key.(crypto.PrivateKey); ok && !noPassword {
 			var pass []byte
 			if passFile != "" {
@@ -190,7 +192,7 @@ func formatAction(ctx *cli.Context) error {
 			return errs.FileError(err, keyFile)
 		}
 		if err := utils.WriteFile(out, ob, info.Mode()); err != nil {
-			return err
+			return errs.FileError(err, out)
 		}
 		ui.Printf("Your key has been saved in %s.\n", out)
 	}
