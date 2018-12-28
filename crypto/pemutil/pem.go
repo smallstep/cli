@@ -26,13 +26,27 @@ var DefaultEncCipher = x509.PEMCipherAES256
 // context add options to the pem methods.
 type context struct {
 	filename   string
+	perm       os.FileMode
 	password   []byte
 	stepCrypto bool
 }
 
 // newContext initializes the context with a filename.
 func newContext(name string) *context {
-	return &context{filename: name}
+	return &context{
+		filename: name,
+		perm:     0600,
+	}
+}
+
+// apply the context options and return the first error if exists.
+func (c *context) apply(opts []Options) error {
+	for _, fn := range opts {
+		if err := fn(c); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Options is the type to add attributes to the context.
@@ -42,6 +56,20 @@ type Options func(o *context) error
 func WithFilename(name string) Options {
 	return func(ctx *context) error {
 		ctx.filename = name
+		// Default perm mode if not set
+		if ctx.perm == 0 {
+			ctx.perm = 0600
+		}
+		return nil
+	}
+}
+
+// ToFile is a method that adds the given filename and permissions to the
+// context. It is used in the Serialize to store PEM in disk.
+func ToFile(name string, perm os.FileMode) Options {
+	return func(ctx *context) error {
+		ctx.filename = name
+		ctx.perm = perm
 		return nil
 	}
 }
@@ -133,10 +161,8 @@ func ReadStepCertificate(filename string) (*x509.Certificate, error) {
 func Parse(b []byte, opts ...Options) (interface{}, error) {
 	// Populate options
 	ctx := newContext("PEM")
-	for _, f := range opts {
-		if err := f(ctx); err != nil {
-			return nil, err
-		}
+	if err := ctx.apply(opts); err != nil {
+		return nil, err
 	}
 
 	block, rest := pem.Decode(b)
@@ -217,42 +243,13 @@ func Read(filename string, opts ...Options) (interface{}, error) {
 	return Parse(b, opts...)
 }
 
-// SerializeOption is the type used as an option for the Serialize function.
-type SerializeOption func(*pem.Block) error
-
-// WithEncryption is a modifier for **Serialize** that will encrypt the
-// PEM formatted data using the given key and a sane default cipher.
-func WithEncryption(pass []byte) SerializeOption {
-	return func(p *pem.Block) error {
-		_p, err := x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, pass, DefaultEncCipher)
-		if err != nil {
-			return err
-		}
-		*p = *_p
-		return nil
-	}
-}
-
-// ToFile is modifier a for **Serialize** that will right the PEM formatted
-// data to disk.
-//
-// NOTE: This modifier should be the last in the list of options passed to
-// Serialize. Otherwise, transformation on the *pem.Block may not be completed
-// at the time of encoding to disk.
-func ToFile(f string, perm os.FileMode) SerializeOption {
-	return func(p *pem.Block) error {
-		err := utils.WriteFile(f, pem.EncodeToMemory(p), perm)
-		if err != nil {
-			return errs.FileError(err, f)
-		}
-		return nil
-	}
-}
-
 // Serialize will serialize the input to a PEM formatted block and apply
 // modifiers.
-func Serialize(in interface{}, opts ...SerializeOption) (*pem.Block, error) {
-	var p *pem.Block
+func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
+	ctx := new(context)
+	if err := ctx.apply(opts); err != nil {
+		return nil, err
+	}
 
 	switch k := in.(type) {
 	case *rsa.PrivateKey:
@@ -320,10 +317,19 @@ func Serialize(in interface{}, opts ...SerializeOption) (*pem.Block, error) {
 		return nil, errors.Errorf("cannot serialize type '%T', value '%v'", k, k)
 	}
 
-	for _, opt := range opts {
-		if err := opt(p); err != nil {
-			return nil, errors.WithStack(err)
+	// Apply options on the PEM blocks.
+	if ctx.password != nil {
+		p, err = x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, ctx.password, DefaultEncCipher)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to serialze to PEM")
 		}
 	}
+
+	if ctx.filename != "" {
+		if err := utils.WriteFile(ctx.filename, pem.EncodeToMemory(p), ctx.perm); err != nil {
+			return nil, errs.FileError(err, ctx.filename)
+		}
+	}
+
 	return p, nil
 }

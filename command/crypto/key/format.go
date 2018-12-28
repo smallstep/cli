@@ -158,7 +158,7 @@ func formatAction(ctx *cli.Context) error {
 			}
 		}
 
-		var opts []pemutil.SerializeOption
+		var opts []pemutil.Options
 		if _, ok := key.(crypto.PrivateKey); ok && !noPassword {
 			var pass []byte
 			if passFile != "" {
@@ -172,7 +172,7 @@ func formatAction(ctx *cli.Context) error {
 					return err
 				}
 			}
-			opts = append(opts, pemutil.WithEncryption(pass))
+			opts = append(opts, pemutil.WithPassword(pass))
 		}
 
 		p, err := pemutil.Serialize(key, opts...)
