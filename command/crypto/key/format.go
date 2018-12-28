@@ -185,9 +185,13 @@ func formatAction(ctx *cli.Context) error {
 
 	switch {
 	case toPEM:
-		ob, err = convertToPEM(ctx, key)
+		if ob, err = convertToPEM(ctx, key); err != nil {
+			return err
+		}
 	case toDER:
-		ob, err = convertToDER(ctx, key)
+		if ob, err = convertToDER(ctx, key); err != nil {
+			return err
+		}
 	default:
 		return errors.New("error formating key: it should not get here")
 	}
