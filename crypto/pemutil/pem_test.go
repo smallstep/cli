@@ -534,6 +534,7 @@ func TestParseDER(t *testing.T) {
 	}{
 		{"rsa public key", args{toDER(rsaKey.Public())}, rsaKey.Public(), false},
 		{"rsa private key", args{toDER(rsaKey)}, rsaKey, false},
+		{"rsa pkcs#1 public key", args{x509.MarshalPKCS1PublicKey(&rsaKey.PublicKey)}, rsaKey.Public(), false},
 		{"ecdsa public key", args{toDER(ecdsaKey.Public())}, ecdsaKey.Public(), false},
 		{"ecdsa private key", args{toDER(ecdsaKey)}, ecdsaKey, false},
 		{"ed25519 public key", args{edPubDer}, edKey.Public(), false},
