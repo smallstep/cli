@@ -77,7 +77,12 @@ $ step crypto key format key.pem --out key.der
 
 Convert a PKCS#1 RSA private key to PKCS#8 using the PEM format:
 '''
-$ step crypto key format --pem --pkcs8 key.pem --out key-pkcs8.pem
+$ step crypto key format --pem --pkcs8 rsa.pem --out rsa-pkcs8.pem
+'''
+
+Convert PKCS#8 RSA private key to the PKCS#1 format:
+'''
+$ step crypto key format --pem rsa-pkcs8.pem --out rsa.pem
 '''
 
 Convert an ASN.1 DER format to the PEM-encoded PKCS#8 format:
