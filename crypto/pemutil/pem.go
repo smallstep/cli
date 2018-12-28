@@ -96,6 +96,18 @@ func WithPasswordFile(filename string) Options {
 	}
 }
 
+// WithPasswordPrompt ask the user for a password and adds it to the context.
+func WithPasswordPrompt(prompt string) Options {
+	return func(ctx *context) error {
+		b, err := ui.PromptPassword(prompt)
+		if err != nil {
+			return err
+		}
+		ctx.password = b
+		return nil
+	}
+}
+
 // WithPKCS8 with v set to true returns an option used in the Serialize method
 // to use the PKCS#8 encoding form on the private keys. With v set to false
 // default form will be used.
@@ -365,4 +377,27 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 	}
 
 	return p, nil
+}
+
+// ParseDER parses the given DER-encoded bytes and results the public or private
+// key encoded.
+func ParseDER(b []byte) (interface{}, error) {
+	// Try private keys
+	key, err := ParsePKCS8PrivateKey(b)
+	if err != nil {
+		if key, err = x509.ParseECPrivateKey(b); err != nil {
+			key, err = x509.ParsePKCS1PrivateKey(b)
+		}
+	}
+
+	// Try public key
+	if err != nil {
+		if key, err = x509.ParsePKIXPublicKey(b); err != nil {
+			if key, err = x509.ParsePKCS1PublicKey(b); err != nil {
+				return nil, errors.New("error decoding DER; bad format")
+			}
+		}
+	}
+
+	return key, nil
 }
