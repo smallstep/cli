@@ -299,8 +299,8 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "master"
-  digest = "1:90239c0862142dad5e4341750f79c3422de9f1dad381570d1c43edc1c34bb71a"
+  branch = "mariano/multiroot"
+  digest = "1:584b8d2f862e6a7d6367707a75d888a176b298a3c3817cc593cb7587ee97c509"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
@@ -311,7 +311,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "5d92735594c77405d4134d0d55d192ecb8a5acd6"
+  revision = "61165230556d12a6b681f36864ef19749a8db261"
 
 [[projects]]
   branch = "master"
