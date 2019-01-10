@@ -285,7 +285,8 @@ func (p *PKI) Save() error {
 	}
 
 	config := authority.Config{
-		Root:             p.root,
+		Root:             []string{p.root},
+		FederatedRoots:   []string{},
 		IntermediateCert: p.intermediate,
 		IntermediateKey:  p.intermediateKey,
 		Address:          p.address,
