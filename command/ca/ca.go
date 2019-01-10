@@ -71,9 +71,11 @@ $ step ca renew internal.crt internal.key \
 			newTokenCommand(),
 			newCertificateCommand(),
 			renewCertificateCommand(),
-			rootComand(),
 			provisioner.Command(),
 			signCertificateCommand(),
+			rootComand(),
+			rootsCommand(),
+			federationCommand(),
 		},
 	}
 
