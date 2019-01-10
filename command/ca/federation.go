@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -13,6 +14,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
+	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
@@ -34,7 +36,7 @@ func rootsCommand() cli.Command {
 		Action: command.ActionFunc(rootsAction),
 		Usage:  "download all the root certificates",
 		UsageText: `**step ca roots** <roots-file>
-		[**--token**=<token>]`,
+		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Description: `**step ca roots** downloads a certificate bundle with all the root
 certificates. The request to download the bundle requires
 a mTLS connection with the certificate authority, the command creates a 
@@ -44,9 +46,25 @@ CA.
 ## POSITIONAL ARGUMENTS
 
 <roots-file>
-:  File to write all the root certificates (PEM format)`,
+:  File to write all the root certificates (PEM format)
+
+## EXAMPLES
+
+Download the roots with a token:
+'''
+$ step ca roots --token $(step ca token whatever) roots.pem
+'''
+
+Download the roots doing the token flow:
+'''
+$ step ca roots roots.pem \
+    --ca-url https://ca.example.com \
+	--root /path/to/root_ca.crt
+'''`,
 		Flags: []cli.Flag{
 			tokenFlag,
+			caURLFlag,
+			rootFlag,
 			flags.Force,
 		},
 	}
@@ -58,7 +76,7 @@ func federationCommand() cli.Command {
 		Action: command.ActionFunc(federationAction),
 		Usage:  "download all the federated certificates",
 		UsageText: `**step ca federation** <federation-file>
-		[**--token**=<token>]`,
+		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Description: `**step ca federation** downloads a certificate bundle with all the root
 certificates in the federation. The request to download the bundle requires
 a mTLS connection with the certificate authority, the command creates a 
@@ -68,9 +86,26 @@ CA.
 ## POSITIONAL ARGUMENTS
 
 <federation-file>
-:  File to write federation certificates (PEM format)`,
+:  File to write federation certificates (PEM format)
+
+## EXAMPLES
+
+Download the federated roots with a token:
+'''
+$ step ca federation --token $(step ca token whatever) federation.pem
+'''
+
+Download the federated roots doing the token flow:
+'''
+$ step ca federation federation.pem \
+    --ca-url https://ca.example.com \
+    --root /path/to/root_ca.crt
+'''
+`,
 		Flags: []cli.Flag{
 			tokenFlag,
+			caURLFlag,
+			rootFlag,
 			flags.Force,
 		},
 	}
@@ -105,9 +140,21 @@ func rootsAndFederationFlow(ctx *cli.Context, typ flowType) error {
 		return err
 	}
 
+	caURL := ctx.String("ca-url")
+	root := ctx.String("root")
+
 	token := ctx.String("token")
 	if len(token) == 0 {
-		errs.RequiredFlag(ctx, "token")
+		s, err := randutil.Alphanumeric(10)
+		if err != nil {
+			return err
+		}
+
+		subject := "step-cli-" + s
+		token, err = newTokenFlow(ctx, subject, caURL, root, "", "", "", "", time.Time{}, time.Time{})
+		if err != nil {
+			return err
+		}
 	}
 
 	tok, err := jose.ParseSigned(token)
@@ -120,17 +167,14 @@ func rootsAndFederationFlow(ctx *cli.Context, typ flowType) error {
 	}
 
 	// Prepare client for bootstrap or provisioning tokens
-	var caURL string
 	var options []ca.ClientOption
 	if len(claims.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
 		caURL = claims.Audience[0]
 		options = append(options, ca.WithRootSHA256(claims.SHA))
 	} else {
-		caURL = ctx.String("ca-url")
 		if len(caURL) == 0 {
 			return errs.RequiredFlag(ctx, "ca-url")
 		}
-		root := ctx.String("root")
 		if len(root) == 0 {
 			root = pki.GetRootCAPath()
 			if _, err := os.Stat(root); err != nil {
