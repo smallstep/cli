@@ -8,7 +8,7 @@ import (
 	"github.com/smallstep/cli/pkg/x509"
 )
 
-// DefaultIntermediateCertValidity is the default validity of a root certificate in the step PKI.
+// DefaultIntermediateCertValidity is the default validity of a intermediate certificate in the step PKI.
 var DefaultIntermediateCertValidity = time.Hour * 24 * 365 * 10
 
 // Intermediate implements the Profile for a intermediate certificate.
