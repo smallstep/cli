@@ -57,9 +57,8 @@ func defaultLeafTemplate(sub pkix.Name, iss pkix.Name) *x509.Certificate {
 	return &x509.Certificate{
 		IsCA:      false,
 		NotBefore: notBefore,
-		// 1 Day Leaf Certificate validity.
-		NotAfter: notBefore.Add(DefaultCertValidity),
-		KeyUsage: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		NotAfter:  notBefore.Add(DefaultCertValidity),
+		KeyUsage:  x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage: []x509.ExtKeyUsage{
 			x509.ExtKeyUsageServerAuth,
 			x509.ExtKeyUsageClientAuth,

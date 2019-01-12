@@ -41,13 +41,10 @@ func NewRootProfileWithTemplate(crt *x509.Certificate, withOps ...WithOption) (P
 func defaultRootTemplate(cn string) *x509.Certificate {
 	notBefore := time.Now()
 	return &x509.Certificate{
-		IsCA:      true,
-		NotBefore: notBefore,
-		// 10 year root certificate validity.
-		NotAfter: notBefore.Add(DefaultRootCertValidity),
-		KeyUsage: x509.KeyUsageKeyEncipherment |
-			x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign |
-			x509.KeyUsageCRLSign,
+		IsCA:                  true,
+		NotBefore:             notBefore,
+		NotAfter:              notBefore.Add(DefaultRootCertValidity),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 		MaxPathLen:            1,
 		MaxPathLenZero:        false,

@@ -8,7 +8,7 @@ import (
 	"github.com/smallstep/cli/pkg/x509"
 )
 
-// DefaultIntermediateCertValidity is the default validity of a root certificate in the step PKI.
+// DefaultIntermediateCertValidity is the default validity of a intermediate certificate in the step PKI.
 var DefaultIntermediateCertValidity = time.Hour * 24 * 365 * 10
 
 // Intermediate implements the Profile for a intermediate certificate.
@@ -30,16 +30,10 @@ func NewIntermediateProfile(name string, iss *x509.Certificate, issPriv crypto.P
 func defaultIntermediateTemplate(name string) *x509.Certificate {
 	notBefore := time.Now()
 	return &x509.Certificate{
-		IsCA:      true,
-		NotBefore: notBefore,
-		// 10 year intermediate certificate validity.
-		NotAfter: notBefore.Add(DefaultIntermediateCertValidity),
-		KeyUsage: x509.KeyUsageKeyEncipherment |
-			x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-		ExtKeyUsage: []x509.ExtKeyUsage{
-			x509.ExtKeyUsageServerAuth,
-			x509.ExtKeyUsageClientAuth,
-		},
+		IsCA:                  true,
+		NotBefore:             notBefore,
+		NotAfter:              notBefore.Add(DefaultIntermediateCertValidity),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 		MaxPathLen:            0,
 		MaxPathLenZero:        true,
