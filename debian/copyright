@@ -3,11 +3,11 @@ Upstream-Name: step
 Source: https://github.com/smallstep/cli
 
 Files: *
-Copyright: 2018 Smallstep Labs, Inc.
-License: MIT
+Copyright: 2019 Smallstep Labs, Inc.
+License: Apache
 
-License: MIT
- Copyright (c) 2018 Smallstep Labs, Inc.
+License: Apache
+ Copyright (c) 2019 Smallstep Labs, Inc.
  .
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
