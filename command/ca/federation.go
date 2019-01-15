@@ -50,7 +50,7 @@ Download the roots with custom flags:
 '''
 $ step ca roots roots.pem \
     --ca-url https://ca.example.com \
-	--root /path/to/root_ca.crt
+    --root /path/to/root_ca.crt
 '''`,
 		Flags: []cli.Flag{
 			caURLFlag,
