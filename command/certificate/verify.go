@@ -105,10 +105,10 @@ func verifyAction(ctx *cli.Context) error {
 		cert             *realx509.Certificate
 	)
 
-	if isURL, _, addr := trimURLPrefix(crtFile); isURL {
+	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
 		peerCertificates, err := getPeerCertificates(addr, roots, false)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 		cert = peerCertificates[0]
 		for _, pc := range peerCertificates {

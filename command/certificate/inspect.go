@@ -190,10 +190,10 @@ func inspectAction(ctx *cli.Context) error {
 
 	if bundle {
 		var blocks []*pem.Block
-		if isURL, _, addr := trimURLPrefix(crtFile); isURL {
+		if _, addr, isURL := trimURLPrefix(crtFile); isURL {
 			peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 			if err != nil {
-				return errors.WithStack(err)
+				return err
 			}
 			for _, crt := range peerCertificates {
 				blocks = append(blocks, &pem.Block{
@@ -255,10 +255,10 @@ func inspectAction(ctx *cli.Context) error {
 	} else { // Only inspect the leaf certificate.
 		var block *pem.Block
 
-		if isURL, _, addr := trimURLPrefix(crtFile); isURL {
+		if _, addr, isURL := trimURLPrefix(crtFile); isURL {
 			peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 			if err != nil {
-				return errors.WithStack(err)
+				return err
 			}
 			block = &pem.Block{
 				Type: "CERTIFICATE",

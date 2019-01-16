@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
@@ -79,10 +78,10 @@ func fingerprintAction(ctx *cli.Context) error {
 		crtFile  = ctx.Args().First()
 	)
 
-	if isURL, _, addr := trimURLPrefix(crtFile); isURL {
+	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
 		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 		crt = peerCertificates[0]
 	} else {

@@ -11,6 +11,16 @@ import (
 
 var urlPrefixes = []string{"https://", "tcp://", "tls://"}
 
+// getPeerCertificates creates a connection to a remote server and returns the
+// list of server certificates.
+//
+// If the address does not contain a port then default to port 443.
+//
+// Params
+//   *addr*:     e.g. smallstep.com
+//   *roots*:    a file, a directory, or a comma-separated list of files.
+//   *insecure*: do not verify that the server's certificate has been signed by
+//               a trusted root
 func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate, error) {
 	var (
 		err     error
@@ -37,22 +47,19 @@ func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate
 	return conn.ConnectionState().PeerCertificates, nil
 }
 
-func trimURLPrefix(url string) (bool, string, string) {
+// trimURLPrefix returns the url split into prefix and suffix and a bool which
+// tells if the input string had a recognizable URL prefix.
+//
+// Examples:
+// trimURLPrefix("https://smallstep.com") -> "https://", "smallstep.com", true
+// trimURLPrefix("./certs/root_ca.crt") -> "", "", false
+// trimURLPrefix("hTtPs://sMaLlStEp.cOm") -> "hTtPs://", "sMaLlStEp.cOm", true
+func trimURLPrefix(url string) (string, string, bool) {
+	tmp := strings.ToLower(url)
 	for _, prefix := range urlPrefixes {
-		if strings.HasPrefix(url, prefix) {
-			return true, prefix, strings.TrimPrefix(url, prefix)
+		if strings.HasPrefix(tmp, prefix) {
+			return url[:len(prefix)], url[len(prefix):], true
 		}
 	}
-	return false, "", ""
-}
-
-// isURL returns true if the input string is formatted as a URL with one of the
-// documented prefixes.
-func isURL(str string) bool {
-	for _, prefix := range urlPrefixes {
-		if strings.HasPrefix(str, prefix) {
-			return true
-		}
-	}
-	return false
+	return "", "", false
 }
