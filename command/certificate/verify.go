@@ -4,7 +4,6 @@ import (
 	realx509 "crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/x509util"
@@ -106,8 +105,8 @@ func verifyAction(ctx *cli.Context) error {
 		cert             *realx509.Certificate
 	)
 
-	if strings.HasPrefix(crtFile, "https://") {
-		peerCertificates, err := getPeerCertificates(crtFile, roots, false)
+	if isURL, _, addr := trimURLPrefix(crtFile); isURL {
+		peerCertificates, err := getPeerCertificates(addr, roots, false)
 		if err != nil {
 			return errors.WithStack(err)
 		}

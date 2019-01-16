@@ -1,16 +1,12 @@
 package certificate
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/smallstep/zlint"
@@ -83,6 +79,11 @@ authenticity of the remote server.
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
+			cli.BoolFlag{
+				Name: "insecure",
+				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
+debugging invalid certificates remotely.`,
+			},
 		},
 	}
 }
@@ -93,30 +94,17 @@ func lintAction(ctx *cli.Context) error {
 	}
 
 	var (
-		crtFile = ctx.Args().Get(0)
-		block   *pem.Block
+		crtFile  = ctx.Args().Get(0)
+		roots    = ctx.String("roots")
+		insecure = ctx.Bool("insecure")
+		block    *pem.Block
 	)
-	if strings.HasPrefix(crtFile, "https://") {
-		var (
-			err     error
-			rootCAs *x509.CertPool
-		)
-		if roots := ctx.String("roots"); roots != "" {
-			rootCAs, err = x509util.ReadCertPool(roots)
-			if err != nil {
-				errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
-			}
-		}
-		addr := strings.TrimPrefix(crtFile, "https://")
-		if !strings.Contains(addr, ":") {
-			addr += ":443"
-		}
-		conn, err := tls.Dial("tcp", addr, &tls.Config{RootCAs: rootCAs})
+	if isURL, _, addr := trimURLPrefix(crtFile); isURL {
+		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 		if err != nil {
-			return errors.Wrapf(err, "failed to connect")
+			return errors.WithStack(err)
 		}
-		conn.Close()
-		crt := conn.ConnectionState().PeerCertificates[0]
+		crt := peerCertificates[0]
 		block = &pem.Block{
 			Type:  "CERTIFICATE",
 			Bytes: crt.Raw,

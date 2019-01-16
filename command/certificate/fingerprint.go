@@ -79,8 +79,8 @@ func fingerprintAction(ctx *cli.Context) error {
 		crtFile  = ctx.Args().First()
 	)
 
-	if strings.HasPrefix(crtFile, "https://") {
-		peerCertificates, err := getPeerCertificates(crtFile, roots, insecure)
+	if isURL, _, addr := trimURLPrefix(crtFile); isURL {
+		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 		if err != nil {
 			return errors.WithStack(err)
 		}
