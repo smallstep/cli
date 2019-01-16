@@ -12,11 +12,11 @@ func TestTrimUrlPrefix(t *testing.T) {
 		isURL                 bool
 	}
 	tests := map[string]newTest{
-		"true-http":      newTest{"https://smallstep.com", "https://", "smallstep.com", true},
-		"true-tcp":       newTest{"tcp://smallstep.com", "tcp://", "smallstep.com", true},
-		"true-tls":       newTest{"tls://smallstep.com", "tls://", "smallstep.com", true},
-		"false":          newTest{"./certs/root_ca.crt", "", "", false},
-		"true-http-case": newTest{"hTtPs://sMaLlStEp.cOm", "hTtPs://", "sMaLlStEp.cOm", true},
+		"true-http":      {"https://smallstep.com", "https://", "smallstep.com", true},
+		"true-tcp":       {"tcp://smallstep.com", "tcp://", "smallstep.com", true},
+		"true-tls":       {"tls://smallstep.com", "tls://", "smallstep.com", true},
+		"false":          {"./certs/root_ca.crt", "", "", false},
+		"true-http-case": {"hTtPs://sMaLlStEp.cOm", "hTtPs://", "sMaLlStEp.cOm", true},
 	}
 
 	for name, tc := range tests {
