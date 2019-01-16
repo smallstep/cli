@@ -2,7 +2,7 @@ package certificate
 
 import (
 	"crypto/tls"
-	realx509 "crypto/x509"
+	x509 "crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/smallstep/certinfo"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
-	x509 "github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
@@ -129,7 +129,6 @@ Inspect a local CSR in json:
 $ step certificate inspect foo.csr --format json
 '''
 `,
-
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "format",
@@ -230,7 +229,7 @@ func inspectAction(ctx *cli.Context) error {
 		switch format {
 		case "text":
 			for _, block := range blocks {
-				crt, err := x509.ParseCertificate(block.Bytes)
+				crt, err := stepx509.ParseCertificate(block.Bytes)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -287,7 +286,7 @@ func inspectAction(ctx *cli.Context) error {
 		case "CERTIFICATE":
 			switch format {
 			case "text":
-				crt, err := x509.ParseCertificate(block.Bytes)
+				crt, err := stepx509.ParseCertificate(block.Bytes)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -314,7 +313,7 @@ func inspectAction(ctx *cli.Context) error {
 		case "CERTIFICATE REQUEST":
 			switch format {
 			case "text":
-				csr, err := x509.ParseCertificateRequest(block.Bytes)
+				csr, err := stepx509.ParseCertificateRequest(block.Bytes)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -346,10 +345,10 @@ func inspectAction(ctx *cli.Context) error {
 	return nil
 }
 
-func getPeerCertificates(url, roots string, insecure bool) ([]*realx509.Certificate, error) {
+func getPeerCertificates(url, roots string, insecure bool) ([]*x509.Certificate, error) {
 	var (
 		err     error
-		rootCAs *realx509.CertPool
+		rootCAs *x509.CertPool
 	)
 	if roots != "" {
 		rootCAs, err = x509util.ReadCertPool(roots)
