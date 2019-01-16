@@ -1,19 +1,15 @@
 package certificate
 
 import (
-	"crypto/tls"
-	realx509 "crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certinfo"
-	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
-	x509 "github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
@@ -129,7 +125,6 @@ Inspect a local CSR in json:
 $ step certificate inspect foo.csr --format json
 '''
 `,
-
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "format",
@@ -195,10 +190,10 @@ func inspectAction(ctx *cli.Context) error {
 
 	if bundle {
 		var blocks []*pem.Block
-		if strings.HasPrefix(crtFile, "https://") {
-			peerCertificates, err := getPeerCertificates(crtFile, roots, insecure)
+		if _, addr, isURL := trimURLPrefix(crtFile); isURL {
+			peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 			if err != nil {
-				return errors.WithStack(err)
+				return err
 			}
 			for _, crt := range peerCertificates {
 				blocks = append(blocks, &pem.Block{
@@ -230,7 +225,7 @@ func inspectAction(ctx *cli.Context) error {
 		switch format {
 		case "text":
 			for _, block := range blocks {
-				crt, err := x509.ParseCertificate(block.Bytes)
+				crt, err := stepx509.ParseCertificate(block.Bytes)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -260,10 +255,10 @@ func inspectAction(ctx *cli.Context) error {
 	} else { // Only inspect the leaf certificate.
 		var block *pem.Block
 
-		if strings.HasPrefix(crtFile, "https://") {
-			peerCertificates, err := getPeerCertificates(crtFile, roots, insecure)
+		if _, addr, isURL := trimURLPrefix(crtFile); isURL {
+			peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 			if err != nil {
-				return errors.WithStack(err)
+				return err
 			}
 			block = &pem.Block{
 				Type: "CERTIFICATE",
@@ -287,7 +282,7 @@ func inspectAction(ctx *cli.Context) error {
 		case "CERTIFICATE":
 			switch format {
 			case "text":
-				crt, err := x509.ParseCertificate(block.Bytes)
+				crt, err := stepx509.ParseCertificate(block.Bytes)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -314,7 +309,7 @@ func inspectAction(ctx *cli.Context) error {
 		case "CERTIFICATE REQUEST":
 			switch format {
 			case "text":
-				csr, err := x509.ParseCertificateRequest(block.Bytes)
+				csr, err := stepx509.ParseCertificateRequest(block.Bytes)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -344,31 +339,4 @@ func inspectAction(ctx *cli.Context) error {
 	}
 
 	return nil
-}
-
-func getPeerCertificates(url, roots string, insecure bool) ([]*realx509.Certificate, error) {
-	var (
-		err     error
-		rootCAs *realx509.CertPool
-	)
-	if roots != "" {
-		rootCAs, err = x509util.ReadCertPool(roots)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
-		}
-	}
-	addr := strings.TrimPrefix(url, "https://")
-	if !strings.Contains(addr, ":") {
-		addr += ":443"
-	}
-	tlsConfig := &tls.Config{RootCAs: rootCAs}
-	if insecure {
-		tlsConfig.InsecureSkipVerify = true
-	}
-	conn, err := tls.Dial("tcp", addr, tlsConfig)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to connect")
-	}
-	conn.Close()
-	return conn.ConnectionState().PeerCertificates, nil
 }
