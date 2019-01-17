@@ -98,6 +98,11 @@ func Prompt(label string, opts ...Option) (string, error) {
 	}
 	o.apply(opts)
 
+	// Return value if set
+	if o.value != "" {
+		return o.getValue()
+	}
+
 	prompt := &promptui.Prompt{
 		Label:     label,
 		Default:   o.defaultValue,
@@ -127,6 +132,11 @@ func PromptPassword(label string, opts ...Option) ([]byte, error) {
 		promptTemplates: SimplePromptTemplates(),
 	}
 	o.apply(opts)
+
+	// Return value if set
+	if o.value != "" {
+		return o.getValueBytes()
+	}
 
 	prompt := &promptui.Prompt{
 		Label:     label,

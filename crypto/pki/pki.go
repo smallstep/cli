@@ -119,6 +119,7 @@ type PKI struct {
 	provisioner                     string
 	address                         string
 	dnsNames                        []string
+	caURL                           string
 }
 
 // New creates a new PKI configuration.
@@ -191,6 +192,11 @@ func (p *PKI) SetAddress(s string) {
 // SetDNSNames sets the dns names of the CA.
 func (p *PKI) SetDNSNames(s []string) {
 	p.dnsNames = s
+}
+
+// SetCAURL sets the ca-url to use in the defaults.json.
+func (p *PKI) SetCAURL(s string) {
+	p.caURL = s
 }
 
 // GenerateKeyPairs generates the key pairs used by the certificate authority.
@@ -315,21 +321,23 @@ func (p *PKI) Save() error {
 	}
 
 	// Generate the CA URL.
-	url := p.dnsNames[0]
-	_, port, err := net.SplitHostPort(p.address)
-	if err != nil {
-		return errors.Wrapf(err, "error parsing %s", p.address)
-	}
-	if port == "443" {
-		url = fmt.Sprintf("https://%s", url)
-	} else {
-		url = fmt.Sprintf("https://%s:%s", url, port)
+	if p.caURL == "" {
+		p.caURL = p.dnsNames[0]
+		_, port, err := net.SplitHostPort(p.address)
+		if err != nil {
+			return errors.Wrapf(err, "error parsing %s", p.address)
+		}
+		if port == "443" {
+			p.caURL = fmt.Sprintf("https://%s", p.caURL)
+		} else {
+			p.caURL = fmt.Sprintf("https://%s:%s", p.caURL, port)
+		}
 	}
 
 	defaults := &caDefaults{
 		Root:        p.root,
 		CAConfig:    p.config,
-		CAUrl:       url,
+		CAUrl:       p.caURL,
 		Fingerprint: p.rootFingerprint,
 	}
 	b, err = json.MarshalIndent(defaults, "", "   ")

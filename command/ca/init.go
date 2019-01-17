@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/smallstep/cli/utils"
+
 	"github.com/smallstep/cli/crypto/pemutil"
 
 	"github.com/smallstep/cli/command"
@@ -38,7 +40,31 @@ func initCommand() cli.Command {
 			},
 			cli.BoolFlag{
 				Name:  "pki",
-				Usage: "Generate only the PKI without the CA configuration",
+				Usage: "Generate only the PKI without the CA configuration.",
+			},
+			cli.StringFlag{
+				Name:  "name",
+				Usage: "The <name> of the new PKI.",
+			},
+			cli.StringFlag{
+				Name:  "dns",
+				Usage: "The comma sepparated DNS <names> or IP addresses of the new CA.",
+			},
+			cli.StringFlag{
+				Name:  "address",
+				Usage: "The <address> that the new CA will listen at.",
+			},
+			cli.StringFlag{
+				Name:  "provisioner",
+				Usage: "The <name> of the first provisioner.",
+			},
+			cli.StringFlag{
+				Name:  "password-file",
+				Usage: `The path to the <file> containing the password to encrypt the keys.`,
+			},
+			cli.StringFlag{
+				Name:  "with-ca-url",
+				Usage: `<URI> of the Step Certificate Authority to write in defaults.json`,
 			},
 		},
 	}
@@ -49,12 +75,14 @@ func initAction(ctx *cli.Context) error {
 		return err
 	}
 
+	var password string
 	var rootCrt *stepx509.Certificate
 	var rootKey interface{}
 
 	root := ctx.String("root")
 	key := ctx.String("key")
 	configure := !ctx.Bool("pki")
+	caURL := ctx.String("with-ca-url")
 	switch {
 	case len(root) > 0 && len(key) == 0:
 		return errs.RequiredWithFlag(ctx, "root", "key")
@@ -70,18 +98,29 @@ func initAction(ctx *cli.Context) error {
 		}
 	}
 
+	passwordFile := ctx.String("password-file")
+	if passwordFile != "" {
+		b, err := utils.ReadPasswordFromFile(passwordFile)
+		if err != nil {
+			return err
+		}
+		password = string(b)
+	}
+
 	p, err := pki.New(pki.GetPublicPath(), pki.GetSecretsPath(), pki.GetConfigPath())
 	if err != nil {
 		return err
 	}
 
-	name, err := ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)", ui.WithValidateNotEmpty())
+	name, err := ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)",
+		ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
 	if err != nil {
 		return err
 	}
 
 	if configure {
-		names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])", ui.WithValidateFunc(ui.DNS()))
+		names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])",
+			ui.WithValidateFunc(ui.DNS()), ui.WithValue(ctx.String("dns")))
 		if err != nil {
 			return err
 		}
@@ -95,12 +134,14 @@ func initAction(ctx *cli.Context) error {
 			dnsNames = append(dnsNames, strings.TrimSpace(name))
 		}
 
-		address, err := ui.Prompt("What address will your new CA listen at? (e.g. :443)", ui.WithValidateFunc(ui.Address()))
+		address, err := ui.Prompt("What address will your new CA listen at? (e.g. :443)",
+			ui.WithValidateFunc(ui.Address()), ui.WithValue(ctx.String("address")))
 		if err != nil {
 			return err
 		}
 
-		provisioner, err := ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)", ui.WithValidateNotEmpty())
+		provisioner, err := ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)",
+			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("provisioner")))
 		if err != nil {
 			return err
 		}
@@ -108,9 +149,11 @@ func initAction(ctx *cli.Context) error {
 		p.SetProvisioner(provisioner)
 		p.SetAddress(address)
 		p.SetDNSNames(dnsNames)
+		p.SetCAURL(caURL)
 	}
 
-	pass, err := ui.PromptPasswordGenerate("What do you want your password to be? [leave empty and we'll generate one]", ui.WithRichPrompt())
+	pass, err := ui.PromptPasswordGenerate("What do you want your password to be? [leave empty and we'll generate one]",
+		ui.WithRichPrompt(), ui.WithValue(password))
 	if err != nil {
 		return err
 	}
