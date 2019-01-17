@@ -6,15 +6,13 @@ import (
 	"io"
 	"strings"
 
-	"github.com/smallstep/cli/utils"
-
-	"github.com/smallstep/cli/crypto/pemutil"
-
 	"github.com/smallstep/cli/command"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/ui"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
 
