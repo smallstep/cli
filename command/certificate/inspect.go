@@ -350,7 +350,7 @@ func inspectAction(ctx *cli.Context) error {
 	return nil
 }
 
-// derToPemBlock attempts to parse the ANS.1 data as a certificate or a
+// derToPemBlock attempts to parse the ASN.1 data as a certificate or a
 // certificate request, returning a pem.Block of the one that succeeds. Returns
 // nil if it cannot parse the data.
 func derToPemBlock(b []byte) *pem.Block {
