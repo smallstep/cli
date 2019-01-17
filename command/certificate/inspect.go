@@ -1,6 +1,8 @@
 package certificate
 
 import (
+	"bytes"
+	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -272,12 +274,19 @@ func inspectAction(ctx *cli.Context) error {
 				return errs.FileError(err, crtFile)
 			}
 
-			// leaf certificate should be the first in the file
-			block, _ = pem.Decode(crtBytes)
-			if block == nil {
-				return errors.Errorf("%s contains an invalid PEM block", crtFile)
+			if bytes.HasPrefix(crtBytes, []byte("-----BEGIN ")) {
+				// leaf certificate should be the first in the file
+				block, _ = pem.Decode(crtBytes)
+				if block == nil {
+					return errors.Errorf("%s contains an invalid PEM block", crtFile)
+				}
+			} else {
+				if block = derToPemBlock(crtBytes); block == nil {
+					return errors.Errorf("%s contains an invalid PEM block", crtFile)
+				}
 			}
 		}
+
 		switch block.Type {
 		case "CERTIFICATE":
 			switch format {
@@ -338,5 +347,18 @@ func inspectAction(ctx *cli.Context) error {
 		}
 	}
 
+	return nil
+}
+
+// derToPemBlock attempts to parse the ASN.1 data as a certificate or a
+// certificate request, returning a pem.Block of the one that succeeds. Returns
+// nil if it cannot parse the data.
+func derToPemBlock(b []byte) *pem.Block {
+	if _, err := x509.ParseCertificate(b); err == nil {
+		return &pem.Block{Type: "CERTIFICATE", Bytes: b}
+	}
+	if _, err := x509.ParseCertificateRequest(b); err == nil {
+		return &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: b}
+	}
 	return nil
 }
