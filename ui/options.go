@@ -7,6 +7,7 @@ import (
 type options struct {
 	mask            rune
 	defaultValue    string
+	value           string
 	allowEdit       bool
 	printTemplate   string
 	promptTemplates *promptui.PromptTemplates
@@ -14,11 +15,34 @@ type options struct {
 	validateFunc    promptui.ValidateFunc
 }
 
+// apply applies the given options.
 func (o *options) apply(opts []Option) *options {
 	for _, fn := range opts {
 		fn(o)
 	}
 	return o
+}
+
+// getValue validates the value and returns it.
+func (o *options) getValue() (string, error) {
+	if o.validateFunc == nil {
+		return o.value, nil
+	}
+	if err := o.validateFunc(o.value); err != nil {
+		return "", err
+	}
+	return o.value, nil
+}
+
+// getValueBytes validates the value and returns it as a byte slice.
+func (o *options) getValueBytes() ([]byte, error) {
+	if o.validateFunc == nil {
+		return []byte(o.value), nil
+	}
+	if err := o.validateFunc(o.value); err != nil {
+		return nil, err
+	}
+	return []byte(o.value), nil
 }
 
 // Option is the type of the functions that modify the prompt options.
@@ -35,6 +59,14 @@ func WithMask(r rune) Option {
 func WithDefaultValue(s string) Option {
 	return func(o *options) {
 		o.defaultValue = s
+	}
+}
+
+// WithValue sets a custom string as the result of a prompt. If value is set,
+// the prompt won't be displayed.
+func WithValue(value string) Option {
+	return func(o *options) {
+		o.value = value
 	}
 }
 
