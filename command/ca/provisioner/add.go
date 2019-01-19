@@ -4,8 +4,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
 
@@ -15,7 +17,7 @@ func addCommand() cli.Command {
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add one or more provisioners the CA configuration",
 		UsageText: `**step ca provisioner add** <name> <jwk-file> [<jwk-file> ...]
-		[**--ca-config**=<file>] [**--create**]`,
+		[**--ca-config**=<file>] [**--create**] [**--password-file**=<file>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "ca-config",
@@ -25,6 +27,7 @@ func addCommand() cli.Command {
 				Name:  "create",
 				Usage: `Create a new ECDSA key pair using curve P-256 and populate a new provisioner.`,
 			},
+			flags.PasswordFile,
 		},
 		Description: `**step ca provisioner add** adds one or more provisioners
 to the configuration and writes the new configuration back to the CA config.
@@ -58,7 +61,7 @@ $ step ca provisioner add max@smallstep.com ./max-laptop.jwk ./max-phone.pem ./m
 	}
 }
 
-func addAction(ctx *cli.Context) error {
+func addAction(ctx *cli.Context) (err error) {
 	if ctx.NArg() < 1 {
 		return errs.TooFewArguments(ctx)
 	}
@@ -69,6 +72,14 @@ func addAction(ctx *cli.Context) error {
 	config := ctx.String("ca-config")
 	if len(config) == 0 {
 		return errs.RequiredFlag(ctx, "ca-config")
+	}
+
+	var password string
+	if passwordFile := ctx.String("password-file"); len(passwordFile) > 0 {
+		password, err = utils.ReadStringPasswordFromFile(passwordFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	c, err := authority.LoadConfiguration(config)
@@ -89,7 +100,7 @@ func addAction(ctx *cli.Context) error {
 		if ctx.NArg() > 1 {
 			return errs.IncompatibleFlag(ctx, "create", "<jwk-path> positional arg")
 		}
-		pass, err := ui.PromptPasswordGenerate("Please enter a password to encrypt the provisioner private key? [leave empty and we'll generate one]")
+		pass, err := ui.PromptPasswordGenerate("Please enter a password to encrypt the provisioner private key? [leave empty and we'll generate one]", ui.WithValue(password))
 		if err != nil {
 			return err
 		}

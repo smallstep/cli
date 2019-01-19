@@ -33,7 +33,7 @@ func createCommand() cli.Command {
 		UsageText: `**step crypto jwk create** <public-jwk-file> <private-jwk-file>
     [**--kty**=<type>] [**--alg**=<algorithm>] [**--use**=<use>]
     [**--size**=<size>] [**--crv**=<curve>] [**--kid**=<kid>]
-    [**--from-pem**=<pem-file>]`,
+    [**--from-pem**=<pem-file>] [**--password-file**=<file>]`,
 		Description: `**step crypto jwk create** generates a new JWK (JSON Web Key) or constructs a
 JWK from an existing key. The generated JWK conforms to RFC7517 and can be used
 to sign and encrypt data using JWT, JWS, and JWE.
@@ -393,12 +393,8 @@ related.`,
 				Usage: `Create a JWK representing the key encoded in an
 existing <pem-file> instead of creating a new key.`,
 			},
-			cli.BoolFlag{
-				Name: "no-password",
-				Usage: `Do not ask for a password to encrypt the JWK. Sensitive
-key material will be written to disk unencrypted. This is not
-recommended. Requires **--insecure** flag.`,
-			},
+			flags.PasswordFile,
+			flags.NoPassword,
 			flags.Subtle,
 			flags.Insecure,
 			flags.Force,
@@ -406,7 +402,7 @@ recommended. Requires **--insecure** flag.`,
 	}
 }
 
-func createAction(ctx *cli.Context) error {
+func createAction(ctx *cli.Context) (err error) {
 	// require public and private files
 	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
@@ -414,7 +410,11 @@ func createAction(ctx *cli.Context) error {
 
 	// Use password to protect private JWK by default
 	usePassword := true
+	passwordFile := ctx.String("password-file")
 	if ctx.Bool("no-password") {
+		if len(passwordFile) > 0 {
+			return errs.IncompatibleFlag(ctx, "no-password", "password-file")
+		}
 		if ctx.Bool("insecure") {
 			usePassword = false
 		} else {
@@ -426,6 +426,15 @@ func createAction(ctx *cli.Context) error {
 	privFile := ctx.Args().Get(1)
 	if pubFile == privFile {
 		return errs.EqualArguments(ctx, "public-jwk-file", "private-jwk-file")
+	}
+
+	// Read password if necessary
+	var password string
+	if len(passwordFile) > 0 {
+		password, err = utils.ReadStringPasswordFromFile(passwordFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	kty := ctx.String("kty")
@@ -476,7 +485,6 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	// Generate or read secrets
-	var err error
 	var jwk *jose.JSONWebKey
 	switch {
 	case pemFile != "":
@@ -539,7 +547,7 @@ func createAction(ctx *cli.Context) error {
 		var rcpt jose.Recipient
 		// Generate JWE encryption key.
 		if jose.SupportsPBKDF2 {
-			key, err := ui.PromptPassword("Please enter the password to encrypt the private JWK")
+			key, err := ui.PromptPassword("Please enter the password to encrypt the private JWK", ui.WithValue(password))
 			if err != nil {
 				return errors.Wrap(err, "error reading password")
 			}

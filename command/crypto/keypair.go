@@ -19,8 +19,8 @@ func createKeyPairCommand() cli.Command {
 		Action: command.ActionFunc(createAction),
 		Usage:  "generate a public / private keypair in PEM format",
 		UsageText: `**step crypto keypair** <pub_file> <priv_file>
-[**--curve**=<curve>] [**--no-password**] [**--size**=<size>]
-[**--kty**=<key-type>]`,
+[**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>]
+[**--password-file**=<file>] [**--no-password**]`,
 		Description: `**step crypto keypair** generates a raw public /
 private keypair in PEM format. These keys can be used by other operations
 to sign and encrypt data, and the public key can be bound to an identity
@@ -125,22 +125,15 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
 				Usage: `Create a PEM representing the key encoded in an
 existing <jwk-file> instead of creating a new key.`,
 			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
-			},
-			cli.BoolFlag{
-				Name: "no-password",
-				Usage: `Do not ask for a password to encrypt the private key.
-Sensitive key material will be written to disk unencrypted. This is not
-recommended. Requires **--insecure** flag.`,
-			},
+			flags.PasswordFile,
+			flags.NoPassword,
+			flags.Insecure,
 			flags.Force,
 		},
 	}
 }
 
-func createAction(ctx *cli.Context) error {
+func createAction(ctx *cli.Context) (err error) {
 	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
@@ -153,11 +146,23 @@ func createAction(ctx *cli.Context) error {
 
 	insecure := ctx.Bool("insecure")
 	noPass := ctx.Bool("no-password")
+	passwordFile := ctx.String("password-file")
+	if noPass && len(passwordFile) > 0 {
+		return errs.IncompatibleFlag(ctx, "no-password", "password-file")
+	}
 	if noPass && !insecure {
 		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
 	}
 
-	var err error
+	// Read password if necessary
+	var password string
+	if len(passwordFile) > 0 {
+		password, err = utils.ReadStringPasswordFromFile(passwordFile)
+		if err != nil {
+			return err
+		}
+	}
+
 	var pub, priv interface{}
 	fromJWK := ctx.String("from-jwk")
 	if len(fromJWK) > 0 {
@@ -212,7 +217,7 @@ func createAction(ctx *cli.Context) error {
 			return err
 		}
 	} else {
-		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key")
+		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key", ui.WithValue(password))
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}

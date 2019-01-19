@@ -22,6 +22,21 @@ var Force = cli.BoolFlag{
 	Usage: "Force the overwrite of files without asking.",
 }
 
+// PasswordFile is a cli.Flag used to pass a file to encrypt or decrypt a
+// private key.
+var PasswordFile = cli.StringFlag{
+	Name:  "password-file",
+	Usage: `The path to the <file> containing the password to encrypt or decrypt the private key.`,
+}
+
+// NoPassword is a cli.Flag used to avoid using a password to encrypt private
+// keys.
+var NoPassword = cli.BoolFlag{
+	Name: "no-password",
+	Usage: `Do not ask for a password to encrypt a private key. Sensitive key material will
+be written to disk unencrypted. This is not recommended. Requires **--insecure** flag.`,
+}
+
 // ParseTimeOrDuration is a helper that returns the time or the current time
 // with an extra duration. It's used in flags like --not-before, --not-after.
 func ParseTimeOrDuration(s string) (time.Time, bool) {
