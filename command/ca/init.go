@@ -61,6 +61,10 @@ func initCommand() cli.Command {
 				Usage: `The path to the <file> containing the password to encrypt the keys.`,
 			},
 			cli.StringFlag{
+				Name:  "provisioner-password-file",
+				Usage: `The path to the <file> containing the password to encrypt the provisioner key.`,
+			},
+			cli.StringFlag{
 				Name:  "with-ca-url",
 				Usage: `<URI> of the Step Certificate Authority to write in defaults.json`,
 			},
@@ -68,12 +72,11 @@ func initCommand() cli.Command {
 	}
 }
 
-func initAction(ctx *cli.Context) error {
+func initAction(ctx *cli.Context) (err error) {
 	if err := assertCryptoRand(); err != nil {
 		return err
 	}
 
-	var password string
 	var rootCrt *stepx509.Certificate
 	var rootKey interface{}
 
@@ -96,13 +99,22 @@ func initAction(ctx *cli.Context) error {
 		}
 	}
 
-	passwordFile := ctx.String("password-file")
-	if passwordFile != "" {
-		b, err := utils.ReadPasswordFromFile(passwordFile)
+	var password string
+	if passwordFile := ctx.String("password-file"); passwordFile != "" {
+		password, err = utils.ReadStringPasswordFromFile(passwordFile)
 		if err != nil {
 			return err
 		}
-		password = string(b)
+	}
+
+	// Provisioner password will be equal to the certificate private keys if
+	// --provisioner-password-file is not provided.
+	var provisionerPassword []byte
+	if passwordFile := ctx.String("provisioner-password-file"); passwordFile != "" {
+		provisionerPassword, err = utils.ReadPasswordFromFile(passwordFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	p, err := pki.New(pki.GetPublicPath(), pki.GetSecretsPath(), pki.GetConfigPath())
@@ -157,9 +169,15 @@ func initAction(ctx *cli.Context) error {
 	}
 
 	if configure {
-		// Generate ott key pairs.
-		if err := p.GenerateKeyPairs(pass); err != nil {
-			return err
+		// Generate provisioner key pairs.
+		if len(provisionerPassword) > 0 {
+			if err := p.GenerateKeyPairs(provisionerPassword); err != nil {
+				return err
+			}
+		} else {
+			if err := p.GenerateKeyPairs(pass); err != nil {
+				return err
+			}
 		}
 	}
 
