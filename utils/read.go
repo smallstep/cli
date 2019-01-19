@@ -45,6 +45,16 @@ func ReadPasswordFromFile(filename string) ([]byte, error) {
 	return password, nil
 }
 
+// ReadStringPasswordFromFile reads and returns the password from the given filename.
+// The contents of the file will be trimmed at the right.
+func ReadStringPasswordFromFile(filename string) (string, error) {
+	b, err := ReadPasswordFromFile(filename)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
 // ReadInput from stdin if something is detected or ask the user for an input
 // using the given prompt.
 func ReadInput(prompt string) ([]byte, error) {
