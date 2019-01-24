@@ -48,16 +48,16 @@ docker-push-tag: docker-tag
 docker-login:
 	$Q docker login -u="$(DOCKER_USERNAME)" -p="$(DOCKER_PASSWORD)"
 
-.PHONY: docker-login docker-tag docker-push-tag
+.PHONY: docker-tag docker-push-tag docker-login
 
 #################################################
-# Targets for pushing the docker images
+# Targets for different type of builds
 #################################################
 
 # For all builds on the master branch we build the container but do not push.
 docker-master: docker
 
-# For all builds on the master branch with a tag we build and push the container.
+# For all builds of a tagged release we build and push the container.
 docker-release: docker-master docker-login docker-push-tag
 
-.PHONY: docker-push docker-push-prod-release docker-push-master
+.PHONY: docker-master docker-release
