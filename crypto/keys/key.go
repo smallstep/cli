@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
 	"math/big"
 
 	"github.com/pkg/errors"
@@ -55,6 +56,23 @@ func GenerateKey(kty, crv string, size int) (interface{}, error) {
 		return generateOctKey(size)
 	default:
 		return nil, errors.Errorf("unrecognized key type: %s", kty)
+	}
+}
+
+// ExtractKey returns the given public or private key or extracts the public key
+// if a x509.Certificate or x509.CertificateRequest is given.
+func ExtractKey(in interface{}) (interface{}, error) {
+	switch k := in.(type) {
+	case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey, *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
+		return in, nil
+	case []byte:
+		return in, nil
+	case *x509.Certificate:
+		return k.PublicKey, nil
+	case *x509.CertificateRequest:
+		return k.PublicKey, nil
+	default:
+		return nil, errors.Errorf("cannot extract the key from type '%T'", k)
 	}
 }
 

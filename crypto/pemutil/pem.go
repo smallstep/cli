@@ -13,6 +13,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/ui"
@@ -247,6 +248,16 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 	default:
 		return nil, errors.Errorf("error decoding %s: contains an unexpected header '%s'", ctx.filename, block.Type)
 	}
+}
+
+// ParseKey returns the key or the public key of a certificate or certificate
+// signing request in the given PEM-encoded bytes.
+func ParseKey(b []byte, opts ...Options) (interface{}, error) {
+	k, err := Parse(b, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return keys.ExtractKey(k)
 }
 
 // Read returns the key or certificate encoded in the given PEM file.
