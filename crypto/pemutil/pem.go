@@ -32,6 +32,7 @@ type context struct {
 	password   []byte
 	pkcs8      bool
 	stepCrypto bool
+	firstBlock bool
 }
 
 // newContext initializes the context with a filename.
@@ -128,6 +129,15 @@ func WithStepCrypto() Options {
 	}
 }
 
+// WithFirstBlock will avoid failing if a PEM contains more than one block or
+// certificate and it will only look at the first.
+func WithFirstBlock() Options {
+	return func(ctx *context) error {
+		ctx.firstBlock = true
+		return nil
+	}
+}
+
 // ReadCertificate returns a *x509.Certificate from the given filename. It
 // supports certificates formats PEM and DER.
 func ReadCertificate(filename string) (*realx509.Certificate, error) {
@@ -194,7 +204,7 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 	switch {
 	case block == nil:
 		return nil, errors.Errorf("error decoding %s: is not a valid PEM encoded key", ctx.filename)
-	case len(rest) > 0:
+	case len(rest) > 0 && !ctx.firstBlock:
 		return nil, errors.Errorf("error decoding %s: contains more than one key", ctx.filename)
 	}
 
