@@ -91,7 +91,7 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 			return nil, errors.Errorf("error reading %s: unsupported format", filename)
 		}
 	case pemKeyType:
-		jwk.Key, err = pemutil.Parse(b, pemutil.WithFilename(filename), pemutil.WithPassword(ctx.password))
+		jwk.Key, err = pemutil.ParseKey(b, pemutil.WithFilename(filename), pemutil.WithPassword(ctx.password))
 		if err != nil {
 			return nil, err
 		}

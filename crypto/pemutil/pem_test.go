@@ -32,6 +32,30 @@ const (
 	rsaPrivateKey
 )
 
+const (
+	testCRT = `-----BEGIN CERTIFICATE-----
+MIICLjCCAdSgAwIBAgIQBvswFbAODY9xtJ/myiuEHzAKBggqhkjOPQQDAjAkMSIw
+IAYDVQQDExlTbWFsbHN0ZXAgSW50ZXJtZWRpYXRlIENBMB4XDTE4MTEzMDE5NTkw
+OVoXDTE4MTIwMTE5NTkwOVowHjEcMBoGA1UEAxMTaGVsbG8uc21hbGxzdGVwLmNv
+bTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABIqPQy8roJTMWpEt8NNA1CnRm3l1
+wdjH4OrVaH3l2Gp/UW737Wbn4sqSAFahmajuwkfRG5KMh2/+xnCkGuR2fayjge0w
+geowDgYDVR0PAQH/BAQDAgWgMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcD
+AjAdBgNVHQ4EFgQU5bqyXvZaEmtZ3OpZapq7pBIkVvgwHwYDVR0jBBgwFoAUu97P
+aFQPfuyKOeew7Hg45WFIAVMwHgYDVR0RBBcwFYITaGVsbG8uc21hbGxzdGVwLmNv
+bTBZBgwrBgEEAYKkZMYoQAEESTBHAgEBBBVtYXJpYW5vQHNtYWxsc3RlcC5jb20E
+K2pPMzdkdERia3UtUW5hYnM1VlIwWXc2WUZGdjl3ZUExOGRwM2h0dmRFanMwCgYI
+KoZIzj0EAwIDSAAwRQIhALKeC2q0HWyHoZobZFK9HQynLbPOOtAK437RaetlX5ty
+AiBXQzvaLlDprQu+THj18aDYLnHA//5mdD3HPJV6KmgdDg==
+-----END CERTIFICATE-----`
+	testCSR = `-----BEGIN CERTIFICATE REQUEST-----
+MIHYMIGAAgEAMB4xHDAaBgNVBAMTE2hlbGxvLnNtYWxsc3RlcC5jb20wWTATBgcq
+hkjOPQIBBggqhkjOPQMBBwNCAASKj0MvK6CUzFqRLfDTQNQp0Zt5dcHYx+Dq1Wh9
+5dhqf1Fu9+1m5+LKkgBWoZmo7sJH0RuSjIdv/sZwpBrkdn2soAAwCgYIKoZIzj0E
+AwIDRwAwRAIgZgz9gdx9inOp6bSX4EkYiUCyLV9xGvabovu5C9UkRr8CIBGBbkp0
+l4tesAKoXelsLygJjPuUGRLK+OtdjPBIN1Zo
+-----END CERTIFICATE REQUEST-----`
+)
+
 type testdata struct {
 	typ       keyType
 	encrypted bool
@@ -553,4 +577,50 @@ func TestParseDER(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParseKey(t *testing.T) {
+	var key interface{}
+	for fn, td := range files {
+		t.Run(fn, func(t *testing.T) {
+			data, err := ioutil.ReadFile(fn)
+			if td.encrypted {
+				key, err = ParseKey(data, WithPassword([]byte("mypassword")))
+			} else {
+				key, err = ParseKey(data)
+			}
+			assert.NotNil(t, key)
+			assert.NoError(t, err)
+
+			switch td.typ {
+			case ecdsaPublicKey:
+				assert.Type(t, &ecdsa.PublicKey{}, key)
+			case ecdsaPrivateKey:
+				assert.Type(t, &ecdsa.PrivateKey{}, key)
+			case ed25519PublicKey:
+				assert.Type(t, ed25519.PublicKey{}, key)
+			case ed25519PrivateKey:
+				assert.Type(t, ed25519.PrivateKey{}, key)
+			case rsaPublicKey:
+				assert.Type(t, &rsa.PublicKey{}, key)
+			case rsaPrivateKey:
+				assert.Type(t, &rsa.PrivateKey{}, key)
+			default:
+				t.Errorf("type %T not supported", key)
+			}
+		})
+	}
+}
+func TestParseKey_x509(t *testing.T) {
+	b, _ := pem.Decode([]byte(testCRT))
+	cert, err := x509.ParseCertificate(b.Bytes)
+	assert.FatalError(t, err)
+	key, err := ParseKey([]byte(testCRT))
+	assert.Equals(t, cert.PublicKey, key)
+
+	b, _ = pem.Decode([]byte(testCSR))
+	csr, err := x509.ParseCertificateRequest(b.Bytes)
+	assert.FatalError(t, err)
+	key, err = ParseKey([]byte(testCSR))
+	assert.Equals(t, csr.PublicKey, key)
 }

@@ -64,6 +64,11 @@ Convert PEM format certificate to DER and write to disk.
 '''
 $ step certificate format foo.pem --out foo.der
 '''
+
+Extract the public key from a PEM encoded certificate:
+'''
+$ step certificate key foo.crt
+'''
 `,
 
 		Subcommands: cli.Commands{
@@ -73,9 +78,9 @@ $ step certificate format foo.pem --out foo.der
 			inspectCommand(),
 			fingerprintCommand(),
 			lintCommand(),
-			//renewCommand(),
 			signCommand(),
 			verifyCommand(),
+			keyCommand(),
 		},
 	}
 
