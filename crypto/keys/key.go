@@ -9,6 +9,7 @@ import (
 	"math/big"
 
 	"github.com/pkg/errors"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -70,6 +71,10 @@ func ExtractKey(in interface{}) (interface{}, error) {
 	case *x509.Certificate:
 		return k.PublicKey, nil
 	case *x509.CertificateRequest:
+		return k.PublicKey, nil
+	case *stepx509.Certificate:
+		return k.PublicKey, nil
+	case *stepx509.CertificateRequest:
 		return k.PublicKey, nil
 	default:
 		return nil, errors.Errorf("cannot extract the key from type '%T'", k)
