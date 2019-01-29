@@ -28,7 +28,7 @@ func bundleCommand() cli.Command {
 : The path to a leaf certificate to bundle with issuing certificate(s).
 
 <ca>
-: The path to the Certificate Authoriy issusing certificate.
+: The path to the Certificate Authority issusing certificate.
 
 <bundle_file>
 : The path to write the bundle.
