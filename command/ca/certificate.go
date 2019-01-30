@@ -27,7 +27,8 @@ func newCertificateCommand() cli.Command {
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <hostname> <crt-file> <key-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
+		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+		[**--san**=<SAN>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -49,6 +50,12 @@ $ TOKEN=$(step ca token internal.example.com)
 $ step ca certificate --token $TOKEN internal.example.com internal.crt internal.key
 '''
 
+Request a new certificate with multiple Subject Alternative Names:
+'''
+$ TOKEN=$(step ca token internal.example.com)
+$ step ca certificate --token $TOKEN --san 1.1.1.1 --san hello.example.com --san 10.2.3.4 internal.example.com internal.crt internal.key
+'''
+
 Request a new certificate with a 1h validity:
 '''
 $ TOKEN=$(step ca token internal.example.com)
@@ -60,6 +67,13 @@ $ step ca certificate --token $TOKEN --not-after=1h internal.example.com interna
 			rootFlag,
 			notBeforeFlag,
 			notAfterFlag,
+			cli.StringSliceFlag{
+				Name: "san",
+				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
+authorized to request. A certificate signing request using this token must match
+the complete set of subjective alternative names in the token 1:1. Use the '--san'
+flag multiple times to request multiple SANs.`,
+			},
 			flags.Force,
 		},
 	}
@@ -193,6 +207,7 @@ type tokenClaims struct {
 
 func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) {
 	var err error
+	sans := ctx.StringSlice("san")
 
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
@@ -224,7 +239,7 @@ func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) 
 		}
 	}
 
-	return newTokenFlow(ctx, subject, caURL, root, "", "", "", "", notBefore, notAfter)
+	return newTokenFlow(ctx, subject, sans, caURL, root, "", "", "", "", notBefore, notAfter)
 }
 
 func signCertificateRequest(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {

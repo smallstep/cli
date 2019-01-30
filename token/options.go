@@ -40,6 +40,15 @@ func WithRootCA(path string) Options {
 	}
 }
 
+// WithSANS returns an Options function that sets the list of required SANs
+// in the token claims.
+func WithSANS(sans []string) Options {
+	return func(c *Claims) error {
+		c.Set(SANSClaim, sans)
+		return nil
+	}
+}
+
 // WithValidity validates boundary inputs and sets the 'nbf' (NotBefore) and
 // 'exp' (expiration) options.
 func WithValidity(notBefore, expiration time.Time) Options {

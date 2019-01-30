@@ -38,7 +38,7 @@ func newTokenCommand() cli.Command {
 		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]
-		[**--offline**]`,
+		[**--san**=<SAN>] [**--offline**]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
@@ -61,6 +61,12 @@ $ step ca token internal.example.com
 Get a new token for an IP address:
 '''
 $ step ca token 192.168.10.10
+'''
+
+Get a new token with custom subject alternative names:
+'''
+$ step ca token internal.example.com --san 192.168.10.10 \
+	--san internal2.example.com --san 10.271.43.1
 '''
 
 Get a new token that would be valid not, but expires in 30 minutes:
@@ -119,6 +125,13 @@ the certificate authority.`,
 				Usage: `Creates a token without contacting the certificate authority. Offline mode
 requires the flags <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
 			},
+			cli.StringSliceFlag{
+				Name: "san",
+				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
+authorized to request. A certificate signing request using this token must match
+the complete set of subjective alternative names in the token 1:1. Use the '--san'
+flag multiple times to request multiple SANs.`,
+			},
 			flags.Force,
 		},
 	}
@@ -136,6 +149,7 @@ func newTokenAction(ctx *cli.Context) error {
 	outputFile := ctx.String("output-file")
 	keyFile := ctx.String("key")
 	offline := ctx.Bool("offline")
+	sans := ctx.StringSlice("san")
 
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
@@ -187,12 +201,12 @@ func newTokenAction(ctx *cli.Context) error {
 			return err
 		}
 
-		token, err = generateToken(subject, kid, issuer, audience, root, notBefore, notAfter, jwk)
+		token, err = generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 		if err != nil {
 			return err
 		}
 	} else {
-		token, err = newTokenFlow(ctx, subject, caURL, root, kid, issuer, passwordFile, keyFile, notBefore, notAfter)
+		token, err = newTokenFlow(ctx, subject, sans, caURL, root, kid, issuer, passwordFile, keyFile, notBefore, notAfter)
 		if err != nil {
 			return err
 		}
@@ -225,9 +239,18 @@ func parseAudience(ctx *cli.Context) (string, error) {
 	}
 }
 
+func appendIfMissing(slice []string, s string) []string {
+	for _, e := range slice {
+		if e == s {
+			return slice
+		}
+	}
+	return append(slice, s)
+}
+
 // generateToken generates a provisioning or bootstrap token with the given
 // parameters.
-func generateToken(sub, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
+func generateToken(sub string, sans []string, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
 	// A random jwt id will be used to identify duplicated tokens
 	jwtID, err := randutil.Hex(64) // 256 bits
 	if err != nil {
@@ -243,6 +266,7 @@ func generateToken(sub, kid, iss, aud, root string, notBefore, notAfter time.Tim
 	if len(root) > 0 {
 		tokOptions = append(tokOptions, token.WithRootCA(root))
 	}
+	tokOptions = append(tokOptions, token.WithSANS(appendIfMissing(sans, sub)))
 	if !notBefore.IsZero() || !notAfter.IsZero() {
 		if notBefore.IsZero() {
 			notBefore = time.Now()
@@ -262,7 +286,7 @@ func generateToken(sub, kid, iss, aud, root string, notBefore, notAfter time.Tim
 }
 
 // newTokenFlow implements the common flow used to generate a token
-func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordFile, keyFile string, notBefore, notAfter time.Time) (string, error) {
+func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, kid, issuer, passwordFile, keyFile string, notBefore, notAfter time.Time) (string, error) {
 	// Get audience from ca-url
 	audience, err := parseAudience(ctx)
 	if err != nil {
@@ -357,7 +381,7 @@ func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordF
 		}
 	}
 
-	return generateToken(subject, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }
 
 // provisionerFilter returns a slice of provisioners that pass the given filter.

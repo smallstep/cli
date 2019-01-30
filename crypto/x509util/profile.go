@@ -151,6 +151,24 @@ func WithNotBeforeAfterDuration(nb, na time.Time, d time.Duration) WithOption {
 	}
 }
 
+func appendIfMissingString(slice []string, s string) []string {
+	for _, e := range slice {
+		if e == s {
+			return slice
+		}
+	}
+	return append(slice, s)
+}
+
+func appendIfMissingIP(ips []net.IP, ip net.IP) []net.IP {
+	for _, e := range ips {
+		if ip.Equal(e) {
+			return ips
+		}
+	}
+	return append(ips, ip)
+}
+
 // WithHosts returns a Profile modifier which sets the DNS Names and IP Addresses
 // that will be bound to the subject Certificate.
 //
@@ -164,9 +182,9 @@ func WithHosts(hosts string) WithOption {
 			if h == "" {
 				continue
 			} else if ip := net.ParseIP(h); ip != nil {
-				crt.IPAddresses = append(crt.IPAddresses, ip)
+				crt.IPAddresses = appendIfMissingIP(crt.IPAddresses, ip)
 			} else {
-				crt.DNSNames = append(crt.DNSNames, h)
+				crt.DNSNames = appendIfMissingString(crt.DNSNames, h)
 			}
 		}
 
