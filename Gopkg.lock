@@ -3,6 +3,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:c10265d5a71326618d37e97169eddb3582f78e8ac7dcf87403b4cf619efd519a"
+  name = "github.com/DHowett/go-plist"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "591f970eefbbeb04d7b37f334a0c4c3256e32876"
+
+[[projects]]
+  branch = "master"
   digest = "1:655f3b07160fbe90713062296ef215c096ad4308bdc0081620cacd9b9d46dce5"
   name = "github.com/ThomasRooney/gexpect"
   packages = ["."]
@@ -323,6 +331,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:ec3fa293616d4ffca7789352d5b0d1089fcf85f86d96951e10483c832a36de7b"
+  name = "github.com/smallstep/truststore"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "94e089c1c553fbe0af9eafcf2d71eb7075cb8f7a"
+
+[[projects]]
+  branch = "master"
   digest = "1:a269b4157cb66815858bf50ff738cc127003fa153f877eee97b99b9b3c86a3bf"
   name = "github.com/smallstep/zcrypto"
   packages = [
@@ -522,6 +538,7 @@
     "github.com/smallstep/certificates/authority",
     "github.com/smallstep/certificates/ca",
     "github.com/smallstep/certinfo",
+    "github.com/smallstep/truststore",
     "github.com/smallstep/zcrypto/x509",
     "github.com/smallstep/zlint",
     "github.com/stretchr/testify/assert",
