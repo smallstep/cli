@@ -20,7 +20,7 @@ of private keys.
 
 ## EXAMPLES
 
-Create a root certifciate and private key using the default parameters (EC P-256 curve):
+Create a root certificate and private key using the default parameters (EC P-256 curve):
 '''
 $ step certificate create foo foo.crt foo.key --profile root-ca
 '''
@@ -69,7 +69,16 @@ Extract the public key from a PEM encoded certificate:
 '''
 $ step certificate key foo.crt
 '''
-`,
+
+Install a root certificate in the system truststore:
+'''
+$ step certificate install root-ca.crt
+'''
+
+Uninstall a root certificate from the system truststore:
+'''
+$ step certificate uninstall root-ca.crt
+'''`,
 
 		Subcommands: cli.Commands{
 			bundleCommand(),
@@ -82,6 +91,7 @@ $ step certificate key foo.crt
 			verifyCommand(),
 			keyCommand(),
 			installCommand(),
+			uninstallCommand(),
 		},
 	}
 
