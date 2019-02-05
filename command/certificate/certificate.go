@@ -81,6 +81,7 @@ $ step certificate key foo.crt
 			signCommand(),
 			verifyCommand(),
 			keyCommand(),
+			installCommand(),
 		},
 	}
 
