@@ -34,7 +34,7 @@ func newTokenCommand() cli.Command {
 		Name:   "token",
 		Action: command.ActionFunc(newTokenAction),
 		Usage:  "generate an OTT granting access to the CA",
-		UsageText: `**step ca token** <hostname>
+		UsageText: `**step ca token** <subject>
 		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]
@@ -44,8 +44,11 @@ certificates authority.
 
 ## POSITIONAL ARGUMENTS
 
-<hostname>
-:  The DNS or IP address that will be set by the certificate authority.
+<subject>
+:  The Common Name, DNS Name, or IP address that will be set by the certificate authority.
+When there are no additional Subject Alternative Names configured (via the
+--san flag), the subject will be added as the only element of the 'sans' claim
+on the token.
 
 ## EXAMPLES
 
@@ -53,28 +56,33 @@ certificates authority.
  set using environment variables or the default configuration file in
  <$STEPPATH/config/defaults.json>.
 
-Get a new token for a DNS:
+Get a new token for a DNS. Because there are no Subject Alternative Names
+configured (via the '--san' flag), the 'sans' claim of the token will have a
+default value of ['internal.example.com']:
 '''
 $ step ca token internal.example.com
 '''
 
-Get a new token for an IP address:
+Get a new token for an IP address. Because there are no Subject Alternative Names
+configured (via the '--san' flag), the 'sans' claim of the token will have a
+default value of ['192.168.10.10']:
 '''
 $ step ca token 192.168.10.10
 '''
 
-Get a new token with custom subject alternative names:
+Get a new token with custom Subject Alternative Names. The value of the 'sans'
+claim of the token will be ['1.1.1.1', 'hello.example.com'] - 'foobar' will not
+be in the 'sans' claim unless explicitly configured via the '--sans' flag:
 '''
-$ step ca token internal.example.com --san 192.168.10.10 \
-	--san internal2.example.com --san 10.271.43.1
+$ step ca token foobar --san 1.1.1.1 --san hello.example.com
 '''
 
-Get a new token that would be valid not, but expires in 30 minutes:
+Get a new token that expires in 30 minutes:
 '''
 $ step ca token --not-after 30m internal.example.com
 '''
 
-Get a new token that is not valid for 30 and expires 5 minutes after that:
+Get a new token that becomes valid in 30 minutes and expires 5 minutes after that:
 '''
 $ step ca token --not-before 30m --not-after 35m internal.example.com
 '''
@@ -239,15 +247,6 @@ func parseAudience(ctx *cli.Context) (string, error) {
 	}
 }
 
-func appendIfMissing(slice []string, s string) []string {
-	for _, e := range slice {
-		if e == s {
-			return slice
-		}
-	}
-	return append(slice, s)
-}
-
 // generateToken generates a provisioning or bootstrap token with the given
 // parameters.
 func generateToken(sub string, sans []string, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
@@ -266,7 +265,12 @@ func generateToken(sub string, sans []string, kid, iss, aud, root string, notBef
 	if len(root) > 0 {
 		tokOptions = append(tokOptions, token.WithRootCA(root))
 	}
-	tokOptions = append(tokOptions, token.WithSANS(appendIfMissing(sans, sub)))
+	// If there are no SANs then add the 'subject' (common-name) as the only SAN.
+	if len(sans) == 0 {
+		sans = []string{sub}
+	}
+
+	tokOptions = append(tokOptions, token.WithSANS(sans))
 	if !notBefore.IsZero() || !notAfter.IsZero() {
 		if notBefore.IsZero() {
 			notBefore = time.Now()
