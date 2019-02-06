@@ -25,7 +25,7 @@ func newCertificateCommand() cli.Command {
 		Name:   "certificate",
 		Action: command.ActionFunc(newCertificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
-		UsageText: `**step ca certificate** <common-name> <crt-file> <key-file>
+		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--san**=<SAN>]`,
@@ -33,7 +33,7 @@ func newCertificateCommand() cli.Command {
 
 ## POSITIONAL ARGUMENTS
 
-<common-name>
+<subject>
 :  The Subject Common Name, DNS Name, or IP address that will be set as the
 Subject Common Name for the certificate. If no Subject Alternative Names (SANs)
 are configured (via the --san flag) then the **common-name** will be set as the only SAN.
