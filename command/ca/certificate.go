@@ -34,9 +34,9 @@ func newCertificateCommand() cli.Command {
 ## POSITIONAL ARGUMENTS
 
 <subject>
-:  The Subject Common Name, DNS Name, or IP address that will be set as the
+:  The Common Name, DNS Name, or IP address that will be set as the
 Subject Common Name for the certificate. If no Subject Alternative Names (SANs)
-are configured (via the --san flag) then the **common-name** will be set as the only SAN.
+are configured (via the --san flag) then the <subject> will be set as the only SAN.
 
 <crt-file>
 :  File to write the certificate (PEM format)
@@ -47,15 +47,15 @@ are configured (via the --san flag) then the **common-name** will be set as the 
 ## EXAMPLES
 
 Request a new certificate for a given domain. There are no additional SANs
-configured, therefore (by default) the **common-name** will be used as the only
+configured, therefore (by default) the <subject> will be used as the only
 SAN extension: DNS Name internal.example.com:
 '''
 $ TOKEN=$(step ca token internal.example.com)
 $ step ca certificate --token $TOKEN internal.example.com internal.crt internal.key
 '''
 
-Request a new certificate with multiple Subject Alternative Names. The Common
-Name of the certificate will be 'foobar', however, because additional SANs are
+Request a new certificate with multiple Subject Alternative Names. The Subject
+Common Name of the certificate will be 'foobar'. However, because additional SANs are
 configured using the --san flag and 'foobar' is not one of these, 'foobar' will
 not be in the SAN extensions of the certificate. The certificate will have 2
 IP Address extensions (1.1.1.1, 10.2.3.4) and 1 DNS Name extension (hello.example.com):
