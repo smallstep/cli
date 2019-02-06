@@ -151,6 +151,44 @@ func WithNotBeforeAfterDuration(nb, na time.Time, d time.Duration) WithOption {
 	}
 }
 
+func appendIfMissingString(slice []string, s string) []string {
+	for _, e := range slice {
+		if e == s {
+			return slice
+		}
+	}
+	return append(slice, s)
+}
+
+func appendIfMissingIP(ips []net.IP, ip net.IP) []net.IP {
+	for _, e := range ips {
+		if ip.Equal(e) {
+			return ips
+		}
+	}
+	return append(ips, ip)
+}
+
+// WithDNSNames returns a Profile modifier which sets the DNS Names
+// that will be bound to the subject alternative name extension of the Certificate.
+func WithDNSNames(dns []string) WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.DNSNames = dns
+		return nil
+	}
+}
+
+// WithIPAddresses returns a Profile modifier which sets the IP Addresses
+// that will be bound to the subject alternative name extension of the Certificate.
+func WithIPAddresses(ips []net.IP) WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.IPAddresses = ips
+		return nil
+	}
+}
+
 // WithHosts returns a Profile modifier which sets the DNS Names and IP Addresses
 // that will be bound to the subject Certificate.
 //
@@ -164,9 +202,9 @@ func WithHosts(hosts string) WithOption {
 			if h == "" {
 				continue
 			} else if ip := net.ParseIP(h); ip != nil {
-				crt.IPAddresses = append(crt.IPAddresses, ip)
+				crt.IPAddresses = appendIfMissingIP(crt.IPAddresses, ip)
 			} else {
-				crt.DNSNames = append(crt.DNSNames, h)
+				crt.DNSNames = appendIfMissingString(crt.DNSNames, h)
 			}
 		}
 

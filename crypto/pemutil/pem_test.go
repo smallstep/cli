@@ -584,6 +584,7 @@ func TestParseKey(t *testing.T) {
 	for fn, td := range files {
 		t.Run(fn, func(t *testing.T) {
 			data, err := ioutil.ReadFile(fn)
+			assert.FatalError(t, err)
 			if td.encrypted {
 				key, err = ParseKey(data, WithPassword([]byte("mypassword")))
 			} else {
@@ -616,11 +617,13 @@ func TestParseKey_x509(t *testing.T) {
 	cert, err := x509.ParseCertificate(b.Bytes)
 	assert.FatalError(t, err)
 	key, err := ParseKey([]byte(testCRT))
+	assert.FatalError(t, err)
 	assert.Equals(t, cert.PublicKey, key)
 
 	b, _ = pem.Decode([]byte(testCSR))
 	csr, err := x509.ParseCertificateRequest(b.Bytes)
 	assert.FatalError(t, err)
 	key, err = ParseKey([]byte(testCSR))
+	assert.FatalError(t, err)
 	assert.Equals(t, csr.PublicKey, key)
 }
