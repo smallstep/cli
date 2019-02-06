@@ -138,7 +138,7 @@ requires the flags <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
 				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
 authorized to request. A certificate signing request using this token must match
 the complete set of subjective alternative names in the token 1:1. Use the '--san'
-flag multiple times to request multiple SANs.`,
+flag multiple times to configure multiple SANs.`,
 			},
 			flags.Force,
 		},

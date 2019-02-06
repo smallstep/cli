@@ -4,6 +4,7 @@ import (
 	realx509 "crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +12,26 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
 )
+
+// SplitSANs splits a slice of Subject Alternative Names into slices of
+// IP Addresses and DNS Names. If an element is not an IP address, then it
+// is bucketed as a DNS Name.
+func SplitSANs(sans []string) (dnsNames []string, ips []net.IP) {
+	dnsNames = []string{}
+	ips = []net.IP{}
+	if sans == nil {
+		return
+	}
+	for _, san := range sans {
+		if ip := net.ParseIP(san); ip != nil {
+			ips = append(ips, ip)
+		} else {
+			// If not IP then assume DNSName.
+			dnsNames = append(dnsNames, san)
+		}
+	}
+	return
+}
 
 // ReadCertPool loads a certificate pool from disk.
 // *path*: a file, a directory, or a comma-separated list of files.

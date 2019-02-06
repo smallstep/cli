@@ -169,6 +169,26 @@ func appendIfMissingIP(ips []net.IP, ip net.IP) []net.IP {
 	return append(ips, ip)
 }
 
+// WithDNSNames returns a Profile modifier which sets the DNS Names
+// that will be bound to the subject alternative name extension of the Certificate.
+func WithDNSNames(dns []string) WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.DNSNames = dns
+		return nil
+	}
+}
+
+// WithIPAddresses returns a Profile modifier which sets the IP Addresses
+// that will be bound to the subject alternative name extension of the Certificate.
+func WithIPAddresses(ips []net.IP) WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.IPAddresses = ips
+		return nil
+	}
+}
+
 // WithHosts returns a Profile modifier which sets the DNS Names and IP Addresses
 // that will be bound to the subject Certificate.
 //
