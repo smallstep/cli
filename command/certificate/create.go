@@ -26,7 +26,7 @@ func createCommand() cli.Command {
 		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
 [**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
 [**--curve**=<curve>] [**no-password**] [**--profile**=<profile>]
-[**--size**=<size>] [**--type**=<type>]`,
+[**--size**=<size>] [**--type**=<type>] [**--san**=<SAN>]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing requests (CSR) that can be signed later using 'step
 certificates sign' (or some other tool) to produce a certificate.
@@ -56,6 +56,13 @@ Create a CSR and key:
 $ step certificate create foo foo.csr foo.key --csr
 '''
 
+Create a CSR and key with custom Subject Alternative Names:
+
+'''
+$ step certificate create foo foo.csr foo.key --csr \
+  --san inter.smallstep.com --san 1.1.1.1 --san ca.smallstep.com
+'''
+
 Create a CSR and key - do not encrypt the key when writing to disk:
 
 '''
@@ -75,11 +82,27 @@ $ step certificate create intermediate-ca intermediate-ca.crt intermediate-ca.ke
   --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key
 '''
 
+Create an intermediate certificate and key with custom Subject Alternative Names:
+
+'''
+$ step certificate create intermediate-ca intermediate-ca.crt intermediate-ca.key \
+  --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key \
+  --san inter.smallstep.com --san 1.1.1.1 --san ca.smallstep.com
+'''
+
 Create a leaf certificate and key:
 
 '''
 $ step certificate create foo foo.crt foo.key --profile leaf \
   --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
+'''
+
+Create a leaf certificate and key with custom Subject Alternative Names:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile leaf \
+  --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key \
+  --san inter.smallstep.com --san 1.1.1.1 --san ca.smallstep.com
 '''
 
 Create a leaf certificate and key with custom validity:
@@ -218,6 +241,11 @@ used, it is a sequence of decimal numbers, each with optional fraction and a
 unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
+			cli.StringSliceFlag{
+				Name: "san",
+				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs). Use the '--san'
+flag multiple times to configure multiple SANs.`,
+			},
 			flags.Force,
 		},
 	}
@@ -264,6 +292,7 @@ func createAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	dnsNames, ips := x509util.SplitSANs(ctx.StringSlice("san"))
 
 	var (
 		priv       interface{}
@@ -284,6 +313,8 @@ func createAction(ctx *cli.Context) error {
 			Subject: pkix.Name{
 				CommonName: subject,
 			},
+			DNSNames:    dnsNames,
+			IPAddresses: ips,
 		}
 		csrBytes, err := x509.CreateCertificateRequest(rand.Reader, _csr, priv)
 		if err != nil {
@@ -320,7 +351,9 @@ func createAction(ctx *cli.Context) error {
 				}
 				profile, err = x509util.NewLeafProfile(subject, issIdentity.Crt,
 					issIdentity.Key, x509util.GenerateKeyPair(kty, crv, size),
-					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0))
+					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
+					x509util.WithDNSNames(dnsNames),
+					x509util.WithIPAddresses(ips))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -335,7 +368,9 @@ func createAction(ctx *cli.Context) error {
 				profile, err = x509util.NewIntermediateProfile(subject,
 					issIdentity.Crt, issIdentity.Key,
 					x509util.GenerateKeyPair(kty, crv, size),
-					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0))
+					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
+					x509util.WithDNSNames(dnsNames),
+					x509util.WithIPAddresses(ips))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -343,7 +378,9 @@ func createAction(ctx *cli.Context) error {
 		case "root-ca":
 			profile, err = x509util.NewRootProfile(subject,
 				x509util.GenerateKeyPair(kty, crv, size),
-				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0))
+				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
+				x509util.WithDNSNames(dnsNames),
+				x509util.WithIPAddresses(ips))
 			if err != nil {
 				return errors.WithStack(err)
 			}

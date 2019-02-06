@@ -25,15 +25,18 @@ func newCertificateCommand() cli.Command {
 		Name:   "certificate",
 		Action: command.ActionFunc(newCertificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
-		UsageText: `**step ca certificate** <hostname> <crt-file> <key-file>
+		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
+		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+		[**--san**=<SAN>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
 
-<hostname>
-:  The DNS or IP address that will be set as the subject for the certificate.
+<subject>
+:  The Common Name, DNS Name, or IP address that will be set as the
+Subject Common Name for the certificate. If no Subject Alternative Names (SANs)
+are configured (via the --san flag) then the <subject> will be set as the only SAN.
 
 <crt-file>
 :  File to write the certificate (PEM format)
@@ -43,10 +46,22 @@ func newCertificateCommand() cli.Command {
 
 ## EXAMPLES
 
-Request a new certificate for a given domain:
+Request a new certificate for a given domain. There are no additional SANs
+configured, therefore (by default) the <subject> will be used as the only
+SAN extension: DNS Name internal.example.com:
 '''
 $ TOKEN=$(step ca token internal.example.com)
 $ step ca certificate --token $TOKEN internal.example.com internal.crt internal.key
+'''
+
+Request a new certificate with multiple Subject Alternative Names. The Subject
+Common Name of the certificate will be 'foobar'. However, because additional SANs are
+configured using the --san flag and 'foobar' is not one of these, 'foobar' will
+not be in the SAN extensions of the certificate. The certificate will have 2
+IP Address extensions (1.1.1.1, 10.2.3.4) and 1 DNS Name extension (hello.example.com):
+'''
+$ TOKEN=$(step ca token internal.example.com)
+$ step ca certificate --token $TOKEN --san 1.1.1.1 --san hello.example.com --san 10.2.3.4 foobar internal.crt internal.key
 '''
 
 Request a new certificate with a 1h validity:
@@ -60,6 +75,14 @@ $ step ca certificate --token $TOKEN --not-after=1h internal.example.com interna
 			rootFlag,
 			notBeforeFlag,
 			notAfterFlag,
+			cli.StringSliceFlag{
+				Name: "san",
+				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
+authorized to request. A certificate signing request using this token must match
+the complete set of subjective alternative names in the token 1:1. Use the '--san'
+flag multiple times to configure multiple SANs. The '--san' flag and the '--token'
+flag are mutually exlusive.`,
+			},
 			flags.Force,
 		},
 	}
@@ -123,6 +146,10 @@ func newCertificateAction(ctx *cli.Context) error {
 			token = tok
 		} else {
 			return err
+		}
+	} else {
+		if len(ctx.StringSlice("san")) > 0 {
+			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
 		}
 	}
 
@@ -193,6 +220,7 @@ type tokenClaims struct {
 
 func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) {
 	var err error
+	sans := ctx.StringSlice("san")
 
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
@@ -224,7 +252,7 @@ func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) 
 		}
 	}
 
-	return newTokenFlow(ctx, subject, caURL, root, "", "", "", "", notBefore, notAfter)
+	return newTokenFlow(ctx, subject, sans, caURL, root, "", "", "", "", notBefore, notAfter)
 }
 
 func signCertificateRequest(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {

@@ -34,18 +34,21 @@ func newTokenCommand() cli.Command {
 		Name:   "token",
 		Action: command.ActionFunc(newTokenAction),
 		Usage:  "generate an OTT granting access to the CA",
-		UsageText: `**step ca token** <hostname>
+		UsageText: `**step ca token** <subject>
 		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]
-		[**--offline**]`,
+		[**--san**=<SAN>] [**--offline**]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
 ## POSITIONAL ARGUMENTS
 
-<hostname>
-:  The DNS or IP address that will be set by the certificate authority.
+<subject>
+:  The Common Name, DNS Name, or IP address that will be set by the certificate authority.
+When there are no additional Subject Alternative Names configured (via the
+--san flag), the subject will be added as the only element of the 'sans' claim
+on the token.
 
 ## EXAMPLES
 
@@ -53,22 +56,33 @@ certificates authority.
  set using environment variables or the default configuration file in
  <$STEPPATH/config/defaults.json>.
 
-Get a new token for a DNS:
+Get a new token for a DNS. Because there are no Subject Alternative Names
+configured (via the '--san' flag), the 'sans' claim of the token will have a
+default value of ['internal.example.com']:
 '''
 $ step ca token internal.example.com
 '''
 
-Get a new token for an IP address:
+Get a new token for an IP address. Because there are no Subject Alternative Names
+configured (via the '--san' flag), the 'sans' claim of the token will have a
+default value of ['192.168.10.10']:
 '''
 $ step ca token 192.168.10.10
 '''
 
-Get a new token that would be valid not, but expires in 30 minutes:
+Get a new token with custom Subject Alternative Names. The value of the 'sans'
+claim of the token will be ['1.1.1.1', 'hello.example.com'] - 'foobar' will not
+be in the 'sans' claim unless explicitly configured via the '--sans' flag:
+'''
+$ step ca token foobar --san 1.1.1.1 --san hello.example.com
+'''
+
+Get a new token that expires in 30 minutes:
 '''
 $ step ca token --not-after 30m internal.example.com
 '''
 
-Get a new token that is not valid for 30 and expires 5 minutes after that:
+Get a new token that becomes valid in 30 minutes and expires 5 minutes after that:
 '''
 $ step ca token --not-before 30m --not-after 35m internal.example.com
 '''
@@ -119,6 +133,13 @@ the certificate authority.`,
 				Usage: `Creates a token without contacting the certificate authority. Offline mode
 requires the flags <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
 			},
+			cli.StringSliceFlag{
+				Name: "san",
+				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
+authorized to request. A certificate signing request using this token must match
+the complete set of subjective alternative names in the token 1:1. Use the '--san'
+flag multiple times to configure multiple SANs.`,
+			},
 			flags.Force,
 		},
 	}
@@ -136,6 +157,7 @@ func newTokenAction(ctx *cli.Context) error {
 	outputFile := ctx.String("output-file")
 	keyFile := ctx.String("key")
 	offline := ctx.Bool("offline")
+	sans := ctx.StringSlice("san")
 
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
@@ -187,12 +209,12 @@ func newTokenAction(ctx *cli.Context) error {
 			return err
 		}
 
-		token, err = generateToken(subject, kid, issuer, audience, root, notBefore, notAfter, jwk)
+		token, err = generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 		if err != nil {
 			return err
 		}
 	} else {
-		token, err = newTokenFlow(ctx, subject, caURL, root, kid, issuer, passwordFile, keyFile, notBefore, notAfter)
+		token, err = newTokenFlow(ctx, subject, sans, caURL, root, kid, issuer, passwordFile, keyFile, notBefore, notAfter)
 		if err != nil {
 			return err
 		}
@@ -227,7 +249,7 @@ func parseAudience(ctx *cli.Context) (string, error) {
 
 // generateToken generates a provisioning or bootstrap token with the given
 // parameters.
-func generateToken(sub, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
+func generateToken(sub string, sans []string, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
 	// A random jwt id will be used to identify duplicated tokens
 	jwtID, err := randutil.Hex(64) // 256 bits
 	if err != nil {
@@ -243,6 +265,12 @@ func generateToken(sub, kid, iss, aud, root string, notBefore, notAfter time.Tim
 	if len(root) > 0 {
 		tokOptions = append(tokOptions, token.WithRootCA(root))
 	}
+	// If there are no SANs then add the 'subject' (common-name) as the only SAN.
+	if len(sans) == 0 {
+		sans = []string{sub}
+	}
+
+	tokOptions = append(tokOptions, token.WithSANS(sans))
 	if !notBefore.IsZero() || !notAfter.IsZero() {
 		if notBefore.IsZero() {
 			notBefore = time.Now()
@@ -262,7 +290,7 @@ func generateToken(sub, kid, iss, aud, root string, notBefore, notAfter time.Tim
 }
 
 // newTokenFlow implements the common flow used to generate a token
-func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordFile, keyFile string, notBefore, notAfter time.Time) (string, error) {
+func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, kid, issuer, passwordFile, keyFile string, notBefore, notAfter time.Time) (string, error) {
 	// Get audience from ca-url
 	audience, err := parseAudience(ctx)
 	if err != nil {
@@ -357,7 +385,7 @@ func newTokenFlow(ctx *cli.Context, subject, caURL, root, kid, issuer, passwordF
 		}
 	}
 
-	return generateToken(subject, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }
 
 // provisionerFilter returns a slice of provisioners that pass the given filter.

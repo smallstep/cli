@@ -11,8 +11,6 @@ OUTPUT_ROOT=output/
 # Set shell to bash for `echo -e`
 SHELL := /bin/bash
 
-al%: build lint test
-
 .PHONY: all
 
 #########################################
