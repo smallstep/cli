@@ -66,3 +66,7 @@ required = [
 [[constraint]]
   branch = "master"
   name = "github.com/smallstep/certificates"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/smallstep/truststore"

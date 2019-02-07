@@ -15,6 +15,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
 )
 
@@ -23,7 +24,7 @@ func bootstrapCommand() cli.Command {
 		Name:      "bootstrap",
 		Action:    command.ActionFunc(bootstrapAction),
 		Usage:     "initialize the environment to use the CA commands",
-		UsageText: "**step ca bootstrap** [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>]",
+		UsageText: `**step ca bootstrap** [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**]`,
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
 authority and sets up the current environment to use it.
 
@@ -33,7 +34,14 @@ url, the root certificate location and its fingerprint.
 
 After the bootstrap, ca commands do not need to specify the flags 
 --ca-url, --root or --fingerprint if we want to use the same environment.`,
-		Flags: []cli.Flag{caURLFlag, fingerprintFlag, flags.Force},
+		Flags: []cli.Flag{
+			caURLFlag,
+			fingerprintFlag,
+			cli.BoolFlag{
+				Name:  "install",
+				Usage: "Install the root certificate into the system truststore.",
+			},
+			flags.Force},
 	}
 }
 
@@ -104,5 +112,15 @@ func bootstrapAction(ctx *cli.Context) error {
 	}
 
 	ui.Printf("Your configuration has been saved in %s.\n", configFile)
+
+	if ctx.Bool("install") {
+		ui.Printf("Installing the root certificate in the system truststore... ")
+		if err := truststore.InstallFile(rootFile); err != nil {
+			ui.Println()
+			return err
+		}
+		ui.Println("done.")
+	}
+
 	return nil
 }
