@@ -22,8 +22,7 @@ func installCommand() cli.Command {
 		[**--java**] [**--firefox**] [**--no-system**]`,
 		Description: `**step certificate install** installs a certificate in the system truststore.
 
-Java and Firefox truststores are also supported if the properly flags are
-passed.
+Java and Firefox truststores are also supported via the respective flags.
 
 ## POSITIONAL ARGUMENTS
 
@@ -39,7 +38,22 @@ $ step certificate install root-ca.pem
 
 Install a certificate in all the supported truststores:
 '''
-$ step certificate install -all root-ca.pem
+$ step certificate install --all root-ca.pem
+'''
+
+Install a certificate in Firefox and the system trustore:
+'''
+$ step certificate install --firefox root--ca.pem
+'''
+
+Install a certificate in Java and the system trustore:
+'''
+$ step certificate install --java root-ca.pem
+'''
+
+Install a certificate in Firefox, Java, but not in the system trustore:
+'''
+$ step certificate install --firefox --java --no-system root-ca.pem
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -77,8 +91,7 @@ func uninstallCommand() cli.Command {
 		[**--java**] [**--firefox**] [**--no-system**]`,
 		Description: `**step certificate install** uninstalls a certificate from the system truststore.
 
-Java and Firefox truststores are also supported if the properly flags are
-passed.
+Java and Firefox truststores are also supported via the respective flags.
 
 ## POSITIONAL ARGUMENTS
 
@@ -94,7 +107,22 @@ $ step certificate uninstall root-ca.pem
 
 Uninstall a certificate from all the supported truststores:
 '''
-$ step certificate uninstall -all root-ca.pem
+$ step certificate uninstall =-all root-ca.pem
+'''
+
+Uninstall a certificate from Firefox and the system trustore:
+'''
+$ step certificate uninstall --firefox root--ca.pem
+'''
+
+Uninstall a certificate infrom Java and the system trustore:
+'''
+$ step certificate uninstall --java root-ca.pem
+'''
+
+Uninstall a certificate from Firefox, Java, but not from the system:
+'''
+$ step certificate uninstall --firefox --java --no-system root-ca.pem
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
