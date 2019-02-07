@@ -16,11 +16,12 @@ func installCommand() cli.Command {
 	return cli.Command{
 		Name:   "install",
 		Action: command.ActionFunc(installAction),
-		Usage:  "install a certificate in the system truststore",
+		Usage:  "install a root certificate in the system truststore",
 		UsageText: `**step certificate install** <crt-file>
 		[**--prefix**=<name>] [**--all**]
 		[**--java**] [**--firefox**] [**--no-system**]`,
-		Description: `**step certificate install** installs a certificate in the system truststore.
+		Description: `**step certificate install** installs a root certificate in the system
+truststore.
 
 Java and Firefox truststores are also supported via the respective flags.
 
@@ -85,11 +86,12 @@ func uninstallCommand() cli.Command {
 	return cli.Command{
 		Name:   "uninstall",
 		Action: command.ActionFunc(uninstallAction),
-		Usage:  "uninstall a certificate from the system truststore",
+		Usage:  "uninstall a root certificate from the system truststore",
 		UsageText: `**step certificate uninstall** <crt-file>
 		[**--prefix**=<name>] [**--all**]
 		[**--java**] [**--firefox**] [**--no-system**]`,
-		Description: `**step certificate install** uninstalls a certificate from the system truststore.
+		Description: `**step certificate install** uninstalls a root certificate from the system
+truststore.
 
 Java and Firefox truststores are also supported via the respective flags.
 
@@ -170,7 +172,7 @@ func installAction(ctx *cli.Context) error {
 		}
 	}
 
-	ui.Printf("Certificate %s has been properly installed.", filename)
+	ui.Printf("Certificate %s has been installed.", filename)
 	return nil
 }
 
@@ -194,7 +196,7 @@ func uninstallAction(ctx *cli.Context) error {
 		}
 	}
 
-	ui.Printf("Certificate %s has been properly removed.", filename)
+	ui.Printf("Certificate %s has been removed.", filename)
 	return nil
 }
 
