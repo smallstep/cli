@@ -171,12 +171,17 @@ func uninstallAction(ctx *cli.Context) error {
 }
 
 func getTruststoreOptions(ctx *cli.Context) ([]truststore.Option, error) {
+	cert, err := pemutil.ReadCertificate(ctx.Args().Get(0))
+	if err != nil {
+		return nil, err
+	}
+
+	if !cert.IsCA || cert.CheckSignatureFrom(cert) != nil {
+		return nil, errors.Errorf("certificate %s is not a root CA", ctx.Args().Get(0))
+	}
+
 	prefix := ctx.String("prefix")
 	if prefix == "" {
-		cert, err := pemutil.ReadCertificate(ctx.Args().Get(0))
-		if err != nil {
-			return nil, err
-		}
 		if len(cert.Subject.CommonName) > 0 {
 			prefix = cert.Subject.CommonName + " "
 		} else {
