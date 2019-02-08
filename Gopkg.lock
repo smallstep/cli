@@ -107,6 +107,22 @@
   revision = "883fe33ffc4344bad1ecd881f61afd5ec5d80e0a"
 
 [[projects]]
+  digest = "1:64124fe9a41d7dcc3912de0d9dfddd9b353e84123b0aeaf2fb6a6b7d422f24f1"
+  name = "github.com/google/certificate-transparency-go"
+  packages = [
+    ".",
+    "asn1",
+    "gossip/minimal/x509ext",
+    "tls",
+    "x509",
+    "x509/pkix",
+    "x509util",
+  ]
+  pruneopts = "UT"
+  revision = "3629d6846518309d22c16fee15d1007262a459d2"
+  version = "v1.0.21"
+
+[[projects]]
   branch = "master"
   digest = "1:750e747d0aad97b79f4a4e00034bae415c2ea793fd9e61438d966ee9c79579bf"
   name = "github.com/google/shlex"
@@ -323,11 +339,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c21748269676302d24f6c86cb11c95f9fb80a29750eb73b2ee89377a148d6378"
+  digest = "1:3a9a2027500fd3488877a29fbbd850c04760948983b350b76e0e1e0a003eba6b"
   name = "github.com/smallstep/certinfo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b5f8cf3f6d0c3685fe68a2fdee7e0df32c2e6739"
+  revision = "f98c238010a74426c9cdb038b821a07e058aa5b7"
 
 [[projects]]
   branch = "master"
