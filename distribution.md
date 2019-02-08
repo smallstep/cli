@@ -95,4 +95,8 @@ e.g. `v1.0.2`
 
     Follow the steps [here](https://github.com/smallstep/homebrew-smallstep#how-to-update-the-formula).
 
+9. [Update the documentation at smallstep.com/docs](#https://github.com/smallstep/website#generating-cli-documentation)
+
+    **NOTE**: this only needs to be done for standard releases.
+
 *All Done!*
