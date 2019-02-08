@@ -60,8 +60,7 @@ configured using the --san flag and 'foobar' is not one of these, 'foobar' will
 not be in the SAN extensions of the certificate. The certificate will have 2
 IP Address extensions (1.1.1.1, 10.2.3.4) and 1 DNS Name extension (hello.example.com):
 '''
-$ TOKEN=$(step ca token internal.example.com)
-$ step ca certificate --token $TOKEN --san 1.1.1.1 --san hello.example.com --san 10.2.3.4 foobar internal.crt internal.key
+$ step ca certificate --san 1.1.1.1 --san hello.example.com --san 10.2.3.4 foobar internal.crt internal.key
 '''
 
 Request a new certificate with a 1h validity:
