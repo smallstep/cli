@@ -201,34 +201,13 @@ define BUNDLE
     tar -zcvf $$NEW_BUNDLE -C $$TMP $$stepName;
 endef
 
-define BUNDLE_BREW
-	$(q)set -e; BREW_DIR=$(OUTPUT_ROOT)brew; \
-	mkdir -p $$BREW_DIR $(RELEASE); \
-	TMP=$$(mktemp -d $$BREW_DIR/tmp.XXXX); \
-	trap "rm -rf $$TMP" EXIT INT QUIT TERM; \
-	NAME=brew_step_$(VERSION); \
-	TAR_DIR=$$TMP/$$NAME; \
-	mkdir -p $$TAR_DIR; \
-	git clone https://github.com/smallstep/cli.git $$TAR_DIR/cli; \
-	git --git-dir="$$TAR_DIR/cli/.git" --work-tree="$$TAR_DIR/cli" checkout v$(VERSION); \
-	CERT_VERSION=$$(cat .COMPONENT_VERSIONS | grep "certificates" | tr -d "\r\n" | awk '{printf $$2}'); \
-	git clone https://github.com/smallstep/certificates.git $$TAR_DIR/certificates; \
-	git --git-dir="$$TAR_DIR/certificates/.git" --work-tree="$$TAR_DIR/certificates" checkout $$CERT_VERSION; \
-	BREW_TAR=$(RELEASE)/$$NAME.tar.gz; \
-	rm -f $$BREW_TAR; \
-	tar -zcvf $$BREW_TAR -C $$TMP $$NAME;
-endef
-
 bundle-linux: binary-linux
 	$(call BUNDLE,linux,$(VERSION),amd64)
 
 bundle-darwin: binary-darwin
 	$(call BUNDLE,darwin,$(VERSION),amd64)
 
-brew:
-	$(call BUNDLE_BREW)
-
-.PHONY: binary-linux binary-darwin bundle-linux bundle-darwin brew
+.PHONY: binary-linux binary-darwin bundle-linux bundle-darwin
 
 #################################################
 # Targets for creating OS specific artifacts
@@ -236,7 +215,7 @@ brew:
 
 artifacts-linux-tag: bundle-linux debian
 
-artifacts-darwin-tag: bundle-darwin brew
+artifacts-darwin-tag: bundle-darwin
 
 artifacts-tag: artifacts-linux-tag artifacts-darwin-tag
 
