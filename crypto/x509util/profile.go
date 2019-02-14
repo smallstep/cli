@@ -225,7 +225,7 @@ func WithHosts(hosts string) WithOption {
 func WithCTPoison() WithOption {
 	return func(p Profile) error {
 		crt := p.Subject()
-		crt.ExtraExtensions = append(crt.Extensions, pkix.Extension{
+		crt.ExtraExtensions = append(crt.ExtraExtensions, pkix.Extension{
 			Id:       oidExtensionCTPoison,
 			Critical: true,
 			Value:    asn1.NullBytes,
