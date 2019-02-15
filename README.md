@@ -37,13 +37,17 @@ development](#getting-started-with-development) below.
 Install `step` via [Homebrew](https://brew.sh/):
 
 ```
-brew install smallstep/smallstep/step
-```
+brew install step
 
-Test:
-
-```
+# test ...
 step certificate inspect https://smallstep.com
+```
+
+> Note: If you have installed `step` previously through the `smallstep/smallstep`
+> tap you will need to run the following commands before installing:
+```
+brew untap smallstep/smallstep
+brew uninstall step
 ```
 
 ### Linux
