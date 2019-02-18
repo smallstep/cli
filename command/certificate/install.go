@@ -109,7 +109,7 @@ $ step certificate uninstall root-ca.pem
 
 Uninstall a certificate from all the supported truststores:
 '''
-$ step certificate uninstall =-all root-ca.pem
+$ step certificate uninstall --all root-ca.pem
 '''
 
 Uninstall a certificate from Firefox and the system trustore:
