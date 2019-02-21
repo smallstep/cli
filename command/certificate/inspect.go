@@ -187,11 +187,15 @@ func inspectAction(ctx *cli.Context) error {
 		bundle   = ctx.Bool("bundle")
 		format   = ctx.String("format")
 		roots    = ctx.String("roots")
+		short    = ctx.Bool("short")
 		insecure = ctx.Bool("insecure")
 	)
 
 	if format != "text" && format != "json" {
 		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
+	}
+	if short && format == "json" {
+		return errs.IncompatibleFlagWithFlag(ctx, "short", "format json")
 	}
 
 	var block *pem.Block
