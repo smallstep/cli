@@ -4,7 +4,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
-	realx509 "crypto/x509"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
 	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -175,7 +175,7 @@ func TestReadCertificate(t *testing.T) {
 			}
 		} else {
 			assert.NoError(t, err)
-			assert.Type(t, &realx509.Certificate{}, crt)
+			assert.Type(t, &x509.Certificate{}, crt)
 		}
 	}
 }
@@ -206,7 +206,7 @@ func TestReadCertificateBundle(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Len(t, tc.len, certs, tc.fn)
 			for i := range certs {
-				assert.Type(t, &realx509.Certificate{}, certs[i])
+				assert.Type(t, &x509.Certificate{}, certs[i])
 			}
 		}
 	}
@@ -234,7 +234,7 @@ func TestReadStepCertificate(t *testing.T) {
 			}
 		} else {
 			assert.NoError(t, err)
-			assert.Type(t, &x509.Certificate{}, crt)
+			assert.Type(t, &stepx509.Certificate{}, crt)
 		}
 	}
 }
@@ -307,7 +307,7 @@ func TestParsePEM(t *testing.T) {
 			return &ParseTest{
 				in:      b,
 				opts:    nil,
-				cmpType: &realx509.Certificate{},
+				cmpType: &x509.Certificate{},
 			}
 		},
 		"success-stepx509-crt": func(t *testing.T) *ParseTest {
@@ -316,7 +316,7 @@ func TestParsePEM(t *testing.T) {
 			return &ParseTest{
 				in:      b,
 				opts:    []Options{WithStepCrypto()},
-				cmpType: &x509.Certificate{},
+				cmpType: &stepx509.Certificate{},
 			}
 		},
 	}
