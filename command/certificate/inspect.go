@@ -165,6 +165,10 @@ the bundle only contains one certificate. This flag will result in an error
 if the input bundle includes any PEM that does not have type CERTIFICATE.`,
 			},
 			cli.BoolFlag{
+				Name:  "short",
+				Usage: "Print the certificate or CSR details in shorter and more friendly format.",
+			},
+			cli.BoolFlag{
 				Name: "insecure",
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
@@ -190,54 +194,91 @@ func inspectAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
 	}
 
-	if bundle {
-		var blocks []*pem.Block
-		if _, addr, isURL := trimURLPrefix(crtFile); isURL {
-			peerCertificates, err := getPeerCertificates(addr, roots, insecure)
-			if err != nil {
-				return err
-			}
-			for _, crt := range peerCertificates {
-				blocks = append(blocks, &pem.Block{
-					Type:  "CERTIFICATE",
-					Bytes: crt.Raw,
-				})
-			}
-		} else {
-			crtBytes, err := utils.ReadFile(crtFile)
-			if err != nil {
-				return errs.FileError(err, crtFile)
-			}
-
-			var block *pem.Block
+	var block *pem.Block
+	var blocks []*pem.Block
+	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
+		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
+		if err != nil {
+			return err
+		}
+		for _, crt := range peerCertificates {
+			blocks = append(blocks, &pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: crt.Raw,
+			})
+		}
+	} else {
+		crtBytes, err := utils.ReadFile(crtFile)
+		if err != nil {
+			return errs.FileError(err, crtFile)
+		}
+		if bytes.HasPrefix(crtBytes, []byte("-----BEGIN ")) {
 			for len(crtBytes) > 0 {
 				block, crtBytes = pem.Decode(crtBytes)
 				if block == nil {
-					return errors.Errorf("%s contains an invalid PEM block", crtFile)
+					break
 				}
-				if block.Type != "CERTIFICATE" {
-					return errors.Errorf("certificate bundle %s contains an "+
-						"unexpected PEM block of type %s\n\n  expected type: "+
-						"CERTIFICATE", crtFile, block.Type)
+				if bundle && block.Type != "CERTIFICATE" {
+					return errors.Errorf("certificate bundle %s contains an unexpected PEM block of type %s\n\n  expected type: CERTIFICATE",
+						crtFile, block.Type)
 				}
 				blocks = append(blocks, block)
 			}
-		}
-
-		switch format {
-		case "text":
-			for _, block := range blocks {
-				crt, err := stepx509.ParseCertificate(block.Bytes)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				result, err := certinfo.CertificateText(crt)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				fmt.Print(result)
+		} else {
+			if block = derToPemBlock(crtBytes); block == nil {
+				return errors.Errorf("%s contains an invalid PEM block", crtFile)
 			}
-		case "json":
+			blocks = append(blocks, block)
+		}
+	}
+
+	// Keep the first one if !bundle
+	if !bundle {
+		blocks = []*pem.Block{blocks[0]}
+	}
+
+	switch blocks[0].Type {
+	case "CERTIFICATE":
+		return inspectCertificates(ctx, blocks)
+	case "CERTIFICATE REQUEST": // only one is supported
+		return inspectCertificateRequest(ctx, blocks[0])
+	default:
+		return errors.Errorf("Invalid PEM type in %s. Expected [CERTIFICATE|CERTIFICATE REQUEST] but got %s)", crtFile, block.Type)
+	}
+}
+
+func inspectCertificates(ctx *cli.Context, blocks []*pem.Block) error {
+	format, short := ctx.String("format"), ctx.Bool("short")
+	switch format {
+	case "text":
+		var text string
+		for _, block := range blocks {
+			crt, err := stepx509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			if short {
+				if text, err = certinfo.CertificateShortText(crt); err != nil {
+					return err
+				}
+			} else {
+				if text, err = certinfo.CertificateText(crt); err != nil {
+					return err
+				}
+			}
+			fmt.Print(text)
+		}
+		return nil
+	case "json":
+		var b []byte
+		var v interface{}
+		if len(blocks) == 1 {
+			zcrt, err := zx509.ParseCertificate(blocks[0].Bytes)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			v = struct{ *zx509.Certificate }{zcrt}
+		} else {
 			var zcrts []*zx509.Certificate
 			for _, block := range blocks {
 				zcrt, err := zx509.ParseCertificate(block.Bytes)
@@ -246,108 +287,57 @@ func inspectAction(ctx *cli.Context) error {
 				}
 				zcrts = append(zcrts, zcrt)
 			}
-			b, err := json.MarshalIndent(zcrts, "", "  ")
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			os.Stdout.Write(b)
-		default:
-			return errs.InvalidFlagValue(ctx, "format", format, "text, json")
+			v = zcrts
 		}
-	} else { // Only inspect the leaf certificate.
-		var block *pem.Block
+		b, err := json.MarshalIndent(v, "", "  ")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		os.Stdout.Write(b)
+		return nil
+	default:
+		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
+	}
+}
 
-		if _, addr, isURL := trimURLPrefix(crtFile); isURL {
-			peerCertificates, err := getPeerCertificates(addr, roots, insecure)
+func inspectCertificateRequest(ctx *cli.Context, block *pem.Block) error {
+	format, short := ctx.String("format"), ctx.Bool("short")
+	switch format {
+	case "text":
+		var text string
+		csr, err := stepx509.ParseCertificateRequest(block.Bytes)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		if short {
+			text, err = certinfo.CertificateRequestShortText(csr)
 			if err != nil {
 				return err
 			}
-			block = &pem.Block{
-				Type: "CERTIFICATE",
-				// leaf certificate should be first in PeerCertificates returned
-				// by tls.Conn.
-				Bytes: peerCertificates[0].Raw,
-			}
 		} else {
-			crtBytes, err := utils.ReadFile(crtFile)
+			text, err = certinfo.CertificateRequestText(csr)
 			if err != nil {
-				return errs.FileError(err, crtFile)
-			}
-
-			if bytes.HasPrefix(crtBytes, []byte("-----BEGIN ")) {
-				// leaf certificate should be the first in the file
-				block, _ = pem.Decode(crtBytes)
-				if block == nil {
-					return errors.Errorf("%s contains an invalid PEM block", crtFile)
-				}
-			} else {
-				if block = derToPemBlock(crtBytes); block == nil {
-					return errors.Errorf("%s contains an invalid PEM block", crtFile)
-				}
+				return err
 			}
 		}
-
-		switch block.Type {
-		case "CERTIFICATE":
-			switch format {
-			case "text":
-				crt, err := stepx509.ParseCertificate(block.Bytes)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				result, err := certinfo.CertificateText(crt)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				fmt.Print(result)
-			case "json":
-				zcrt, err := zx509.ParseCertificate(block.Bytes)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				b, err := json.MarshalIndent(struct {
-					*zx509.Certificate
-				}{zcrt}, "", "  ")
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				os.Stdout.Write(b)
-			default:
-				return errs.InvalidFlagValue(ctx, "format", format, "text, json")
-			}
-		case "CERTIFICATE REQUEST":
-			switch format {
-			case "text":
-				csr, err := stepx509.ParseCertificateRequest(block.Bytes)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				result, err := certinfo.CertificateRequestText(csr)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				fmt.Print(result)
-			case "json":
-				zcsr, err := zx509.ParseCertificateRequest(block.Bytes)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				b, err := json.MarshalIndent(struct {
-					*zx509.CertificateRequest
-				}{zcsr}, "", "  ")
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				os.Stdout.Write(b)
-			default:
-				return errs.InvalidFlagValue(ctx, "format", format, "text, json")
-			}
-		default:
-			return errors.Errorf("Invalid PEM type in %s. Expected [CERTIFICATE|CSR] but got %s)", crtFile, block.Type)
+		fmt.Print(text)
+		return nil
+	case "json":
+		zcsr, err := zx509.ParseCertificateRequest(block.Bytes)
+		if err != nil {
+			return errors.WithStack(err)
 		}
+		b, err := json.MarshalIndent(struct {
+			*zx509.CertificateRequest
+		}{zcsr}, "", "  ")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		os.Stdout.Write(b)
+		return nil
+	default:
+		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
 	}
-
-	return nil
 }
 
 // derToPemBlock attempts to parse the ASN.1 data as a certificate or a
