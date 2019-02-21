@@ -165,6 +165,47 @@ func ReadCertificate(filename string) (*realx509.Certificate, error) {
 	return crt, errors.Wrapf(err, "error parsing %s", filename)
 }
 
+// ReadCertificateBundle returns a list of *x509.Certificate from the given
+// filename. It supports certificates formats PEM and DER. If a DER-formatted
+// file is given only one certificate will be returned.
+func ReadCertificateBundle(filename string) ([]*realx509.Certificate, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errs.FileError(err, filename)
+	}
+
+	// PEM format
+	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
+		var block *pem.Block
+		var bundle []*realx509.Certificate
+		for len(b) > 0 {
+			block, b = pem.Decode(b)
+			if block == nil {
+				break
+			}
+			if block.Type != "CERTIFICATE" {
+				return nil, errors.Errorf("error decoding PEM: file '%s' is not a certificate bundle", filename)
+			}
+			crt, err := realx509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error parsing %s", filename)
+			}
+			bundle = append(bundle, crt)
+		}
+		if len(b) > 0 {
+			return nil, errors.Errorf("error decoding PEM: file '%s' contains unexpected data", filename)
+		}
+		return bundle, nil
+	}
+
+	// DER format (binary)
+	crt, err := realx509.ParseCertificate(b)
+	if err != nil {
+		errors.Wrapf(err, "error parsing %s", filename)
+	}
+	return []*realx509.Certificate{crt}, nil
+}
+
 // ReadStepCertificate returns a *x509.Certificate from the given filename. It
 // supports certificates formats PEM and DER.
 func ReadStepCertificate(filename string) (*x509.Certificate, error) {

@@ -179,6 +179,37 @@ func TestReadCertificate(t *testing.T) {
 	}
 }
 
+func TestReadCertificateBundle(t *testing.T) {
+	tests := []struct {
+		fn  string
+		len int
+		err error
+	}{
+		{"testdata/ca.crt", 1, nil},
+		{"testdata/ca.der", 1, nil},
+		{"testdata/bundle.crt", 2, nil},
+		{"testdata/notexists.crt", 0, errors.New("open testdata/notexists.crt failed: no such file or directory")},
+		{"testdata/badca.crt", 0, errors.New("error parsing testdata/badca.crt")},
+		{"testdata/badpem.crt", 0, errors.New("error decoding PEM: file 'testdata/badpem.crt' contains unexpected data")},
+		{"testdata/openssl.p256.pem", 0, errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' is not a certificate bundle")},
+	}
+
+	for _, tc := range tests {
+		certs, err := ReadCertificateBundle(tc.fn)
+		if tc.err != nil {
+			if assert.Error(t, err, tc.fn) {
+				assert.HasPrefix(t, err.Error(), tc.err.Error())
+			}
+		} else {
+			assert.NoError(t, err)
+			assert.Len(t, tc.len, certs, tc.fn)
+			for i := range certs {
+				assert.Type(t, &realx509.Certificate{}, certs[i])
+			}
+		}
+	}
+}
+
 func TestReadStepCertificate(t *testing.T) {
 	tests := []struct {
 		fn  string
