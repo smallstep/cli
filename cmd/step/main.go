@@ -53,7 +53,6 @@ func main() {
 	cli.FlagNamePrefixer = usage.FlagNamePrefixer
 	cli.FlagStringer = stringifyFlag
 
-	os.Setenv("_CLI_ZSH_AUTOCOMPLETE_HACK", "1")
 	// Configure cli app
 	app := cli.NewApp()
 	app.Name = "step"
