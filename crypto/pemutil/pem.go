@@ -201,7 +201,7 @@ func ReadCertificateBundle(filename string) ([]*realx509.Certificate, error) {
 	// DER format (binary)
 	crt, err := realx509.ParseCertificate(b)
 	if err != nil {
-		errors.Wrapf(err, "error parsing %s", filename)
+		return nil, errors.Wrapf(err, "error parsing %s", filename)
 	}
 	return []*realx509.Certificate{crt}, nil
 }
