@@ -1,11 +1,10 @@
 package certificate
 
 import (
-	"crypto/sha256"
 	"crypto/x509"
-	"encoding/hex"
 	"fmt"
-	"strings"
+
+	"github.com/smallstep/cli/crypto/x509util"
 
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
@@ -111,10 +110,12 @@ func fingerprintAction(ctx *cli.Context) error {
 		certs = certs[:1]
 	}
 
-	for _, crt := range certs {
-		sum := sha256.Sum256(crt.Raw)
-		fmt.Println(strings.ToLower(hex.EncodeToString(sum[:])))
+	for i, crt := range certs {
+		if bundle {
+			fmt.Printf("%d: %s\n", i, x509util.Fingerprint(crt))
+		} else {
+			fmt.Println(x509util.Fingerprint(crt))
+		}
 	}
-
 	return nil
 }
