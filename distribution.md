@@ -35,7 +35,7 @@ e.g. `v1.0.2`
         ```
 
         The new tag needs to be the logical successor of the most recent existing tag.
-        See [versioning](./README.md#versioning) section for more information on version numbers.
+        See [versioning](#versioning) section for more information on version numbers.
 
     2. **Select the next tag (but don't actually tag anything yet!!).**
 
@@ -96,3 +96,8 @@ e.g. `v1.0.2`
     **NOTE**: this only needs to be done for standard releases.
 
 *All Done!*
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available,
+see the [tags on this repository](https://github.com/smallstep/cli).

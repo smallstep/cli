@@ -20,7 +20,6 @@ announcing step.
 - [Examples](#examples)
 - [Getting Started with Development](#getting-started-with-development)
 - [How To Add A New Command](./command/README.md)
-- [Versioning](#versioning)
 - [How To Create A New Release](./distribution.md)
 - [LICENSE](./LICENSE)
 - [CHANGELOG](./CHANGELOG.md)
@@ -276,11 +275,6 @@ and running `dep ensure`.
 To remove a dependency, simply remove it from the codebase and any mention of
 it in the `Gopkg.toml` file and run `dep ensure` which will remove it from the
 `vendor` folder while updating the `Gopkg.lock` file.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available,
-see the [tags on this repository](https://github.com/smallstep/cli).
 
 ## License
 
