@@ -1,13 +1,14 @@
 package certificate
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/certinfo"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
 )
@@ -172,7 +173,14 @@ func installAction(ctx *cli.Context) error {
 		}
 	}
 
-	ui.Printf("Certificate %s has been installed.", filename)
+	fmt.Printf("Certificate %s has been installed.\n", filename)
+	// Print certificate info (ignore errors)
+	if cert, err := pemutil.ReadStepCertificate(filename); err == nil {
+		if s, err := certinfo.CertificateShortText(cert); err == nil {
+			fmt.Print(s)
+		}
+	}
+
 	return nil
 }
 
@@ -196,7 +204,14 @@ func uninstallAction(ctx *cli.Context) error {
 		}
 	}
 
-	ui.Printf("Certificate %s has been removed.", filename)
+	fmt.Printf("Certificate %s has been removed.\n", filename)
+	// Print certificate info (ignore errors)
+	if cert, err := pemutil.ReadStepCertificate(filename); err == nil {
+		if s, err := certinfo.CertificateShortText(cert); err == nil {
+			fmt.Print(s)
+		}
+	}
+
 	return nil
 }
 

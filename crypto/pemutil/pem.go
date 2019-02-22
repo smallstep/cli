@@ -6,7 +6,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
-	realx509 "crypto/x509"
+	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ed25519"
@@ -140,7 +140,7 @@ func WithFirstBlock() Options {
 
 // ReadCertificate returns a *x509.Certificate from the given filename. It
 // supports certificates formats PEM and DER.
-func ReadCertificate(filename string) (*realx509.Certificate, error) {
+func ReadCertificate(filename string) (*x509.Certificate, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errs.FileError(err, filename)
@@ -149,33 +149,6 @@ func ReadCertificate(filename string) (*realx509.Certificate, error) {
 	// PEM format
 	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
 		crt, err := Read(filename)
-		if err != nil {
-			return nil, err
-		}
-		switch crt := crt.(type) {
-		case *realx509.Certificate:
-			return crt, nil
-		default:
-			return nil, errors.Errorf("error decoding PEM: file '%s' does not contain a certificate", filename)
-		}
-	}
-
-	// DER format (binary)
-	crt, err := realx509.ParseCertificate(b)
-	return crt, errors.Wrapf(err, "error parsing %s", filename)
-}
-
-// ReadStepCertificate returns a *x509.Certificate from the given filename. It
-// supports certificates formats PEM and DER.
-func ReadStepCertificate(filename string) (*x509.Certificate, error) {
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, errs.FileError(err, filename)
-	}
-
-	// PEM format
-	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
-		crt, err := Read(filename, []Options{WithStepCrypto()}...)
 		if err != nil {
 			return nil, err
 		}
@@ -189,6 +162,74 @@ func ReadStepCertificate(filename string) (*x509.Certificate, error) {
 
 	// DER format (binary)
 	crt, err := x509.ParseCertificate(b)
+	return crt, errors.Wrapf(err, "error parsing %s", filename)
+}
+
+// ReadCertificateBundle returns a list of *x509.Certificate from the given
+// filename. It supports certificates formats PEM and DER. If a DER-formatted
+// file is given only one certificate will be returned.
+func ReadCertificateBundle(filename string) ([]*x509.Certificate, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errs.FileError(err, filename)
+	}
+
+	// PEM format
+	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
+		var block *pem.Block
+		var bundle []*x509.Certificate
+		for len(b) > 0 {
+			block, b = pem.Decode(b)
+			if block == nil {
+				break
+			}
+			if block.Type != "CERTIFICATE" {
+				return nil, errors.Errorf("error decoding PEM: file '%s' is not a certificate bundle", filename)
+			}
+			crt, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error parsing %s", filename)
+			}
+			bundle = append(bundle, crt)
+		}
+		if len(b) > 0 {
+			return nil, errors.Errorf("error decoding PEM: file '%s' contains unexpected data", filename)
+		}
+		return bundle, nil
+	}
+
+	// DER format (binary)
+	crt, err := x509.ParseCertificate(b)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error parsing %s", filename)
+	}
+	return []*x509.Certificate{crt}, nil
+}
+
+// ReadStepCertificate returns a *x509.Certificate from the given filename. It
+// supports certificates formats PEM and DER.
+func ReadStepCertificate(filename string) (*stepx509.Certificate, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errs.FileError(err, filename)
+	}
+
+	// PEM format
+	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
+		crt, err := Read(filename, []Options{WithStepCrypto()}...)
+		if err != nil {
+			return nil, err
+		}
+		switch crt := crt.(type) {
+		case *stepx509.Certificate:
+			return crt, nil
+		default:
+			return nil, errors.Errorf("error decoding PEM: file '%s' does not contain a certificate", filename)
+		}
+	}
+
+	// DER format (binary)
+	crt, err := stepx509.ParseCertificate(b)
 	return crt, errors.Wrapf(err, "error parsing %s", filename)
 }
 
@@ -243,17 +284,17 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE":
 		if ctx.stepCrypto {
-			crt, err := x509.ParseCertificate(block.Bytes)
+			crt, err := stepx509.ParseCertificate(block.Bytes)
 			return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
 		}
-		crt, err := realx509.ParseCertificate(block.Bytes)
+		crt, err := x509.ParseCertificate(block.Bytes)
 		return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE REQUEST":
 		if ctx.stepCrypto {
-			csr, err := x509.ParseCertificateRequest(block.Bytes)
+			csr, err := stepx509.ParseCertificateRequest(block.Bytes)
 			return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
 		}
-		csr, err := realx509.ParseCertificateRequest(block.Bytes)
+		csr, err := x509.ParseCertificateRequest(block.Bytes)
 		return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	default:
 		return nil, errors.Errorf("error decoding %s: contains an unexpected header '%s'", ctx.filename, block.Type)
@@ -357,7 +398,7 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 			Type:  "CERTIFICATE",
 			Bytes: k.Raw,
 		}
-	case *realx509.Certificate:
+	case *stepx509.Certificate:
 		p = &pem.Block{
 			Type:  "CERTIFICATE",
 			Bytes: k.Raw,
@@ -367,7 +408,7 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 			Type:  "CERTIFICATE REQUEST",
 			Bytes: k.Raw,
 		}
-	case *realx509.CertificateRequest:
+	case *stepx509.CertificateRequest:
 		p = &pem.Block{
 			Type:  "CERTIFICATE REQUEST",
 			Bytes: k.Raw,
@@ -413,7 +454,7 @@ func ParseDER(b []byte) (interface{}, error) {
 
 	// Try public key
 	if err != nil {
-		if key, err = x509.ParsePKIXPublicKey(b); err != nil {
+		if key, err = ParsePKIXPublicKey(b); err != nil {
 			if key, err = x509.ParsePKCS1PublicKey(b); err != nil {
 				return nil, errors.New("error decoding DER; bad format")
 			}

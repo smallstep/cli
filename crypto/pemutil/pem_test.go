@@ -4,7 +4,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
-	realx509 "crypto/x509"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
 	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -163,6 +163,7 @@ func TestReadCertificate(t *testing.T) {
 		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
 		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
 		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded key")},
+		{"testdata/badder.crt", errors.New("error parsing testdata/badder.crt: asn1: syntax error: data truncated")},
 		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
 	}
 
@@ -174,7 +175,39 @@ func TestReadCertificate(t *testing.T) {
 			}
 		} else {
 			assert.NoError(t, err)
-			assert.Type(t, &realx509.Certificate{}, crt)
+			assert.Type(t, &x509.Certificate{}, crt)
+		}
+	}
+}
+
+func TestReadCertificateBundle(t *testing.T) {
+	tests := []struct {
+		fn  string
+		len int
+		err error
+	}{
+		{"testdata/ca.crt", 1, nil},
+		{"testdata/ca.der", 1, nil},
+		{"testdata/bundle.crt", 2, nil},
+		{"testdata/notexists.crt", 0, errors.New("open testdata/notexists.crt failed: no such file or directory")},
+		{"testdata/badca.crt", 0, errors.New("error parsing testdata/badca.crt")},
+		{"testdata/badpem.crt", 0, errors.New("error decoding PEM: file 'testdata/badpem.crt' contains unexpected data")},
+		{"testdata/badder.crt", 0, errors.New("error parsing testdata/badder.crt: asn1: syntax error: data truncated")},
+		{"testdata/openssl.p256.pem", 0, errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' is not a certificate bundle")},
+	}
+
+	for _, tc := range tests {
+		certs, err := ReadCertificateBundle(tc.fn)
+		if tc.err != nil {
+			if assert.Error(t, err, tc.fn) {
+				assert.HasPrefix(t, err.Error(), tc.err.Error())
+			}
+		} else {
+			assert.NoError(t, err)
+			assert.Len(t, tc.len, certs, tc.fn)
+			for i := range certs {
+				assert.Type(t, &x509.Certificate{}, certs[i])
+			}
 		}
 	}
 }
@@ -189,6 +222,7 @@ func TestReadStepCertificate(t *testing.T) {
 		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
 		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
 		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded key")},
+		{"testdata/badder.crt", errors.New("error parsing testdata/badder.crt: asn1: syntax error: data truncated")},
 		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
 	}
 
@@ -200,7 +234,7 @@ func TestReadStepCertificate(t *testing.T) {
 			}
 		} else {
 			assert.NoError(t, err)
-			assert.Type(t, &x509.Certificate{}, crt)
+			assert.Type(t, &stepx509.Certificate{}, crt)
 		}
 	}
 }
@@ -273,7 +307,7 @@ func TestParsePEM(t *testing.T) {
 			return &ParseTest{
 				in:      b,
 				opts:    nil,
-				cmpType: &realx509.Certificate{},
+				cmpType: &x509.Certificate{},
 			}
 		},
 		"success-stepx509-crt": func(t *testing.T) *ParseTest {
@@ -282,7 +316,7 @@ func TestParsePEM(t *testing.T) {
 			return &ParseTest{
 				in:      b,
 				opts:    []Options{WithStepCrypto()},
-				cmpType: &x509.Certificate{},
+				cmpType: &stepx509.Certificate{},
 			}
 		},
 	}

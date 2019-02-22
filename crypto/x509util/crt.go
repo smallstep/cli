@@ -1,7 +1,9 @@
 package x509util
 
 import (
-	realx509 "crypto/x509"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"io/ioutil"
 	"net"
@@ -12,6 +14,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
 )
+
+// Fingerprint returns the SHA-256 fingerprint of the certificate.
+func Fingerprint(cert *x509.Certificate) string {
+	sum := sha256.Sum256(cert.Raw)
+	return strings.ToLower(hex.EncodeToString(sum[:]))
+}
 
 // SplitSANs splits a slice of Subject Alternative Names into slices of
 // IP Addresses and DNS Names. If an element is not an IP address, then it
@@ -35,7 +43,7 @@ func SplitSANs(sans []string) (dnsNames []string, ips []net.IP) {
 
 // ReadCertPool loads a certificate pool from disk.
 // *path*: a file, a directory, or a comma-separated list of files.
-func ReadCertPool(path string) (*realx509.CertPool, error) {
+func ReadCertPool(path string) (*x509.CertPool, error) {
 	info, err := os.Stat(path)
 	if err != nil && !os.IsNotExist(err) {
 		return nil, errors.Wrapf(err, "os.Stat %s failed", path)
@@ -43,7 +51,7 @@ func ReadCertPool(path string) (*realx509.CertPool, error) {
 
 	var (
 		files []string
-		pool  = realx509.NewCertPool()
+		pool  = x509.NewCertPool()
 	)
 	if info != nil && info.IsDir() {
 		finfos, err := ioutil.ReadDir(path)
