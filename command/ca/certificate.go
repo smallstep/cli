@@ -3,6 +3,7 @@ package ca
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"os"
 	"strings"
 
@@ -82,6 +83,8 @@ the complete set of subjective alternative names in the token 1:1. Use the '--sa
 flag multiple times to configure multiple SANs. The '--san' flag and the '--token'
 flag are mutually exlusive.`,
 			},
+			offlineFlag,
+			caConfigFlag,
 			flags.Force,
 		},
 	}
@@ -137,6 +140,11 @@ func newCertificateAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	hostname := args.Get(0)
 	crtFile, keyFile := args.Get(1), args.Get(2)
+	offline := ctx.Bool("offline")
+
+	if offline {
+		return signCertificateOfflineFlow(ctx, hostname, crtFile, keyFile)
+	}
 
 	token := ctx.String("token")
 	if len(token) == 0 {
@@ -252,6 +260,87 @@ func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) 
 	}
 
 	return newTokenFlow(ctx, subject, sans, caURL, root, "", "", "", "", notBefore, notAfter)
+}
+
+func signCertificateOfflineFlow(ctx *cli.Context, subject, crtFile, keyFile string) error {
+	configFile := ctx.String("ca-config")
+	offlineCA, err := newOfflineCA(configFile)
+	if err != nil {
+		return err
+	}
+
+	audience := ctx.String("ca-url")
+	if len(audience) == 0 {
+		if len(offlineCA.config.DNSNames) > 0 {
+			audience = fmt.Sprintf("https://%s/sign", offlineCA.config.DNSNames[0])
+		} else {
+			return errs.RequiredUnlessFlag(ctx, "ca-url", "token")
+		}
+	} else {
+		audience, err = parseAudience(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	root := ctx.String("root")
+	if len(root) == 0 {
+		root = offlineCA.config.Root.First()
+		if _, err := os.Stat(root); err != nil {
+			return errs.RequiredUnlessFlag(ctx, "root", "token")
+		}
+	}
+
+	// parse times or durations
+	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+
+	sans := ctx.StringSlice("san")
+
+	token, err := offlineCA.GenerateToken(subject, sans, audience, root, notBefore, notAfter)
+	if err != nil {
+		return err
+	}
+
+	req, pk, err := ca.CreateSignRequest(token)
+	if err != nil {
+		return err
+	}
+	req.NotAfter = notAfter
+	req.NotBefore = notBefore
+
+	resp, err := offlineCA.Sign(req)
+	if err != nil {
+		return err
+	}
+
+	serverBlock, err := pemutil.Serialize(resp.ServerPEM.Certificate)
+	if err != nil {
+		return err
+	}
+	caBlock, err := pemutil.Serialize(resp.CaPEM.Certificate)
+	if err != nil {
+		return err
+	}
+	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
+	if err := utils.WriteFile(crtFile, data, 0600); err != nil {
+		return errs.FileError(err, crtFile)
+	}
+
+	_, err = pemutil.Serialize(pk, pemutil.ToFile(keyFile, 0600))
+	if err != nil {
+		return err
+	}
+
+	ui.PrintSelected("Certificate", crtFile)
+	ui.PrintSelected("Private Key", keyFile)
+	return nil
 }
 
 func signCertificateRequest(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {

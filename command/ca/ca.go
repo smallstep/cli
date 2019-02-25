@@ -2,11 +2,13 @@ package ca
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/ca/provisioner"
+	"github.com/smallstep/cli/config"
 	"github.com/urfave/cli"
 )
 
@@ -121,6 +123,19 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 used, it is a sequence of decimal numbers, each with optional fraction and a
 unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 "us" (or "µs"), "ms", "s", "m", "h".`,
+	}
+
+	offlineFlag = cli.BoolFlag{
+		Name: "offline",
+		Usage: `Creates a certificate without contacting the certificate authority. Offline mode
+requires the CA configuration file given using the '--ca-config>' flag.`,
+	}
+
+	caConfigFlag = cli.StringFlag{
+		Name: "ca-config",
+		Usage: `The <path> to the certificate authority configuration file. Defaults to
+$STEPPATH/config/ca.json`,
+		Value: filepath.Join(config.StepPath(), "config", "ca.json"),
 	}
 
 	provisionerKidFlag = cli.StringFlag{
