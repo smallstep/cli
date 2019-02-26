@@ -197,9 +197,9 @@ All changes to behavior *must* be documented in the [CHANGELOG.md](./CHANGELOG.m
 To get started with local development, you will need three things:
 
 - Golang installed locally (instructions available
-[here](https://golang.org/doc/install).
+[here](https://golang.org/doc/install)).
 - dep installed locally (instructions available
-[here](https://golang.github.io/dep/docs/installation.html).
+[here](https://golang.github.io/dep/docs/installation.html)).
 - A version of `make` available for usage of the `Makefile`.
 - The repository checked out in the appropriate location of your `$GOPATH`.
 
