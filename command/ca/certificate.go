@@ -154,15 +154,14 @@ func newCertificateAction(ctx *cli.Context) error {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
 	}
 
-	// Use offline flow
-	if offline {
-		return signCertificateOfflineFlow(ctx, hostname, crtFile, keyFile)
+	// certificate flow unifies online and offline flows on a single api
+	flow, err := newCertificateFlow(ctx)
+	if err != nil {
+		return err
 	}
 
-	// Use online flow
 	if len(token) == 0 {
-		// Start token flow
-		if tok, err := signCertificateTokenFlow(ctx, hostname); err == nil {
+		if tok, err := flow.GenerateToken(ctx, hostname); err == nil {
 			token = tok
 		} else {
 			return err
@@ -182,7 +181,7 @@ func newCertificateAction(ctx *cli.Context) error {
 		return errors.Errorf("token subject '%s' and hostname '%s' do not match", req.CsrPEM.Subject.CommonName, hostname)
 	}
 
-	if err := signCertificateRequest(ctx, token, req.CsrPEM, crtFile); err != nil {
+	if err := flow.Sign(ctx, token, req.CsrPEM, crtFile); err != nil {
 		return err
 	}
 
@@ -204,28 +203,40 @@ func signCertificateAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	csrFile := args.Get(0)
 	crtFile := args.Get(1)
+	token := ctx.String("token")
+	offline := ctx.Bool("offline")
 
 	csrInt, err := pemutil.Read(csrFile)
 	if err != nil {
 		return err
 	}
-
 	csr, ok := csrInt.(*x509.CertificateRequest)
 	if !ok {
 		return errors.Errorf("error parsing %s: file is not a certificate request", csrFile)
 	}
 
-	token := ctx.String("token")
+	// ofline and token are incompatible because the token is generated before
+	// the start of the offline CA.
+	if offline && len(token) != 0 {
+		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
+	}
+
+	// certificate flow unifies online and offline flows on a single api
+	flow, err := newCertificateFlow(ctx)
+	if err != nil {
+		return err
+	}
+
 	if len(token) == 0 {
 		// Start token flow using common name as the hostname
-		if tok, err := signCertificateTokenFlow(ctx, csr.Subject.CommonName); err == nil {
+		if tok, err := flow.GenerateToken(ctx, csr.Subject.CommonName); err == nil {
 			token = tok
 		} else {
 			return err
 		}
 	}
 
-	if err := signCertificateRequest(ctx, token, api.NewCertificateRequest(csr), crtFile); err != nil {
+	if err := flow.Sign(ctx, token, api.NewCertificateRequest(csr), crtFile); err != nil {
 		return err
 	}
 
@@ -238,10 +249,84 @@ type tokenClaims struct {
 	jose.Claims
 }
 
-func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) {
-	var err error
-	sans := ctx.StringSlice("san")
+type certificateFlow struct {
+	offlineCA *offlineCA
+	offline   bool
+}
 
+func newCertificateFlow(ctx *cli.Context) (*certificateFlow, error) {
+	var err error
+	var offlineClient *offlineCA
+
+	offline := ctx.Bool("offline")
+	if offline {
+		caConfig := ctx.String("ca-config")
+		if caConfig == "" {
+			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
+		}
+		offlineClient, err = newOfflineCA(caConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &certificateFlow{
+		offlineCA: offlineClient,
+		offline:   offline,
+	}, nil
+}
+
+func (f *certificateFlow) getClient(ctx *cli.Context, subject, token string) (caClient, error) {
+	if f.offline {
+		return f.offlineCA, nil
+	}
+
+	// Create online client
+	root := ctx.String("root")
+	caURL := ctx.String("ca-url")
+
+	tok, err := jose.ParseSigned(token)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing flag '--token'")
+	}
+	var claims tokenClaims
+	if err := tok.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return nil, errors.Wrap(err, "error parsing flag '--token'")
+	}
+	if strings.ToLower(claims.Subject) != strings.ToLower(subject) {
+		return nil, errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", claims.Subject, subject)
+	}
+
+	// Prepare client for bootstrap or provisioning tokens
+	var options []ca.ClientOption
+	if len(claims.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
+		caURL = claims.Audience[0]
+		options = append(options, ca.WithRootSHA256(claims.SHA))
+	} else {
+		if len(caURL) == 0 {
+			return nil, errs.RequiredFlag(ctx, "ca-url")
+		}
+		if len(root) == 0 {
+			root = pki.GetRootCAPath()
+			if _, err := os.Stat(root); err != nil {
+				return nil, errs.RequiredFlag(ctx, "root")
+			}
+		}
+		options = append(options, ca.WithRootFile(root))
+	}
+
+	ui.PrintSelected("CA", caURL)
+	return ca.NewClient(caURL, options...)
+}
+
+func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string) (string, error) {
+	// For offline just generate the token
+	if f.offline {
+		return f.offlineCA.GenerateToken(ctx, subject)
+	}
+
+	// Use online CA to get the provisioners and generate the token
+	sans := ctx.StringSlice("san")
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
@@ -265,6 +350,7 @@ func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) 
 		return "", errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 
+	var err error
 	if subject == "" {
 		subject, err = ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
 		if err != nil {
@@ -275,110 +361,14 @@ func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) 
 	return newTokenFlow(ctx, subject, sans, caURL, root, "", "", "", "", notBefore, notAfter)
 }
 
-func signCertificateOfflineFlow(ctx *cli.Context, subject, crtFile, keyFile string) error {
-	caConfig := ctx.String("ca-config")
-	if caConfig == "" {
-		return errs.InvalidFlagValue(ctx, "ca-config", "", "")
-	}
-
-	offlineCA, err := newOfflineCA(caConfig)
+func (f *certificateFlow) Sign(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {
+	client, err := f.getClient(ctx, csr.Subject.CommonName, token)
 	if err != nil {
 		return err
 	}
-
-	token, err := offlineCA.GenerateToken(ctx, subject)
-	if err != nil {
-		return err
-	}
-
-	req, pk, err := ca.CreateSignRequest(token)
-	if err != nil {
-		return err
-	}
-
-	// add validity if used
-	notBefore, notAfter, err := parseValidity(ctx)
-	if err != nil {
-		return err
-	}
-	req.NotAfter = notAfter
-	req.NotBefore = notBefore
-
-	resp, err := offlineCA.Sign(req)
-	if err != nil {
-		return err
-	}
-
-	// Save files
-	serverBlock, err := pemutil.Serialize(resp.ServerPEM.Certificate)
-	if err != nil {
-		return err
-	}
-	caBlock, err := pemutil.Serialize(resp.CaPEM.Certificate)
-	if err != nil {
-		return err
-	}
-	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
-	if err := utils.WriteFile(crtFile, data, 0600); err != nil {
-		return errs.FileError(err, crtFile)
-	}
-
-	_, err = pemutil.Serialize(pk, pemutil.ToFile(keyFile, 0600))
-	if err != nil {
-		return err
-	}
-
-	ui.PrintSelected("Certificate", crtFile)
-	ui.PrintSelected("Private Key", keyFile)
-	return nil
-}
-
-func signCertificateRequest(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {
-	root := ctx.String("root")
-	caURL := ctx.String("ca-url")
 
 	// parse times or durations
-	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
-	if !ok {
-		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
-	}
-	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
-	if !ok {
-		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
-	}
-
-	tok, err := jose.ParseSigned(token)
-	if err != nil {
-		return errors.Wrap(err, "error parsing flag '--token'")
-	}
-	var claims tokenClaims
-	if err := tok.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return errors.Wrap(err, "error parsing flag '--token'")
-	}
-	if strings.ToLower(claims.Subject) != strings.ToLower(csr.Subject.CommonName) {
-		return errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", claims.Subject, csr.Subject.CommonName)
-	}
-
-	// Prepare client for bootstrap or provisioning tokens
-	var options []ca.ClientOption
-	if len(claims.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
-		caURL = claims.Audience[0]
-		options = append(options, ca.WithRootSHA256(claims.SHA))
-	} else {
-		if len(caURL) == 0 {
-			return errs.RequiredFlag(ctx, "ca-url")
-		}
-		if len(root) == 0 {
-			root = pki.GetRootCAPath()
-			if _, err := os.Stat(root); err != nil {
-				return errs.RequiredFlag(ctx, "root")
-			}
-		}
-		options = append(options, ca.WithRootFile(root))
-	}
-
-	ui.PrintSelected("CA", caURL)
-	client, err := ca.NewClient(caURL, options...)
+	notBefore, notAfter, err := parseValidity(ctx)
 	if err != nil {
 		return err
 	}

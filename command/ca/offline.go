@@ -23,6 +23,11 @@ type offlineProvisionersSelect struct {
 	EncryptedKey string
 }
 
+type caClient interface {
+	Sign(req *api.SignRequest) (*api.SignResponse, error)
+	Renew(tr http.RoundTripper) (*api.SignResponse, error)
+}
+
 // oflineCA is a wrapper on top of the certificates authority methods that
 type offlineCA struct {
 	authority  *authority.Authority

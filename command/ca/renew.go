@@ -338,10 +338,6 @@ func runExecCmd(execCmd string) error {
 	return cmd.Run()
 }
 
-type caClient interface {
-	Renew(tr http.RoundTripper) (*api.SignResponse, error)
-}
-
 type renewer struct {
 	client    caClient
 	transport *http.Transport
