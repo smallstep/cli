@@ -18,6 +18,17 @@ import (
 // indicates STDIN as a file to be read.
 const stdinFilename = "-"
 
+// FileExists is a wrapper on os.Stat that returns false if os.Stat returns an
+// error, it returns true otherwise. This method does not care if os.Stat
+// returns any other kind of errors.
+func FileExists(path string) bool {
+	if path == "" {
+		return false
+	}
+	_, err := os.Stat(path)
+	return err == nil
+}
+
 // ReadAll returns a slice of bytes with the content of the given reader.
 func ReadAll(r io.Reader) ([]byte, error) {
 	b, err := ioutil.ReadAll(r)
