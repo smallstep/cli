@@ -292,7 +292,12 @@ func createAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	dnsNames, ips := x509util.SplitSANs(ctx.StringSlice("san"))
+
+	sans := ctx.StringSlice("san")
+	if len(sans) == 0 {
+		sans = []string{subject}
+	}
+	dnsNames, ips := x509util.SplitSANs(sans)
 
 	var (
 		priv       interface{}
