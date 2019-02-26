@@ -270,12 +270,12 @@ func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) 
 }
 
 func signCertificateOfflineFlow(ctx *cli.Context, subject, crtFile, keyFile string) error {
-	configFile := ctx.String("ca-config")
-	if configFile == "" {
+	caConfig := ctx.String("ca-config")
+	if caConfig == "" {
 		return errs.InvalidFlagValue(ctx, "ca-config", "", "")
 	}
 
-	offlineCA, err := newOfflineCA(configFile)
+	offlineCA, err := newOfflineCA(caConfig)
 	if err != nil {
 		return err
 	}

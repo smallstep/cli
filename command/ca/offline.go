@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -77,7 +78,9 @@ func (c *offlineCA) Provisioners() []*authority.Provisioner {
 	return c.config.AuthorityConfig.Provisioners
 }
 
-// Sign is a wrapper on top of certificates Authorize and Sign methods. It returns the requested certificate with the intermediate.
+// Sign is a wrapper on top of certificates Authorize and Sign methods. It
+// returns an api.SignResponse with the requested certificate and the
+// intermediate.
 func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 	opts, err := c.authority.Authorize(req.OTT)
 	if err != nil {
@@ -98,9 +101,26 @@ func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 	}, nil
 }
 
-// Renew is a wrapper on top of certificates Renew method. It returns the requested certificate with the intermediate.
-func (c *offlineCA) Renew(peer *x509.Certificate) (*x509.Certificate, *x509.Certificate, error) {
-	return c.authority.Renew(peer)
+// Renew is a wrapper on top of certificates Renew method. It returns an
+// api.SignResponse with the requested certificate and the intermediate.
+func (c *offlineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
+	// it should not panic as this is always internal code
+	tr := rt.(*http.Transport)
+	asn1Data := tr.TLSClientConfig.Certificates[0].Certificate[0]
+	peer, err := x509.ParseCertificate(asn1Data)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing certificate")
+	}
+	// renew cert using authority
+	cert, root, err := c.authority.Renew(peer)
+	if err != nil {
+		return nil, err
+	}
+	return &api.SignResponse{
+		ServerPEM:  api.Certificate{cert},
+		CaPEM:      api.Certificate{root},
+		TLSOptions: c.authority.GetTLSOptions(),
+	}, nil
 }
 
 func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string) (string, error) {
