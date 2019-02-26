@@ -142,7 +142,7 @@ func newCertificateAction(ctx *cli.Context) error {
 	token := ctx.String("token")
 	offline := ctx.Bool("offline")
 
-	// ofline and token are imcompatible because the token is generated before
+	// ofline and token are incompatible because the token is generated before
 	// the start of the offline CA.
 	if offline && len(token) != 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
