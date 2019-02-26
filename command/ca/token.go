@@ -101,7 +101,13 @@ $ step ca token internal.example.com \
     --root /path/to/root_ca.crt
 '''
 
-Get a new token using the offline mode:
+Get a new token using the simple offline mode, requires the file ca.json
+created with **step ca init**:
+'''
+$ step ca token internal.example.com --offline
+'''
+
+Get a new token using the offline mode with all the parameters:
 '''
 $ step ca token internal.example.com \
     --offline \
@@ -110,7 +116,9 @@ $ step ca token internal.example.com \
     --key provisioner.key \
     --ca-url https://ca.example.com \
     --root /path/to/root_ca.crt
-'''`,
+'''
+
+`,
 		Flags: []cli.Flag{
 			provisionerKidFlag,
 			provisionerIssuerFlag,
@@ -118,21 +126,6 @@ $ step ca token internal.example.com \
 			rootFlag,
 			notBeforeFlag,
 			notAfterFlag,
-			passwordFileFlag,
-			cli.StringFlag{
-				Name:  "output-file",
-				Usage: "The destination <file> of the generated one-time token.",
-			},
-			cli.StringFlag{
-				Name: "key",
-				Usage: `The private key <file> used to sign the JWT. This is usually downloaded from
-the certificate authority.`,
-			},
-			cli.BoolFlag{
-				Name: "offline",
-				Usage: `Creates a token without contacting the certificate authority. Offline mode
-requires the flags <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
-			},
 			cli.StringSliceFlag{
 				Name: "san",
 				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
@@ -140,6 +133,22 @@ authorized to request. A certificate signing request using this token must match
 the complete set of subjective alternative names in the token 1:1. Use the '--san'
 flag multiple times to configure multiple SANs.`,
 			},
+			cli.StringFlag{
+				Name: "key",
+				Usage: `The private key <file> used to sign the JWT. This is usually downloaded from
+the certificate authority.`,
+			},
+			passwordFileFlag,
+			cli.StringFlag{
+				Name:  "output-file",
+				Usage: "The destination <file> of the generated one-time token.",
+			},
+			cli.BoolFlag{
+				Name: "offline",
+				Usage: `Creates a token without contacting the certificate authority. Offline mode
+requires the flags <--ca-config> or <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
+			},
+			caConfigFlag,
 			flags.Force,
 		},
 	}
@@ -185,31 +194,7 @@ func newTokenAction(ctx *cli.Context) error {
 	var err error
 	var token string
 	if offline {
-		switch {
-		case len(kid) == 0:
-			return errs.RequiredWithFlag(ctx, "offline", "kid")
-		case len(issuer) == 0:
-			return errs.RequiredWithFlag(ctx, "offline", "issuer")
-		case len(keyFile) == 0:
-			return errs.RequiredWithFlag(ctx, "offline", "key")
-		}
-
-		// Get audience from ca-url
-		audience, err := parseAudience(ctx)
-		if err != nil {
-			return err
-		}
-
-		var opts []jose.Option
-		if len(passwordFile) != 0 {
-			opts = append(opts, jose.WithPasswordFile(passwordFile))
-		}
-		jwk, err := jose.ParseKey(keyFile, opts...)
-		if err != nil {
-			return err
-		}
-
-		token, err = generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+		token, err = offlineTokenFlow(ctx, subject)
 		if err != nil {
 			return err
 		}
@@ -383,6 +368,69 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 		if err != nil {
 			return "", err
 		}
+	}
+
+	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+}
+
+func offlineTokenFlow(ctx *cli.Context, subject string) (string, error) {
+	caConfig := ctx.String("ca-config")
+	if caConfig == "" {
+		return "", errs.InvalidFlagValue(ctx, "ca-config", "", "")
+	}
+
+	// Using the offline CA
+	if utils.FileExists(caConfig) {
+		offlineCA, err := newOfflineCA(caConfig)
+		if err != nil {
+			return "", err
+		}
+
+		return offlineCA.GenerateToken(ctx, subject)
+	}
+
+	kid := ctx.String("kid")
+	issuer := ctx.String("issuer")
+	keyFile := ctx.String("key")
+	passwordFile := ctx.String("password-file")
+	sans := ctx.StringSlice("san")
+
+	notBefore, notAfter, err := parseValidity(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	// Require kid, issuer and keyFile if ca.json does not exists
+	switch {
+	case len(kid) == 0:
+		return "", errs.RequiredWithFlag(ctx, "offline", "kid")
+	case len(issuer) == 0:
+		return "", errs.RequiredWithFlag(ctx, "offline", "issuer")
+	case len(keyFile) == 0:
+		return "", errs.RequiredWithFlag(ctx, "offline", "key")
+	}
+
+	// Get audience from ca-url
+	audience, err := parseAudience(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	root := ctx.String("root")
+	if len(root) == 0 {
+		root = pki.GetRootCAPath()
+		if utils.FileExists(root) {
+			return "", errs.RequiredFlag(ctx, "root")
+		}
+	}
+
+	var opts []jose.Option
+	if len(passwordFile) != 0 {
+		opts = append(opts, jose.WithPasswordFile(passwordFile))
+	}
+	jwk, err := jose.ParseKey(keyFile, opts...)
+	if err != nil {
+		return "", err
 	}
 
 	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
