@@ -107,6 +107,20 @@ $ step certificate inspect example.com.crt --format json | jq -r .validity.end
 $ step certificate inspect https://smallstep.com --format json | jq -r .validity.end
 ```
 
+You can install your root certificate locally:
+
+```
+$ step certificate install root-ca.crt
+```
+
+And issued certificates will work in your browser and with tools like `curl`. See [our blog post](https://smallstep.com/blog/step-v0-8-6-valid-HTTPS-certificates-for-dev-pre-prod.html) for more info.
+
+![Browser demo of HTTPS working without warnings](https://smallstep.com/images/blog/2019-02-25-localhost-tls.png)
+
+Alternatively, for internal service-to-service communication, you can [configure your code and infrastructure to trust your root certificate](https://github.com/smallstep/certificates/tree/master/autocert/examples/hello-mtls).
+
+If you need certificates for your microservices, containers, or other internal services see [step certificates](https://github.com/smallstep/certificates), a sub-project that adds an online certificate authority and automated certificate management tools to `step`.
+
 ### JSON Object Signing & Encryption (JOSE)
 
 Create a [JSON Web Key](https://tools.ietf.org/html/rfc7517) (JWK), add the
