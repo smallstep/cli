@@ -1,7 +1,6 @@
 package ca
 
 import (
-	"crypto/x509"
 	"encoding/pem"
 	"os"
 	"strings"
@@ -95,48 +94,6 @@ flag are mutually exlusive.`,
 	}
 }
 
-func signCertificateCommand() cli.Command {
-	return cli.Command{
-		Name:   "sign",
-		Action: command.ActionFunc(signCertificateAction),
-		Usage:  "generate a new certificate signing a certificate request",
-		UsageText: `**step ca sign** <csr-file> <crt-file>
-		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
-		Description: `**step ca sign** command signs the given csr and generates a new certificate.
-
-## POSITIONAL ARGUMENTS
-
-<csr-file>
-:  File with the certificate signing request (PEM format)
-
-<crt-file>
-:  File to write the certificate (PEM format)
-
-## EXAMPLES
-
-Sign a new certificate for the given CSR:
-'''
-$ TOKEN=$(step ca token internal.example.com)
-$ step ca sign --token $TOKEN internal.csr internal.crt
-'''
-
-Sign a new certificate with a 1h validity:
-'''
-$ TOKEN=$(step ca token internal.example.com)
-$ step ca sign --token $TOKEN --not-after=1h internal.csr internal.crt
-'''`,
-		Flags: []cli.Flag{
-			tokenFlag,
-			caURLFlag,
-			rootFlag,
-			notBeforeFlag,
-			notAfterFlag,
-			flags.Force,
-		},
-	}
-}
-
 func newCertificateAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 3); err != nil {
 		return err
@@ -192,55 +149,6 @@ func newCertificateAction(ctx *cli.Context) error {
 
 	ui.PrintSelected("Certificate", crtFile)
 	ui.PrintSelected("Private Key", keyFile)
-	return nil
-}
-
-func signCertificateAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 2); err != nil {
-		return err
-	}
-
-	args := ctx.Args()
-	csrFile := args.Get(0)
-	crtFile := args.Get(1)
-	token := ctx.String("token")
-	offline := ctx.Bool("offline")
-
-	csrInt, err := pemutil.Read(csrFile)
-	if err != nil {
-		return err
-	}
-	csr, ok := csrInt.(*x509.CertificateRequest)
-	if !ok {
-		return errors.Errorf("error parsing %s: file is not a certificate request", csrFile)
-	}
-
-	// ofline and token are incompatible because the token is generated before
-	// the start of the offline CA.
-	if offline && len(token) != 0 {
-		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
-	}
-
-	// certificate flow unifies online and offline flows on a single api
-	flow, err := newCertificateFlow(ctx)
-	if err != nil {
-		return err
-	}
-
-	if len(token) == 0 {
-		// Start token flow using common name as the hostname
-		if tok, err := flow.GenerateToken(ctx, csr.Subject.CommonName); err == nil {
-			token = tok
-		} else {
-			return err
-		}
-	}
-
-	if err := flow.Sign(ctx, token, api.NewCertificateRequest(csr), crtFile); err != nil {
-		return err
-	}
-
-	ui.PrintSelected("Certificate", crtFile)
 	return nil
 }
 
