@@ -3,7 +3,6 @@ package ca
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"os"
 	"strings"
 
@@ -140,13 +139,21 @@ func newCertificateAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	hostname := args.Get(0)
 	crtFile, keyFile := args.Get(1), args.Get(2)
+	token := ctx.String("token")
 	offline := ctx.Bool("offline")
 
+	// ofline and token are imcompatible because the token is generated before
+	// the start of the offline CA.
+	if offline && len(token) != 0 {
+		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
+	}
+
+	// Use offline flow
 	if offline {
 		return signCertificateOfflineFlow(ctx, hostname, crtFile, keyFile)
 	}
 
-	token := ctx.String("token")
+	// Use online flow
 	if len(token) == 0 {
 		// Start token flow
 		if tok, err := signCertificateTokenFlow(ctx, hostname); err == nil {
@@ -264,51 +271,27 @@ func signCertificateTokenFlow(ctx *cli.Context, subject string) (string, error) 
 
 func signCertificateOfflineFlow(ctx *cli.Context, subject, crtFile, keyFile string) error {
 	configFile := ctx.String("ca-config")
+	if configFile == "" {
+		return errs.InvalidFlagValue(ctx, "ca-config", "", "")
+	}
+
 	offlineCA, err := newOfflineCA(configFile)
 	if err != nil {
 		return err
 	}
 
-	audience := ctx.String("ca-url")
-	if len(audience) == 0 {
-		if len(offlineCA.config.DNSNames) > 0 {
-			audience = fmt.Sprintf("https://%s/sign", offlineCA.config.DNSNames[0])
-		} else {
-			return errs.RequiredUnlessFlag(ctx, "ca-url", "token")
-		}
-	} else {
-		audience, err = parseAudience(ctx)
-		if err != nil {
-			return err
-		}
-	}
-
-	root := ctx.String("root")
-	if len(root) == 0 {
-		root = offlineCA.config.Root.First()
-		if _, err := os.Stat(root); err != nil {
-			return errs.RequiredUnlessFlag(ctx, "root", "token")
-		}
-	}
-
-	// parse times or durations
-	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
-	if !ok {
-		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
-	}
-	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
-	if !ok {
-		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
-	}
-
-	sans := ctx.StringSlice("san")
-
-	token, err := offlineCA.GenerateToken(subject, sans, audience, root, notBefore, notAfter)
+	token, err := offlineCA.GenerateToken(ctx, subject)
 	if err != nil {
 		return err
 	}
 
 	req, pk, err := ca.CreateSignRequest(token)
+	if err != nil {
+		return err
+	}
+
+	// add validity if used
+	notBefore, notAfter, err := parseValidity(ctx)
 	if err != nil {
 		return err
 	}
@@ -320,6 +303,7 @@ func signCertificateOfflineFlow(ctx *cli.Context, subject, crtFile, keyFile stri
 		return err
 	}
 
+	// Save files
 	serverBlock, err := pemutil.Serialize(resp.ServerPEM.Certificate)
 	if err != nil {
 		return err

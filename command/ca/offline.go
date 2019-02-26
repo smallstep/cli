@@ -3,14 +3,16 @@ package ca
 import (
 	"crypto/x509"
 	"encoding/json"
-	"time"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/urfave/cli"
 )
 
 type offlineProvisionersSelect struct {
@@ -22,8 +24,9 @@ type offlineProvisionersSelect struct {
 
 // oflineCA is a wrapper on top of the certificates authority methods that
 type offlineCA struct {
-	authority *authority.Authority
-	config    authority.Config
+	authority  *authority.Authority
+	config     authority.Config
+	configFile string
 }
 
 // newOfflineCA initializes an offliceCA.
@@ -48,9 +51,30 @@ func newOfflineCA(configFile string) (*offlineCA, error) {
 	}
 
 	return &offlineCA{
-		authority: auth,
-		config:    config,
+		authority:  auth,
+		config:     config,
+		configFile: configFile,
 	}, nil
+}
+
+// Audience returns the token audience.
+func (c *offlineCA) Audience() string {
+	return fmt.Sprintf("https://%s/sign", c.config.DNSNames[0])
+}
+
+// CaURL returns the CA URL using the first DNS entry.
+func (c *offlineCA) CaURL() string {
+	return fmt.Sprintf("https://%s", c.config.DNSNames[0])
+}
+
+// Root returns the path of the file used as root certificate.
+func (c *offlineCA) Root() string {
+	return c.config.Root.First()
+}
+
+// Provisioners returns the list of provisioners configured.
+func (c *offlineCA) Provisioners() []*authority.Provisioner {
+	return c.config.AuthorityConfig.Provisioners
 }
 
 // Sign is a wrapper on top of certificates Authorize and Sign methods. It returns the requested certificate with the intermediate.
@@ -79,14 +103,47 @@ func (c *offlineCA) Renew(peer *x509.Certificate) (*x509.Certificate, *x509.Cert
 	return c.authority.Renew(peer)
 }
 
-func (c *offlineCA) GenerateToken(subject string, sans []string, audience, root string, notBefore, notAfter time.Time) (string, error) {
-	var kid, issuer, key string
+func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string) (string, error) {
+	// Use always ca.json information root and audience
+	root := c.Root()
+	audience := c.Audience()
 
-	provisioners := c.config.AuthorityConfig.Provisioners
+	// Get common parameters
+	sans := ctx.StringSlice("san")
+	passwordFile := ctx.String("password-file")
+	notBefore, notAfter, err := parseValidity(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	// Get provisioner to use
+	var kid, issuer, encryptedKey string
+	provisioners := c.Provisioners()
+
+	// Filter by kid (provisioner key id)
+	if kid = ctx.String("kid"); len(kid) != 0 {
+		provisioners = provisionerFilter(provisioners, func(p *authority.Provisioner) bool {
+			return p.Key.KeyID == kid
+		})
+		if len(provisioners) == 0 {
+			return "", errs.InvalidFlagValue(ctx, "kid", kid, "")
+		}
+	}
+
+	// Filter by issuer (provisioner name)
+	if issuer = ctx.String("issuer"); len(issuer) != 0 {
+		provisioners = provisionerFilter(provisioners, func(p *authority.Provisioner) bool {
+			return p.Name == issuer
+		})
+		if len(provisioners) == 0 {
+			return "", errs.InvalidFlagValue(ctx, "issuer", issuer, "")
+		}
+	}
+
 	if len(provisioners) == 1 {
 		kid = provisioners[0].Key.KeyID
 		issuer = provisioners[0].Name
-		key = provisioners[0].EncryptedKey
+		encryptedKey = provisioners[0].EncryptedKey
 	} else {
 		var items []*offlineProvisionersSelect
 		for _, p := range provisioners {
@@ -103,15 +160,22 @@ func (c *offlineCA) GenerateToken(subject string, sans []string, audience, root 
 		}
 		kid = items[i].Kid
 		issuer = items[i].Issuer
-		key = items[i].EncryptedKey
+		encryptedKey = items[i].EncryptedKey
 	}
 
-	// Add template with check mark
+	// Decrypt encrypted key
 	opts := []jose.Option{
 		jose.WithUIOptions(ui.WithPromptTemplates(ui.PromptTemplates())),
 	}
+	if len(passwordFile) != 0 {
+		opts = append(opts, jose.WithPasswordFile(passwordFile))
+	}
 
-	decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key", []byte(key), opts...)
+	if len(encryptedKey) == 0 {
+		return "", errors.Errorf("provisioner '%s' does not have an 'encryptedKey' property", kid)
+	}
+
+	decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key", []byte(encryptedKey), opts...)
 	if err != nil {
 		return "", err
 	}

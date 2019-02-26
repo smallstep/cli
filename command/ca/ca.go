@@ -4,11 +4,14 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/smallstep/cli/config"
+	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
@@ -191,4 +194,19 @@ func completeURL(rawurl string) (string, error) {
 	// scheme:opaque[?query][#fragment]
 	// rawurl looks like ca.smallstep.com:443 or ca.smallstep.com:443/1.0/sign
 	return completeURL("https://" + rawurl)
+}
+
+// parseValidity parses the not-before and not-after flags as times or durations.
+func parseValidity(ctx *cli.Context) (notBefore time.Time, notAfter time.Time, err error) {
+	var ok bool
+	var zero time.Time
+	notBefore, ok = flags.ParseTimeOrDuration(ctx.String("not-before"))
+	if !ok {
+		return zero, zero, errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, ok = flags.ParseTimeOrDuration(ctx.String("not-after"))
+	if !ok {
+		return zero, zero, errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+	return
 }
