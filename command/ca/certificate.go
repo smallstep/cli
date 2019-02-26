@@ -67,6 +67,12 @@ Request a new certificate with a 1h validity:
 '''
 $ TOKEN=$(step ca token internal.example.com)
 $ step ca certificate --token $TOKEN --not-after=1h internal.example.com internal.crt internal.key
+'''
+
+Request a new certificate using the offline mode, requires the configuration
+files, certificates and keys created with **step ca init**:
+'''
+$ step ca certificate --offline internal.example.com internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
 			tokenFlag,

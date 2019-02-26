@@ -116,6 +116,12 @@ Renew the certificate and convert it to DER:
 $ step ca renew --daemon --renew-period 16h \
   --exec "step certificate format --force --out internal.der internal.crt" \
   internal.crt internal.key
+'''
+
+Renew a certificate using the offline mode, requires the configuration
+files, certificates and keys created with **step ca init**:
+'''
+$ step ca renew --offline internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
 			caURLFlag,

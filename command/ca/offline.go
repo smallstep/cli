@@ -123,6 +123,7 @@ func (c *offlineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 	}, nil
 }
 
+// GenerateToken creates the token used by the authority to sign certificates.
 func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string) (string, error) {
 	// Use always ca.json information root and audience
 	root := c.Root()

@@ -101,8 +101,8 @@ $ step ca token internal.example.com \
     --root /path/to/root_ca.crt
 '''
 
-Get a new token using the simple offline mode, requires the file ca.json
-created with **step ca init**:
+Get a new token using the simple offline mode, requires the configuration
+files, certificates and keys created with **step ca init**:
 '''
 $ step ca token internal.example.com --offline
 '''
