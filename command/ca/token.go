@@ -29,10 +29,10 @@ type provisionersSelect struct {
 	JWK    jose.JSONWebKey
 }
 
-func newTokenCommand() cli.Command {
+func tokenCommand() cli.Command {
 	return cli.Command{
 		Name:   "token",
-		Action: command.ActionFunc(newTokenAction),
+		Action: command.ActionFunc(tokenAction),
 		Usage:  "generate an OTT granting access to the CA",
 		UsageText: `**step ca token** <subject>
 		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -154,7 +154,7 @@ requires the flags <--ca-config> or <--kid>, <--issuer>, <--key>, <--ca-url>, an
 	}
 }
 
-func newTokenAction(ctx *cli.Context) error {
+func tokenAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}

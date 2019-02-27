@@ -19,10 +19,10 @@ import (
 	"github.com/urfave/cli"
 )
 
-func newCertificateCommand() cli.Command {
+func certificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "certificate",
-		Action: command.ActionFunc(newCertificateAction),
+		Action: command.ActionFunc(certificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
 		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -94,7 +94,7 @@ flag are mutually exlusive.`,
 	}
 }
 
-func newCertificateAction(ctx *cli.Context) error {
+func certificateAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 3); err != nil {
 		return err
 	}
