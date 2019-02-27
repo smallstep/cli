@@ -250,7 +250,7 @@ func generateToken(sub string, sans []string, kid, iss, aud, root string, notBef
 	if len(root) > 0 {
 		tokOptions = append(tokOptions, token.WithRootCA(root))
 	}
-	fmt.Println(2, sans)
+
 	// If there are no SANs then add the 'subject' (common-name) as the only SAN.
 	if len(sans) == 0 {
 		sans = []string{sub}
