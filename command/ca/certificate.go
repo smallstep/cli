@@ -118,7 +118,8 @@ func newCertificateAction(ctx *cli.Context) error {
 	}
 
 	if len(token) == 0 {
-		if tok, err := flow.GenerateToken(ctx, hostname); err == nil {
+		sans := ctx.StringSlice("san")
+		if tok, err := flow.GenerateToken(ctx, hostname, sans); err == nil {
 			token = tok
 		} else {
 			return err
@@ -227,14 +228,13 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, token string) (ca
 	return ca.NewClient(caURL, options...)
 }
 
-func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string) (string, error) {
+func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
 	// For offline just generate the token
 	if f.offline {
-		return f.offlineCA.GenerateToken(ctx, subject)
+		return f.offlineCA.GenerateToken(ctx, subject, sans)
 	}
 
 	// Use online CA to get the provisioners and generate the token
-	sans := ctx.StringSlice("san")
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")

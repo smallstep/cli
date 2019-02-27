@@ -129,13 +129,12 @@ func (c *offlineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 }
 
 // GenerateToken creates the token used by the authority to sign certificates.
-func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string) (string, error) {
+func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
 	// Use always ca.json information root and audience
 	root := c.Root()
 	audience := c.Audience()
 
 	// Get common parameters
-	sans := ctx.StringSlice("san")
 	passwordFile := ctx.String("password-file")
 	notBefore, notAfter, err := parseValidity(ctx)
 	if err != nil {

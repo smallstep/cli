@@ -194,7 +194,7 @@ func newTokenAction(ctx *cli.Context) error {
 	var err error
 	var token string
 	if offline {
-		token, err = offlineTokenFlow(ctx, subject)
+		token, err = offlineTokenFlow(ctx, subject, sans)
 		if err != nil {
 			return err
 		}
@@ -250,6 +250,7 @@ func generateToken(sub string, sans []string, kid, iss, aud, root string, notBef
 	if len(root) > 0 {
 		tokOptions = append(tokOptions, token.WithRootCA(root))
 	}
+	fmt.Println(2, sans)
 	// If there are no SANs then add the 'subject' (common-name) as the only SAN.
 	if len(sans) == 0 {
 		sans = []string{sub}
@@ -373,7 +374,7 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }
 
-func offlineTokenFlow(ctx *cli.Context, subject string) (string, error) {
+func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, error) {
 	caConfig := ctx.String("ca-config")
 	if caConfig == "" {
 		return "", errs.InvalidFlagValue(ctx, "ca-config", "", "")
@@ -385,15 +386,13 @@ func offlineTokenFlow(ctx *cli.Context, subject string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-
-		return offlineCA.GenerateToken(ctx, subject)
+		return offlineCA.GenerateToken(ctx, subject, sans)
 	}
 
 	kid := ctx.String("kid")
 	issuer := ctx.String("issuer")
 	keyFile := ctx.String("key")
 	passwordFile := ctx.String("password-file")
-	sans := ctx.StringSlice("san")
 
 	notBefore, notAfter, err := parseValidity(ctx)
 	if err != nil {

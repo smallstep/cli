@@ -96,11 +96,15 @@ func signCertificateAction(ctx *cli.Context) error {
 	}
 
 	if len(token) == 0 {
-		// Start token flow using common name as the hostname
-		if tok, err := flow.GenerateToken(ctx, csr.Subject.CommonName); err == nil {
+		sans := mergeSans(ctx, csr)
+		if tok, err := flow.GenerateToken(ctx, csr.Subject.CommonName, sans); err == nil {
 			token = tok
 		} else {
 			return err
+		}
+	} else {
+		if len(ctx.StringSlice("san")) > 0 {
+			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
 		}
 	}
 
@@ -110,4 +114,29 @@ func signCertificateAction(ctx *cli.Context) error {
 
 	ui.PrintSelected("Certificate", crtFile)
 	return nil
+}
+
+func mergeSans(ctx *cli.Context, csr *x509.CertificateRequest) []string {
+	uniq := make([]string, 0)
+	m := make(map[string]bool)
+	for _, s := range ctx.StringSlice("san") {
+		if _, ok := m[s]; !ok {
+			uniq = append(uniq, s)
+			m[s] = true
+		}
+	}
+	for _, s := range csr.DNSNames {
+		if _, ok := m[s]; !ok {
+			uniq = append(uniq, s)
+			m[s] = true
+		}
+	}
+	for _, ip := range csr.IPAddresses {
+		s := ip.String()
+		if _, ok := m[s]; !ok {
+			uniq = append(uniq, s)
+			m[s] = true
+		}
+	}
+	return uniq
 }
