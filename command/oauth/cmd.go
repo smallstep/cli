@@ -80,6 +80,14 @@ func init() {
 				Value: "google",
 			},
 			cli.StringFlag{
+				Name:  "refresh",
+				Usage: "Refresh existing OAuth/OIDC token(s) using a refresh token with the refresh grant type",
+			},
+			cli.StringFlag{
+				Name:  "revoke",
+				Usage: "Revoke an OAuth access or refresh token",
+			},
+			cli.StringFlag{
 				Name:  "email, e",
 				Usage: "Email to authenticate",
 			},
@@ -106,6 +114,10 @@ func init() {
 			cli.StringFlag{
 				Name:  "token-endpoint",
 				Usage: "OAuth Token Endpoint",
+			},
+			cli.StringFlag{
+				Name:  "revocation-endpoint",
+				Usage: "OAuth Token Revocation Endpoint",
 			},
 			cli.BoolFlag{
 				Name:  "header",
@@ -147,7 +159,7 @@ func oauthCmd(c *cli.Context) error {
 	if err := opts.Validate(); err != nil {
 		return err
 	}
-	if (opts.Provider != "google" || c.IsSet("authorization-endpoint")) && !c.IsSet("client-id") {
+	if (opts.Provider != "google" || c.IsSet("authorization-endpoint")) && !(c.IsSet("client-id") || c.IsSet("revoke")) {
 		return errors.New("flag '--client-id' required with '--provider'")
 	}
 
@@ -168,6 +180,10 @@ func oauthCmd(c *cli.Context) error {
 		authzEp = c.String("authorization-endpoint")
 		tokenEp = c.String("token-endpoint")
 	}
+	revokeEp := ""
+	if c.IsSet("revocation-endpoint") {
+		revokeEp = c.String("revocation-endpoint")
+	}
 
 	do2lo := false
 	issuer := ""
@@ -184,6 +200,7 @@ func oauthCmd(c *cli.Context) error {
 			return errors.Wrapf(err, "error reading %s: unsupported format", filename)
 		}
 
+		// TODO: Other client types are different (e.g., web or otherwise
 		if _, ok := account["installed"]; ok {
 			details := account["installed"].(map[string]interface{})
 			authzEp = details["auth_uri"].(string)
@@ -208,22 +225,32 @@ func oauthCmd(c *cli.Context) error {
 	}
 	audience := c.String("aud")
 
-	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, audience, opts.Email)
+	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scope, audience, opts.Email)
 	if err != nil {
 		return err
+	}
+
+	if c.IsSet("revoke") {
+		return o.DoRevoke(c.String("revoke"))
 	}
 
 	var tok *token
 	if do2lo {
 		if c.Bool("jwt") {
 			if c.IsSet("aud") {
+				// TODO: This should be something like DoJWTClientCredentials or
+				// DoJWTbAT or something? Might want to distinguish between those two:
+				// - JWT client credentials (standardized)
+				// - JWT-bAT (non-standardized? Google-only?)
 				tok, err = o.DoJWTAuthorization(issuer, audience)
 			} else {
 				tok, err = o.DoJWTAuthorization(issuer, scope)
 			}
 		} else {
-			tok, err = o.DoTwoLeggedAuthorization(issuer)
+			tok, err = o.DoTwoLeggedAuthorization(issuer, audience)
 		}
+	} else if c.IsSet("refresh") {
+		tok, err = o.DoRefreshToken(c.String("refresh"))
 	} else if opts.Console {
 		tok, err = o.DoManualAuthorization()
 	} else {
@@ -274,23 +301,24 @@ func (o *options) Validate() error {
 }
 
 type oauth struct {
-	provider         string
-	clientID         string
-	clientSecret     string
-	scope            string
-	audience         string
-	loginHint        string
-	redirectURI      string
-	tokenEndpoint    string
-	authzEndpoint    string
-	userInfoEndpoint string // For testing
-	state            string
-	codeChallenge    string
-	errCh            chan error
-	tokCh            chan *token
+	provider           string
+	clientID           string
+	clientSecret       string
+	scope              string
+	audience           string
+	loginHint          string
+	redirectURI        string
+	tokenEndpoint      string
+	authzEndpoint      string
+	userInfoEndpoint   string // For testing
+	revocationEndpoint string
+	state              string
+	codeChallenge      string
+	errCh              chan error
+	tokCh              chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, audience, loginHint string) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scope, audience, loginHint string) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -304,19 +332,20 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, audienc
 	switch provider {
 	case "google":
 		return &oauth{
-			provider:         provider,
-			clientID:         clientID,
-			clientSecret:     clientSecret,
-			scope:            scope,
-			audience:         audience,
-			authzEndpoint:    "https://accounts.google.com/o/oauth2/v2/auth",
-			tokenEndpoint:    "https://www.googleapis.com/oauth2/v4/token",
-			userInfoEndpoint: "https://www.googleapis.com/oauth2/v3/userinfo",
-			loginHint:        loginHint,
-			state:            state,
-			codeChallenge:    challenge,
-			errCh:            make(chan error),
-			tokCh:            make(chan *token),
+			provider:           provider,
+			clientID:           clientID,
+			clientSecret:       clientSecret,
+			scope:              scope,
+			audience:           audience,
+			authzEndpoint:      "https://accounts.google.com/o/oauth2/v2/auth",
+			tokenEndpoint:      "https://www.googleapis.com/oauth2/v4/token",
+			userInfoEndpoint:   "https://www.googleapis.com/oauth2/v3/userinfo",
+			revocationEndpoint: "https://oauth2.googleapis.com/revoke",
+			loginHint:          loginHint,
+			state:              state,
+			codeChallenge:      challenge,
+			errCh:              make(chan error),
+			tokCh:              make(chan *token),
 		}, nil
 	default:
 		userinfoEp := ""
@@ -334,22 +363,33 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, audienc
 			}
 			authzEp = d["authorization_endpoint"].(string)
 			tokenEp = d["token_endpoint"].(string)
-			userinfoEp = d["token_endpoint"].(string)
+			userinfoEp = d["userinfo_endpoint"].(string)
+		}
+		if revokeEp == "" {
+			d, err := disco(provider)
+			if err != nil {
+				return nil, err
+			}
+
+			if _, ok := d["revocation_endpoint"]; ok {
+				revokeEp = d["revocation_endpoint"].(string)
+			}
 		}
 		return &oauth{
-			provider:         provider,
-			clientID:         clientID,
-			clientSecret:     clientSecret,
-			scope:            scope,
-			audience:         audience,
-			authzEndpoint:    authzEp,
-			tokenEndpoint:    tokenEp,
-			userInfoEndpoint: userinfoEp,
-			loginHint:        loginHint,
-			state:            state,
-			codeChallenge:    challenge,
-			errCh:            make(chan error),
-			tokCh:            make(chan *token),
+			provider:           provider,
+			clientID:           clientID,
+			clientSecret:       clientSecret,
+			scope:              scope,
+			audience:           audience,
+			authzEndpoint:      authzEp,
+			tokenEndpoint:      tokenEp,
+			userInfoEndpoint:   userinfoEp,
+			revocationEndpoint: revokeEp,
+			loginHint:          loginHint,
+			state:              state,
+			codeChallenge:      challenge,
+			errCh:              make(chan error),
+			tokCh:              make(chan *token),
 		}, nil
 	}
 }
@@ -451,9 +491,58 @@ func (o *oauth) DoManualAuthorization() (*token, error) {
 	return tok, nil
 }
 
+// DoRefreshToken performs a the non-interactive refresh_token grant type.
+func (o *oauth) DoRefreshToken(refreshToken string) (*token, error) {
+	data := url.Values{}
+	data.Set("scope", o.scope)
+	data.Set("client_id", o.clientID)
+	data.Set("client_secret", o.clientSecret)
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", refreshToken)
+	if o.audience != "" {
+		data.Set("audience", o.audience)
+	}
+
+	// Send the POST request to obtain the token(s).
+	resp, err := http.PostForm(o.tokenEndpoint, data)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from token endpoint")
+	}
+	defer resp.Body.Close()
+
+	var tok token
+	if err := json.NewDecoder(resp.Body).Decode(&tok); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &tok, nil
+}
+
+// DoRevoke revokes an access or refresh token using the OAuth 2.0 Token
+// Revocation protocol defined in RFC7009.
+func (o *oauth) DoRevoke(token string) error {
+	params := url.Values{
+		"token": []string{token},
+	}
+
+	// Send the POST request to revoke the token
+	resp, err := http.PostForm(o.revocationEndpoint, params)
+	if err != nil {
+		return errors.Wrap(err, "error from revocation endpoint")
+	}
+	defer resp.Body.Close()
+
+	var tok map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&tok); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
 // DoTwoLeggedAuthorization performs two-legged OAuth using the jwt-bearer
 // grant type.
-func (o *oauth) DoTwoLeggedAuthorization(issuer string) (*token, error) {
+func (o *oauth) DoTwoLeggedAuthorization(issuer, audience string) (*token, error) {
 	pemBytes := []byte(o.clientSecret)
 	block, _ := pem.Decode(pemBytes)
 	if block == nil {
@@ -467,12 +556,16 @@ func (o *oauth) DoTwoLeggedAuthorization(issuer string) (*token, error) {
 	// Add claims
 	now := int(time.Now().Unix())
 	c := map[string]interface{}{
-		"aud":   o.tokenEndpoint,
-		"nbf":   now,
-		"iat":   now,
-		"exp":   now + 3600,
-		"iss":   issuer,
-		"scope": o.scope,
+		"aud": o.tokenEndpoint,
+		"nbf": now,
+		"iat": now,
+		"exp": now + 3600,
+		"iss": issuer,
+	}
+	if audience != "" {
+		c["target_audience"] = audience
+	} else {
+		c["scope"] = o.scope
 	}
 
 	so := new(jose.SignerOptions)
@@ -585,6 +678,7 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	tok, err := o.Exchange(o.tokenEndpoint, code)
 	if err != nil {
 		o.badRequest(w, "Failed exchanging authorization code: "+err.Error())
+		return
 	}
 	if tok.Err != "" || tok.ErrDesc != "" {
 		o.badRequest(w, fmt.Sprintf("Failed exchanging authorization code: %s. %s", tok.Err, tok.ErrDesc))
