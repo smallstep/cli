@@ -131,7 +131,8 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 	offlineFlag = cli.BoolFlag{
 		Name: "offline",
 		Usage: `Creates a certificate without contacting the certificate authority. Offline mode
-requires the CA configuration file given using the '--ca-config>' flag.`,
+uses the configuration, certificates, and keys created with **step ca init**,
+but can accept a different configuration file using '--ca-config>' flag.`,
 	}
 
 	caConfigFlag = cli.StringFlag{

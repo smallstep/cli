@@ -119,7 +119,7 @@ $ step ca renew --daemon --renew-period 16h \
 '''
 
 Renew a certificate using the offline mode, requires the configuration
-files, certificates and keys created with **step ca init**:
+files, certificates, and keys created with **step ca init**:
 '''
 $ step ca renew --offline internal.crt internal.key
 '''`,

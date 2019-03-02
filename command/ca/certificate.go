@@ -69,7 +69,7 @@ $ step ca certificate --token $TOKEN --not-after=1h internal.example.com interna
 '''
 
 Request a new certificate using the offline mode, requires the configuration
-files, certificates and keys created with **step ca init**:
+files, certificates, and keys created with **step ca init**:
 '''
 $ step ca certificate --offline internal.example.com internal.crt internal.key
 '''`,
@@ -105,7 +105,7 @@ func certificateAction(ctx *cli.Context) error {
 	token := ctx.String("token")
 	offline := ctx.Bool("offline")
 
-	// ofline and token are incompatible because the token is generated before
+	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
 	if offline && len(token) != 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
@@ -119,9 +119,7 @@ func certificateAction(ctx *cli.Context) error {
 
 	if len(token) == 0 {
 		sans := ctx.StringSlice("san")
-		if tok, err := flow.GenerateToken(ctx, hostname, sans); err == nil {
-			token = tok
-		} else {
+		if token, err = flow.GenerateToken(ctx, hostname, sans); err != nil {
 			return err
 		}
 	} else {

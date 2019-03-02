@@ -28,7 +28,8 @@ type caClient interface {
 	Renew(tr http.RoundTripper) (*api.SignResponse, error)
 }
 
-// oflineCA is a wrapper on top of the certificates authority methods that
+// offlineCA is a wrapper on top of the certificates authority methods that is
+// used to sign certificates without an online CA.
 type offlineCA struct {
 	authority  *authority.Authority
 	config     authority.Config
@@ -78,7 +79,7 @@ func (c *offlineCA) Root() string {
 	return c.config.Root.First()
 }
 
-// Provisioners returns the list of provisioners configured.
+// Provisioners returns the list of configured provisioners.
 func (c *offlineCA) Provisioners() []*authority.Provisioner {
 	return c.config.AuthorityConfig.Provisioners
 }
@@ -95,13 +96,13 @@ func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 		NotBefore: req.NotBefore,
 		NotAfter:  req.NotAfter,
 	}
-	cert, root, err := c.authority.Sign(req.CsrPEM.CertificateRequest, signOpts, opts...)
+	cert, ca, err := c.authority.Sign(req.CsrPEM.CertificateRequest, signOpts, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return &api.SignResponse{
 		ServerPEM:  api.Certificate{cert},
-		CaPEM:      api.Certificate{root},
+		CaPEM:      api.Certificate{ca},
 		TLSOptions: c.authority.GetTLSOptions(),
 	}, nil
 }
@@ -117,20 +118,20 @@ func (c *offlineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 		return nil, errors.Wrap(err, "error parsing certificate")
 	}
 	// renew cert using authority
-	cert, root, err := c.authority.Renew(peer)
+	cert, ca, err := c.authority.Renew(peer)
 	if err != nil {
 		return nil, err
 	}
 	return &api.SignResponse{
 		ServerPEM:  api.Certificate{cert},
-		CaPEM:      api.Certificate{root},
+		CaPEM:      api.Certificate{ca},
 		TLSOptions: c.authority.GetTLSOptions(),
 	}, nil
 }
 
 // GenerateToken creates the token used by the authority to sign certificates.
 func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
-	// Use always ca.json information root and audience
+	// Use ca.json configuration for the root and audience
 	root := c.Root()
 	audience := c.Audience()
 

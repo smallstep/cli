@@ -1,6 +1,8 @@
 package ca
 
 import (
+	"crypto"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -102,7 +104,7 @@ $ step ca token internal.example.com \
 '''
 
 Get a new token using the simple offline mode, requires the configuration
-files, certificates and keys created with **step ca init**:
+files, certificates, and keys created with **step ca init**:
 '''
 $ step ca token internal.example.com --offline
 '''
@@ -374,6 +376,10 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }
 
+// offlineTokenFlow generates a provisioning token using either
+//   1. static configuration from ca.json (created with `step ca init`)
+//   2. input from command line flags
+// These two options are mutually exclusive and priority is given to ca.json.
 func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, error) {
 	caConfig := ctx.String("ca-config")
 	if caConfig == "" {
@@ -399,10 +405,9 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 		return "", err
 	}
 
-	// Require kid, issuer and keyFile if ca.json does not exists
+	// Require issuer and keyFile if ca.json does not exists.
+	// kid can be passed or created using jwk.Thumbprint.
 	switch {
-	case len(kid) == 0:
-		return "", errs.RequiredWithFlag(ctx, "offline", "kid")
 	case len(issuer) == 0:
 		return "", errs.RequiredWithFlag(ctx, "offline", "issuer")
 	case len(keyFile) == 0:
@@ -415,6 +420,7 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 		return "", err
 	}
 
+	// Get root from argument or default location
 	root := ctx.String("root")
 	if len(root) == 0 {
 		root = pki.GetRootCAPath()
@@ -423,6 +429,7 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 		}
 	}
 
+	// Parse key
 	var opts []jose.Option
 	if len(passwordFile) != 0 {
 		opts = append(opts, jose.WithPasswordFile(passwordFile))
@@ -430,6 +437,15 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 	jwk, err := jose.ParseKey(keyFile, opts...)
 	if err != nil {
 		return "", err
+	}
+
+	// Get the kid if it's not passed as an argument
+	if len(kid) == 0 {
+		hash, err := jwk.Thumbprint(crypto.SHA256)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating JWK thumbprint")
+		}
+		kid = base64.RawURLEncoding.EncodeToString(hash)
 	}
 
 	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)

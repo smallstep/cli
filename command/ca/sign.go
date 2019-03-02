@@ -46,7 +46,7 @@ $ step ca sign --token $TOKEN --not-after=1h internal.csr internal.crt
 '''
 
 Sign a new certificate using the offline mode, requires the configuration
-files, certificates and keys created with **step ca init**:
+files, certificates, and keys created with **step ca init**:
 '''
 $ step ca sign --offline internal internal.csr internal.crt
 '''`,
@@ -83,7 +83,7 @@ func signCertificateAction(ctx *cli.Context) error {
 		return errors.Errorf("error parsing %s: file is not a certificate request", csrFile)
 	}
 
-	// ofline and token are incompatible because the token is generated before
+	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
 	if offline && len(token) != 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
