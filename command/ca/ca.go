@@ -2,11 +2,16 @@ package ca
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/ca/provisioner"
+	"github.com/smallstep/cli/config"
+	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
@@ -68,8 +73,8 @@ $ step ca renew internal.crt internal.key \
 			healthCommand(),
 			initCommand(),
 			bootstrapCommand(),
-			newTokenCommand(),
-			newCertificateCommand(),
+			tokenCommand(),
+			certificateCommand(),
 			renewCertificateCommand(),
 			provisioner.Command(),
 			signCertificateCommand(),
@@ -121,6 +126,20 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 used, it is a sequence of decimal numbers, each with optional fraction and a
 unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 "us" (or "µs"), "ms", "s", "m", "h".`,
+	}
+
+	offlineFlag = cli.BoolFlag{
+		Name: "offline",
+		Usage: `Creates a certificate without contacting the certificate authority. Offline mode
+uses the configuration, certificates, and keys created with **step ca init**,
+but can accept a different configuration file using '--ca-config>' flag.`,
+	}
+
+	caConfigFlag = cli.StringFlag{
+		Name: "ca-config",
+		Usage: `The <path> to the certificate authority configuration file. Defaults to
+$STEPPATH/config/ca.json`,
+		Value: filepath.Join(config.StepPath(), "config", "ca.json"),
 	}
 
 	provisionerKidFlag = cli.StringFlag{
@@ -176,4 +195,19 @@ func completeURL(rawurl string) (string, error) {
 	// scheme:opaque[?query][#fragment]
 	// rawurl looks like ca.smallstep.com:443 or ca.smallstep.com:443/1.0/sign
 	return completeURL("https://" + rawurl)
+}
+
+// parseValidity parses the not-before and not-after flags as times or durations.
+func parseValidity(ctx *cli.Context) (notBefore time.Time, notAfter time.Time, err error) {
+	var ok bool
+	var zero time.Time
+	notBefore, ok = flags.ParseTimeOrDuration(ctx.String("not-before"))
+	if !ok {
+		return zero, zero, errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, ok = flags.ParseTimeOrDuration(ctx.String("not-after"))
+	if !ok {
+		return zero, zero, errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+	return
 }

@@ -17,6 +17,32 @@ func setStdin(new *os.File) (cleanup func()) {
 	return func() { _osStdin = old }
 }
 
+func TestFileExists(t *testing.T) {
+	content := []byte("my file content")
+	f, cleanup := newFile(t, content)
+	defer cleanup()
+
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{"ok", args{f.Name()}, true},
+		{"nok", args{f.Name() + ".foo"}, false},
+		{"empty", args{""}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FileExists(tt.args.path); got != tt.want {
+				t.Errorf("FileExists() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestReadFile(t *testing.T) {
 	content := []byte("my file content")
 	f, cleanup := newFile(t, content)
