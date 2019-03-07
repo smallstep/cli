@@ -1,8 +1,10 @@
 package ca
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,6 +13,8 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
@@ -21,6 +25,7 @@ import (
 type caClient interface {
 	Sign(req *api.SignRequest) (*api.SignResponse, error)
 	Renew(tr http.RoundTripper) (*api.SignResponse, error)
+	Revoke(req *api.RevokeRequest, tr http.RoundTripper) (*api.RevokeResponse, error)
 }
 
 // offlineCA is a wrapper on top of the certificates authority methods that is
@@ -59,9 +64,60 @@ func newOfflineCA(configFile string) (*offlineCA, error) {
 	}, nil
 }
 
+// VerifyClientCertificate verifies and validates the client cert/key pair
+// using the offline CA root and intermediate certificates.
+func (c *offlineCA) VerifyClientCert(certFile, keyFile string) error {
+	cert, err := pemutil.ReadCertificate(certFile, pemutil.WithFirstBlock())
+	if err != nil {
+		return err
+	}
+	key, err := pemutil.Read(keyFile)
+	if err != nil {
+		return err
+	}
+
+	certPem, err := pemutil.Serialize(cert)
+	if err != nil {
+		return err
+	}
+	keyPem, err := pemutil.Serialize(key)
+	if err != nil {
+		return err
+	}
+	// Validate that the certificate and key match
+	if _, err := tls.X509KeyPair(pem.EncodeToMemory(certPem), pem.EncodeToMemory(keyPem)); err != nil {
+		return errors.Wrap(err, "error loading x509 key pair")
+	}
+
+	rootPool, err := x509util.ReadCertPool(c.Root())
+	if err != nil {
+		return err
+	}
+	intermediatePool, err := x509util.ReadCertPool(c.config.IntermediateCert)
+	if err != nil {
+		return err
+	}
+
+	opts := x509.VerifyOptions{
+		Roots:         rootPool,
+		Intermediates: intermediatePool,
+	}
+
+	if _, err := cert.Verify(opts); err != nil {
+		return errors.Wrapf(err, "failed to verify certificate")
+	}
+
+	return nil
+}
+
 // Audience returns the token audience.
-func (c *offlineCA) Audience() string {
-	return fmt.Sprintf("https://%s/sign", c.config.DNSNames[0])
+func (c *offlineCA) Audience(tokType int) string {
+	switch tokType {
+	case revokeType:
+		return fmt.Sprintf("https://%s/revoke", c.config.DNSNames[0])
+	default:
+		return fmt.Sprintf("https://%s/sign", c.config.DNSNames[0])
+	}
 }
 
 // CaURL returns the CA URL using the first DNS entry.
@@ -96,8 +152,8 @@ func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 		return nil, err
 	}
 	return &api.SignResponse{
-		ServerPEM:  api.Certificate{cert},
-		CaPEM:      api.Certificate{ca},
+		ServerPEM:  api.Certificate{Certificate: cert},
+		CaPEM:      api.Certificate{Certificate: ca},
 		TLSOptions: c.authority.GetTLSOptions(),
 	}, nil
 }
@@ -118,17 +174,51 @@ func (c *offlineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 		return nil, err
 	}
 	return &api.SignResponse{
-		ServerPEM:  api.Certificate{cert},
-		CaPEM:      api.Certificate{ca},
+		ServerPEM:  api.Certificate{Certificate: cert},
+		CaPEM:      api.Certificate{Certificate: ca},
 		TLSOptions: c.authority.GetTLSOptions(),
 	}, nil
 }
 
-// GenerateToken creates the token used by the authority to sign certificates.
-func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []string, notBefore, notAfter time.Time) (string, error) {
+// Revoke is a wrapper on top of certificates Revoke method. It returns an
+// api.RevokeResponse.
+func (c *offlineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.RevokeResponse, error) {
+	var (
+		opts = authority.RevokeOptions{
+			Serial:      req.Serial,
+			Reason:      req.Reason,
+			ReasonCode:  req.ReasonCode,
+			PassiveOnly: req.Passive,
+		}
+		err error
+	)
+	if len(req.OTT) > 0 {
+		opts.OTT = req.OTT
+		opts.MTLS = false
+	} else {
+		// it should not panic as this is always internal code
+		tr := rt.(*http.Transport)
+		asn1Data := tr.TLSClientConfig.Certificates[0].Certificate[0]
+		opts.Crt, err = x509.ParseCertificate(asn1Data)
+		if err != nil {
+			return nil, errors.Wrap(err, "error parsing certificate")
+		}
+		opts.MTLS = true
+	}
+
+	// revoke cert using authority
+	if err := c.authority.Revoke(&opts); err != nil {
+		return nil, err
+	}
+
+	return &api.RevokeResponse{Status: "ok"}, nil
+}
+
+// GenerateToken creates the token used by the authority to authorize requests.
+func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time) (string, error) {
 	// Use ca.json configuration for the root and audience
 	root := c.Root()
-	audience := c.Audience()
+	audience := c.Audience(typ)
 
 	// Get provisioner to use
 	provisioners := c.Provisioners()
@@ -181,5 +271,5 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []strin
 		return "", errors.Wrap(err, "error unmarshalling provisioning key")
 	}
 
-	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	return generateToken(typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }

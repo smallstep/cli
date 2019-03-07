@@ -219,7 +219,7 @@ func RequiredOrFlag(ctx *cli.Context, flags ...string) error {
 	for i, flag := range flags {
 		params[i] = "--" + flag
 	}
-	return errors.Errorf("flag %s are required", strings.Join(params, " or "))
+	return errors.Errorf("one of flag %s is required", strings.Join(params, " or "))
 }
 
 // MinSizeFlag returns an error with a greater or equal message message for

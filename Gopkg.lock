@@ -255,12 +255,12 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = "UT"
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -323,20 +323,21 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "master"
-  digest = "1:9efbb46c88d769c4ef0004369c4fa445d9b7a4ce019bf0648ec813781af94ff1"
+  branch = "max/revoke"
+  digest = "1:646268432552a1d59fe2e644c1e651f4eadf179d040a364275b67956eba4b838"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
     "authority",
     "authority/provisioner",
     "ca",
+    "db",
     "logging",
     "monitoring",
     "server",
   ]
   pruneopts = "UT"
-  revision = "07ff7d980709bc48ff01c72d85666e94b6d716fb"
+  revision = "fca190f5fec8e50bf81adeabe4b36671bb8bc861"
 
 [[projects]]
   branch = "master"
@@ -345,6 +346,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "e844a799fa044497e6532dc757d4f2965c364617"
+
+[[projects]]
+  branch = "master"
+  digest = "1:fd8d9eb07509d8ef47fc82c99646f0b2203b2ba3c240ba77d8c457bb6109836d"
+  name = "github.com/smallstep/nosql"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d8f68d14f9ae04e0991dce06b44768f2d38dccf8"
 
 [[projects]]
   branch = "master"
@@ -415,8 +424,16 @@
   version = "v0.4.0"
 
 [[projects]]
+  digest = "1:5f7414cf41466d4b4dd7ec52b2cd3e481e08cfd11e7e24fef730c0e483e88bb1"
+  name = "go.etcd.io/bbolt"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "63597a96ec0ad9e6d43c3fc81e809909e0237461"
+  version = "v1.3.2"
+
+[[projects]]
   branch = "master"
-  digest = "1:f8b267e57349247df4ee850da3ea1f3301f3f4c2691a8dc6ce8c1226db35c3a7"
+  digest = "1:92e6039249b009932cb9f850f7e043412c8d3377e85f873d98f18937ad919add"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
@@ -433,6 +450,7 @@
     "nacl/box",
     "nacl/secretbox",
     "nacl/sign",
+    "ocsp",
     "pbkdf2",
     "poly1305",
     "salsa20/salsa",
@@ -574,6 +592,7 @@
     "golang.org/x/crypto/nacl/box",
     "golang.org/x/crypto/nacl/secretbox",
     "golang.org/x/crypto/nacl/sign",
+    "golang.org/x/crypto/ocsp",
     "golang.org/x/crypto/pbkdf2",
     "golang.org/x/crypto/scrypt",
     "golang.org/x/net/html",

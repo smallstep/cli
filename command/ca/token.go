@@ -33,6 +33,11 @@ type provisionersSelect struct {
 	Provisioner provisioner.Interface
 }
 
+const (
+	signType = iota
+	revokeType
+)
+
 func tokenCommand() cli.Command {
 	return cli.Command{
 		Name:   "token",
@@ -41,8 +46,8 @@ func tokenCommand() cli.Command {
 		UsageText: `**step ca token** <subject>
 		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]
-		[**--san**=<SAN>] [**--offline**]`,
+		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<path>]
+		[**--san**=<SAN>] [**--offline**] [**--revoke**]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
@@ -65,6 +70,11 @@ configured (via the '--san' flag), the 'sans' claim of the token will have a
 default value of ['internal.example.com']:
 '''
 $ step ca token internal.example.com
+'''
+
+Get a new token for a 'Revoke' request:
+'''
+$ step ca token --revoke 146103349666685108195655980390445292315
 '''
 
 Get a new token for an IP address. Because there are no Subject Alternative Names
@@ -122,6 +132,15 @@ $ step ca token internal.example.com \
     --root /path/to/root_ca.crt
 '''
 
+Get a new token for a 'Revoke' request:
+'''
+$ step ca token --revoke 146103349666685108195655980390445292315
+'''
+
+Get a new token in offline mode for a 'Revoke' request:
+'''
+$ step ca token --offline --revoke 146103349666685108195655980390445292315
+'''
 `,
 		Flags: []cli.Flag{
 			provisionerKidFlag,
@@ -139,7 +158,7 @@ flag multiple times to configure multiple SANs.`,
 			},
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The private key <file> used to sign the JWT. This is usually downloaded from
+				Usage: `The private key <path> used to sign the JWT. This is usually downloaded from
 the certificate authority.`,
 			},
 			passwordFileFlag,
@@ -151,6 +170,11 @@ the certificate authority.`,
 				Name: "offline",
 				Usage: `Creates a token without contacting the certificate authority. Offline mode
 requires the flags <--ca-config> or <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
+			},
+			cli.BoolFlag{
+				Name: "revoke",
+				Usage: `Create a token for authorizing 'Revoke' requests. The audience will
+be invalid for any other API request.`,
 			},
 			caConfigFlag,
 			flags.Force,
@@ -168,6 +192,12 @@ func tokenAction(ctx *cli.Context) error {
 	offline := ctx.Bool("offline")
 	sans := ctx.StringSlice("san")
 
+	// Default token type is always a 'Sign' token.
+	typ := signType
+	if ctx.Bool("revoke") {
+		typ = revokeType
+	}
+
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
 		return errs.RequiredFlag(ctx, "ca-url")
@@ -179,6 +209,11 @@ func tokenAction(ctx *cli.Context) error {
 		if _, err := os.Stat(root); err != nil {
 			return errs.RequiredFlag(ctx, "root")
 		}
+	}
+
+	// --san and --type revoke are incompatible. Revocation tokens do not support SANs.
+	if typ == revokeType && len(sans) > 0 {
+		return errs.IncompatibleFlagWithFlag(ctx, "san", "revoke")
 	}
 
 	// parse times or durations
@@ -194,12 +229,12 @@ func tokenAction(ctx *cli.Context) error {
 	var err error
 	var token string
 	if offline {
-		token, err = offlineTokenFlow(ctx, subject, sans)
+		token, err = offlineTokenFlow(ctx, typ, subject, sans)
 		if err != nil {
 			return err
 		}
 	} else {
-		token, err = newTokenFlow(ctx, subject, sans, caURL, root, notBefore, notAfter)
+		token, err = newTokenFlow(ctx, typ, subject, sans, caURL, root, notBefore, notAfter)
 		if err != nil {
 			return err
 		}
@@ -212,7 +247,7 @@ func tokenAction(ctx *cli.Context) error {
 }
 
 // parseAudience creates the ca audience url from the ca-url
-func parseAudience(ctx *cli.Context) (string, error) {
+func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
 		return "", errs.RequiredFlag(ctx, "ca-url")
@@ -224,8 +259,19 @@ func parseAudience(ctx *cli.Context) (string, error) {
 	}
 	switch strings.ToLower(audience.Scheme) {
 	case "https", "":
+		var path string
+		switch tokType {
+		// default
+		case signType:
+			path = "/1.0/sign"
+		// revocation token
+		case revokeType:
+			path = "/1.0/revoke"
+		default:
+			return "", errors.Errorf("unexpected token type: %d", tokType)
+		}
 		audience.Scheme = "https"
-		audience = audience.ResolveReference(&url.URL{Path: "/1.0/sign"})
+		audience = audience.ResolveReference(&url.URL{Path: path})
 		return audience.String(), nil
 	default:
 		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
@@ -234,7 +280,7 @@ func parseAudience(ctx *cli.Context) (string, error) {
 
 // generateToken generates a provisioning or bootstrap token with the given
 // parameters.
-func generateToken(sub string, sans []string, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
+func generateToken(typ int, sub string, sans []string, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
 	// A random jwt id will be used to identify duplicated tokens
 	jwtID, err := randutil.Hex(64) // 256 bits
 	if err != nil {
@@ -251,12 +297,15 @@ func generateToken(sub string, sans []string, kid, iss, aud, root string, notBef
 		tokOptions = append(tokOptions, token.WithRootCA(root))
 	}
 
-	// If there are no SANs then add the 'subject' (common-name) as the only SAN.
-	if len(sans) == 0 {
-		sans = []string{sub}
+	// If 'sign' token then add SANs.
+	if typ == signType {
+		// If there are no SANs then add the 'subject' (common-name) as the only SAN.
+		if len(sans) == 0 {
+			sans = []string{sub}
+		}
+		tokOptions = append(tokOptions, token.WithSANS(sans))
 	}
 
-	tokOptions = append(tokOptions, token.WithSANS(sans))
 	if !notBefore.IsZero() || !notAfter.IsZero() {
 		if notBefore.IsZero() {
 			notBefore = time.Now()
@@ -276,9 +325,9 @@ func generateToken(sub string, sans []string, kid, iss, aud, root string, notBef
 }
 
 // newTokenFlow implements the common flow used to generate a token
-func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time) (string, error) {
+func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time) (string, error) {
 	// Get audience from ca-url
-	audience, err := parseAudience(ctx)
+	audience, err := parseAudience(ctx, typ)
 	if err != nil {
 		return "", err
 	}
@@ -348,14 +397,14 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root s
 		}
 	}
 
-	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	return generateToken(typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }
 
 // offlineTokenFlow generates a provisioning token using either
 //   1. static configuration from ca.json (created with `step ca init`)
 //   2. input from command line flags
 // These two options are mutually exclusive and priority is given to ca.json.
-func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, error) {
+func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string) (string, error) {
 	caConfig := ctx.String("ca-config")
 	if caConfig == "" {
 		return "", errs.InvalidFlagValue(ctx, "ca-config", "", "")
@@ -372,7 +421,7 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 		if err != nil {
 			return "", err
 		}
-		return offlineCA.GenerateToken(ctx, subject, sans, notBefore, notAfter)
+		return offlineCA.GenerateToken(ctx, typ, subject, sans, notBefore, notAfter)
 	}
 
 	kid := ctx.String("kid")
@@ -390,7 +439,7 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 	}
 
 	// Get audience from ca-url
-	audience, err := parseAudience(ctx)
+	audience, err := parseAudience(ctx, typ)
 	if err != nil {
 		return "", err
 	}
@@ -423,7 +472,7 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 		kid = base64.RawURLEncoding.EncodeToString(hash)
 	}
 
-	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	return generateToken(typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }
 
 func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {

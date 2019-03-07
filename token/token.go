@@ -108,7 +108,7 @@ func NewClaims(opts ...Options) (*Claims, error) {
 
 // DefaultClaims returns the default claims of any token.
 func DefaultClaims() *Claims {
-	now := time.Now()
+	now := time.Now().UTC()
 	return &Claims{
 		Claims: jose.Claims{
 			Issuer:    DefaultIssuer,

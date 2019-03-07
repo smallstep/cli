@@ -274,7 +274,7 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, token string) (ca
 // token flow or the online mode.
 func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
 	if f.offline {
-		return f.offlineCA.GenerateToken(ctx, subject, sans, time.Time{}, time.Time{})
+		return f.offlineCA.GenerateToken(ctx, signType, subject, sans, time.Time{}, time.Time{})
 	}
 
 	// Use online CA to get the provisioners and generate the token
@@ -299,7 +299,7 @@ func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 		}
 	}
 
-	return newTokenFlow(ctx, subject, sans, caURL, root, time.Time{}, time.Time{})
+	return newTokenFlow(ctx, signType, subject, sans, caURL, root, time.Time{}, time.Time{})
 }
 
 // Sign signs the CSR using the online or the offline certificate authority.

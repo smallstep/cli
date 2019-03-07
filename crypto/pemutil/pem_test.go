@@ -162,7 +162,7 @@ func TestReadCertificate(t *testing.T) {
 		{"testdata/ca.der", nil},
 		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
 		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
-		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded key")},
+		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded block")},
 		{"testdata/badder.crt", errors.New("error parsing testdata/badder.crt: asn1: syntax error: data truncated")},
 		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
 	}
@@ -221,7 +221,7 @@ func TestReadStepCertificate(t *testing.T) {
 		{"testdata/ca.der", nil},
 		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
 		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
-		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded key")},
+		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded block")},
 		{"testdata/badder.crt", errors.New("error parsing testdata/badder.crt: asn1: syntax error: data truncated")},
 		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
 	}

@@ -22,9 +22,9 @@ func signCommand() cli.Command {
 		Action: cli.ActionFunc(signAction),
 		Usage:  "create a signed JWT data structure",
 		UsageText: `**step crypto jwt sign** [- | <filename>]
-		[**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
-        [**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>] [**--key**=<jwk>]
-        [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]`,
+[**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
+[**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>] [**--key**=<path>]
+[**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]`,
 		Description: `**step crypto jwt sign** command generates a signed JSON Web Token (JWT) by
 computing a digital signature or message authentication code for a JSON
 payload. By default, the payload to sign is read from STDIN and the JWT will
@@ -166,7 +166,7 @@ with sufficient entropy to satisfy the collision-resistance criteria.`,
 			},
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The key to use to sign the JWT. The <key> argument should be the name of a file.
+				Usage: `The <path> to the key with which to sign the JWT.
 JWTs can be signed using a private JWK (or a JWK encrypted as a JWE payload) or
 a PEM encoded private key (or a private key encrypted using the modes described
 on RFC 1423 or with PBES2+PBKDF2 described in RFC 2898).`,

@@ -21,7 +21,7 @@ func signCommand() cli.Command {
 		Usage:  "create a signed JWS data structure",
 		UsageText: `**step crypto jws sign** [- | <filename>]
 		[**--alg**=<algorithm>] [**--jku**=<jwk-url>] [**--jwk**] [**--typ**=<type>]
-		[**--cty=<content-type>] [**--key**=<jwk>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+		[**--cty=<content-type>] [**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		// others: x5u, x5c, x5t, x5t#S256, and crit
 		Description: `**step crypto jws sign** generates a signed JSON Web Signature (JWS) by
 computing a digital signature or message authentication code for an arbitrary
@@ -128,7 +128,7 @@ performed by the JWS application. Use of <content-type> is optional.`,
 			},
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The key to use to sign the JWS. The <key> argument should be the name of a file.
+				Usage: `The <path> to the key with which to sign the JWS.
 JWSs can be signed using a private JWK (or a JWK encrypted as a JWE payload) or
 a PEM encoded private key (or a private key encrypted using the modes described
 on RFC 1423 or with PBES2+PBKDF2 described in RFC 2898).`,
