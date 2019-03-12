@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/urfave/cli"
@@ -42,6 +43,7 @@ func init() {
 }
 
 func main() {
+	defer panicHandler()
 	// Override global framework components
 	cli.VersionPrinter = func(c *cli.Context) {
 		version.Command(c)
@@ -90,6 +92,22 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 		}
 		os.Exit(1)
+	}
+}
+
+func panicHandler() {
+	if r := recover(); r != nil {
+		if os.Getenv("STEPDEBUG") == "1" {
+			fmt.Fprintf(os.Stderr, "%s\n", config.Version())
+			fmt.Fprintf(os.Stderr, "Release Date: %s\n\n", config.ReleaseDate())
+			panic(r)
+		} else {
+			fmt.Fprintln(os.Stderr, "Something unexpected happened.")
+			fmt.Fprintln(os.Stderr, "If you want to help us debug the problem, please run:")
+			fmt.Fprintf(os.Stderr, "STEPDEBUG=1 %s\n", strings.Join(os.Args, " "))
+			fmt.Fprintln(os.Stderr, "and send the output to info@smallstep.com")
+			os.Exit(2)
+		}
 	}
 }
 
