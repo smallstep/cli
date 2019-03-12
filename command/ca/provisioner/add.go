@@ -3,6 +3,7 @@ package provisioner
 import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
@@ -87,11 +88,11 @@ func addAction(ctx *cli.Context) (err error) {
 		return errors.Wrapf(err, "error loading configuration")
 	}
 
-	var provisioners []*authority.Provisioner
-	provMap := make(map[string]*authority.Provisioner)
+	var provisioners provisioner.List
+	provMap := make(map[string]provisioner.Interface)
 	for _, prov := range c.AuthorityConfig.Provisioners {
 		provisioners = append(provisioners, prov)
-		provMap[prov.Name+":"+prov.Key.KeyID] = prov
+		provMap[prov.GetID()] = prov
 	}
 
 	create := ctx.Bool("create")
@@ -116,7 +117,7 @@ func addAction(ctx *cli.Context) (err error) {
 		if _, ok := provMap[name+":"+jwk.KeyID]; ok {
 			return errors.Errorf("duplicated provisioner: CA config already contains a provisioner with issuer=%s and kid=%s", name, jwk.KeyID)
 		}
-		prov := &authority.Provisioner{
+		prov := &provisioner.JWK{
 			Name:         name,
 			Type:         "jwk",
 			Key:          jwk,
@@ -161,14 +162,14 @@ func addAction(ctx *cli.Context) (err error) {
 				}
 			}
 			key := jwk.Public()
-			prov := &authority.Provisioner{
+			prov := &provisioner.JWK{
 				Name:         name,
 				Type:         "jwk",
 				Key:          &key,
 				EncryptedKey: encryptedKey,
 			}
 			provisioners = append(provisioners, prov)
-			provMap[name+":"+jwk.KeyID] = prov
+			provMap[prov.GetID()] = prov
 		}
 	}
 

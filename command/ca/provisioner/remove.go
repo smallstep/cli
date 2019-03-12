@@ -3,6 +3,7 @@ package provisioner
 import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
@@ -81,17 +82,23 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	var (
-		provisioners []*authority.Provisioner
+		provisioners provisioner.List
 		found        = false
 	)
 	for _, p := range c.AuthorityConfig.Provisioners {
-		if p.Name != name {
+		if p.GetType() != provisioner.TypeJWK {
 			provisioners = append(provisioners, p)
 			continue
 		}
-		if !all && p.Key.KeyID != kid {
+		if p.GetName() != name {
 			provisioners = append(provisioners, p)
 			continue
+		}
+		if !all {
+			if pp, ok := p.(*provisioner.JWK); ok && pp.Key.KeyID != kid {
+				provisioners = append(provisioners, p)
+				continue
+			}
 		}
 		found = true
 	}
