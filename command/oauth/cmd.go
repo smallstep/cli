@@ -276,6 +276,7 @@ type oauth struct {
 	userInfoEndpoint string // For testing
 	state            string
 	codeChallenge    string
+	nonce            string
 	errCh            chan error
 	tokCh            chan *token
 }
@@ -287,6 +288,11 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHi
 	}
 
 	challenge, err := randutil.Alphanumeric(64)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce, err := randutil.Hex(64) // 256 bits
 	if err != nil {
 		return nil, err
 	}
@@ -304,6 +310,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHi
 			loginHint:        loginHint,
 			state:            state,
 			codeChallenge:    challenge,
+			nonce:            nonce,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -336,6 +343,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHi
 			loginHint:        loginHint,
 			state:            state,
 			codeChallenge:    challenge,
+			nonce:            nonce,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -615,6 +623,7 @@ func (o *oauth) Auth() (string, error) {
 	q.Add("state", o.state)
 	q.Add("code_challenge_method", "plain")
 	q.Add("code_challenge", o.codeChallenge)
+	q.Add("nonce", o.nonce)
 	if o.loginHint != "" {
 		q.Add("login_hint", o.loginHint)
 	}
