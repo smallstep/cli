@@ -323,19 +323,20 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "master"
-  digest = "1:fa2b355b73d097489bde877193bafac4f3689fc7101216a99880261235a7450d"
+  branch = "oidc-provisioner"
+  digest = "1:b5207a617db1a4135777ba7d16c6adda9b2befba76d8273783fd2d56d0b9b999"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
     "authority",
+    "authority/provisioner",
     "ca",
     "logging",
     "monitoring",
     "server",
   ]
   pruneopts = "UT"
-  revision = "c23eb88a4f4121945cf774cf43aefad13e56af9a"
+  revision = "945a1371f182ef038f53b0b182a46b1b52df4781"
 
 [[projects]]
   branch = "master"
@@ -552,6 +553,7 @@
     "github.com/smallstep/assert",
     "github.com/smallstep/certificates/api",
     "github.com/smallstep/certificates/authority",
+    "github.com/smallstep/certificates/authority/provisioner",
     "github.com/smallstep/certificates/ca",
     "github.com/smallstep/certinfo",
     "github.com/smallstep/truststore",

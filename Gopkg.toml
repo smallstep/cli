@@ -64,7 +64,7 @@ required = [
   unused-packages = true
 
 [[constraint]]
-  branch = "master"
+  branch = "oidc-provisioner"
   name = "github.com/smallstep/certificates"
 
 [[constraint]]
