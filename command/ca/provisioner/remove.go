@@ -131,9 +131,8 @@ func removeAction(ctx *cli.Context) error {
 		}
 		if kid != "" {
 			return errors.Errorf("no provisioners with name=%s and kid=%s found", name, kid)
-		} else {
-			return errors.Errorf("no provisioners with name=%s and client-id=%s found", name, clientID)
 		}
+		return errors.Errorf("no provisioners with name=%s and client-id=%s found", name, clientID)
 	}
 
 	c.AuthorityConfig.Provisioners = provisioners
