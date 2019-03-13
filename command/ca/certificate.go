@@ -1,7 +1,14 @@
 package ca
 
 import (
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
+	"net"
 	"os"
 	"strings"
 
@@ -11,6 +18,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
+	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
@@ -100,10 +108,11 @@ func certificateAction(ctx *cli.Context) error {
 	}
 
 	args := ctx.Args()
-	hostname := args.Get(0)
+	subject := args.Get(0)
 	crtFile, keyFile := args.Get(1), args.Get(2)
 	token := ctx.String("token")
 	offline := ctx.Bool("offline")
+	sans := ctx.StringSlice("san")
 
 	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
@@ -117,24 +126,28 @@ func certificateAction(ctx *cli.Context) error {
 		return err
 	}
 
+	var isStepToken bool
 	if len(token) == 0 {
-		sans := ctx.StringSlice("san")
-		if token, err = flow.GenerateToken(ctx, hostname, sans); err != nil {
+		if token, err = flow.GenerateToken(ctx, subject, sans); err != nil {
 			return err
 		}
 	} else {
-		if len(ctx.StringSlice("san")) > 0 {
+		isStepToken = isStepCertificatesToken(token)
+		if isStepToken && len(sans) > 0 {
 			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
 		}
 	}
 
-	req, pk, err := ca.CreateSignRequest(token)
+	req, pk, err := flow.CreateSignRequest(token, sans)
 	if err != nil {
 		return err
 	}
 
-	if strings.ToLower(hostname) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
-		return errors.Errorf("token subject '%s' and hostname '%s' do not match", req.CsrPEM.Subject.CommonName, hostname)
+	if isStepToken {
+		// Validate that subject matches the CSR common name.
+		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
+			return errors.Errorf("token subject '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
+		}
 	}
 
 	if err := flow.Sign(ctx, token, req.CsrPEM, crtFile); err != nil {
@@ -152,8 +165,22 @@ func certificateAction(ctx *cli.Context) error {
 }
 
 type tokenClaims struct {
-	SHA string `json:"sha"`
 	jose.Claims
+	SHA   string   `json:"sha"`
+	SANs  []string `json:"sans"`
+	Email string   `json:"email"`
+}
+
+func isStepCertificatesToken(token string) bool {
+	t, err := jose.ParseSigned(token)
+	if err != nil {
+		return false
+	}
+	var claims tokenClaims
+	if err := t.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return false
+	}
+	return len(claims.SHA) > 0 || len(claims.SANs) > 0
 }
 
 type certificateFlow struct {
@@ -301,4 +328,70 @@ func (f *certificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 	}
 	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
 	return utils.WriteFile(crtFile, data, 0600)
+}
+
+// CreateSignRequest is a helper function that given an x509 OTT returns a
+// simple but secure sign request as well as the private key used.
+func (f *certificateFlow) CreateSignRequest(token string, sans []string) (*api.SignRequest, crypto.PrivateKey, error) {
+	tok, err := jose.ParseSigned(token)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error parsing token")
+	}
+	var claims tokenClaims
+	if err := tok.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return nil, nil, errors.Wrap(err, "error parsing token")
+	}
+
+	pk, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error generating key")
+	}
+
+	var emails []string
+	dnsNames, ips := splitSANs(sans, claims.SANs)
+	if claims.Email != "" {
+		emails = append(emails, claims.Email)
+	}
+
+	template := &x509.CertificateRequest{
+		Subject: pkix.Name{
+			CommonName: claims.Subject,
+		},
+		SignatureAlgorithm: x509.ECDSAWithSHA256,
+		DNSNames:           dnsNames,
+		IPAddresses:        ips,
+		EmailAddresses:     emails,
+	}
+
+	csr, err := x509.CreateCertificateRequest(rand.Reader, template, pk)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error creating certificate request")
+	}
+	cr, err := x509.ParseCertificateRequest(csr)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error parsing certificate request")
+	}
+	if err := cr.CheckSignature(); err != nil {
+		return nil, nil, errors.Wrap(err, "error signing certificate request")
+	}
+	return &api.SignRequest{
+		CsrPEM: api.CertificateRequest{CertificateRequest: cr},
+		OTT:    token,
+	}, pk, nil
+}
+
+// splitSANs unifies the SAN collections passed as arguments and returns a list
+// of DNS names and a list of IP addresses.
+func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP) {
+	m := make(map[string]bool)
+	var unique []string
+	for _, sans := range args {
+		for _, san := range sans {
+			if ok := m[san]; !ok {
+				m[san] = true
+				unique = append(unique, san)
+			}
+		}
+	}
+	return x509util.SplitSANs(unique)
 }
