@@ -84,13 +84,6 @@ Add a single JWK provisioner:
 $ step ca provisioner add max@smallstep.com ./max-laptop.jwk --ca-config ca.json
 '''
 
-Add a single OIDC provisioner:
-'''
-$ step ca provisioner add Google --type oidc --ca-config ca.json \
-  --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
-  --configuration-endpoint https://accounts.google.com/.well-known/openid-configuration
-'''
-
 Add a single JWK provisioner using an auto-generated asymmetric key pair:
 '''
 $ step ca provisioner add max@smallstep.com --ca-config ca.json \
@@ -101,6 +94,21 @@ Add a list of provisioners for a single name:
 '''
 $ step ca provisioner add max@smallstep.com ./max-laptop.jwk ./max-phone.pem ./max-work.pem \
 --ca-config ca.json
+'''
+
+Add a single OIDC provisioner:
+'''
+$ step ca provisioner add Google --type oidc --ca-config ca.json \
+  --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
+  --configuration-endpoint https://accounts.google.com/.well-known/openid-configuration
+'''
+
+Add an OIDC provisioner with two administrators:
+'''
+$ step ca provisioner add Google --type oidc --ca-config ca.json \
+  --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
+  --configuration-endpoint https://accounts.google.com/.well-known/openid-configuration \
+  --admin mariano@smallstep.com --admin max@smallstep.com
 '''`,
 	}
 }
