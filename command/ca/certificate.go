@@ -148,6 +148,14 @@ func certificateAction(ctx *cli.Context) error {
 		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
 			return errors.Errorf("token subject '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
+	} else {
+		// Validate that the subject matches an email SAN
+		if len(req.CsrPEM.EmailAddresses) == 0 {
+			return errors.New("unexpected token: payload does not contain an email claim")
+		}
+		if email := req.CsrPEM.EmailAddresses[0]; email != subject {
+			return errors.Errorf("token email '%s' and argument '%s' do not match", email, subject)
+		}
 	}
 
 	if err := flow.Sign(ctx, token, req.CsrPEM, crtFile); err != nil {
