@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,6 +41,7 @@ import (
 const (
 	defaultClientID          = "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com"
 	defaultClientNotSoSecret = "udTrOT3gzrO7W9fDPgZQLfYJ"
+	implicitClientID         = "1087160488420-iu4at42pp2ejebiaekg05fp0cato2l4s.apps.googleusercontent.com"
 
 	// The URN for getting verification token offline
 	oobCallbackUrn = "urn:ietf:wg:oauth:2.0:oob"
@@ -127,6 +129,10 @@ func init() {
 				Name:  "jwt",
 				Usage: "Generate a JWT Auth token instead of an OAuth Token (only works with service accounts)",
 			},
+			cli.BoolFlag{
+				Name:  "implicit",
+				Usage: "Uses the implicit flow to authenticate the user",
+			},
 		},
 		Action: oauthCmd,
 	}
@@ -139,6 +145,7 @@ func oauthCmd(c *cli.Context) error {
 		Provider: c.String("provider"),
 		Email:    c.String("email"),
 		Console:  c.Bool("console"),
+		Implicit: c.Bool("implicit"),
 	}
 	if err := opts.Validate(); err != nil {
 		return err
@@ -147,8 +154,14 @@ func oauthCmd(c *cli.Context) error {
 		return errors.New("flag '--client-id' required with '--provider'")
 	}
 
-	clientID := defaultClientID
-	clientSecret := defaultClientNotSoSecret
+	var clientID, clientSecret string
+	if opts.Implicit {
+		clientID = implicitClientID
+		clientSecret = ""
+	} else {
+		clientID = defaultClientID
+		clientSecret = defaultClientNotSoSecret
+	}
 	if c.IsSet("client-id") {
 		clientID = c.String("client-id")
 		clientSecret = c.String("client-secret")
@@ -203,7 +216,7 @@ func oauthCmd(c *cli.Context) error {
 		scope = strings.Join(c.StringSlice("scope"), " ")
 	}
 
-	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, opts.Email)
+	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, opts)
 	if err != nil {
 		return err
 	}
@@ -254,6 +267,7 @@ type options struct {
 	Provider string
 	Email    string
 	Console  bool
+	Implicit bool
 }
 
 // Validate validates the options.
@@ -277,11 +291,12 @@ type oauth struct {
 	state            string
 	codeChallenge    string
 	nonce            string
+	implicit         bool
 	errCh            chan error
 	tokCh            chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHint string) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -307,10 +322,11 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHi
 			authzEndpoint:    "https://accounts.google.com/o/oauth2/v2/auth",
 			tokenEndpoint:    "https://www.googleapis.com/oauth2/v4/token",
 			userInfoEndpoint: "https://www.googleapis.com/oauth2/v3/userinfo",
-			loginHint:        loginHint,
+			loginHint:        opts.Email,
 			state:            state,
 			codeChallenge:    challenge,
 			nonce:            nonce,
+			implicit:         opts.Implicit,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -340,10 +356,11 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, loginHi
 			authzEndpoint:    authzEp,
 			tokenEndpoint:    tokenEp,
 			userInfoEndpoint: userinfoEp,
-			loginHint:        loginHint,
+			loginHint:        opts.Email,
 			state:            state,
 			codeChallenge:    challenge,
 			nonce:            nonce,
+			implicit:         opts.Implicit,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -358,7 +375,9 @@ func disco(provider string) (map[string]interface{}, error) {
 	// TODO: OIDC and OAuth specify two different ways of constructing this
 	// URL. This is the OIDC way. Probably want to try both. See
 	// https://tools.ietf.org/html/rfc8414#section-5
-	url.Path = path.Join(url.Path, "/.well-known/openid-configuration")
+	if strings.Index(url.Path, "/.well-known/openid-configuration") == -1 {
+		url.Path = path.Join(url.Path, "/.well-known/openid-configuration")
+	}
 	resp, err := http.Get(url.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "error retrieving %s", url.String())
@@ -571,6 +590,11 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if o.implicit {
+		o.implicitHandler(w, req)
+		return
+	}
+
 	code, state := q.Get("code"), q.Get("state")
 	if code == "" || state == "" {
 		fmt.Fprintf(os.Stderr, "Invalid request received: http://%s%s\n", req.RemoteAddr, req.URL.String())
@@ -608,6 +632,53 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	o.tokCh <- tok
 }
 
+func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
+	q := req.URL.Query()
+	if hash := q.Get("urlhash"); hash == "true" {
+		state := q.Get("state")
+		if state == "" || state != o.state {
+			o.badRequest(w, "Failed to authenticate: missing or invalid state")
+			return
+		}
+		accessToken := q.Get("access_token")
+		if accessToken == "" {
+			o.badRequest(w, "Failed to authenticate: missing access token")
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte(`<html><head><title>OAuth Request Successful</title>`))
+		w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
+		w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />Look for the token on the command line`))
+		w.Write([]byte(`</p></body></html>`))
+
+		expiresIn, _ := strconv.Atoi(q.Get("expires_in"))
+		o.tokCh <- &token{
+			AccessToken:  accessToken,
+			IDToken:      q.Get("id_token"),
+			RefreshToken: q.Get("refresh_token"),
+			ExpiresIn:    expiresIn,
+			TokenType:    q.Get("token_type"),
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(`<html><head><title>Processing OAuth Request</title>`))
+	w.Write([]byte(`</head>`))
+	w.Write([]byte(`<script type="text/javascript">`))
+	w.Write([]byte(fmt.Sprintf(`function redirect(){var hash = window.location.hash.substr(1); document.location.href = "%s?urlhash=true&"+hash;}`, o.redirectURI)))
+	w.Write([]byte(`if (window.addEventListener) window.addEventListener("load", redirect, false); else if (window.attachEvent) window.attachEvent("onload", redirect); else window.onload = redirect;`))
+	w.Write([]byte("</script>"))
+	w.Write([]byte(`<body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
+	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />`))
+	w.Write([]byte(`Click <a href="javascript:redirect();">here</a> if your browser does not automatically redirect you`))
+	w.Write([]byte(`</p></body></html>`))
+	return
+}
+
 // Auth returns the OAuth 2.0 authentication url.
 func (o *oauth) Auth() (string, error) {
 	u, err := url.Parse(o.authzEndpoint)
@@ -618,11 +689,15 @@ func (o *oauth) Auth() (string, error) {
 	q := u.Query()
 	q.Add("client_id", o.clientID)
 	q.Add("redirect_uri", o.redirectURI)
-	q.Add("response_type", "code")
+	if o.implicit {
+		q.Add("response_type", "id_token token")
+	} else {
+		q.Add("response_type", "code")
+		q.Add("code_challenge_method", "plain")
+		q.Add("code_challenge", o.codeChallenge)
+	}
 	q.Add("scope", o.scope)
 	q.Add("state", o.state)
-	q.Add("code_challenge_method", "plain")
-	q.Add("code_challenge", o.codeChallenge)
 	q.Add("nonce", o.nonce)
 	if o.loginHint != "" {
 		q.Add("login_hint", o.loginHint)
