@@ -16,14 +16,13 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/urfave/cli"
-
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/randutil"
+	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
+	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/pkg/x509"
-	jose "gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/urfave/cli"
 )
 
 // These are the OAuth2.0 client IDs from the Step CLI. This application is
@@ -131,7 +130,11 @@ func init() {
 			},
 			cli.BoolFlag{
 				Name:  "implicit",
-				Usage: "Uses the implicit flow to authenticate the user",
+				Usage: "Uses the implicit flow to authenticate the user. Requires **--insecure** flag.",
+			},
+			cli.BoolFlag{
+				Name:  "insecure",
+				Usage: "Allows the use of insecure flows.",
 			},
 		},
 		Action: oauthCmd,
@@ -152,6 +155,9 @@ func oauthCmd(c *cli.Context) error {
 	}
 	if (opts.Provider != "google" || c.IsSet("authorization-endpoint")) && !c.IsSet("client-id") {
 		return errors.New("flag '--client-id' required with '--provider'")
+	}
+	if opts.Implicit && !c.Bool("insecure") {
+		return errs.RequiredInsecureFlag(c, "implicit")
 	}
 
 	var clientID, clientSecret string
@@ -503,7 +509,7 @@ func (o *oauth) DoTwoLeggedAuthorization(issuer string) (*token, error) {
 		return nil, errors.Wrapf(err, "error creating JWT signer")
 	}
 
-	raw, err := jwt.Signed(signer).Claims(c).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c).CompactSerialize()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error serializing JWT")
 	}
@@ -566,7 +572,7 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 		return nil, errors.Wrapf(err, "error creating JWT signer")
 	}
 
-	raw, err := jwt.Signed(signer).Claims(c).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c).CompactSerialize()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error serializing JWT")
 	}
