@@ -40,7 +40,6 @@ import (
 const (
 	defaultClientID          = "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com"
 	defaultClientNotSoSecret = "udTrOT3gzrO7W9fDPgZQLfYJ"
-	implicitClientID         = "1087160488420-iu4at42pp2ejebiaekg05fp0cato2l4s.apps.googleusercontent.com"
 
 	// The URN for getting verification token offline
 	oobCallbackUrn = "urn:ietf:wg:oauth:2.0:oob"
@@ -129,12 +128,14 @@ func init() {
 				Usage: "Generate a JWT Auth token instead of an OAuth Token (only works with service accounts)",
 			},
 			cli.BoolFlag{
-				Name:  "implicit",
-				Usage: "Uses the implicit flow to authenticate the user. Requires **--insecure** flag.",
+				Name:   "implicit",
+				Usage:  "Uses the implicit flow to authenticate the user. Requires **--insecure** and **--client-id** flags.",
+				Hidden: true,
 			},
 			cli.BoolFlag{
-				Name:  "insecure",
-				Usage: "Allows the use of insecure flows.",
+				Name:   "insecure",
+				Usage:  "Allows the use of insecure flows.",
+				Hidden: true,
 			},
 		},
 		Action: oauthCmd,
@@ -156,14 +157,15 @@ func oauthCmd(c *cli.Context) error {
 	if (opts.Provider != "google" || c.IsSet("authorization-endpoint")) && !c.IsSet("client-id") {
 		return errors.New("flag '--client-id' required with '--provider'")
 	}
-	if opts.Implicit && !c.Bool("insecure") {
-		return errs.RequiredInsecureFlag(c, "implicit")
-	}
 
 	var clientID, clientSecret string
 	if opts.Implicit {
-		clientID = implicitClientID
-		clientSecret = ""
+		if !c.Bool("insecure") {
+			return errs.RequiredInsecureFlag(c, "implicit")
+		}
+		if !c.IsSet("client-id") {
+			return errs.RequiredWithFlag(c, "implicit", "client-id")
+		}
 	} else {
 		clientID = defaultClientID
 		clientSecret = defaultClientNotSoSecret
