@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/smallstep/cli/exec"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/command"
@@ -26,9 +28,10 @@ import (
 )
 
 type provisionersSelect struct {
-	Name   string
-	Issuer string
-	JWK    jose.JSONWebKey
+	Name        string
+	Issuer      string
+	JWK         jose.JSONWebKey
+	Provisioner provisioner.Interface
 }
 
 func tokenCommand() cli.Command {
@@ -296,7 +299,7 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 
 	// Filter by type
 	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-		return p.GetType() == provisioner.TypeJWK
+		return p.GetType() == provisioner.TypeJWK || p.GetType() == provisioner.TypeOIDC
 	})
 
 	// Filter by kid
@@ -333,17 +336,50 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 	} else {
 		var items []*provisionersSelect
 		for _, prov := range provisioners {
-			p := prov.(*provisioner.JWK)
-			items = append(items, &provisionersSelect{
-				Name:   p.Key.KeyID + " (" + p.Name + ")",
-				Issuer: p.Name,
-				JWK:    *p.Key,
-			})
+			switch p := prov.(type) {
+			case *provisioner.JWK:
+				items = append(items, &provisionersSelect{
+					Name:        p.Key.KeyID + " (" + p.Name + ")",
+					Issuer:      p.Name,
+					JWK:         *p.Key,
+					Provisioner: p,
+				})
+			case *provisioner.OIDC:
+				items = append(items, &provisionersSelect{
+					Name:        p.ClientID + " (" + p.Name + " OIDC)",
+					Issuer:      p.Name,
+					Provisioner: p,
+				})
+			default:
+				continue
+			}
 		}
 		i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
 		if err != nil {
 			return "", err
 		}
+
+		if p, ok := items[i].Provisioner.(*provisioner.OIDC); ok {
+			// Use the "implicit" flow if the secret is not available
+			if p.ClientSecret == "" {
+				out, err := exec.Step("oauth", "--oidc", "--bare", "--implicit",
+					"--provider", p.ConfigurationEndpoint,
+					"--client-id", p.ClientID)
+				if err != nil {
+					return "", err
+				}
+				return string(out), nil
+			}
+			// Server flow
+			out, err := exec.Step("oauth", "--oidc", "--bare",
+				"--provider", p.ConfigurationEndpoint,
+				"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
+			if err != nil {
+				return "", err
+			}
+			return string(out), nil
+		}
+
 		kid = items[i].JWK.KeyID
 		issuer = items[i].Issuer
 	}
