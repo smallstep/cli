@@ -2,6 +2,8 @@ package oauth
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -701,8 +703,9 @@ func (o *oauth) Auth() (string, error) {
 		q.Add("response_type", "id_token token")
 	} else {
 		q.Add("response_type", "code")
-		q.Add("code_challenge_method", "plain")
-		q.Add("code_challenge", o.codeChallenge)
+		q.Add("code_challenge_method", "S256")
+		s256 := sha256.Sum256([]byte(o.codeChallenge))
+		q.Add("code_challenge", base64.RawURLEncoding.EncodeToString(s256[:]))
 	}
 	q.Add("scope", o.scope)
 	q.Add("state", o.state)
