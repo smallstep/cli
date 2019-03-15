@@ -346,7 +346,7 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 				})
 			case *provisioner.OIDC:
 				items = append(items, &provisionersSelect{
-					Name:        p.ClientID + " (" + p.Name + " OIDC)",
+					Name:        p.ClientID + " (" + p.Name + ")",
 					Issuer:      p.Name,
 					Provisioner: p,
 				})
@@ -360,17 +360,6 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 		}
 
 		if p, ok := items[i].Provisioner.(*provisioner.OIDC); ok {
-			// Use the "implicit" flow if the secret is not available
-			if p.ClientSecret == "" {
-				out, err := exec.Step("oauth", "--oidc", "--bare", "--implicit",
-					"--provider", p.ConfigurationEndpoint,
-					"--client-id", p.ClientID)
-				if err != nil {
-					return "", err
-				}
-				return string(out), nil
-			}
-			// Server flow
 			out, err := exec.Step("oauth", "--oidc", "--bare",
 				"--provider", p.ConfigurationEndpoint,
 				"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
