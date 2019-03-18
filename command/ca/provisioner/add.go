@@ -54,6 +54,10 @@ provisioner with it.`,
 				Usage: `The <id> used to validate the audience in an OpenID Connect token.`,
 			},
 			cli.StringFlag{
+				Name:  "client-secret",
+				Usage: `The <secret> used to obtain the OpenID Connect tokens.`,
+			},
+			cli.StringFlag{
 				Name:  "configuration-endpoint",
 				Usage: `OpenID Connect configuration <url>.`,
 			},
@@ -62,6 +66,11 @@ provisioner with it.`,
 				Usage: `The <email> of an admin user in an OpenID Connect provisioner, this user
 will not have restrictions in the certificates to sign. Use the
 '--admin' flag multiple times to configure multiple administrators.`,
+			},
+			cli.StringSliceFlag{
+				Name: "domain",
+				Usage: `The <domain> used to validate the email claim in an OpenID Connect provisioner.
+Use the '--domain' flag multiple times to configure multiple domains.`,
 			},
 			flags.PasswordFile,
 		},
@@ -107,9 +116,11 @@ Add an OIDC provisioner with two administrators:
 '''
 $ step ca provisioner add Google --type oidc --ca-config ca.json \
   --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
+  --client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
   --configuration-endpoint https://accounts.google.com/.well-known/openid-configuration \
-  --admin mariano@smallstep.com --admin max@smallstep.com
-'''`,
+  --admin mariano@smallstep.com --admin max@smallstep.com \
+  --domain smallstep.com
+'''	`,
 	}
 }
 
@@ -276,8 +287,10 @@ func addOIDCProvider(ctx *cli.Context, name string, provMap map[string]bool) (li
 		Type:                  oidcType,
 		Name:                  name,
 		ClientID:              clientID,
+		ClientSecret:          ctx.String("client-secret"),
 		ConfigurationEndpoint: confURL,
 		Admins:                ctx.StringSlice("admin"),
+		Domains:               ctx.StringSlice("domain"),
 	}
 	// Check for duplicates
 	if _, ok := provMap[p.GetID()]; !ok {
