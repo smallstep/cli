@@ -136,6 +136,7 @@ func certificateAction(ctx *cli.Context) error {
 		if token, err = flow.GenerateToken(ctx, subject, sans); err != nil {
 			return err
 		}
+		isStepToken = isStepCertificatesToken(token)
 	} else {
 		isStepToken = isStepCertificatesToken(token)
 		if isStepToken && len(sans) > 0 {
