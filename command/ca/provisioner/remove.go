@@ -22,16 +22,16 @@ func removeCommand() cli.Command {
 			},
 			cli.StringFlag{
 				Name:  "kid",
-				Usage: "The <kid> (Key ID) of for the JWK provisioner key to be removed.",
+				Usage: "The <kid> (Key ID) of the JWK provisioner key to be removed.",
 			},
 			cli.StringFlag{
 				Name:  "client-id",
-				Usage: "The <id> (Client ID) of for the OIDC provisioner to be removed.",
+				Usage: "The <id> (Client ID) of the OIDC provisioner to be removed.",
 			},
 			cli.BoolFlag{
 				Name: "all",
 				Usage: `Remove all provisioners with a given name. Cannot be
-used in combination w/ the **--kid** flag.`,
+used in combination w/ the **--kid** or **--client-id** flag.`,
 			},
 		},
 		Description: `**step ca provisioner remove** removes one or more provisioners
