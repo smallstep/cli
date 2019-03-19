@@ -370,7 +370,7 @@ func (f *certificateFlow) CreateSignRequest(token string, sans []string) (*api.S
 		Subject: pkix.Name{
 			CommonName: claims.Subject,
 		},
-		SignatureAlgorithm: x509.ECDSAWithSHA256,
+		SignatureAlgorithm: keys.DefaultSignatureAlgorithm,
 		DNSNames:           dnsNames,
 		IPAddresses:        ips,
 		EmailAddresses:     emails,
