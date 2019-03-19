@@ -2,8 +2,6 @@ package ca
 
 import (
 	"crypto"
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -16,6 +14,7 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
+	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/x509util"
@@ -356,9 +355,9 @@ func (f *certificateFlow) CreateSignRequest(token string, sans []string) (*api.S
 		return nil, nil, errors.Wrap(err, "error parsing token")
 	}
 
-	pk, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	pk, err := keys.GenerateDefaultKey()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "error generating key")
+		return nil, nil, err
 	}
 
 	var emails []string
