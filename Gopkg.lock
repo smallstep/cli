@@ -323,8 +323,8 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "oidc-provisioner"
-  digest = "1:0ebeb00ed4b09fc7d3ce5ef21d9e54f406dc58593b85bd62749be20541835cee"
+  branch = "master"
+  digest = "1:ddc780ea695358bba68986ae9e7ba342512de810d4099cc57f9f11e59c58aeea"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
@@ -336,7 +336,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "6592c4784b8058499b18574ca9529f9d0c7266ee"
+  revision = "095ab891e736ea7eb1c77436fd6083a79d786151"
 
 [[projects]]
   branch = "master"
