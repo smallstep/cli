@@ -57,8 +57,8 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 			case "": // ok: OKP defaults to Ed25519
 				crv = "Ed25519"
 			default:
-				return kty, crv, size, errs.IncompatibleFlagValueWithFlagValue(ctx, curveKey,
-					crv, ktyKey, kty, "Ed25519")
+				return kty, crv, size, errs.IncompatibleFlagValueWithFlagValue(ctx, ktyKey, kty,
+					curveKey, crv, "Ed25519")
 			}
 		default:
 			return kty, crv, size, errs.InvalidFlagValue(ctx, ktyKey, kty, "RSA, EC, OKP")
