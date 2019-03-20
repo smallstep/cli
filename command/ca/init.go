@@ -2,6 +2,7 @@ package ca
 
 import (
 	"crypto/rand"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
-	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -46,7 +46,7 @@ func initCommand() cli.Command {
 			},
 			cli.StringFlag{
 				Name:  "dns",
-				Usage: "The comma sepparated DNS <names> or IP addresses of the new CA.",
+				Usage: "The comma separated DNS <names> or IP addresses of the new CA.",
 			},
 			cli.StringFlag{
 				Name:  "address",
@@ -77,7 +77,7 @@ func initAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	var rootCrt *stepx509.Certificate
+	var rootCrt *x509.Certificate
 	var rootKey interface{}
 
 	root := ctx.String("root")
@@ -91,7 +91,7 @@ func initAction(ctx *cli.Context) (err error) {
 		return errs.RequiredWithFlag(ctx, "key", "root")
 	case len(root) > 0 && len(key) > 0:
 		var err error
-		if rootCrt, err = pemutil.ReadStepCertificate(root); err != nil {
+		if rootCrt, err = pemutil.ReadCertificate(root); err != nil {
 			return err
 		}
 		if rootKey, err = pemutil.Read(key); err != nil {

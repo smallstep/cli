@@ -1,11 +1,11 @@
 package x509util
 
 import (
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/pkg/x509"
 )
 
 // DefaultRootCertValidity is the default validity of a root certificate in the step PKI.

@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/sha1"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
@@ -14,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 )
 
@@ -244,7 +245,7 @@ func newProfile(p Profile, sub, iss *x509.Certificate, issPriv crypto.PrivateKey
 	}
 
 	if sub.SubjectKeyId == nil {
-		pubBytes, err := x509.MarshalPKIXPublicKey(p.SubjectPublicKey())
+		pubBytes, err := stepx509.MarshalPKIXPublicKey(p.SubjectPublicKey())
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to marshal public key to bytes")
 		}
@@ -329,13 +330,17 @@ func (b *base) GenerateDefaultKeyPair() error {
 // in the profile.
 func (b *base) CreateCertificate() ([]byte, error) {
 	if b.SubjectPublicKey() == nil {
-		return nil, errors.Errorf("Profile does not have subject public key. Need to call 'profile.GenKeys(...)' or use setters to populate keys")
+		return nil, errors.Errorf("Profile does not have subject public key. Need to call 'profile.GenerateKeyPair(...)' or use setters to populate keys")
 	}
 	if b.issPriv == nil {
 		return nil, errors.Errorf("Profile does not have issuer private key. Use setters to populate this field.")
 	}
-	bytes, err := x509.CreateCertificate(rand.Reader, b.Subject(), b.Issuer(),
-		b.SubjectPublicKey(), b.issPriv)
+
+	sub := ToStepX509Certificate(b.Subject())
+	iss := ToStepX509Certificate(b.Issuer())
+
+	// Using stepx509 to be able to create certs with ed25519
+	bytes, err := stepx509.CreateCertificate(rand.Reader, sub, iss, b.SubjectPublicKey(), b.issPriv)
 	return bytes, errors.WithStack(err)
 }
 

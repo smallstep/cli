@@ -1,10 +1,9 @@
 package x509util
 
 import (
+	"crypto/x509"
 	"encoding/pem"
 	"errors"
-
-	"github.com/smallstep/cli/pkg/x509"
 )
 
 // LoadCSRFromBytes loads a CSR given the ASN.1 DER format.
@@ -13,5 +12,5 @@ func LoadCSRFromBytes(der []byte) (*x509.CertificateRequest, error) {
 	if block == nil {
 		return nil, errors.New("failed to decode PEM block containing CSR")
 	}
-	return x509.ParseCertificateRequest(block.Bytes)
+	return ParseCertificateRequest(block.Bytes)
 }

@@ -2,6 +2,7 @@ package pki
 
 import (
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
@@ -21,7 +22,6 @@ import (
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
-	stepX509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 )
@@ -213,7 +213,7 @@ func (p *PKI) GenerateKeyPairs(pass []byte) error {
 }
 
 // GenerateRootCertificate generates a root certificate with the given name.
-func (p *PKI) GenerateRootCertificate(name string, pass []byte) (*stepX509.Certificate, interface{}, error) {
+func (p *PKI) GenerateRootCertificate(name string, pass []byte) (*x509.Certificate, interface{}, error) {
 	rootProfile, err := x509util.NewRootProfile(name)
 	if err != nil {
 		return nil, nil, err
@@ -224,7 +224,7 @@ func (p *PKI) GenerateRootCertificate(name string, pass []byte) (*stepX509.Certi
 		return nil, nil, err
 	}
 
-	rootCrt, err := stepX509.ParseCertificate(rootBytes)
+	rootCrt, err := x509.ParseCertificate(rootBytes)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "error parsing root certificate")
 	}
@@ -236,7 +236,7 @@ func (p *PKI) GenerateRootCertificate(name string, pass []byte) (*stepX509.Certi
 }
 
 // WriteRootCertificate writes to disk the given certificate and key.
-func (p *PKI) WriteRootCertificate(rootCrt *stepX509.Certificate, rootKey interface{}, pass []byte) error {
+func (p *PKI) WriteRootCertificate(rootCrt *x509.Certificate, rootKey interface{}, pass []byte) error {
 	if err := utils.WriteFile(p.root, pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: rootCrt.Raw,
@@ -253,7 +253,7 @@ func (p *PKI) WriteRootCertificate(rootCrt *stepX509.Certificate, rootKey interf
 
 // GenerateIntermediateCertificate generates an intermediate certificate with
 // the given name.
-func (p *PKI) GenerateIntermediateCertificate(name string, rootCrt *stepX509.Certificate, rootKey interface{}, pass []byte) error {
+func (p *PKI) GenerateIntermediateCertificate(name string, rootCrt *x509.Certificate, rootKey interface{}, pass []byte) error {
 	interProfile, err := x509util.NewIntermediateProfile(name, rootCrt, rootKey)
 	if err != nil {
 		return err

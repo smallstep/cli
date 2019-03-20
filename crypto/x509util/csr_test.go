@@ -27,7 +27,7 @@ func TestCSR_LoadCSRFromBytes(t *testing.T) {
 			der: func() ([]byte, error) {
 				return []byte("-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyEU5ZhIhFn7v4bpMKlkz\ndmLCj9KfmqFWig29c6OzYoMUnbdodOmZ6RId/Gw5fnluH12eFxsItlXKDT4RPSm7\nm4D1sYgFmk88oo6z4XDuItDncoIg89jGK38OZ8A0gwEoy5JqukONGmAldzgzQyiq\nuzSNMeT1WO9zXCwOljcUio697M1kP/YN1Lp7n7YILVwdV8wQ2vyNKQK1M/5OZOFl\nlOqww4wsqLTDK0rfxp6LAVtczp1XdxbsnpdixrK38O+dHWe4IS5HhKLmmmdTfpFQ\nD3PIAXs/Naap/0+t0lsOplNPiF4BYyNBIqyyfm1o5ZQpGfmITKvDFZMBkQ2i2cou\nnQIDAQAB\n-----END PUBLIC KEY-----"), nil
 			},
-			err: errors.New("asn1: structure error: tags don't match"),
+			err: errors.New("error parsing certificate request: asn1: structure error: tags don't match"),
 		},
 		"success": {
 			der: func() ([]byte, error) {
@@ -59,20 +59,20 @@ func TestCSR_LoadCSRFromBytes(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		t.Logf("Running test case: %s", name)
+		t.Run(name, func(t *testing.T) {
+			bytes, err := test.der()
+			assert.FatalError(t, err)
+			csr, err := LoadCSRFromBytes(bytes)
 
-		bytes, err := test.der()
-		assert.FatalError(t, err)
-		csr, err := LoadCSRFromBytes(bytes)
-
-		if err != nil {
-			if assert.NotNil(t, test.err) {
-				assert.HasPrefix(t, err.Error(), test.err.Error())
+			if err != nil {
+				if assert.NotNil(t, test.err) {
+					assert.HasPrefix(t, err.Error(), test.err.Error())
+				}
+			} else {
+				assert.Equals(t, csr.Subject.Country, []string{"Foo"})
+				assert.Equals(t, csr.Subject.Organization, []string{"Smallstep"})
+				assert.Equals(t, csr.Subject.CommonName, "Bar")
 			}
-		} else {
-			assert.Equals(t, csr.Subject.Country, []string{"Foo"})
-			assert.Equals(t, csr.Subject.Organization, []string{"Smallstep"})
-			assert.Equals(t, csr.Subject.CommonName, "Bar")
-		}
+		})
 	}
 }
