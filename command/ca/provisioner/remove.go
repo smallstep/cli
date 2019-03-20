@@ -3,6 +3,7 @@ package provisioner
 import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
@@ -21,12 +22,16 @@ func removeCommand() cli.Command {
 			},
 			cli.StringFlag{
 				Name:  "kid",
-				Usage: "The <kid> (Key ID) of for the provisioner key to be removed.",
+				Usage: "The <kid> (Key ID) of the JWK provisioner key to be removed.",
+			},
+			cli.StringFlag{
+				Name:  "client-id",
+				Usage: "The <id> (Client ID) of the OIDC provisioner to be removed.",
 			},
 			cli.BoolFlag{
 				Name: "all",
 				Usage: `Remove all provisioners with a given name. Cannot be
-used in combination w/ the **--kid** flag.`,
+used in combination w/ the **--kid** or **--client-id** flag.`,
 			},
 		},
 		Description: `**step ca provisioner remove** removes one or more provisioners
@@ -47,6 +52,12 @@ $ step ca provisioner remove max@smallstep.com --all --ca-config ca.json
 Remove the provisioner matching a given name and kid:
 '''
 $ step ca provisioner remove max@smallstep. --kid 1234 --ca-config ca.json
+'''
+
+Remove the provisioner matching a given name and a client id:
+'''
+$ step ca provisioner remove Google --ca-config ca.json \
+  --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com
 '''`,
 	}
 }
@@ -60,18 +71,26 @@ func removeAction(ctx *cli.Context) error {
 	config := ctx.String("ca-config")
 	all := ctx.Bool("all")
 	kid := ctx.String("kid")
+	clientID := ctx.String("client-id")
 
 	if len(config) == 0 {
 		return errs.RequiredFlag(ctx, "ca-config")
+	}
+
+	if len(kid) > 0 && len(clientID) > 0 {
+		return errs.MutuallyExclusiveFlags(ctx, "kid", "client-id")
 	}
 
 	if all {
 		if len(kid) != 0 {
 			return errs.MutuallyExclusiveFlags(ctx, "all", "kid")
 		}
+		if len(clientID) != 0 {
+			return errs.MutuallyExclusiveFlags(ctx, "all", "client-id")
+		}
 	} else {
-		if len(kid) == 0 {
-			return errs.RequiredUnlessFlag(ctx, "kid", "all")
+		if len(kid) == 0 && len(clientID) == 0 {
+			return errs.RequiredOrFlag(ctx, "all", "kid", "client-id")
 		}
 	}
 
@@ -81,17 +100,27 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	var (
-		provisioners []*authority.Provisioner
+		provisioners provisioner.List
 		found        = false
 	)
 	for _, p := range c.AuthorityConfig.Provisioners {
-		if p.Name != name {
+		if p.GetName() != name {
 			provisioners = append(provisioners, p)
 			continue
 		}
-		if !all && p.Key.KeyID != kid {
-			provisioners = append(provisioners, p)
-			continue
+		if !all {
+			switch pp := p.(type) {
+			case *provisioner.JWK:
+				if kid == "" || pp.Key.KeyID != kid {
+					provisioners = append(provisioners, p)
+				}
+			case *provisioner.OIDC:
+				if clientID == "" || pp.ClientID != clientID {
+					provisioners = append(provisioners, p)
+				}
+			default:
+				continue
+			}
 		}
 		found = true
 	}
@@ -100,7 +129,10 @@ func removeAction(ctx *cli.Context) error {
 		if all {
 			return errors.Errorf("no provisioners with name %s found", name)
 		}
-		return errors.Errorf("no provisioners with name=%s and kid=%s found", name, kid)
+		if kid != "" {
+			return errors.Errorf("no provisioners with name=%s and kid=%s found", name, kid)
+		}
+		return errors.Errorf("no provisioners with name=%s and client-id=%s found", name, clientID)
 	}
 
 	c.AuthorityConfig.Provisioners = provisioners

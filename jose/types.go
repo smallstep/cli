@@ -89,6 +89,9 @@ type SigningKey = jose.SigningKey
 // SignerOptions represents options that can be set when creating signers.
 type SignerOptions = jose.SignerOptions
 
+// Header represents the read-only JOSE header for JWE/JWS objects.
+type Header = jose.Header
+
 // HeaderKey represents the type used as a key in the protected header of a JWS
 // object.
 type HeaderKey = jose.HeaderKey

@@ -13,6 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -68,7 +69,7 @@ func GetOTTKeyPath() string {
 }
 
 // GetProvisioners returns the map of provisioners on the given CA.
-func GetProvisioners(caURL, rootFile string) ([]*authority.Provisioner, error) {
+func GetProvisioners(caURL, rootFile string) (provisioner.List, error) {
 	if len(rootFile) == 0 {
 		rootFile = GetRootCAPath()
 	}
@@ -77,7 +78,7 @@ func GetProvisioners(caURL, rootFile string) ([]*authority.Provisioner, error) {
 		return nil, err
 	}
 	cursor := ""
-	provisioners := []*authority.Provisioner{}
+	provisioners := provisioner.List{}
 	for {
 		resp, err := client.Provisioners(ca.WithProvisionerCursor(cursor), ca.WithProvisionerLimit(100))
 		if err != nil {
@@ -300,8 +301,8 @@ func (p *PKI) Save() error {
 		Logger:           []byte(`{"format": "text"}`),
 		AuthorityConfig: &authority.AuthConfig{
 			DisableIssuedAtCheck: false,
-			Provisioners: []*authority.Provisioner{
-				{Name: p.provisioner, Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
+			Provisioners: provisioner.List{
+				&provisioner.JWK{Name: p.provisioner, Type: "jwk", Key: p.ottPublicKey, EncryptedKey: key},
 			},
 		},
 		TLS: &tlsutil.TLSOptions{

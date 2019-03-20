@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -8,6 +9,7 @@ import (
 	"path"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/pkg/errors"
@@ -90,6 +92,18 @@ func OpenInBrowser(url string) error {
 	}
 
 	return errors.WithStack(cmd.Start())
+}
+
+// Step executes step with the given commands and returns the standard output.
+func Step(args ...string) ([]byte, error) {
+	var stderr bytes.Buffer
+	cmd := exec.Command(os.Args[0], args...)
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error running %s %s:\n%s", os.Args[0], strings.Join(args, " "), stderr.String())
+	}
+	return out, nil
 }
 
 func run(name string, arg ...string) (*exec.Cmd, chan int, error) {

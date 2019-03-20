@@ -10,8 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/smallstep/cli/exec"
+
 	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/randutil"
@@ -26,9 +28,10 @@ import (
 )
 
 type provisionersSelect struct {
-	Name   string
-	Issuer string
-	JWK    jose.JSONWebKey
+	Name        string
+	Issuer      string
+	JWK         jose.JSONWebKey
+	Provisioner provisioner.Interface
 }
 
 func tokenCommand() cli.Command {
@@ -294,10 +297,18 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 		return "", errors.New("cannot create a new token: the CA does not have any provisioner configured")
 	}
 
+	// Filter by type
+	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+		return p.GetType() == provisioner.TypeJWK || p.GetType() == provisioner.TypeOIDC
+	})
+
 	// Filter by kid
 	if len(kid) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p *authority.Provisioner) bool {
-			return p.Key.KeyID == kid
+		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+			if pp, ok := p.(*provisioner.JWK); ok {
+				return pp.Key.KeyID == kid
+			}
+			return false
 		})
 		if len(provisioners) == 0 {
 			return "", errs.InvalidFlagValue(ctx, "kid", kid, "")
@@ -306,8 +317,8 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 
 	// Filter by issuer (provisioner name)
 	if len(issuer) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p *authority.Provisioner) bool {
-			return p.Name == issuer
+		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+			return p.GetName() == issuer
 		})
 		if len(provisioners) == 0 {
 			return "", errs.InvalidFlagValue(ctx, "issuer", issuer, "")
@@ -315,25 +326,49 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 	}
 
 	if len(provisioners) == 1 {
-		kid = provisioners[0].Key.KeyID
-		issuer = provisioners[0].Name
+		p := provisioners[0].(*provisioner.JWK)
+		kid = p.Key.KeyID
+		issuer = p.Name
 		// Prints kid/issuer used
 		if err := ui.PrintSelected("Key ID", kid+" ("+issuer+")"); err != nil {
 			return "", err
 		}
 	} else {
 		var items []*provisionersSelect
-		for _, p := range provisioners {
-			items = append(items, &provisionersSelect{
-				Name:   p.Key.KeyID + " (" + p.Name + ")",
-				Issuer: p.Name,
-				JWK:    *p.Key,
-			})
+		for _, prov := range provisioners {
+			switch p := prov.(type) {
+			case *provisioner.JWK:
+				items = append(items, &provisionersSelect{
+					Name:        p.Key.KeyID + " (" + p.Name + ")",
+					Issuer:      p.Name,
+					JWK:         *p.Key,
+					Provisioner: p,
+				})
+			case *provisioner.OIDC:
+				items = append(items, &provisionersSelect{
+					Name:        p.ClientID + " (" + p.Name + ")",
+					Issuer:      p.Name,
+					Provisioner: p,
+				})
+			default:
+				continue
+			}
 		}
 		i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
 		if err != nil {
 			return "", err
 		}
+
+		if p, ok := items[i].Provisioner.(*provisioner.OIDC); ok {
+			out, err := exec.Step("oauth", "--oidc", "--bare",
+				"--provider", p.ConfigurationEndpoint,
+				"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
+			if err != nil {
+				return "", err
+			}
+			return string(out), nil
+		}
+
 		kid = items[i].JWK.KeyID
 		issuer = items[i].Issuer
 	}
@@ -452,8 +487,8 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 }
 
 // provisionerFilter returns a slice of provisioners that pass the given filter.
-func provisionerFilter(provisioners []*authority.Provisioner, f func(*authority.Provisioner) bool) []*authority.Provisioner {
-	var result []*authority.Provisioner
+func provisionerFilter(provisioners provisioner.List, f func(provisioner.Interface) bool) provisioner.List {
+	var result provisioner.List
 	for _, p := range provisioners {
 		if f(p) {
 			result = append(result, p)

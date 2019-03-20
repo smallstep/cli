@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
@@ -80,7 +81,7 @@ func (c *offlineCA) Root() string {
 }
 
 // Provisioners returns the list of configured provisioners.
-func (c *offlineCA) Provisioners() []*authority.Provisioner {
+func (c *offlineCA) Provisioners() provisioner.List {
 	return c.config.AuthorityConfig.Provisioners
 }
 
@@ -92,7 +93,7 @@ func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	signOpts := authority.SignOptions{
+	signOpts := provisioner.Options{
 		NotBefore: req.NotBefore,
 		NotAfter:  req.NotAfter,
 	}
@@ -146,10 +147,18 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []strin
 	var kid, issuer, encryptedKey string
 	provisioners := c.Provisioners()
 
+	// Filter by type
+	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+		return p.GetType() == provisioner.TypeJWK
+	})
+
 	// Filter by kid (provisioner key id)
 	if kid = ctx.String("kid"); len(kid) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p *authority.Provisioner) bool {
-			return p.Key.KeyID == kid
+		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+			if pp, ok := p.(*provisioner.JWK); ok {
+				return pp.Key.KeyID == kid
+			}
+			return false
 		})
 		if len(provisioners) == 0 {
 			return "", errs.InvalidFlagValue(ctx, "kid", kid, "")
@@ -158,8 +167,8 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []strin
 
 	// Filter by issuer (provisioner name)
 	if issuer = ctx.String("issuer"); len(issuer) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p *authority.Provisioner) bool {
-			return p.Name == issuer
+		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+			return p.GetName() == issuer
 		})
 		if len(provisioners) == 0 {
 			return "", errs.InvalidFlagValue(ctx, "issuer", issuer, "")
@@ -167,12 +176,14 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []strin
 	}
 
 	if len(provisioners) == 1 {
-		kid = provisioners[0].Key.KeyID
-		issuer = provisioners[0].Name
-		encryptedKey = provisioners[0].EncryptedKey
+		p := provisioners[0].(*provisioner.JWK)
+		kid = p.Key.KeyID
+		issuer = p.Name
+		encryptedKey = p.EncryptedKey
 	} else {
 		var items []*offlineProvisionersSelect
-		for _, p := range provisioners {
+		for _, prov := range provisioners {
+			p := prov.(*provisioner.JWK)
 			items = append(items, &offlineProvisionersSelect{
 				Name:         p.Key.KeyID + " (" + p.Name + ")",
 				Issuer:       p.Name,

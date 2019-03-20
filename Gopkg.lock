@@ -324,26 +324,27 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fa2b355b73d097489bde877193bafac4f3689fc7101216a99880261235a7450d"
+  digest = "1:ddc780ea695358bba68986ae9e7ba342512de810d4099cc57f9f11e59c58aeea"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
     "authority",
+    "authority/provisioner",
     "ca",
     "logging",
     "monitoring",
     "server",
   ]
   pruneopts = "UT"
-  revision = "c23eb88a4f4121945cf774cf43aefad13e56af9a"
+  revision = "095ab891e736ea7eb1c77436fd6083a79d786151"
 
 [[projects]]
   branch = "master"
-  digest = "1:60f40b13a4b607f1045261aed96d2bc92aaed72d00d5d131fce88bbc64a65600"
+  digest = "1:8935e65a39d1ad6915455137210ed0d1043a03a7873aba8e06082d48bece68dd"
   name = "github.com/smallstep/certinfo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "e8f2471440c016c50aee065f22933c3056720242"
+  revision = "6dab787688cc83532a523649e9f5a6bde2947439"
 
 [[projects]]
   branch = "master"
@@ -552,6 +553,7 @@
     "github.com/smallstep/assert",
     "github.com/smallstep/certificates/api",
     "github.com/smallstep/certificates/authority",
+    "github.com/smallstep/certificates/authority/provisioner",
     "github.com/smallstep/certificates/ca",
     "github.com/smallstep/certinfo",
     "github.com/smallstep/truststore",
