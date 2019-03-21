@@ -178,7 +178,7 @@ func TestConvertCertificates(t *testing.T) {
 	assert.Equals(t, e1, ToStepX509Certificate(ToX509Certificate(e1)))
 }
 
-func TestconvertCertificateRequests(t *testing.T) {
+func TestConvertCertificateRequests(t *testing.T) {
 	p256Bytes := pemBytes(t, p256Csr)
 	ed25519Bytes := pemBytes(t, ed25519Csr)
 
