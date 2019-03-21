@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 )
 
 func TestCSR_LoadCSRFromBytes(t *testing.T) {
@@ -35,16 +35,16 @@ func TestCSR_LoadCSRFromBytes(t *testing.T) {
 				if err != nil {
 					return nil, err
 				}
-				template := &x509.CertificateRequest{
+				template := &stepx509.CertificateRequest{
 					Subject: pkix.Name{
 						Country:      []string{"Foo"},
 						Organization: []string{"Smallstep"},
 						CommonName:   "Bar",
 					},
-					SignatureAlgorithm: x509.SHA256WithRSA,
+					SignatureAlgorithm: stepx509.SHA256WithRSA,
 				}
 
-				bytes, err := x509.CreateCertificateRequest(rand.Reader, template, keypair)
+				bytes, err := stepx509.CreateCertificateRequest(rand.Reader, template, keypair)
 				if err != nil {
 					return nil, err
 				}
