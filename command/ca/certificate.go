@@ -297,7 +297,7 @@ func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 		}
 	}
 
-	return newTokenFlow(ctx, subject, sans, caURL, root, "", "", "", "", time.Time{}, time.Time{})
+	return newTokenFlow(ctx, subject, sans, caURL, root, time.Time{}, time.Time{})
 }
 
 // Sign signs the CSR using the online or the offline certificate authority.
