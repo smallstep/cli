@@ -18,13 +18,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-type offlineProvisionersSelect struct {
-	Name         string
-	Issuer       string
-	Kid          string
-	EncryptedKey string
-}
-
 type caClient interface {
 	Sign(req *api.SignRequest) (*api.SignResponse, error)
 	Renew(tr http.RoundTripper) (*api.SignResponse, error)
