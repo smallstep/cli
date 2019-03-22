@@ -421,24 +421,24 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 		return "", errs.InvalidFlagValue(ctx, "ca-config", "", "")
 	}
 
+	notBefore, notAfter, err := parseValidity(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	// Using the offline CA
 	if utils.FileExists(caConfig) {
 		offlineCA, err := newOfflineCA(caConfig)
 		if err != nil {
 			return "", err
 		}
-		return offlineCA.GenerateToken(ctx, subject, sans)
+		return offlineCA.GenerateToken(ctx, subject, sans, notBefore, notAfter)
 	}
 
 	kid := ctx.String("kid")
 	issuer := ctx.String("issuer")
 	keyFile := ctx.String("key")
 	passwordFile := ctx.String("password-file")
-
-	notBefore, notAfter, err := parseValidity(ctx)
-	if err != nil {
-		return "", err
-	}
 
 	// Require issuer and keyFile if ca.json does not exists.
 	// kid can be passed or created using jwk.Thumbprint.

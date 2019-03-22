@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -37,7 +38,7 @@ type offlineCA struct {
 	configFile string
 }
 
-// newOfflineCA initializes an offliceCA.
+// newOfflineCA initializes an offlineCA.
 func newOfflineCA(configFile string) (*offlineCA, error) {
 	b, err := utils.ReadFile(configFile)
 	if err != nil {
@@ -131,17 +132,13 @@ func (c *offlineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 }
 
 // GenerateToken creates the token used by the authority to sign certificates.
-func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
+func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []string, notBefore, notAfter time.Time) (string, error) {
 	// Use ca.json configuration for the root and audience
 	root := c.Root()
 	audience := c.Audience()
 
 	// Get common parameters
 	passwordFile := ctx.String("password-file")
-	notBefore, notAfter, err := parseValidity(ctx)
-	if err != nil {
-		return "", err
-	}
 
 	// Get provisioner to use
 	var kid, issuer, encryptedKey string
