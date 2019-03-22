@@ -299,7 +299,7 @@ func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 	return newTokenFlow(ctx, subject, sans, caURL, root, "", "", "", "", time.Time{}, time.Time{})
 }
 
-// Sign signs the token using the online or the offline certificate authority.
+// Sign signs the CSR using the online or the offline certificate authority.
 func (f *certificateFlow) Sign(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {
 	client, err := f.getClient(ctx, csr.Subject.CommonName, token)
 	if err != nil {
