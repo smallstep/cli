@@ -267,8 +267,9 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, token string) (ca
 	return ca.NewClient(caURL, options...)
 }
 
-// GenerateToken generates the token using the token flow or the online mode.
-// Both flows use the default validity as the token will be used immediately.
+// GenerateToken generates a token for immediate use (therefore only default
+// validity values will be used). The token is generated either with the offline
+// token flow or the online mode.
 func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
 	if f.offline {
 		return f.offlineCA.GenerateToken(ctx, subject, sans, time.Time{}, time.Time{})
