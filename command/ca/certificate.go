@@ -308,7 +308,7 @@ func (f *certificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 	}
 
 	// parse times or durations
-	notBefore, notAfter, err := parseValidity(ctx)
+	notBefore, notAfter, err := parseTimeDuration(ctx)
 	if err != nil {
 		return err
 	}
@@ -401,4 +401,18 @@ func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP) {
 		}
 	}
 	return x509util.SplitSANs(unique)
+}
+
+// parseTimeDuration parses the not-before and not-after flags as a timeDuration
+func parseTimeDuration(ctx *cli.Context) (notBefore api.TimeDuration, notAfter api.TimeDuration, err error) {
+	var zero api.TimeDuration
+	notBefore, err = api.ParseTimeDuration(ctx.String("not-before"))
+	if err != nil {
+		return zero, zero, errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, err = api.ParseTimeDuration(ctx.String("not-after"))
+	if err != nil {
+		return zero, zero, errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+	return
 }
