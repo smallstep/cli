@@ -11,19 +11,12 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
-
-type offlineProvisionersSelect struct {
-	Name         string
-	Issuer       string
-	Kid          string
-	EncryptedKey string
-}
 
 type caClient interface {
 	Sign(req *api.SignRequest) (*api.SignResponse, error)
@@ -137,71 +130,40 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, subject string, sans []strin
 	root := c.Root()
 	audience := c.Audience()
 
-	// Get common parameters
-	passwordFile := ctx.String("password-file")
-
 	// Get provisioner to use
-	var kid, issuer, encryptedKey string
 	provisioners := c.Provisioners()
 
-	// Filter by type
-	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-		return p.GetType() == provisioner.TypeJWK
-	})
-
-	// Filter by kid (provisioner key id)
-	if kid = ctx.String("kid"); len(kid) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			if pp, ok := p.(*provisioner.JWK); ok {
-				return pp.Key.KeyID == kid
-			}
-			return false
-		})
-		if len(provisioners) == 0 {
-			return "", errs.InvalidFlagValue(ctx, "kid", kid, "")
-		}
+	p, err := provisionerPrompt(ctx, provisioners)
+	if err != nil {
+		return "", err
 	}
 
-	// Filter by issuer (provisioner name)
-	if issuer = ctx.String("issuer"); len(issuer) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			return p.GetName() == issuer
-		})
-		if len(provisioners) == 0 {
-			return "", errs.InvalidFlagValue(ctx, "issuer", issuer, "")
-		}
-	}
-
-	if len(provisioners) == 1 {
-		p := provisioners[0].(*provisioner.JWK)
-		kid = p.Key.KeyID
-		issuer = p.Name
-		encryptedKey = p.EncryptedKey
-	} else {
-		var items []*offlineProvisionersSelect
-		for _, prov := range provisioners {
-			p := prov.(*provisioner.JWK)
-			items = append(items, &offlineProvisionersSelect{
-				Name:         p.Key.KeyID + " (" + p.Name + ")",
-				Issuer:       p.Name,
-				Kid:          p.Key.KeyID,
-				EncryptedKey: p.EncryptedKey,
-			})
-		}
-		i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
+	// With OIDC just run step oauth
+	if p, ok := p.(*provisioner.OIDC); ok {
+		out, err := exec.Step("oauth", "--oidc", "--bare",
+			"--provider", p.ConfigurationEndpoint,
+			"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
 		if err != nil {
 			return "", err
 		}
-		kid = items[i].Kid
-		issuer = items[i].Issuer
-		encryptedKey = items[i].EncryptedKey
+		return string(out), nil
 	}
+
+	// JWK provisioner
+	prov, ok := p.(*provisioner.JWK)
+	if !ok {
+		return "", errors.Errorf("unknown provisioner type %T", p)
+	}
+
+	kid := prov.Key.KeyID
+	issuer := prov.Name
+	encryptedKey := prov.EncryptedKey
 
 	// Decrypt encrypted key
 	opts := []jose.Option{
 		jose.WithUIOptions(ui.WithPromptTemplates(ui.PromptTemplates())),
 	}
-	if len(passwordFile) != 0 {
+	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
 		opts = append(opts, jose.WithPasswordFile(passwordFile))
 	}
 
