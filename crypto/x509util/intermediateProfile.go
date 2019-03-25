@@ -2,10 +2,9 @@ package x509util
 
 import (
 	"crypto"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"time"
-
-	"github.com/smallstep/cli/pkg/x509"
 )
 
 // DefaultIntermediateCertValidity is the default validity of a intermediate certificate in the step PKI.

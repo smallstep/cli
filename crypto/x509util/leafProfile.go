@@ -2,11 +2,11 @@ package x509util
 
 import (
 	"crypto"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/pkg/x509"
 )
 
 // Leaf implements the Profile for a leaf certificate.

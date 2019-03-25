@@ -1,7 +1,7 @@
 package certificate
 
 import (
-	realx509 "crypto/x509"
+	"crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
 
@@ -100,9 +100,9 @@ func verifyAction(ctx *cli.Context) error {
 		crtFile          = ctx.Args().Get(0)
 		host             = ctx.String("host")
 		roots            = ctx.String("roots")
-		intermediatePool = realx509.NewCertPool()
-		rootPool         *realx509.CertPool
-		cert             *realx509.Certificate
+		intermediatePool = x509.NewCertPool()
+		rootPool         *x509.CertPool
+		cert             *x509.Certificate
 	)
 
 	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
@@ -136,7 +136,7 @@ func verifyAction(ctx *cli.Context) error {
 				continue
 			}
 			if cert == nil {
-				cert, err = realx509.ParseCertificate(block.Bytes)
+				cert, err = x509.ParseCertificate(block.Bytes)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -159,7 +159,7 @@ func verifyAction(ctx *cli.Context) error {
 		}
 	}
 
-	opts := realx509.VerifyOptions{
+	opts := x509.VerifyOptions{
 		DNSName:       host,
 		Roots:         rootPool,
 		Intermediates: intermediatePool,

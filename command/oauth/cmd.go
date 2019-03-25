@@ -3,6 +3,7 @@ package oauth
 import (
 	"bufio"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
@@ -23,7 +24,6 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/jose"
-	"github.com/smallstep/cli/pkg/x509"
 	"github.com/urfave/cli"
 )
 
