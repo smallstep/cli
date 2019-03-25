@@ -4,9 +4,8 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"github.com/smallstep/cli/crypto/x509util"
-
 	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 )
