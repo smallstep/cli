@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -266,10 +267,12 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, token string) (ca
 	return ca.NewClient(caURL, options...)
 }
 
+// GenerateToken generates a token for immediate use (therefore only default
+// validity values will be used). The token is generated either with the offline
+// token flow or the online mode.
 func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
-	// For offline just generate the token
 	if f.offline {
-		return f.offlineCA.GenerateToken(ctx, subject, sans)
+		return f.offlineCA.GenerateToken(ctx, subject, sans, time.Time{}, time.Time{})
 	}
 
 	// Use online CA to get the provisioners and generate the token
@@ -286,16 +289,6 @@ func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 		}
 	}
 
-	// parse times or durations
-	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
-	if !ok {
-		return "", errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
-	}
-	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
-	if !ok {
-		return "", errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
-	}
-
 	var err error
 	if subject == "" {
 		subject, err = ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
@@ -304,9 +297,10 @@ func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 		}
 	}
 
-	return newTokenFlow(ctx, subject, sans, caURL, root, "", "", "", "", notBefore, notAfter)
+	return newTokenFlow(ctx, subject, sans, caURL, root, time.Time{}, time.Time{})
 }
 
+// Sign signs the CSR using the online or the offline certificate authority.
 func (f *certificateFlow) Sign(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {
 	client, err := f.getClient(ctx, csr.Subject.CommonName, token)
 	if err != nil {
@@ -314,7 +308,7 @@ func (f *certificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 	}
 
 	// parse times or durations
-	notBefore, notAfter, err := parseValidity(ctx)
+	notBefore, notAfter, err := parseTimeDuration(ctx)
 	if err != nil {
 		return err
 	}
@@ -407,4 +401,18 @@ func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP) {
 		}
 	}
 	return x509util.SplitSANs(unique)
+}
+
+// parseTimeDuration parses the not-before and not-after flags as a timeDuration
+func parseTimeDuration(ctx *cli.Context) (notBefore api.TimeDuration, notAfter api.TimeDuration, err error) {
+	var zero api.TimeDuration
+	notBefore, err = api.ParseTimeDuration(ctx.String("not-before"))
+	if err != nil {
+		return zero, zero, errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, err = api.ParseTimeDuration(ctx.String("not-after"))
+	if err != nil {
+		return zero, zero, errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+	return
 }

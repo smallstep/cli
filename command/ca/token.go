@@ -30,7 +30,6 @@ import (
 type provisionersSelect struct {
 	Name        string
 	Issuer      string
-	JWK         jose.JSONWebKey
 	Provisioner provisioner.Interface
 }
 
@@ -165,11 +164,7 @@ func tokenAction(ctx *cli.Context) error {
 	}
 
 	subject := ctx.Args().Get(0)
-	kid := ctx.String("kid")
-	issuer := ctx.String("issuer")
-	passwordFile := ctx.String("password-file")
 	outputFile := ctx.String("output-file")
-	keyFile := ctx.String("key")
 	offline := ctx.Bool("offline")
 	sans := ctx.StringSlice("san")
 
@@ -204,7 +199,7 @@ func tokenAction(ctx *cli.Context) error {
 			return err
 		}
 	} else {
-		token, err = newTokenFlow(ctx, subject, sans, caURL, root, kid, issuer, passwordFile, keyFile, notBefore, notAfter)
+		token, err = newTokenFlow(ctx, subject, sans, caURL, root, notBefore, notAfter)
 		if err != nil {
 			return err
 		}
@@ -281,7 +276,7 @@ func generateToken(sub string, sans []string, kid, iss, aud, root string, notBef
 }
 
 // newTokenFlow implements the common flow used to generate a token
-func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, kid, issuer, passwordFile, keyFile string, notBefore, notAfter time.Time) (string, error) {
+func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time) (string, error) {
 	// Get audience from ca-url
 	audience, err := parseAudience(ctx)
 	if err != nil {
@@ -293,93 +288,38 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root, 
 		return "", err
 	}
 
-	if len(provisioners) == 0 {
-		return "", errors.New("cannot create a new token: the CA does not have any provisioner configured")
+	p, err := provisionerPrompt(ctx, provisioners)
+	if err != nil {
+		return "", err
 	}
 
-	// Filter by type
-	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-		return p.GetType() == provisioner.TypeJWK || p.GetType() == provisioner.TypeOIDC
-	})
-
-	// Filter by kid
-	if len(kid) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			if pp, ok := p.(*provisioner.JWK); ok {
-				return pp.Key.KeyID == kid
-			}
-			return false
-		})
-		if len(provisioners) == 0 {
-			return "", errs.InvalidFlagValue(ctx, "kid", kid, "")
-		}
-	}
-
-	// Filter by issuer (provisioner name)
-	if len(issuer) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			return p.GetName() == issuer
-		})
-		if len(provisioners) == 0 {
-			return "", errs.InvalidFlagValue(ctx, "issuer", issuer, "")
-		}
-	}
-
-	if len(provisioners) == 1 {
-		p := provisioners[0].(*provisioner.JWK)
-		kid = p.Key.KeyID
-		issuer = p.Name
-		// Prints kid/issuer used
-		if err := ui.PrintSelected("Key ID", kid+" ("+issuer+")"); err != nil {
-			return "", err
-		}
-	} else {
-		var items []*provisionersSelect
-		for _, prov := range provisioners {
-			switch p := prov.(type) {
-			case *provisioner.JWK:
-				items = append(items, &provisionersSelect{
-					Name:        p.Key.KeyID + " (" + p.Name + ")",
-					Issuer:      p.Name,
-					JWK:         *p.Key,
-					Provisioner: p,
-				})
-			case *provisioner.OIDC:
-				items = append(items, &provisionersSelect{
-					Name:        p.ClientID + " (" + p.Name + ")",
-					Issuer:      p.Name,
-					Provisioner: p,
-				})
-			default:
-				continue
-			}
-		}
-		i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
+	// With OIDC just run step oauth
+	if p, ok := p.(*provisioner.OIDC); ok {
+		out, err := exec.Step("oauth", "--oidc", "--bare",
+			"--provider", p.ConfigurationEndpoint,
+			"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
 		if err != nil {
 			return "", err
 		}
-
-		if p, ok := items[i].Provisioner.(*provisioner.OIDC); ok {
-			out, err := exec.Step("oauth", "--oidc", "--bare",
-				"--provider", p.ConfigurationEndpoint,
-				"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
-			if err != nil {
-				return "", err
-			}
-			return string(out), nil
-		}
-
-		kid = items[i].JWK.KeyID
-		issuer = items[i].Issuer
+		return string(out), nil
 	}
 
+	// JWK provisioner
+	prov, ok := p.(*provisioner.JWK)
+	if !ok {
+		return "", errors.Errorf("unknown provisioner type %T", p)
+	}
+
+	kid := prov.Key.KeyID
+	issuer := prov.Name
+
 	var opts []jose.Option
-	if len(passwordFile) != 0 {
+	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
 		opts = append(opts, jose.WithPasswordFile(passwordFile))
 	}
 
 	var jwk *jose.JSONWebKey
-	if len(keyFile) == 0 {
+	if keyFile := ctx.String("key"); len(keyFile) == 0 {
 		// Get private key from CA
 		encrypted, err := pki.GetProvisionerKey(caURL, root, kid)
 		if err != nil {
@@ -421,24 +361,24 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 		return "", errs.InvalidFlagValue(ctx, "ca-config", "", "")
 	}
 
+	notBefore, notAfter, err := parseValidity(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	// Using the offline CA
 	if utils.FileExists(caConfig) {
 		offlineCA, err := newOfflineCA(caConfig)
 		if err != nil {
 			return "", err
 		}
-		return offlineCA.GenerateToken(ctx, subject, sans)
+		return offlineCA.GenerateToken(ctx, subject, sans, notBefore, notAfter)
 	}
 
 	kid := ctx.String("kid")
 	issuer := ctx.String("issuer")
 	keyFile := ctx.String("key")
 	passwordFile := ctx.String("password-file")
-
-	notBefore, notAfter, err := parseValidity(ctx)
-	if err != nil {
-		return "", err
-	}
 
 	// Require issuer and keyFile if ca.json does not exists.
 	// kid can be passed or created using jwk.Thumbprint.
@@ -484,6 +424,92 @@ func offlineTokenFlow(ctx *cli.Context, subject string, sans []string) (string, 
 	}
 
 	return generateToken(subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+}
+
+func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {
+	// Filter by type
+	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+		return p.GetType() == provisioner.TypeJWK || p.GetType() == provisioner.TypeOIDC
+	})
+
+	if len(provisioners) == 0 {
+		return nil, errors.New("cannot create a new token: the CA does not have any provisioner configured")
+	}
+
+	// Filter by kid
+	if kid := ctx.String("kid"); len(kid) != 0 {
+		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+			switch p := p.(type) {
+			case *provisioner.JWK:
+				return p.Key.KeyID == kid
+			case *provisioner.OIDC:
+				return p.ClientID == kid
+			default:
+				return false
+			}
+		})
+		if len(provisioners) == 0 {
+			return nil, errs.InvalidFlagValue(ctx, "kid", kid, "")
+		}
+	}
+
+	// Filter by issuer (provisioner name)
+	if issuer := ctx.String("issuer"); len(issuer) != 0 {
+		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+			return p.GetName() == issuer
+		})
+		if len(provisioners) == 0 {
+			return nil, errs.InvalidFlagValue(ctx, "issuer", issuer, "")
+		}
+	}
+
+	if len(provisioners) == 1 {
+		var id, name string
+		switch p := provisioners[0].(type) {
+		case *provisioner.JWK:
+			name = p.Name
+			id = p.Key.KeyID
+		case *provisioner.OIDC:
+			name = p.Name
+			id = p.ClientID
+		default:
+			return nil, errors.Errorf("unknown provisioner type %T", p)
+		}
+
+		// Prints provisioner used
+		if err := ui.PrintSelected("Key ID", id+" ("+name+")"); err != nil {
+			return nil, err
+		}
+
+		return provisioners[0], nil
+	}
+
+	var items []*provisionersSelect
+	for _, prov := range provisioners {
+		switch p := prov.(type) {
+		case *provisioner.JWK:
+			items = append(items, &provisionersSelect{
+				Name:        p.Key.KeyID + " (" + p.Name + ")",
+				Issuer:      p.Name,
+				Provisioner: p,
+			})
+		case *provisioner.OIDC:
+			items = append(items, &provisionersSelect{
+				Name:        p.ClientID + " (" + p.Name + ")",
+				Issuer:      p.Name,
+				Provisioner: p,
+			})
+		default:
+			continue
+		}
+	}
+
+	i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
+	if err != nil {
+		return nil, err
+	}
+
+	return items[i].Provisioner, nil
 }
 
 // provisionerFilter returns a slice of provisioners that pass the given filter.
