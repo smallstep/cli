@@ -248,7 +248,9 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, token string) (ca
 	// Prepare client for bootstrap or provisioning tokens
 	var options []ca.ClientOption
 	if len(claims.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
-		caURL = claims.Audience[0]
+		if len(caURL) == 0 {
+			caURL = claims.Audience[0]
+		}
 		options = append(options, ca.WithRootSHA256(claims.SHA))
 	} else {
 		if len(caURL) == 0 {
