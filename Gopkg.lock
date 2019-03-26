@@ -336,7 +336,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "eacd2122d077d8979cc2a6274a08e21600ac4427"
+  revision = "1bb25b517115cebfb8ce9e5ecb48fc7bbea055ec"
 
 [[projects]]
   branch = "master"

@@ -15,7 +15,13 @@ e.g. `v1.0.2`
 * **Release Candidate**: not ready for public use, still testing. must have a
 `-rc*` suffix. e.g. `v1.0.2-rc` or `v1.0.2-rc.4`
 
-1. **Commit all changes.**
+1. **Update smallstep/certificates.**
+
+    ```
+    $ dep ensure -update github.com/smallstep/certificates
+    ```
+
+2. **Commit all changes.**
 
     Make sure that the local checkout is up to date with the remote origin and
     that all local changes have been pushed.
@@ -25,7 +31,7 @@ e.g. `v1.0.2`
     git push
     ```
 
-2. **Tag it!**
+3. **Tag it!**
 
     1. **Find the most recent tag.**
 
@@ -37,7 +43,7 @@ e.g. `v1.0.2`
         The new tag needs to be the logical successor of the most recent existing tag.
         See [versioning](#versioning) section for more information on version numbers.
 
-    2. **Select the next tag (but don't actually tag anything yet!!).**
+    2. **Select the type and value of the next tag.**
 
         Is the new release a *release candidate* or a *standard release*?
 
@@ -72,7 +78,7 @@ e.g. `v1.0.2`
         git push origin tag v1.0.3-rc.1  # release candidate
         ```
 
-3. **Check the build status at [Travis-CI](https://travis-ci.com/smallstep/cli/builds/).**
+4. **Check the build status at [Travis-CI](https://travis-ci.com/smallstep/cli/builds/).**
 
     Travis will begin by verifying that there are no compilation or linting errors
     and then run the unit tests. Assuming all the checks have passed, Travis will
@@ -85,13 +91,13 @@ e.g. `v1.0.2`
     * **step_1.0.3_linux_amd64.tar.gz**: tarball containing a statically compiled linux binary.
     * **step_1.0.3_darwin_amd64.tar.gz**: tarball containing a statically compiled darwin binary.
 
-4. **Update the Homebrew formula.**
+5. **Update the Homebrew formula.**
 
     **NOTE**: this only needs to be done for standard releases.
 
     Follow the steps [here](https://github.com/smallstep/homebrew-smallstep#how-to-update-the-formula).
 
-5. **[Update the documentation at smallstep.com/docs](#https://github.com/smallstep/website#cli-documentation)**
+6. **[Update the documentation at smallstep.com/docs](#https://github.com/smallstep/website#cli-documentation)**
 
     **NOTE**: this only needs to be done for standard releases.
 
