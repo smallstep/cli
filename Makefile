@@ -88,10 +88,13 @@ artifacts-tag: artifacts-linux-tag artifacts-darwin-tag
 # For all builds that are not tagged
 artifacts-master:
 
+# For all builds with a release candidate tag
+artifacts-release-candidate: artifacts-tag
+
 # For all builds with a release tag
 artifacts-release: artifacts-tag
 
 # This command is called by travis directly *after* a successful build
 artifacts: artifacts-$(PUSHTYPE) docker-$(PUSHTYPE)
 
-.PHONY: artifacts-master artifacts-release artifacts
+.PHONY: artifacts-master artifacts-release-candidate artifacts-release artifacts
