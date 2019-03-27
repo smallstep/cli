@@ -81,11 +81,11 @@ func init() {
 			},
 			cli.StringFlag{
 				Name:  "refresh",
-				Usage: "Refresh existing OAuth/OIDC token(s) using a refresh token with the refresh grant type",
+				Usage: "Refresh existing OAuth/OIDC token(s) using a refresh <token> with the refresh grant type",
 			},
 			cli.StringFlag{
 				Name:  "revoke",
-				Usage: "Revoke an OAuth access or refresh token",
+				Usage: "Revoke an OAuth access or refresh <token>",
 			},
 			cli.StringFlag{
 				Name:  "email, e",
@@ -231,6 +231,9 @@ func oauthCmd(c *cli.Context) error {
 	}
 
 	if c.IsSet("revoke") {
+		if o.revocationEndpoint == "" {
+			return errors.New("missing 'revocation_endpoint' in provider metadata")
+		}
 		return o.DoRevoke(c.String("revoke"))
 	}
 
@@ -355,15 +358,22 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scop
 				return nil, err
 			}
 
-			if _, ok := d["authorization_endpoint"]; !ok {
+			if v, ok := d["authorization_endpoint"].(string); ok {
+				authzEp = v
+			} else {
 				return nil, errors.New("missing 'authorization_endpoint' in provider metadata")
 			}
-			if _, ok := d["token_endpoint"]; !ok {
+			if v, ok := d["token_endpoint"].(string); ok {
+				tokenEp = v
+			} else {
 				return nil, errors.New("missing 'token_endpoint' in provider metadata")
 			}
-			authzEp = d["authorization_endpoint"].(string)
-			tokenEp = d["token_endpoint"].(string)
-			userinfoEp = d["userinfo_endpoint"].(string)
+			if v, ok := d["userinfo_endpoint"].(string); ok {
+				userinfoEp = v
+			}
+			if v, ok := d["revocation_endpoint"].(string); ok && revokeEp == "" {
+				revokeEp = v
+			}
 		}
 		if revokeEp == "" {
 			d, err := disco(provider)
@@ -371,8 +381,8 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scop
 				return nil, err
 			}
 
-			if _, ok := d["revocation_endpoint"]; ok {
-				revokeEp = d["revocation_endpoint"].(string)
+			if v, ok := d["revocation_endpoint"].(string); ok {
+				revokeEp = v
 			}
 		}
 		return &oauth{
