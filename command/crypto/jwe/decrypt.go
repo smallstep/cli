@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/ui"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/jose"
@@ -27,10 +28,10 @@ For examples, see **step help crypto jwe**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The JWE recipient's private key. The <key> argument should be the name of a
-file containing a private JWK (or a JWK encrypted as a JWE payload) or a PEM
-encoded private key (or a private key encrypted using [TODO: insert private
-key encryption mechanism]).`,
+				Usage: `The JWE recipient's private key. The <key> argument should be the name of a file
+containing a private JWK (or a JWK encrypted as a JWE payload) or a PEM encoded
+private key (or a private key encrypted using the modes described on RFC 1423 or
+with PBES2+PBKDF2 described in RFC 2898).`,
 			},
 			cli.StringFlag{
 				Name: "jwks",
@@ -106,7 +107,7 @@ func decryptAction(ctx *cli.Context) error {
 	case jwks != "":
 		jwk, err = jose.ParseKeySet(jwks, options...)
 	case isPBES2:
-		pbes2Key, err = utils.ReadPassword("Please enter the password to decrypt the content encryption key: ")
+		pbes2Key, err = ui.PromptPassword("Please enter the password to decrypt the content encryption key")
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwk")
 	}

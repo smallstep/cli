@@ -83,10 +83,6 @@ var AppHelpTemplate = `## NAME
 ## USAGE
 {{if .UsageText}}{{.UsageText}}{{else}}**{{.HelpName}}**{{if .Commands}} <command>{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}_[arguments]_{{end}}{{end}}{{if .Description}}
 
-## STABILITY INDEX
-
-FOO BAR BAZ
-
 ## DESCRIPTION
 {{.Description}}{{end}}{{if .VisibleCommands}}
 
@@ -149,8 +145,6 @@ var SubcommandHelpTemplate = `## NAME
 {{range .VisibleFlags}}
 {{.}}
 {{end}}{{end}}
-
-## SUBCOMMAND TEMPLATE
 `
 
 // CommandHelpTemplate contains the modified template for a command
@@ -174,8 +168,6 @@ var CommandHelpTemplate = `## NAME
 {{range .VisibleFlags}}
 {{.}}
 {{end}}{{end}}
-
-## COMMAND TEMPLATE
 `
 
 // FlagNamePrefixer converts a full flag name and its placeholder into the help

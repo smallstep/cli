@@ -1,8 +1,10 @@
 package x509util
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/sha1"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
@@ -13,8 +15,40 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
+)
+
+var (
+	// DefaultCertValidity is the minimum validity of an end-entity (not root or intermediate) certificate.
+	DefaultCertValidity = 24 * time.Hour
+
+	// DefaultTLSMinVersion default minimum version of TLS.
+	DefaultTLSMinVersion = TLSVersion(1.2)
+	// DefaultTLSMaxVersion default maximum version of TLS.
+	DefaultTLSMaxVersion = TLSVersion(1.2)
+	// DefaultTLSRenegotiation default TLS connection renegotiation policy.
+	DefaultTLSRenegotiation = false // Never regnegotiate.
+	// DefaultTLSCipherSuites specifies default step ciphersuite(s).
+	DefaultTLSCipherSuites = CipherSuites{
+		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+	}
+	// ApprovedTLSCipherSuites smallstep approved ciphersuites.
+	ApprovedTLSCipherSuites = CipherSuites{
+		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+	}
 )
 
 // Profile is an interface that certificate profiles (e.g. leaf,
@@ -31,6 +65,8 @@ type Profile interface {
 	SetIssuerPrivateKey(interface{})
 	CreateCertificate() ([]byte, error)
 	GenerateKeyPair(string, string, int) error
+	DefaultDuration() time.Duration
+	CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, error)
 }
 
 type base struct {
@@ -50,6 +86,18 @@ func GenerateKeyPair(kty, crv string, size int) WithOption {
 	return func(p Profile) error {
 		return p.GenerateKeyPair(kty, crv, size)
 	}
+}
+
+// GenerateDefaultKeyPair generates a new public/private key pair using the
+// default values and sets them in the given profile.
+func GenerateDefaultKeyPair(p Profile) error {
+	pub, priv, err := keys.GenerateDefaultKeyPair()
+	if err != nil {
+		return err
+	}
+	p.SetSubjectPublicKey(pub)
+	p.SetSubjectPrivateKey(priv)
+	return nil
 }
 
 // WithPublicKey returns a Profile modifier that sets the public key for a profile.
@@ -80,13 +128,64 @@ func WithIssuer(iss pkix.Name) WithOption {
 	}
 }
 
-// WithNotBeforeAfter returns a Profile modifier that sets the `NotBefore` and
-// `NotAfter` attributes of the subject x509 Certificate.
-func WithNotBeforeAfter(nb, na time.Time) WithOption {
+// WithNotBeforeAfterDuration returns a Profile modifier that sets the
+// `NotBefore` and `NotAfter` attributes of the subject x509 Certificate.
+func WithNotBeforeAfterDuration(nb, na time.Time, d time.Duration) WithOption {
 	return func(p Profile) error {
 		crt := p.Subject()
+
+		now := time.Now()
+		if nb.IsZero() {
+			nb = now
+		}
+		if na.IsZero() {
+			if d == 0 {
+				na = nb.Add(p.DefaultDuration())
+			} else {
+				na = nb.Add(d)
+			}
+		}
+
 		crt.NotBefore = nb
 		crt.NotAfter = na
+		return nil
+	}
+}
+
+func appendIfMissingString(slice []string, s string) []string {
+	for _, e := range slice {
+		if e == s {
+			return slice
+		}
+	}
+	return append(slice, s)
+}
+
+func appendIfMissingIP(ips []net.IP, ip net.IP) []net.IP {
+	for _, e := range ips {
+		if ip.Equal(e) {
+			return ips
+		}
+	}
+	return append(ips, ip)
+}
+
+// WithDNSNames returns a Profile modifier which sets the DNS Names
+// that will be bound to the subject alternative name extension of the Certificate.
+func WithDNSNames(dns []string) WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.DNSNames = dns
+		return nil
+	}
+}
+
+// WithIPAddresses returns a Profile modifier which sets the IP Addresses
+// that will be bound to the subject alternative name extension of the Certificate.
+func WithIPAddresses(ips []net.IP) WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.IPAddresses = ips
 		return nil
 	}
 }
@@ -104,9 +203,9 @@ func WithHosts(hosts string) WithOption {
 			if h == "" {
 				continue
 			} else if ip := net.ParseIP(h); ip != nil {
-				crt.IPAddresses = append(crt.IPAddresses, ip)
+				crt.IPAddresses = appendIfMissingIP(crt.IPAddresses, ip)
 			} else {
-				crt.DNSNames = append(crt.DNSNames, h)
+				crt.DNSNames = appendIfMissingString(crt.DNSNames, h)
 			}
 		}
 
@@ -114,67 +213,57 @@ func WithHosts(hosts string) WithOption {
 	}
 }
 
-// newBase generates a new base profile.
+// newProfile initializes the given profile.
 //
 // If the public/private key pair of the subject identity are not set by
 // the optional modifiers then a pair will be generated using sane defaults.
-func newBase(sub, iss *x509.Certificate, withOps ...WithOption) (*base, error) {
+func newProfile(p Profile, sub, iss *x509.Certificate, issPriv crypto.PrivateKey, withOps ...WithOption) (Profile, error) {
+	if p == nil {
+		return nil, errors.New("profile cannot be nil")
+	}
 	if sub == nil {
-		return nil, errors.Errorf("subject certificate cannot be nil")
+		return nil, errors.New("subject certificate cannot be nil")
 	}
 	if iss == nil {
-		return nil, errors.Errorf("issuing certificate cannot be nil")
+		return nil, errors.New("issuing certificate cannot be nil")
 	}
 
-	var (
-		err error
-		b   = &base{}
-	)
-	b.SetSubject(sub)
-	b.SetIssuer(iss)
+	p.SetSubject(sub)
+	p.SetIssuer(iss)
+	p.SetIssuerPrivateKey(issPriv)
 
 	for _, op := range withOps {
-		if err := op(b); err != nil {
-			return nil, errors.WithStack(err)
+		if err := op(p); err != nil {
+			return nil, err
 		}
 	}
 
-	if b.SubjectPublicKey() == nil {
-		if err := b.GenerateDefaultKeyPair(); err != nil {
-			return nil, errors.WithStack(err)
+	if p.SubjectPublicKey() == nil {
+		if err := GenerateDefaultKeyPair(p); err != nil {
+			return nil, err
 		}
 	}
 
-	if b.sub.SubjectKeyId == nil {
-		var pubBytes []byte
-		pubBytes, err = x509.MarshalPKIXPublicKey(b.SubjectPublicKey())
+	if sub.SubjectKeyId == nil {
+		pubBytes, err := stepx509.MarshalPKIXPublicKey(p.SubjectPublicKey())
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to marshal public key to bytes")
+			return nil, errors.Wrap(err, "failed to marshal public key to bytes")
 		}
 		hash := sha1.Sum(pubBytes)
-		b.sub.SubjectKeyId = hash[:] // takes slice over the whole array
+		sub.SubjectKeyId = hash[:] // takes slice over the whole array
 	}
 
-	if b.sub.SerialNumber == nil {
-		// TODO figure out how to test rand w/out threading as another arg
+	if sub.SerialNumber == nil {
 		serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-		b.sub.SerialNumber, err = rand.Int(rand.Reader, serialNumberLimit)
-		// TODO error condition untested -- hard to test w/o mocking rand
+		sn, err := rand.Int(rand.Reader, serialNumberLimit)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to generate serial number for "+
 				"certificate with common name '%s'", sub.Subject.CommonName)
 		}
+		sub.SerialNumber = sn
 	}
 
-	return b, nil
-}
-
-func fromBase(profile Profile, b base) {
-	profile.SetSubject(b.Subject())
-	profile.SetIssuer(b.Issuer())
-	profile.SetSubjectPublicKey(b.SubjectPublicKey())
-	profile.SetSubjectPrivateKey(b.SubjectPrivateKey())
-	profile.SetIssuerPrivateKey(b.issPriv)
+	return p, nil
 }
 
 func (b *base) Issuer() *x509.Certificate {
@@ -213,6 +302,10 @@ func (b *base) SetSubjectPublicKey(pub interface{}) {
 	b.subPub = pub
 }
 
+func (b *base) DefaultDuration() time.Duration {
+	return DefaultCertValidity
+}
+
 func (b *base) GenerateKeyPair(kty, crv string, size int) error {
 	pub, priv, err := keys.GenerateKeyPair(kty, crv, size)
 	if err != nil {
@@ -237,13 +330,17 @@ func (b *base) GenerateDefaultKeyPair() error {
 // in the profile.
 func (b *base) CreateCertificate() ([]byte, error) {
 	if b.SubjectPublicKey() == nil {
-		return nil, errors.Errorf("Profile does not have subject public key. Need to call 'profile.GenKeys(...)' or use setters to populate keys")
+		return nil, errors.Errorf("Profile does not have subject public key. Need to call 'profile.GenerateKeyPair(...)' or use setters to populate keys")
 	}
 	if b.issPriv == nil {
 		return nil, errors.Errorf("Profile does not have issuer private key. Use setters to populate this field.")
 	}
-	bytes, err := x509.CreateCertificate(rand.Reader, b.Subject(), b.Issuer(),
-		b.SubjectPublicKey(), b.issPriv)
+
+	sub := ToStepX509Certificate(b.Subject())
+	iss := ToStepX509Certificate(b.Issuer())
+
+	// Using stepx509 to be able to create certs with ed25519
+	bytes, err := stepx509.CreateCertificate(rand.Reader, sub, iss, b.SubjectPublicKey(), b.issPriv)
 	return bytes, errors.WithStack(err)
 }
 
@@ -262,7 +359,7 @@ func (b *base) CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, erro
 	}
 
 	_, err = pemutil.Serialize(b.SubjectPrivateKey(),
-		pemutil.WithEncryption([]byte(pass)), pemutil.ToFile(keyOut, 0600))
+		pemutil.WithPassword([]byte(pass)), pemutil.ToFile(keyOut, 0600))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

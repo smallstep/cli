@@ -13,6 +13,14 @@ import (
 	"github.com/smallstep/assert"
 )
 
+// CleanOutput returns the output from the cursor character.
+func CleanOutput(str string) string {
+	if i := strings.Index(str, "?25h"); i > 0 {
+		return str[i+4:]
+	}
+	return str
+}
+
 // Command executes a shell command.
 func Command(command string) *exec.Cmd {
 	return exec.Command("sh", "-c", command)
@@ -112,7 +120,7 @@ func (c CLICommand) test(t *testing.T, name string, expected string, msg ...inte
 	t.Run(name, func(t *testing.T) {
 		out, err := c.run()
 		assert.FatalError(t, err, fmt.Sprintf("`%s`: returned error '%s'\n\nOutput:\n%s", c.cmd(), err, out.combined))
-		assert.Equals(t, out.combined, expected, msg)
+		assert.Equals(t, out.combined, expected, msg...)
 	})
 }
 

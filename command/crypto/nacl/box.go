@@ -7,7 +7,10 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/nacl/box"
@@ -18,8 +21,45 @@ func boxCommand() cli.Command {
 		Name:      "box",
 		Usage:     "authenticate and encrypt small messages using public-key cryptography",
 		UsageText: "step crypto nacl box <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**step crypto nacl box** command group uses public-key cryptography to
-encrypt, decrypt and authenticate messages.
+		Description: `**step crypto nacl box** command group uses public-key cryptography to encrypt,
+decrypt and authenticate messages. The implementation is based on NaCl's
+crypto_box function.
+
+NaCl crypto_box function is designed to meet the standard notions of
+privacy and third-party unforgeability for a public-key authenticated-encryption
+scheme using nonces. For formal definitions see, e.g., Jee Hea An,
+"Authenticated encryption in the public-key setting: security notions and
+analyses," https://eprint.iacr.org/2001/079. Distinct messages between the same
+{sender, receiver} set are required to have distinct nonces. For example, the
+lexicographically smaller public key can use nonce 1 for its first message to
+the other key, nonce 3 for its second message, nonce 5 for its third message,
+etc., while the lexicographically larger public key uses nonce 2 for its first
+message to the other key, nonce 4 for its second message, nonce 6 for its third
+message, etc. Nonces are long enough that randomly generated nonces have
+negligible risk of collision.
+
+There is no harm in having the same nonce for different messages if the {sender,
+receiver} sets are different. This is true even if the sets overlap. For
+example, a sender can use the same nonce for two different messages if the
+messages are sent to two different public keys.
+
+NaCl crypto_box is not meant to provide non-repudiation. On the contrary: they
+guarantee repudiability. A receiver can freely modify a boxed message, and
+therefore cannot convince third parties that this particular message came from
+the sender. The sender and receiver are nevertheless protected against forgeries
+by other parties. In the terminology of
+https://groups.google.com/group/sci.crypt/msg/ec5c18b23b11d82c, NaCl crypto_box
+uses "public-key authenticators" rather than "public-key signatures."
+
+Users who want public verifiability (or receiver-assisted public verifiability)
+should instead use signatures (or signcryption).
+
+NaCl crypto_box is curve25519xsalsa20poly1305, a particular combination of
+Curve25519, Salsa20, and Poly1305 specified in "Cryptography in NaCl". This
+function is conjectured to meet the standard notions of privacy and third-party
+unforgeability.
+
+These commands are interoperable with NaCl: https://nacl.cr.yp.to/box.html
 
 ## EXAMPLES
 
@@ -56,11 +96,13 @@ message
 func boxKeypairCommand() cli.Command {
 	return cli.Command{
 		Name:      "keypair",
-		Action:    cli.ActionFunc(boxKeypairAction),
+		Action:    command.ActionFunc(boxKeypairAction),
 		Usage:     "generate a key for use with seal and open",
 		UsageText: "**step crypto nacl box keypair** <pub-file> <priv-file>",
 		Description: `Generates a new public/private keypair suitable for use with seal and open.
 The private key is encrypted using a password in a nacl secretbox.
+
+This command uses an implementation of NaCl's crypto_box_keypair function.
 
 For examples, see **step help crypto nacl box**.
 
@@ -71,6 +113,7 @@ For examples, see **step help crypto nacl box**.
 
 <priv-file>
 :  The path to write the encrypted private key.`,
+		Flags: []cli.Flag{flags.Force},
 	}
 }
 
@@ -84,6 +127,8 @@ func boxOpenCommand() cli.Command {
 		Description: `Authenticate and decrypt a box produced by seal using the specified KEY. If
 PRIV_KEY is encrypted you will be prompted for the password. The sealed box is
 read from STDIN and the decrypted plaintext is written to STDOUT.
+
+This command uses an implementation of NaCl's crypto_box_open function.
 
 For examples, see **step help crypto nacl box**.
 
@@ -116,6 +161,10 @@ func boxSealCommand() cli.Command {
 		Description: `Reads plaintext from STDIN and writes an encrypted and authenticated
 ciphertext to STDOUT. The "box" can be open by the a recipient who has access
 to the private key corresponding to <recipient-pub-key>.
+
+This command uses an implementation of NaCl's crypto_box function.
+
+For examples, see **step help crypto nacl box**.
 
 ## POSITIONAL ARGUMENTS
 
@@ -160,6 +209,8 @@ func boxKeypairAction(ctx *cli.Context) error {
 		return errs.FileError(err, privFile)
 	}
 
+	ui.Printf("Your public key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", privFile)
 	return nil
 }
 
@@ -251,7 +302,7 @@ func boxSealAction(ctx *cli.Context) error {
 		return errors.New("invalid private key: key size is not 32 bytes")
 	}
 
-	input, err := utils.ReadInput("Write text to seal: ")
+	input, err := utils.ReadInput("Please enter text to seal")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

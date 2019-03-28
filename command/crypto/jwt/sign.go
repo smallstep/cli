@@ -167,9 +167,9 @@ with sufficient entropy to satisfy the collision-resistance criteria.`,
 			cli.StringFlag{
 				Name: "key",
 				Usage: `The key to use to sign the JWT. The <key> argument should be the name of a file.
-JWTs can be signed using a private JWK (or a JWK encrypted as a JWE payload)
-or a PEM encoded private key (or a private key encrypted using [TODO: insert
-private key encryption mechanism]).`,
+JWTs can be signed using a private JWK (or a JWK encrypted as a JWE payload) or
+a PEM encoded private key (or a private key encrypted using the modes described
+on RFC 1423 or with PBES2+PBKDF2 described in RFC 2898).`,
 			},
 			cli.StringFlag{
 				Name: "jwks",
@@ -184,6 +184,10 @@ flag to specify which key to use.`,
 string. When used with '--jwk' the <kid> value must match the **"kid"** member
 of the JWK. When used with **--jwks** (a JWK Set) the <kid> value must match
 the **"kid"** member of one of the JWKs in the JWK Set.`,
+			},
+			cli.StringFlag{
+				Name:  "password-file",
+				Usage: `The path to the <file> containing the password to decrypt the key.`,
 			},
 			cli.BoolFlag{
 				Name:   "subtle",
@@ -245,6 +249,9 @@ func signAction(ctx *cli.Context) error {
 	}
 	if isSubtle {
 		options = append(options, jose.WithSubtle(true))
+	}
+	if passwordFile := ctx.String("password-file"); len(passwordFile) > 0 {
+		options = append(options, jose.WithPasswordFile(passwordFile))
 	}
 
 	// Read key from --key or --jwks

@@ -35,7 +35,7 @@ func thumbprintAction(ctx *cli.Context) error {
 
 	jwk := new(jose.JSONWebKey)
 	// Attempt to decrypt if encrypted
-	if b, err = jose.Decrypt("Please enter the password to decrypt your private JWK: ", b); err != nil {
+	if b, err = jose.Decrypt("Please enter the password to decrypt your private JWK", b); err != nil {
 		return err
 	}
 

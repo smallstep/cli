@@ -15,7 +15,7 @@ func signCommand() cli.Command {
 	return cli.Command{
 		Name:      "sign",
 		Action:    cli.ActionFunc(signAction),
-		Usage:     "sign a certificate signing request (CSR).",
+		Usage:     "sign a certificate signing request (CSR)",
 		UsageText: `**step certificate sign** <csr_file> <crt_file> <key_file>`,
 		Description: `**step certificate sign** generates a signed
 certificate from a certificate signing request (CSR).
@@ -64,7 +64,7 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if err := csr.CheckSignature(); err != nil {
+	if err := x509util.CheckCertificateRequestSignature(csr); err != nil {
 		return errors.Wrapf(err, "Certificate Request has invalid signature")
 	}
 
@@ -89,6 +89,5 @@ func signAction(ctx *cli.Context) error {
 	}
 	fmt.Printf("%s", string(pem.EncodeToMemory(block)))
 
-	//tok := ctx.String("token")
 	return nil
 }

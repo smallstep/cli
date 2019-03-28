@@ -9,7 +9,7 @@ import (
 func init() {
 	cmd := cli.Command{
 		Name:      "certificate",
-		Usage:     "create, revoke, validate, bundle, and otherwise manage certificates.",
+		Usage:     "create, revoke, validate, bundle, and otherwise manage certificates",
 		UsageText: "step certificate SUBCOMMAND [ARGUMENTS] [GLOBAL_FLAGS] [SUBCOMMAND_FLAGS]",
 		Description: `**step certificate** command group provides facilities for creating
 certificate signing requests (CSRs), creating self-signed certificates
@@ -18,13 +18,9 @@ intermediate CA certificate by signing a CSR, validating certificates,
 renewing certificates, generating certificate bundles, and key-wrapping
 of private keys.
 
-More information about certificates in general (as opposed to the
-**step certificate** sub-commands) can be found at **step help topics certificate**
-or online at [URL].
-
 ## EXAMPLES
 
-Create a root certifciate and private key using the default parameters (EC P-256 curve):
+Create a root certificate and private key using the default parameters (EC P-256 curve):
 '''
 $ step certificate create foo foo.crt foo.key --profile root-ca
 '''
@@ -63,16 +59,39 @@ Bundle an end certificate with the issuing certificate:
 '''
 $ step certificate bundle ./baz.crt ./foo.crt bundle.crt
 '''
-`,
+
+Convert PEM format certificate to DER and write to disk.
+'''
+$ step certificate format foo.pem --out foo.der
+'''
+
+Extract the public key from a PEM encoded certificate:
+'''
+$ step certificate key foo.crt
+'''
+
+Install a root certificate in the system truststore:
+'''
+$ step certificate install root-ca.crt
+'''
+
+Uninstall a root certificate from the system truststore:
+'''
+$ step certificate uninstall root-ca.crt
+'''`,
 
 		Subcommands: cli.Commands{
 			bundleCommand(),
 			createCommand(),
+			formatCommand(),
 			inspectCommand(),
+			fingerprintCommand(),
 			lintCommand(),
-			//renewCommand(),
 			signCommand(),
 			verifyCommand(),
+			keyCommand(),
+			installCommand(),
+			uninstallCommand(),
 		},
 	}
 

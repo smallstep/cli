@@ -226,7 +226,7 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 		} else {
 			if r.listdepth > 1 && r.list.isDefinition() {
 				w := new(tabwriter.Writer)
-				w.Init(r.out.w, 0, 8, 4, ' ', 0)
+				w.Init(r.out.w, 0, 8, 4, ' ', tabwriter.StripEscape)
 				for _, item := range r.list.items {
 					fmt.Fprintf(w, strings.TrimRight(string(item.term), " \n"))
 					fmt.Fprintf(w, "\t")
@@ -304,7 +304,7 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 		if entering {
 			r.capture(RenderModeKeepBreaks)
 			w := new(tabwriter.Writer)
-			w.Init(r.out.w, 1, 8, 2, ' ', tabwriter.StripEscape|tabwriter.FilterHTML)
+			w.Init(r.out.w, 1, 8, 2, ' ', tabwriter.StripEscape)
 			r.out.w = w
 		} else {
 			r.out.w.(*tabwriter.Writer).Flush()

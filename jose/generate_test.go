@@ -3,10 +3,17 @@ package jose
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"io/ioutil"
+	"math/big"
+	"os"
 	"testing"
 
 	"github.com/smallstep/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -86,5 +93,133 @@ func TestGenerateJWK(t *testing.T) {
 		default:
 			t.Errorf("unexpected key type %T", key)
 		}
+	}
+}
+
+func TestKeyUsageForCert(t *testing.T) {
+	tests := []struct {
+		Cert      *x509.Certificate
+		ExpectUse string
+		ExpectErr error
+	}{
+		{
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDigitalSignature,
+			},
+			ExpectUse: jwksUsageSig,
+		},
+		{
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageContentCommitment,
+			},
+			ExpectUse: jwksUsageSig,
+		},
+		{
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDataEncipherment | x509.KeyUsageKeyAgreement,
+			},
+			ExpectUse: jwksUsageEnc,
+		},
+		{
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDataEncipherment,
+			},
+			ExpectUse: jwksUsageEnc,
+		},
+		{
+			Cert:      &x509.Certificate{},
+			ExpectErr: errNoCertKeyUsage,
+		},
+		{
+			Cert: &x509.Certificate{
+				KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment,
+			},
+			ExpectErr: errAmbiguousCertKeyUsage,
+		},
+	}
+
+	for _, tt := range tests {
+		use, err := keyUsageForCert(tt.Cert)
+		if tt.ExpectErr != nil {
+			require.Equal(t, tt.ExpectErr, err)
+		} else {
+			require.Equal(t, tt.ExpectUse, use)
+		}
+	}
+}
+
+func TestGenerateJWKFromPEMSubtle(t *testing.T) {
+	tests := []struct {
+		Description string
+		KeyUsage    x509.KeyUsage
+		Subtle      bool
+		ExpectErr   error
+		ExpectSig   string
+	}{
+		{
+			Description: "single key usage without subtle",
+			KeyUsage:    x509.KeyUsageDigitalSignature,
+			ExpectSig:   jwksUsageSig,
+		},
+		{
+			Description: "single key usage with subtle",
+			KeyUsage:    x509.KeyUsageDigitalSignature,
+			Subtle:      true,
+		},
+		{
+			Description: "multiple key usage without subtle",
+			KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+			ExpectErr:   errAmbiguousCertKeyUsage,
+		},
+		{
+			Description: "multiple key usage with subtle",
+			KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+			Subtle:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Description, func(t *testing.T) {
+			f, cleanup := tempFile(t)
+			defer cleanup()
+
+			err := pem.Encode(f, &pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: newCert(t, tt.KeyUsage),
+			})
+			assert.NoError(t, err)
+
+			jwk, err := GenerateJWKFromPEM(f.Name(), tt.Subtle)
+			if tt.ExpectErr != nil {
+				assert.Equals(t, tt.ExpectErr, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tt.ExpectSig, jwk.Use)
+			require.Equal(t, ES256, jwk.Algorithm)
+			require.Equal(t, 1, len(jwk.Certificates))
+		})
+	}
+}
+
+func newCert(t *testing.T, keyUsage x509.KeyUsage) []byte {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	assert.NoError(t, err)
+
+	tmpl := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		KeyUsage:     keyUsage,
+	}
+	cert, err := x509.CreateCertificate(rand.Reader, &tmpl, &tmpl, key.Public(), key)
+	assert.NoError(t, err)
+	return cert
+}
+
+func tempFile(t *testing.T) (_ *os.File, cleanup func()) {
+	f, err := ioutil.TempFile("" /* use default tmp dir */, "jose-generate-test")
+	assert.NoError(t, err)
+	return f, func() {
+		f.Close()
+		os.Remove(f.Name())
 	}
 }

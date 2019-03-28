@@ -5,24 +5,24 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
-	"encoding/pem"
+	"crypto/x509"
 	"math/big"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
 )
 
-// DefaultPEMCipher is the default algorithm used when encrypting PEM blocks
-// by the CA.
 var (
-	DefaultPEMCipher = x509.PEMCipherAES128
 	// DefaultKeyType is the default type of a private key.
 	DefaultKeyType = "EC"
 	// DefaultKeySize is the default size (in # of bits) of a private key.
 	DefaultKeySize = 2048
 	// DefaultKeyCurve is the default curve of a private key.
 	DefaultKeyCurve = "P-256"
+	// DefaultSignatureAlgorithm is the default signature algorithm used on a
+	// certificate with the default key type.
+	DefaultSignatureAlgorithm = x509.ECDSAWithSHA256
 )
 
 // PublicKey extracts a public key from a private key.
@@ -34,22 +34,11 @@ func PublicKey(priv interface{}) (interface{}, error) {
 		return &k.PublicKey, nil
 	case ed25519.PrivateKey:
 		return k.Public(), nil
+	case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey:
+		return k, nil
 	default:
 		return nil, errors.Errorf("unrecognized key type: %T", priv)
 	}
-}
-
-// PublicPEM returns the public key in PEM block format.
-func PublicPEM(pub interface{}) (*pem.Block, error) {
-	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return &pem.Block{
-		Bytes: pubBytes,
-		Type:  "PUBLIC KEY",
-	}, nil
 }
 
 // GenerateDefaultKey generates a public/private key pair using sane defaults
@@ -71,6 +60,27 @@ func GenerateKey(kty, crv string, size int) (interface{}, error) {
 		return generateOctKey(size)
 	default:
 		return nil, errors.Errorf("unrecognized key type: %s", kty)
+	}
+}
+
+// ExtractKey returns the given public or private key or extracts the public key
+// if a x509.Certificate or x509.CertificateRequest is given.
+func ExtractKey(in interface{}) (interface{}, error) {
+	switch k := in.(type) {
+	case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey, *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
+		return in, nil
+	case []byte:
+		return in, nil
+	case *x509.Certificate:
+		return k.PublicKey, nil
+	case *x509.CertificateRequest:
+		return k.PublicKey, nil
+	case *stepx509.Certificate:
+		return k.PublicKey, nil
+	case *stepx509.CertificateRequest:
+		return k.PublicKey, nil
+	default:
+		return nil, errors.Errorf("cannot extract the key from type '%T'", k)
 	}
 }
 

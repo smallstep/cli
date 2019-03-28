@@ -2,6 +2,9 @@ package oauth
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -11,18 +14,17 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/urfave/cli"
-
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/randutil"
+	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
-	"github.com/smallstep/cli/pkg/x509"
-	jose "gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/smallstep/cli/jose"
+	"github.com/urfave/cli"
 )
 
 // These are the OAuth2.0 client IDs from the Step CLI. This application is
@@ -143,6 +145,16 @@ func init() {
 				Name:  "jwt",
 				Usage: "Generate a JWT Auth token instead of an OAuth Token (only works with service accounts)",
 			},
+			cli.BoolFlag{
+				Name:   "implicit",
+				Usage:  "Uses the implicit flow to authenticate the user. Requires **--insecure** and **--client-id** flags.",
+				Hidden: true,
+			},
+			cli.BoolFlag{
+				Name:   "insecure",
+				Usage:  "Allows the use of insecure flows.",
+				Hidden: true,
+			},
 		},
 		Action: oauthCmd,
 	}
@@ -155,35 +167,55 @@ func oauthCmd(c *cli.Context) error {
 		Provider: c.String("provider"),
 		Email:    c.String("email"),
 		Console:  c.Bool("console"),
+		Implicit: c.Bool("implicit"),
 	}
 	if err := opts.Validate(); err != nil {
 		return err
 	}
-	if (opts.Provider != "google" || c.IsSet("authorization-endpoint")) && !(c.IsSet("client-id") || c.IsSet("revoke")) {
-		return errors.New("flag '--client-id' required with '--provider'")
+
+	if opts.Provider != "google" && !(c.IsSet("client-id") || c.IsSet("revoke")) {
+		return errs.RequiredWithFlag(c, "provider", "client-id")
 	}
 
-	clientID := defaultClientID
-	clientSecret := defaultClientNotSoSecret
+	var clientID, clientSecret string
+	if opts.Implicit {
+		if !c.Bool("insecure") {
+			return errs.RequiredInsecureFlag(c, "implicit")
+		}
+		if !c.IsSet("client-id") {
+			return errs.RequiredWithFlag(c, "implicit", "client-id")
+		}
+	} else {
+		clientID = defaultClientID
+		clientSecret = defaultClientNotSoSecret
+	}
 	if c.IsSet("client-id") {
 		clientID = c.String("client-id")
 		clientSecret = c.String("client-secret")
 	}
 
-	authzEp := ""
-	tokenEp := ""
-	if c.IsSet("authorization-endpoint") {
-		if !c.IsSet("token-endpoint") {
-			return errors.New("flag '--authorization-endpoint' requires flag '--token-endpoint'")
+	// Validate custom endpoints with client-id
+	switch {
+	case c.IsSet("authorization-endpoint") && !c.IsSet("client-id"):
+		return errs.RequiredWithFlag(c, "authorization-endpoint", "client-id")
+	case c.IsSet("authorization-endpoint") && !c.IsSet("token-endpoint"):
+		return errs.RequiredWithFlag(c, "authorization-endpoint", "token-endpoint")
+	case c.IsSet("token-endpoint") && !c.IsSet("client-id"):
+		return errs.RequiredWithFlag(c, "token-endpoint", "client-id")
+	}
+
+	// Always set an empty provider if not set and custom endpoints are set
+	if !c.IsSet("provider") {
+		if c.IsSet("authorization-endpoint") || c.IsSet("token-endpoint") || c.IsSet("revocation-endpoint") {
+			opts.Provider = ""
 		}
-		opts.Provider = ""
-		authzEp = c.String("authorization-endpoint")
-		tokenEp = c.String("token-endpoint")
 	}
-	revokeEp := ""
-	if c.IsSet("revocation-endpoint") {
+
+	var (
+		authzEp  = c.String("authorization-endpoint")
+		tokenEp  = c.String("token-endpoint")
 		revokeEp = c.String("revocation-endpoint")
-	}
+	)
 
 	do2lo := false
 	issuer := ""
@@ -200,7 +232,7 @@ func oauthCmd(c *cli.Context) error {
 			return errors.Wrapf(err, "error reading %s: unsupported format", filename)
 		}
 
-		// TODO: Other client types are different (e.g., web or otherwise
+		// TODO: Other client types are different
 		if _, ok := account["installed"]; ok {
 			details := account["installed"].(map[string]interface{})
 			authzEp = details["auth_uri"].(string)
@@ -225,7 +257,7 @@ func oauthCmd(c *cli.Context) error {
 	}
 	audience := c.String("aud")
 
-	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scope, audience, opts.Email)
+	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scope, audience, opts)
 	if err != nil {
 		return err
 	}
@@ -293,6 +325,7 @@ type options struct {
 	Provider string
 	Email    string
 	Console  bool
+	Implicit bool
 }
 
 // Validate validates the options.
@@ -317,17 +350,24 @@ type oauth struct {
 	revocationEndpoint string
 	state              string
 	codeChallenge      string
+	nonce              string
+	implicit           bool
 	errCh              chan error
 	tokCh              chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scope, audience, loginHint string) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scope, audience string, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
 	}
 
 	challenge, err := randutil.Alphanumeric(64)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce, err := randutil.Hex(64) // 256 bits
 	if err != nil {
 		return nil, err
 	}
@@ -344,45 +384,39 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scop
 			tokenEndpoint:      "https://www.googleapis.com/oauth2/v4/token",
 			userInfoEndpoint:   "https://www.googleapis.com/oauth2/v3/userinfo",
 			revocationEndpoint: "https://oauth2.googleapis.com/revoke",
-			loginHint:          loginHint,
+			loginHint:          opts.Email,
 			state:              state,
 			codeChallenge:      challenge,
+			nonce:              nonce,
+			implicit:           opts.Implicit,
 			errCh:              make(chan error),
 			tokCh:              make(chan *token),
 		}, nil
 	default:
 		userinfoEp := ""
-		if authzEp == "" && tokenEp == "" {
+		if provider != "" {
 			d, err := disco(provider)
 			if err != nil {
 				return nil, err
 			}
 
-			if v, ok := d["authorization_endpoint"].(string); ok {
+			if v, ok := d["authorization_endpoint"].(string); ok && authzEp == "" {
 				authzEp = v
-			} else {
-				return nil, errors.New("missing 'authorization_endpoint' in provider metadata")
 			}
-			if v, ok := d["token_endpoint"].(string); ok {
+			if v, ok := d["token_endpoint"].(string); ok && tokenEp == "" {
 				tokenEp = v
-			} else {
-				return nil, errors.New("missing 'token_endpoint' in provider metadata")
-			}
-			if v, ok := d["userinfo_endpoint"].(string); ok {
-				userinfoEp = v
 			}
 			if v, ok := d["revocation_endpoint"].(string); ok && revokeEp == "" {
 				revokeEp = v
 			}
-		}
-		if revokeEp == "" {
-			d, err := disco(provider)
-			if err != nil {
-				return nil, err
+			if v, ok := d["userinfo_endpoint"].(string); ok {
+				userinfoEp = v
 			}
-
-			if v, ok := d["revocation_endpoint"].(string); ok {
-				revokeEp = v
+			switch {
+			case authzEp == "":
+				return nil, errors.New("missing 'authorization_endpoint' in provider metadata")
+			case tokenEp == "":
+				return nil, errors.New("missing 'token_endpoint' in provider metadata")
 			}
 		}
 		return &oauth{
@@ -395,9 +429,11 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, revokeEp, scop
 			tokenEndpoint:      tokenEp,
 			userInfoEndpoint:   userinfoEp,
 			revocationEndpoint: revokeEp,
-			loginHint:          loginHint,
+			loginHint:          opts.Email,
 			state:              state,
 			codeChallenge:      challenge,
+			nonce:              nonce,
+			implicit:           opts.Implicit,
 			errCh:              make(chan error),
 			tokCh:              make(chan *token),
 		}, nil
@@ -412,7 +448,9 @@ func disco(provider string) (map[string]interface{}, error) {
 	// TODO: OIDC and OAuth specify two different ways of constructing this
 	// URL. This is the OIDC way. Probably want to try both. See
 	// https://tools.ietf.org/html/rfc8414#section-5
-	url.Path = path.Join(url.Path, "/.well-known/openid-configuration")
+	if strings.Index(url.Path, "/.well-known/openid-configuration") == -1 {
+		url.Path = path.Join(url.Path, "/.well-known/openid-configuration")
+	}
 	resp, err := http.Get(url.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "error retrieving %s", url.String())
@@ -591,7 +629,7 @@ func (o *oauth) DoTwoLeggedAuthorization(issuer, audience string) (*token, error
 		return nil, errors.Wrapf(err, "error creating JWT signer")
 	}
 
-	raw, err := jwt.Signed(signer).Claims(c).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c).CompactSerialize()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error serializing JWT")
 	}
@@ -654,7 +692,7 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 		return nil, errors.Wrapf(err, "error creating JWT signer")
 	}
 
-	raw, err := jwt.Signed(signer).Claims(c).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c).CompactSerialize()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error serializing JWT")
 	}
@@ -666,6 +704,11 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 // ServeHTTP is the handler that performs the OAuth 2.0 dance and returns the
 // tokens using channels.
 func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != "/" {
+		http.NotFound(w, req)
+		return
+	}
+
 	q := req.URL.Query()
 	errStr := q.Get("error")
 	if errStr != "" {
@@ -673,13 +716,24 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	code := q.Get("code")
+	if o.implicit {
+		o.implicitHandler(w, req)
+		return
+	}
+
+	code, state := q.Get("code"), q.Get("state")
+	if code == "" || state == "" {
+		fmt.Fprintf(os.Stderr, "Invalid request received: http://%s%s\n", req.RemoteAddr, req.URL.String())
+		fmt.Fprintf(os.Stderr, "You may have an app or browser plugin that needs to be turned off\n")
+		http.Error(w, "400 bad request", http.StatusBadRequest)
+		return
+	}
+
 	if code == "" {
 		o.badRequest(w, "Failed to authenticate: missing or invalid code")
 		return
 	}
 
-	state := q.Get("state")
 	if state == "" || state != o.state {
 		o.badRequest(w, "Failed to authenticate: missing or invalid state")
 		return
@@ -697,8 +751,58 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte("Success: look for the token on the command line"))
+	w.Write([]byte(`<html><head><title>OAuth Request Successful</title>`))
+	w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
+	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />Look for the token on the command line`))
+	w.Write([]byte(`</p></body></html>`))
 	o.tokCh <- tok
+}
+
+func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
+	q := req.URL.Query()
+	if hash := q.Get("urlhash"); hash == "true" {
+		state := q.Get("state")
+		if state == "" || state != o.state {
+			o.badRequest(w, "Failed to authenticate: missing or invalid state")
+			return
+		}
+		accessToken := q.Get("access_token")
+		if accessToken == "" {
+			o.badRequest(w, "Failed to authenticate: missing access token")
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte(`<html><head><title>OAuth Request Successful</title>`))
+		w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
+		w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />Look for the token on the command line`))
+		w.Write([]byte(`</p></body></html>`))
+
+		expiresIn, _ := strconv.Atoi(q.Get("expires_in"))
+		o.tokCh <- &token{
+			AccessToken:  accessToken,
+			IDToken:      q.Get("id_token"),
+			RefreshToken: q.Get("refresh_token"),
+			ExpiresIn:    expiresIn,
+			TokenType:    q.Get("token_type"),
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(`<html><head><title>Processing OAuth Request</title>`))
+	w.Write([]byte(`</head>`))
+	w.Write([]byte(`<script type="text/javascript">`))
+	w.Write([]byte(fmt.Sprintf(`function redirect(){var hash = window.location.hash.substr(1); document.location.href = "%s?urlhash=true&"+hash;}`, o.redirectURI)))
+	w.Write([]byte(`if (window.addEventListener) window.addEventListener("load", redirect, false); else if (window.attachEvent) window.attachEvent("onload", redirect); else window.onload = redirect;`))
+	w.Write([]byte("</script>"))
+	w.Write([]byte(`<body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
+	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />`))
+	w.Write([]byte(`Click <a href="javascript:redirect();">here</a> if your browser does not automatically redirect you`))
+	w.Write([]byte(`</p></body></html>`))
+	return
 }
 
 // Auth returns the OAuth 2.0 authentication url.
@@ -711,11 +815,17 @@ func (o *oauth) Auth() (string, error) {
 	q := u.Query()
 	q.Add("client_id", o.clientID)
 	q.Add("redirect_uri", o.redirectURI)
-	q.Add("response_type", "code")
+	if o.implicit {
+		q.Add("response_type", "id_token token")
+	} else {
+		q.Add("response_type", "code")
+		q.Add("code_challenge_method", "S256")
+		s256 := sha256.Sum256([]byte(o.codeChallenge))
+		q.Add("code_challenge", base64.RawURLEncoding.EncodeToString(s256[:]))
+	}
 	q.Add("scope", o.scope)
 	q.Add("state", o.state)
-	q.Add("code_challenge_method", "plain")
-	q.Add("code_challenge", o.codeChallenge)
+	q.Add("nonce", o.nonce)
 	if o.loginHint != "" {
 		q.Add("login_hint", o.loginHint)
 	}
@@ -753,6 +863,10 @@ func (o *oauth) Exchange(tokenEndpoint, code string) (*token, error) {
 func (o *oauth) badRequest(w http.ResponseWriter, msg string) {
 	w.WriteHeader(http.StatusBadRequest)
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(`<html><head><title>OAuth Request Unsuccessful</title>`))
+	w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
+	w.Write([]byte(`<strong style='font-size: 28px; color: red;'>Failure</strong><br />`))
 	w.Write([]byte(msg))
+	w.Write([]byte(`</p></body></html>`))
 	o.errCh <- errors.New(msg)
 }

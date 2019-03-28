@@ -44,23 +44,23 @@ func (k KeypairCmd) test(t *testing.T) {
 		cmd, err := gexpect.Spawn(k.command.cmd())
 		assert.FatalError(t, err)
 		prompt := fmt.Sprintf("Please enter the password to encrypt the private key: ")
-		assert.FatalError(t, cmd.ExpectTimeout(prompt, 10*time.Second))
+		assert.FatalError(t, cmd.ExpectTimeout(prompt, 15*time.Second))
 		assert.FatalError(t, cmd.SendLine(k.password))
 		k.testJwtSignVerify(t)
 	})
 }
 
 func (k KeypairCmd) testNoPass(t *testing.T) {
-	k.command.test(t, k.name, "", "")
+	k.command.test(t, k.name, "Your public key has been saved in testdata-tmp/no-pass.pub.\nYour private key has been saved in testdata-tmp/no-pass.pem.\n")
 	k.testJwtSignVerify(t)
 }
 
 func (k KeypairCmd) fail(t *testing.T, expected string) {
-	k.command.fail(t, k.name, expected, "")
+	k.command.fail(t, k.name, expected)
 }
 
 func (k KeypairCmd) failNoPass(t *testing.T, expected string) {
-	k.command.fail(t, k.name, expected, "")
+	k.command.fail(t, k.name, expected)
 }
 
 func NewKeypairCmd(name string) KeypairCmd {

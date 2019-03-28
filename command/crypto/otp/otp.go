@@ -13,7 +13,7 @@ func Command() cli.Command {
 		Description: `**step crypto otp** command group implements TOTP and HOTP one-time passwords
 (mention RFCs)
 
-## EXAMPLE
+## EXAMPLES
 
 Generate a new TOTP token and it's QR Code to scan:
 '''

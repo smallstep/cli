@@ -129,7 +129,7 @@ func keysetAddAction(ctx *cli.Context) error {
 	}
 
 	// Attempt to parse an encrypted file
-	if b, err = jose.Decrypt("Please enter the password to decrypt JWK: ", b); err != nil {
+	if b, err = jose.Decrypt("Please enter the password to decrypt JWK", b); err != nil {
 		return err
 	}
 

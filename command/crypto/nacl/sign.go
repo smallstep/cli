@@ -7,7 +7,10 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/nacl/sign"
@@ -16,13 +19,20 @@ import (
 func signCommand() cli.Command {
 	return cli.Command{
 		Name:      "sign",
-		Usage:     "signs small messages using public-key cryptography",
+		Usage:     "sign small messages using public-key cryptography",
 		UsageText: "step crypto nacl sign <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `
-**step crypto nacl sign** command group uses public-key cryptography to sign
-and verify messages.
+		Description: `**step crypto nacl sign** command group uses public-key cryptography to sign and
+verify messages. The implementation is based on NaCl's crypto_sign function.
 
-TODO
+NaCl crypto_sign function is designed to meet the standard notion of
+unforgeability for a public-key signature scheme under chosen-message attacks.
+
+NaCl crypto_sign is crypto_sign_edwards25519sha512batch, a particular
+combination of Curve25519 in Edwards form and SHA-512 into a signature scheme
+suitable for high-speed batch verification. This function is conjectured to meet
+the standard notion of unforgeability under chosen-message attacks.
+
+These commands are interoperable with NaCl: https://nacl.cr.yp.to/sign.html
 
 ## EXAMPLES
 
@@ -34,7 +44,7 @@ $ step crypto nacl sign keypair nacl.sign.pub nacl.sign.priv
 Sign a message using the private key:
 '''
 $ step crypto nacl sign sign nacl.sign.priv
-Write text to sign: ********
+Please enter text to sign: ********
 rNrOfqsv4svlRnVPSVYe2REXodL78yEMHtNkzAGNp4MgHuVGoyayp0zx4D5rjTzYVVrD2HRP306ZILT62ohvCG1lc3NhZ2U
 
 $ cat message.txt | step crypto nacl sign sign ~/step/keys/nacl.recipient.sign.priv
@@ -58,13 +68,16 @@ message
 func signKeypairCommand() cli.Command {
 	return cli.Command{
 		Name:      "keypair",
-		Action:    cli.ActionFunc(signKeypairAction),
-		Usage:     "generates a pair for use with sign and open",
+		Action:    command.ActionFunc(signKeypairAction),
+		Usage:     "generate a pair for use with sign and open",
 		UsageText: "**step crypto nacl sign keypair** <pub-file> <priv-file>",
 		Description: `**step crypto nacl sign keypair** generates a secret key and a corresponding
 public key valid for verifying and signing messages.
 
+This command uses an implementation of NaCl's crypto_sign_keypair function.
+
 For examples, see **step help crypto nacl sign**.`,
+		Flags: []cli.Flag{flags.Force},
 	}
 }
 
@@ -72,10 +85,12 @@ func signOpenCommand() cli.Command {
 	return cli.Command{
 		Name:      "open",
 		Action:    cli.ActionFunc(signOpenAction),
-		Usage:     "verifies a signed message produced by sign",
+		Usage:     "verify a signed message produced by sign",
 		UsageText: "**step crypto nacl sign open** <pub-file>",
 		Description: `**step crypto nacl sign open** verifies the signature of a message using the
 signer's public key.
+
+This command uses an implementation of NaCl's crypto_sign_open function.
 
 For examples, see **step help crypto nacl sign**.`,
 		Flags: []cli.Flag{
@@ -91,10 +106,12 @@ func signSignCommand() cli.Command {
 	return cli.Command{
 		Name:      "sign",
 		Action:    cli.ActionFunc(signSignAction),
-		Usage:     "signs a message using Ed25519",
+		Usage:     "sign a message using Ed25519",
 		UsageText: "**step crypto nacl sign sign** <priv-file>",
-		Description: `**step crypto nacl sign keypair** signs a message m using the signer's private
+		Description: `**step crypto nacl sign sign** signs a message m using the signer's private
 key.
+
+This command uses an implementation of NaCl's crypto_sign function.
 
 For examples, see **step help crypto nacl sign**.`,
 		Flags: []cli.Flag{
@@ -130,6 +147,8 @@ func signKeypairAction(ctx *cli.Context) error {
 		return errs.FileError(err, privFile)
 	}
 
+	ui.Printf("Your public key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", privFile)
 	return nil
 }
 
@@ -146,7 +165,7 @@ func signOpenAction(ctx *cli.Context) error {
 		return errors.New("invalid public key: key size is not 32 bytes")
 	}
 
-	input, err := utils.ReadInput("Write signed message to open: ")
+	input, err := utils.ReadInput("Write signed message to open")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}
@@ -190,7 +209,7 @@ func signSignAction(ctx *cli.Context) error {
 		return errors.New("invalid private key: key size is not 64 bytes")
 	}
 
-	input, err := utils.ReadInput("Write text to sign: ")
+	input, err := utils.ReadInput("Please enter text to sign")
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

@@ -5,15 +5,19 @@ import (
 	"io/ioutil"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
 
 func bundleCommand() cli.Command {
 	return cli.Command{
 		Name:      "bundle",
-		Action:    cli.ActionFunc(bundleAction),
-		Usage:     `bundle a certificate with intermediate certificate(s) needed for certificate path validation.`,
+		Action:    command.ActionFunc(bundleAction),
+		Usage:     `bundle a certificate with intermediate certificate(s) needed for certificate path validation`,
 		UsageText: `**step certificate bundle** <crt_file> <ca> <bundle_file>`,
 		Description: `**step certificate bundle** bundles a certificate
 		with any intermediates necessary to validate the certificate.
@@ -24,7 +28,7 @@ func bundleCommand() cli.Command {
 : The path to a leaf certificate to bundle with issuing certificate(s).
 
 <ca>
-: The path to the Certificate Authoriy issusing certificate.
+: The path to the Certificate Authority issusing certificate.
 
 <bundle_file>
 : The path to write the bundle.
@@ -41,6 +45,7 @@ Bundle a certificate with the intermediate certificate authority (issuer):
 $ step certificate bundle foo.crt intermediate-ca.crt foo-bundle.crt
 '''
 `,
+		Flags: []cli.Flag{flags.Force},
 	}
 }
 
@@ -70,10 +75,11 @@ func bundleAction(ctx *cli.Context) error {
 	}
 
 	chainFile := ctx.Args().Get(2)
-	if err := ioutil.WriteFile(chainFile,
+	if err := utils.WriteFile(chainFile,
 		append(pem.EncodeToMemory(crtBlock), pem.EncodeToMemory(caBlock)...), 0600); err != nil {
-		return errs.FileError(err, chainFile)
+		return err
 	}
 
+	ui.Printf("Your certificate has been saved in %s.\n", chainFile)
 	return nil
 }

@@ -47,16 +47,9 @@ required = [
   branch = "master"
   name = "golang.org/x/crypto"
 
-[prune]
-  go-tests = true
-  unused-packages = true
-
 [[constraint]]
   name = "gopkg.in/square/go-jose.v2"
-  # version = "2.1.6"
-  # Using special branch with pbkdf2 support
-  source = "github.com/maraino/go-jose"
-  branch = "v2"
+  version = "2.1.9"
 
 [[constraint]]
   branch = "master"
@@ -65,3 +58,19 @@ required = [
 [[constraint]]
   branch = "master"
   name = "github.com/smallstep/assert"
+
+[prune]
+  go-tests = true
+  unused-packages = true
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/smallstep/certificates"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/smallstep/truststore"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/smallstep/certinfo"

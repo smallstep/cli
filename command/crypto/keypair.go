@@ -2,9 +2,13 @@ package crypto
 
 import (
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -12,11 +16,11 @@ import (
 func createKeyPairCommand() cli.Command {
 	return cli.Command{
 		Name:   "keypair",
-		Action: cli.ActionFunc(createAction),
-		Usage:  "generate a public /private keypair in PEM format.",
+		Action: command.ActionFunc(createAction),
+		Usage:  "generate a public / private keypair in PEM format",
 		UsageText: `**step crypto keypair** <pub_file> <priv_file>
-[**--curve**=<curve>] [**--no-password**] [**--size**=<size>]
-[**--kty**=<key-type>]`,
+[**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>]
+[**--password-file**=<file>] [**--no-password**]`,
 		Description: `**step crypto keypair** generates a raw public /
 private keypair in PEM format. These keys can be used by other operations
 to sign and encrypt data, and the public key can be bound to an identity
@@ -116,21 +120,20 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
     :  Ed25519 Curve
 `,
 			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
+			cli.StringFlag{
+				Name: "from-jwk",
+				Usage: `Create a PEM representing the key encoded in an
+existing <jwk-file> instead of creating a new key.`,
 			},
-			cli.BoolFlag{
-				Name: "no-password",
-				Usage: `Do not ask for a password to encrypt the private key.
-Sensitive key material will be written to disk unencrypted. This is not
-recommended. Requires **--insecure** flag.`,
-			},
+			flags.PasswordFile,
+			flags.NoPassword,
+			flags.Insecure,
+			flags.Force,
 		},
 	}
 }
 
-func createAction(ctx *cli.Context) error {
+func createAction(ctx *cli.Context) (err error) {
 	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
@@ -143,42 +146,89 @@ func createAction(ctx *cli.Context) error {
 
 	insecure := ctx.Bool("insecure")
 	noPass := ctx.Bool("no-password")
+	passwordFile := ctx.String("password-file")
+	if noPass && len(passwordFile) > 0 {
+		return errs.IncompatibleFlag(ctx, "no-password", "password-file")
+	}
 	if noPass && !insecure {
 		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
 	}
 
-	kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
-		"curve", "size")
-	if err != nil {
-		return err
+	// Read password if necessary
+	var password string
+	if len(passwordFile) > 0 {
+		password, err = utils.ReadStringPasswordFromFile(passwordFile)
+		if err != nil {
+			return err
+		}
 	}
 
-	pub, priv, err := keys.GenerateKeyPair(kty, crv, size)
-	if err != nil {
-		return errors.WithStack(err)
+	var pub, priv interface{}
+	fromJWK := ctx.String("from-jwk")
+	if len(fromJWK) > 0 {
+		switch {
+		case ctx.IsSet("kty"):
+			return errs.IncompatibleFlagWithFlag(ctx, "from-jwk", "kty")
+		case ctx.IsSet("curve"):
+			return errs.IncompatibleFlagWithFlag(ctx, "from-jwk", "curve")
+		case ctx.IsSet("size"):
+			return errs.IncompatibleFlagWithFlag(ctx, "from-jwk", "size")
+		}
+
+		jwk, err := jose.ParseKey(fromJWK)
+		if err != nil {
+			return err
+		}
+
+		if jwk.IsPublic() {
+			pub = jwk.Key
+		} else {
+			pub = jwk.Public().Key
+			priv = jwk.Key
+		}
+	} else {
+		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
+			"curve", "size")
+		if err != nil {
+			return err
+		}
+
+		pub, priv, err = keys.GenerateKeyPair(kty, crv, size)
+		if err != nil {
+			return err
+		}
 	}
 
 	_, err = pemutil.Serialize(pub, pemutil.ToFile(pubFile, 0600))
 	if err != nil {
-		return errors.WithStack(err)
+		return err
+	}
+
+	if priv == nil {
+		ui.Printf("Your public key has been saved in %s.\n", pubFile)
+		ui.Println("Only the public PEM was generated.")
+		ui.Println("Cannot retrieve a private key from a public one.")
+		return nil
 	}
 
 	if noPass {
 		_, err = pemutil.Serialize(priv, pemutil.ToFile(privFile, 0600))
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	} else {
-		pass, err := utils.ReadPassword("Please enter the password to encrypt the private key: ")
+		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key", ui.WithValue(password))
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}
-		_, err = pemutil.Serialize(priv, pemutil.WithEncryption(pass),
+		_, err = pemutil.Serialize(priv, pemutil.WithPassword(pass),
 			pemutil.ToFile(privFile, 0600))
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 
+	ui.Printf("Your public key has been saved in %s.\n", pubFile)
+	ui.Printf("Your private key has been saved in %s.\n", privFile)
 	return nil
 }

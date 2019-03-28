@@ -1,29 +1,32 @@
 # Step CLI
 
-`step` is a zero trust swiss army knife. It’s an easy-to-use and hard-to-misuse
+`step` is a zero trust swiss army knife. It's an easy-to-use and hard-to-misuse
 utility for building, operating, and automating systems that use zero trust
 technologies like authenticated encryption (X.509, TLS), single sign-on (OAuth
-OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption
-mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML
-assertions).
+OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F),
+encryption mechanisms (JSON Web Encryption, NaCl), and verifiable
+claims (JWT, SAML assertions).
 
-For more information and docs see [the step website](https://smallstep.com/cli/)
-and the [blog post](https://smallstep.com/blog/zero-trust-swiss-army-knife.html)
-announcing step.
+[Website](https://smallstep.com) |
+[Documentation](https://smallstep.com/docs/cli) |
+[Installation Guide](#installation-guide) |
+[Examples](#examples) |
+[Contribution Guide](./docs/CONTRIBUTING.md)
 
-![Alt Text](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
+[![GitHub release](https://img.shields.io/github/release/smallstep/cli.svg)](https://github.com/smallstep/cli/releases)
+[![Join the chat at https://gitter.im/smallstep/community](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/smallstep/community)
+[![CA Image](https://images.microbadger.com/badges/image/smallstep/step-cli.svg)](https://microbadger.com/images/smallstep/step-cli)
+[![Go Report Card](https://goreportcard.com/badge/github.com/smallstep/cli)](https://goreportcard.com/report/github.com/smallstep/cli)
+[![Build Status](https://travis-ci.com/smallstep/cli.svg?branch=master)](https://travis-ci.com/smallstep/cli)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CLA assistant](https://cla-assistant.io/readme/badge/smallstep/cli)](https://cla-assistant.io/smallstep/cli)
 
-### Table of Contents
+[![GitHub stars](https://img.shields.io/github/stars/smallstep/cli.svg?style=social)](https://github.com/smallstep/cli/stargazers)
+[![Twitter followers](https://img.shields.io/twitter/follow/smallsteplabs.svg?label=Follow&style=social)](https://twitter.com/intent/follow?screen_name=smallsteplabs)
 
-- [Installing](#installing)
-- [Examples](#examples)
-- [Getting Started with Development](#getting-started-with-development)
-- [How to add a new Command](./command/README.md)
-- [Versioning](#versioning)
-- [LICENSE](./LICENSE)
-- [CHANGELOG](./CHANGELOG.md)
+![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
 
-## Installing
+## Installation Guide
 
 These instructions will install an OS specific version of the `step` binary on
 your local machine. To build from source see [getting started with
@@ -34,35 +37,44 @@ development](#getting-started-with-development) below.
 
 Install `step` via [Homebrew](https://brew.sh/):
 
-```
-brew install smallstep/smallstep/step
-```
+<pre><code>
+<b>$ brew install step</b>
+</code></pre>
 
-Test:
+> Note: If you have installed `step` previously through the `smallstep/smallstep`
+> tap you will need to run the following commands before installing:
 
-```
-step certificate inspect https://smallstep.com
-```
+<pre><code>
+<b>$ brew untap smallstep/smallstep</b>
+<b>$ brew uninstall step</b>
+</code></pre>
 
 ### Linux
 
-Download the latest Debian package from [releases](https://github.com/smallstep/cli/releases):
+Download and install the latest Debian package from [releases](https://github.com/smallstep/cli/releases):
 
-```
-wget https://github.com/smallstep/cli/releases/download/X.Y.Z/step_X.Y.Z_amd64.deb
-```
+<pre><code>
+<b>$ wget https://github.com/smallstep/cli/releases/download/X.Y.Z/step_X.Y.Z_amd64.deb</b>
 
-Install the Debian package:
+# Install the Debian package:
+<b>$ sudo dpkg -i step_X.Y.Z_amd64.deb</b>
+</code></pre>
 
-```
-sudo dpkg -s step_X.Y.Z_amd64.deb
-```
-
-Test:
-
-```
-step certificate inspect https://smallstep.com
-```
+### Test
+<pre><code>
+<b>$ step certificate inspect https://smallstep.com</b>
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 326381749415081530968054238478851085504954 (0x3bf265673332db2d0c70e48a163fb7d11ba)
+    Signature Algorithm: SHA256-RSA
+        Issuer: C=US,O=Let's Encrypt,CN=Let's Encrypt Authority X3
+        Validity
+            Not Before: Feb 8 13:07:44 2019 UTC
+            Not After : May 9 13:07:44 2019 UTC
+        Subject: CN=smallstep.com
+[...]
+</code></pre>
 
 ## Examples
 
@@ -71,202 +83,218 @@ step certificate inspect https://smallstep.com
 Create a root CA, an intermediate, and a leaf X.509 certificate. Bundle the
 leaf with the intermediate for use with TLS:
 
-```
-$ step certificate create --profile root-ca \
-    "Example Root CA" root-ca.crt root-ca.key 
-$ step certificate create \
-    "Example Intermediate CA 1" intermediate-ca.crt intermediate-ca.key \
-    --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key
-$ step certificate create \
-    example.com example.com.crt example.com.key \
-    --profile leaf --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
-$ step certificate bundle \
-    example.com.crt intermediate-ca.crt example.com-bundle.crt
-```
+<pre><code>
+<b>$ step certificate create --profile root-ca \
+     "Example Root CA" root-ca.crt root-ca.key</b>
+Please enter the password to encrypt the private key:
+Your certificate has been saved in root-ca.crt.
+Your private key has been saved in root-ca.key.
+
+<b>$ step certificate create \
+     "Example Intermediate CA 1" intermediate-ca.crt intermediate-ca.key \
+     --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key</b>
+Please enter the password to decrypt ./root-ca.key:
+Please enter the password to encrypt the private key:
+Your certificate has been saved in intermediate-ca.crt.
+Your private key has been saved in intermediate-ca.key.
+
+<b>$ step certificate create \
+     example.com example.com.crt example.com.key \
+     --profile leaf --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key</b>
+Please enter the password to decrypt ./intermediate-ca.key:
+Please enter the password to encrypt the private key:
+Your certificate has been saved in example.com.crt.
+Your private key has been saved in example.com.key.
+
+<b>$ step certificate bundle \
+     example.com.crt intermediate-ca.crt example.com-bundle.crt</b>
+Your certificate has been saved in example.com-bundle.crt.
+</code></pre>
 
 Extract the expiration date from a certificate (requires
 [`jq`](https://stedolan.github.io/jq/)):
 
+<pre><code>
+<b>$ step certificate inspect example.com.crt --format json | jq -r .validity.end</b>
+2019-02-28T17:46:16Z
+
+<b>$ step certificate inspect https://smallstep.com --format json | jq -r .validity.end</b>
+2019-05-09T13:07:44Z
+</code></pre>
+
+You can install your root certificate locally:
+
 ```
-$ step certificate inspect example.com.crt --format json | jq -r .validity.end
-$ step certificate inspect https://smallstep.com --format json | jq -r .validity.end
+$ step certificate install root-ca.crt
 ```
+
+And issued certificates will work in your browser and with tools like `curl`. See [our blog post](https://smallstep.com/blog/step-v0-8-6-valid-HTTPS-certificates-for-dev-pre-prod.html) for more info.
+
+![Browser demo of HTTPS working without warnings](https://smallstep.com/images/blog/2019-02-25-localhost-tls.png)
+
+Alternatively, for internal service-to-service communication, you can [configure your code and infrastructure to trust your root certificate](https://github.com/smallstep/certificates/tree/master/autocert/examples/hello-mtls).
+
+If you need certificates for your microservices, containers, or other internal services see [step certificates](https://github.com/smallstep/certificates), a sub-project that adds an online certificate authority and automated certificate management tools to `step`.
 
 ### JSON Object Signing & Encryption (JOSE)
 
 Create a [JSON Web Key](https://tools.ietf.org/html/rfc7517) (JWK), add the
 public key to a keyset, and sign a [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT):
 
-```
-$ step crypto jwk create pub.json key.json
-$ cat pub.json | step crypto jwk keyset add keys.json
-$ JWT=$(step crypto jwt sign \
+<pre><code>
+<b>$ step crypto jwk create pub.json key.json</b>
+Please enter the password to encrypt the private JWK:
+Your public key has been saved in pub.json.
+Your private key has been saved in key.json.
+
+<b>$ cat pub.json | step crypto jwk keyset add keys.json</b>
+
+<b>$ JWT=$(step crypto jwt sign \
     --key key.json \
     --iss "issuer@example.com" \
     --aud "audience@example.com" \
     --sub "subject@example.com" \
-    --exp $(date -v+15M +"%s"))
-```
+    --exp $(date -v+15M +"%s"))</b>
+Please enter the password to decrypt key.json:
 
-Verify your JWT and return the payload:
-
-```
-$ echo $JWT | step crypto jwt verify \
-    --jwks keys.json --iss "issuer@example.com" --aud "audience@example.com"
-```
+# Verify your JWT and return the payload:
+<b>$ echo $JWT | step crypto jwt verify \
+    --jwks keys.json --iss "issuer@example.com" --aud "audience@example.com"</b>
+{
+  "header": {
+    "alg": "ES256",
+    "kid": "X6yaHYNyxr-psAqvSNKCWc9oYDetvGdo2n2PSRZjxss",
+    "typ": "JWT"
+  },
+  "payload": {
+    "aud": "audience@example.com",
+    "exp": 1551290879,
+    "iat": 1551289983,
+    "iss": "issuer@example.com",
+    "nbf": 1551289983,
+    "sub": "subject@example.com"
+  },
+  "signature": "JU7fPGqBJcIfauJHA7KP9Wp292g_G9s4bLMVLyRgEQDpL5faaG-3teJ81_igPz1zP7IjHmz8D6Gigt7kbnlasw"
+}
+</code></pre>
 
 ### Single Sign-On
 
 Login with Google, get an access token, and use it to make a request to
 Google's APIs:
 
-```
-curl -H"$(step oauth --header)" https://www.googleapis.com/oauth2/v3/userinfo
-```
+<pre><code>
+<b>$ curl -H"$(step oauth --header)" https://www.googleapis.com/oauth2/v3/userinfo</b>
+Your default web browser has been opened to visit:
+
+https://accounts.google.com/o/oauth2/v2/auth?client_id=1087160488420-AAAAAAAAAAAAAAA.apps.googleusercontent.com&code_challenge=XXXXX
+
+{
+  "sub": "AAAAAAAAAAAAA",
+  "picture": "https://lh6.googleusercontent.com/photo.jpg",
+  "email": "bob@smallstep.com",
+  "email_verified": true,
+  "hd": "smallstep.com"
+}
+</code></pre>
 
 Login with Google and obtain an OAuth OIDC identity token for single sign-on:
 
-```
-$ step oauth \
+<pre><code>
+<b>$ step oauth \
     --provider https://accounts.google.com \
     --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
     --client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
-    --bare --oidc
-```
+    --bare --oidc</b>
+Your default web browser has been opened to visit:
+
+https://accounts.google.com/o/oauth2/v2/auth?client_id=[...]
+
+xxx-google-xxx.yyy-oauth-yyy.zzz-token-zzz
+</code></pre>
 
 Obtain and verify a Google-issued OAuth OIDC identity token:
 
-```
-$ step oauth \
-    --provider https://accounts.google.com \
-    --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
-    --client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
-    --bare --oidc \
- | step crypto jwt verify \
-   --jwks https://www.googleapis.com/oauth2/v3/certs \
-   --iss https://accounts.google.com \
-   --aud 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com
-```
+<pre><code>
+<b>$ step oauth \
+     --provider https://accounts.google.com \
+     --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
+     --client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
+     --bare --oidc \
+     | step crypto jwt verify \
+       --jwks https://www.googleapis.com/oauth2/v3/certs \
+       --iss https://accounts.google.com \
+       --aud 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com</b>
+Your default web browser has been opened to visit:
+
+https://accounts.google.com/o/oauth2/v2/auth?client_id=[...]
+
+{
+  "header": {
+    "alg": "RS256",
+    "kid": "f24d6a1930669cb75f19",
+    "typ": "JWT"
+  },
+  "payload": {
+    "iss": "https://accounts.google.com",
+    "azp": "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com",
+    "aud": "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com",
+    "sub": "103209689286000948507",
+    "hd": "smallstep.com",
+    "email": "name@smallstep.com",
+    "email_verified": true,
+    "at_hash": "euBvS34BVu0SJQ-EsbBT3A",
+    "iat": 1551293134,
+    "exp": 1551296734
+  },
+  "signature": "[...]"
+}
+</code></pre>
 
 ### Multi-factor Authentication
 
 Generate a [TOTP](https://en.wikipedia.org/wiki/Time-based_One-time_Password_algorithm)
 token and a QR code:
 
-```
-$ step crypto otp generate \
+<pre><code>
+<b>$ step crypto otp generate \
     --issuer smallstep.com --account name@smallstep.com \
-    --qr smallstep.png > smallstep.totp
-```
+    --qr smallstep.png > smallstep.totp</b>
+</code></pre>
 
-Scan the QR Code using Google Authenticator, Authy or similar software and use
-it to verify the TOTP token:
+Scan the QR Code (`smallstep.png`) using Google Authenticator, Authy or similar
+software and use it to verify the TOTP token:
 
-```
-$ step crypto otp verify --secret smallstep.totp
-```
+<pre><code>
+<b>$ step crypto otp verify --secret smallstep.totp</b>
+</code></pre>
 
-## Getting Started with Development
+## Documentation
 
-These instructions will get you a copy of the project up and running on your
-local machine for development, testing, and contribution purposes.
+Documentation can be found in three places:
 
-Please read the [CLI Style Guide](https://github.com/urfave/cli) before
-implementing any features or modifying behavior as it contains expectations
-surrounding how the CLI should behave.
+1. On the command line with `step help xxx` where `xxx` is the subcommand you
+   are interested in. Ex: `step help crypto jwk`
 
-All changes to behavior *must* be documented in the [CHANGELOG.md](./CHANGELOG.md).
+2. On the web at https://smallstep.com/docs/cli
 
-### Prerequisites
+3. On your browser by running `step help --http :8080` and visiting
+   http://localhost:8080
 
-To get started with local development, you will need three things:
+## The Future
 
-- Golang installed locally (instructions available
-[here](https://golang.org/doc/install).
-- dep installed locally (instructions available
-[here](https://golang.github.io/dep/docs/installation.html).
-- A version of `make` available for usage of the `Makefile`.
-- The repository checked out in the appropriate location of your `$GOPATH`.
+We plan to build more tools that facilitate the use and management of zero trust
+networks.
 
-Ensure you've checked out the repository into the appropriate path inside your
-`$GOPATH`. For example, if your `$GOPATH` is set to `~/go`, then you'd check
-this repository out at `~/go/src/github.com/smallstep/cli`. You can
-learn more about `$GOPATH` in the
-[documentation](https://golang.org/doc/code.html#GOPATH).
+* Tell us what you like and don't like about managing identity in your
+network - we're eager to help solve problems in this space.
+* Tell us what features you'd like to see - open issues or hit us on
+[Twitter](https://twitter.com/smallsteplabs).
 
-### Installing Dependencies and Bootstrapping
+## Further Reading
 
-Once you've cloned the repository to the appropriate location, you will now be
-able to install any other dependencies via the `make bootstrap` command.
-
-You should only ever need to run this command once, as it will ensure you have
-the right version of `dep` and `gometalinter` installed.
-
-### Building step
-
-To build step, simply run `make build` which will build the cli and place the
-binary in the `bin` folder.
-
-### Running Tests and Linting
-
-Now that you've installed any dependencies, you can run the tests and lint the
-code base simply by running `make`.
-
-#### Unit Tests
-
-Run the unit tests:
-
-```
-make test
-```
-
-For a more verbose version of the unit tests:
-
-```
-make vtest
-```
-
-#### Integration Tests
-
-Run the integration tests:
-
-```
-make integration
-```
-
-#### And coding style tests
-
-These tests apply the following `Go` linters to verify code style and formatting:
-
-* [deadcode](https://github.com/tsenart/deadcode)
-* [gofmt](https://golang.org/cmd/gofmt/)
-* [golint](https://github.com/golang/lint/golint)
-* [ineffassign](https://github.com/gordonklaus/ineffassign)
-* [metalinter](https://github.com/alecthomas/gometalinter)
-* [misspell](https://github.com/client9/misspell/cmd/misspell)
-* [vet](https://golang.org/cmd/vet/)
-
-```
-make lint
-```
-
-### Adding and Removing Dependencies
-
-To add any dependency to the repository, simply import it into your code and
-then run `dep ensure` which will update the `Gopkg.lock` file. A specific
-version of a dependency can be specified by adding it to the `Gopkg.toml` file
-and running `dep ensure`.
-
-To remove a dependency, simply remove it from the codebase and any mention of
-it in the `Gopkg.toml` file and run `dep ensure` which will remove it from the
-`vendor` folder while updating the `Gopkg.lock` file.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available,
-see the [tags on this repository](https://github.com/smallstep/cli).
-
-## License
-
-This project is licensed under the MIT License - see the
-[LICENSE](./LICENSE) file for details
+* Check out our [blog](https://smallstep.com/blog).
+* Eliminate the pain of managing a PKI with [`step
+certificates`](https://github.com/smallstep/certificates) - an online
+certificate authority and related tools for secure automated certificate
+management, so you can use TLS everywhere.

@@ -10,13 +10,13 @@ import (
 // ASN1DN contains ASN1.DN attributes that are used in Subject and Issuer
 // x509 Certificate blocks.
 type ASN1DN struct {
-	Country            string `step:"country"`
-	Organization       string `step:"organization"`
-	OrganizationalUnit string `step:"organizationalUnit"`
-	Locality           string `step:"locality"`
-	Province           string `step:"province"`
-	StreetAddress      string `step:"streetAddress"`
-	CommonName         string `step:"commonName"`
+	Country            string `json:"country,omitempty" step:"country"`
+	Organization       string `json:"organization,omitempty" step:"organization"`
+	OrganizationalUnit string `json:"organizationalUnit,omitempty" step:"organizationalUnit"`
+	Locality           string `json:"locality,omitempty" step:"locality"`
+	Province           string `json:"province,omitempty" step:"province"`
+	StreetAddress      string `json:"streetAddress,omitempty" step:"streetAddress"`
+	CommonName         string `json:"commonName,omitempty" step:"commonName"`
 }
 
 // TLSVersion represents a TLS version number.

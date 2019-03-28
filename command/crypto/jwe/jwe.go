@@ -46,7 +46,7 @@ parts:
 
 This is somewhat confusing. Instead of directly encrypting the plaintext
 payload, JWE typically generates a new "content encryption key" then encrypts
-*that key* for the intended recipient(s). Todo: y tho?
+*that key* for the intended recipient(s).
 
 While versatile, JWE is easy to use incorrectly. Therefore, any use of this
 subcommand requires the use of the '--subtle' flag as a misuse prevention

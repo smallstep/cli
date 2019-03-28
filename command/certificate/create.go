@@ -4,14 +4,16 @@ import (
 	"crypto/rand"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
-	x509 "github.com/smallstep/cli/pkg/x509"
+	"github.com/smallstep/cli/flags"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -19,12 +21,12 @@ import (
 func createCommand() cli.Command {
 	return cli.Command{
 		Name:   "create",
-		Action: cli.ActionFunc(createAction),
+		Action: command.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
 [**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
 [**--curve**=<curve>] [**no-password**] [**--profile**=<profile>]
-[**--size**=<size>] [**--type**=<type>]`,
+[**--size**=<size>] [**--type**=<type>] [**--san**=<SAN>]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing requests (CSR) that can be signed later using 'step
 certificates sign' (or some other tool) to produce a certificate.
@@ -54,6 +56,13 @@ Create a CSR and key:
 $ step certificate create foo foo.csr foo.key --csr
 '''
 
+Create a CSR and key with custom Subject Alternative Names:
+
+'''
+$ step certificate create foo foo.csr foo.key --csr \
+  --san inter.smallstep.com --san 1.1.1.1 --san ca.smallstep.com
+'''
+
 Create a CSR and key - do not encrypt the key when writing to disk:
 
 '''
@@ -73,11 +82,35 @@ $ step certificate create intermediate-ca intermediate-ca.crt intermediate-ca.ke
   --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key
 '''
 
+Create an intermediate certificate and key with custom Subject Alternative Names:
+
+'''
+$ step certificate create intermediate-ca intermediate-ca.crt intermediate-ca.key \
+  --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key \
+  --san inter.smallstep.com --san 1.1.1.1 --san ca.smallstep.com
+'''
+
 Create a leaf certificate and key:
 
 '''
 $ step certificate create foo foo.crt foo.key --profile leaf \
   --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
+'''
+
+Create a leaf certificate and key with custom Subject Alternative Names:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile leaf \
+  --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key \
+  --san inter.smallstep.com --san 1.1.1.1 --san ca.smallstep.com
+'''
+
+Create a leaf certificate and key with custom validity:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile leaf \
+  --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key \
+  --not-before 24h --not-after 2160h
 '''
 
 Create a root certificate and key with underlying OKP Ed25519:
@@ -192,6 +225,28 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
     :  Ed25519 Curve
 `,
 			},
+			cli.StringFlag{
+				Name: "not-before",
+				Usage: `The <time|duration> set in the NotBefore property of the certificate. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+			},
+			cli.StringFlag{
+				Name: "not-after",
+				Usage: `The <time|duration> set in the NotAfter property of the certificate. If a
+<time> is used it is expected to be in RFC 3339 format. If a <duration> is
+used, it is a sequence of decimal numbers, each with optional fraction and a
+unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+"us" (or "µs"), "ms", "s", "m", "h".`,
+			},
+			cli.StringSliceFlag{
+				Name: "san",
+				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs). Use the '--san'
+flag multiple times to configure multiple SANs.`,
+			},
+			flags.Force,
 		},
 	}
 }
@@ -214,6 +269,18 @@ func createAction(ctx *cli.Context) error {
 		return errs.EqualArguments(ctx, "CRT_FILE", "KEY_FILE")
 	}
 
+	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
+	}
+	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
+	if !ok {
+		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
+	}
+	if !notAfter.IsZero() && !notBefore.IsZero() && notBefore.After(notAfter) {
+		return errs.IncompatibleFlagValues(ctx, "not-before", ctx.String("not-before"), "not-after", ctx.String("not-after"))
+	}
+
 	var typ string
 	if ctx.Bool("csr") {
 		typ = "x509-csr"
@@ -226,9 +293,16 @@ func createAction(ctx *cli.Context) error {
 		return err
 	}
 
+	sans := ctx.StringSlice("san")
+	if len(sans) == 0 {
+		sans = []string{subject}
+	}
+	dnsNames, ips := x509util.SplitSANs(sans)
+
 	var (
-		priv   interface{}
-		pubPEM *pem.Block
+		priv       interface{}
+		pubPEM     *pem.Block
+		outputType string
 	)
 	switch typ {
 	case "x509-csr":
@@ -240,12 +314,14 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 
-		_csr := &x509.CertificateRequest{
+		_csr := &stepx509.CertificateRequest{
 			Subject: pkix.Name{
 				CommonName: subject,
 			},
+			DNSNames:    dnsNames,
+			IPAddresses: ips,
 		}
-		csrBytes, err := x509.CreateCertificateRequest(rand.Reader, _csr, priv)
+		csrBytes, err := stepx509.CreateCertificateRequest(rand.Reader, _csr, priv)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -255,6 +331,7 @@ func createAction(ctx *cli.Context) error {
 			Bytes:   csrBytes,
 			Headers: map[string]string{},
 		}
+		outputType = "certificate signing request"
 	case "x509":
 		var (
 			err       error
@@ -278,7 +355,10 @@ func createAction(ctx *cli.Context) error {
 					return errors.WithStack(err)
 				}
 				profile, err = x509util.NewLeafProfile(subject, issIdentity.Crt,
-					issIdentity.Key, x509util.GenerateKeyPair(kty, crv, size))
+					issIdentity.Key, x509util.GenerateKeyPair(kty, crv, size),
+					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
+					x509util.WithDNSNames(dnsNames),
+					x509util.WithIPAddresses(ips))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -292,14 +372,20 @@ func createAction(ctx *cli.Context) error {
 				}
 				profile, err = x509util.NewIntermediateProfile(subject,
 					issIdentity.Crt, issIdentity.Key,
-					x509util.GenerateKeyPair(kty, crv, size))
+					x509util.GenerateKeyPair(kty, crv, size),
+					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
+					x509util.WithDNSNames(dnsNames),
+					x509util.WithIPAddresses(ips))
 				if err != nil {
 					return errors.WithStack(err)
 				}
 			}
 		case "root-ca":
 			profile, err = x509util.NewRootProfile(subject,
-				x509util.GenerateKeyPair(kty, crv, size))
+				x509util.GenerateKeyPair(kty, crv, size),
+				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
+				x509util.WithDNSNames(dnsNames),
+				x509util.WithIPAddresses(ips))
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -316,12 +402,12 @@ func createAction(ctx *cli.Context) error {
 			Headers: map[string]string{},
 		}
 		priv = profile.SubjectPrivateKey()
+		outputType = "certificate"
 	default:
 		return errs.NewError("unexpected type: %s", typ)
 	}
 
-	if err := utils.WriteFile(crtFile, pem.EncodeToMemory(pubPEM),
-		os.FileMode(0600)); err != nil {
+	if err := utils.WriteFile(crtFile, pem.EncodeToMemory(pubPEM), 0600); err != nil {
 		return errs.FileError(err, crtFile)
 	}
 
@@ -331,16 +417,20 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 	} else {
-		pass, err := utils.ReadPassword("Please enter the password to encrypt the private key: ")
+		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key")
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}
-		_, err = pemutil.Serialize(priv, pemutil.WithEncryption(pass),
+		_, err = pemutil.Serialize(priv, pemutil.WithPassword(pass),
 			pemutil.ToFile(keyFile, 0600))
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
+
+	ui.Printf("Your %s has been saved in %s.\n", outputType, crtFile)
+	ui.Printf("Your private key has been saved in %s.\n", keyFile)
+
 	return nil
 }
 

@@ -8,7 +8,9 @@ import (
 
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
@@ -16,8 +18,8 @@ import (
 func generateCommand() cli.Command {
 	return cli.Command{
 		Name:        "generate",
-		Action:      cli.ActionFunc(generateAction),
-		Usage:       "one-time password",
+		Action:      command.ActionFunc(generateAction),
+		Usage:       "generate a one-time password",
 		UsageText:   `**step crypto otp generate**`,
 		Description: `**step crypto otp generate** does TOTP and HTOP`,
 		Flags: []cli.Flag{
@@ -61,6 +63,7 @@ https://github.com/google/google-authenticator/wiki/Key-Uri-Format`,
 				Name:  "qr",
 				Usage: `Write a QR code to the specified path`,
 			},
+			flags.Force,
 		},
 	}
 }

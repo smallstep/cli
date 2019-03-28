@@ -15,7 +15,7 @@ func verifyCommand() cli.Command {
 	return cli.Command{
 		Name:   "verify",
 		Action: cli.ActionFunc(verifyAction),
-		Usage:  `verify a certificate.`,
+		Usage:  `verify a certificate`,
 		UsageText: `**step certificate verify** <crt_file> [**--host**=<host>]
 		[**--roots**=<root-bundle>]`,
 		Description: `**step certificate verify** executes the certificate path
@@ -38,6 +38,12 @@ Verify a certificate using your operating system's default root certificate bund
 
 '''
 $ step certificate verify ./certificate.crt
+'''
+
+Verify a remote certificate using your operating system's default root certificate bundle:
+
+'''
+$ step certificate verify https://smallstep.com
 '''
 
 Verify a certificate using a custom root certificate for path validation:
@@ -89,50 +95,62 @@ func verifyAction(ctx *cli.Context) error {
 		return err
 	}
 
-	crtFile := ctx.Args().Get(0)
-	crtBytes, err := ioutil.ReadFile(crtFile)
-	if err != nil {
-		return errs.FileError(err, crtFile)
-	}
-
 	var (
-		crt              *x509.Certificate
-		ipems            []byte
+		err              error
+		crtFile          = ctx.Args().Get(0)
+		host             = ctx.String("host")
+		roots            = ctx.String("roots")
 		intermediatePool = x509.NewCertPool()
-		block            *pem.Block
+		rootPool         *x509.CertPool
+		cert             *x509.Certificate
 	)
-	// The first certificate PEM in the file is our leaf Certificate.
-	// Any certificate after the first is added to the list of Intermediate
-	// certificates used for path validation.
-	for len(crtBytes) > 0 {
-		block, crtBytes = pem.Decode(crtBytes)
-		if block == nil {
-			return errors.Errorf("%s contains an invalid PEM block", crtFile)
-		}
-		if block.Type != "CERTIFICATE" {
-			continue
-		}
-		if crt == nil {
-			crt, err = x509.ParseCertificate(block.Bytes)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		} else {
-			ipems = append(ipems, pem.EncodeToMemory(block)...)
-		}
-	}
-	if crt == nil {
-		return errors.Errorf("%s contains no PEM certificate blocks", crtFile)
-	}
-	if len(ipems) > 0 && !intermediatePool.AppendCertsFromPEM(ipems) {
-		return errors.Errorf("failure creating intermediate list from certificate '%s'", crtFile)
-	}
 
-	var (
-		host     = ctx.String("host")
-		roots    = ctx.String("roots")
-		rootPool *x509.CertPool
-	)
+	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
+		peerCertificates, err := getPeerCertificates(addr, roots, false)
+		if err != nil {
+			return err
+		}
+		cert = peerCertificates[0]
+		for _, pc := range peerCertificates {
+			intermediatePool.AddCert(pc)
+		}
+	} else {
+		crtBytes, err := ioutil.ReadFile(crtFile)
+		if err != nil {
+			return errs.FileError(err, crtFile)
+		}
+
+		var (
+			ipems []byte
+			block *pem.Block
+		)
+		// The first certificate PEM in the file is our leaf Certificate.
+		// Any certificate after the first is added to the list of Intermediate
+		// certificates used for path validation.
+		for len(crtBytes) > 0 {
+			block, crtBytes = pem.Decode(crtBytes)
+			if block == nil {
+				return errors.Errorf("%s contains an invalid PEM block", crtFile)
+			}
+			if block.Type != "CERTIFICATE" {
+				continue
+			}
+			if cert == nil {
+				cert, err = x509.ParseCertificate(block.Bytes)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+			} else {
+				ipems = append(ipems, pem.EncodeToMemory(block)...)
+			}
+		}
+		if cert == nil {
+			return errors.Errorf("%s contains no PEM certificate blocks", crtFile)
+		}
+		if len(ipems) > 0 && !intermediatePool.AppendCertsFromPEM(ipems) {
+			return errors.Errorf("failure creating intermediate list from certificate '%s'", crtFile)
+		}
+	}
 
 	if roots != "" {
 		rootPool, err = x509util.ReadCertPool(roots)
@@ -147,7 +165,7 @@ func verifyAction(ctx *cli.Context) error {
 		Intermediates: intermediatePool,
 	}
 
-	if _, err := crt.Verify(opts); err != nil {
+	if _, err := cert.Verify(opts); err != nil {
 		return errors.Wrapf(err, "failed to verify certificate")
 	}
 

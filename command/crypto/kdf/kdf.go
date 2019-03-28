@@ -179,7 +179,7 @@ func hashAction(ctx *cli.Context) error {
 	// Grab input from terminal or arguments
 	switch ctx.NArg() {
 	case 0:
-		input, err = utils.ReadInput("Enter password to hash: ")
+		input, err = utils.ReadInput("Please enter the password to hash")
 		if err != nil {
 			return err
 		}
@@ -253,7 +253,7 @@ func compareAction(ctx *cli.Context) error {
 		return errs.MissingArguments(ctx, "PHC_HASH")
 	case 1:
 		hash = []byte(ctx.Args().Get(0))
-		input, err = utils.ReadInput("Enter password to compare: ")
+		input, err = utils.ReadInput("Please enter the password to compare")
 		if err != nil {
 			return err
 		}

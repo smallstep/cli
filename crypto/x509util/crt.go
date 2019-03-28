@@ -1,9 +1,12 @@
 package x509util
 
 import (
-	realx509 "crypto/x509"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,37 +15,45 @@ import (
 	"github.com/smallstep/cli/errs"
 )
 
-// WriteCertificate encodes a x509 Certificate to a file on disk in PEM format.
-func WriteCertificate(crt []byte, out string) error {
-	if crt == nil {
-		return errors.Errorf("crt cannot be nil")
+// Fingerprint returns the SHA-256 fingerprint of the certificate.
+func Fingerprint(cert *x509.Certificate) string {
+	sum := sha256.Sum256(cert.Raw)
+	return strings.ToLower(hex.EncodeToString(sum[:]))
+}
+
+// SplitSANs splits a slice of Subject Alternative Names into slices of
+// IP Addresses and DNS Names. If an element is not an IP address, then it
+// is bucketed as a DNS Name.
+func SplitSANs(sans []string) (dnsNames []string, ips []net.IP) {
+	dnsNames = []string{}
+	ips = []net.IP{}
+	if sans == nil {
+		return
 	}
-	certOut, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-		os.FileMode(0644))
-	if err != nil {
-		return errs.FileError(err, out)
+	for _, san := range sans {
+		if ip := net.ParseIP(san); ip != nil {
+			ips = append(ips, ip)
+		} else {
+			// If not IP then assume DNSName.
+			dnsNames = append(dnsNames, san)
+		}
 	}
-	err = pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: crt})
-	if err != nil {
-		return errors.Wrapf(err,
-			"pem encode '%s' failed", out)
-	}
-	certOut.Close()
-	return nil
+	return
 }
 
 // ReadCertPool loads a certificate pool from disk.
-func ReadCertPool(path string) (*realx509.CertPool, error) {
+// *path*: a file, a directory, or a comma-separated list of files.
+func ReadCertPool(path string) (*x509.CertPool, error) {
 	info, err := os.Stat(path)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, errors.Wrapf(err, "os.Stat %s failed", path)
 	}
 
 	var (
 		files []string
-		pool  = realx509.NewCertPool()
+		pool  = x509.NewCertPool()
 	)
-	if info.IsDir() {
+	if info != nil && info.IsDir() {
 		finfos, err := ioutil.ReadDir(path)
 		if err != nil {
 			return nil, errs.FileError(err, path)
@@ -52,6 +63,9 @@ func ReadCertPool(path string) (*realx509.CertPool, error) {
 		}
 	} else {
 		files = strings.Split(path, ",")
+		for i := range files {
+			files[i] = strings.TrimSpace(files[i])
+		}
 	}
 
 	var pems []byte

@@ -7,6 +7,9 @@ import (
 	"github.com/urfave/cli"
 )
 
+// HelpCommandAction is the action function of the overwritten help command.
+var HelpCommandAction = cli.ActionFunc(helpAction)
+
 // HelpCommand overwrites default urfvafe/cli help command to support one or
 // multiple subcommands like:
 //   step help
@@ -18,9 +21,9 @@ func HelpCommand() cli.Command {
 	return cli.Command{
 		Name:      "help",
 		Aliases:   []string{"h"},
-		Usage:     "displays help for the specified command or command group",
+		Usage:     "display help for the specified command or command group",
 		ArgsUsage: "[command]",
-		Action:    cli.ActionFunc(helpAction),
+		Action:    HelpCommandAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "http",
@@ -33,6 +36,10 @@ func HelpCommand() cli.Command {
 			cli.StringFlag{
 				Name:  "markdown",
 				Usage: "The export <directory> for Markdown docs.",
+			},
+			cli.BoolFlag{
+				Name:  "report",
+				Usage: "Writes a JSON report to the HTML docs directory.",
 			},
 		},
 	}
