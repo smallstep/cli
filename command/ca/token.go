@@ -301,7 +301,7 @@ func newTokenFlow(ctx *cli.Context, subject string, sans []string, caURL, root s
 		if err != nil {
 			return "", err
 		}
-		return string(out), nil
+		return strings.TrimSpace(string(out)), nil
 	}
 
 	// JWK provisioner
