@@ -70,16 +70,20 @@ bundle-darwin: binary-darwin
 .PHONY: binary-linux binary-darwin bundle-linux bundle-darwin
 
 #################################################
-# Targets for creating OS specific artifacts
+# Targets for creating OS specific artifacts and archives
 #################################################
 
 artifacts-linux-tag: bundle-linux debian
 
 artifacts-darwin-tag: bundle-darwin
 
-artifacts-tag: artifacts-linux-tag artifacts-darwin-tag
+artifacts-archive-tag:
+	$Q mkdir -p $(RELEASE)
+	$Q git archive v$(VERSION) | gzip > $(RELEASE)/step-cli.tar.gz
 
-.PHONY: artifacts-linux-tag artifacts-darwin-tag artifacts-tag
+artifacts-tag: artifacts-linux-tag artifacts-darwin-tag artifacts-archive-tag
+
+.PHONY: artifacts-linux-tag artifacts-darwin-tag artifacts-archive-tag artifacts-tag
 
 #################################################
 # Targets for creating step artifacts

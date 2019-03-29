@@ -48,7 +48,7 @@ $(foreach pkg,$(BOOTSTRAP),$(eval $(call VENDOR_BIN_TMPL,$(pkg))))
 # Version flags to embed in the binaries
 VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
 VERSION := $(shell echo $(VERSION) | sed 's/^v//')
-NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
+NOT_RC  := $(shell echo $(VERSION) | grep -v -e -beta)
 
 # If TRAVIS_TAG is set then we know this ref has been tagged.
 ifdef TRAVIS_TAG
