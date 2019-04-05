@@ -210,8 +210,18 @@ func NewEncrypter(enc ContentEncryption, rcpt Recipient, opts *EncrypterOptions)
 }
 
 // NewNumericDate constructs NumericDate from time.Time value.
-func NewNumericDate(t time.Time) NumericDate {
+func NewNumericDate(t time.Time) *NumericDate {
 	return jwt.NewNumericDate(t)
+}
+
+// UnixNumericDate returns a NumericDate from the given seconds since the UNIX
+// Epoch time. For backward compatibility is s is 0, a nil value will be returned.
+func UnixNumericDate(s int64) *NumericDate {
+	if s == 0 {
+		return nil
+	}
+	out := NumericDate(s)
+	return &out
 }
 
 // NewSigner creates an appropriate signer based on the key type
