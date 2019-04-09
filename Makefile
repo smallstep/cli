@@ -79,7 +79,7 @@ artifacts-darwin-tag: bundle-darwin
 
 artifacts-archive-tag:
 	$Q mkdir -p $(RELEASE)
-	$Q git archive v$(VERSION) | gzip > $(RELEASE)/step-cli.tar.gz
+	$Q git archive v$(VERSION) | gzip > $(RELEASE)/step-cli_$(VERSION).tar.gz
 
 artifacts-tag: artifacts-linux-tag artifacts-darwin-tag artifacts-archive-tag
 
