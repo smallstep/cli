@@ -290,7 +290,7 @@ func signAction(ctx *cli.Context) error {
 	}
 
 	// Validate exp
-	if !isSubtle && ctx.IsSet("exp") && jose.NumericDate(ctx.Int64("exp")).Time().Before(time.Now()) {
+	if !isSubtle && ctx.IsSet("exp") && jose.UnixNumericDate(ctx.Int64("exp")).Time().Before(time.Now()) {
 		return errors.New("flag '--exp' must be in the future unless the '--subtle' flag is provided")
 	}
 
@@ -299,16 +299,16 @@ func signAction(ctx *cli.Context) error {
 		Issuer:    ctx.String("iss"),
 		Subject:   ctx.String("sub"),
 		Audience:  ctx.StringSlice("aud"),
-		Expiry:    jose.NumericDate(ctx.Int64("exp")),
-		NotBefore: jose.NumericDate(ctx.Int64("nbf")),
-		IssuedAt:  jose.NumericDate(ctx.Int64("iat")),
+		Expiry:    jose.UnixNumericDate(ctx.Int64("exp")),
+		NotBefore: jose.UnixNumericDate(ctx.Int64("nbf")),
+		IssuedAt:  jose.UnixNumericDate(ctx.Int64("iat")),
 		ID:        ctx.String("jti"),
 	}
 	now := time.Now()
-	if c.NotBefore == 0 {
+	if c.NotBefore == nil {
 		c.NotBefore = jose.NewNumericDate(now)
 	}
-	if c.IssuedAt == 0 {
+	if c.IssuedAt == nil {
 		c.IssuedAt = jose.NewNumericDate(now)
 	}
 	if c.ID == "" && ctx.IsSet("jti") {
@@ -326,7 +326,7 @@ func signAction(ctx *cli.Context) error {
 			return errors.New("flag '--aud' is required unless '--subtle' is used")
 		case len(c.Subject) == 0:
 			return errors.New("flag '--sub' is required unless '--subtle' is used")
-		case c.Expiry == 0:
+		case c.Expiry == nil:
 			return errors.New("flag '--exp' is required unless '--subtle' is used")
 		case c.Expiry.Time().Before(time.Now()):
 			return errors.New("flag '--exp' must be in the future unless '--subtle' is used")

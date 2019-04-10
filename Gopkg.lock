@@ -323,8 +323,8 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "master"
-  digest = "1:b66ff4abd77f39e94020219427c0c62bc1474d41edb2b445d2058adede69475f"
+  branch = "update-go-jose"
+  digest = "1:9efbb46c88d769c4ef0004369c4fa445d9b7a4ce019bf0648ec813781af94ff1"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
@@ -336,7 +336,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "8c5b14b88c0ccd68687b3d684eda769510a6c5ef"
+  revision = "b171e57c860391eb80352409aac90c1d1e93f83e"
 
 [[projects]]
   branch = "master"
@@ -513,7 +513,8 @@
   revision = "63abe20a23e29e80bbef8089bd3dee3ac25e5306"
 
 [[projects]]
-  digest = "1:7fbe10f3790dc4e6296c7c844c5a9b35513e5521c29c47e10ba99cd2956a2719"
+  branch = "v2"
+  digest = "1:9593bab40e981b1f90b7e07faeab0d09b75fe338880d08880f986a9d3283c53f"
   name = "gopkg.in/square/go-jose.v2"
   packages = [
     ".",
@@ -522,8 +523,8 @@
     "jwt",
   ]
   pruneopts = "UT"
-  revision = "ef984e69dd356202fd4e4910d4d9c24468bdf0b8"
-  version = "v2.1.9"
+  revision = "fd0b35a2f1ec103c6bb76cc6d4b8077fa5844fb2"
+  source = "github.com/maraino/go-jose"
 
 [[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
