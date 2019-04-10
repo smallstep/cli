@@ -323,7 +323,7 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "update-go-jose"
+  branch = "master"
   digest = "1:9efbb46c88d769c4ef0004369c4fa445d9b7a4ce019bf0648ec813781af94ff1"
   name = "github.com/smallstep/certificates"
   packages = [
@@ -336,7 +336,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "b171e57c860391eb80352409aac90c1d1e93f83e"
+  revision = "ba640234db5ad45f8b6028612801d0ffe3ee97e3"
 
 [[projects]]
   branch = "master"

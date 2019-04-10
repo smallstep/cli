@@ -67,7 +67,7 @@ required = [
   unused-packages = true
 
 [[constraint]]
-  branch = "update-go-jose"
+  branch = "master"
   name = "github.com/smallstep/certificates"
 
 [[constraint]]
