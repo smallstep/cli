@@ -323,7 +323,7 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "max/revoke"
+  branch = "master"
   digest = "1:fc5c4de5fd58c745af2ce848618abced409938b2484266d7c0675f089758585a"
   name = "github.com/smallstep/certificates"
   packages = [
@@ -337,7 +337,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "9977eff153ff5f8b2d4ea7d5524792d08f0a2fc7"
+  revision = "110e07706fb6e1fd493122b78669135d4f9ab509"
 
 [[projects]]
   branch = "master"
