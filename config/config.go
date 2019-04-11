@@ -12,6 +12,7 @@ import (
 
 // version and buildTime are filled in during build by the Makefile
 var (
+	name      = "Smallstep CLI"
 	buildTime = "N/A"
 	commit    = "N/A"
 )
@@ -62,7 +63,8 @@ func init() {
 }
 
 // Set updates the Version and ReleaseDate
-func Set(v, t string) {
+func Set(n, v, t string) {
+	name = n
 	buildTime = t
 	commit = v
 }
@@ -74,8 +76,8 @@ func Version() string {
 		out = "0000000-dev"
 	}
 
-	return fmt.Sprintf("Smallstep CLI/%s (%s/%s)",
-		out, runtime.GOOS, runtime.GOARCH)
+	return fmt.Sprintf("%s/%s (%s/%s)",
+		name, out, runtime.GOOS, runtime.GOARCH)
 }
 
 // ReleaseDate returns the time of when the binary was built

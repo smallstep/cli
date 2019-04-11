@@ -38,7 +38,7 @@ var Version = "N/A"
 var BuildTime = "N/A"
 
 func init() {
-	config.Set(Version, BuildTime)
+	config.Set("Smallstep CLI", Version, BuildTime)
 	rand.Seed(time.Now().UnixNano())
 }
 
