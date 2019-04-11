@@ -68,7 +68,7 @@ We are using the [Arch User Repository](https://aur.archlinux.org) to distribute
 
 * The `step-cli` binary tarball can be found [here](https://aur.archlinux.org/packages/step-cli-bin/).
 * The `step-ca` binary tarball (for [step certificates](https://github.com/smallstep/certificates) -
-a sibling repository) can be found [here](https://aur.archlinux.org/packages/step-cli-bin/).
+a sibling repository) can be found [here](https://aur.archlinux.org/packages/step-ca-bin/).
 
 You can use [pacman](https://www.archlinux.org/pacman/) to install the packages.
 
