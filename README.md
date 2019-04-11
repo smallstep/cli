@@ -32,7 +32,6 @@ These instructions will install an OS specific version of the `step` binary on
 your local machine. To build from source see [getting started with
 development](#getting-started-with-development) below.
 
-
 ### Mac OS
 
 Install `step` via [Homebrew](https://brew.sh/):
@@ -51,6 +50,8 @@ Install `step` via [Homebrew](https://brew.sh/):
 
 ### Linux
 
+#### Debian
+
 Download and install the latest Debian package from [releases](https://github.com/smallstep/cli/releases):
 
 <pre><code>
@@ -59,6 +60,18 @@ Download and install the latest Debian package from [releases](https://github.co
 # Install the Debian package:
 <b>$ sudo dpkg -i step_X.Y.Z_amd64.deb</b>
 </code></pre>
+
+#### Arch Linux
+
+We are using the [Arch User Repository](https://aur.archlinux.org) to distribute
+`step` binaries for Arch Linux.
+
+* The `step-cli` can be found [here](https://aur.archlinux.org/packages/step-cli-bin/).
+* The `step-ca` ([step certificates](https://github.com/smallstep/certificates) -
+a sibling repository) can be found [here](https://aur.archlinux.org/packages/step-cli-bin/).
+https://sources.archlinux.org/other/pacman/pacman-5.1.3.tar.gz
+
+You can use [pacman](https://www.archlinux.org/pacman/) to install the packages.
 
 ### Test
 <pre><code>
