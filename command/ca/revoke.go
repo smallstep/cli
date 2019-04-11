@@ -35,8 +35,8 @@ func revokeCertificateCommand() cli.Command {
 		Action: command.ActionFunc(revokeCertificateAction),
 		Usage:  "revoke a certificate",
 		UsageText: `**step ca revoke** <serial-number>
-[**--cert**=<certificate>] [**--key**=<path>] [**--token**=<ott>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--reason**=<string>]
+[**--cert**=<path>] [**--key**=<path>] [**--token**=<ott>]
+[**--ca-url**=<uri>] [**--root**=<path>] [**--reason**=<string>]
 [**--reasonCode**=<code>] [**-offline**]`,
 		Description: `
 **step ca revoke** command passively revokes a certificate with the given serial
@@ -103,8 +103,8 @@ $ step ca revoke --offline --cert foo.crt --key foo.key
 			cli.StringFlag{
 				Name:  "reasonCode",
 				Value: "",
-				Usage: `The <reasonCode> for which the certificate is being revoked.
-If unset, default is Unspecified.
+				Usage: `The <reasonCode> specifies the reason for revocation - chose from a list of
+common revocation reasons. If unset, the default is Unspecified.
 
 
 : <reasonCode> can be a number from 0-9 or a case insensitive string matching
