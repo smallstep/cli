@@ -232,7 +232,7 @@ depends on the key use, key type, and curve (for EC and OKP keys). Defaults are:
     :  HMAC using SHA-384
 
     **HS512**
-	  :  HMAC using SHA-512
+    :  HMAC using SHA-512
 
     **RS256**
     :  RSASSA-PKCS1-v1_5 using SHA-256
