@@ -27,8 +27,8 @@ e.g. `v1.0.2`
     that all local changes have been pushed.
 
     ```
-    git pull --rebase origin master
-    git push
+    $ git pull --rebase origin master
+    $ git push
     ```
 
 3. **Tag it!**
@@ -36,8 +36,8 @@ e.g. `v1.0.2`
     1. **Find the most recent tag.**
 
         ```
-        git fetch --tags
-        git tag
+        $ git fetch --tags
+        $ git tag
         ```
 
         The new tag needs to be the logical successor of the most recent existing tag.
@@ -65,17 +65,17 @@ e.g. `v1.0.2`
     3. **Create a local tag.**
 
         ```
-        git tag v1.0.3   # standard release
+        $ git tag v1.0.3   # standard release
         ...or
-        git tag v1.0.3-rc.1  # release candidate
+        $ git tag v1.0.3-rc.1  # release candidate
         ```
 
     4. **Push the new tag to the remote origin.**
 
         ```
-        git push origin tag v1.0.3   # standard release
+        $ git push origin tag v1.0.3   # standard release
         ...or
-        git push origin tag v1.0.3-rc.1  # release candidate
+        $ git push origin tag v1.0.3-rc.1  # release candidate
         ```
 
 4. **Check the build status at [Travis-CI](https://travis-ci.com/smallstep/cli/builds/).**
@@ -91,13 +91,32 @@ e.g. `v1.0.2`
     * **step_1.0.3_linux_amd64.tar.gz**: tarball containing a statically compiled linux binary.
     * **step_1.0.3_darwin_amd64.tar.gz**: tarball containing a statically compiled darwin binary.
 
-5. **Update the Homebrew formula.**
+5. **[Update the documentation at smallstep.com/docs](#https://github.com/smallstep/website#cli-documentation)**
+
+    **NOTE**: this only needs to be done for standard releases.
+
+6. **Update the AUR Arch Linux packages**
+
+    ```
+    $ cd archlinux
+
+    # Get up to date...
+    $ git pull origin master
+    $ make
+
+    # If updating the packages for cli and ca
+    $ ./update --cli v1.0.3 --ca v1.0.3
+    # If only updating the package for cli
+    $ ./update --cli v1.0.3
+    ```
+
+7. **Update the smallstep/smallstep Homebrew tap.**
 
     **NOTE**: this only needs to be done for standard releases.
 
     Follow the steps [here](https://github.com/smallstep/homebrew-smallstep#how-to-update-the-formula).
 
-6. **[Update the documentation at smallstep.com/docs](#https://github.com/smallstep/website#cli-documentation)**
+8. **Update Homebrew Core.**
 
     **NOTE**: this only needs to be done for standard releases.
 
