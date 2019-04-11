@@ -49,10 +49,7 @@ required = [
 
 [[constraint]]
   name = "gopkg.in/square/go-jose.v2"
-  # version = "2.3.0"
-  # Using special branch with ed25519 fix
-  source = "github.com/maraino/go-jose"
-  branch = "v2"
+  version = "2.3.1"
 
 [[constraint]]
   branch = "master"
