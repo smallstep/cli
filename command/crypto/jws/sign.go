@@ -289,7 +289,7 @@ func readPayload(filename string) ([]byte, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "error reading data")
 		}
-		if st.Size() == 0 {
+		if st.Size() == 0 && st.Mode()&os.ModeNamedPipe == 0 {
 			return []byte{}, nil
 		}
 		return utils.ReadAll(os.Stdin)

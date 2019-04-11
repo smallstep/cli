@@ -58,7 +58,7 @@ $ step ca revoke
 '''
 
 Revoke a certificate using a transparently generated API token and the default
-'uspecified' reason:
+'unspecified' reason:
 '''
 $ step ca revoke 308893286343609293989051180431574390766
 '''
@@ -86,6 +86,7 @@ the request with the CA:
 '''
 $ TOKEN=$(step ca token --revoke 308893286343609293989051180431574390766)
 $ step ca revoke --token $TOKEN 308893286343609293989051180431574390766
+'''
 
 Revoke a certificate in offline mode:
 '''
@@ -97,8 +98,7 @@ will be validated against the root and intermediate certifcates configured in
 the step CA):
 '''
 $ step ca revoke --offline --cert foo.crt --key foo.key
-'''
-`,
+'''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "reasonCode",
@@ -111,45 +111,45 @@ If unset, default is Unspecified.
 one of the following options:
 
     **Unspecified**
-	:  No reason given (Default).
+    :  No reason given (Default).
 
     **KeyCompromise**
-	:  The key is believed to have been compromised.
+    :  The key is believed to have been compromised.
 
     **CACompromise**
-	:  The issuing Certificate Authority itself has been compromised.
+    :  The issuing Certificate Authority itself has been compromised.
 
     **AffiliationChanged**
-	:  The certificate contained affiliation information, for example, it may
+    :  The certificate contained affiliation information, for example, it may
 have been an EV certificate and the associated business is no longer owned by
 the same entity.
 
     **Superseded**
-	:  The certificate is being replaced.
+    :  The certificate is being replaced.
 
     **CessationOfOperation**
-	:  If a CA is decommissioned, no longer to be used, the CA's certificate
+    :  If a CA is decommissioned, no longer to be used, the CA's certificate
 should be revoked with this reason code. Do not revoke the CA's certificate if
 the CA no longer issues new certificates, yet still publishes CRLs for the
 currently issued certificates.
 
     **CertificateHold**
-	:  A temporary revocation that indicates that a CA will not vouch for a
+    :  A temporary revocation that indicates that a CA will not vouch for a
 certificate at a specific point in time. Once a certificate is revoked with a
 CertificateHold reason code, the certificate can then be revoked with another
 Reason Code, or unrevoked and returned to use.
 
     **RemoveFromCRL**
-	:  If a certificate is revoked with the CertificateHold reason code, it is
+    :  If a certificate is revoked with the CertificateHold reason code, it is
 possible to "unrevoke" a certificate. The unrevoking process still lists the
 certificate in the CRL, but with the reason code set to RemoveFromCRL.
 Note: This is specific to the CertificateHold reason and is only used in DeltaCRLs.
 
     **PrivilegeWithdrawn**
-	:  The right to represent the given entity was revoked for some reason.
+    :  The right to represent the given entity was revoked for some reason.
 
     **AACompromise**
-	:   It is known or suspected that aspects of the AA validated in the
+    :   It is known or suspected that aspects of the AA validated in the
 attribute certificate have been compromised.
 `,
 			},
