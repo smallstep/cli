@@ -353,6 +353,11 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		return strings.TrimSpace(string(out)), nil
 	}
 
+	// With GCP, do the identity request to get the token
+	if p, ok := p.(*provisioner.GCP); ok {
+		return p.GetIdentityToken()
+	}
+
 	// JWK provisioner
 	prov, ok := p.(*provisioner.JWK)
 	if !ok {
@@ -478,7 +483,12 @@ func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string) 
 func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {
 	// Filter by type
 	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-		return p.GetType() == provisioner.TypeJWK || p.GetType() == provisioner.TypeOIDC
+		switch p.GetType() {
+		case provisioner.TypeJWK, provisioner.TypeOIDC, provisioner.TypeGCP:
+			return true
+		default:
+			return false
+		}
 	})
 
 	if len(provisioners) == 0 {
@@ -513,20 +523,23 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	}
 
 	if len(provisioners) == 1 {
-		var id, name string
+		var name, value string
 		switch p := provisioners[0].(type) {
 		case *provisioner.JWK:
-			name = p.Name
-			id = p.Key.KeyID
+			name = "Key ID"
+			value = p.Key.KeyID + " (" + p.Name + ")"
 		case *provisioner.OIDC:
-			name = p.Name
-			id = p.ClientID
+			name = "Client ID"
+			value = p.ClientID + " (" + p.Name + ")"
+		case *provisioner.GCP:
+			name = "Provisioner"
+			value = p.Name + " (GCP)"
 		default:
 			return nil, errors.Errorf("unknown provisioner type %T", p)
 		}
 
 		// Prints provisioner used
-		if err := ui.PrintSelected("Key ID", id+" ("+name+")"); err != nil {
+		if err := ui.PrintSelected(name, value); err != nil {
 			return nil, err
 		}
 
@@ -546,6 +559,12 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 			items = append(items, &provisionersSelect{
 				Name:        p.ClientID + " (" + p.Name + ")",
 				Issuer:      p.Name,
+				Provisioner: p,
+			})
+		case *provisioner.GCP:
+			items = append(items, &provisionersSelect{
+				Name:        p.Name + " (GCP)",
+				Issuer:      "https://accounts.google.com",
 				Provisioner: p,
 			})
 		default:

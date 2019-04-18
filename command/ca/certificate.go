@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -22,6 +23,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -115,13 +117,13 @@ func certificateAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	subject := args.Get(0)
 	crtFile, keyFile := args.Get(1), args.Get(2)
-	token := ctx.String("token")
+	tok := ctx.String("token")
 	offline := ctx.Bool("offline")
 	sans := ctx.StringSlice("san")
 
 	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
-	if offline && len(token) != 0 {
+	if offline && len(tok) != 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
 	}
 
@@ -132,39 +134,49 @@ func certificateAction(ctx *cli.Context) error {
 	}
 
 	var isStepToken bool
-	if len(token) == 0 {
-		if token, err = flow.GenerateToken(ctx, subject, sans); err != nil {
+	if len(tok) == 0 {
+		if tok, err = flow.GenerateToken(ctx, subject, sans); err != nil {
 			return err
 		}
-		isStepToken = isStepCertificatesToken(token)
+		isStepToken = isStepCertificatesToken(tok)
 	} else {
-		isStepToken = isStepCertificatesToken(token)
+		isStepToken = isStepCertificatesToken(tok)
 		if isStepToken && len(sans) > 0 {
 			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
 		}
 	}
 
-	req, pk, err := flow.CreateSignRequest(token, sans)
+	req, pk, err := flow.CreateSignRequest(tok, sans)
 	if err != nil {
 		return err
 	}
 
-	if isStepToken {
-		// Validate that subject matches the CSR common name.
+	jwt, err := token.ParseInsecure(tok)
+	if err != nil {
+		return err
+	}
+
+	switch jwt.Payload.Type() {
+	case token.JWK: // Validate that subject matches the CSR common name.
 		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
 			return errors.Errorf("token subject '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
-	} else {
-		// Validate that the subject matches an email SAN
+	case token.OIDC: // Validate that the subject matches an email SAN
 		if len(req.CsrPEM.EmailAddresses) == 0 {
 			return errors.New("unexpected token: payload does not contain an email claim")
 		}
 		if email := req.CsrPEM.EmailAddresses[0]; email != subject {
 			return errors.Errorf("token email '%s' and argument '%s' do not match", email, subject)
 		}
+	case token.GCP: // Validate that the subject matches the instance Name
+		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
+			return errors.Errorf("token google.compute_engine.instance_name '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
+		}
+	default:
+		return errors.New("token is not supported")
 	}
 
-	if err := flow.Sign(ctx, token, req.CsrPEM, crtFile); err != nil {
+	if err := flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
 		return err
 	}
 
@@ -224,7 +236,7 @@ func newCertificateFlow(ctx *cli.Context) (*certificateFlow, error) {
 	}, nil
 }
 
-func (f *certificateFlow) getClient(ctx *cli.Context, subject, token string) (caClient, error) {
+func (f *certificateFlow) getClient(ctx *cli.Context, subject, tok string) (caClient, error) {
 	if f.offline {
 		return f.offlineCA, nil
 	}
@@ -233,25 +245,29 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, token string) (ca
 	root := ctx.String("root")
 	caURL := ctx.String("ca-url")
 
-	tok, err := jose.ParseSigned(token)
+	jwt, err := token.ParseInsecure(tok)
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing flag '--token'")
 	}
-	var claims tokenClaims
-	if err := tok.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, errors.Wrap(err, "error parsing flag '--token'")
-	}
-	if strings.ToLower(claims.Subject) != strings.ToLower(subject) {
-		return nil, errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", claims.Subject, subject)
+	switch jwt.Payload.Type() {
+	case token.GCP:
+		instanceName := jwt.Payload.Google.ComputeEngine.InstanceName
+		if strings.ToLower(instanceName) != strings.ToLower(subject) {
+			return nil, errors.Errorf("token google.compute_engine.instance_name '%s' and CSR CommonName '%s' do not match", instanceName, subject)
+		}
+	default:
+		if strings.ToLower(jwt.Payload.Subject) != strings.ToLower(subject) {
+			return nil, errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", jwt.Payload.Subject, subject)
+		}
 	}
 
 	// Prepare client for bootstrap or provisioning tokens
 	var options []ca.ClientOption
-	if len(claims.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
+	if len(jwt.Payload.SHA) > 0 && len(jwt.Payload.Audience) > 0 && strings.HasPrefix(strings.ToLower(jwt.Payload.Audience[0]), "http") {
 		if len(caURL) == 0 {
-			caURL = claims.Audience[0]
+			caURL = jwt.Payload.Audience[0]
 		}
-		options = append(options, ca.WithRootSHA256(claims.SHA))
+		options = append(options, ca.WithRootSHA256(jwt.Payload.SHA))
 	} else {
 		if len(caURL) == 0 {
 			return nil, errs.RequiredFlag(ctx, "ca-url")
@@ -341,14 +357,10 @@ func (f *certificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 
 // CreateSignRequest is a helper function that given an x509 OTT returns a
 // simple but secure sign request as well as the private key used.
-func (f *certificateFlow) CreateSignRequest(token string, sans []string) (*api.SignRequest, crypto.PrivateKey, error) {
-	tok, err := jose.ParseSigned(token)
+func (f *certificateFlow) CreateSignRequest(tok string, sans []string) (*api.SignRequest, crypto.PrivateKey, error) {
+	jwt, err := token.ParseInsecure(tok)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "error parsing token")
-	}
-	var claims tokenClaims
-	if err := tok.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, nil, errors.Wrap(err, "error parsing token")
+		return nil, nil, err
 	}
 
 	pk, err := keys.GenerateDefaultKey()
@@ -357,14 +369,24 @@ func (f *certificateFlow) CreateSignRequest(token string, sans []string) (*api.S
 	}
 
 	var emails []string
-	dnsNames, ips := splitSANs(sans, claims.SANs)
-	if claims.Email != "" {
-		emails = append(emails, claims.Email)
+	dnsNames, ips := splitSANs(sans, jwt.Payload.SANs)
+	if jwt.Payload.Email != "" {
+		emails = append(emails, jwt.Payload.Email)
+	}
+
+	subject := jwt.Payload.Subject
+	if jwt.Payload.Type() == token.GCP {
+		ce := jwt.Payload.Google.ComputeEngine
+		subject = ce.InstanceName
+		dnsNames = append(dnsNames,
+			fmt.Sprintf("%s.c.%s.internal", ce.InstanceName, ce.ProjectID),
+			fmt.Sprintf("%s.%s.c.%s.internal", ce.InstanceName, ce.Zone, ce.ProjectID),
+		)
 	}
 
 	template := &x509.CertificateRequest{
 		Subject: pkix.Name{
-			CommonName: claims.Subject,
+			CommonName: subject,
 		},
 		SignatureAlgorithm: keys.DefaultSignatureAlgorithm,
 		DNSNames:           dnsNames,
@@ -385,7 +407,7 @@ func (f *certificateFlow) CreateSignRequest(token string, sans []string) (*api.S
 	}
 	return &api.SignRequest{
 		CsrPEM: api.CertificateRequest{CertificateRequest: cr},
-		OTT:    token,
+		OTT:    tok,
 	}, pk, nil
 }
 
