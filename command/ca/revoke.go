@@ -202,6 +202,10 @@ func revokeCertificateAction(ctx *cli.Context) error {
 	// If cert and key are passed then infer the serial number and certificate
 	// that should be revoked.
 	if len(certFile) > 0 || len(keyFile) > 0 {
+		// Must be using cert/key flags for mTLS revoke so should be 0 cmd line args.
+		if ctx.NArg() > 0 {
+			return errors.Errorf("'%s %s --cert <certificate> --key <key>' expects no additional positional arguments", ctx.App.Name, ctx.Command.Name)
+		}
 		if len(certFile) == 0 {
 			return errs.RequiredWithFlag(ctx, "key", "cert")
 		}
@@ -220,6 +224,10 @@ func revokeCertificateAction(ctx *cli.Context) error {
 		}
 		serial = cert[0].SerialNumber.String()
 	} else if len(token) == 0 {
+		// Must be using serial number so verify that only 1 command line args was given.
+		if err := errs.NumberOfArguments(ctx, 1); err != nil {
+			return err
+		}
 		// No token and no cert/key pair - so generate a token.
 		token, err = flow.GenerateToken(ctx, &serial)
 		if err != nil {
