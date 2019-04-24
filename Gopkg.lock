@@ -324,7 +324,7 @@
 
 [[projects]]
   branch = "cloud-identities"
-  digest = "1:d4e2879afd8a3ca7b785966d3a5dc42b426c18194c3519760994f70fd2a03279"
+  digest = "1:86dca4541e21d68f016be01b65ccf969a8123a9614c7f039dd36e771aa452ced"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
@@ -337,7 +337,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "b6a5ebcfc969fb49e83641db34df94ee0252678a"
+  revision = "f755fddc351980308c295646a2a6988926ce9a14"
 
 [[projects]]
   branch = "master"
