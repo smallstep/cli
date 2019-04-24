@@ -168,6 +168,10 @@ func certificateAction(ctx *cli.Context) error {
 		if email := req.CsrPEM.EmailAddresses[0]; email != subject {
 			return errors.Errorf("token email '%s' and argument '%s' do not match", email, subject)
 		}
+	case token.AWS: // Validate that the subject matches the instance id
+		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
+			return errors.Errorf("token subject '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
+		}
 	case token.GCP: // Validate that the subject matches the instance Name
 		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
 			return errors.Errorf("token google.compute_engine.instance_name '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
@@ -250,6 +254,11 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, tok string) (caCl
 		return nil, errors.Wrap(err, "error parsing flag '--token'")
 	}
 	switch jwt.Payload.Type() {
+	case token.AWS:
+		instanceID := jwt.Payload.Amazon.InstanceIdentityDocument.InstanceID
+		if strings.ToLower(instanceID) != strings.ToLower(subject) {
+			return nil, errors.Errorf("token amazon.document.instanceId '%s' and CSR CommonName '%s' do not match", instanceID, subject)
+		}
 	case token.GCP:
 		instanceName := jwt.Payload.Google.ComputeEngine.InstanceName
 		if strings.ToLower(instanceName) != strings.ToLower(subject) {
@@ -375,13 +384,25 @@ func (f *certificateFlow) CreateSignRequest(tok string, sans []string) (*api.Sig
 	}
 
 	subject := jwt.Payload.Subject
-	if jwt.Payload.Type() == token.GCP {
+	switch jwt.Payload.Type() {
+	case token.AWS:
+		doc := jwt.Payload.Amazon.InstanceIdentityDocument
+		subject = doc.InstanceID
+		if len(ips) == 0 && len(dnsNames) == 0 {
+			ips = append(ips, net.ParseIP(doc.PrivateIP))
+			dnsNames = append(dnsNames,
+				fmt.Sprintf("ip-%s.%s.compute.internal", strings.Replace(doc.PrivateIP, ".", "-", -1), doc.Region),
+			)
+		}
+	case token.GCP:
 		ce := jwt.Payload.Google.ComputeEngine
 		subject = ce.InstanceName
-		dnsNames = append(dnsNames,
-			fmt.Sprintf("%s.c.%s.internal", ce.InstanceName, ce.ProjectID),
-			fmt.Sprintf("%s.%s.c.%s.internal", ce.InstanceName, ce.Zone, ce.ProjectID),
-		)
+		if len(dnsNames) == 0 {
+			dnsNames = append(dnsNames,
+				fmt.Sprintf("%s.c.%s.internal", ce.InstanceName, ce.ProjectID),
+				fmt.Sprintf("%s.%s.c.%s.internal", ce.InstanceName, ce.Zone, ce.ProjectID),
+			)
+		}
 	}
 
 	template := &x509.CertificateRequest{

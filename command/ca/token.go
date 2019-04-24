@@ -342,8 +342,8 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		return "", err
 	}
 
-	// With OIDC just run step oauth
-	if p, ok := p.(*provisioner.OIDC); ok {
+	switch p := p.(type) {
+	case *provisioner.OIDC: // Run step oauth
 		out, err := exec.Step("oauth", "--oidc", "--bare",
 			"--provider", p.ConfigurationEndpoint,
 			"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
@@ -351,10 +351,9 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 			return "", err
 		}
 		return strings.TrimSpace(string(out)), nil
-	}
-
-	// With GCP, do the identity request to get the token
-	if p, ok := p.(*provisioner.GCP); ok {
+	case *provisioner.GCP: // Do the identity request to get the token
+		return p.GetIdentityToken()
+	case *provisioner.AWS: // Do the identity request to get the token
 		return p.GetIdentityToken()
 	}
 
@@ -484,7 +483,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	// Filter by type
 	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 		switch p.GetType() {
-		case provisioner.TypeJWK, provisioner.TypeOIDC, provisioner.TypeGCP:
+		case provisioner.TypeJWK, provisioner.TypeOIDC, provisioner.TypeGCP, provisioner.TypeAWS:
 			return true
 		default:
 			return false
@@ -534,6 +533,9 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		case *provisioner.GCP:
 			name = "Provisioner"
 			value = p.Name + " (GCP)"
+		case *provisioner.AWS:
+			name = "Provisioner"
+			value = p.Name + " (AWS)"
 		default:
 			return nil, errors.Errorf("unknown provisioner type %T", p)
 		}
@@ -565,6 +567,11 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 			items = append(items, &provisionersSelect{
 				Name:        p.Name + " (GCP)",
 				Issuer:      "https://accounts.google.com",
+				Provisioner: p,
+			})
+		case *provisioner.AWS:
+			items = append(items, &provisionersSelect{
+				Name:        p.Name + " (AWS)",
 				Provisioner: p,
 			})
 		default:
