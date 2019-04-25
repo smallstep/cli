@@ -22,7 +22,6 @@ import (
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
@@ -133,16 +132,9 @@ func certificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	var isStepToken bool
 	if len(tok) == 0 {
 		if tok, err = flow.GenerateToken(ctx, subject, sans); err != nil {
 			return err
-		}
-		isStepToken = isStepCertificatesToken(tok)
-	} else {
-		isStepToken = isStepCertificatesToken(tok)
-		if isStepToken && len(sans) > 0 {
-			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
 		}
 	}
 
@@ -158,6 +150,9 @@ func certificateAction(ctx *cli.Context) error {
 
 	switch jwt.Payload.Type() {
 	case token.JWK: // Validate that subject matches the CSR common name.
+		if ctx.String("token") != "" && len(sans) > 0 {
+			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
+		}
 		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
 			return errors.Errorf("token subject '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
@@ -192,25 +187,6 @@ func certificateAction(ctx *cli.Context) error {
 	ui.PrintSelected("Certificate", crtFile)
 	ui.PrintSelected("Private Key", keyFile)
 	return nil
-}
-
-type tokenClaims struct {
-	jose.Claims
-	SHA   string   `json:"sha"`
-	SANs  []string `json:"sans"`
-	Email string   `json:"email"`
-}
-
-func isStepCertificatesToken(token string) bool {
-	t, err := jose.ParseSigned(token)
-	if err != nil {
-		return false
-	}
-	var claims tokenClaims
-	if err := t.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return false
-	}
-	return len(claims.SHA) > 0 || len(claims.SANs) > 0
 }
 
 type certificateFlow struct {
