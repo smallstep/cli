@@ -223,15 +223,17 @@ func revokeCertificateAction(ctx *cli.Context) error {
 			return err
 		}
 		serial = cert[0].SerialNumber.String()
-	} else if len(token) == 0 {
+	} else {
 		// Must be using serial number so verify that only 1 command line args was given.
 		if err := errs.NumberOfArguments(ctx, 1); err != nil {
 			return err
 		}
-		// No token and no cert/key pair - so generate a token.
-		token, err = flow.GenerateToken(ctx, &serial)
-		if err != nil {
-			return err
+		if len(token) == 0 {
+			// No token and no cert/key pair - so generate a token.
+			token, err = flow.GenerateToken(ctx, &serial)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
