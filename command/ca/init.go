@@ -68,6 +68,10 @@ func initCommand() cli.Command {
 				Name:  "with-ca-url",
 				Usage: `<URI> of the Step Certificate Authority to write in defaults.json`,
 			},
+			cli.BoolFlag{
+				Name:  "no-db",
+				Usage: `Generate a CA configuration without the DB stanza. No persistence layer.`,
+			},
 		},
 	}
 }
@@ -80,10 +84,9 @@ func initAction(ctx *cli.Context) (err error) {
 	var rootCrt *x509.Certificate
 	var rootKey interface{}
 
+	caURL := ctx.String("with-ca-url")
 	root := ctx.String("root")
 	key := ctx.String("key")
-	configure := !ctx.Bool("pki")
-	caURL := ctx.String("with-ca-url")
 	switch {
 	case len(root) > 0 && len(key) == 0:
 		return errs.RequiredWithFlag(ctx, "root", "key")
@@ -97,6 +100,12 @@ func initAction(ctx *cli.Context) (err error) {
 		if rootKey, err = pemutil.Read(key); err != nil {
 			return err
 		}
+	}
+
+	configure := !ctx.Bool("pki")
+	noDB := ctx.Bool("no-db")
+	if !configure && noDB {
+		return errs.IncompatibleFlagWithFlag(ctx, "pki", "no-db")
 	}
 
 	var password string
@@ -215,7 +224,11 @@ func initAction(ctx *cli.Context) (err error) {
 		p.TellPKI()
 		return nil
 	}
-	return p.Save()
+	opts := []pki.Option{}
+	if noDB {
+		opts = append(opts, pki.WithoutDB())
+	}
+	return p.Save(opts...)
 }
 
 // assertCrytoRand asserts that a cryptographically secure random number
