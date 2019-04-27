@@ -39,8 +39,23 @@ func revokeCertificateCommand() cli.Command {
 [**--ca-url**=<uri>] [**--root**=<path>] [**--reason**=<string>]
 [**--reasonCode**=<code>] [**-offline**]`,
 		Description: `
-**step ca revoke** command passively revokes a certificate with the given serial
+**step ca revoke** command revokes a certificate with the given serial
 number.
+
+Active Revocation: A certificate is no longer valid from the moment it has
+been actively revoked. Clients are required to check verify certificate validity
+against CRLs (Certificate Revocation Lists) or use OCSP (Online Certificate
+Status Protocol). Active Revocation requires clients to take an active role
+in certificate validation for the benefit of real time revocation.
+
+Passive Revocation: A certificate that has been passively revoked can no
+longer be renewed. It will still be valid for the remainder of it's validity period,
+but cannot be prolonged. The benefit of passive revocation is that clients
+can remain simple and decentralized. Passive revocation works best with short
+certificate lifetimes.
+
+**step ca revoke** currently only supports passive revocation. Active revocation
+is on our roadmap.
 
 ## POSITIONAL ARGUMENTS
 
@@ -50,12 +65,6 @@ either to be supplied by prompt or when using --cert and --key flags for
 revocation over mTLS.
 
 ## EXAMPLES
-
-Revoke a certificate using a transparently generated API token, default
-'unspecified' reason, and get prompted for a serial number:
-'''
-$ step ca revoke
-'''
 
 Revoke a certificate using a transparently generated API token and the default
 'unspecified' reason:
