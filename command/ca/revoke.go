@@ -78,13 +78,13 @@ $ step ca revoke 308893286343609293989051180431574390766
 Revoke a certificate using a transparently generated token and configured reason
 and reasonCode:
 '''
-$ step ca revoke --reason "lap top compromised" --reasonCode 1 308893286343609293989051180431574390766
+$ step ca revoke --reason "laptop compromised" --reasonCode 1 308893286343609293989051180431574390766
 '''
 
 Revoke a certificate using a transparently generated token and configured reason
 and stringified reasonCode:
 '''
-$ step ca revoke --reason "lap top compromised" --reasonCode "key compromise" 308893286343609293989051180431574390766
+$ step ca revoke --reason "laptop compromised" --reasonCode "key compromise" 308893286343609293989051180431574390766
 '''
 
 Revoke a certificate using that same certificate to validate and authorize the
