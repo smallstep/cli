@@ -42,16 +42,19 @@ func revokeCertificateCommand() cli.Command {
 **step ca revoke** command revokes a certificate with the given serial
 number.
 
-Active Revocation: A certificate is no longer valid from the moment it has
-been actively revoked. Clients are required to check verify certificate validity
-against CRLs (Certificate Revocation Lists) or use OCSP (Online Certificate
-Status Protocol). Active Revocation requires clients to take an active role
-in certificate validation for the benefit of real time revocation.
+**Active Revocation**: A certificate is no longer valid from the moment it has
+been actively revoked. Clients are required to check against centralized
+sources of certificate validity information (e.g. by using CRLs (Certificate
+Revocation Lists) or OCSP (Online Certificate Status Protocol)) to
+verify that certificates have not been revoked. Active Revocation requires
+clients to take an active role in certificate validation for the benefit of
+real time revocation.
 
-Passive Revocation: A certificate that has been passively revoked can no
+**Passive Revocation**: A certificate that has been passively revoked can no
 longer be renewed. It will still be valid for the remainder of it's validity period,
 but cannot be prolonged. The benefit of passive revocation is that clients
-can remain simple and decentralized. Passive revocation works best with short
+can verify certificates in a simple, decentralized manner without relying on
+centralized 3rd parties. Passive revocation works best with short
 certificate lifetimes.
 
 **step ca revoke** currently only supports passive revocation. Active revocation
@@ -120,46 +123,48 @@ common revocation reasons. If unset, the default is Unspecified.
 one of the following options:
 
     **Unspecified**
-    :  No reason given (Default).
+    :  No reason given (Default -- reasonCode=0).
 
     **KeyCompromise**
-    :  The key is believed to have been compromised.
+    :  The key is believed to have been compromised (reasonCode=1).
 
     **CACompromise**
-    :  The issuing Certificate Authority itself has been compromised.
+    :  The issuing Certificate Authority itself has been compromised (reasonCode=2).
 
     **AffiliationChanged**
     :  The certificate contained affiliation information, for example, it may
 have been an EV certificate and the associated business is no longer owned by
-the same entity.
+the same entity (reasonCode=3).
 
     **Superseded**
-    :  The certificate is being replaced.
+    :  The certificate is being replaced (reasonCode=4).
 
     **CessationOfOperation**
     :  If a CA is decommissioned, no longer to be used, the CA's certificate
 should be revoked with this reason code. Do not revoke the CA's certificate if
 the CA no longer issues new certificates, yet still publishes CRLs for the
-currently issued certificates.
+currently issued certificates (reasonCode=5).
 
     **CertificateHold**
     :  A temporary revocation that indicates that a CA will not vouch for a
 certificate at a specific point in time. Once a certificate is revoked with a
 CertificateHold reason code, the certificate can then be revoked with another
-Reason Code, or unrevoked and returned to use.
+Reason Code, or unrevoked and returned to use (reasonCode=6).
 
     **RemoveFromCRL**
     :  If a certificate is revoked with the CertificateHold reason code, it is
 possible to "unrevoke" a certificate. The unrevoking process still lists the
 certificate in the CRL, but with the reason code set to RemoveFromCRL.
-Note: This is specific to the CertificateHold reason and is only used in DeltaCRLs.
+Note: This is specific to the CertificateHold reason and is only used in DeltaCRLs
+(reasonCode=8).
 
     **PrivilegeWithdrawn**
-    :  The right to represent the given entity was revoked for some reason.
+    :  The right to represent the given entity was revoked for some reason
+(reasonCode=9).
 
     **AACompromise**
     :   It is known or suspected that aspects of the AA validated in the
-attribute certificate have been compromised.
+attribute certificate have been compromised (reasonCode=10).
 `,
 			},
 			cli.StringFlag{
