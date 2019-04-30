@@ -87,38 +87,78 @@ e.g. `v1.0.2`
 
     Travis will build and upload the following artifacts:
 
+    * **step-cli_1.0.3.tar.gz**: source code tarball.
     * **step-cli_1.0.3_amd64.deb**: debian package for installation on linux.
     * **step_1.0.3_linux_amd64.tar.gz**: tarball containing a statically compiled linux binary.
     * **step_1.0.3_darwin_amd64.tar.gz**: tarball containing a statically compiled darwin binary.
 
-5. **[Update the documentation at smallstep.com/docs](#https://github.com/smallstep/website#cli-documentation)**
+5. **Update the AUR Arch Linux packages**
 
-    **NOTE**: this only needs to be done for standard releases.
+    <pre><code>
+    ### <b>SETUP</b> ###
+    # clone the archlinux repo if you don't already have it.
+    <b>$ git clone git@github.com:smallstep/archlinux.git</b>
 
-6. **Update the AUR Arch Linux packages**
+    ### Get up to date...
+    <b>$ cd archlinux && git pull origin master && make</b>
 
-    ```
-    $ cd archlinux
-
-    # Get up to date...
-    $ git pull origin master
-    $ make
+    ### Bump and push new versions
 
     # If updating the packages for cli and ca
-    $ ./update --cli v1.0.3 --ca v1.0.3
+    <b>$ ./update --cli v1.0.3 --ca v1.0.3</b>
+
     # If only updating the package for cli
-    $ ./update --cli v1.0.3
-    ```
+    <b>$ ./update --cli v1.0.3</b>
+    </code></pre>
 
-7. **Update the smallstep/smallstep Homebrew tap.**
+6. **Update the smallstep/smallstep Homebrew tap.**
 
-    **NOTE**: this only needs to be done for standard releases.
+    > **NOTE**: this only needs to be done for standard releases.
 
     Follow the steps [here](https://github.com/smallstep/homebrew-smallstep#how-to-update-the-formula).
 
-8. **Update Homebrew Core.**
+7. **Update Homebrew Core.**
 
-    **NOTE**: this only needs to be done for standard releases.
+    > **NOTE**: this only needs to be done for standard releases.
+
+    1. Fork the homebrew-core repo if you don't already have it.
+    2. Create a branch in your fork.
+
+       <pre><code>
+       <b>$ git checkout -B step-v0.10.0</b>
+       </code></pre>
+
+    3. Apply changes from `smallstep/smallstep/step` tap.
+
+       Take the diff from the `smallstep/homebrew-smallstep` repo and manually
+       apply it to your branch. The most common changes should be URL and SHA
+       updates.
+
+    4. Test the changes.
+
+       <pre><code>
+       # start fresh
+       <b>$ brew uninstall step</b>
+
+       # test install
+       <b>$ brew install --build-from-source Formula/step.rb</b>
+
+       # setup for audit and test
+       <b>$ sudo cp Formula/step.rb /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core/Formula/step.rb</b>
+
+       # audit
+       <b>$ brew audit --strict --online step</b>
+
+       # test
+       <b>$ brew test step</b>
+       </code></pre>
+
+
+8. **Update the documentation on the website**
+
+    > **NOTE**: this only needs to be done for standard releases.
+
+    Follow the steps [here](https://github.com/smallstep/website#cli-documentation).
 
 *All Done!*
 
