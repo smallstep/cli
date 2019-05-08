@@ -355,6 +355,8 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		return p.GetIdentityToken()
 	case *provisioner.AWS: // Do the identity request to get the token
 		return p.GetIdentityToken()
+	case *provisioner.Azure: // Do the identity request to get the token
+		return p.GetIdentityToken()
 	}
 
 	// JWK provisioner
@@ -483,7 +485,9 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	// Filter by type
 	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 		switch p.GetType() {
-		case provisioner.TypeJWK, provisioner.TypeOIDC, provisioner.TypeGCP, provisioner.TypeAWS:
+		case provisioner.TypeJWK, provisioner.TypeOIDC:
+			return true
+		case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
 			return true
 		default:
 			return false
@@ -536,6 +540,9 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		case *provisioner.AWS:
 			name = "Provisioner"
 			value = p.Name + " (AWS)"
+		case *provisioner.Azure:
+			name = "Provisioner"
+			value = p.Name + " (Azure)"
 		default:
 			return nil, errors.Errorf("unknown provisioner type %T", p)
 		}
@@ -572,6 +579,11 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		case *provisioner.AWS:
 			items = append(items, &provisionersSelect{
 				Name:        p.Name + " (AWS)",
+				Provisioner: p,
+			})
+		case *provisioner.Azure:
+			items = append(items, &provisionersSelect{
+				Name:        p.Name + " (Azure)",
 				Provisioner: p,
 			})
 		default:

@@ -171,6 +171,10 @@ func certificateAction(ctx *cli.Context) error {
 		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
 			return errors.Errorf("token google.compute_engine.instance_name '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
+	case token.Azure: // Validate that the subject matches the virtual machine name
+		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
+			return errors.Errorf("token virtual machine '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
+		}
 	default:
 		return errors.New("token is not supported")
 	}
@@ -239,6 +243,10 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, tok string) (caCl
 		instanceName := jwt.Payload.Google.ComputeEngine.InstanceName
 		if strings.ToLower(instanceName) != strings.ToLower(subject) {
 			return nil, errors.Errorf("token google.compute_engine.instance_name '%s' and CSR CommonName '%s' do not match", instanceName, subject)
+		}
+	case token.Azure:
+		if strings.ToLower(jwt.Payload.Azure.VirtualMachine) != strings.ToLower(subject) {
+			return nil, errors.Errorf("token virtual machine '%s' and CSR CommonName '%s' do not match", jwt.Payload.Azure.VirtualMachine, subject)
 		}
 	default:
 		if strings.ToLower(jwt.Payload.Subject) != strings.ToLower(subject) {
@@ -378,6 +386,11 @@ func (f *certificateFlow) CreateSignRequest(tok string, sans []string) (*api.Sig
 				fmt.Sprintf("%s.c.%s.internal", ce.InstanceName, ce.ProjectID),
 				fmt.Sprintf("%s.%s.c.%s.internal", ce.InstanceName, ce.Zone, ce.ProjectID),
 			)
+		}
+	case token.Azure:
+		subject = jwt.Payload.Azure.VirtualMachine
+		if len(dnsNames) == 0 {
+			dnsNames = append(dnsNames, jwt.Payload.Azure.VirtualMachine)
 		}
 	}
 

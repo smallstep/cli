@@ -2,6 +2,8 @@ package token
 
 import (
 	"encoding/json"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -18,6 +20,7 @@ const (
 	OIDC         // OpenID Connect
 	GCP          // Google Cloud Platform
 	AWS          // Amazon Web Services
+	Azure        // Microsoft Azure
 )
 
 // JSONWebToken represents a JSON Web Token (as specified in RFC7519). Using the
@@ -31,16 +34,24 @@ type JSONWebToken struct {
 // addition to the standard claims it contains the ones supported in step ca.
 type Payload struct {
 	jose.Claims
-	SHA             string            `json:"sha"`     // JWK token claims
-	SANs            []string          `json:"sans"`    // ...
-	AtHash          string            `json:"at_hash"` // OIDC token claims
-	AuthorizedParty string            `json:"azp"`     // ...
-	Email           string            `json:"email"`
-	EmailVerified   bool              `json:"email_verified"`
-	Hd              string            `json:"hd"`
-	Nonce           string            `json:"nonce"`
-	Google          *GCPGooglePayload `json:"google"` // GCP token claims
-	Amazon          *AWSAmazonPayload `json:"amazon"` // AWS token claims
+	SHA              string            `json:"sha"`     // JWK token claims
+	SANs             []string          `json:"sans"`    // ...
+	AtHash           string            `json:"at_hash"` // OIDC token claims
+	AuthorizedParty  string            `json:"azp"`     // ...
+	Email            string            `json:"email"`
+	EmailVerified    bool              `json:"email_verified"`
+	Hd               string            `json:"hd"`
+	Nonce            string            `json:"nonce"`
+	AppID            string            `json:"appid"`    // Azure token claims
+	AppIDAcr         string            `json:"appidacr"` // ...
+	IdentityProvider string            `json:"idp"`
+	ObjectID         string            `json:"oid"`
+	TenantID         string            `json:"tid"`
+	Version          string            `json:"ver"`
+	XMSMirID         string            `json:"xms_mirid"`
+	Google           *GCPGooglePayload `json:"google"` // GCP token claims
+	Amazon           *AWSAmazonPayload `json:"amazon"` // AWS token claims
+	Azure            *AzurePayload     `json:"azure"`  // Azure token claims
 }
 
 // Type returns the type of the payload.
@@ -50,6 +61,8 @@ func (p Payload) Type() Type {
 		return GCP
 	case p.Amazon != nil:
 		return AWS
+	case p.Azure != nil:
+		return Azure
 	case len(p.SHA) > 0 || len(p.SANs) > 0:
 		return JWK
 	case p.Email != "":
@@ -101,6 +114,17 @@ type AWSInstanceIdentityDocument struct {
 	Version            string    `json:"version"`
 }
 
+// azureXMSMirIDRegExp is the regular expression used to parse the xms_mirid claim.
+// Using case insensitive as resourceGroups appears as resourcegroups.
+var azureXMSMirIDRegExp = regexp.MustCompile(`(?i)^/subscriptions/([^/]+)/resourceGroups/([^/]+)/providers/Microsoft.Compute/virtualMachines/([^/]+)$`)
+
+// AzurePayload contains the information in the xms_mirid claim.
+type AzurePayload struct {
+	SubscriptionID string
+	ResourceGroup  string
+	VirtualMachine string
+}
+
 // Parse parses the given token verifying the signature with the key.
 func Parse(token string, key interface{}) (*JSONWebToken, error) {
 	jwt, err := jose.ParseSigned(token)
@@ -132,9 +156,18 @@ func ParseInsecure(token string) (*JSONWebToken, error) {
 }
 
 func parseResponse(jwt *jose.JSONWebToken, p Payload) (*JSONWebToken, error) {
-	if p.Type() == AWS {
+	switch {
+	case p.Type() == AWS:
 		if err := json.Unmarshal(p.Amazon.Document, &p.Amazon.InstanceIdentityDocument); err != nil {
 			return nil, errors.Wrap(err, "error unmarshaling instance identity document")
+		}
+	case strings.HasPrefix(p.Issuer, "https://sts.windows.net/"):
+		if re := azureXMSMirIDRegExp.FindStringSubmatch(p.XMSMirID); len(re) > 0 {
+			p.Azure = &AzurePayload{
+				SubscriptionID: re[1],
+				ResourceGroup:  re[2],
+				VirtualMachine: re[3],
+			}
 		}
 	}
 
