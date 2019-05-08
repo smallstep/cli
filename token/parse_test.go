@@ -1,6 +1,7 @@
 package token
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"reflect"
 	"testing"
@@ -46,7 +47,9 @@ const (
 	  }
 	]
 }`
-	badToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyeyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+	awsToken   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhbWF6b24iOnsiZG9jdW1lbnQiOiJld29nSUNKaFkyTnZkVzUwU1dRaU9pQWlSRk13VlZST1JHdzBiU0lzQ2lBZ0ltRnlZMmhwZEdWamRIVnlaU0k2SUNKNE9EWmZOalFpTEFvZ0lDSmhkbUZwYkdGaWFXeHBkSGxhYjI1bElqb2dJblZ6TFhkbGMzUXRNbUlpTEFvZ0lDSmlhV3hzYVc1blVISnZaSFZqZEhNaU9pQnVkV3hzTEFvZ0lDSmtaWFp3WVhsUWNtOWtkV04wUTI5a1pYTWlPaUJ1ZFd4c0xBb2dJQ0pwYldGblpVbGtJam9nSWs5aVpIUlhVR1ZpVFZJaUxBb2dJQ0pwYm5OMFlXNWpaVWxrSWpvZ0ltVmtTbFV6ZFcxTldFc2lMQW9nSUNKcGJuTjBZVzVqWlZSNWNHVWlPaUFpZERJdWJXbGpjbThpTEFvZ0lDSnJaWEp1Wld4SlpDSTZJQ0lpTEFvZ0lDSndaVzVrYVc1blZHbHRaU0k2SUNJeU1ERTVMVEExTFRBNFZERXlPalUyT2pVMUxqZ3hOelEzTkMwd056b3dNQ0lzQ2lBZ0luQnlhWFpoZEdWSmNDSTZJQ0l4TWpjdU1DNHdMakVpTEFvZ0lDSnlZVzFrYVhOclNXUWlPaUFpSWl3S0lDQWljbVZuYVc5dUlqb2dJblZ6TFhkbGMzUXRNU0lzQ2lBZ0luWmxjbk5wYjI0aU9pQWlNakF4Tnkwd09TMHpNQ0lLZlE9PSIsInNpZ25hdHVyZSI6Iks3ZVkxTW1vY0xFNXN4UlJxOUNKaHc1VmZtY2Fwb2lEOFBnQTRjbncyT0VrdnhINHJ0NkxBSDUzWWxIb0RLL0d6bFJrdkdiYTd1M2cvRVZOQjBaelpQeUxrRWxzRU80STkyRjVqZ2dKaXlNVEV3czJkY1ArcUNLQzAvdDhrb0xrcUJNcURXbEtTWXY2S1hyNDhma1ZpQ0szZ05pL1JVUmwySUlmR3F0Tno4QT0ifSwiYXVkIjpbImF3czp3NnV4Q1dXUzNMIl0sImV4cCI6MTU1NzM0NTcxNSwiaWF0IjoxNTU3MzQ1NDE1LCJpc3MiOiJlYzIuYW1hem9uYXdzLmNvbSIsImp0aSI6IjRmMmY5NjIyZTQ1Mjg5ZDRiYmZkZGRjMzFiOTQ3MGY3YzY5Mjg0MWVlZDFmMjM5NTViZGQzNDkwODhmOTVjYmYiLCJuYmYiOjE1NTczNDU0MTUsInNhbnMiOm51bGwsInN1YiI6ImVkSlUzdW1NWEsifQ.E-l6tP0Z3K-q2j4SCGVw55Sc1OmUtudYF1ryrjNuuI8"
+	azureToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjY2YjQxZjFlOTNmYTM5YTQzMjVkNmFhYmNlZGYwODJhZjg0NGZiMjJlZTk1NDAzYmVmOWQ0ZGNmMzcwYjcxMGUiLCJ0eXAiOiJKV1QifQ.eyJhcHBpZCI6InRoZS1hcHBpZCIsImFwcGlkYWNyIjoidGhlLWFwcGlkYWNyIiwiYXVkIjpbImh0dHBzOi8vbWFuYWdlbWVudC5henVyZS5jb20vIl0sImV4cCI6MTU1NzM0NTY1OCwiaWF0IjoxNTU3MzQ1MzU4LCJpZHAiOiJ0aGUtaWRwIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvUDg3aEFXVUUwYy8iLCJqdGkiOiJ0aGUtanRpIiwibmJmIjoxNTU3MzQ1MzU4LCJvaWQiOiJ0aGUtb2lkIiwic3ViIjoic3ViamVjdCIsInRpZCI6IlA4N2hBV1VFMGMiLCJ2ZXIiOiJ0aGUtdmVyc2lvbiIsInhtc19taXJpZCI6Ii9zdWJzY3JpcHRpb25zL3N1YnNjcmlwdGlvbklEL3Jlc291cmNlR3JvdXBzL3Jlc291cmNlR3JvdXAvcHJvdmlkZXJzL01pY3Jvc29mdC5Db21wdXRlL3ZpcnR1YWxNYWNoaW5lcy92aXJ0dWFsTWFjaGluZSJ9.U_NdLMXLztkYEn0RXYD394SiR-QpaJ8eoRFBu0FYQJ6zDflc-veAceFbLsTdihNE21zm7qYAkDqXlE0q3Y7Zdg"
+	badToken   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyeyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 )
 
 func TestParse(t *testing.T) {
@@ -141,6 +144,13 @@ func TestParseInsecure(t *testing.T) {
 		}
 		return c
 	}
+	mustBase64 := func(s string) []byte {
+		b64, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return b64
+	}
 
 	type args struct {
 		token string
@@ -181,6 +191,50 @@ func TestParseInsecure(t *testing.T) {
 				},
 			},
 		}, false},
+		{"ok AWS", args{awsToken}, Payload{
+			Claims: mustJoseClaims(awsToken),
+			Amazon: &AWSAmazonPayload{
+				Document: []byte(`{
+  "accountId": "DS0UTNDl4m",
+  "architecture": "x86_64",
+  "availabilityZone": "us-west-2b",
+  "billingProducts": null,
+  "devpayProductCodes": null,
+  "imageId": "ObdtWPebMR",
+  "instanceId": "edJU3umMXK",
+  "instanceType": "t2.micro",
+  "kernelId": "",
+  "pendingTime": "2019-05-08T12:56:55.817474-07:00",
+  "privateIp": "127.0.0.1",
+  "ramdiskId": "",
+  "region": "us-west-1",
+  "version": "2017-09-30"
+}`),
+				Signature: mustBase64("K7eY1MmocLE5sxRRq9CJhw5VfmcapoiD8PgA4cnw2OEkvxH4rt6LAH53YlHoDK/GzlRkvGba7u3g/EVNB0ZzZPyLkElsEO4I92F5jggJiyMTEws2dcP+qCKC0/t8koLkqBMqDWlKSYv6KXr48fkViCK3gNi/RURl2IIfGqtNz8A="),
+				InstanceIdentityDocument: &AWSInstanceIdentityDocument{
+					AccountID:        "DS0UTNDl4m",
+					Architecture:     "x86_64",
+					AvailabilityZone: "us-west-2b",
+					ImageID:          "ObdtWPebMR",
+					InstanceID:       "edJU3umMXK",
+					InstanceType:     "t2.micro",
+					KernelID:         "",
+					PendingTime:      time.Unix(1557345415, 817474000),
+					PrivateIP:        "127.0.0.1",
+					RamdiskID:        "",
+					Region:           "us-west-1",
+					Version:          "2017-09-30",
+				},
+			},
+		}, false},
+		{"ok Azure", args{azureToken}, Payload{
+			Claims: mustJoseClaims(awsToken),
+			Azure: &AzurePayload{
+				SubscriptionID: "subscriptionID",
+				ResourceGroup:  "resourceGroup",
+				VirtualMachine: "virtualMachine",
+			},
+		}, false},
 		{"fail bad token", args{"foobarzar"}, Payload{}, true},
 		{"fail bad claims", args{badToken}, Payload{}, true},
 	}
@@ -206,18 +260,22 @@ func TestPayload_Type(t *testing.T) {
 		SANs   []string
 		Email  string
 		Google *GCPGooglePayload
+		Amazon *AWSAmazonPayload
+		Azure  *AzurePayload
 	}
 	tests := []struct {
 		name   string
 		fields fields
 		want   Type
 	}{
-		{"JWK", fields{"a-sha", []string{"foo.bar.zar"}, "", nil}, JWK},
-		{"JWK no sans", fields{"a-sha", nil, "", nil}, JWK},
-		{"JWK no sha", fields{"", []string{"foo.bar.zar"}, "", nil}, JWK},
-		{"OIDC", fields{"", nil, "mariano@smallstep.com", nil}, OIDC},
-		{"GCP", fields{"", nil, "", &GCPGooglePayload{}}, GCP},
-		{"Unknown", fields{"", nil, "", nil}, Unknown},
+		{"JWK", fields{"a-sha", []string{"foo.bar.zar"}, "", nil, nil, nil}, JWK},
+		{"JWK no sans", fields{"a-sha", nil, "", nil, nil, nil}, JWK},
+		{"JWK no sha", fields{"", []string{"foo.bar.zar"}, "", nil, nil, nil}, JWK},
+		{"OIDC", fields{"", nil, "mariano@smallstep.com", nil, nil, nil}, OIDC},
+		{"GCP", fields{"", nil, "", &GCPGooglePayload{}, nil, nil}, GCP},
+		{"AWS", fields{"", nil, "", nil, &AWSAmazonPayload{}, nil}, AWS},
+		{"Azure", fields{"", nil, "", nil, nil, &AzurePayload{}}, Azure},
+		{"Unknown", fields{"", nil, "", nil, nil, nil}, Unknown},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -226,6 +284,8 @@ func TestPayload_Type(t *testing.T) {
 				SANs:   tt.fields.SANs,
 				Email:  tt.fields.Email,
 				Google: tt.fields.Google,
+				Amazon: tt.fields.Amazon,
+				Azure:  tt.fields.Azure,
 			}
 			if got := p.Type(); got != tt.want {
 				t.Errorf("Payload.Type() = %v, want %v", got, tt.want)
