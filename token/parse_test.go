@@ -228,7 +228,14 @@ func TestParseInsecure(t *testing.T) {
 			},
 		}, false},
 		{"ok Azure", args{azureToken}, Payload{
-			Claims: mustJoseClaims(awsToken),
+			Claims:           mustJoseClaims(azureToken),
+			AppID:            "the-appid",
+			AppIDAcr:         "the-appidacr",
+			IdentityProvider: "the-idp",
+			ObjectID:         "the-oid",
+			TenantID:         "P87hAWUE0c",
+			Version:          "the-version",
+			XMSMirID:         "/subscriptions/subscriptionID/resourceGroups/resourceGroup/providers/Microsoft.Compute/virtualMachines/virtualMachine",
 			Azure: &AzurePayload{
 				SubscriptionID: "subscriptionID",
 				ResourceGroup:  "resourceGroup",
