@@ -47,7 +47,7 @@ const (
 	  }
 	]
 }`
-	awsToken   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhbWF6b24iOnsiZG9jdW1lbnQiOiJld29nSUNKaFkyTnZkVzUwU1dRaU9pQWlSRk13VlZST1JHdzBiU0lzQ2lBZ0ltRnlZMmhwZEdWamRIVnlaU0k2SUNKNE9EWmZOalFpTEFvZ0lDSmhkbUZwYkdGaWFXeHBkSGxhYjI1bElqb2dJblZ6TFhkbGMzUXRNbUlpTEFvZ0lDSmlhV3hzYVc1blVISnZaSFZqZEhNaU9pQnVkV3hzTEFvZ0lDSmtaWFp3WVhsUWNtOWtkV04wUTI5a1pYTWlPaUJ1ZFd4c0xBb2dJQ0pwYldGblpVbGtJam9nSWs5aVpIUlhVR1ZpVFZJaUxBb2dJQ0pwYm5OMFlXNWpaVWxrSWpvZ0ltVmtTbFV6ZFcxTldFc2lMQW9nSUNKcGJuTjBZVzVqWlZSNWNHVWlPaUFpZERJdWJXbGpjbThpTEFvZ0lDSnJaWEp1Wld4SlpDSTZJQ0lpTEFvZ0lDSndaVzVrYVc1blZHbHRaU0k2SUNJeU1ERTVMVEExTFRBNFZERXlPalUyT2pVMUxqZ3hOelEzTkMwd056b3dNQ0lzQ2lBZ0luQnlhWFpoZEdWSmNDSTZJQ0l4TWpjdU1DNHdMakVpTEFvZ0lDSnlZVzFrYVhOclNXUWlPaUFpSWl3S0lDQWljbVZuYVc5dUlqb2dJblZ6TFhkbGMzUXRNU0lzQ2lBZ0luWmxjbk5wYjI0aU9pQWlNakF4Tnkwd09TMHpNQ0lLZlE9PSIsInNpZ25hdHVyZSI6Iks3ZVkxTW1vY0xFNXN4UlJxOUNKaHc1VmZtY2Fwb2lEOFBnQTRjbncyT0VrdnhINHJ0NkxBSDUzWWxIb0RLL0d6bFJrdkdiYTd1M2cvRVZOQjBaelpQeUxrRWxzRU80STkyRjVqZ2dKaXlNVEV3czJkY1ArcUNLQzAvdDhrb0xrcUJNcURXbEtTWXY2S1hyNDhma1ZpQ0szZ05pL1JVUmwySUlmR3F0Tno4QT0ifSwiYXVkIjpbImF3czp3NnV4Q1dXUzNMIl0sImV4cCI6MTU1NzM0NTcxNSwiaWF0IjoxNTU3MzQ1NDE1LCJpc3MiOiJlYzIuYW1hem9uYXdzLmNvbSIsImp0aSI6IjRmMmY5NjIyZTQ1Mjg5ZDRiYmZkZGRjMzFiOTQ3MGY3YzY5Mjg0MWVlZDFmMjM5NTViZGQzNDkwODhmOTVjYmYiLCJuYmYiOjE1NTczNDU0MTUsInNhbnMiOm51bGwsInN1YiI6ImVkSlUzdW1NWEsifQ.E-l6tP0Z3K-q2j4SCGVw55Sc1OmUtudYF1ryrjNuuI8"
+	awsToken   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhbWF6b24iOnsiZG9jdW1lbnQiOiJld29nSUNKaFkyTnZkVzUwU1dRaU9pQWlTVzV0UWxOMGVuaDJjeUlzQ2lBZ0ltRnlZMmhwZEdWamRIVnlaU0k2SUNKNE9EWmZOalFpTEFvZ0lDSmhkbUZwYkdGaWFXeHBkSGxhYjI1bElqb2dJblZ6TFhkbGMzUXRNbUlpTEFvZ0lDSmlhV3hzYVc1blVISnZaSFZqZEhNaU9pQnVkV3hzTEFvZ0lDSmtaWFp3WVhsUWNtOWtkV04wUTI5a1pYTWlPaUJ1ZFd4c0xBb2dJQ0pwYldGblpVbGtJam9nSWxOQk5IaFpWVEZGWWtRaUxBb2dJQ0pwYm5OMFlXNWpaVWxrSWpvZ0lsb3pXRmRzV0VkT1dsSWlMQW9nSUNKcGJuTjBZVzVqWlZSNWNHVWlPaUFpZERJdWJXbGpjbThpTEFvZ0lDSnJaWEp1Wld4SlpDSTZJQ0lpTEFvZ0lDSndaVzVrYVc1blZHbHRaU0k2SUNJeU1ERTVMVEExTFRBNVZEQXhPakEwT2pJekxqVXlORFkyT1ZvaUxBb2dJQ0p3Y21sMllYUmxTWEFpT2lBaU1USTNMakF1TUM0eElpd0tJQ0FpY21GdFpHbHphMGxrSWpvZ0lpSXNDaUFnSW5KbFoybHZiaUk2SUNKMWN5MTNaWE4wTFRFaUxBb2dJQ0oyWlhKemFXOXVJam9nSWpJd01UY3RNRGt0TXpBaUNuMD0iLCJzaWduYXR1cmUiOiJKbkdlaWl2UzMrU1QxNGdFd2NCQS9MK0dHYkRyZm1iWmh3dU9tMjIrbFhqWjZzSUN4YUpRaFg1bmxyRDBrZUlvL2Y0dmRkT3FGTzhvUWNHd0J1YXl6aHFSVEt6cGpZVXBoSDFRMlJBUGl4dmcvZ0NSZG5YV0pETHpIRGhjTXdraCtvWnpFTkFuSTlhWGR4Vko4dGFKSlRHZ2lEVzdBcXYzK1JYZG4xcndiVVE9In0sImF1ZCI6WyJhd3M6TGdONHU4OUliNyJdLCJleHAiOjE1NTczNjQxNjMsImlhdCI6MTU1NzM2Mzg2MywiaXNzIjoiZWMyLmFtYXpvbmF3cy5jb20iLCJqdGkiOiI2ZDAyZDQ1MTEzODUzOTc3OTRmMmJkNjc0M2I1Nzc0MmIyNDMzYzE1Y2ZhNjEzZGNjYWYwNmNiMzUzOGY5YzJmIiwibmJmIjoxNTU3MzYzODYzLCJzYW5zIjpudWxsLCJzdWIiOiJaM1hXbFhHTlpSIn0.bP40Dk1YMQlNMK_XYVde93x53c92hCwYCsUp4tL7wrA"
 	azureToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjY2YjQxZjFlOTNmYTM5YTQzMjVkNmFhYmNlZGYwODJhZjg0NGZiMjJlZTk1NDAzYmVmOWQ0ZGNmMzcwYjcxMGUiLCJ0eXAiOiJKV1QifQ.eyJhcHBpZCI6InRoZS1hcHBpZCIsImFwcGlkYWNyIjoidGhlLWFwcGlkYWNyIiwiYXVkIjpbImh0dHBzOi8vbWFuYWdlbWVudC5henVyZS5jb20vIl0sImV4cCI6MTU1NzM0NTY1OCwiaWF0IjoxNTU3MzQ1MzU4LCJpZHAiOiJ0aGUtaWRwIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvUDg3aEFXVUUwYy8iLCJqdGkiOiJ0aGUtanRpIiwibmJmIjoxNTU3MzQ1MzU4LCJvaWQiOiJ0aGUtb2lkIiwic3ViIjoic3ViamVjdCIsInRpZCI6IlA4N2hBV1VFMGMiLCJ2ZXIiOiJ0aGUtdmVyc2lvbiIsInhtc19taXJpZCI6Ii9zdWJzY3JpcHRpb25zL3N1YnNjcmlwdGlvbklEL3Jlc291cmNlR3JvdXBzL3Jlc291cmNlR3JvdXAvcHJvdmlkZXJzL01pY3Jvc29mdC5Db21wdXRlL3ZpcnR1YWxNYWNoaW5lcy92aXJ0dWFsTWFjaGluZSJ9.U_NdLMXLztkYEn0RXYD394SiR-QpaJ8eoRFBu0FYQJ6zDflc-veAceFbLsTdihNE21zm7qYAkDqXlE0q3Y7Zdg"
 	badToken   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyeyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 )
@@ -195,31 +195,31 @@ func TestParseInsecure(t *testing.T) {
 			Claims: mustJoseClaims(awsToken),
 			Amazon: &AWSAmazonPayload{
 				Document: []byte(`{
-  "accountId": "DS0UTNDl4m",
+  "accountId": "InmBStzxvs",
   "architecture": "x86_64",
   "availabilityZone": "us-west-2b",
   "billingProducts": null,
   "devpayProductCodes": null,
-  "imageId": "ObdtWPebMR",
-  "instanceId": "edJU3umMXK",
+  "imageId": "SA4xYU1EbD",
+  "instanceId": "Z3XWlXGNZR",
   "instanceType": "t2.micro",
   "kernelId": "",
-  "pendingTime": "2019-05-08T12:56:55.817474-07:00",
+  "pendingTime": "2019-05-09T01:04:23.524669Z",
   "privateIp": "127.0.0.1",
   "ramdiskId": "",
   "region": "us-west-1",
   "version": "2017-09-30"
 }`),
-				Signature: mustBase64("K7eY1MmocLE5sxRRq9CJhw5VfmcapoiD8PgA4cnw2OEkvxH4rt6LAH53YlHoDK/GzlRkvGba7u3g/EVNB0ZzZPyLkElsEO4I92F5jggJiyMTEws2dcP+qCKC0/t8koLkqBMqDWlKSYv6KXr48fkViCK3gNi/RURl2IIfGqtNz8A="),
+				Signature: mustBase64("JnGeiivS3+ST14gEwcBA/L+GGbDrfmbZhwuOm22+lXjZ6sICxaJQhX5nlrD0keIo/f4vddOqFO8oQcGwBuayzhqRTKzpjYUphH1Q2RAPixvg/gCRdnXWJDLzHDhcMwkh+oZzENAnI9aXdxVJ8taJJTGgiDW7Aqv3+RXdn1rwbUQ="),
 				InstanceIdentityDocument: &AWSInstanceIdentityDocument{
-					AccountID:        "DS0UTNDl4m",
+					AccountID:        "InmBStzxvs",
 					Architecture:     "x86_64",
 					AvailabilityZone: "us-west-2b",
-					ImageID:          "ObdtWPebMR",
-					InstanceID:       "edJU3umMXK",
+					ImageID:          "SA4xYU1EbD",
+					InstanceID:       "Z3XWlXGNZR",
 					InstanceType:     "t2.micro",
 					KernelID:         "",
-					PendingTime:      time.Unix(1557345415, 817474000),
+					PendingTime:      time.Unix(1557363863, 524669000).UTC(),
 					PrivateIP:        "127.0.0.1",
 					RamdiskID:        "",
 					Region:           "us-west-1",
