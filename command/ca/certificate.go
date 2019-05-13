@@ -154,7 +154,7 @@ func certificateAction(ctx *cli.Context) error {
 			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
 		}
 		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
-			return errors.Errorf("token subject '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
+			return errors.Errorf("token subject '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
 	case token.OIDC: // Validate that the subject matches an email SAN
 		if len(req.CsrPEM.EmailAddresses) == 0 {
@@ -165,15 +165,15 @@ func certificateAction(ctx *cli.Context) error {
 		}
 	case token.AWS: // Validate that the subject matches the instance id
 		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
-			return errors.Errorf("token subject '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
+			return errors.Errorf("token subject '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
 	case token.GCP: // Validate that the subject matches the instance Name
 		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
-			return errors.Errorf("token google.compute_engine.instance_name '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
+			return errors.Errorf("token google.compute_engine.instance_name '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
 	case token.Azure: // Validate that the subject matches the virtual machine name
 		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
-			return errors.Errorf("token virtual machine '%s' and common name '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
+			return errors.Errorf("token virtual machine '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
 	default:
 		return errors.New("token is not supported")
