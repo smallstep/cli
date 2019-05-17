@@ -20,8 +20,8 @@ func init() {
 		Hidden: true,
 		Action: command.ActionFunc(fileServerAction),
 		Usage:  "start an HTTP(S) server serving the contents of a path",
-		UsageText: `step fileserver <root>
-		[--address=<address>] [--cert=<path>] [--key=<path>`,
+		UsageText: `step fileserver <dir>
+		[--address=<address>] [--cert=<path>] [--key=<path>]`,
 		Description: `**step fileserver** command starts an HTTP(S) server serving the contents of a file
 system.
 
@@ -29,7 +29,7 @@ This command is experimental and only intended for test purposes.
 
 ## POSITIONAL ARGUMENTS
 
-<root>
+<dir>
 : The directory used as root for the HTTP file server.
 
 ## EXAMPLES
@@ -76,7 +76,7 @@ func fileServerAction(ctx *cli.Context) error {
 		return errs.FileError(err, root)
 	}
 	if !f.Mode().IsDir() {
-		return errors.New("positional argument <root> must be a directory")
+		return errors.New("positional argument <dir> must be a directory")
 	}
 
 	address := ctx.String("address")
