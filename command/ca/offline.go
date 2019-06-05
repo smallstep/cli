@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -226,6 +227,23 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 	p, err := provisionerPrompt(ctx, provisioners)
 	if err != nil {
 		return "", err
+	}
+
+	switch p := p.(type) {
+	case *provisioner.OIDC: // Run step oauth
+		out, err := exec.Step("oauth", "--oidc", "--bare",
+			"--provider", p.ConfigurationEndpoint,
+			"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(string(out)), nil
+	case *provisioner.GCP: // Do the identity request to get the token
+		return p.GetIdentityToken(c.CaURL())
+	case *provisioner.AWS: // Do the identity request to get the token
+		return p.GetIdentityToken()
+	case *provisioner.Azure: // Do the identity request to get the token
+		return p.GetIdentityToken()
 	}
 
 	// With OIDC just run step oauth

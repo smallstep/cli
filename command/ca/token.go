@@ -352,7 +352,7 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		}
 		return strings.TrimSpace(string(out)), nil
 	case *provisioner.GCP: // Do the identity request to get the token
-		return p.GetIdentityToken()
+		return p.GetIdentityToken(caURL)
 	case *provisioner.AWS: // Do the identity request to get the token
 		return p.GetIdentityToken()
 	case *provisioner.Azure: // Do the identity request to get the token
