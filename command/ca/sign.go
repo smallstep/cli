@@ -19,7 +19,7 @@ func signCertificateCommand() cli.Command {
 		Action: command.ActionFunc(signCertificateAction),
 		Usage:  "generate a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
-		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
+		[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
@@ -52,6 +52,7 @@ $ step ca sign --offline internal internal.csr internal.crt
 '''`,
 		Flags: []cli.Flag{
 			tokenFlag,
+			provisionerIssuerFlag,
 			caURLFlag,
 			rootFlag,
 			notBeforeFlag,

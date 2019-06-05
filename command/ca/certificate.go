@@ -34,7 +34,7 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
-		[**--token**=<token>] [**--ca-url**=<uri>] [**--root**=<file>]
+		[**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--san**=<SAN>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
@@ -89,6 +89,7 @@ $ step ca certificate --token $(step oauth --oidc --bare) joe@example.com joe.cr
 '''`,
 		Flags: []cli.Flag{
 			tokenFlag,
+			provisionerIssuerFlag,
 			caURLFlag,
 			rootFlag,
 			notBeforeFlag,

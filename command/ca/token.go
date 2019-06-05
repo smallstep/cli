@@ -10,14 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/smallstep/cli/exec"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
@@ -44,7 +43,7 @@ func tokenCommand() cli.Command {
 		Action: command.ActionFunc(tokenAction),
 		Usage:  "generate an OTT granting access to the CA",
 		UsageText: `**step ca token** <subject>
-		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
+		[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<path>]
 		[**--san**=<SAN>] [**--offline**] [**--revoke**]`,
