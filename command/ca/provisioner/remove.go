@@ -1,6 +1,8 @@
 package provisioner
 
 import (
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/provisioner"
@@ -33,6 +35,25 @@ func removeCommand() cli.Command {
 				Usage: `Remove all provisioners with a given name. Cannot be
 used in combination w/ the **--kid** or **--client-id** flag.`,
 			},
+			cli.StringFlag{
+				Name: "type",
+				Usage: `The <type> of provisioner to remove. Type is a case-insensitive string
+and must be one of:
+    **JWK**
+    : Uses an JWK key pair to sign bootstrap tokens.
+
+    **OIDC**
+    : Uses an OpenID Connect provider to sign bootstrap tokens.
+
+    **AWS**
+    : Uses Amazon AWS instance identity documents.
+
+    **GCP**
+    : Use Google instance identity tokens.
+
+    **Azure**
+    : Uses Microsoft Azure identity tokens.`,
+			},
 		},
 		Description: `**step ca provisioner remove** removes one or more provisioners
 from the configuration and writes the new configuration back to the CA config.
@@ -58,6 +79,11 @@ Remove the provisioner matching a given name and a client id:
 '''
 $ step ca provisioner remove Google --ca-config ca.json \
   --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com
+'''
+
+Remove the cloud identity provisioner given name and a type:
+'''
+$ step ca provisioner remove Amazon --ca-config ca.json --type AWS
 '''`,
 	}
 }
@@ -72,6 +98,7 @@ func removeAction(ctx *cli.Context) error {
 	all := ctx.Bool("all")
 	kid := ctx.String("kid")
 	clientID := ctx.String("client-id")
+	typ := ctx.String("type")
 
 	if len(config) == 0 {
 		return errs.RequiredFlag(ctx, "ca-config")
@@ -89,8 +116,8 @@ func removeAction(ctx *cli.Context) error {
 			return errs.MutuallyExclusiveFlags(ctx, "all", "client-id")
 		}
 	} else {
-		if len(kid) == 0 && len(clientID) == 0 {
-			return errs.RequiredOrFlag(ctx, "all", "kid", "client-id")
+		if len(kid) == 0 && len(clientID) == 0 && len(typ) == 0 {
+			return errs.RequiredOrFlag(ctx, "all", "kid", "client-id", "type")
 		}
 	}
 
@@ -104,20 +131,22 @@ func removeAction(ctx *cli.Context) error {
 		found        = false
 	)
 	for _, p := range c.AuthorityConfig.Provisioners {
-		if p.GetName() != name {
+		if p.GetName() != name || !isProvisionerType(p, typ) {
 			provisioners = append(provisioners, p)
 			continue
 		}
 		if !all {
 			switch pp := p.(type) {
 			case *provisioner.JWK:
-				if kid == "" || pp.Key.KeyID != kid {
+				if kid != "" && pp.Key.KeyID != kid {
 					provisioners = append(provisioners, p)
 				}
 			case *provisioner.OIDC:
-				if clientID == "" || pp.ClientID != clientID {
+				if clientID != "" && pp.ClientID != clientID {
 					provisioners = append(provisioners, p)
 				}
+			case *provisioner.AWS, *provisioner.Azure, *provisioner.GCP:
+				// they are filtered by type
 			default:
 				continue
 			}
@@ -126,15 +155,24 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	if !found {
-		if all {
+		switch {
+		case kid != "":
+			return errors.Errorf("no provisioners with name=%s and kid=%s found", name, kid)
+		case clientID != "":
+			return errors.Errorf("no provisioners with name=%s and client-id=%s found", name, clientID)
+		case typ != "":
+			return errors.Errorf("no provisioners with name=%s and type=%s found", name, typ)
+		default:
 			return errors.Errorf("no provisioners with name %s found", name)
 		}
-		if kid != "" {
-			return errors.Errorf("no provisioners with name=%s and kid=%s found", name, kid)
-		}
-		return errors.Errorf("no provisioners with name=%s and client-id=%s found", name, clientID)
 	}
 
 	c.AuthorityConfig.Provisioners = provisioners
 	return c.Save(config)
+}
+
+// isProvisionerType returns true if p.GetType() is equal to typ. If typ is
+// empty it will always return true.
+func isProvisionerType(p provisioner.Interface, typ string) bool {
+	return typ == "" || strings.EqualFold(typ, p.GetType().String())
 }
