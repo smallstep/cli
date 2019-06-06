@@ -241,7 +241,7 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 	case *provisioner.GCP: // Do the identity request to get the token
 		return p.GetIdentityToken(c.CaURL())
 	case *provisioner.AWS: // Do the identity request to get the token
-		return p.GetIdentityToken()
+		return p.GetIdentityToken(c.CaURL())
 	case *provisioner.Azure: // Do the identity request to get the token
 		return p.GetIdentityToken()
 	}
