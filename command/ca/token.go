@@ -28,7 +28,6 @@ import (
 
 type provisionersSelect struct {
 	Name        string
-	Issuer      string
 	Provisioner provisioner.Interface
 }
 
@@ -524,65 +523,33 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		}
 	}
 
-	if len(provisioners) == 1 {
-		var name, value string
-		switch p := provisioners[0].(type) {
-		case *provisioner.JWK:
-			name = "Key ID"
-			value = p.Key.KeyID + " (" + p.Name + ")"
-		case *provisioner.OIDC:
-			name = "Client ID"
-			value = p.ClientID + " (" + p.Name + ")"
-		case *provisioner.GCP:
-			name = "Provisioner"
-			value = p.Name + " (GCP)"
-		case *provisioner.AWS:
-			name = "Provisioner"
-			value = p.Name + " (AWS)"
-		case *provisioner.Azure:
-			name = "Provisioner"
-			value = p.Name + " (Azure)"
-		default:
-			return nil, errors.Errorf("unknown provisioner type %T", p)
-		}
-
-		// Prints provisioner used
-		if err := ui.PrintSelected(name, value); err != nil {
-			return nil, err
-		}
-
-		return provisioners[0], nil
-	}
-
+	// Select provisioner
 	var items []*provisionersSelect
 	for _, prov := range provisioners {
 		switch p := prov.(type) {
 		case *provisioner.JWK:
 			items = append(items, &provisionersSelect{
-				Name:        p.Key.KeyID + " (" + p.Name + ")",
-				Issuer:      p.Name,
+				Name:        fmt.Sprintf("%s (%s) [kid: %s]", p.Name, p.GetType(), p.Key.KeyID),
 				Provisioner: p,
 			})
 		case *provisioner.OIDC:
 			items = append(items, &provisionersSelect{
-				Name:        p.ClientID + " (" + p.Name + ")",
-				Issuer:      p.Name,
+				Name:        fmt.Sprintf("%s (%s) [client: %s]", p.Name, p.GetType(), p.ClientID),
 				Provisioner: p,
 			})
 		case *provisioner.GCP:
 			items = append(items, &provisionersSelect{
-				Name:        p.Name + " (GCP)",
-				Issuer:      "https://accounts.google.com",
+				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
 				Provisioner: p,
 			})
 		case *provisioner.AWS:
 			items = append(items, &provisionersSelect{
-				Name:        p.Name + " (AWS)",
+				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
 				Provisioner: p,
 			})
 		case *provisioner.Azure:
 			items = append(items, &provisionersSelect{
-				Name:        p.Name + " (Azure)",
+				Name:        fmt.Sprintf("%s (%s) [tenant: %s]", p.Name, p.GetType(), p.TenantID),
 				Provisioner: p,
 			})
 		default:
@@ -590,7 +557,14 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		}
 	}
 
-	i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
+	if len(items) == 1 {
+		if err := ui.PrintSelected("Provisioner", items[0].Name); err != nil {
+			return nil, err
+		}
+		return items[0].Provisioner, nil
+	}
+
+	i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Provisioner")))
 	if err != nil {
 		return nil, err
 	}
