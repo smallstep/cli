@@ -10,14 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/smallstep/cli/exec"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
@@ -29,7 +28,6 @@ import (
 
 type provisionersSelect struct {
 	Name        string
-	Issuer      string
 	Provisioner provisioner.Interface
 }
 
@@ -44,7 +42,7 @@ func tokenCommand() cli.Command {
 		Action: command.ActionFunc(tokenAction),
 		Usage:  "generate an OTT granting access to the CA",
 		UsageText: `**step ca token** <subject>
-		[--**kid**=<kid>] [--**issuer**=<issuer>] [**--ca-url**=<uri>] [**--root**=<file>]
+		[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<path>]
 		[**--san**=<SAN>] [**--offline**] [**--revoke**]`,
@@ -342,8 +340,8 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		return "", err
 	}
 
-	// With OIDC just run step oauth
-	if p, ok := p.(*provisioner.OIDC); ok {
+	switch p := p.(type) {
+	case *provisioner.OIDC: // Run step oauth
 		out, err := exec.Step("oauth", "--oidc", "--bare",
 			"--provider", p.ConfigurationEndpoint,
 			"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
@@ -351,6 +349,12 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 			return "", err
 		}
 		return strings.TrimSpace(string(out)), nil
+	case *provisioner.GCP: // Do the identity request to get the token
+		return p.GetIdentityToken(caURL)
+	case *provisioner.AWS: // Do the identity request to get the token
+		return p.GetIdentityToken(caURL)
+	case *provisioner.Azure: // Do the identity request to get the token
+		return p.GetIdentityToken()
 	}
 
 	// JWK provisioner
@@ -478,7 +482,14 @@ func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string) 
 func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {
 	// Filter by type
 	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-		return p.GetType() == provisioner.TypeJWK || p.GetType() == provisioner.TypeOIDC
+		switch p.GetType() {
+		case provisioner.TypeJWK, provisioner.TypeOIDC:
+			return true
+		case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
+			return true
+		default:
+			return false
+		}
 	})
 
 	if len(provisioners) == 0 {
@@ -512,40 +523,33 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		}
 	}
 
-	if len(provisioners) == 1 {
-		var id, name string
-		switch p := provisioners[0].(type) {
-		case *provisioner.JWK:
-			name = p.Name
-			id = p.Key.KeyID
-		case *provisioner.OIDC:
-			name = p.Name
-			id = p.ClientID
-		default:
-			return nil, errors.Errorf("unknown provisioner type %T", p)
-		}
-
-		// Prints provisioner used
-		if err := ui.PrintSelected("Key ID", id+" ("+name+")"); err != nil {
-			return nil, err
-		}
-
-		return provisioners[0], nil
-	}
-
+	// Select provisioner
 	var items []*provisionersSelect
 	for _, prov := range provisioners {
 		switch p := prov.(type) {
 		case *provisioner.JWK:
 			items = append(items, &provisionersSelect{
-				Name:        p.Key.KeyID + " (" + p.Name + ")",
-				Issuer:      p.Name,
+				Name:        fmt.Sprintf("%s (%s) [kid: %s]", p.Name, p.GetType(), p.Key.KeyID),
 				Provisioner: p,
 			})
 		case *provisioner.OIDC:
 			items = append(items, &provisionersSelect{
-				Name:        p.ClientID + " (" + p.Name + ")",
-				Issuer:      p.Name,
+				Name:        fmt.Sprintf("%s (%s) [client: %s]", p.Name, p.GetType(), p.ClientID),
+				Provisioner: p,
+			})
+		case *provisioner.GCP:
+			items = append(items, &provisionersSelect{
+				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
+				Provisioner: p,
+			})
+		case *provisioner.AWS:
+			items = append(items, &provisionersSelect{
+				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
+				Provisioner: p,
+			})
+		case *provisioner.Azure:
+			items = append(items, &provisionersSelect{
+				Name:        fmt.Sprintf("%s (%s) [tenant: %s]", p.Name, p.GetType(), p.TenantID),
 				Provisioner: p,
 			})
 		default:
@@ -553,7 +557,14 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		}
 	}
 
-	i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Key ID")))
+	if len(items) == 1 {
+		if err := ui.PrintSelected("Provisioner", items[0].Name); err != nil {
+			return nil, err
+		}
+		return items[0].Provisioner, nil
+	}
+
+	i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Provisioner")))
 	if err != nil {
 		return nil, err
 	}

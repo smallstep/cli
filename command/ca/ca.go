@@ -149,7 +149,7 @@ $STEPPATH/config/ca.json`,
 	}
 
 	provisionerIssuerFlag = cli.StringFlag{
-		Name:  "issuer",
+		Name:  "issuer,provisioner",
 		Usage: "The provisioner <name> to use.",
 	}
 

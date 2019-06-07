@@ -106,6 +106,19 @@ func Step(args ...string) ([]byte, error) {
 	return out, nil
 }
 
+// Command executes the given command with it's arguments and returns the
+// standard output.
+func Command(name string, args ...string) ([]byte, error) {
+	var stderr bytes.Buffer
+	cmd := exec.Command(name, args...)
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error running %s %s:\n%s", name, strings.Join(args, " "), stderr.String())
+	}
+	return out, nil
+}
+
 func run(name string, arg ...string) (*exec.Cmd, chan int, error) {
 	cmd := exec.Command(name, arg...)
 	cmd.Stderr = os.Stderr

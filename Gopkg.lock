@@ -393,7 +393,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:74f4ddfd6c9a1663278464524f9fc1f3dde4efaa54eb14b34ffdc04a5db71438"
+  digest = "1:5bdb12667536b63c2b391ed01a9f405f435f4af3eee4abec06fff002a1030d35"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
@@ -406,19 +406,19 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "25c710c056defc5515f7ff1d4c31ff0f38a05e31"
+  revision = "578beec25d34d5cf29a3d940de0cd7d0dab51b05"
 
 [[projects]]
   branch = "master"
-  digest = "1:91df4e4fc5646c3d4d35d82804b0b89002897c1fe49915fb2d6e753103257419"
+  digest = "1:c1f5d81fb178224e211c8ea8d589b266f51bb97c48031a47ef6000365674e399"
   name = "github.com/smallstep/certinfo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "e844a799fa044497e6532dc757d4f2965c364617"
+  revision = "3e50cbc672cf9db49bd5c4bccf110a3981d7ddc5"
 
 [[projects]]
   branch = "master"
-  digest = "1:f1f1df1e19d55a1ef1f0a63633191e7d2a99993c0a17f945c0b9ebd16b17871b"
+  digest = "1:5e778214d472b6d2ad4d544d293d1478d9b222db8ffc6079623fbe3e58e1841e"
   name = "github.com/smallstep/nosql"
   packages = [
     ".",
@@ -428,7 +428,7 @@
     "mysql",
   ]
   pruneopts = "UT"
-  revision = "5a355c598075a346d9ca9b50ec10e3f86ac66148"
+  revision = "b66b34823456721912ba037126e92414690c07d6"
 
 [[projects]]
   branch = "master"
