@@ -30,7 +30,7 @@ claims (JWT, SAML assertions).
 
 These instructions will install an OS specific version of the `step` binary on
 your local machine. To build from source see [getting started with
-development](#getting-started-with-development) below.
+development](docs/local-development.md) below.
 
 ### Mac OS
 

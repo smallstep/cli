@@ -16,6 +16,7 @@ import (
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/certificates/db"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/tlsutil"
@@ -36,7 +37,16 @@ const (
 	// PublicPath is the directory name under the step path where the private keys
 	// will be stored.
 	privatePath = "secrets"
+	// DBPath is the directory name under the step path where the private keys
+	// will be stored.
+	dbPath = "db"
 )
+
+// GetDBPath returns the path where the file-system persistence is stored
+// based on the STEPPATH environment variable.
+func GetDBPath() string {
+	return filepath.Join(config.StepPath(), dbPath)
+}
 
 // GetConfigPath returns the directory where the configuration files are stored
 // based on the STEPPATH environment variable.
@@ -281,9 +291,33 @@ type caDefaults struct {
 	Root        string `json:"root"`
 }
 
+// Option is the type for modifiers over the auth config object.
+type Option func(c *authority.Config) error
+
+// WithDefaultDB is a configuration modifier that adds a default DB stanza to
+// the authority config.
+func WithDefaultDB() Option {
+	return func(c *authority.Config) error {
+		c.DB = &db.Config{
+			Type:       "badger",
+			DataSource: GetDBPath(),
+		}
+		return nil
+	}
+}
+
+// WithoutDB is a configuration modifier that adds a default DB stanza to
+// the authority config.
+func WithoutDB() Option {
+	return func(c *authority.Config) error {
+		c.DB = nil
+		return nil
+	}
+}
+
 // Save stores the pki on a json file that will be used as the certificate
 // authority configuration.
-func (p *PKI) Save() error {
+func (p *PKI) Save(opt ...Option) error {
 	p.TellPKI()
 
 	key, err := p.ottPrivateKey.CompactSerialize()
@@ -299,6 +333,10 @@ func (p *PKI) Save() error {
 		Address:          p.address,
 		DNSNames:         p.dnsNames,
 		Logger:           []byte(`{"format": "text"}`),
+		DB: &db.Config{
+			Type:       "badger",
+			DataSource: GetDBPath(),
+		},
 		AuthorityConfig: &authority.AuthConfig{
 			DisableIssuedAtCheck: false,
 			Provisioners: provisioner.List{
@@ -311,6 +349,13 @@ func (p *PKI) Save() error {
 			Renegotiation: x509util.DefaultTLSRenegotiation,
 			CipherSuites:  x509util.DefaultTLSCipherSuites,
 		},
+	}
+
+	// Apply configuration modifiers
+	for _, o := range opt {
+		if err = o(&config); err != nil {
+			return err
+		}
 	}
 
 	b, err := json.MarshalIndent(config, "", "   ")
@@ -351,6 +396,9 @@ func (p *PKI) Save() error {
 
 	ui.PrintSelected("Default configuration", p.defaults)
 	ui.PrintSelected("Certificate Authority configuration", p.config)
+	if config.DB != nil {
+		ui.PrintSelected("Database", config.DB.DataSource)
+	}
 	ui.Println()
 	ui.Println("Your PKI is ready to go. To generate certificates for individual services see 'step help ca'.")
 

@@ -22,6 +22,7 @@ import (
 	_ "github.com/smallstep/cli/command/ca"
 	_ "github.com/smallstep/cli/command/certificate"
 	_ "github.com/smallstep/cli/command/crypto"
+	_ "github.com/smallstep/cli/command/fileserver"
 	_ "github.com/smallstep/cli/command/oauth"
 	_ "github.com/smallstep/cli/command/path"
 
