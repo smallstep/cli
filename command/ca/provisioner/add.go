@@ -28,7 +28,7 @@ func addCommand() cli.Command {
 [**--configuration-endpoint**=<url>] [**--domain**=<domain>]
 [**--admin**=<email>]...
 
-**step ca provisioner add** **--type**=[AWS|Azure|GCP] **--ca-config**=<file>
+**step ca provisioner add** <name> **--type**=[AWS|Azure|GCP] **--ca-config**=<file>
 [**--aws-account**=<id>]
 [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
