@@ -372,7 +372,7 @@ func readPayload(filename string) (interface{}, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "error reading data")
 		}
-		if st.Size() == 0 {
+		if st.Size() == 0 && st.Mode()&os.ModeNamedPipe == 0 {
 			return make(map[string]interface{}), nil
 		}
 		r = os.Stdin

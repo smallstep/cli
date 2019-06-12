@@ -74,11 +74,11 @@ func ReadInput(prompt string) ([]byte, error) {
 		return nil, errors.Wrap(err, "error reading data")
 	}
 
-	if st.Size() > 0 {
-		return ReadAll(os.Stdin)
+	if st.Size() == 0 && st.Mode()&os.ModeNamedPipe == 0 {
+		return ui.PromptPassword(prompt)
 	}
 
-	return ui.PromptPassword(prompt)
+	return ReadAll(os.Stdin)
 }
 
 var _osStdin = os.Stdin
