@@ -18,6 +18,9 @@ import (
 // indicates STDIN as a file to be read.
 const stdinFilename = "-"
 
+// stdin points to os.Stdin.
+var stdin = os.Stdin
+
 // FileExists is a wrapper on os.Stat that returns false if os.Stat returns an
 // error, it returns true otherwise. This method does not care if os.Stat
 // returns any other kind of errors.
@@ -69,26 +72,24 @@ func ReadStringPasswordFromFile(filename string) (string, error) {
 // ReadInput from stdin if something is detected or ask the user for an input
 // using the given prompt.
 func ReadInput(prompt string) ([]byte, error) {
-	st, err := os.Stdin.Stat()
+	st, err := stdin.Stat()
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading data")
 	}
 
-	if st.Size() > 0 {
-		return ReadAll(os.Stdin)
+	if st.Size() == 0 && st.Mode()&os.ModeNamedPipe == 0 {
+		return ui.PromptPassword(prompt)
 	}
 
-	return ui.PromptPassword(prompt)
+	return ReadAll(stdin)
 }
-
-var _osStdin = os.Stdin
 
 // ReadFile returns the contents of the file identified by name. It reads from
 // STDIN if name is a hyphen ("-").
 func ReadFile(name string) (b []byte, err error) {
 	if name == stdinFilename {
 		name = "/dev/stdin"
-		b, err = ioutil.ReadAll(_osStdin)
+		b, err = ioutil.ReadAll(stdin)
 	} else {
 		b, err = ioutil.ReadFile(name)
 	}
