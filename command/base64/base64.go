@@ -17,7 +17,7 @@ func init() {
 	cmd := cli.Command{
 		Name:      "base64",
 		Action:    command.ActionFunc(base64Action),
-		Usage:     "encodes and decodes b64 data.",
+		Usage:     "encodes and decodes using base64 representation",
 		UsageText: `**step base64** [**-d**|**--decode**] [**-r**|**--raw**] [**-u**|**--url**]`,
 		Description: `**step base64** implements base64 encoding as specified by RFC 4648.
 
@@ -51,7 +51,9 @@ $ echo 'abc123$%^&*()_+-=~' | step base64 -u
 YWJjMTIzJCVeJiooKV8rLT1-Cg==
 '''
 
-Decode an url encoded base64 string:
+Decode an url encoded base64 string. The encoding type can be enforced
+using the '-u' or '-r' flags, but it will be autodetected if they are not
+passed:
 '''
 $ echo YWJjMTIzJCVeJiooKV8rLT1-Cg== | step base64 -d
 abc123$%^&*()_+-=~
