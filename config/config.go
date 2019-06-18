@@ -47,14 +47,12 @@ func init() {
 		}
 	}
 
-	// Check for presence or create it if necessary
+	// Check for presence or attempt to create it if necessary.
+	//
+	// Some environments (e.g. third party docker images) might fail creating
+	// the directory, so this should not panic if it can't.
 	if fi, err := os.Stat(stepPath); err != nil {
-		if err := os.MkdirAll(stepPath, 0700); err != nil {
-			if e, ok := err.(*os.PathError); ok {
-				err = e.Err
-			}
-			l.Fatalf("Error creating '%s': %s.", stepPath, err)
-		}
+		os.MkdirAll(stepPath, 0700)
 	} else if !fi.IsDir() {
 		l.Fatalf("File '%s' is not a directory.", stepPath)
 	}
