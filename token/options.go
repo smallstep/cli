@@ -40,6 +40,15 @@ func WithRootCA(path string) Options {
 	}
 }
 
+// WithSHA returns an Options function that sets the SHA claim to the given
+// value.
+func WithSHA(sum string) Options {
+	return func(c *Claims) error {
+		c.Set(RootSHAClaim, sum)
+		return nil
+	}
+}
+
 // WithSANS returns an Options function that sets the list of required SANs
 // in the token claims.
 func WithSANS(sans []string) Options {
