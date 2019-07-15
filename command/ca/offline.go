@@ -239,22 +239,11 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 		}
 		return strings.TrimSpace(string(out)), nil
 	case *provisioner.GCP: // Do the identity request to get the token
-		return p.GetIdentityToken(c.CaURL())
+		return p.GetIdentityToken(subject, c.CaURL())
 	case *provisioner.AWS: // Do the identity request to get the token
-		return p.GetIdentityToken(c.CaURL())
+		return p.GetIdentityToken(subject, c.CaURL())
 	case *provisioner.Azure: // Do the identity request to get the token
-		return p.GetIdentityToken()
-	}
-
-	// With OIDC just run step oauth
-	if p, ok := p.(*provisioner.OIDC); ok {
-		out, err := exec.Step("oauth", "--oidc", "--bare",
-			"--provider", p.ConfigurationEndpoint,
-			"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
-		if err != nil {
-			return "", err
-		}
-		return string(out), nil
+		return p.GetIdentityToken(subject, c.CaURL())
 	}
 
 	// JWK provisioner
