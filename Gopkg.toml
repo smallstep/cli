@@ -64,7 +64,7 @@ required = [
   unused-packages = true
 
 [[constraint]]
-  branch = "master"
+  branch = "iid-common-name"
   name = "github.com/smallstep/certificates"
 
 [[constraint]]
