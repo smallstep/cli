@@ -392,7 +392,7 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "iid-common-name"
+  branch = "master"
   digest = "1:12f34131d2a21014b4c0d1d3c8b99aecdc83c8e3f216a85cdad00a8e5a231586"
   name = "github.com/smallstep/certificates"
   packages = [
@@ -406,7 +406,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "3e69194cc45c650b8105e78f533789f121d6957b"
+  revision = "5356bce4d84ecbf8e3b4ff08eb3e5045b2fcec2d"
 
 [[projects]]
   branch = "master"
