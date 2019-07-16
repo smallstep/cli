@@ -410,11 +410,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c1f5d81fb178224e211c8ea8d589b266f51bb97c48031a47ef6000365674e399"
+  digest = "1:c3207093bfee46dc9f408a55408d6fa6ed59431bdeb54df2ab89ffa1d8e1bfaf"
   name = "github.com/smallstep/certinfo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "3e50cbc672cf9db49bd5c4bccf110a3981d7ddc5"
+  revision = "fef09aeb6b3b6451151ae248670cf020454c0d5b"
 
 [[projects]]
   branch = "master"
