@@ -139,7 +139,7 @@ func certificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	req, pk, err := flow.CreateSignRequest(tok, sans)
+	req, pk, err := flow.CreateSignRequest(tok, subject, sans)
 	if err != nil {
 		return err
 	}
@@ -164,18 +164,9 @@ func certificateAction(ctx *cli.Context) error {
 		if email := req.CsrPEM.EmailAddresses[0]; email != subject {
 			return errors.Errorf("token email '%s' and argument '%s' do not match", email, subject)
 		}
-	case token.AWS: // Validate that the subject matches the instance id
-		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
-			return errors.Errorf("token subject '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
-		}
-	case token.GCP: // Validate that the subject matches the instance Name
-		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
-			return errors.Errorf("token google.compute_engine.instance_name '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
-		}
-	case token.Azure: // Validate that the subject matches the virtual machine name
-		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
-			return errors.Errorf("token virtual machine '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
-		}
+	case token.AWS, token.GCP, token.Azure:
+		// Common name will be validated on the server side, it depends on
+		// server configuration.
 	default:
 		return errors.New("token is not supported")
 	}
@@ -235,20 +226,9 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, tok string) (caCl
 		return nil, errors.Wrap(err, "error parsing flag '--token'")
 	}
 	switch jwt.Payload.Type() {
-	case token.AWS:
-		instanceID := jwt.Payload.Amazon.InstanceIdentityDocument.InstanceID
-		if strings.ToLower(instanceID) != strings.ToLower(subject) {
-			return nil, errors.Errorf("token amazon.document.instanceId '%s' and CSR CommonName '%s' do not match", instanceID, subject)
-		}
-	case token.GCP:
-		instanceName := jwt.Payload.Google.ComputeEngine.InstanceName
-		if strings.ToLower(instanceName) != strings.ToLower(subject) {
-			return nil, errors.Errorf("token google.compute_engine.instance_name '%s' and CSR CommonName '%s' do not match", instanceName, subject)
-		}
-	case token.Azure:
-		if strings.ToLower(jwt.Payload.Azure.VirtualMachine) != strings.ToLower(subject) {
-			return nil, errors.Errorf("token virtual machine '%s' and CSR CommonName '%s' do not match", jwt.Payload.Azure.VirtualMachine, subject)
-		}
+	case token.AWS, token.GCP, token.Azure:
+		// Common name will be validated on the server side, it depends on
+		// server configuration.
 	default:
 		if strings.ToLower(jwt.Payload.Subject) != strings.ToLower(subject) {
 			return nil, errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", jwt.Payload.Subject, subject)
@@ -351,7 +331,7 @@ func (f *certificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 
 // CreateSignRequest is a helper function that given an x509 OTT returns a
 // simple but secure sign request as well as the private key used.
-func (f *certificateFlow) CreateSignRequest(tok string, sans []string) (*api.SignRequest, crypto.PrivateKey, error) {
+func (f *certificateFlow) CreateSignRequest(tok, subject string, sans []string) (*api.SignRequest, crypto.PrivateKey, error) {
 	jwt, err := token.ParseInsecure(tok)
 	if err != nil {
 		return nil, nil, err
@@ -368,11 +348,9 @@ func (f *certificateFlow) CreateSignRequest(tok string, sans []string) (*api.Sig
 		emails = append(emails, jwt.Payload.Email)
 	}
 
-	subject := jwt.Payload.Subject
 	switch jwt.Payload.Type() {
 	case token.AWS:
 		doc := jwt.Payload.Amazon.InstanceIdentityDocument
-		subject = doc.InstanceID
 		if len(ips) == 0 && len(dnsNames) == 0 {
 			ips = append(ips, net.ParseIP(doc.PrivateIP))
 			dnsNames = append(dnsNames,
@@ -381,7 +359,6 @@ func (f *certificateFlow) CreateSignRequest(tok string, sans []string) (*api.Sig
 		}
 	case token.GCP:
 		ce := jwt.Payload.Google.ComputeEngine
-		subject = ce.InstanceName
 		if len(dnsNames) == 0 {
 			dnsNames = append(dnsNames,
 				fmt.Sprintf("%s.c.%s.internal", ce.InstanceName, ce.ProjectID),
@@ -389,10 +366,11 @@ func (f *certificateFlow) CreateSignRequest(tok string, sans []string) (*api.Sig
 			)
 		}
 	case token.Azure:
-		subject = jwt.Payload.Azure.VirtualMachine
 		if len(dnsNames) == 0 {
 			dnsNames = append(dnsNames, jwt.Payload.Azure.VirtualMachine)
 		}
+	default: // Use common name in the token
+		subject = jwt.Payload.Subject
 	}
 
 	template := &x509.CertificateRequest{
