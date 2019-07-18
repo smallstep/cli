@@ -58,6 +58,9 @@ type ContentEncryption = jose.ContentEncryption
 // SignatureAlgorithm represents a signature (or MAC) algorithm.
 type SignatureAlgorithm = jose.SignatureAlgorithm
 
+// Signature represents a signature.
+type Signature = jose.Signature
+
 // ErrCryptoFailure indicates an error in a cryptographic primitive.
 var ErrCryptoFailure = jose.ErrCryptoFailure
 
