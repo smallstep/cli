@@ -352,22 +352,36 @@ func (f *certificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 	case token.AWS:
 		doc := jwt.Payload.Amazon.InstanceIdentityDocument
 		if len(ips) == 0 && len(dnsNames) == 0 {
-			ips = append(ips, net.ParseIP(doc.PrivateIP))
-			dnsNames = append(dnsNames,
+			defaultSANs := []string{
+				doc.PrivateIP,
 				fmt.Sprintf("ip-%s.%s.compute.internal", strings.Replace(doc.PrivateIP, ".", "-", -1), doc.Region),
-			)
+			}
+			if !sharedContext.DisableCustomSANs {
+				defaultSANs = append(defaultSANs, subject)
+			}
+			dnsNames, ips = splitSANs(defaultSANs)
 		}
 	case token.GCP:
 		ce := jwt.Payload.Google.ComputeEngine
-		if len(dnsNames) == 0 {
-			dnsNames = append(dnsNames,
+		if len(ips) == 0 && len(dnsNames) == 0 {
+			defaultSANs := []string{
 				fmt.Sprintf("%s.c.%s.internal", ce.InstanceName, ce.ProjectID),
 				fmt.Sprintf("%s.%s.c.%s.internal", ce.InstanceName, ce.Zone, ce.ProjectID),
-			)
+			}
+			if !sharedContext.DisableCustomSANs {
+				defaultSANs = append(defaultSANs, subject)
+			}
+			dnsNames, ips = splitSANs(defaultSANs)
 		}
 	case token.Azure:
-		if len(dnsNames) == 0 {
-			dnsNames = append(dnsNames, jwt.Payload.Azure.VirtualMachine)
+		if len(ips) == 0 && len(dnsNames) == 0 {
+			defaultSANs := []string{
+				jwt.Payload.Azure.VirtualMachine,
+			}
+			if !sharedContext.DisableCustomSANs {
+				defaultSANs = append(defaultSANs, subject)
+			}
+			dnsNames, ips = splitSANs(defaultSANs)
 		}
 	default: // Use common name in the token
 		subject = jwt.Payload.Subject

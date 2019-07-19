@@ -15,6 +15,11 @@ import (
 	"github.com/urfave/cli"
 )
 
+// sharedContext is used to share information between commands.
+var sharedContext = struct {
+	DisableCustomSANs bool
+}{}
+
 // init creates and registers the ca command
 func init() {
 	cmd := cli.Command{
