@@ -440,7 +440,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a269b4157cb66815858bf50ff738cc127003fa153f877eee97b99b9b3c86a3bf"
+  digest = "1:167fb96bb586d7abc0714a63d5bd30f24563d369012b295268db4d64008c4f7d"
   name = "github.com/smallstep/zcrypto"
   packages = [
     "json",
@@ -449,7 +449,7 @@
     "x509/pkix",
   ]
   pruneopts = "UT"
-  revision = "bc17bc261e409b0d18f8101b81c8d09b67155953"
+  revision = "0eaa490bf930eb2c8f1fd0dec8750619588aadae"
 
 [[projects]]
   branch = "master"

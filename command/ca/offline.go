@@ -239,10 +239,13 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 		}
 		return strings.TrimSpace(string(out)), nil
 	case *provisioner.GCP: // Do the identity request to get the token
+		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
 	case *provisioner.AWS: // Do the identity request to get the token
+		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
 	case *provisioner.Azure: // Do the identity request to get the token
+		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
 	}
 
