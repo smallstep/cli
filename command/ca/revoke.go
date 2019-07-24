@@ -180,7 +180,6 @@ attribute certificate have been compromised (reasonCode=10).
 				Usage: `The <path> to the key corresponding to the cert that should be revoked.`,
 			},
 			tokenFlag,
-			notBeforeFlag,
 			caURLFlag,
 			rootFlag,
 			offlineFlag,
