@@ -92,8 +92,8 @@ $ step ca certificate --token $(step oauth --oidc --bare) joe@example.com joe.cr
 			provisionerIssuerFlag,
 			caURLFlag,
 			rootFlag,
-			notBeforeFlag,
-			notAfterFlag,
+			notBeforeCertFlag,
+			notAfterCertFlag,
 			cli.StringSliceFlag{
 				Name: "san",
 				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
