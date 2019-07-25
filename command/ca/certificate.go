@@ -12,10 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/smallstep/certificates/authority/provisioner"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
