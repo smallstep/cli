@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"os"
+
+	"golang.org/x/crypto/ssh"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
@@ -427,7 +431,7 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 		} else {
 			p, err = x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, ctx.password, DefaultEncCipher)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to serialze to PEM")
+				return nil, errors.Wrap(err, "failed to serialize to PEM")
 			}
 		}
 	}
@@ -462,4 +466,82 @@ func ParseDER(b []byte) (interface{}, error) {
 	}
 
 	return key, nil
+}
+
+// ParseSSH parses parses a public key from an authorized_keys file used in
+// OpenSSH according to the sshd(8) manual page.
+func ParseSSH(b []byte) (interface{}, error) {
+	key, _, _, _, err := ssh.ParseAuthorizedKey(b)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing OpenSSH key")
+	}
+
+	switch key.Type() {
+	case ssh.KeyAlgoRSA:
+		var w struct {
+			Name string
+			E    *big.Int
+			N    *big.Int
+		}
+		if err := ssh.Unmarshal(key.Marshal(), &w); err != nil {
+			return nil, errors.Wrap(err, "error unmarshaling key")
+		}
+
+		if w.E.BitLen() > 24 {
+			return nil, errors.New("error unmarshaling key: exponent too large")
+		}
+		e := w.E.Int64()
+		if e < 3 || e&1 == 0 {
+			return nil, errors.New("error unmarshaling key: incorrect exponent")
+		}
+
+		key := new(rsa.PublicKey)
+		key.E = int(e)
+		key.N = w.N
+		return key, nil
+
+	case ssh.KeyAlgoECDSA256, ssh.KeyAlgoECDSA384, ssh.KeyAlgoECDSA521:
+		var w struct {
+			Name     string
+			ID       string
+			KeyBytes []byte
+		}
+		if err := ssh.Unmarshal(key.Marshal(), &w); err != nil {
+			return nil, errors.Wrap(err, "error unmarshaling key")
+		}
+
+		key := new(ecdsa.PublicKey)
+		switch w.Name {
+		case ssh.KeyAlgoECDSA256:
+			key.Curve = elliptic.P256()
+		case ssh.KeyAlgoECDSA384:
+			key.Curve = elliptic.P384()
+		case ssh.KeyAlgoECDSA521:
+			key.Curve = elliptic.P521()
+		default:
+			return nil, errors.Errorf("unsupported ecdsa curve %s", w.Name)
+		}
+
+		key.X, key.Y = elliptic.Unmarshal(key.Curve, w.KeyBytes)
+		if key.X == nil || key.Y == nil {
+			return nil, errors.New("invalid ecdsa curve point")
+		}
+		return key, nil
+
+	case ssh.KeyAlgoED25519:
+		var w struct {
+			Name     string
+			KeyBytes []byte
+		}
+		if err := ssh.Unmarshal(key.Marshal(), &w); err != nil {
+			return nil, errors.Wrap(err, "error unmarshaling key")
+		}
+		return ed25519.PublicKey(w.KeyBytes), nil
+
+	case ssh.KeyAlgoDSA:
+		return nil, errors.Errorf("step does not support DSA keys")
+
+	default:
+		return nil, errors.Errorf("unsupported key type %T", key)
+	}
 }
