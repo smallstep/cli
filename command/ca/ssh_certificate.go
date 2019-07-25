@@ -37,6 +37,17 @@ var (
 		Name:  "sign",
 		Usage: `Sign the public key passed as an argument instead of creating one.`,
 	}
+
+	sshPasswordFileFlag = cli.StringFlag{
+		Name:  "password-file",
+		Usage: `The path to the <file> containing the password to encrypt the private key.`,
+	}
+
+	sshProvisionerPasswordFlag = cli.StringFlag{
+		Name: "provisioner-password-file",
+		Usage: `The path to the <file> containing the password to decrypt the one-time token
+		generating key.`,
+	}
 )
 
 func sshCertificateCommand() cli.Command {
@@ -129,11 +140,15 @@ $ step ca ssh-certificate --token $TOKEN mariano@work id_ecdsa
 			sshSignFlag,
 			notBeforeCertFlag,
 			notAfterCertFlag,
+			sshPasswordFileFlag,
 			provisionerIssuerFlag,
+			sshProvisionerPasswordFlag,
 			caURLFlag,
 			rootFlag,
 			offlineFlag,
 			caConfigFlag,
+			flags.NoPassword,
+			flags.Insecure,
 			flags.Force,
 		},
 	}
@@ -156,9 +171,34 @@ func sshCertificateAction(ctx *cli.Context) error {
 	isHost := ctx.Bool("host")
 	isSign := ctx.Bool("sign")
 	principals := ctx.StringSlice("principal")
+	passwordFile := ctx.String("password-file")
+	provisionerPasswordFile := ctx.String("provisioner-password-file")
+	noPassword := ctx.Bool("no-password")
+	insecure := ctx.Bool("insecure")
 	validAfter, validBefore, err := parseTimeDuration(ctx)
 	if err != nil {
 		return err
+	}
+
+	// Hack to make the flag "password-file" the content of
+	// "provisioner-password-file" so the token command works as expected
+	ctx.Set("password-file", provisionerPasswordFile)
+
+	// Validation
+	switch {
+	case noPassword && !insecure:
+		return errs.RequiredInsecureFlag(ctx, "no-password")
+	case noPassword && passwordFile != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "password-file")
+	case token != "" && provisionerPasswordFile != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "token", "provisioner-password-file")
+	}
+
+	var certType string
+	if isHost {
+		certType = provisioner.SSHHostCert
+	} else {
+		certType = provisioner.SSHUserCert
 	}
 
 	// If we are signing a public key, get the proper name for the certificate
@@ -175,14 +215,6 @@ func sshCertificateAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-
-	var certType string
-	if isHost {
-		certType = provisioner.SSHHostCert
-	} else {
-		certType = provisioner.SSHUserCert
-	}
-
 	if len(token) == 0 {
 		if token, err = flow.GenerateSSHToken(ctx, subject, certType, principals); err != nil {
 			return err
@@ -238,17 +270,32 @@ func sshCertificateAction(ctx *cli.Context) error {
 		if err := utils.WriteFile(pubFile, marshalPublicKey(sshPub, subject), 0644); err != nil {
 			return err
 		}
-		ui.PrintSelected("Public Key", pubFile)
 
-		_, err = pemutil.Serialize(priv, pemutil.ToFile(keyFile, 0600))
+		// Private key (with password unless --no-password --insecure)
+		opts := []pemutil.Options{
+			pemutil.ToFile(keyFile, 0600),
+		}
+		switch {
+		case noPassword && insecure:
+		case passwordFile != "":
+			opts = append(opts, pemutil.WithPasswordFile(passwordFile))
+		default:
+			opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key"))
+		}
+		_, err = pemutil.Serialize(priv, opts...)
 		if err != nil {
 			return err
 		}
-		ui.PrintSelected("Private Key", keyFile)
 	}
 
+	// Write certificate
 	if err := utils.WriteFile(crtFile, marshalPublicKey(resp.Certificate, subject), 0644); err != nil {
 		return err
+	}
+
+	if !isSign {
+		ui.PrintSelected("Public Key", pubFile)
+		ui.PrintSelected("Private Key", keyFile)
 	}
 	ui.PrintSelected("Certificate", crtFile)
 
