@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/smallstep/certificates/authority/provisioner"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/ca"
@@ -290,6 +292,48 @@ func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 	}
 
 	return newTokenFlow(ctx, signType, subject, sans, caURL, root, time.Time{}, time.Time{})
+}
+
+func (f *certificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, principals []string) (string, error) {
+	var certType int
+	switch ctx.String("type") {
+	case provisioner.SSHUserCert:
+		certType = sshUserSignType
+	case provisioner.SSHHostCert:
+		certType = sshHostSignType
+	case "":
+		return "", errs.RequiredFlag(ctx, "type")
+	default:
+		return "", errs.InvalidFlagValue(ctx, "type", ctx.String("type"), "user or host")
+	}
+
+	if f.offline {
+		return f.offlineCA.GenerateToken(ctx, certType, subject, principals, time.Time{}, time.Time{})
+	}
+
+	// Use online CA to get the provisioners and generate the token
+	caURL := ctx.String("ca-url")
+	if len(caURL) == 0 {
+		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
+	}
+
+	root := ctx.String("root")
+	if len(root) == 0 {
+		root = pki.GetRootCAPath()
+		if _, err := os.Stat(root); err != nil {
+			return "", errs.RequiredUnlessFlag(ctx, "root", "token")
+		}
+	}
+
+	var err error
+	if subject == "" {
+		subject, err = ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return newTokenFlow(ctx, certType, subject, principals, caURL, root, time.Time{}, time.Time{})
 }
 
 // Sign signs the CSR using the online or the offline certificate authority.

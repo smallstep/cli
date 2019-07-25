@@ -34,6 +34,8 @@ type provisionersSelect struct {
 const (
 	signType = iota
 	revokeType
+	sshUserSignType
+	sshHostSignType
 )
 
 func tokenCommand() cli.Command {
@@ -260,7 +262,7 @@ func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 		var path string
 		switch tokType {
 		// default
-		case signType:
+		case signType, sshUserSignType, sshHostSignType:
 			path = "/1.0/sign"
 		// revocation token
 		case revokeType:
@@ -278,7 +280,7 @@ func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 
 // generateToken generates a provisioning or bootstrap token with the given
 // parameters.
-func generateToken(typ int, sub string, sans []string, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
+func generateToken(ctx *cli.Context, typ int, sub string, sans []string, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
 	// A random jwt id will be used to identify duplicated tokens
 	jwtID, err := randutil.Hex(64) // 256 bits
 	if err != nil {
@@ -295,13 +297,38 @@ func generateToken(typ int, sub string, sans []string, kid, iss, aud, root strin
 		tokOptions = append(tokOptions, token.WithRootCA(root))
 	}
 
+	// Get validAfter and validBefore from --not-before and --not-after
+	// flags only when the certificate flow is used (token notBefore and
+	// notAfter is set to zero)
+	var validAfter, validBefore provisioner.TimeDuration
+	if notBefore.IsZero() && notAfter.IsZero() {
+		if validAfter, validBefore, err = parseTimeDuration(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	switch typ {
 	// If 'sign' token then add SANs.
-	if typ == signType {
+	case signType:
 		// If there are no SANs then add the 'subject' (common-name) as the only SAN.
 		if len(sans) == 0 {
 			sans = []string{sub}
 		}
 		tokOptions = append(tokOptions, token.WithSANS(sans))
+	case sshUserSignType:
+		tokOptions = append(tokOptions, token.WithSSH(provisioner.SSHOptions{
+			CertType:    provisioner.SSHUserCert,
+			Principals:  sans,
+			ValidAfter:  validAfter,
+			ValidBefore: validBefore,
+		}))
+	case sshHostSignType:
+		tokOptions = append(tokOptions, token.WithSSH(provisioner.SSHOptions{
+			CertType:    provisioner.SSHUserCert,
+			Principals:  sans,
+			ValidAfter:  validAfter,
+			ValidBefore: validBefore,
+		}))
 	}
 
 	if !notBefore.IsZero() || !notAfter.IsZero() {
@@ -404,7 +431,7 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		}
 	}
 
-	return generateToken(typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	return generateToken(ctx, typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }
 
 // offlineTokenFlow generates a provisioning token using either
@@ -479,7 +506,7 @@ func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string) 
 		kid = base64.RawURLEncoding.EncodeToString(hash)
 	}
 
-	return generateToken(typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	return generateToken(ctx, typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }
 
 func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {

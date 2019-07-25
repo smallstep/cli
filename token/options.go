@@ -58,6 +58,22 @@ func WithSANS(sans []string) Options {
 	}
 }
 
+// WithStep returns an Options function that sets the step claim in the payload.
+func WithStep(v interface{}) Options {
+	return func(c *Claims) error {
+		c.Set(StepClaim, v)
+		return nil
+	}
+}
+
+// WithSSH returns an Options function that sets the step claim with the ssh
+// property in the value.
+func WithSSH(v interface{}) Options {
+	return WithStep(map[string]interface{}{
+		"ssh": v,
+	})
+}
+
 // WithValidity validates boundary inputs and sets the 'nbf' (NotBefore) and
 // 'exp' (expiration) options.
 func WithValidity(notBefore, expiration time.Time) Options {

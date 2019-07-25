@@ -31,6 +31,9 @@ const RootSHAClaim = "sha"
 // SANSClaim is the property name for a JWT claim that stores the list of required subject alternative names.
 const SANSClaim = "sans"
 
+// StepClaim is the property name for a JWT claim the stores the custom information in the certificate.
+const StepClaim = "step"
+
 // Token interface which all token types should attempt to implement.
 type Token interface {
 	SignedString(sigAlg string, priv interface{}) (string, error)

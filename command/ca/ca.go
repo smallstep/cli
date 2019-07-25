@@ -87,6 +87,7 @@ $ step ca renew internal.crt internal.key \
 			rootComand(),
 			rootsCommand(),
 			federationCommand(),
+			sshCertificateCommand(),
 		},
 	}
 

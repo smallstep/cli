@@ -508,7 +508,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:92e6039249b009932cb9f850f7e043412c8d3377e85f873d98f18937ad919add"
+  digest = "1:4727c544d8ef43187b76a977b0b9e3a53474b354f824327374cc6a90db60c351"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
@@ -520,6 +520,7 @@
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
+    "internal/chacha20",
     "internal/subtle",
     "nacl/auth",
     "nacl/box",
@@ -530,6 +531,7 @@
     "poly1305",
     "salsa20/salsa",
     "scrypt",
+    "ssh",
     "ssh/terminal",
   ]
   pruneopts = "UT"
@@ -686,6 +688,7 @@
     "golang.org/x/crypto/ocsp",
     "golang.org/x/crypto/pbkdf2",
     "golang.org/x/crypto/scrypt",
+    "golang.org/x/crypto/ssh",
     "golang.org/x/net/html",
     "gopkg.in/square/go-jose.v2",
     "gopkg.in/square/go-jose.v2/jwt",

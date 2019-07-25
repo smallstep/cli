@@ -25,6 +25,7 @@ import (
 
 type caClient interface {
 	Sign(req *api.SignRequest) (*api.SignResponse, error)
+	SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error)
 	Renew(tr http.RoundTripper) (*api.SignResponse, error)
 	Revoke(req *api.RevokeRequest, tr http.RoundTripper) (*api.RevokeResponse, error)
 }
@@ -159,6 +160,11 @@ func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 	}, nil
 }
 
+// SignSSH is a wrapper on top of certificate Authorize and SignSSH methods.
+func (c *offlineCA) SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error) {
+	return nil, errors.New("offline sign ssh is not implemented")
+}
+
 // Renew is a wrapper on top of certificates Renew method. It returns an
 // api.SignResponse with the requested certificate and the intermediate.
 func (c *offlineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
@@ -281,5 +287,5 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 		return "", errors.Wrap(err, "error unmarshalling provisioning key")
 	}
 
-	return generateToken(typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	return generateToken(ctx, typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
 }

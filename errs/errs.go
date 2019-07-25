@@ -83,6 +83,21 @@ func NumberOfArguments(ctx *cli.Context, required int) error {
 	}
 }
 
+// MinMaxNumberOfArguments returns nil if the number of positional arguments
+// between the min/max range. It will return an appropriate error if they are
+// not.
+func MinMaxNumberOfArguments(ctx *cli.Context, min, max int) error {
+	n := ctx.NArg()
+	switch {
+	case n < min:
+		return TooFewArguments(ctx)
+	case n > max:
+		return TooManyArguments(ctx)
+	default:
+		return nil
+	}
+}
+
 // TooFewArguments returns an error with a few arguments were provided message.
 func TooFewArguments(ctx *cli.Context) error {
 	return errors.Errorf("not enough positional arguments were provided in '%s'", usage(ctx))
