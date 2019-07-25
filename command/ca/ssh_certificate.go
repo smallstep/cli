@@ -23,7 +23,7 @@ func sshCertificateCommand() cli.Command {
 		Name:        "ssh-certificate",
 		Action:      command.ActionFunc(sshCertificateAction),
 		Usage:       "sign an ssh certificate",
-		UsageText:   `**step ca ssh-certificate** <key-id> <keyFile>`,
+		UsageText:   `**step ca ssh-certificate** <key-id> <key-file>`,
 		Description: `**step ca ssh-certificate** command ...`,
 		Flags: []cli.Flag{
 			tokenFlag,
@@ -45,6 +45,10 @@ func sshCertificateCommand() cli.Command {
 			cli.BoolFlag{
 				Name:  "host",
 				Usage: `Create a host certificate instead of a user certificate.`,
+			},
+			cli.BoolFlag{
+				Name:  "sign",
+				Usage: `Sign the public key passed as an argument instead of creating one.`,
 			},
 			notBeforeCertFlag,
 			notAfterCertFlag,
@@ -73,12 +77,19 @@ func sshCertificateAction(ctx *cli.Context) error {
 	// Flags
 	token := ctx.String("token")
 	isHost := ctx.Bool("host")
+	isSign := ctx.Bool("sign")
 	principals := ctx.StringSlice("principal")
 	validAfter, validBefore, err := parseTimeDuration(ctx)
 	if err != nil {
 		return err
 	}
 
+	// If we are signing a public key, get the proper name for the certificate
+	if isSign && strings.HasSuffix(keyFile, ".pub") {
+		crtFile = keyFile[:len(keyFile)-4] + "-cert.pub"
+	}
+
+	// By default use the first part of the subject as a principal
 	if len(principals) == 0 {
 		principals = append(principals, sanitizeUsername(subject))
 	}
@@ -106,14 +117,31 @@ func sshCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	pub, priv, err := keys.GenerateDefaultKeyPair()
-	if err != nil {
-		return err
-	}
+	var sshPub ssh.PublicKey
+	var pub, priv interface{}
 
-	sshPub, err := ssh.NewPublicKey(pub)
-	if err != nil {
-		return errors.Wrap(err, "error creating public key")
+	if isSign {
+		// Used given public key
+		in, err := utils.ReadFile(keyFile)
+		if err != nil {
+			return err
+		}
+
+		sshPub, _, _, _, err = ssh.ParseAuthorizedKey(in)
+		if err != nil {
+			return errors.Wrap(err, "error parsing public key")
+		}
+	} else {
+		// Generate keypair
+		pub, priv, err = keys.GenerateDefaultKeyPair()
+		if err != nil {
+			return err
+		}
+
+		sshPub, err = ssh.NewPublicKey(pub)
+		if err != nil {
+			return errors.Wrap(err, "error creating public key")
+		}
 	}
 
 	resp, err := caClient.SignSSH(&api.SignSSHRequest{
@@ -129,23 +157,23 @@ func sshCertificateAction(ctx *cli.Context) error {
 	}
 
 	// Write files
-	if err := utils.WriteFile(crtFile, marshalPublicKey(resp.Certificate, subject), 0644); err != nil {
-		return err
-	}
-	ui.PrintSelected("Certificate", crtFile)
-
-	if pubFile != "" {
+	if !isSign {
 		if err := utils.WriteFile(pubFile, marshalPublicKey(sshPub, subject), 0644); err != nil {
 			return err
 		}
 		ui.PrintSelected("Public Key", pubFile)
+
+		_, err = pemutil.Serialize(priv, pemutil.ToFile(keyFile, 0600))
+		if err != nil {
+			return err
+		}
+		ui.PrintSelected("Private Key", keyFile)
 	}
 
-	_, err = pemutil.Serialize(priv, pemutil.ToFile(keyFile, 0600))
-	if err != nil {
+	if err := utils.WriteFile(crtFile, marshalPublicKey(resp.Certificate, subject), 0644); err != nil {
 		return err
 	}
-	ui.PrintSelected("Private Key", keyFile)
+	ui.PrintSelected("Certificate", crtFile)
 
 	return nil
 }
