@@ -324,7 +324,7 @@ func generateToken(ctx *cli.Context, typ int, sub string, sans []string, kid, is
 		}))
 	case sshHostSignType:
 		tokOptions = append(tokOptions, token.WithSSH(provisioner.SSHOptions{
-			CertType:    provisioner.SSHUserCert,
+			CertType:    provisioner.SSHHostCert,
 			Principals:  sans,
 			ValidAfter:  validAfter,
 			ValidBefore: validBefore,
