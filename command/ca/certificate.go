@@ -294,21 +294,19 @@ func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 	return newTokenFlow(ctx, signType, subject, sans, caURL, root, time.Time{}, time.Time{})
 }
 
-func (f *certificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, principals []string) (string, error) {
-	var certType int
-	switch ctx.String("type") {
+func (f *certificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType string, principals []string) (string, error) {
+	var typ int
+	switch certType {
 	case provisioner.SSHUserCert:
-		certType = sshUserSignType
+		typ = sshUserSignType
 	case provisioner.SSHHostCert:
-		certType = sshHostSignType
-	case "":
-		return "", errs.RequiredFlag(ctx, "type")
+		typ = sshHostSignType
 	default:
-		return "", errs.InvalidFlagValue(ctx, "type", ctx.String("type"), "user or host")
+		return "", errors.Errorf("unsupported cert type %s", certType)
 	}
 
 	if f.offline {
-		return f.offlineCA.GenerateToken(ctx, certType, subject, principals, time.Time{}, time.Time{})
+		return f.offlineCA.GenerateToken(ctx, typ, subject, principals, time.Time{}, time.Time{})
 	}
 
 	// Use online CA to get the provisioners and generate the token
@@ -333,7 +331,7 @@ func (f *certificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, pri
 		}
 	}
 
-	return newTokenFlow(ctx, certType, subject, principals, caURL, root, time.Time{}, time.Time{})
+	return newTokenFlow(ctx, typ, subject, principals, caURL, root, time.Time{}, time.Time{})
 }
 
 // Sign signs the CSR using the online or the offline certificate authority.
