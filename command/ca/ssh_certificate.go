@@ -2,7 +2,12 @@ package ca
 
 import (
 	"bytes"
+	"net"
+	"os"
 	"strings"
+
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -15,7 +20,6 @@ import (
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
-	"golang.org/x/crypto/ssh"
 )
 
 var (
@@ -299,6 +303,13 @@ func sshCertificateAction(ctx *cli.Context) error {
 	}
 	ui.PrintSelected("Certificate", crtFile)
 
+	// Attempt to add key to agent
+	if err := sshAddKeyToAgent(subject, resp.Certificate.Certificate, priv); err != nil {
+		ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
+	} else {
+		ui.PrintSelected("SSH Agent", "yes")
+	}
+
 	return nil
 }
 
@@ -315,4 +326,18 @@ func marshalPublicKey(key ssh.PublicKey, subject string) []byte {
 		return append(b[:i], []byte(" "+subject+"\n")...)
 	}
 	return append(b, []byte(" "+subject+"\n")...)
+}
+
+func sshAddKeyToAgent(subject string, cert *ssh.Certificate, priv interface{}) error {
+	socket := os.Getenv("SSH_AUTH_SOCK")
+	conn, err := net.Dial("unix", socket)
+	if err != nil {
+		return errors.Wrap(err, "error connecting with ssh-agent")
+	}
+	client := agent.NewClient(conn)
+	return errors.Wrap(client.Add(agent.AddedKey{
+		PrivateKey:  priv,
+		Certificate: cert,
+		Comment:     subject,
+	}), "error adding key to agent")
 }
