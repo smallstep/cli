@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/ssh"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority"
@@ -160,9 +162,32 @@ func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 	}, nil
 }
 
-// SignSSH is a wrapper on top of certificate Authorize and SignSSH methods.
+// SignSSH is a wrapper on top of certificate Authorize and SignSSH methods. It
+// returns an api.SignSSHResponse with the signed certificate.
 func (c *offlineCA) SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error) {
-	return nil, errors.New("offline sign ssh is not implemented")
+	publicKey, err := ssh.ParsePublicKey(req.PublicKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing publicKey")
+	}
+	opts, err := c.authority.Authorize(req.OTT)
+	if err != nil {
+		return nil, err
+	}
+	signOpts := provisioner.SSHOptions{
+		CertType:    req.CertType,
+		Principals:  req.Principals,
+		ValidAfter:  req.ValidAfter,
+		ValidBefore: req.ValidBefore,
+	}
+	cert, err := c.authority.SignSSH(publicKey, signOpts, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &api.SignSSHResponse{
+		Certificate: api.SSHCertificate{
+			Certificate: cert,
+		},
+	}, nil
 }
 
 // Renew is a wrapper on top of certificates Renew method. It returns an
