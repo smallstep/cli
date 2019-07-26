@@ -392,8 +392,8 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "master"
-  digest = "1:12f34131d2a21014b4c0d1d3c8b99aecdc83c8e3f216a85cdad00a8e5a231586"
+  branch = "ssh-ca"
+  digest = "1:f241ed75261754f9d01d05e25ef172a0e7e27d852a343279bfa0beb2ed7bd381"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
@@ -406,7 +406,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "5356bce4d84ecbf8e3b4ff08eb3e5045b2fcec2d"
+  revision = "1c8f610ca9c4033991d395a430f630786774396a"
 
 [[projects]]
   branch = "master"
