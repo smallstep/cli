@@ -267,10 +267,6 @@ func sshCertificateAction(ctx *cli.Context) error {
 
 	// Write files
 	if !isSign {
-		if err := utils.WriteFile(pubFile, marshalPublicKey(sshPub, subject), 0644); err != nil {
-			return err
-		}
-
 		// Private key (with password unless --no-password --insecure)
 		opts := []pemutil.Options{
 			pemutil.ToFile(keyFile, 0600),
@@ -286,6 +282,10 @@ func sshCertificateAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
+
+		if err := utils.WriteFile(pubFile, marshalPublicKey(sshPub, subject), 0644); err != nil {
+			return err
+		}
 	}
 
 	// Write certificate
@@ -294,8 +294,8 @@ func sshCertificateAction(ctx *cli.Context) error {
 	}
 
 	if !isSign {
-		ui.PrintSelected("Public Key", pubFile)
 		ui.PrintSelected("Private Key", keyFile)
+		ui.PrintSelected("Public Key", pubFile)
 	}
 	ui.PrintSelected("Certificate", crtFile)
 
