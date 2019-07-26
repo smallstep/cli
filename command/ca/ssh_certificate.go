@@ -216,7 +216,7 @@ func sshCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 	if len(token) == 0 {
-		if token, err = flow.GenerateSSHToken(ctx, subject, certType, principals); err != nil {
+		if token, err = flow.GenerateSSHToken(ctx, subject, certType, principals, validAfter, validBefore); err != nil {
 			return err
 		}
 	}

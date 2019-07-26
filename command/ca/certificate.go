@@ -265,7 +265,7 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, tok string) (caCl
 // token flow or the online mode.
 func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
 	if f.offline {
-		return f.offlineCA.GenerateToken(ctx, signType, subject, sans, time.Time{}, time.Time{})
+		return f.offlineCA.GenerateToken(ctx, signType, subject, sans, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 	}
 
 	// Use online CA to get the provisioners and generate the token
@@ -290,10 +290,10 @@ func (f *certificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 		}
 	}
 
-	return newTokenFlow(ctx, signType, subject, sans, caURL, root, time.Time{}, time.Time{})
+	return newTokenFlow(ctx, signType, subject, sans, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 }
 
-func (f *certificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType string, principals []string) (string, error) {
+func (f *certificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType string, principals []string, validAfter, validBefore provisioner.TimeDuration) (string, error) {
 	var typ int
 	switch certType {
 	case provisioner.SSHUserCert:
@@ -305,7 +305,7 @@ func (f *certificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType s
 	}
 
 	if f.offline {
-		return f.offlineCA.GenerateToken(ctx, typ, subject, principals, time.Time{}, time.Time{})
+		return f.offlineCA.GenerateToken(ctx, typ, subject, principals, time.Time{}, time.Time{}, validAfter, validBefore)
 	}
 
 	// Use online CA to get the provisioners and generate the token
@@ -330,7 +330,7 @@ func (f *certificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType s
 		}
 	}
 
-	return newTokenFlow(ctx, typ, subject, principals, caURL, root, time.Time{}, time.Time{})
+	return newTokenFlow(ctx, typ, subject, principals, caURL, root, time.Time{}, time.Time{}, validAfter, validBefore)
 }
 
 // Sign signs the CSR using the online or the offline certificate authority.

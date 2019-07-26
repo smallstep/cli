@@ -222,7 +222,7 @@ func (c *offlineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 }
 
 // GenerateToken creates the token used by the authority to authorize requests.
-func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time) (string, error) {
+func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	// Use ca.json configuration for the root and audience
 	root := c.Root()
 	audience := c.Audience(typ)
@@ -287,5 +287,18 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 		return "", errors.Wrap(err, "error unmarshalling provisioning key")
 	}
 
-	return generateToken(ctx, typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	// Generate token
+	tokenGen := newTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
+	switch typ {
+	case signType:
+		return tokenGen.SignToken(subject, sans)
+	case revokeType:
+		return tokenGen.RevokeToken(subject)
+	case sshUserSignType:
+		return tokenGen.SignSSHToken(subject, provisioner.SSHUserCert, sans, certNotBefore, certNotAfter)
+	case sshHostSignType:
+		return tokenGen.SignSSHToken(subject, provisioner.SSHHostCert, sans, certNotBefore, certNotAfter)
+	default:
+		return tokenGen.Token(subject)
+	}
 }

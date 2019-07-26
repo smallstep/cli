@@ -11,16 +11,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pki"
-	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
-	"github.com/smallstep/cli/token"
-	"github.com/smallstep/cli/token/provision"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -39,6 +37,12 @@ const (
 )
 
 func tokenCommand() cli.Command {
+	// Avoid the conflict with --not-before --not-after
+	certNotBeforeFlag := notBeforeCertFlag
+	certNotAfterFlag := notAfterCertFlag
+	certNotBeforeFlag.Name = "cert-not-before"
+	certNotAfterFlag.Name = "cert-not-after"
+
 	return cli.Command{
 		Name:   "token",
 		Action: command.ActionFunc(tokenAction),
@@ -176,6 +180,14 @@ requires the flags <--ca-config> or <--kid>, <--issuer>, <--key>, <--ca-url>, an
 				Usage: `Create a token for authorizing 'Revoke' requests. The audience will
 be invalid for any other API request.`,
 			},
+			cli.BoolFlag{
+				Name:  "ssh",
+				Usage: `Create a token for authorizing an SSH certificate signing request.`,
+			},
+			sshPrincipalFlag,
+			sshHostFlag,
+			certNotBeforeFlag,
+			certNotAfterFlag,
 			caConfigFlag,
 			flags.Force,
 		},
@@ -190,12 +202,42 @@ func tokenAction(ctx *cli.Context) error {
 	subject := ctx.Args().Get(0)
 	outputFile := ctx.String("output-file")
 	offline := ctx.Bool("offline")
+	// x.509 flags
 	sans := ctx.StringSlice("san")
+	isRevoke := ctx.Bool("revoke")
+	// ssh flags
+	isSSH := ctx.Bool("ssh")
+	isHost := ctx.Bool("host")
+	principals := ctx.StringSlice("principal")
+
+	switch {
+	case isSSH && isRevoke:
+		return errs.IncompatibleFlagWithFlag(ctx, "ssh", "revoke")
+	case isSSH && len(sans) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "ssh", "san")
+	case isHost && len(sans) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "host", "san")
+	case len(principals) > 0 && len(sans) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "principal", "san")
+	case !isSSH && isHost:
+		return errs.RequiredWithFlag(ctx, "host", "ssh")
+	case !isSSH && len(principals) > 0:
+		return errs.RequiredWithFlag(ctx, "principal", "ssh")
+	}
 
 	// Default token type is always a 'Sign' token.
-	typ := signType
-	if ctx.Bool("revoke") {
+	var typ int
+	switch {
+	case isSSH && isHost:
+		typ = sshHostSignType
+		sans = principals
+	case isSSH && !isHost:
+		typ = sshUserSignType
+		sans = principals
+	case isRevoke:
 		typ = revokeType
+	default:
+		typ = signType
 	}
 
 	caURL := ctx.String("ca-url")
@@ -226,15 +268,24 @@ func tokenAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 
-	var err error
+	// parse certificates durations
+	certNotBefore, err := api.ParseTimeDuration(ctx.String("cert-not-before"))
+	if err != nil {
+		return errs.InvalidFlagValue(ctx, "cert-not-before", ctx.String("cert-not-before"), "")
+	}
+	certNotAfter, err := api.ParseTimeDuration(ctx.String("cert-not-after"))
+	if err != nil {
+		return errs.InvalidFlagValue(ctx, "cert-not-after", ctx.String("cert-not-after"), "")
+	}
+
 	var token string
 	if offline {
-		token, err = offlineTokenFlow(ctx, typ, subject, sans)
+		token, err = offlineTokenFlow(ctx, typ, subject, sans, notBefore, notAfter, certNotBefore, certNotAfter)
 		if err != nil {
 			return err
 		}
 	} else {
-		token, err = newTokenFlow(ctx, typ, subject, sans, caURL, root, notBefore, notAfter)
+		token, err = newTokenFlow(ctx, typ, subject, sans, caURL, root, notBefore, notAfter, certNotBefore, certNotAfter)
 		if err != nil {
 			return err
 		}
@@ -278,79 +329,8 @@ func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 	}
 }
 
-// generateToken generates a provisioning or bootstrap token with the given
-// parameters.
-func generateToken(ctx *cli.Context, typ int, sub string, sans []string, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
-	// A random jwt id will be used to identify duplicated tokens
-	jwtID, err := randutil.Hex(64) // 256 bits
-	if err != nil {
-		return "", err
-	}
-
-	tokOptions := []token.Options{
-		token.WithJWTID(jwtID),
-		token.WithKid(kid),
-		token.WithIssuer(iss),
-		token.WithAudience(aud),
-	}
-	if len(root) > 0 {
-		tokOptions = append(tokOptions, token.WithRootCA(root))
-	}
-
-	// Get validAfter and validBefore from --not-before and --not-after
-	// flags only when the certificate flow is used (token notBefore and
-	// notAfter is set to zero)
-	var validAfter, validBefore provisioner.TimeDuration
-	if notBefore.IsZero() && notAfter.IsZero() {
-		if validAfter, validBefore, err = parseTimeDuration(ctx); err != nil {
-			return "", err
-		}
-	}
-
-	switch typ {
-	// If 'sign' token then add SANs.
-	case signType:
-		// If there are no SANs then add the 'subject' (common-name) as the only SAN.
-		if len(sans) == 0 {
-			sans = []string{sub}
-		}
-		tokOptions = append(tokOptions, token.WithSANS(sans))
-	case sshUserSignType:
-		tokOptions = append(tokOptions, token.WithSSH(provisioner.SSHOptions{
-			CertType:    provisioner.SSHUserCert,
-			Principals:  sans,
-			ValidAfter:  validAfter,
-			ValidBefore: validBefore,
-		}))
-	case sshHostSignType:
-		tokOptions = append(tokOptions, token.WithSSH(provisioner.SSHOptions{
-			CertType:    provisioner.SSHHostCert,
-			Principals:  sans,
-			ValidAfter:  validAfter,
-			ValidBefore: validBefore,
-		}))
-	}
-
-	if !notBefore.IsZero() || !notAfter.IsZero() {
-		if notBefore.IsZero() {
-			notBefore = time.Now()
-		}
-		if notAfter.IsZero() {
-			notAfter = notBefore.Add(token.DefaultValidity)
-		}
-		tokOptions = append(tokOptions, token.WithValidity(notBefore, notAfter))
-	}
-
-	tok, err := provision.New(sub, tokOptions...)
-	if err != nil {
-		return "", err
-	}
-
-	return tok.SignedString(jwk.Algorithm, jwk.Key)
-}
-
 // newTokenFlow implements the common flow used to generate a token
-func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time) (string, error) {
+func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	// Get audience from ca-url
 	audience, err := parseAudience(ctx, typ)
 	if err != nil {
@@ -431,22 +411,30 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		}
 	}
 
-	return generateToken(ctx, typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	// Generate token
+	tokenGen := newTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
+	switch typ {
+	case signType:
+		return tokenGen.SignToken(subject, sans)
+	case revokeType:
+		return tokenGen.RevokeToken(subject)
+	case sshUserSignType:
+		return tokenGen.SignSSHToken(subject, provisioner.SSHUserCert, sans, certNotBefore, certNotAfter)
+	case sshHostSignType:
+		return tokenGen.SignSSHToken(subject, provisioner.SSHHostCert, sans, certNotBefore, certNotAfter)
+	default:
+		return tokenGen.Token(subject)
+	}
 }
 
 // offlineTokenFlow generates a provisioning token using either
 //   1. static configuration from ca.json (created with `step ca init`)
 //   2. input from command line flags
 // These two options are mutually exclusive and priority is given to ca.json.
-func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string) (string, error) {
+func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	caConfig := ctx.String("ca-config")
 	if caConfig == "" {
 		return "", errs.InvalidFlagValue(ctx, "ca-config", "", "")
-	}
-
-	notBefore, notAfter, err := parseValidity(ctx)
-	if err != nil {
-		return "", err
 	}
 
 	// Using the offline CA
@@ -455,7 +443,7 @@ func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string) 
 		if err != nil {
 			return "", err
 		}
-		return offlineCA.GenerateToken(ctx, typ, subject, sans, notBefore, notAfter)
+		return offlineCA.GenerateToken(ctx, typ, subject, sans, notBefore, notAfter, certNotBefore, certNotAfter)
 	}
 
 	kid := ctx.String("kid")
@@ -506,7 +494,20 @@ func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string) 
 		kid = base64.RawURLEncoding.EncodeToString(hash)
 	}
 
-	return generateToken(ctx, typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
+	// Generate token
+	tokenGen := newTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
+	switch typ {
+	case signType:
+		return tokenGen.SignToken(subject, sans)
+	case revokeType:
+		return tokenGen.RevokeToken(subject)
+	case sshUserSignType:
+		return tokenGen.SignSSHToken(subject, provisioner.SSHUserCert, sans, certNotBefore, certNotAfter)
+	case sshHostSignType:
+		return tokenGen.SignSSHToken(subject, provisioner.SSHHostCert, sans, certNotBefore, certNotAfter)
+	default:
+		return tokenGen.Token(subject)
+	}
 }
 
 func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {
