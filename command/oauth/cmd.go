@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -129,6 +130,11 @@ func init() {
 				Name:  "jwt",
 				Usage: "Generate a JWT Auth token instead of an OAuth Token (only works with service accounts)",
 			},
+			cli.StringFlag{
+				Name:  "listen",
+				Value: "127.0.0.1:8080",
+				Usage: "Callback listener URL (default: 127.0.0.1:8080)",
+			},
 			cli.BoolFlag{
 				Name:   "implicit",
 				Usage:  "Uses the implicit flow to authenticate the user. Requires **--insecure** and **--client-id** flags.",
@@ -148,10 +154,11 @@ func init() {
 
 func oauthCmd(c *cli.Context) error {
 	opts := &options{
-		Provider: c.String("provider"),
-		Email:    c.String("email"),
-		Console:  c.Bool("console"),
-		Implicit: c.Bool("implicit"),
+		Provider:         c.String("provider"),
+		Email:            c.String("email"),
+		Console:          c.Bool("console"),
+		Implicit:         c.Bool("implicit"),
+		CallbackListener: c.String("listen"),
 	}
 	if err := opts.Validate(); err != nil {
 		return err
@@ -274,10 +281,11 @@ func oauthCmd(c *cli.Context) error {
 }
 
 type options struct {
-	Provider string
-	Email    string
-	Console  bool
-	Implicit bool
+	Provider         string
+	Email            string
+	Console          bool
+	Implicit         bool
+	CallbackListener string
 }
 
 // Validate validates the options.
@@ -302,6 +310,7 @@ type oauth struct {
 	codeChallenge    string
 	nonce            string
 	implicit         bool
+	CallbackListener string
 	errCh            chan error
 	tokCh            chan *token
 }
@@ -337,6 +346,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			codeChallenge:    challenge,
 			nonce:            nonce,
 			implicit:         opts.Implicit,
+			CallbackListener: opts.CallbackListener,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -371,6 +381,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			codeChallenge:    challenge,
 			nonce:            nonce,
 			implicit:         opts.Implicit,
+			CallbackListener: opts.CallbackListener,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -404,11 +415,26 @@ func disco(provider string) (map[string]interface{}, error) {
 	return details, err
 }
 
+func (o *oauth) NewServer() (*httptest.Server, error) {
+	l, err := net.Listen("tcp", o.CallbackListener)
+	if err != nil {
+		return nil, err
+	}
+	srv := httptest.NewUnstartedServer(o)
+	srv.Listener.Close()
+	srv.Listener = l
+	srv.Start()
+	return srv, nil
+}
+
 // DoLoopbackAuthorization performs the log in into the identity provider
 // opening a browser and using a redirect_uri in a loopback IP address
 // (http://127.0.0.1:port or http://[::1]:port).
 func (o *oauth) DoLoopbackAuthorization() (*token, error) {
-	srv := httptest.NewServer(o)
+	srv, err := o.NewServer()
+	if err != nil {
+		return nil, err
+	}
 	o.redirectURI = srv.URL
 	defer srv.Close()
 
