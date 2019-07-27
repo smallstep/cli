@@ -310,10 +310,12 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "master"
-  digest = "1:6122a459c2fc45bbab40570f11b23b999f2056f54ce9453c98f27b86ee0ee9e6"
+  branch = "acme"
+  digest = "1:9ff61904f80fc83f52cbb93cd4466ea404a0c724faf87df869b21c7e58aa087c"
   name = "github.com/smallstep/certificates"
   packages = [
+    "acme",
+    "acme/api",
     "api",
     "authority",
     "authority/provisioner",
@@ -324,15 +326,15 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "4c390dcfe1b688bfb76fd61c1a2df2cd3272af27"
+  revision = "1799cde43966f697e19c0437d300f7b69fa78940"
 
 [[projects]]
   branch = "master"
-  digest = "1:f4d37f61cbbd5adb7066017d7e5f303b722a39c3408b41d46a5ea04f81adba8c"
+  digest = "1:743362bd9879b63a73c060d74cfd90d46aab4913aea2b0714ceaacee64e6a9fa"
   name = "github.com/smallstep/certinfo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "203093530c86c19d79cfe5ce9ad0b8897e3cce9b"
+  revision = "78e21b44234ef6ddeb58f5e8aad2ed09975b694a"
 
 [[projects]]
   branch = "master"
@@ -562,6 +564,8 @@
     "github.com/samfoo/ansi",
     "github.com/shurcooL/sanitized_anchor_name",
     "github.com/smallstep/assert",
+    "github.com/smallstep/certificates/acme",
+    "github.com/smallstep/certificates/acme/api",
     "github.com/smallstep/certificates/api",
     "github.com/smallstep/certificates/authority",
     "github.com/smallstep/certificates/authority/provisioner",

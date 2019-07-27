@@ -39,19 +39,16 @@ This command returns 0 on success and \>0 if any error occurs.
 ## EXAMPLES
 
 Sign a certificate signing request:
-
 '''
 $ step certificate sign ./certificate-signing-request.csr \
 ./issuer-certificate.crt ./issuer-private-key.priv
 '''
 
 Sign a certificate signing request and bundle the new certificate with the issuer:
-
 '''
 $ step certificate sign ./certificate-signing-request.csr \
 ./issuer-certificate.crt ./issuer-private-key.priv --bundle
-'''
-`,
+'''`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "bundle",
