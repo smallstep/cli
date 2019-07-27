@@ -207,7 +207,8 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	default:
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			switch p.GetType() {
-			case provisioner.TypeJWK, provisioner.TypeX5C, provisioner.TypeOIDC, provisioner.TypeACME, provisioner.TypeK8sSA:
+			case provisioner.TypeJWK, provisioner.TypeX5C, provisioner.TypeOIDC,
+				provisioner.TypeACME, provisioner.TypeK8sSA:
 				return true
 			case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
 				return true

@@ -262,7 +262,7 @@ $ step ca provisioner add Amazon --type AWS --ca-config ca.json \
 
 Add an ACME provisioner.
 '''
-$ step ca provisioner add acme-smallstep --type ACME --ca-config ca.json
+$ step ca provisioner add acme-smallstep --type ACME
 '''
 
 Add an X5C provisioner.

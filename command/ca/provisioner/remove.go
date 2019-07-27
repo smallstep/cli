@@ -97,7 +97,7 @@ $ step ca provisioner remove Amazon --ca-config ca.json --type AWS
 
 Remove the ACME provisioner by name:
 '''
-$ step ca provisioner remove Amazon --ca-config ca.json --type AWS
+$ step ca provisioner remove my-acme-provisioner --type acme
 '''
 
 Remove an X5C provisioner by name:
