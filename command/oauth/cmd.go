@@ -132,8 +132,7 @@ func init() {
 			},
 			cli.StringFlag{
 				Name:  "listen",
-				Value: "127.0.0.1:8080",
-				Usage: "Callback listener URL (default: 127.0.0.1:8080)",
+				Usage: "Callback listener URL",
 			},
 			cli.BoolFlag{
 				Name:   "implicit",
@@ -415,14 +414,19 @@ func disco(provider string) (map[string]interface{}, error) {
 	return details, err
 }
 
+// NewServer creates http server
 func (o *oauth) NewServer() (*httptest.Server, error) {
+	if o.CallbackListener == "" {
+		return httptest.NewServer(o), nil
+	}
 	l, err := net.Listen("tcp", o.CallbackListener)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "error listening on %s", o.CallbackListener)
 	}
-	srv := httptest.NewUnstartedServer(o)
-	srv.Listener.Close()
-	srv.Listener = l
+	srv := &httptest.Server{
+		Listener: l,
+		Config:   &http.Server{Handler: o},
+	}
 	srv.Start()
 	return srv, nil
 }
