@@ -125,11 +125,6 @@ $ step ca token --offline --revoke 146103349666685108195655980390445292315
 '''
 `,
 		Flags: []cli.Flag{
-			flags.CaURL,
-			flags.CaConfig,
-			flags.Force,
-			flags.Root,
-			flags.Provisioner,
 			certNotAfterFlag,
 			certNotBeforeFlag,
 			notBeforeFlag,
@@ -137,6 +132,11 @@ $ step ca token --offline --revoke 146103349666685108195655980390445292315
 			provisionerKidFlag,
 			sshPrincipalFlag,
 			sshHostFlag,
+			flags.CaURL,
+			flags.CaConfig,
+			flags.Force,
+			flags.Root,
+			flags.Provisioner,
 			cli.StringSliceFlag{
 				Name: "san",
 				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
