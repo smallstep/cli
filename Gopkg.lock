@@ -393,7 +393,7 @@
 
 [[projects]]
   branch = "ssh-ca"
-  digest = "1:db788bbd00f6ff8e63c83b210babfc4b4e367a943e3ab3b23ffc2e4cab948a0a"
+  digest = "1:f8b41bd1e47a90adb09a36c06fe25ead1bffa86e9df16e523db88465600bdc7d"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
@@ -406,7 +406,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "d008d2d4d109da38513a7e30431c0b5e651dfc0b"
+  revision = "f8cacc11b158a00b4e4df5756d3810fda46f86e1"
 
 [[projects]]
   branch = "master"
@@ -508,7 +508,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4727c544d8ef43187b76a977b0b9e3a53474b354f824327374cc6a90db60c351"
+  digest = "1:019f6540f7acff019e4196ea9b76b920949175cbfc582b1f18f5deb3a4381aa7"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
@@ -532,6 +532,7 @@
     "salsa20/salsa",
     "scrypt",
     "ssh",
+    "ssh/agent",
     "ssh/terminal",
   ]
   pruneopts = "UT"
@@ -689,6 +690,7 @@
     "golang.org/x/crypto/pbkdf2",
     "golang.org/x/crypto/scrypt",
     "golang.org/x/crypto/ssh",
+    "golang.org/x/crypto/ssh/agent",
     "golang.org/x/net/html",
     "gopkg.in/square/go-jose.v2",
     "gopkg.in/square/go-jose.v2/jwt",
