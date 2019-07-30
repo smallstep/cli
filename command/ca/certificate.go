@@ -226,16 +226,6 @@ func (f *certificateFlow) getClient(ctx *cli.Context, subject, tok string) (caCl
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing flag '--token'")
 	}
-	switch jwt.Payload.Type() {
-	case token.AWS, token.GCP, token.Azure:
-		// Common name will be validated on the server side, it depends on
-		// server configuration.
-	default:
-		if strings.ToLower(jwt.Payload.Subject) != strings.ToLower(subject) {
-			return nil, errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", jwt.Payload.Subject, subject)
-		}
-	}
-
 	// Prepare client for bootstrap or provisioning tokens
 	var options []ca.ClientOption
 	if len(jwt.Payload.SHA) > 0 && len(jwt.Payload.Audience) > 0 && strings.HasPrefix(strings.ToLower(jwt.Payload.Audience[0]), "http") {
