@@ -212,7 +212,11 @@ func sshCertificateAction(ctx *cli.Context) error {
 
 	// By default use the first part of the subject as a principal
 	if len(principals) == 0 {
-		principals = append(principals, sanitizeUsername(subject))
+		if isHost {
+			principals = append(principals, subject)
+		} else {
+			principals = append(principals, provisioner.SanitizeSSHUserPrincipal(subject))
+		}
 	}
 
 	flow, err := newCertificateFlow(ctx)
@@ -311,13 +315,6 @@ func sshCertificateAction(ctx *cli.Context) error {
 	}
 
 	return nil
-}
-
-func sanitizeUsername(s string) string {
-	if i := strings.Index(s, "@"); i >= 0 {
-		return strings.ToLower(s[:i])
-	}
-	return s
 }
 
 func marshalPublicKey(key ssh.PublicKey, subject string) []byte {
