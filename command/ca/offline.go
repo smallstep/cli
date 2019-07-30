@@ -1,6 +1,7 @@
 package ca
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -143,7 +144,8 @@ func (c *offlineCA) Provisioners() provisioner.List {
 // returns an api.SignResponse with the requested certificate and the
 // intermediate.
 func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
-	opts, err := c.authority.Authorize(req.OTT)
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SignMethod)
+	opts, err := c.authority.Authorize(ctx, req.OTT)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +171,8 @@ func (c *offlineCA) SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, erro
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing publicKey")
 	}
-	opts, err := c.authority.Authorize(req.OTT)
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SignSSHMethod)
+	opts, err := c.authority.Authorize(ctx, req.OTT)
 	if err != nil {
 		return nil, err
 	}
