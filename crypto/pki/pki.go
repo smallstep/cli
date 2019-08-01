@@ -1,6 +1,7 @@
 package pki
 
 import (
+	"crypto"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
@@ -12,12 +13,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/crypto/ssh"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/db"
 	"github.com/smallstep/cli/config"
+	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/tlsutil"
 	"github.com/smallstep/cli/crypto/x509util"
@@ -123,6 +127,8 @@ func GetProvisionerKey(caURL, rootFile, kid string) (string, error) {
 type PKI struct {
 	root, rootKey, rootFingerprint  string
 	intermediate, intermediateKey   string
+	sshHostCert, sshHostKey         string
+	sshUserCert, sshUserKey         string
 	country, locality, organization string
 	config, defaults                string
 	ottPublicKey                    *jose.JSONWebKey
@@ -131,6 +137,7 @@ type PKI struct {
 	address                         string
 	dnsNames                        []string
 	caURL                           string
+	enableSSH                       bool
 }
 
 // New creates a new PKI configuration.
@@ -176,6 +183,18 @@ func New(public, private, config string) (*PKI, error) {
 		return nil, err
 	}
 	if p.intermediateKey, err = getPath(private, "intermediate_ca_key"); err != nil {
+		return nil, err
+	}
+	if p.sshHostCert, err = getPath(public, "ssh_host_key.pub"); err != nil {
+		return nil, err
+	}
+	if p.sshUserCert, err = getPath(public, "ssh_user_key.pub"); err != nil {
+		return nil, err
+	}
+	if p.sshHostKey, err = getPath(private, "ssh_host_key"); err != nil {
+		return nil, err
+	}
+	if p.sshUserKey, err = getPath(private, "ssh_user_key"); err != nil {
 		return nil, err
 	}
 	if len(config) > 0 {
@@ -272,6 +291,35 @@ func (p *PKI) GenerateIntermediateCertificate(name string, rootCrt *x509.Certifi
 	return err
 }
 
+// GenerateSSHSigningKeys generates and encrypts a private key used for signing
+// SSH user certificates and a private key used for signing host certificates.
+func (p *PKI) GenerateSSHSigningKeys(password []byte) error {
+	var pubNames = []string{p.sshHostCert, p.sshUserCert}
+	var privNames = []string{p.sshHostKey, p.sshUserKey}
+	for i := 0; i < 2; i++ {
+		pub, priv, err := keys.GenerateDefaultKeyPair()
+		if err != nil {
+			return err
+		}
+		if _, ok := priv.(crypto.Signer); !ok {
+			return errors.Errorf("key of type %T is not a crypto.Signer", priv)
+		}
+		sshKey, err := ssh.NewPublicKey(pub)
+		if err != nil {
+			return errors.Wrapf(err, "error converting public key")
+		}
+		_, err = pemutil.Serialize(priv, pemutil.WithFilename(privNames[i]), pemutil.WithPassword(password))
+		if err != nil {
+			return err
+		}
+		if err = utils.WriteFile(pubNames[i], ssh.MarshalAuthorizedKey(sshKey), 0600); err != nil {
+			return err
+		}
+	}
+	p.enableSSH = true
+	return nil
+}
+
 // TellPKI outputs the locations of public and private keys generated
 // generated for a new PKI. Generally this will consist of a root certificate
 // and key and an intermediate certificate and key.
@@ -282,6 +330,12 @@ func (p *PKI) TellPKI() {
 	ui.PrintSelected("Root fingerprint", p.rootFingerprint)
 	ui.PrintSelected("Intermediate certificate", p.intermediate)
 	ui.PrintSelected("Intermediate private key", p.intermediateKey)
+	if p.enableSSH {
+		ui.PrintSelected("SSH user certificate", p.sshUserCert)
+		ui.PrintSelected("SSH user private key", p.sshUserKey)
+		ui.PrintSelected("SSH host certificate", p.sshHostCert)
+		ui.PrintSelected("SSH host private key", p.sshHostKey)
+	}
 }
 
 type caDefaults struct {
@@ -349,6 +403,12 @@ func (p *PKI) Save(opt ...Option) error {
 			Renegotiation: x509util.DefaultTLSRenegotiation,
 			CipherSuites:  x509util.DefaultTLSCipherSuites,
 		},
+	}
+	if p.enableSSH {
+		config.SSH = &authority.SSHConfig{
+			HostKey: p.sshHostKey,
+			UserKey: p.sshUserKey,
+		}
 	}
 
 	// Apply configuration modifiers

@@ -22,12 +22,12 @@ func initCommand() cli.Command {
 		Action: cli.ActionFunc(initAction),
 		Usage:  "initialize the CA PKI",
 		UsageText: `**step ca init**
-		[**--root**=<path>] [**--key**=<path>] [**--pki**] [**--name**=<name>]
+		[**--root**=<path>] [**--key**=<path>] [**--pki**] [**--ssh**] [**--name**=<name>]
 [**dns**=<dns>] [**address**=<address>] [**provisioner**=<name>]
 [**provisioner-password-file**=<path>] [**password-file**=<path>]
 [**with-ca-url**=<url>] [**no-db**]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
- used by the Certificate Authority`,
+ used by the Certificate Authority.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:   "root",
@@ -42,6 +42,10 @@ func initCommand() cli.Command {
 			cli.BoolFlag{
 				Name:  "pki",
 				Usage: "Generate only the PKI without the CA configuration.",
+			},
+			cli.BoolTFlag{
+				Name:  "ssh",
+				Usage: `Create keys to sign SSH certificates.`,
 			},
 			cli.StringFlag{
 				Name:  "name",
@@ -219,6 +223,14 @@ func initAction(ctx *cli.Context) (err error) {
 	err = p.GenerateIntermediateCertificate(name+" Intermediate CA", rootCrt, rootKey, pass)
 	if err != nil {
 		return err
+	}
+
+	if ctx.Bool("ssh") {
+		fmt.Println()
+		fmt.Print("Generating user and host SSH certificate signing keys... \n")
+		if err := p.GenerateSSHSigningKeys(pass); err != nil {
+			return err
+		}
 	}
 
 	fmt.Println("all done!")
