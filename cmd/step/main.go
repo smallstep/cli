@@ -133,7 +133,6 @@ func stringifyFlag(f cli.Flag) string {
 		default:
 			placeholder = "<value>"
 		}
-
 	}
 	return cli.FlagNamePrefixer(fv.FieldByName("Name").String(), placeholder) + "\t" + usage
 }
