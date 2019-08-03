@@ -52,6 +52,11 @@ var (
 		Usage: `The path to the <file> containing the password to decrypt the one-time token
 		generating key.`,
 	}
+
+	sshAddUserFlag = cli.BoolFlag{
+		Name:  "add-user",
+		Usage: `Create a user provisioner certificate used to create a new user.`,
+	}
 )
 
 func sshCertificateCommand() cli.Command {
@@ -92,6 +97,38 @@ And to configure a client to accept host certificates you need to add the CA in
 
 Where <*.example.com> is a pattern that matches the hosts and
 <ecdsa-sha2-nistp256 AAAAE...=> should be the contents of the CA public key.
+
+Auto-provision of a new user in servers is also possible, but some configuration
+is required in each of the servers.
+
+First a new <provisioner> user is required.
+'''
+$ useradd -m provisioner
+'''
+
+Then we need to give sudo access to the user to run useradd or the appropriate
+command, to do this edit /etc/sudoers and add the following line:
+'''
+provisioner     ALL=NOPASSWD: /usr/sbin/useradd
+'''
+
+When the command is run with the <--add-user> flag, a new key-pair and
+certificate will be created, when this new certificate is used to connect to a
+server will only run the following commands:
+'''
+$ sudo useradd -m <principal>
+$ nc -q0 localhost 22
+'''
+
+You can automatically enforce the creating of your user adding this in your
+~/.ssh/config:
+'''
+Host *.example.com
+    IdentityFile /path/to/your/key
+    ProxyCommand ssh -T -F /dev/null -i /path/to/your/key-provisioner -p %p provisioner@%h
+'''
+
+The provisioner username and the command are both configurable in the ca.json.
 
 ## POSITIONAL ARGUMENTS
 
@@ -147,6 +184,7 @@ $ step ca ssh-certificate --token $TOKEN mariano@work id_ecdsa
 			sshPasswordFileFlag,
 			provisionerIssuerFlag,
 			sshProvisionerPasswordFlag,
+			sshAddUserFlag,
 			caURLFlag,
 			rootFlag,
 			offlineFlag,
@@ -166,14 +204,16 @@ func sshCertificateAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	subject := args.Get(0)
 	keyFile := args.Get(1)
+	baseName := keyFile
 	// SSH uses fixed suffixes for public keys and certificates
-	pubFile := keyFile + ".pub"
-	crtFile := keyFile + "-cert.pub"
+	pubFile := baseName + ".pub"
+	crtFile := baseName + "-cert.pub"
 
 	// Flags
 	token := ctx.String("token")
 	isHost := ctx.Bool("host")
 	isSign := ctx.Bool("sign")
+	isAddUser := ctx.Bool("add-user")
 	principals := ctx.StringSlice("principal")
 	passwordFile := ctx.String("password-file")
 	provisionerPasswordFile := ctx.String("provisioner-password-file")
@@ -196,6 +236,16 @@ func sshCertificateAction(ctx *cli.Context) error {
 		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "password-file")
 	case token != "" && provisionerPasswordFile != "":
 		return errs.IncompatibleFlagWithFlag(ctx, "token", "provisioner-password-file")
+	case isHost && isAddUser:
+		return errs.IncompatibleFlagWithFlag(ctx, "host", "add-user")
+	case isAddUser && len(principals) > 1:
+		return errors.New("flag '--add-user' is incompatible with more than one principal")
+	}
+
+	// If we are signing a public key, get the proper name for the certificate
+	if isSign && strings.HasSuffix(keyFile, ".pub") {
+		baseName = keyFile[:len(keyFile)-4]
+		crtFile = baseName + "-cert.pub"
 	}
 
 	var certType string
@@ -203,11 +253,6 @@ func sshCertificateAction(ctx *cli.Context) error {
 		certType = provisioner.SSHHostCert
 	} else {
 		certType = provisioner.SSHUserCert
-	}
-
-	// If we are signing a public key, get the proper name for the certificate
-	if isSign && strings.HasSuffix(keyFile, ".pub") {
-		crtFile = keyFile[:len(keyFile)-4] + "-cert.pub"
 	}
 
 	// By default use the first part of the subject as a principal
@@ -261,13 +306,29 @@ func sshCertificateAction(ctx *cli.Context) error {
 		}
 	}
 
+	var sshAuPub ssh.PublicKey
+	var sshAuPubBytes []byte
+	var auPub, auPriv interface{}
+	if isAddUser {
+		auPub, auPriv, err = keys.GenerateDefaultKeyPair()
+		if err != nil {
+			return err
+		}
+		sshAuPub, err = ssh.NewPublicKey(auPub)
+		if err != nil {
+			return errors.Wrap(err, "error creating public key")
+		}
+		sshAuPubBytes = sshAuPub.Marshal()
+	}
+
 	resp, err := caClient.SignSSH(&api.SignSSHRequest{
-		PublicKey:   sshPub.Marshal(),
-		OTT:         token,
-		Principals:  principals,
-		CertType:    certType,
-		ValidAfter:  validAfter,
-		ValidBefore: validBefore,
+		PublicKey:        sshPub.Marshal(),
+		OTT:              token,
+		Principals:       principals,
+		CertType:         certType,
+		ValidAfter:       validAfter,
+		ValidBefore:      validBefore,
+		AddUserPublicKey: sshAuPubBytes,
 	})
 	if err != nil {
 		return err
@@ -301,6 +362,20 @@ func sshCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 
+	// Write Add User keys and certs
+	if isAddUser {
+		id := provisioner.SanitizeSSHUserPrincipal(subject) + "-provisioner"
+		if _, err := pemutil.Serialize(auPriv, pemutil.ToFile(baseName+"-provisioner", 0600)); err != nil {
+			return err
+		}
+		if err := utils.WriteFile(baseName+"-provisioner.pub", marshalPublicKey(sshAuPub, id), 0644); err != nil {
+			return err
+		}
+		if err := utils.WriteFile(baseName+"-provisioner-cert.pub", marshalPublicKey(resp.AddUserCertificate, id), 0644); err != nil {
+			return err
+		}
+	}
+
 	if !isSign {
 		ui.PrintSelected("Private Key", keyFile)
 		ui.PrintSelected("Public Key", pubFile)
@@ -312,6 +387,12 @@ func sshCertificateAction(ctx *cli.Context) error {
 		ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 	} else {
 		ui.PrintSelected("SSH Agent", "yes")
+	}
+
+	if isAddUser {
+		ui.PrintSelected("Provisioner Private Key", baseName+"-provisioner")
+		ui.PrintSelected("Provisioner Public Key", baseName+"-provisioner.pub")
+		ui.PrintSelected("Provisioner Certificate", baseName+"-provisioner-cert.pub")
 	}
 
 	return nil
