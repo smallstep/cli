@@ -43,7 +43,7 @@ func initCommand() cli.Command {
 				Name:  "pki",
 				Usage: "Generate only the PKI without the CA configuration.",
 			},
-			cli.BoolTFlag{
+			cli.BoolFlag{
 				Name:  "ssh",
 				Usage: `Create keys to sign SSH certificates.`,
 			},
