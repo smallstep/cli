@@ -113,6 +113,12 @@ $ step certificate create foo foo.crt foo.key --profile leaf \
   --not-before 24h --not-after 2160h
 '''
 
+Create a self-signed leaf certificate and key:
+
+'''
+$ step certificate create self-signed-leaf.local leaf.crt leaf.key --profile self-signed --subtle
+'''
+
 Create a root certificate and key with underlying OKP Ed25519:
 
 '''
@@ -179,7 +185,12 @@ recommended. Requires **--insecure** flag.`,
     :  Generate a certificate that can be used to sign additional leaf or intermediate certificates.
 
     **root-ca**
-    :  Generate a new self-signed root certificate suitable for use as a root CA.`,
+    :  Generate a new self-signed root certificate suitable for use as a root CA.
+
+    **self-signed**
+    :  Generate a new self-signed leaf certificate suitable for use with TLS.
+	This profile requires the **--subtle** flag because the use of self-signed leaf
+	certificates is discouraged unless absolutely necessary.`,
 			},
 			cli.StringFlag{
 				Name:  "kty",
@@ -247,6 +258,7 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 flag multiple times to configure multiple SANs.`,
 			},
 			flags.Force,
+			flags.Subtle,
 		},
 	}
 }
@@ -389,8 +401,20 @@ func createAction(ctx *cli.Context) error {
 			if err != nil {
 				return errors.WithStack(err)
 			}
+		case "self-signed":
+			if !ctx.Bool("subtle") {
+				return errs.RequiredWithFlagValue(ctx, "profile", "self-signed", "subtle")
+			}
+			profile, err = x509util.NewSelfSignedLeafProfile(subject,
+				x509util.GenerateKeyPair(kty, crv, size),
+				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
+				x509util.WithDNSNames(dnsNames),
+				x509util.WithIPAddresses(ips))
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		default:
-			return errs.InvalidFlagValue(ctx, "profile", prof, "leaf, intermediate-ca, root-ca")
+			return errs.InvalidFlagValue(ctx, "profile", prof, "leaf, intermediate-ca, root-ca, self-signed")
 		}
 		crtBytes, err := profile.CreateCertificate()
 		if err != nil {
