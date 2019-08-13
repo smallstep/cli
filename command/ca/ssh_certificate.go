@@ -65,7 +65,7 @@ func sshCertificateCommand() cli.Command {
 		Action: command.ActionFunc(sshCertificateAction),
 		Usage:  "sign a SSH certificate using the the SSH CA",
 		UsageText: `**step ca ssh-certificate** <key-id> <key-file>
-		[**--host**] [**--sign]**`,
+		[**--host**] [**--sign**]`,
 		Description: `**step ca ssh-certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
 
