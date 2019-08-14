@@ -12,6 +12,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -93,7 +94,7 @@ func signCertificateAction(ctx *cli.Context) error {
 	}
 
 	// certificate flow unifies online and offline flows on a single api
-	flow, err := newCertificateFlow(ctx)
+	flow, err := cautils.NewCertificateFlow(ctx)
 	if err != nil {
 		return err
 	}

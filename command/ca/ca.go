@@ -178,6 +178,20 @@ $STEPPATH/config/ca.json`,
 		Usage: `The path to the <file> containing the password to decrypt the one-time token
 generating key.`,
 	}
+
+	sshPrincipalFlag = cli.StringSliceFlag{
+		Name: "principal,n",
+		Usage: `Add the principals (users or hosts) that the token is authorized to
+		request. The signing request using this token won't be able to add
+		extra names. Use the '--principal' flag multiple times to configure
+		multiple ones. The '--principal' flag and the '--token' flag are
+		mutually exlusive.`,
+	}
+
+	sshHostFlag = cli.BoolFlag{
+		Name:  "host",
+		Usage: `Create a host certificate instead of a user certificate.`,
+	}
 )
 
 // completeURL parses and validates the given URL. It supports general

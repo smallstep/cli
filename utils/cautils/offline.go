@@ -1,4 +1,4 @@
-package ca
+package cautils
 
 import (
 	"context"
@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/ssh"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority"
@@ -24,25 +22,26 @@ import (
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
 )
 
-type caClient interface {
+type CaClient interface {
 	Sign(req *api.SignRequest) (*api.SignResponse, error)
 	SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error)
 	Renew(tr http.RoundTripper) (*api.SignResponse, error)
 	Revoke(req *api.RevokeRequest, tr http.RoundTripper) (*api.RevokeResponse, error)
 }
 
-// offlineCA is a wrapper on top of the certificates authority methods that is
+// OfflineCA is a wrapper on top of the certificates authority methods that is
 // used to sign certificates without an online CA.
-type offlineCA struct {
+type OfflineCA struct {
 	authority  *authority.Authority
 	config     authority.Config
 	configFile string
 }
 
-// newOfflineCA initializes an offlineCA.
-func newOfflineCA(configFile string) (*offlineCA, error) {
+// NewOfflineCA initializes an offlineCA.
+func NewOfflineCA(configFile string) (*OfflineCA, error) {
 	b, err := utils.ReadFile(configFile)
 	if err != nil {
 		return nil, err
@@ -62,16 +61,16 @@ func newOfflineCA(configFile string) (*offlineCA, error) {
 		return nil, err
 	}
 
-	return &offlineCA{
+	return &OfflineCA{
 		authority:  auth,
 		config:     config,
 		configFile: configFile,
 	}, nil
 }
 
-// VerifyClientCertificate verifies and validates the client cert/key pair
+// VerifyClientCert verifies and validates the client cert/key pair
 // using the offline CA root and intermediate certificates.
-func (c *offlineCA) VerifyClientCert(certFile, keyFile string) error {
+func (c *OfflineCA) VerifyClientCert(certFile, keyFile string) error {
 	cert, err := pemutil.ReadCertificate(certFile, pemutil.WithFirstBlock())
 	if err != nil {
 		return err
@@ -116,7 +115,7 @@ func (c *offlineCA) VerifyClientCert(certFile, keyFile string) error {
 }
 
 // Audience returns the token audience.
-func (c *offlineCA) Audience(tokType int) string {
+func (c *OfflineCA) Audience(tokType int) string {
 	switch tokType {
 	case revokeType:
 		return fmt.Sprintf("https://%s/revoke", c.config.DNSNames[0])
@@ -126,24 +125,24 @@ func (c *offlineCA) Audience(tokType int) string {
 }
 
 // CaURL returns the CA URL using the first DNS entry.
-func (c *offlineCA) CaURL() string {
+func (c *OfflineCA) CaURL() string {
 	return fmt.Sprintf("https://%s", c.config.DNSNames[0])
 }
 
 // Root returns the path of the file used as root certificate.
-func (c *offlineCA) Root() string {
+func (c *OfflineCA) Root() string {
 	return c.config.Root.First()
 }
 
 // Provisioners returns the list of configured provisioners.
-func (c *offlineCA) Provisioners() provisioner.List {
+func (c *OfflineCA) Provisioners() provisioner.List {
 	return c.config.AuthorityConfig.Provisioners
 }
 
 // Sign is a wrapper on top of certificates Authorize and Sign methods. It
 // returns an api.SignResponse with the requested certificate and the
 // intermediate.
-func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
+func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SignMethod)
 	opts, err := c.authority.Authorize(ctx, req.OTT)
 	if err != nil {
@@ -166,7 +165,7 @@ func (c *offlineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 
 // SignSSH is a wrapper on top of certificate Authorize and SignSSH methods. It
 // returns an api.SignSSHResponse with the signed certificate.
-func (c *offlineCA) SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error) {
+func (c *OfflineCA) SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error) {
 	publicKey, err := ssh.ParsePublicKey(req.PublicKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing publicKey")
@@ -195,7 +194,7 @@ func (c *offlineCA) SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, erro
 
 // Renew is a wrapper on top of certificates Renew method. It returns an
 // api.SignResponse with the requested certificate and the intermediate.
-func (c *offlineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
+func (c *OfflineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 	// it should not panic as this is always internal code
 	tr := rt.(*http.Transport)
 	asn1Data := tr.TLSClientConfig.Certificates[0].Certificate[0]
@@ -217,7 +216,7 @@ func (c *offlineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 
 // Revoke is a wrapper on top of certificates Revoke method. It returns an
 // api.RevokeResponse.
-func (c *offlineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.RevokeResponse, error) {
+func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.RevokeResponse, error) {
 	var (
 		opts = authority.RevokeOptions{
 			Serial:      req.Serial,
@@ -250,7 +249,7 @@ func (c *offlineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 }
 
 // GenerateToken creates the token used by the authority to authorize requests.
-func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
+func (c *OfflineCA) GenerateToken(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	// Use ca.json configuration for the root and audience
 	root := c.Root()
 	audience := c.Audience(typ)
@@ -316,7 +315,7 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 	}
 
 	// Generate token
-	tokenGen := newTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
+	tokenGen := NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
 	switch typ {
 	case signType:
 		return tokenGen.SignToken(subject, sans)

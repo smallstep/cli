@@ -6,8 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
+	"github.com/smallstep/cli/utils/cautils"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -20,6 +19,8 @@ import (
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 )
 
 var (
@@ -175,20 +176,20 @@ Sign an SSH public key generating a certificate with given token:
 $ step ca ssh-certificate --token $TOKEN mariano@work id_ecdsa
 '''`,
 		Flags: []cli.Flag{
-			tokenFlag,
+			flags.Token,
 			sshPrincipalFlag,
 			sshHostFlag,
 			sshSignFlag,
-			notBeforeCertFlag,
-			notAfterCertFlag,
+			flags.NotBefore,
+			flags.NotAfter,
 			sshPasswordFileFlag,
-			provisionerIssuerFlag,
+			flags.Provisioner,
 			sshProvisionerPasswordFlag,
 			sshAddUserFlag,
-			caURLFlag,
-			rootFlag,
-			offlineFlag,
-			caConfigFlag,
+			flags.CaURL,
+			flags.Root,
+			flags.Offline,
+			flags.CaConfig,
 			flags.NoPassword,
 			flags.Insecure,
 			flags.Force,
@@ -219,7 +220,7 @@ func sshCertificateAction(ctx *cli.Context) error {
 	provisionerPasswordFile := ctx.String("provisioner-password-file")
 	noPassword := ctx.Bool("no-password")
 	insecure := ctx.Bool("insecure")
-	validAfter, validBefore, err := parseTimeDuration(ctx)
+	validAfter, validBefore, err := flags.ParseTimeDuration(ctx)
 	if err != nil {
 		return err
 	}
@@ -264,7 +265,7 @@ func sshCertificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	flow, err := newCertificateFlow(ctx)
+	flow, err := cautils.NewCertificateFlow(ctx)
 	if err != nil {
 		return err
 	}
@@ -274,7 +275,7 @@ func sshCertificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	caClient, err := flow.getClient(ctx, subject, token)
+	caClient, err := flow.GetClient(ctx, subject, token)
 	if err != nil {
 		return err
 	}

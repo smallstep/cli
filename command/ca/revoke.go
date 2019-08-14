@@ -19,6 +19,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ocsp"
 )
@@ -265,13 +266,13 @@ type revokeTokenClaims struct {
 }
 
 type revokeFlow struct {
-	offlineCA *offlineCA
+	offlineCA *cautils.OfflineCA
 	offline   bool
 }
 
 func newRevokeFlow(ctx *cli.Context, certFile, keyFile string) (*revokeFlow, error) {
 	var err error
-	var offlineClient *offlineCA
+	var offlineClient *cautils.OfflineCA
 
 	offline := ctx.Bool("offline")
 	if offline {
@@ -279,7 +280,7 @@ func newRevokeFlow(ctx *cli.Context, certFile, keyFile string) (*revokeFlow, err
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		offlineClient, err = newOfflineCA(caConfig)
+		offlineClient, err = cautils.NewOfflineCA(caConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -296,7 +297,7 @@ func newRevokeFlow(ctx *cli.Context, certFile, keyFile string) (*revokeFlow, err
 	}, nil
 }
 
-func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (caClient, error) {
+func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.CaClient, error) {
 	if f.offline {
 		return f.offlineCA, nil
 	}

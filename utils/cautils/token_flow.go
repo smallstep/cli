@@ -1,4 +1,4 @@
-package ca
+package cautils
 
 import (
 	"crypto"
@@ -6,22 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
-	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
-	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -36,267 +31,6 @@ const (
 	sshUserSignType
 	sshHostSignType
 )
-
-func tokenCommand() cli.Command {
-	// Avoid the conflict with --not-before --not-after
-	certNotBeforeFlag := notBeforeCertFlag
-	certNotAfterFlag := notAfterCertFlag
-	certNotBeforeFlag.Name = "cert-not-before"
-	certNotAfterFlag.Name = "cert-not-after"
-
-	return cli.Command{
-		Name:   "token",
-		Action: command.ActionFunc(tokenAction),
-		Usage:  "generate an OTT granting access to the CA",
-		UsageText: `**step ca token** <subject>
-		[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<path>]
-		[**--san**=<SAN>] [**--offline**] [**--revoke**]`,
-		Description: `**step ca token** command generates a one-time token granting access to the
-certificates authority.
-
-## POSITIONAL ARGUMENTS
-
-<subject>
-:  The Common Name, DNS Name, or IP address that will be set by the certificate authority.
-When there are no additional Subject Alternative Names configured (via the
---san flag), the subject will be added as the only element of the 'sans' claim
-on the token.
-
-## EXAMPLES
-
- Most of the following examples assumes that **--ca-url** and **--root** are
- set using environment variables or the default configuration file in
- <$STEPPATH/config/defaults.json>.
-
-Get a new token for a DNS. Because there are no Subject Alternative Names
-configured (via the '--san' flag), the 'sans' claim of the token will have a
-default value of ['internal.example.com']:
-'''
-$ step ca token internal.example.com
-'''
-
-Get a new token for a 'Revoke' request:
-'''
-$ step ca token --revoke 146103349666685108195655980390445292315
-'''
-
-Get a new token for an IP address. Because there are no Subject Alternative Names
-configured (via the '--san' flag), the 'sans' claim of the token will have a
-default value of ['192.168.10.10']:
-'''
-$ step ca token 192.168.10.10
-'''
-
-Get a new token with custom Subject Alternative Names. The value of the 'sans'
-claim of the token will be ['1.1.1.1', 'hello.example.com'] - 'foobar' will not
-be in the 'sans' claim unless explicitly configured via the '--sans' flag:
-'''
-$ step ca token foobar --san 1.1.1.1 --san hello.example.com
-'''
-
-Get a new token that expires in 30 minutes:
-'''
-$ step ca token --not-after 30m internal.example.com
-'''
-
-Get a new token that becomes valid in 30 minutes and expires 5 minutes after that:
-'''
-$ step ca token --not-before 30m --not-after 35m internal.example.com
-'''
-
-Get a new token signed with the given private key, the public key must be
-configured in the certificate authority:
-'''
-$ step ca token internal.smallstep.com --key token.key
-'''
-
-Get a new token for a specific provisioner kid, ca-url and root:
-'''
-$ step ca token internal.example.com \
-    --kid 4vn46fbZT68Uxfs9LBwHkTvrjEvxQqx-W8nnE-qDjts \
-    --ca-url https://ca.example.com \
-    --root /path/to/root_ca.crt
-'''
-
-Get a new token using the simple offline mode, requires the configuration
-files, certificates, and keys created with **step ca init**:
-'''
-$ step ca token internal.example.com --offline
-'''
-
-Get a new token using the offline mode with all the parameters:
-'''
-$ step ca token internal.example.com \
-    --offline \
-    --kid 4vn46fbZT68Uxfs9LBwHkTvrjEvxQqx-W8nnE-qDjts \
-    --issuer you@example.com \
-    --key provisioner.key \
-    --ca-url https://ca.example.com \
-    --root /path/to/root_ca.crt
-'''
-
-Get a new token for a 'Revoke' request:
-'''
-$ step ca token --revoke 146103349666685108195655980390445292315
-'''
-
-Get a new token in offline mode for a 'Revoke' request:
-'''
-$ step ca token --offline --revoke 146103349666685108195655980390445292315
-'''
-`,
-		Flags: []cli.Flag{
-			provisionerKidFlag,
-			provisionerIssuerFlag,
-			caURLFlag,
-			rootFlag,
-			notBeforeFlag,
-			notAfterFlag,
-			cli.StringSliceFlag{
-				Name: "san",
-				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
-authorized to request. A certificate signing request using this token must match
-the complete set of subjective alternative names in the token 1:1. Use the '--san'
-flag multiple times to configure multiple SANs.`,
-			},
-			cli.StringFlag{
-				Name: "key",
-				Usage: `The private key <path> used to sign the JWT. This is usually downloaded from
-the certificate authority.`,
-			},
-			passwordFileFlag,
-			cli.StringFlag{
-				Name:  "output-file",
-				Usage: "The destination <file> of the generated one-time token.",
-			},
-			cli.BoolFlag{
-				Name: "offline",
-				Usage: `Creates a token without contacting the certificate authority. Offline mode
-requires the flags <--ca-config> or <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
-			},
-			cli.BoolFlag{
-				Name: "revoke",
-				Usage: `Create a token for authorizing 'Revoke' requests. The audience will
-be invalid for any other API request.`,
-			},
-			cli.BoolFlag{
-				Name:  "ssh",
-				Usage: `Create a token for authorizing an SSH certificate signing request.`,
-			},
-			sshPrincipalFlag,
-			sshHostFlag,
-			certNotBeforeFlag,
-			certNotAfterFlag,
-			caConfigFlag,
-			flags.Force,
-		},
-	}
-}
-
-func tokenAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
-		return err
-	}
-
-	subject := ctx.Args().Get(0)
-	outputFile := ctx.String("output-file")
-	offline := ctx.Bool("offline")
-	// x.509 flags
-	sans := ctx.StringSlice("san")
-	isRevoke := ctx.Bool("revoke")
-	// ssh flags
-	isSSH := ctx.Bool("ssh")
-	isHost := ctx.Bool("host")
-	principals := ctx.StringSlice("principal")
-
-	switch {
-	case isSSH && isRevoke:
-		return errs.IncompatibleFlagWithFlag(ctx, "ssh", "revoke")
-	case isSSH && len(sans) > 0:
-		return errs.IncompatibleFlagWithFlag(ctx, "ssh", "san")
-	case isHost && len(sans) > 0:
-		return errs.IncompatibleFlagWithFlag(ctx, "host", "san")
-	case len(principals) > 0 && len(sans) > 0:
-		return errs.IncompatibleFlagWithFlag(ctx, "principal", "san")
-	case !isSSH && isHost:
-		return errs.RequiredWithFlag(ctx, "host", "ssh")
-	case !isSSH && len(principals) > 0:
-		return errs.RequiredWithFlag(ctx, "principal", "ssh")
-	}
-
-	// Default token type is always a 'Sign' token.
-	var typ int
-	switch {
-	case isSSH && isHost:
-		typ = sshHostSignType
-		sans = principals
-	case isSSH && !isHost:
-		typ = sshUserSignType
-		sans = principals
-	case isRevoke:
-		typ = revokeType
-	default:
-		typ = signType
-	}
-
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-
-	root := ctx.String("root")
-	if len(root) == 0 {
-		root = pki.GetRootCAPath()
-		if _, err := os.Stat(root); err != nil {
-			return errs.RequiredFlag(ctx, "root")
-		}
-	}
-
-	// --san and --type revoke are incompatible. Revocation tokens do not support SANs.
-	if typ == revokeType && len(sans) > 0 {
-		return errs.IncompatibleFlagWithFlag(ctx, "san", "revoke")
-	}
-
-	// parse times or durations
-	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
-	if !ok {
-		return errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
-	}
-	notAfter, ok := flags.ParseTimeOrDuration(ctx.String("not-after"))
-	if !ok {
-		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
-	}
-
-	// parse certificates durations
-	certNotBefore, err := api.ParseTimeDuration(ctx.String("cert-not-before"))
-	if err != nil {
-		return errs.InvalidFlagValue(ctx, "cert-not-before", ctx.String("cert-not-before"), "")
-	}
-	certNotAfter, err := api.ParseTimeDuration(ctx.String("cert-not-after"))
-	if err != nil {
-		return errs.InvalidFlagValue(ctx, "cert-not-after", ctx.String("cert-not-after"), "")
-	}
-
-	var token string
-	if offline {
-		token, err = offlineTokenFlow(ctx, typ, subject, sans, notBefore, notAfter, certNotBefore, certNotAfter)
-		if err != nil {
-			return err
-		}
-	} else {
-		token, err = newTokenFlow(ctx, typ, subject, sans, caURL, root, notBefore, notAfter, certNotBefore, certNotAfter)
-		if err != nil {
-			return err
-		}
-	}
-	if len(outputFile) > 0 {
-		return utils.WriteFile(outputFile, []byte(token), 0600)
-	}
-	fmt.Println(token)
-	return nil
-}
 
 // parseAudience creates the ca audience url from the ca-url
 func parseAudience(ctx *cli.Context, tokType int) (string, error) {
@@ -413,7 +147,7 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 	}
 
 	// Generate token
-	tokenGen := cautils.NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
+	tokenGen := NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
 	switch typ {
 	case signType:
 		return tokenGen.SignToken(subject, sans)
@@ -440,7 +174,7 @@ func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 
 	// Using the offline CA
 	if utils.FileExists(caConfig) {
-		offlineCA, err := cautils.NewOfflineCA(caConfig)
+		offlineCA, err := NewOfflineCA(caConfig)
 		if err != nil {
 			return "", err
 		}
@@ -496,7 +230,7 @@ func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 	}
 
 	// Generate token
-	tokenGen := cautils.NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
+	tokenGen := NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
 	switch typ {
 	case signType:
 		return tokenGen.SignToken(subject, sans)

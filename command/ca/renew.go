@@ -26,6 +26,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -339,7 +340,7 @@ func runExecCmd(execCmd string) error {
 }
 
 type renewer struct {
-	client    caClient
+	client    cautils.CaClient
 	transport *http.Transport
 	keyFile   string
 	offline   bool
@@ -367,14 +368,14 @@ func newRenewer(ctx *cli.Context, caURL, crtFile, keyFile, rootFile string) (*re
 		},
 	}
 
-	var client caClient
+	var client cautils.CaClient
 	offline := ctx.Bool("offline")
 	if offline {
 		caConfig := ctx.String("ca-config")
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		client, err = newOfflineCA(caConfig)
+		client, err = cautils.NewOfflineCA(caConfig)
 		if err != nil {
 			return nil, err
 		}

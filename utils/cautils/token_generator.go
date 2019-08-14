@@ -1,25 +1,24 @@
-package ca
+package cautils
 
 import (
 	"time"
 
 	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/cli/token/provision"
-
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
+	"github.com/smallstep/cli/token/provision"
 )
 
-type tokenGenerator struct {
+type TokenGenerator struct {
 	kid, iss, aud       string
 	root                string
 	notBefore, notAfter time.Time
 	jwk                 *jose.JSONWebKey
 }
 
-func newTokenGenerator(kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) *tokenGenerator {
-	return &tokenGenerator{
+func NewTokenGenerator(kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) *TokenGenerator {
+	return &TokenGenerator{
 		kid:       kid,
 		iss:       iss,
 		aud:       aud,
@@ -30,7 +29,7 @@ func newTokenGenerator(kid, iss, aud, root string, notBefore, notAfter time.Time
 	}
 }
 
-func (t *tokenGenerator) Token(sub string, opts ...token.Options) (string, error) {
+func (t *TokenGenerator) Token(sub string, opts ...token.Options) (string, error) {
 	// A random jwt id will be used to identify duplicated tokens
 	jwtID, err := randutil.Hex(64) // 256 bits
 	if err != nil {
@@ -74,7 +73,7 @@ func (t *tokenGenerator) Token(sub string, opts ...token.Options) (string, error
 
 // SignToken generates a X.509 certificate signing token. If sans is empty, we
 // will use the subject (common name) as the only SAN.
-func (t *tokenGenerator) SignToken(sub string, sans []string) (string, error) {
+func (t *TokenGenerator) SignToken(sub string, sans []string) (string, error) {
 	if len(sans) == 0 {
 		sans = []string{sub}
 	}
@@ -82,12 +81,12 @@ func (t *tokenGenerator) SignToken(sub string, sans []string) (string, error) {
 }
 
 // RevokeToken generates a X.509 certificate revoke token.
-func (t *tokenGenerator) RevokeToken(sub string) (string, error) {
+func (t *TokenGenerator) RevokeToken(sub string) (string, error) {
 	return t.Token(sub)
 }
 
 // SignSSHToken generates a SSH certificate signing token.
-func (t *tokenGenerator) SignSSHToken(sub, certType string, principals []string, notBefore, notAfter provisioner.TimeDuration) (string, error) {
+func (t *TokenGenerator) SignSSHToken(sub, certType string, principals []string, notBefore, notAfter provisioner.TimeDuration) (string, error) {
 	return t.Token(sub, token.WithSSH(provisioner.SSHOptions{
 		CertType:    certType,
 		Principals:  principals,
