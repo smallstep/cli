@@ -33,8 +33,8 @@ type CertificateFlow struct {
 	offline   bool
 }
 
-// SharedContext is used to share information between commands.
-var SharedContext = struct {
+// sharedContext is used to share information between commands.
+var sharedContext = struct {
 	DisableCustomSANs bool
 }{}
 
@@ -238,7 +238,7 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 				doc.PrivateIP,
 				fmt.Sprintf("ip-%s.%s.compute.internal", strings.Replace(doc.PrivateIP, ".", "-", -1), doc.Region),
 			}
-			if !SharedContext.DisableCustomSANs {
+			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
 			dnsNames, ips = splitSANs(defaultSANs)
@@ -250,7 +250,7 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 				fmt.Sprintf("%s.c.%s.internal", ce.InstanceName, ce.ProjectID),
 				fmt.Sprintf("%s.%s.c.%s.internal", ce.InstanceName, ce.Zone, ce.ProjectID),
 			}
-			if !SharedContext.DisableCustomSANs {
+			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
 			dnsNames, ips = splitSANs(defaultSANs)
@@ -260,7 +260,7 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 			defaultSANs := []string{
 				jwt.Payload.Azure.VirtualMachine,
 			}
-			if !SharedContext.DisableCustomSANs {
+			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
 			dnsNames, ips = splitSANs(defaultSANs)
