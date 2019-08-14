@@ -26,7 +26,7 @@ func createCommand() cli.Command {
 		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
 [**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
 [**--curve**=<curve>] [**no-password**] [**--profile**=<profile>]
-[**--size**=<size>] [**--type**=<type>] [**--san**=<SAN>]`,
+[**--size**=<size>] [**--type**=<type>] [**--san**=<SAN>] [**--bundle**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing requests (CSR) that can be signed later using 'step
 certificates sign' (or some other tool) to produce a certificate.
@@ -347,7 +347,7 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 
-		pubPEMs = []*pem.Block{&pem.Block{
+		pubPEMs = []*pem.Block{{
 			Type:    "CERTIFICATE REQUEST",
 			Bytes:   csrBytes,
 			Headers: map[string]string{},
@@ -432,11 +432,16 @@ func createAction(ctx *cli.Context) error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		pubPEMs = []*pem.Block{&pem.Block{
-			Type:    "CERTIFICATE",
-			Bytes:   crtBytes,
-			Headers: map[string]string{},
+		pubPEMs = []*pem.Block{{
+			Type:  "CERTIFICATE",
+			Bytes: crtBytes,
 		}}
+		if bundle {
+			pubPEMs = append(pubPEMs, &pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: profile.Issuer().Raw,
+			})
+		}
 		priv = profile.SubjectPrivateKey()
 		outputType = "certificate"
 	default:
