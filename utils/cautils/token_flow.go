@@ -64,8 +64,8 @@ func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 	}
 }
 
-// newTokenFlow implements the common flow used to generate a token
-func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
+// NewTokenFlow implements the common flow used to generate a token
+func NewTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	// Get audience from ca-url
 	audience, err := parseAudience(ctx, typ)
 	if err != nil {
@@ -92,13 +92,13 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		}
 		return strings.TrimSpace(string(out)), nil
 	case *provisioner.GCP: // Do the identity request to get the token
-		sharedContext.DisableCustomSANs = p.DisableCustomSANs
+		SharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, caURL)
 	case *provisioner.AWS: // Do the identity request to get the token
-		sharedContext.DisableCustomSANs = p.DisableCustomSANs
+		SharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, caURL)
 	case *provisioner.Azure: // Do the identity request to get the token
-		sharedContext.DisableCustomSANs = p.DisableCustomSANs
+		SharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, caURL)
 	}
 
@@ -162,11 +162,11 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 	}
 }
 
-// offlineTokenFlow generates a provisioning token using either
+// OfflineTokenFlow generates a provisioning token using either
 //   1. static configuration from ca.json (created with `step ca init`)
 //   2. input from command line flags
 // These two options are mutually exclusive and priority is given to ca.json.
-func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
+func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	caConfig := ctx.String("ca-config")
 	if caConfig == "" {
 		return "", errs.InvalidFlagValue(ctx, "ca-config", "", "")

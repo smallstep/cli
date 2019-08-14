@@ -33,8 +33,8 @@ type CertificateFlow struct {
 	offline   bool
 }
 
-// sharedContext is used to share information between commands.
-var sharedContext = struct {
+// SharedContext is used to share information between commands.
+var SharedContext = struct {
 	DisableCustomSANs bool
 }{}
 
@@ -61,6 +61,7 @@ func NewCertificateFlow(ctx *cli.Context) (*CertificateFlow, error) {
 	}, nil
 }
 
+// GetClient returns the client used to send requests to the CA.
 func (f *CertificateFlow) GetClient(ctx *cli.Context, subject, tok string) (CaClient, error) {
 	if f.offline {
 		return f.offlineCA, nil
@@ -128,9 +129,11 @@ func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 		}
 	}
 
-	return newTokenFlow(ctx, signType, subject, sans, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
+	return NewTokenFlow(ctx, signType, subject, sans, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 }
 
+// GenerateSSHToken generates a token used to authorize the sign of an SSH
+// certificate.
 func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType string, principals []string, validAfter, validBefore provisioner.TimeDuration) (string, error) {
 	var typ int
 	switch certType {
@@ -168,7 +171,7 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType s
 		}
 	}
 
-	return newTokenFlow(ctx, typ, subject, principals, caURL, root, time.Time{}, time.Time{}, validAfter, validBefore)
+	return NewTokenFlow(ctx, typ, subject, principals, caURL, root, time.Time{}, time.Time{}, validAfter, validBefore)
 }
 
 // Sign signs the CSR using the online or the offline certificate authority.
@@ -235,7 +238,7 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 				doc.PrivateIP,
 				fmt.Sprintf("ip-%s.%s.compute.internal", strings.Replace(doc.PrivateIP, ".", "-", -1), doc.Region),
 			}
-			if !sharedContext.DisableCustomSANs {
+			if !SharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
 			dnsNames, ips = splitSANs(defaultSANs)
@@ -247,7 +250,7 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 				fmt.Sprintf("%s.c.%s.internal", ce.InstanceName, ce.ProjectID),
 				fmt.Sprintf("%s.%s.c.%s.internal", ce.InstanceName, ce.Zone, ce.ProjectID),
 			}
-			if !sharedContext.DisableCustomSANs {
+			if !SharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
 			dnsNames, ips = splitSANs(defaultSANs)
@@ -257,7 +260,7 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 			defaultSANs := []string{
 				jwt.Payload.Azure.VirtualMachine,
 			}
-			if !sharedContext.DisableCustomSANs {
+			if !SharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
 			dnsNames, ips = splitSANs(defaultSANs)

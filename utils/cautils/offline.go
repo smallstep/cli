@@ -25,6 +25,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// CaClient is the interface implemented by client used to sign, renew, or
+// revoke certificates.
 type CaClient interface {
 	Sign(req *api.SignRequest) (*api.SignResponse, error)
 	SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error)
@@ -272,13 +274,13 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 		}
 		return strings.TrimSpace(string(out)), nil
 	case *provisioner.GCP: // Do the identity request to get the token
-		sharedContext.DisableCustomSANs = p.DisableCustomSANs
+		SharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
 	case *provisioner.AWS: // Do the identity request to get the token
-		sharedContext.DisableCustomSANs = p.DisableCustomSANs
+		SharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
 	case *provisioner.Azure: // Do the identity request to get the token
-		sharedContext.DisableCustomSANs = p.DisableCustomSANs
+		SharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
 	}
 

@@ -374,7 +374,7 @@ func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, e
 		}
 	}
 
-	return newTokenFlow(ctx, revokeType, *subject, nil, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
+	return cautils.NewTokenFlow(ctx, revokeType, *subject, nil, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 }
 
 func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {

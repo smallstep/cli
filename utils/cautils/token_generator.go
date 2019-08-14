@@ -10,6 +10,8 @@ import (
 	"github.com/smallstep/cli/token/provision"
 )
 
+// TokenGenerator is a helper used to generate different types of tokens used in
+// the CA.
 type TokenGenerator struct {
 	kid, iss, aud       string
 	root                string
@@ -17,6 +19,7 @@ type TokenGenerator struct {
 	jwk                 *jose.JSONWebKey
 }
 
+// NewTokenGenerator initializes a new token generator with the common fields.
 func NewTokenGenerator(kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) *TokenGenerator {
 	return &TokenGenerator{
 		kid:       kid,
@@ -29,6 +32,7 @@ func NewTokenGenerator(kid, iss, aud, root string, notBefore, notAfter time.Time
 	}
 }
 
+// Token generates a generic token with the given subject and options.
 func (t *TokenGenerator) Token(sub string, opts ...token.Options) (string, error) {
 	// A random jwt id will be used to identify duplicated tokens
 	jwtID, err := randutil.Hex(64) // 256 bits
