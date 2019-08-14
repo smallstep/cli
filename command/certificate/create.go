@@ -26,7 +26,7 @@ func createCommand() cli.Command {
 		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
 [**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
 [**--curve**=<curve>] [**no-password**] [**--profile**=<profile>]
-[**--size**=<size>] [**--type**=<type>] [**--san**=<SAN>]`,
+[**--size**=<size>] [**--type**=<type>] [**--san**=<SAN>] [**--bundle**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing requests (CSR) that can be signed later using 'step
 certificates sign' (or some other tool) to produce a certificate.
@@ -257,6 +257,11 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs). Use the '--san'
 flag multiple times to configure multiple SANs.`,
 			},
+			cli.BoolFlag{
+				Name: "bundle",
+				Usage: `Bundle the new leaf certificate with the signing certificate. This flag requires
+the **--ca** flag.`,
+			},
 			flags.Force,
 			flags.Subtle,
 		},
@@ -313,11 +318,15 @@ func createAction(ctx *cli.Context) error {
 
 	var (
 		priv       interface{}
-		pubPEM     *pem.Block
+		pubPEMs    []*pem.Block
 		outputType string
+		bundle     = ctx.Bool("bundle")
 	)
 	switch typ {
 	case "x509-csr":
+		if bundle {
+			return errs.IncompatibleFlagWithFlag(ctx, "bundle", "csr")
+		}
 		if ctx.IsSet("profile") {
 			return errs.IncompatibleFlagWithFlag(ctx, "profile", "csr")
 		}
@@ -338,11 +347,11 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 
-		pubPEM = &pem.Block{
+		pubPEMs = []*pem.Block{{
 			Type:    "CERTIFICATE REQUEST",
 			Bytes:   csrBytes,
 			Headers: map[string]string{},
-		}
+		}}
 		outputType = "certificate signing request"
 	case "x509":
 		var (
@@ -352,6 +361,9 @@ func createAction(ctx *cli.Context) error {
 			caKeyPath = ctx.String("ca-key")
 			profile   x509util.Profile
 		)
+		if bundle && prof != "leaf" {
+			return errs.IncompatibleFlagValue(ctx, "bundle", "profile", prof)
+		}
 		switch prof {
 		case "leaf", "intermediate-ca":
 			if caPath == "" {
@@ -420,10 +432,15 @@ func createAction(ctx *cli.Context) error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		pubPEM = &pem.Block{
-			Type:    "CERTIFICATE",
-			Bytes:   crtBytes,
-			Headers: map[string]string{},
+		pubPEMs = []*pem.Block{{
+			Type:  "CERTIFICATE",
+			Bytes: crtBytes,
+		}}
+		if bundle {
+			pubPEMs = append(pubPEMs, &pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: profile.Issuer().Raw,
+			})
 		}
 		priv = profile.SubjectPrivateKey()
 		outputType = "certificate"
@@ -431,7 +448,11 @@ func createAction(ctx *cli.Context) error {
 		return errs.NewError("unexpected type: %s", typ)
 	}
 
-	if err := utils.WriteFile(crtFile, pem.EncodeToMemory(pubPEM), 0600); err != nil {
+	pubBytes := []byte{}
+	for _, pp := range pubPEMs {
+		pubBytes = append(pubBytes, pem.EncodeToMemory(pp)...)
+	}
+	if err := utils.WriteFile(crtFile, pubBytes, 0600); err != nil {
 		return errs.FileError(err, crtFile)
 	}
 
