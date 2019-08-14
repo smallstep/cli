@@ -6,8 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/smallstep/cli/utils/cautils"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
@@ -18,6 +16,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
@@ -60,12 +59,12 @@ var (
 	}
 )
 
-func sshCertificateCommand() cli.Command {
+func certificateCommand() cli.Command {
 	return cli.Command{
-		Name:   "ssh-certificate",
-		Action: command.ActionFunc(sshCertificateAction),
+		Name:   "certificate",
+		Action: command.ActionFunc(certificateAction),
 		Usage:  "sign a SSH certificate using the the SSH CA",
-		UsageText: `**step ca ssh-certificate** <key-id> <key-file>
+		UsageText: `**step ca certificate** <key-id> <key-file>
 		[**--host**] [**--sign**]`,
 		Description: `**step ca ssh-certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
@@ -197,7 +196,7 @@ $ step ca ssh-certificate --token $TOKEN mariano@work id_ecdsa
 	}
 }
 
-func sshCertificateAction(ctx *cli.Context) error {
+func certificateAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}

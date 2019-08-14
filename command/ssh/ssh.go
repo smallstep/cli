@@ -25,7 +25,7 @@ Generate a new SSH key pair and host certificate:
 $ step ca ssh-certificate --host internal.example.com ssh_host_ecdsa_key
 '''`,
 		Subcommands: cli.Commands{
-			sshCertificateCommand(),
+			certificateCommand(),
 		},
 	}
 
