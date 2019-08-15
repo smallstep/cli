@@ -14,13 +14,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-const (
-	signType = iota
-	revokeType
-	sshUserSignType
-	sshHostSignType
-)
-
 func tokenCommand() cli.Command {
 	// Avoid the conflict with --not-before --not-after
 	certNotBeforeFlag := notBeforeCertFlag
@@ -214,15 +207,15 @@ func tokenAction(ctx *cli.Context) error {
 	var typ int
 	switch {
 	case isSSH && isHost:
-		typ = sshHostSignType
+		typ = cautils.SSHHostSignType
 		sans = principals
 	case isSSH && !isHost:
-		typ = sshUserSignType
+		typ = cautils.SSHUserSignType
 		sans = principals
 	case isRevoke:
-		typ = revokeType
+		typ = cautils.RevokeType
 	default:
-		typ = signType
+		typ = cautils.SignType
 	}
 
 	caURL := ctx.String("ca-url")
@@ -239,7 +232,7 @@ func tokenAction(ctx *cli.Context) error {
 	}
 
 	// --san and --type revoke are incompatible. Revocation tokens do not support SANs.
-	if typ == revokeType && len(sans) > 0 {
+	if typ == cautils.RevokeType && len(sans) > 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "san", "revoke")
 	}
 

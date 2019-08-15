@@ -104,7 +104,7 @@ func (f *CertificateFlow) GetClient(ctx *cli.Context, subject, tok string) (CaCl
 // token flow or the online mode.
 func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
 	if f.offline {
-		return f.offlineCA.GenerateToken(ctx, signType, subject, sans, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
+		return f.offlineCA.GenerateToken(ctx, SignType, subject, sans, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 	}
 
 	// Use online CA to get the provisioners and generate the token
@@ -129,7 +129,7 @@ func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 		}
 	}
 
-	return NewTokenFlow(ctx, signType, subject, sans, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
+	return NewTokenFlow(ctx, SignType, subject, sans, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 }
 
 // GenerateSSHToken generates a token used to authorize the sign of an SSH
@@ -138,9 +138,9 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType s
 	var typ int
 	switch certType {
 	case provisioner.SSHUserCert:
-		typ = sshUserSignType
+		typ = SSHUserSignType
 	case provisioner.SSHHostCert:
-		typ = sshHostSignType
+		typ = SSHHostSignType
 	default:
 		return "", errors.Errorf("unsupported cert type %s", certType)
 	}

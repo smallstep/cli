@@ -349,7 +349,7 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.
 func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, error) {
 	// For offline just generate the token
 	if f.offline {
-		return f.offlineCA.GenerateToken(ctx, revokeType, *subject, nil, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
+		return f.offlineCA.GenerateToken(ctx, cautils.RevokeType, *subject, nil, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 	}
 
 	// Use online CA to get the provisioners and generate the token
@@ -374,7 +374,7 @@ func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, e
 		}
 	}
 
-	return cautils.NewTokenFlow(ctx, revokeType, *subject, nil, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
+	return cautils.NewTokenFlow(ctx, cautils.RevokeType, *subject, nil, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 }
 
 func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {

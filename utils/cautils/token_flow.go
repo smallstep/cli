@@ -25,11 +25,12 @@ type provisionersSelect struct {
 	Provisioner provisioner.Interface
 }
 
+// Token signing types
 const (
-	signType = iota
-	revokeType
-	sshUserSignType
-	sshHostSignType
+	SignType = iota
+	RevokeType
+	SSHUserSignType
+	SSHHostSignType
 )
 
 // parseAudience creates the ca audience url from the ca-url
@@ -48,10 +49,10 @@ func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 		var path string
 		switch tokType {
 		// default
-		case signType, sshUserSignType, sshHostSignType:
+		case SignType, SSHUserSignType, SSHHostSignType:
 			path = "/1.0/sign"
 		// revocation token
-		case revokeType:
+		case RevokeType:
 			path = "/1.0/revoke"
 		default:
 			return "", errors.Errorf("unexpected token type: %d", tokType)
@@ -149,13 +150,13 @@ func NewTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 	// Generate token
 	tokenGen := NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
 	switch typ {
-	case signType:
+	case SignType:
 		return tokenGen.SignToken(subject, sans)
-	case revokeType:
+	case RevokeType:
 		return tokenGen.RevokeToken(subject)
-	case sshUserSignType:
+	case SSHUserSignType:
 		return tokenGen.SignSSHToken(subject, provisioner.SSHUserCert, sans, certNotBefore, certNotAfter)
-	case sshHostSignType:
+	case SSHHostSignType:
 		return tokenGen.SignSSHToken(subject, provisioner.SSHHostCert, sans, certNotBefore, certNotAfter)
 	default:
 		return tokenGen.Token(subject)
@@ -232,13 +233,13 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 	// Generate token
 	tokenGen := NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
 	switch typ {
-	case signType:
+	case SignType:
 		return tokenGen.SignToken(subject, sans)
-	case revokeType:
+	case RevokeType:
 		return tokenGen.RevokeToken(subject)
-	case sshUserSignType:
+	case SSHUserSignType:
 		return tokenGen.SignSSHToken(subject, provisioner.SSHUserCert, sans, certNotBefore, certNotAfter)
-	case sshHostSignType:
+	case SSHHostSignType:
 		return tokenGen.SignSSHToken(subject, provisioner.SSHHostCert, sans, certNotBefore, certNotAfter)
 	default:
 		return tokenGen.Token(subject)

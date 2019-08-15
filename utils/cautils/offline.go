@@ -119,7 +119,7 @@ func (c *OfflineCA) VerifyClientCert(certFile, keyFile string) error {
 // Audience returns the token audience.
 func (c *OfflineCA) Audience(tokType int) string {
 	switch tokType {
-	case revokeType:
+	case RevokeType:
 		return fmt.Sprintf("https://%s/revoke", c.config.DNSNames[0])
 	default:
 		return fmt.Sprintf("https://%s/sign", c.config.DNSNames[0])
@@ -319,13 +319,13 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 	// Generate token
 	tokenGen := NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
 	switch typ {
-	case signType:
+	case SignType:
 		return tokenGen.SignToken(subject, sans)
-	case revokeType:
+	case RevokeType:
 		return tokenGen.RevokeToken(subject)
-	case sshUserSignType:
+	case SSHUserSignType:
 		return tokenGen.SignSSHToken(subject, provisioner.SSHUserCert, sans, certNotBefore, certNotAfter)
-	case sshHostSignType:
+	case SSHHostSignType:
 		return tokenGen.SignSSHToken(subject, provisioner.SSHHostCert, sans, certNotBefore, certNotAfter)
 	default:
 		return tokenGen.Token(subject)
