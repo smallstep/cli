@@ -43,7 +43,7 @@ func markdownHelpAction(ctx *cli.Context) error {
 
 	// preserve jekyll compatibility for transition period
 	fileName := "index.md"
-	if ctx.IsSet("hugo") {
+	if ctx.Bool("hugo") {
 		fileName = "_index.md"
 	}
 
