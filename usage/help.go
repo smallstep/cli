@@ -43,7 +43,7 @@ func HelpCommand() cli.Command {
 			},
 			cli.BoolFlag{
 				Name:  "hugo",
-				Usage: "Writes hugo.js (vs jekyll) compatible markdown files",
+				Usage: "Writes hugo (vs jekyll) compatible markdown files",
 			},
 		},
 	}
