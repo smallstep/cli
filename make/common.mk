@@ -29,7 +29,7 @@ BOOTSTRAP=\
 	github.com/client9/misspell/cmd/misspell \
 	github.com/gordonklaus/ineffassign \
 	github.com/tsenart/deadcode \
-	github.com/alecthomas/gometalinter
+	github.com/golangci/golangci-lint
 
 define VENDOR_BIN_TMPL
 vendor/bin/$(notdir $(1)): vendor
@@ -132,9 +132,9 @@ LINTERS=\
 $(patsubst %,%-bin,$(filter-out gofmt vet,$(LINTERS))): %-bin: vendor/bin/%
 gofmt-bin vet-bin:
 
-$(LINTERS): %: vendor/bin/gometalinter %-bin vendor
-	$Q PATH=`pwd`/vendor/bin:$$PATH gometalinter --tests --disable-all --vendor \
-	     --deadline=5m -s data -s pkg --enable $@ ./...
+$(LINTERS): %: %-bin vendor
+	$Q PATH=`pwd`/vendor/bin:$$PATH golangci-lint run --disable-all \
+	     --deadline=5m --skip-dirs pkg --enable $@ ./...
 fmt:
 	$Q gofmt -l -w $(SRC)
 

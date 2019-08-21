@@ -26,21 +26,6 @@
   revision = "5482f03509440585d13d8f648989e05903001842"
 
 [[projects]]
-  digest = "1:304cb78c285eaf02ab529ad02a257cad9b4845022915e6c82f87860ac53222d8"
-  name = "github.com/alecthomas/gometalinter"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "bae2f1293d092fd8167939d5108d1b025eaef9de"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c198fdc381e898e8fb62b8eb62758195091c313ad18e52a3067366e1dda2fb3c"
-  name = "github.com/alecthomas/units"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
-
-[[projects]]
   digest = "1:320e7ead93de9fd2b0e59b50fd92a4d50c1f8ab455d96bc2eb083267453a9709"
   name = "github.com/asaskevich/govalidator"
   packages = ["."]
@@ -167,19 +152,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:750e747d0aad97b79f4a4e00034bae415c2ea793fd9e61438d966ee9c79579bf"
-  name = "github.com/google/shlex"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "6f45313302b9c56850fc17f99e40caebce98c716"
-
-[[projects]]
-  branch = "master"
-  digest = "1:824d147914b40e56e9e1eebd602bc6bb9761989d52fd8e4a498428467980eb17"
+  digest = "1:00d592bdacdeb0412b09f8eb2f98c6cc04470c4b72150f20733511e0821225c1"
   name = "github.com/gordonklaus/ineffassign"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1003c8bd00dc2869cb5ca5282e6ce33834fed514"
+  revision = "ed7b1b5ee0f816bbc0ff35bf7c6fdb4f53b6c59a"
 
 [[projects]]
   branch = "master"
@@ -297,27 +274,6 @@
   pruneopts = "UT"
   revision = "f5bce3387232559bcbe6a5f8227c4bf508dac1ba"
   version = "v1.11.0"
-
-[[projects]]
-  digest = "1:07140002dbf37da92090f731b46fa47be4820b82fe5c14a035203b0e813d0ec2"
-  name = "github.com/nicksnyder/go-i18n"
-  packages = [
-    "i18n",
-    "i18n/bundle",
-    "i18n/language",
-    "i18n/translation",
-  ]
-  pruneopts = "UT"
-  revision = "0dc1626d56435e9d605a29875701721c54bc9bbd"
-  version = "v1.10.0"
-
-[[projects]]
-  digest = "1:95741de3af260a92cc5c7f3f3061e85273f5a81b5db20d4bd68da74bd521675e"
-  name = "github.com/pelletier/go-toml"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
-  version = "v1.2.0"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
@@ -619,13 +575,6 @@
   version = "v1.5.0"
 
 [[projects]]
-  digest = "1:39efb07a0d773dc09785b237ada4e10b5f28646eb6505d97bc18f8d2ff439362"
-  name = "gopkg.in/alecthomas/kingpin.v3-unstable"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "63abe20a23e29e80bbef8089bd3dee3ac25e5306"
-
-[[projects]]
   digest = "1:9593bab40e981b1f90b7e07faeab0d09b75fe338880d08880f986a9d3283c53f"
   name = "gopkg.in/square/go-jose.v2"
   packages = [
@@ -638,20 +587,11 @@
   revision = "730df5f748271903322feb182be83b43ebbbe27d"
   version = "v2.3.1"
 
-[[projects]]
-  digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "github.com/ThomasRooney/gexpect",
-    "github.com/alecthomas/gometalinter",
     "github.com/chzyer/readline",
     "github.com/client9/misspell/cmd/misspell",
     "github.com/golang/lint/golint",
