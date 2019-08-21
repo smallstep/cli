@@ -410,11 +410,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c3207093bfee46dc9f408a55408d6fa6ed59431bdeb54df2ab89ffa1d8e1bfaf"
+  digest = "1:f4d37f61cbbd5adb7066017d7e5f303b722a39c3408b41d46a5ea04f81adba8c"
   name = "github.com/smallstep/certinfo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "fef09aeb6b3b6451151ae248670cf020454c0d5b"
+  revision = "203093530c86c19d79cfe5ce9ad0b8897e3cce9b"
 
 [[projects]]
   branch = "master"
@@ -440,7 +440,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:167fb96bb586d7abc0714a63d5bd30f24563d369012b295268db4d64008c4f7d"
+  digest = "1:822ad7c8c41fe68fb9c9c95ad7e77a1172e216d9e3e527451819927448b6dee6"
   name = "github.com/smallstep/zcrypto"
   packages = [
     "json",
@@ -449,7 +449,7 @@
     "x509/pkix",
   ]
   pruneopts = "UT"
-  revision = "0eaa490bf930eb2c8f1fd0dec8750619588aadae"
+  revision = "6bab21fcaafc3d150cf793b6d5f25fe32f49c80e"
 
 [[projects]]
   branch = "master"
