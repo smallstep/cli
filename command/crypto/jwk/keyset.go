@@ -135,7 +135,7 @@ func keysetAddAction(ctx *cli.Context) error {
 
 	// Unmarshal the plain (or decrypted JWK)
 	var jwk jose.JSONWebKey
-	if err := json.Unmarshal(b, &jwk); err != nil {
+	if err = json.Unmarshal(b, &jwk); err != nil {
 		return errors.New("error reading JWK: unsupported format")
 	}
 

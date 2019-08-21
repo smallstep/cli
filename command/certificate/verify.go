@@ -96,7 +96,6 @@ func verifyAction(ctx *cli.Context) error {
 	}
 
 	var (
-		err              error
 		crtFile          = ctx.Args().Get(0)
 		host             = ctx.String("host")
 		roots            = ctx.String("roots")
@@ -153,6 +152,7 @@ func verifyAction(ctx *cli.Context) error {
 	}
 
 	if roots != "" {
+		var err error
 		rootPool, err = x509util.ReadCertPool(roots)
 		if err != nil {
 			errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)

@@ -11,14 +11,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c10265d5a71326618d37e97169eddb3582f78e8ac7dcf87403b4cf619efd519a"
-  name = "github.com/DHowett/go-plist"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "591f970eefbbeb04d7b37f334a0c4c3256e32876"
-
-[[projects]]
-  branch = "master"
   digest = "1:655f3b07160fbe90713062296ef215c096ad4308bdc0081620cacd9b9d46dce5"
   name = "github.com/ThomasRooney/gexpect"
   packages = ["."]
@@ -384,11 +376,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4bde64565730a308d3cebca9b93f19c8e1137f9ba5b57174669ad0f732dec044"
+  digest = "1:f41de3b55032e81c12f4d109e6c5222e1cff573197a3652b800ca8ac2aaada35"
   name = "github.com/smallstep/truststore"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b8300b931ab584b7aa01fe43b3c92d5a61cf2ce3"
+  revision = "8418f8a7d0b74e79026254b4ad23c67dd77fe5f0"
 
 [[projects]]
   branch = "master"
@@ -586,6 +578,14 @@
   pruneopts = "UT"
   revision = "730df5f748271903322feb182be83b43ebbbe27d"
   version = "v2.3.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c10265d5a71326618d37e97169eddb3582f78e8ac7dcf87403b4cf619efd519a"
+  name = "howett.net/plist"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "591f970eefbbeb04d7b37f334a0c4c3256e32876"
 
 [solve-meta]
   analyzer-name = "dep"

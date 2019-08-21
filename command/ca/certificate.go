@@ -171,7 +171,7 @@ func certificateAction(ctx *cli.Context) error {
 		return errors.New("token is not supported")
 	}
 
-	if err := flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
+	if err = flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
 		return err
 	}
 

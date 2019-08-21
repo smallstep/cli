@@ -134,20 +134,18 @@ type PKI struct {
 
 // New creates a new PKI configuration.
 func New(public, private, config string) (*PKI, error) {
-	var err error
-
-	if _, err = os.Stat(public); os.IsNotExist(err) {
+	if _, err := os.Stat(public); os.IsNotExist(err) {
 		if err = os.MkdirAll(public, 0700); err != nil {
 			return nil, errs.FileError(err, public)
 		}
 	}
-	if _, err = os.Stat(private); os.IsNotExist(err) {
+	if _, err := os.Stat(private); os.IsNotExist(err) {
 		if err = os.MkdirAll(private, 0700); err != nil {
 			return nil, errs.FileError(err, private)
 		}
 	}
 	if len(config) > 0 {
-		if _, err = os.Stat(config); os.IsNotExist(err) {
+		if _, err := os.Stat(config); os.IsNotExist(err) {
 			if err = os.MkdirAll(config, 0700); err != nil {
 				return nil, errs.FileError(err, config)
 			}
@@ -160,6 +158,7 @@ func New(public, private, config string) (*PKI, error) {
 		return s, errors.Wrapf(err, "error getting absolute path for %s", name)
 	}
 
+	var err error
 	p := &PKI{
 		provisioner: "step-cli",
 		address:     "127.0.0.1:9000",
@@ -359,7 +358,7 @@ func (p *PKI) Save(opt ...Option) error {
 
 	b, err := json.MarshalIndent(config, "", "   ")
 	if err != nil {
-		return errors.Wrapf(err, "error marshalling %s", p.config)
+		return errors.Wrapf(err, "error marshaling %s", p.config)
 	}
 	if err = utils.WriteFile(p.config, b, 0666); err != nil {
 		return errs.FileError(err, p.config)
@@ -368,7 +367,8 @@ func (p *PKI) Save(opt ...Option) error {
 	// Generate the CA URL.
 	if p.caURL == "" {
 		p.caURL = p.dnsNames[0]
-		_, port, err := net.SplitHostPort(p.address)
+		var port string
+		_, port, err = net.SplitHostPort(p.address)
 		if err != nil {
 			return errors.Wrapf(err, "error parsing %s", p.address)
 		}
@@ -387,7 +387,7 @@ func (p *PKI) Save(opt ...Option) error {
 	}
 	b, err = json.MarshalIndent(defaults, "", "   ")
 	if err != nil {
-		return errors.Wrapf(err, "error marshalling %s", p.defaults)
+		return errors.Wrapf(err, "error marshaling %s", p.defaults)
 	}
 	if err = utils.WriteFile(p.defaults, b, 0666); err != nil {
 		return errs.FileError(err, p.defaults)

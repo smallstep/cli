@@ -238,7 +238,7 @@ func ParsePKIXPublicKey(derBytes []byte) (pub interface{}, err error) {
 	}
 }
 
-// MarshalPKIXPublicKey serialises a public key to DER-encoded PKIX format. The
+// MarshalPKIXPublicKey serializes a public key to DER-encoded PKIX format. The
 // following key types are supported: *rsa.PublicKey, *ecdsa.PublicKey,
 // ed25519.Publickey. Unsupported key types result in an error.
 func MarshalPKIXPublicKey(pub interface{}) ([]byte, error) {
@@ -265,7 +265,7 @@ func MarshalPKCS8PrivateKey(key interface{}) ([]byte, error) {
 	switch k := key.(type) {
 	case *rsa.PrivateKey, *ecdsa.PrivateKey:
 		b, err := x509.MarshalPKCS8PrivateKey(key)
-		return b, errors.Wrap(err, "error marshalling PKCS#8")
+		return b, errors.Wrap(err, "error marshaling PKCS#8")
 	case ed25519.PrivateKey:
 		var priv pkcs8
 		priv.PrivateKey = append([]byte{4, 32}, k.Seed()...)[:34]
@@ -273,9 +273,9 @@ func MarshalPKCS8PrivateKey(key interface{}) ([]byte, error) {
 			Algorithm: asn1.ObjectIdentifier{1, 3, 101, 112},
 		}
 		b, err := asn1.Marshal(priv)
-		return b, errors.Wrap(err, "error marshalling PKCS#8")
+		return b, errors.Wrap(err, "error marshaling PKCS#8")
 	default:
-		return nil, errors.Errorf("x509: unknown key type while marshalling PKCS#8: %T", key)
+		return nil, errors.Errorf("x509: unknown key type while marshaling PKCS#8: %T", key)
 	}
 }
 
@@ -428,7 +428,7 @@ func EncryptPKCS8PrivateKey(rand io.Reader, data, password []byte, alg x509.PEMC
 
 	b, err := asn1.Marshal(pki)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshalling encrypted key")
+		return nil, errors.Wrap(err, "error marshaling encrypted key")
 	}
 	return &pem.Block{
 		Type:  "ENCRYPTED PRIVATE KEY",

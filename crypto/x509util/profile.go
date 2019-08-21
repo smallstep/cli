@@ -361,7 +361,7 @@ func (b *base) CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, erro
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if err := utils.WriteFile(crtOut, pem.EncodeToMemory(&pem.Block{
+	if err = utils.WriteFile(crtOut, pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: crtBytes,
 	}), 0600); err != nil {

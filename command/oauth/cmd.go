@@ -205,7 +205,7 @@ func oauthCmd(c *cli.Context) error {
 			return errors.Wrapf(err, "error reading account from %s", filename)
 		}
 		account := make(map[string]interface{})
-		if err := json.Unmarshal(b, &account); err != nil {
+		if err = json.Unmarshal(b, &account); err != nil {
 			return errors.Wrapf(err, "error reading %s: unsupported format", filename)
 		}
 
@@ -290,7 +290,7 @@ type options struct {
 // Validate validates the options.
 func (o *options) Validate() error {
 	if o.Provider != "google" && !strings.HasPrefix(o.Provider, "https://") {
-		return errors.New("Use a valid provider: google")
+		return errors.New("use a valid provider: google")
 	}
 	return nil
 }
@@ -408,7 +408,7 @@ func disco(provider string) (map[string]interface{}, error) {
 		return nil, errors.Wrapf(err, "error retrieving %s", url.String())
 	}
 	details := make(map[string]interface{})
-	if err := json.Unmarshal(b, &details); err != nil {
+	if err = json.Unmarshal(b, &details); err != nil {
 		return nil, errors.Wrapf(err, "error reading %s: unsupported format", url.String())
 	}
 	return details, err

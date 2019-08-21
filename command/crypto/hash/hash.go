@@ -203,7 +203,8 @@ func digestAction(ctx *cli.Context) error {
 	}
 
 	for _, filename := range ctx.Args() {
-		st, err := os.Stat(filename)
+		var st os.FileInfo
+		st, err = os.Stat(filename)
 		if err != nil {
 			return errs.FileError(err, filename)
 		}

@@ -80,7 +80,7 @@ func initCommand() cli.Command {
 }
 
 func initAction(ctx *cli.Context) (err error) {
-	if err := assertCryptoRand(); err != nil {
+	if err = assertCryptoRand(); err != nil {
 		return err
 	}
 
@@ -96,7 +96,6 @@ func initAction(ctx *cli.Context) (err error) {
 	case len(root) == 0 && len(key) > 0:
 		return errs.RequiredWithFlag(ctx, "key", "root")
 	case len(root) > 0 && len(key) > 0:
-		var err error
 		if rootCrt, err = pemutil.ReadCertificate(root); err != nil {
 			return err
 		}
@@ -141,7 +140,8 @@ func initAction(ctx *cli.Context) (err error) {
 	}
 
 	if configure {
-		names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])",
+		var names string
+		names, err = ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])",
 			ui.WithValidateFunc(ui.DNS()), ui.WithValue(ctx.String("dns")))
 		if err != nil {
 			return err
@@ -156,13 +156,15 @@ func initAction(ctx *cli.Context) (err error) {
 			dnsNames = append(dnsNames, strings.TrimSpace(name))
 		}
 
-		address, err := ui.Prompt("What address will your new CA listen at? (e.g. :443)",
+		var address string
+		address, err = ui.Prompt("What address will your new CA listen at? (e.g. :443)",
 			ui.WithValidateFunc(ui.Address()), ui.WithValue(ctx.String("address")))
 		if err != nil {
 			return err
 		}
 
-		provisioner, err := ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)",
+		var provisioner string
+		provisioner, err = ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)",
 			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("provisioner")))
 		if err != nil {
 			return err
@@ -183,11 +185,11 @@ func initAction(ctx *cli.Context) (err error) {
 	if configure {
 		// Generate provisioner key pairs.
 		if len(provisionerPassword) > 0 {
-			if err := p.GenerateKeyPairs(provisionerPassword); err != nil {
+			if err = p.GenerateKeyPairs(provisionerPassword); err != nil {
 				return err
 			}
 		} else {
-			if err := p.GenerateKeyPairs(pass); err != nil {
+			if err = p.GenerateKeyPairs(pass); err != nil {
 				return err
 			}
 		}
@@ -207,7 +209,7 @@ func initAction(ctx *cli.Context) (err error) {
 	} else {
 		fmt.Println()
 		fmt.Print("Copying root certificate... \n")
-		if err := p.WriteRootCertificate(rootCrt, rootKey, pass); err != nil {
+		if err = p.WriteRootCertificate(rootCrt, rootKey, pass); err != nil {
 			return err
 		}
 		fmt.Println("all done!")
