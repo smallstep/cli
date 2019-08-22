@@ -391,9 +391,6 @@ func createAction(ctx *cli.Context) error {
 				if err != nil {
 					return errors.WithStack(err)
 				}
-				if err != nil {
-					return errors.WithStack(err)
-				}
 				profile, err = x509util.NewIntermediateProfile(subject,
 					issIdentity.Crt, issIdentity.Key,
 					x509util.GenerateKeyPair(kty, crv, size),

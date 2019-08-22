@@ -121,16 +121,15 @@ func GetProvisionerKey(caURL, rootFile, kid string) (string, error) {
 
 // PKI represents the Public Key Infrastructure used by a certificate authority.
 type PKI struct {
-	root, rootKey, rootFingerprint  string
-	intermediate, intermediateKey   string
-	country, locality, organization string
-	config, defaults                string
-	ottPublicKey                    *jose.JSONWebKey
-	ottPrivateKey                   *jose.JSONWebEncryption
-	provisioner                     string
-	address                         string
-	dnsNames                        []string
-	caURL                           string
+	root, rootKey, rootFingerprint string
+	intermediate, intermediateKey  string
+	config, defaults               string
+	ottPublicKey                   *jose.JSONWebKey
+	ottPrivateKey                  *jose.JSONWebEncryption
+	provisioner                    string
+	address                        string
+	dnsNames                       []string
+	caURL                          string
 }
 
 // New creates a new PKI configuration.
