@@ -314,7 +314,7 @@ func createAction(ctx *cli.Context) error {
 	if len(sans) == 0 {
 		sans = []string{subject}
 	}
-	dnsNames, ips := x509util.SplitSANs(sans)
+	dnsNames, ips, emails := x509util.SplitSANs(sans)
 
 	var (
 		priv       interface{}
@@ -339,8 +339,9 @@ func createAction(ctx *cli.Context) error {
 			Subject: pkix.Name{
 				CommonName: subject,
 			},
-			DNSNames:    dnsNames,
-			IPAddresses: ips,
+			DNSNames:       dnsNames,
+			IPAddresses:    ips,
+			EmailAddresses: emails,
 		}
 		csrBytes, err := stepx509.CreateCertificateRequest(rand.Reader, _csr, priv)
 		if err != nil {
@@ -382,7 +383,8 @@ func createAction(ctx *cli.Context) error {
 					issIdentity.Key, x509util.GenerateKeyPair(kty, crv, size),
 					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
 					x509util.WithDNSNames(dnsNames),
-					x509util.WithIPAddresses(ips))
+					x509util.WithIPAddresses(ips),
+					x509util.WithEmailAddresses(emails))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -396,7 +398,8 @@ func createAction(ctx *cli.Context) error {
 					x509util.GenerateKeyPair(kty, crv, size),
 					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
 					x509util.WithDNSNames(dnsNames),
-					x509util.WithIPAddresses(ips))
+					x509util.WithIPAddresses(ips),
+					x509util.WithEmailAddresses(emails))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -406,7 +409,8 @@ func createAction(ctx *cli.Context) error {
 				x509util.GenerateKeyPair(kty, crv, size),
 				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
 				x509util.WithDNSNames(dnsNames),
-				x509util.WithIPAddresses(ips))
+				x509util.WithIPAddresses(ips),
+				x509util.WithEmailAddresses(emails))
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -418,7 +422,8 @@ func createAction(ctx *cli.Context) error {
 				x509util.GenerateKeyPair(kty, crv, size),
 				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
 				x509util.WithDNSNames(dnsNames),
-				x509util.WithIPAddresses(ips))
+				x509util.WithIPAddresses(ips),
+				x509util.WithEmailAddresses(emails))
 			if err != nil {
 				return errors.WithStack(err)
 			}

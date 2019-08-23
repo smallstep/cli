@@ -342,12 +342,7 @@ func (f *certificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 		return nil, nil, err
 	}
 
-	var emails []string
-	dnsNames, ips := splitSANs(sans, jwt.Payload.SANs)
-	if jwt.Payload.Email != "" {
-		emails = append(emails, jwt.Payload.Email)
-	}
-
+	dnsNames, ips, emails := splitSANs(sans, jwt.Payload.SANs)
 	switch jwt.Payload.Type() {
 	case token.AWS:
 		doc := jwt.Payload.Amazon.InstanceIdentityDocument
@@ -359,7 +354,7 @@ func (f *certificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips = splitSANs(defaultSANs)
+			dnsNames, ips, emails = splitSANs(defaultSANs)
 		}
 	case token.GCP:
 		ce := jwt.Payload.Google.ComputeEngine
@@ -371,7 +366,7 @@ func (f *certificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips = splitSANs(defaultSANs)
+			dnsNames, ips, emails = splitSANs(defaultSANs)
 		}
 	case token.Azure:
 		if len(ips) == 0 && len(dnsNames) == 0 {
@@ -381,8 +376,13 @@ func (f *certificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips = splitSANs(defaultSANs)
+			dnsNames, ips, emails = splitSANs(defaultSANs)
 		}
+	case token.OIDC:
+		if jwt.Payload.Email != "" {
+			emails = append(emails, jwt.Payload.Email)
+		}
+		subject = jwt.Payload.Subject
 	default: // Use common name in the token
 		subject = jwt.Payload.Subject
 	}
@@ -416,7 +416,7 @@ func (f *certificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 
 // splitSANs unifies the SAN collections passed as arguments and returns a list
 // of DNS names and a list of IP addresses.
-func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP) {
+func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email []string) {
 	m := make(map[string]bool)
 	var unique []string
 	for _, sans := range args {
