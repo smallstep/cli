@@ -139,5 +139,11 @@ func mergeSans(ctx *cli.Context, csr *x509.CertificateRequest) []string {
 			m[s] = true
 		}
 	}
+	for _, s := range csr.EmailAddresses {
+		if _, ok := m[s]; !ok {
+			uniq = append(uniq, s)
+			m[s] = true
+		}
+	}
 	return uniq
 }

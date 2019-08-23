@@ -24,14 +24,17 @@ func Fingerprint(cert *x509.Certificate) string {
 // SplitSANs splits a slice of Subject Alternative Names into slices of
 // IP Addresses and DNS Names. If an element is not an IP address, then it
 // is bucketed as a DNS Name.
-func SplitSANs(sans []string) (dnsNames []string, ips []net.IP) {
+func SplitSANs(sans []string) (dnsNames []string, ips []net.IP, emails []string) {
 	dnsNames = []string{}
 	ips = []net.IP{}
+	emails = []string{}
 	if sans == nil {
 		return
 	}
 	for _, san := range sans {
-		if ip := net.ParseIP(san); ip != nil {
+		if strings.Contains(san, "@") {
+			emails = append(emails, san)
+		} else if ip := net.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
 		} else {
 			// If not IP then assume DNSName.
