@@ -50,12 +50,26 @@ func TestSplitSANs(t *testing.T) {
 		sans, dns, emails []string
 		ips               []net.IP
 	}{
-		{name: "empty"},
-		{name: "all-dns", sans: []string{"foo.internal", "bar.internal"}, dns: []string{"foo.internal", "bar.internal"}},
-		{name: "all-ip", sans: []string{"0.0.0.0", "127.0.0.1"}, ips: []net.IP{net.ParseIP("0.0.0.0"), net.ParseIP("127.0.0.1")}},
+		{name: "empty", sans: []string{}, dns: []string{}, ips: []net.IP{}, emails: []string{}},
+		{
+			name:   "all-dns",
+			sans:   []string{"foo.internal", "bar.internal"},
+			dns:    []string{"foo.internal", "bar.internal"},
+			ips:    []net.IP{},
+			emails: []string{},
+		},
+		{
+			name:   "all-ip",
+			sans:   []string{"0.0.0.0", "127.0.0.1"},
+			dns:    []string{},
+			ips:    []net.IP{net.ParseIP("0.0.0.0"), net.ParseIP("127.0.0.1")},
+			emails: []string{},
+		},
 		{
 			name:   "all-email",
 			sans:   []string{"max@smallstep.com", "mariano@smallstep.com"},
+			dns:    []string{},
+			ips:    []net.IP{},
 			emails: []string{"max@smallstep.com", "mariano@smallstep.com"},
 		},
 		{
