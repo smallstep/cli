@@ -58,6 +58,7 @@ issues:
   exclude:
     - can't lint
     - declaration of "err" shadows declaration at line
+    - should have a package comment, unless it's in another file for this package
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration
 service:

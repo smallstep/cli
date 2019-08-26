@@ -395,7 +395,7 @@ func disco(provider string) (map[string]interface{}, error) {
 	// TODO: OIDC and OAuth specify two different ways of constructing this
 	// URL. This is the OIDC way. Probably want to try both. See
 	// https://tools.ietf.org/html/rfc8414#section-5
-	if strings.Index(url.Path, "/.well-known/openid-configuration") == -1 {
+	if !strings.Contains(url.Path, "/.well-known/openid-configuration") {
 		url.Path = path.Join(url.Path, "/.well-known/openid-configuration")
 	}
 	resp, err := http.Get(url.String())
@@ -716,7 +716,6 @@ func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />`))
 	w.Write([]byte(`Click <a href="javascript:redirect();">here</a> if your browser does not automatically redirect you`))
 	w.Write([]byte(`</p></body></html>`))
-	return
 }
 
 // Auth returns the OAuth 2.0 authentication url.

@@ -36,7 +36,7 @@ func certificateCommand() cli.Command {
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
 [**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>] [**--san**=<SAN>]
-[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]`,
+[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -86,6 +86,11 @@ $ step ca certificate --offline internal.example.com internal.crt internal.key
 Request a new certificate using an OIDC provisioner:
 '''
 $ step ca certificate --token $(step oauth --oidc --bare) joe@example.com joe.crt joe.key
+'''
+
+Request a new certificate using an OIDC provisioner while remaining in the console:
+'''
+$ step ca certificate joe@example.com joe.crt joe.key --issuer Google --console
 '''`,
 		Flags: []cli.Flag{
 			tokenFlag,
@@ -96,14 +101,18 @@ $ step ca certificate --token $(step oauth --oidc --bare) joe@example.com joe.cr
 			notAfterFlag,
 			cli.StringSliceFlag{
 				Name: "san",
-				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
-authorized to request. A certificate signing request using this token must match
-the complete set of subjective alternative names in the token 1:1. Use the '--san'
-flag multiple times to configure multiple SANs. The '--san' flag and the '--token'
-flag are mutually exlusive.`,
+				Usage: `Add DNS Name, IP Address, or Email Address Subjective Alternative Names (SANs)
+that the token is authorized to request. A certificate signing request using
+this token must match the complete set of subjective alternative names in the
+token 1:1. Use the '--san' flag multiple times to configure multiple SANs. The
+'--san' flag and the '--token' flag are mutually exlusive.`,
 			},
 			offlineFlag,
 			caConfigFlag,
+			cli.BoolFlag{
+				Name:  "console",
+				Usage: "Complete the flow while remaining inside the terminal",
+			},
 			flags.Force,
 			flags.KTY,
 			flags.Size,
