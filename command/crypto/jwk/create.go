@@ -177,32 +177,8 @@ If unset, default is EC.
     :  Create an **RSA** keypair
 `,
 			},
-			cli.IntFlag{
-				Name: "size",
-				Usage: `The <size> (in bits) of the key for RSA and oct key types. RSA keys require a
-minimum key size of 2048 bits. If unset, default is 2048 bits for RSA keys and 128 bits for oct keys.`,
-			},
-			cli.StringFlag{
-				Name: "crv, curve",
-				Usage: `The elliptic <curve> to use for EC and OKP key types. Corresponds
-to the **"crv"** JWK parameter. Valid curves are defined in JWA [RFC7518]. If
-unset, default is P-256 for EC keys and Ed25519 for OKP keys.
-
-: <curve> is a case-sensitive string and must be one of:
-
-    **P-256**
-    :  NIST P-256 Curve
-
-    **P-384**
-    :  NIST P-384 Curve
-
-    **P-521**
-    :  NIST P-521 Curve
-
-    **Ed25519**
-    :  Ed25519 Curve
-`,
-			},
+			flags.Size,
+			flags.Curve,
 			cli.StringFlag{
 				Name: "alg, algorithm",
 				Usage: `The <algorithm> intended for use with this key. Corresponds to the

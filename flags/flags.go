@@ -6,6 +6,54 @@ import (
 	"github.com/urfave/cli"
 )
 
+// KTY is the flag to set the key type.
+var KTY = cli.StringFlag{
+	Name:  "kty",
+	Value: "EC",
+	Usage: `The <kty> to build the certificate upon.
+If unset, default is EC.
+
+: <kty> is a case-sensitive string and must be one of:
+
+    **EC**
+    :  Create an **elliptic curve** keypair
+
+    **OKP**
+    :  Create an octet key pair (for **"Ed25519"** curve)
+
+    **RSA**
+    :  Create an **RSA** keypair`,
+}
+
+// Size is the flag to set the key size.
+var Size = cli.IntFlag{
+	Name: "size",
+	Usage: `The <size> (in bits) of the key for RSA and oct key types. RSA keys require a
+minimum key size of 2048 bits. If unset, default is 2048 bits for RSA keys and 128 bits for oct keys.`,
+}
+
+// Curve is the flag to se the key curve.
+var Curve = cli.StringFlag{
+	Name: "crv, curve",
+	Usage: `The elliptic <curve> to use for EC and OKP key types. Corresponds
+to the **"crv"** JWK parameter. Valid curves are defined in JWA [RFC7518]. If
+unset, default is P-256 for EC keys and Ed25519 for OKP keys.
+
+: <curve> is a case-sensitive string and must be one of:
+
+		**P-256**
+		:  NIST P-256 Curve
+
+		**P-384**
+		:  NIST P-384 Curve
+
+		**P-521**
+		:  NIST P-521 Curve
+
+		**Ed25519**
+		:  Ed25519 Curve`,
+}
+
 // Subtle is the flag required for delicate operations.
 var Subtle = cli.BoolFlag{
 	Name: "subtle",

@@ -34,9 +34,9 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
-		[**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-		[**--san**=<SAN>]`,
+[**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--not-before**=<time|duration>] [**--not-after**=<time|duration>] [**--san**=<SAN>]
+[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -105,6 +105,9 @@ flag are mutually exlusive.`,
 			offlineFlag,
 			caConfigFlag,
 			flags.Force,
+			flags.KTY,
+			flags.Size,
+			flags.Curve,
 		},
 	}
 }
@@ -139,7 +142,7 @@ func certificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	req, pk, err := flow.CreateSignRequest(tok, subject, sans)
+	req, pk, err := flow.CreateSignRequest(ctx, tok, subject, sans)
 	if err != nil {
 		return err
 	}
@@ -331,13 +334,17 @@ func (f *certificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 
 // CreateSignRequest is a helper function that given an x509 OTT returns a
 // simple but secure sign request as well as the private key used.
-func (f *certificateFlow) CreateSignRequest(tok, subject string, sans []string) (*api.SignRequest, crypto.PrivateKey, error) {
+func (f *certificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject string, sans []string) (*api.SignRequest, crypto.PrivateKey, error) {
 	jwt, err := token.ParseInsecure(tok)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pk, err := keys.GenerateDefaultKey()
+	kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, false, "kty", "curve", "size")
+	if err != nil {
+		return nil, nil, err
+	}
+	pk, err := keys.GenerateKey(kty, crv, size)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -391,10 +398,9 @@ func (f *certificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 		Subject: pkix.Name{
 			CommonName: subject,
 		},
-		SignatureAlgorithm: keys.DefaultSignatureAlgorithm,
-		DNSNames:           dnsNames,
-		IPAddresses:        ips,
-		EmailAddresses:     emails,
+		DNSNames:       dnsNames,
+		IPAddresses:    ips,
+		EmailAddresses: emails,
 	}
 
 	csr, err := x509.CreateCertificateRequest(rand.Reader, template, pk)
