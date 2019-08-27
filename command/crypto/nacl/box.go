@@ -29,7 +29,7 @@ NaCl crypto_box function is designed to meet the standard notions of
 privacy and third-party unforgeability for a public-key authenticated-encryption
 scheme using nonces. For formal definitions see, e.g., Jee Hea An,
 "Authenticated encryption in the public-key setting: security notions and
-analyses," https://eprint.iacr.org/2001/079. Distinct messages between the same
+analyzes," https://eprint.iacr.org/2001/079. Distinct messages between the same
 {sender, receiver} set are required to have distinct nonces. For example, the
 lexicographically smaller public key can use nonce 1 for its first message to
 the other key, nonce 3 for its second message, nonce 5 for its third message,

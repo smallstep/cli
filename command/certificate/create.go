@@ -343,7 +343,8 @@ func createAction(ctx *cli.Context) error {
 			IPAddresses:    ips,
 			EmailAddresses: emails,
 		}
-		csrBytes, err := stepx509.CreateCertificateRequest(rand.Reader, _csr, priv)
+		var csrBytes []byte
+		csrBytes, err = stepx509.CreateCertificateRequest(rand.Reader, _csr, priv)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -356,7 +357,6 @@ func createAction(ctx *cli.Context) error {
 		outputType = "certificate signing request"
 	case "x509":
 		var (
-			err       error
 			prof      = ctx.String("profile")
 			caPath    = ctx.String("ca")
 			caKeyPath = ctx.String("ca-key")
@@ -375,7 +375,8 @@ func createAction(ctx *cli.Context) error {
 			}
 			switch prof {
 			case "leaf":
-				issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
+				var issIdentity *x509util.Identity
+				issIdentity, err = loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -389,7 +390,8 @@ func createAction(ctx *cli.Context) error {
 					return errors.WithStack(err)
 				}
 			case "intermediate-ca":
-				issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
+				var issIdentity *x509util.Identity
+				issIdentity, err = loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -430,7 +432,8 @@ func createAction(ctx *cli.Context) error {
 		default:
 			return errs.InvalidFlagValue(ctx, "profile", prof, "leaf, intermediate-ca, root-ca, self-signed")
 		}
-		crtBytes, err := profile.CreateCertificate()
+		var crtBytes []byte
+		crtBytes, err = profile.CreateCertificate()
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -454,7 +457,7 @@ func createAction(ctx *cli.Context) error {
 	for _, pp := range pubPEMs {
 		pubBytes = append(pubBytes, pem.EncodeToMemory(pp)...)
 	}
-	if err := utils.WriteFile(crtFile, pubBytes, 0600); err != nil {
+	if err = utils.WriteFile(crtFile, pubBytes, 0600); err != nil {
 		return errs.FileError(err, crtFile)
 	}
 
@@ -464,7 +467,8 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 	} else {
-		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key")
+		var pass []byte
+		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key")
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}

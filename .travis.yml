@@ -12,6 +12,7 @@ env:
   - V=1
 before_script:
 - make bootstrap
+- go get github.com/golangci/golangci-lint/cmd/golangci-lint
 script:
 - make
 - make artifacts

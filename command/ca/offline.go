@@ -45,7 +45,7 @@ func newOfflineCA(configFile string) (*offlineCA, error) {
 	}
 
 	var config authority.Config
-	if err := json.Unmarshal(b, &config); err != nil {
+	if err = json.Unmarshal(b, &config); err != nil {
 		return nil, errors.Wrapf(err, "error reading %s", configFile)
 	}
 
@@ -86,7 +86,7 @@ func (c *offlineCA) VerifyClientCert(certFile, keyFile string) error {
 		return err
 	}
 	// Validate that the certificate and key match
-	if _, err := tls.X509KeyPair(pem.EncodeToMemory(certPem), pem.EncodeToMemory(keyPem)); err != nil {
+	if _, err = tls.X509KeyPair(pem.EncodeToMemory(certPem), pem.EncodeToMemory(keyPem)); err != nil {
 		return errors.Wrap(err, "error loading x509 key pair")
 	}
 
@@ -104,7 +104,7 @@ func (c *offlineCA) VerifyClientCert(certFile, keyFile string) error {
 		Intermediates: intermediatePool,
 	}
 
-	if _, err := cert.Verify(opts); err != nil {
+	if _, err = cert.Verify(opts); err != nil {
 		return errors.Wrapf(err, "failed to verify certificate")
 	}
 
@@ -231,7 +231,8 @@ func (c *offlineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 
 	switch p := p.(type) {
 	case *provisioner.OIDC: // Run step oauth
-		out, err := exec.Step("oauth", "--oidc", "--bare",
+		var out []byte
+		out, err = exec.Step("oauth", "--oidc", "--bare",
 			"--provider", p.ConfigurationEndpoint,
 			"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
 		if err != nil {

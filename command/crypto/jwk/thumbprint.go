@@ -40,7 +40,7 @@ func thumbprintAction(ctx *cli.Context) error {
 	}
 
 	// Unmarshal the plain (or decrypted JWK)
-	if err := json.Unmarshal(b, jwk); err != nil {
+	if err = json.Unmarshal(b, jwk); err != nil {
 		return errors.New("error reading JWK: unsupported format")
 	}
 

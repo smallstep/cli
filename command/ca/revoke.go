@@ -2,6 +2,7 @@ package ca
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"net/http"
 	"os"
 	"strconv"
@@ -232,14 +233,15 @@ func revokeCertificateAction(ctx *cli.Context) error {
 		if len(serial) > 0 {
 			errs.IncompatibleFlagWithFlag(ctx, "cert", "serial")
 		}
-		cert, err := pemutil.ReadCertificateBundle(certFile)
+		var cert []*x509.Certificate
+		cert, err = pemutil.ReadCertificateBundle(certFile)
 		if err != nil {
 			return err
 		}
 		serial = cert[0].SerialNumber.String()
 	} else {
 		// Must be using serial number so verify that only 1 command line args was given.
-		if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		if err = errs.NumberOfArguments(ctx, 1); err != nil {
 			return err
 		}
 		if len(token) == 0 {
@@ -396,7 +398,8 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 		certFile, keyFile := ctx.String("cert"), ctx.String("key")
 
 		// If there is no token then we must be doing a Revoke over mTLS.
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		var cert tls.Certificate
+		cert, err = tls.LoadX509KeyPair(certFile, keyFile)
 		if err != nil {
 			return errors.Wrap(err, "error loading certificates")
 		}
@@ -406,11 +409,12 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 		root := ctx.String("root")
 		if len(root) == 0 {
 			root = pki.GetRootCAPath()
-			if _, err := os.Stat(root); err != nil {
+			if _, err = os.Stat(root); err != nil {
 				return errs.RequiredUnlessFlag(ctx, "root", "token")
 			}
 		}
-		rootCAs, err := x509util.ReadCertPool(root)
+		var rootCAs *x509.CertPool
+		rootCAs, err = x509util.ReadCertPool(root)
 		if err != nil {
 			return err
 		}

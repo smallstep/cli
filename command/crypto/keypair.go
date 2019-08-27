@@ -134,7 +134,7 @@ existing <jwk-file> instead of creating a new key.`,
 }
 
 func createAction(ctx *cli.Context) (err error) {
-	if err := errs.NumberOfArguments(ctx, 2); err != nil {
+	if err = errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
 
@@ -175,7 +175,8 @@ func createAction(ctx *cli.Context) (err error) {
 			return errs.IncompatibleFlagWithFlag(ctx, "from-jwk", "size")
 		}
 
-		jwk, err := jose.ParseKey(fromJWK)
+		var jwk *jose.JSONWebKey
+		jwk, err = jose.ParseKey(fromJWK)
 		if err != nil {
 			return err
 		}
@@ -187,7 +188,11 @@ func createAction(ctx *cli.Context) (err error) {
 			priv = jwk.Key
 		}
 	} else {
-		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
+		var (
+			kty, crv string
+			size     int
+		)
+		kty, crv, size, err = utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
 			"curve", "size")
 		if err != nil {
 			return err
@@ -217,7 +222,8 @@ func createAction(ctx *cli.Context) (err error) {
 			return err
 		}
 	} else {
-		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key", ui.WithValue(password))
+		var pass []byte
+		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key", ui.WithValue(password))
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}

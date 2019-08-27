@@ -342,7 +342,8 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 
 	switch p := p.(type) {
 	case *provisioner.OIDC: // Run step oauth
-		out, err := exec.Step("oauth", "--oidc", "--bare",
+		var out []byte
+		out, err = exec.Step("oauth", "--oidc", "--bare",
 			"--provider", p.ConfigurationEndpoint,
 			"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
 		if err != nil {
@@ -377,7 +378,8 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 	var jwk *jose.JSONWebKey
 	if keyFile := ctx.String("key"); len(keyFile) == 0 {
 		// Get private key from CA
-		encrypted, err := pki.GetProvisionerKey(caURL, root, kid)
+		var encrypted string
+		encrypted, err = pki.GetProvisionerKey(caURL, root, kid)
 		if err != nil {
 			return "", err
 		}
@@ -387,13 +389,14 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 			ui.WithPromptTemplates(ui.PromptTemplates()),
 		))
 
-		decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key", []byte(encrypted), opts...)
+		var decrypted []byte
+		decrypted, err = jose.Decrypt("Please enter the password to decrypt the provisioner key", []byte(encrypted), opts...)
 		if err != nil {
 			return "", err
 		}
 
 		jwk = new(jose.JSONWebKey)
-		if err := json.Unmarshal(decrypted, jwk); err != nil {
+		if err = json.Unmarshal(decrypted, jwk); err != nil {
 			return "", errors.Wrap(err, "error unmarshalling provisioning key")
 		}
 	} else {
@@ -424,7 +427,8 @@ func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string) 
 
 	// Using the offline CA
 	if utils.FileExists(caConfig) {
-		offlineCA, err := newOfflineCA(caConfig)
+		var offlineCA *offlineCA
+		offlineCA, err = newOfflineCA(caConfig)
 		if err != nil {
 			return "", err
 		}

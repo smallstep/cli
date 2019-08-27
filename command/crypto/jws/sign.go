@@ -238,7 +238,7 @@ func signAction(ctx *cli.Context) error {
 	if jwk.Algorithm == "" {
 		return errors.New("flag '--alg' is required with the given key")
 	}
-	if err := jose.ValidateJWK(jwk); err != nil {
+	if err = jose.ValidateJWK(jwk); err != nil {
 		return err
 	}
 
