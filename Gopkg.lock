@@ -46,17 +46,6 @@
   revision = "2972be24d48e78746da79ba8e24e8b488c9880de"
 
 [[projects]]
-  digest = "1:848ef40f818e59905140552cc49ff3dc1a15f955e4b56d1c5c2cc4b54dbadf0c"
-  name = "github.com/client9/misspell"
-  packages = [
-    ".",
-    "cmd/misspell",
-  ]
-  pruneopts = "UT"
-  revision = "b90dc15cfd220ecf8bbc9043ecb928cef381f011"
-  version = "v0.3.4"
-
-[[projects]]
   branch = "master"
   digest = "1:cc439e1d9d8cff3d575642f5401033b00f2b8d0cd9f859db45604701c990879a"
   name = "github.com/corpix/uarand"
@@ -112,13 +101,6 @@
   version = "v1.4.1"
 
 [[projects]]
-  digest = "1:4ee452f8994700dcab9e816aef1cb9eb2317218734c6ccf5135746e6c19f3dce"
-  name = "github.com/golang/lint"
-  packages = ["golint"]
-  pruneopts = "UT"
-  revision = "06c8688daad7faa9da5a0c2f163a3d14aac986ca"
-
-[[projects]]
   digest = "1:318f1c959a8a740366fce4b1e1eb2fd914036b4af58fbd0a003349b305f118ad"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -141,14 +123,6 @@
   pruneopts = "UT"
   revision = "3629d6846518309d22c16fee15d1007262a459d2"
   version = "v1.0.21"
-
-[[projects]]
-  branch = "master"
-  digest = "1:00d592bdacdeb0412b09f8eb2f98c6cc04470c4b72150f20733511e0821225c1"
-  name = "github.com/gordonklaus/ineffassign"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "ed7b1b5ee0f816bbc0ff35bf7c6fdb4f53b6c59a"
 
 [[projects]]
   branch = "master"
@@ -420,14 +394,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ba52e5a5fb800ce55108b7a5f181bb809aab71c16736051312b0aa969f82ad39"
-  name = "github.com/tsenart/deadcode"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "210d2dc333e90c7e3eedf4f2242507a8e83ed4ab"
-
-[[projects]]
-  branch = "master"
   digest = "1:6743b69de0d73e91004e4e201cf4965b59a0fa5caf6f0ffbe0cb9ee8807738a7"
   name = "github.com/urfave/cli"
   packages = ["."]
@@ -478,14 +444,6 @@
   ]
   pruneopts = "UT"
   revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
-
-[[projects]]
-  branch = "master"
-  digest = "1:0824a2eb250dd552f41daaf471266d085e8e8cabdbff9e4294bc799076e00da7"
-  name = "golang.org/x/lint"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "959b441ac422379a43da2230f62be024250818b0"
 
 [[projects]]
   branch = "master"
@@ -593,9 +551,6 @@
   input-imports = [
     "github.com/ThomasRooney/gexpect",
     "github.com/chzyer/readline",
-    "github.com/client9/misspell/cmd/misspell",
-    "github.com/golang/lint/golint",
-    "github.com/gordonklaus/ineffassign",
     "github.com/icrowley/fake",
     "github.com/manifoldco/promptui",
     "github.com/pkg/errors",
@@ -615,7 +570,6 @@
     "github.com/smallstep/zlint",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
-    "github.com/tsenart/deadcode",
     "github.com/urfave/cli",
     "golang.org/x/crypto/argon2",
     "golang.org/x/crypto/bcrypt",
