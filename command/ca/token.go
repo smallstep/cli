@@ -342,10 +342,13 @@ func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 
 	switch p := p.(type) {
 	case *provisioner.OIDC: // Run step oauth
-		var out []byte
-		out, err = exec.Step("oauth", "--oidc", "--bare",
+		args := []string{"oauth", "--oidc", "--bare",
 			"--provider", p.ConfigurationEndpoint,
-			"--client-id", p.ClientID, "--client-secret", p.ClientSecret)
+			"--client-id", p.ClientID, "--client-secret", p.ClientSecret}
+		if ctx.IsSet("console") {
+			args = append(args, "--console")
+		}
+		out, err := exec.Step(args...)
 		if err != nil {
 			return "", err
 		}
