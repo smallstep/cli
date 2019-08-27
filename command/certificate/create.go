@@ -25,8 +25,8 @@ func createCommand() cli.Command {
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
 [**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
-[**--curve**=<curve>] [**no-password**] [**--profile**=<profile>]
-[**--size**=<size>] [**--type**=<type>] [**--san**=<SAN>] [**--bundle**]`,
+[**no-password**] [**--profile**=<profile>] [**--san**=<SAN>] [**--bundle**]
+[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing requests (CSR) that can be signed later using 'step
 certificates sign' (or some other tool) to produce a certificate.
@@ -193,50 +193,6 @@ recommended. Requires **--insecure** flag.`,
 	certificates is discouraged unless absolutely necessary.`,
 			},
 			cli.StringFlag{
-				Name:  "kty",
-				Value: "EC",
-				Usage: `The <kty> to build the certificate upon.
-If unset, default is EC.
-
-: <kty> is a case-sensitive string and must be one of:
-
-    **EC**
-    :  Create an **elliptic curve** keypair
-
-    **OKP**
-    :  Create an octet key pair (for **"Ed25519"** curve)
-
-    **RSA**
-    :  Create an **RSA** keypair
-`,
-			},
-			cli.IntFlag{
-				Name: "size",
-				Usage: `The <size> (in bits) of the key for RSA and oct key types. RSA keys require a
-minimum key size of 2048 bits. If unset, default is 2048 bits for RSA keys and 128 bits for oct keys.`,
-			},
-			cli.StringFlag{
-				Name: "crv, curve",
-				Usage: `The elliptic <curve> to use for EC and OKP key types. Corresponds
-to the **"crv"** JWK parameter. Valid curves are defined in JWA [RFC7518]. If
-unset, default is P-256 for EC keys and Ed25519 for OKP keys.
-
-: <curve> is a case-sensitive string and must be one of:
-
-    **P-256**
-    :  NIST P-256 Curve
-
-    **P-384**
-    :  NIST P-384 Curve
-
-    **P-521**
-    :  NIST P-521 Curve
-
-    **Ed25519**
-    :  Ed25519 Curve
-`,
-			},
-			cli.StringFlag{
 				Name: "not-before",
 				Usage: `The <time|duration> set in the NotBefore property of the certificate. If a
 <time> is used it is expected to be in RFC 3339 format. If a <duration> is
@@ -262,6 +218,9 @@ flag multiple times to configure multiple SANs.`,
 				Usage: `Bundle the new leaf certificate with the signing certificate. This flag requires
 the **--ca** flag.`,
 			},
+			flags.KTY,
+			flags.Size,
+			flags.Curve,
 			flags.Force,
 			flags.Subtle,
 		},
