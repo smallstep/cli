@@ -22,7 +22,7 @@ func initCommand() cli.Command {
 		Action: cli.ActionFunc(initAction),
 		Usage:  "initialize the CA PKI",
 		UsageText: `**step ca init**
-		[**--root**=<path>] [**--key**=<path>] [**--pki**] [**--name**=<name>]
+[**--root**=<path>] [**--key**=<path>] [**--pki**] [**--name**=<name>]
 [**dns**=<dns>] [**address**=<address>] [**provisioner**=<name>]
 [**provisioner-password-file**=<path>] [**password-file**=<path>]
 [**with-ca-url**=<url>] [**no-db**]`,

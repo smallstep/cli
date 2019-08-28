@@ -7,9 +7,11 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"html"
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -270,10 +272,27 @@ func (p *PKI) GenerateIntermediateCertificate(name string, rootCrt *x509.Certifi
 	return err
 }
 
+func (p *PKI) askFeedback() {
+	ui.Println()
+	ui.Printf("\033[1mFEEDBACK\033[0m %s %s\n",
+		html.UnescapeString("&#"+strconv.Itoa(128525)+";"),
+		html.UnescapeString("&#"+strconv.Itoa(127867)+";"))
+	ui.Println("      The \033[1mstep\033[0m utility is not instrumented for usage statistics. It does not")
+	ui.Println("      phone home. But your feedback is extremely valuable. Any information you")
+	ui.Println("      can provide regarding how you’re using `step` helps. Please send us a")
+	ui.Println("      sentence or two, good or bad: \033[1mfeedback@smallstep.com\033[0m or join")
+	ui.Println("      \033[1mhttps://gitter.im/smallstep/community\033[0m.")
+}
+
 // TellPKI outputs the locations of public and private keys generated
 // generated for a new PKI. Generally this will consist of a root certificate
 // and key and an intermediate certificate and key.
 func (p *PKI) TellPKI() {
+	p.tellPKI()
+	p.askFeedback()
+}
+
+func (p *PKI) tellPKI() {
 	ui.Println()
 	ui.PrintSelected("Root certificate", p.root)
 	ui.PrintSelected("Root private key", p.rootKey)
@@ -316,7 +335,7 @@ func WithoutDB() Option {
 // Save stores the pki on a json file that will be used as the certificate
 // authority configuration.
 func (p *PKI) Save(opt ...Option) error {
-	p.TellPKI()
+	p.tellPKI()
 
 	key, err := p.ottPrivateKey.CompactSerialize()
 	if err != nil {
@@ -400,6 +419,8 @@ func (p *PKI) Save(opt ...Option) error {
 	}
 	ui.Println()
 	ui.Println("Your PKI is ready to go. To generate certificates for individual services see 'step help ca'.")
+
+	p.askFeedback()
 
 	return nil
 }
