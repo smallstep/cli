@@ -91,6 +91,11 @@ $ step ca certificate --token $(step oauth --oidc --bare) joe@example.com joe.cr
 Request a new certificate using an OIDC provisioner while remaining in the console:
 '''
 $ step ca certificate joe@example.com joe.crt joe.key --issuer Google --console
+'''
+
+Request a new certificate with an RSA public key (default is ECDSA256):
+'''
+$ step ca certificate foo.internal foo.crt foo.key --kty RSA --size 4096
 '''`,
 		Flags: []cli.Flag{
 			tokenFlag,
