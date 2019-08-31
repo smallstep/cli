@@ -1,11 +1,6 @@
 # Step CLI
 
-`step` is a zero trust swiss army knife. It's an easy-to-use and hard-to-misuse
-utility for building, operating, and automating systems that use zero trust
-technologies like authenticated encryption (X.509, TLS), single sign-on (OAuth
-OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F),
-encryption mechanisms (JSON Web Encryption, NaCl), and verifiable
-claims (JWT, SAML assertions).
+`step` is a zero trust swiss army knife that integrates with [`step-ca`](https://github.com/smallstep/certificates) for automated certificate management. It's an easy-to-use and hard-to-misuse utility for building, operating, and automating systems that use zero trust technologies like authenticated encryption (X.509, TLS), single sign-on (OAuth OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML assertions).
 
 [Website](https://smallstep.com) |
 [Documentation](https://smallstep.com/docs/cli) |
@@ -25,6 +20,52 @@ claims (JWT, SAML assertions).
 [![Twitter followers](https://img.shields.io/twitter/follow/smallsteplabs.svg?label=Follow&style=social)](https://twitter.com/intent/follow?screen_name=smallsteplabs)
 
 ![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
+
+## Features
+
+`step` is a powerful security tool that's been carefully designed to be safe and easy to use, even if you don't have a favorite elliptic curve or if you're inclined to forget to check the `aud` when you verify a JWT.
+
+- Safe and sane defaults everywhere encourage best practices by making the right thing easy
+- Insecure or subtle operations are gated with flags to prevent accidental misuse
+- In-depth help with examples is available via `step help`
+
+### Work with [JWTs](https://jwt.io) ([RFC7519](https://tools.ietf.org/html/rfc7519)) and [other JOSE constructs](https://datatracker.ietf.org/wg/jose/documents/)
+
+- [Sign](https://smallstep.com/docs/cli/crypto/jwt/sign), [verify](https://smallstep.com/docs/cli/crypto/jwt/verify), and [inspect](https://smallstep.com/docs/cli/crypto/jwt/inspect) JSON Web Tokens (JWTs)
+- [Sign](https://smallstep.com/docs/cli/crypto/jws/sign), [verify](https://smallstep.com/docs/cli/crypto/jws/verify), and [inspect](https://smallstep.com/docs/cli/crypto/jws/inspect/) arbitrary data using JSON Web Signature (JWS)
+- [Encrypt](https://smallstep.com/docs/cli/crypto/jwe/encrypt/) and [decrypt](https://smallstep.com/docs/cli/crypto/jwe/decrypt/) data and wrap private keys using JSON Web Encryption (JWE)
+- [Create JWKs](https://smallstep.com/docs/cli/crypto/jwk/create/) and [manage key sets](https://smallstep.com/docs/cli/crypto/jwk/keyset) for use with JWT, JWE, and JWS
+
+### Work with X.509 (TLS/HTTPS) certificates
+
+- Create key pairs (RSA, ECDSA, EdDSA) and certificate signing requests (CSRs)
+- Create [RFC5280](https://tools.ietf.org/html/rfc5280) and [CA/Browser Forum](https://cabforum.org/baseline-requirements-documents/) compliant X.509 certificates that work **for TLS and HTTPS**
+- [Create](https://smallstep.com/docs/cli/certificate/create/) root and intermediate signing certificates (CA certificates)
+- Create self-signed & CA-signed certificates, and [sign CSRs](https://smallstep.com/docs/cli/certificate/sign/)
+- [Inspect](https://smallstep.com/docs/cli/certificate/inspect/) and [lint](https://smallstep.com/docs/cli/certificate/lint/) certificates on disk or in use by a remote server
+- [Install root certificates](https://smallstep.com/docs/cli/certificate/install/) so your CA is trusted by default (issue development certificates **that [work in browsers](https://smallstep.com/blog/step-v0-8-6-valid-HTTPS-certificates-for-dev-pre-prod.html)**)
+- Get certificates from any ACME compliant CA (*coming soon*)
+
+### Connect to [`step-ca`](https://github.com/smallstep/certificates) and get certificates from your own private certificate authority
+
+- [Authenticate and obtain a certificate](https://smallstep.com/docs/cli/ca/certificate/) using any enrollment mechanism supported by `step-ca`
+- Securely [distribute root certificates](https://smallstep.com/docs/cli/ca/root/) and [bootstrap](https://smallstep.com/docs/cli/ca/bootstrap/) PKI relying parties
+- [Renew](https://smallstep.com/docs/cli/ca/renew/) and [revoke](https://smallstep.com/docs/cli/ca/revoke/) certificates issued by `step-ca`
+- [Submit CSRs](https://smallstep.com/docs/cli/ca/sign/) to be signed by `step-ca`
+
+### Command line OAuth and MFA
+
+- [Get OAuth access tokens](https://smallstep.com/docs/cli/oauth/) and OIDC identity tokens at the command line from any provider
+- Supports OAuth authorization code, implicit, OOB, jwt-bearer, and refresh token flows
+- Automatically launch browser to complete OAuth flow (or use console flow)
+- Verify OIDC identity tokens (using `step crypt jwt verify`)
+- [Generate and verify](https://smallstep.com/docs/cli/crypto/otp/) TOTP tokens
+
+### NaCl and other crypto utilities
+
+- [Work with NaCl](https://smallstep.com/docs/cli/crypto/nacl/) box, secretbox, and sign constructs
+- [Apply key derivation functions](https://smallstep.com/docs/cli/crypto/kdf/) (KDFs) and [verify passwords](https://smallstep.com/docs/cli/crypto/kdf/compare/) using `scrypt`, `bcrypt`, and `argo2`
+- Generate and check [file hashes](https://smallstep.com/docs/cli/crypto/hash/)
 
 ## Installation Guide
 
