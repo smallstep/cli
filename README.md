@@ -183,7 +183,7 @@ And issued certificates will work in your browser and with tools like `curl`. Se
 
 ![Browser demo of HTTPS working without warnings](https://smallstep.com/images/blog/2019-02-25-localhost-tls.png)
 
-Alternatively, for internal service-to-service communication, you can [configure your code and infrastructure to trust your root certificate](https://github.com/smallstep/certificates/tree/master/autocert/examples/hello-mtls).
+Alternatively, for internal service-to-service communication, you can [configure your code and infrastructure to trust your root certificate](https://github.com/smallstep/autocert/tree/master/examples/hello-mtls).
 
 ### X.509 Certificates
 
