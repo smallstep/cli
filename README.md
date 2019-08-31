@@ -77,17 +77,13 @@ development](docs/local-development.md) below.
 
 Install `step` via [Homebrew](https://brew.sh/):
 
-<pre><code>
-<b>$ brew install step</b>
-</code></pre>
+<pre><code><b>$ brew install step</b></code></pre>
 
 > Note: If you have installed `step` previously through the `smallstep/smallstep`
 > tap you will need to run the following commands before installing:
-
-<pre><code>
-<b>$ brew untap smallstep/smallstep</b>
-<b>$ brew uninstall step</b>
-</code></pre>
+>
+> <pre><code><b>$ brew untap smallstep/smallstep</b>
+> <b>$ brew uninstall step</b></code></pre>
 
 ### Linux
 
@@ -95,12 +91,10 @@ Install `step` via [Homebrew](https://brew.sh/):
 
 Download and install the latest Debian package from [releases](https://github.com/smallstep/cli/releases):
 
-<pre><code>
-<b>$ wget https://github.com/smallstep/cli/releases/download/X.Y.Z/step_X.Y.Z_amd64.deb</b>
+<pre><code><b>$ wget https://github.com/smallstep/cli/releases/download/X.Y.Z/step_X.Y.Z_amd64.deb</b>
 
 # Install the Debian package:
-<b>$ sudo dpkg -i step_X.Y.Z_amd64.deb</b>
-</code></pre>
+<b>$ sudo dpkg -i step_X.Y.Z_amd64.deb</b></code></pre>
 
 #### Arch Linux
 
@@ -114,8 +108,7 @@ a sibling repository) can be found [here](https://aur.archlinux.org/packages/ste
 You can use [pacman](https://www.archlinux.org/pacman/) to install the packages.
 
 ### Test
-<pre><code>
-<b>$ step certificate inspect https://smallstep.com</b>
+<pre><code><b>$ step certificate inspect https://smallstep.com</b>
 Certificate:
     Data:
         Version: 3 (0x2)
@@ -126,18 +119,86 @@ Certificate:
             Not Before: Feb 8 13:07:44 2019 UTC
             Not After : May 9 13:07:44 2019 UTC
         Subject: CN=smallstep.com
-[...]
-</code></pre>
+[...]</code></pre>
 
 ## Examples
 
+### X.509 Certificates from `step-ca`
+
+This example assumes you already have [`step-ca`](https://github.com/smallstep/certificates) running at `https://ca.local`.
+
+Get your root certificate fingerprint from the machine running `step-ca`:
+
+<pre><code><b>ca$ step certificate fingerprint $(step path)/certs/root_ca.crt</b>
+0eea955785796f0a103637df88f29d8dfc8c1f4260f35c8e744be155f06fd82d</pre></code>
+
+Bootstrap a new machine to trust and connect to `step-ca`:
+
+<pre><code><b>$ step ca bootstrap --ca-url https://ca.local \
+                    --fingerprint 0eea955785796f0a103637df88f29d8dfc8c1f4260f35c8e744be155f06fd82d</b></pre></code>
+
+Create a key pair, generate a CSR, and get a certificate from `step-ca`:
+
+<pre><code><b>$ step ca certificate foo.local foo.crt foo.key</b>
+Use the arrow keys to navigate: ↓ ↑ → ←
+What provisioner key do you want to use?
+  ▸ bob@smallstep.com (JWK) [kid: XXX]
+    Google (OIDC) [client: XXX.apps.googleusercontent.com]
+    Auth0 (OIDC) [client: XXX]
+    AWS IID Provisioner (AWS)
+✔ CA: https://ca.local
+✔ Certificate: foo.crt
+✔ Private Key: foo.key</code></pre>
+
+
+Use `step certificate inspect` to check our work:
+
+<pre><code><b>$ step certificate inspect --short foo.crt</b>
+X.509v3 TLS Certificate (ECDSA P-256) [Serial: 2982...2760]
+  Subject:     foo.local
+  Issuer:      Intermediate CA
+  Provisioner: bob@smallstep.com [ID: EVct...2B-I]
+  Valid from:  2019-08-31T00:14:50Z
+          to:  2019-09-01T00:14:50Z</code></pre>
+
+Renew certificate:
+
+<pre><code><b>$ step ca renew foo.crt foo.key --force</b>
+Your certificate has been saved in foo.crt.</code></pre>
+
+Revoke certificate:
+
+<pre><code><b>$ step ca revoke --cert foo.crt --key foo.key</b>
+✔ CA: https://ca.local
+Certificate with Serial Number 202784089649824696691681223134769107758 has been revoked.
+
+<b>$ step ca renew foo.crt foo.key --force</b>
+error renewing certificate: Unauthorized</code></pre>
+
+You can install your root certificate locally:
+
+<pre><code><b>$ step certificate install $(step path)/certs/root_ca.crt</b></code></pre>
+
+And issued certificates will work in your browser and with tools like `curl`. See [our blog post](https://smallstep.com/blog/step-v0-8-6-valid-HTTPS-certificates-for-dev-pre-prod.html) for more info.
+
+![Browser demo of HTTPS working without warnings](https://smallstep.com/images/blog/2019-02-25-localhost-tls.png)
+
+Alternatively, for internal service-to-service communication, you can [configure your code and infrastructure to trust your root certificate](https://github.com/smallstep/certificates/tree/master/autocert/examples/hello-mtls).
+
 ### X.509 Certificates
+
+The `step certificate` command group can also be used to create an offline CA and self-signed certificates.
+
+Create a self-signed certificate:
+
+<pre><code><b>$ step certificate create foo.local foo.crt foo.key --profile self-signed --subtle</b>
+Your certificate has been saved in foo.crt.
+Your private key has been saved in foo.key.</code></pre>
 
 Create a root CA, an intermediate, and a leaf X.509 certificate. Bundle the
 leaf with the intermediate for use with TLS:
 
-<pre><code>
-<b>$ step certificate create --profile root-ca \
+<pre><code><b>$ step certificate create --profile root-ca \
      "Example Root CA" root-ca.crt root-ca.key</b>
 Please enter the password to encrypt the private key:
 Your certificate has been saved in root-ca.crt.
@@ -161,41 +222,23 @@ Your private key has been saved in example.com.key.
 
 <b>$ step certificate bundle \
      example.com.crt intermediate-ca.crt example.com-bundle.crt</b>
-Your certificate has been saved in example.com-bundle.crt.
-</code></pre>
+Your certificate has been saved in example.com-bundle.crt.</code></pre>
 
 Extract the expiration date from a certificate (requires
 [`jq`](https://stedolan.github.io/jq/)):
 
-<pre><code>
-<b>$ step certificate inspect example.com.crt --format json | jq -r .validity.end</b>
+<pre><code><b>$ step certificate inspect example.com.crt --format json | jq -r .validity.end</b>
 2019-02-28T17:46:16Z
 
 <b>$ step certificate inspect https://smallstep.com --format json | jq -r .validity.end</b>
-2019-05-09T13:07:44Z
-</code></pre>
-
-You can install your root certificate locally:
-
-```
-$ step certificate install root-ca.crt
-```
-
-And issued certificates will work in your browser and with tools like `curl`. See [our blog post](https://smallstep.com/blog/step-v0-8-6-valid-HTTPS-certificates-for-dev-pre-prod.html) for more info.
-
-![Browser demo of HTTPS working without warnings](https://smallstep.com/images/blog/2019-02-25-localhost-tls.png)
-
-Alternatively, for internal service-to-service communication, you can [configure your code and infrastructure to trust your root certificate](https://github.com/smallstep/certificates/tree/master/autocert/examples/hello-mtls).
-
-If you need certificates for your microservices, containers, or other internal services see [step certificates](https://github.com/smallstep/certificates), a sub-project that adds an online certificate authority and automated certificate management tools to `step`.
+2019-05-09T13:07:44Z</code></pre>
 
 ### JSON Object Signing & Encryption (JOSE)
 
 Create a [JSON Web Key](https://tools.ietf.org/html/rfc7517) (JWK), add the
 public key to a keyset, and sign a [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT):
 
-<pre><code>
-<b>$ step crypto jwk create pub.json key.json</b>
+<pre><code><b>$ step crypto jwk create pub.json key.json</b>
 Please enter the password to encrypt the private JWK:
 Your public key has been saved in pub.json.
 Your private key has been saved in key.json.
@@ -228,16 +271,14 @@ Please enter the password to decrypt key.json:
     "sub": "subject@example.com"
   },
   "signature": "JU7fPGqBJcIfauJHA7KP9Wp292g_G9s4bLMVLyRgEQDpL5faaG-3teJ81_igPz1zP7IjHmz8D6Gigt7kbnlasw"
-}
-</code></pre>
+}</code></pre>
 
 ### Single Sign-On
 
 Login with Google, get an access token, and use it to make a request to
 Google's APIs:
 
-<pre><code>
-<b>$ curl -H"$(step oauth --header)" https://www.googleapis.com/oauth2/v3/userinfo</b>
+<pre><code><b>$ curl -H"$(step oauth --header)" https://www.googleapis.com/oauth2/v3/userinfo</b>
 Your default web browser has been opened to visit:
 
 https://accounts.google.com/o/oauth2/v2/auth?client_id=1087160488420-AAAAAAAAAAAAAAA.apps.googleusercontent.com&code_challenge=XXXXX
@@ -248,13 +289,11 @@ https://accounts.google.com/o/oauth2/v2/auth?client_id=1087160488420-AAAAAAAAAAA
   "email": "bob@smallstep.com",
   "email_verified": true,
   "hd": "smallstep.com"
-}
-</code></pre>
+}</code></pre>
 
 Login with Google and obtain an OAuth OIDC identity token for single sign-on:
 
-<pre><code>
-<b>$ step oauth \
+<pre><code><b>$ step oauth \
     --provider https://accounts.google.com \
     --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
     --client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
@@ -263,13 +302,11 @@ Your default web browser has been opened to visit:
 
 https://accounts.google.com/o/oauth2/v2/auth?client_id=[...]
 
-xxx-google-xxx.yyy-oauth-yyy.zzz-token-zzz
-</code></pre>
+xxx-google-xxx.yyy-oauth-yyy.zzz-token-zzz</code></pre>
 
 Obtain and verify a Google-issued OAuth OIDC identity token:
 
-<pre><code>
-<b>$ step oauth \
+<pre><code><b>$ step oauth \
      --provider https://accounts.google.com \
      --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
      --client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
@@ -301,26 +338,21 @@ https://accounts.google.com/o/oauth2/v2/auth?client_id=[...]
     "exp": 1551296734
   },
   "signature": "[...]"
-}
-</code></pre>
+}</code></pre>
 
 ### Multi-factor Authentication
 
 Generate a [TOTP](https://en.wikipedia.org/wiki/Time-based_One-time_Password_algorithm)
 token and a QR code:
 
-<pre><code>
-<b>$ step crypto otp generate \
+<pre><code><b>$ step crypto otp generate \
     --issuer smallstep.com --account name@smallstep.com \
-    --qr smallstep.png > smallstep.totp</b>
-</code></pre>
+    --qr smallstep.png > smallstep.totp</b></code></pre>
 
 Scan the QR Code (`smallstep.png`) using Google Authenticator, Authy or similar
 software and use it to verify the TOTP token:
 
-<pre><code>
-<b>$ step crypto otp verify --secret smallstep.totp</b>
-</code></pre>
+<pre><code><b>$ step crypto otp verify --secret smallstep.totp</b></code></pre>
 
 ## Documentation
 
