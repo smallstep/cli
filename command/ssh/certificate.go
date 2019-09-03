@@ -81,54 +81,24 @@ only be able to generate host certificates.
 To configure a server to accept user certificates and provide a user certificate
 you need to add the following lines in </etc/ssh/sshd_config>:
 '''
-# The path to the CA public key, it accepts multiple CAs, one per line
-TrustedUserCAKeys /etc/ssh/ca.pub
+# The path to the CA public key, it accepts multiple user CAs, one per line
+TrustedUserCAKeys /etc/ssh/ssh_user_key.pub
 
 # Path to the private key and certificate
 HostKey /etc/ssh/ssh_host_ecdsa_key
 HostCertificate /etc/ssh/ssh_host_ecdsa_key-cert.pub
 '''
 
-And to configure a client to accept host certificates you need to add the CA in
-<~/.ssh/known_hosts> with the following format:
+Make sure to restart the sshd daemon to refresh its configuration.
+
+To configure clients to accept host certificates you need to add the host CA public
+key in <~/.ssh/known_hosts> with the following format:
 '''
 @cert-authority *.example.com ecdsa-sha2-nistp256 AAAAE...=
 '''
 
 Where <*.example.com> is a pattern that matches the hosts and
-<ecdsa-sha2-nistp256 AAAAE...=> should be the contents of the CA public key.
-
-Auto-provision of a new user in servers is also possible, but some configuration
-is required in each of the servers.
-
-First a new <provisioner> user is required.
-'''
-$ useradd -m provisioner
-'''
-
-Then we need to give sudo access to the user to run useradd or the appropriate
-command, to do this edit /etc/sudoers and add the following line:
-'''
-provisioner     ALL=NOPASSWD: /usr/sbin/useradd
-'''
-
-When the command is run with the <--add-user> flag, a new key-pair and
-certificate will be created, when this new certificate is used to connect to a
-server will only run the following commands:
-'''
-$ sudo useradd -m <principal>
-$ nc -q0 localhost 22
-'''
-
-You can automatically enforce the creating of your user adding this in your
-~/.ssh/config:
-'''
-Host *.example.com
-    IdentityFile /path/to/your/key
-    ProxyCommand ssh -T -F /dev/null -i /path/to/your/key-provisioner -p %p provisioner@%h
-'''
-
-The provisioner username and the command are both configurable in the ca.json.
+<ecdsa-sha2-nistp256 AAAAE...=> should be the contents of the host CA public key.
 
 ## POSITIONAL ARGUMENTS
 
