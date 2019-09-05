@@ -3,11 +3,41 @@ package jose
 import (
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/crypto/x509util"
 	"golang.org/x/crypto/ed25519"
 )
+
+// ValidateX5C validates the given x5c certificate chain and key for use in an
+// x5c header.
+func ValidateX5C(certFile string, key interface{}) ([]string, error) {
+	if certFile == "" {
+		return nil, errors.New("x5c certfile cannot be empty")
+	}
+	certs, err := pemutil.ReadCertificateBundle(certFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "error reading x5c certificate chain from file")
+	}
+
+	if err = x509util.VerifyCertKey(certs[0], key); err != nil {
+		return nil, errors.Wrap(err, "error verifying x5c certificate and key")
+	}
+
+	if certs[0].KeyUsage&x509.KeyUsageDigitalSignature == 0 {
+		return nil, errors.New("x5c: certificate/private-key pair used to sign " +
+			"x5c token is not approved for digital signature")
+	}
+	strs := make([]string, len(certs))
+	for i, cert := range certs {
+		strs[i] = base64.StdEncoding.EncodeToString(cert.Raw)
+	}
+	return strs, nil
+}
 
 // ValidateJWK validates the given JWK.
 func ValidateJWK(jwk *JSONWebKey) error {

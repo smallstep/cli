@@ -2,9 +2,11 @@ package jose
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -63,6 +65,19 @@ func Decrypt(prompt string, data []byte, opts ...Option) ([]byte, error) {
 	return nil, errors.New("failed to decrypt JWK: invalid password")
 }
 
+func defKeyID(jwk *JSONWebKey) error {
+	var (
+		err  error
+		hash []byte
+	)
+	hash, err = jwk.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return errors.Wrap(err, "error generating JWK thumbprint")
+	}
+	jwk.KeyID = base64.RawURLEncoding.EncodeToString(hash)
+	return nil
+}
+
 // ParseKey returns a JSONWebKey from the given JWK file or a PEM file. For
 // password protected keys, it will ask the user for a password.
 // func ParseKey(filename, use, alg, kid string, subtle bool) (*JSONWebKey, error) {
@@ -90,13 +105,28 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 		if err = json.Unmarshal(b, jwk); err != nil {
 			return nil, errors.Errorf("error reading %s: unsupported format", filename)
 		}
+
+	// If KeyID not set by environment, then use the default.
+	// NOTE: we do not set this value by default in the case of jwkKeyType
+	// because it is assumed to have been left empty on purpose.
 	case pemKeyType:
 		jwk.Key, err = pemutil.ParseKey(b, pemutil.WithFilename(filename), pemutil.WithPassword(ctx.password))
 		if err != nil {
 			return nil, err
 		}
+		if len(ctx.kid) == 0 {
+			if err = defKeyID(jwk); err != nil {
+				return nil, err
+			}
+		}
+
 	case octKeyType:
 		jwk.Key = b
+		if len(ctx.kid) == 0 {
+			if err = defKeyID(jwk); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	// Validate key id

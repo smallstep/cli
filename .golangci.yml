@@ -51,6 +51,8 @@ linters:
     - deadcode
     - staticcheck
     - unused
+    - structcheck
+    - gosimple
 
 run:
   skip-dirs:

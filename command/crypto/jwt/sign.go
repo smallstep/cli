@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/urfave/cli"
 )
@@ -23,8 +24,9 @@ func signCommand() cli.Command {
 		Usage:  "create a signed JWT data structure",
 		UsageText: `**step crypto jwt sign** [- | <filename>]
 [**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
-[**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>] [**--key**=<path>]
-[**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]`,
+[**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>]
+[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]
+[**--x5c-cert=<path>**] [**--x5c-key=<path>]`,
 		Description: `**step crypto jwt sign** command generates a signed JSON Web Token (JWT) by
 computing a digital signature or message authentication code for a JSON
 payload. By default, the payload to sign is read from STDIN and the JWT will
@@ -165,7 +167,7 @@ JWT one-time-use). The <jti> argument is a case-sensitive string. If the
 with sufficient entropy to satisfy the collision-resistance criteria.`,
 			},
 			cli.StringFlag{
-				Name: "key",
+				Name: "key, x5c-key",
 				Usage: `The <path> to the key with which to sign the JWT.
 JWTs can be signed using a private JWK (or a JWK encrypted as a JWE payload) or
 a PEM encoded private key (or a private key encrypted using the modes described
@@ -197,6 +199,7 @@ the **"kid"** member of one of the JWKs in the JWK Set.`,
 				Name:   "no-kid",
 				Hidden: true,
 			},
+			flags.X5cCert,
 		},
 	}
 }
@@ -222,22 +225,36 @@ func signAction(ctx *cli.Context) error {
 		return errs.TooManyArguments(ctx)
 	}
 
-	alg := ctx.String("alg")
-	isSubtle := ctx.Bool("subtle")
-
-	// Validate key, jwks and kid
+	x5cCertFile, x5cKeyFile := ctx.String("x5c-cert"), ctx.String("x5c-key")
 	key := ctx.String("key")
 	jwks := ctx.String("jwks")
 	kid := ctx.String("kid")
-	switch {
-	case key == "" && jwks == "":
-		return errs.RequiredOrFlag(ctx, "key", "jwks")
-	case key != "" && jwks != "":
-		return errs.MutuallyExclusiveFlags(ctx, "key", "jwks")
-	case jwks != "" && kid == "":
-		return errs.RequiredWithFlag(ctx, "kid", "jwks")
+	var isX5C bool
+	if len(x5cCertFile) > 0 {
+		if len(x5cKeyFile) == 0 {
+			return errs.RequiredWithOrFlag(ctx, "x5c-cert", "key", "x5c-key")
+		}
+		if ctx.IsSet("jwk") {
+			return errs.MutuallyExclusiveFlags(ctx, "x5c-cert", "jwk")
+		}
+		if len(jwks) > 0 {
+			return errs.MutuallyExclusiveFlags(ctx, "x5c-cert", "jwks")
+		}
+		isX5C = true
+	} else {
+		// Validate key, jwks and kid
+		switch {
+		case key == "" && jwks == "":
+			return errs.RequiredOrFlag(ctx, "key", "jwks")
+		case key != "" && jwks != "":
+			return errs.MutuallyExclusiveFlags(ctx, "key", "jwks")
+		case jwks != "" && kid == "":
+			return errs.RequiredWithFlag(ctx, "kid", "jwks")
+		}
 	}
 
+	alg := ctx.String("alg")
+	isSubtle := ctx.Bool("subtle")
 	// Add parse options
 	var options []jose.Option
 	options = append(options, jose.WithUse("sig"))
@@ -254,9 +271,11 @@ func signAction(ctx *cli.Context) error {
 		options = append(options, jose.WithPasswordFile(passwordFile))
 	}
 
-	// Read key from --key or --jwks
+	// Read key from --key or --jwks or --x5c-key
 	var jwk *jose.JSONWebKey
 	switch {
+	case isX5C:
+		jwk, err = jose.ParseKey(x5cKeyFile, options...)
 	case key != "":
 		jwk, err = jose.ParseKey(key, options...)
 	case jwks != "":
@@ -294,6 +313,13 @@ func signAction(ctx *cli.Context) error {
 		return errors.New("flag '--exp' must be in the future unless the '--subtle' flag is provided")
 	}
 
+	jti := ctx.String("jti")
+	if !ctx.IsSet("jti") {
+		if jti, err = randutil.Hex(64); err != nil { // 256 bits
+			return errors.Wrap(err, "error generating random JWT ID")
+		}
+	}
+
 	// Add claims
 	c := &jose.Claims{
 		Issuer:    ctx.String("iss"),
@@ -302,7 +328,7 @@ func signAction(ctx *cli.Context) error {
 		Expiry:    jose.UnixNumericDate(ctx.Int64("exp")),
 		NotBefore: jose.UnixNumericDate(ctx.Int64("nbf")),
 		IssuedAt:  jose.UnixNumericDate(ctx.Int64("iat")),
-		ID:        ctx.String("jti"),
+		ID:        jti,
 	}
 	now := time.Now()
 	if c.NotBefore == nil {
@@ -338,6 +364,14 @@ func signAction(ctx *cli.Context) error {
 	so.WithType("JWT")
 	if !ctx.Bool("no-kid") && jwk.KeyID != "" {
 		so.WithHeader("kid", jwk.KeyID)
+	}
+
+	if isX5C {
+		certStrs, err := jose.ValidateX5C(x5cCertFile, jwk.Key)
+		if err != nil {
+			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
+		}
+		so.WithHeader("x5c", certStrs)
 	}
 
 	signer, err := jose.NewSigner(jose.SigningKey{
