@@ -17,12 +17,12 @@ func init() {
 
 Generate a new SSH key pair and user certificate:
 '''
-$ step ca ssh-certificate mariano@work id_ecdsa
+$ step ssh certificate mariano@work id_ecdsa
 '''
 
 Generate a new SSH key pair and host certificate:
 '''
-$ step ca ssh-certificate --host internal.example.com ssh_host_ecdsa_key
+$ step ssh certificate --host internal.example.com ssh_host_ecdsa_key
 '''`,
 		Subcommands: cli.Commands{
 			certificateCommand(),

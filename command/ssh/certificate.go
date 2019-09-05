@@ -64,9 +64,9 @@ func certificateCommand() cli.Command {
 		Name:   "certificate",
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "sign a SSH certificate using the the SSH CA",
-		UsageText: `**step ca certificate** <key-id> <key-file>
+		UsageText: `**step ssh certificate** <key-id> <key-file>
 		[**--host**] [**--sign**]`,
-		Description: `**step ca ssh-certificate** command generates an SSH key pair and creates a
+		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
 
 With a certificate clients or servers may trust only the CA key and verify its
@@ -145,34 +145,34 @@ key path when we are just signing it.
 
 Generate a new SSH key pair and user certificate:
 '''
-$ step ca ssh-certificate mariano@work id_ecdsa
+$ step ssh certificate mariano@work id_ecdsa
 '''
 
 Sign an SSH public key and generate a user certificate:
 '''
-$ step ca ssh-certificate --sign mariano@work id_ecdsa.pub
+$ step ssh certificate --sign mariano@work id_ecdsa.pub
 '''
 
 Generate a new SSH key pair and host certificate:
 '''
-$ step ca ssh-certificate --host internal.example.com ssh_host_ecdsa_key
+$ step ssh certificate --host internal.example.com ssh_host_ecdsa_key
 '''
 
 Sign an SSH public key and generate a host certificate:
 '''
-$ step ca ssh-certificate --host --sign \
+$ step ssh certificate --host --sign \
 	internal.example.com ssh_host_ecdsa_key.pub
 '''
 
 Generate a new key pair, and a certificate with custom principals (user/host names):
 '''
-$ step ca ssh-certificate --principal max --principal mariano --sign \
+$ step ssh certificate --principal max --principal mariano --sign \
 	ops@work id_ecdsa
 '''
 
 Sign an SSH public key generating a certificate with given token:
 '''
-$ step ca ssh-certificate --token $TOKEN mariano@work id_ecdsa
+$ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 '''`,
 		Flags: []cli.Flag{
 			flags.Token,
