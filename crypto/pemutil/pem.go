@@ -152,7 +152,8 @@ func ReadCertificate(filename string, opts ...Options) (*x509.Certificate, error
 
 	// PEM format
 	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
-		crt, err := Read(filename, opts...)
+		var crt interface{}
+		crt, err = Read(filename, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +191,8 @@ func ReadCertificateBundle(filename string) ([]*x509.Certificate, error) {
 			if block.Type != "CERTIFICATE" {
 				return nil, errors.Errorf("error decoding PEM: file '%s' is not a certificate bundle", filename)
 			}
-			crt, err := x509.ParseCertificate(block.Bytes)
+			var crt *x509.Certificate
+			crt, err = x509.ParseCertificate(block.Bytes)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error parsing %s", filename)
 			}
@@ -220,7 +222,8 @@ func ReadStepCertificate(filename string) (*stepx509.Certificate, error) {
 
 	// PEM format
 	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
-		crt, err := Read(filename, []Options{WithStepCrypto()}...)
+		var crt interface{}
+		crt, err = Read(filename, []Options{WithStepCrypto()}...)
 		if err != nil {
 			return nil, err
 		}
@@ -335,12 +338,13 @@ func Read(filename string, opts ...Options) (interface{}, error) {
 
 // Serialize will serialize the input to a PEM formatted block and apply
 // modifiers.
-func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
+func Serialize(in interface{}, opts ...Options) (*pem.Block, error) {
 	ctx := new(context)
 	if err := ctx.apply(opts); err != nil {
 		return nil, err
 	}
 
+	var p *pem.Block
 	switch k := in.(type) {
 	case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey:
 		b, err := MarshalPKIXPublicKey(k)
@@ -424,11 +428,13 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 	// Apply options on the PEM blocks.
 	if ctx.password != nil {
 		if _, ok := in.(crypto.PrivateKey); ok && ctx.pkcs8 {
+			var err error
 			p, err = EncryptPKCS8PrivateKey(rand.Reader, p.Bytes, ctx.password, DefaultEncCipher)
 			if err != nil {
 				return nil, err
 			}
 		} else {
+			var err error
 			p, err = x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, ctx.password, DefaultEncCipher)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to serialize to PEM")

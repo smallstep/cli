@@ -25,8 +25,8 @@ func createCommand() cli.Command {
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
 [**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
-[**--curve**=<curve>] [**no-password**] [**--profile**=<profile>]
-[**--size**=<size>] [**--type**=<type>] [**--san**=<SAN>]`,
+[**no-password**] [**--profile**=<profile>] [**--san**=<SAN>] [**--bundle**]
+[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing requests (CSR) that can be signed later using 'step
 certificates sign' (or some other tool) to produce a certificate.
@@ -113,6 +113,12 @@ $ step certificate create foo foo.crt foo.key --profile leaf \
   --not-before 24h --not-after 2160h
 '''
 
+Create a self-signed leaf certificate and key:
+
+'''
+$ step certificate create self-signed-leaf.local leaf.crt leaf.key --profile self-signed --subtle
+'''
+
 Create a root certificate and key with underlying OKP Ed25519:
 
 '''
@@ -179,51 +185,12 @@ recommended. Requires **--insecure** flag.`,
     :  Generate a certificate that can be used to sign additional leaf or intermediate certificates.
 
     **root-ca**
-    :  Generate a new self-signed root certificate suitable for use as a root CA.`,
-			},
-			cli.StringFlag{
-				Name:  "kty",
-				Value: "EC",
-				Usage: `The <kty> to build the certificate upon.
-If unset, default is EC.
+    :  Generate a new self-signed root certificate suitable for use as a root CA.
 
-: <kty> is a case-sensitive string and must be one of:
-
-    **EC**
-    :  Create an **elliptic curve** keypair
-
-    **OKP**
-    :  Create an octet key pair (for **"Ed25519"** curve)
-
-    **RSA**
-    :  Create an **RSA** keypair
-`,
-			},
-			cli.IntFlag{
-				Name: "size",
-				Usage: `The <size> (in bits) of the key for RSA and oct key types. RSA keys require a
-minimum key size of 2048 bits. If unset, default is 2048 bits for RSA keys and 128 bits for oct keys.`,
-			},
-			cli.StringFlag{
-				Name: "crv, curve",
-				Usage: `The elliptic <curve> to use for EC and OKP key types. Corresponds
-to the **"crv"** JWK parameter. Valid curves are defined in JWA [RFC7518]. If
-unset, default is P-256 for EC keys and Ed25519 for OKP keys.
-
-: <curve> is a case-sensitive string and must be one of:
-
-    **P-256**
-    :  NIST P-256 Curve
-
-    **P-384**
-    :  NIST P-384 Curve
-
-    **P-521**
-    :  NIST P-521 Curve
-
-    **Ed25519**
-    :  Ed25519 Curve
-`,
+    **self-signed**
+    :  Generate a new self-signed leaf certificate suitable for use with TLS.
+	This profile requires the **--subtle** flag because the use of self-signed leaf
+	certificates is discouraged unless absolutely necessary.`,
 			},
 			cli.StringFlag{
 				Name: "not-before",
@@ -246,7 +213,16 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs). Use the '--san'
 flag multiple times to configure multiple SANs.`,
 			},
+			cli.BoolFlag{
+				Name: "bundle",
+				Usage: `Bundle the new leaf certificate with the signing certificate. This flag requires
+the **--ca** flag.`,
+			},
+			flags.KTY,
+			flags.Size,
+			flags.Curve,
 			flags.Force,
+			flags.Subtle,
 		},
 	}
 }
@@ -297,15 +273,19 @@ func createAction(ctx *cli.Context) error {
 	if len(sans) == 0 {
 		sans = []string{subject}
 	}
-	dnsNames, ips := x509util.SplitSANs(sans)
+	dnsNames, ips, emails := x509util.SplitSANs(sans)
 
 	var (
 		priv       interface{}
-		pubPEM     *pem.Block
+		pubPEMs    []*pem.Block
 		outputType string
+		bundle     = ctx.Bool("bundle")
 	)
 	switch typ {
 	case "x509-csr":
+		if bundle {
+			return errs.IncompatibleFlagWithFlag(ctx, "bundle", "csr")
+		}
 		if ctx.IsSet("profile") {
 			return errs.IncompatibleFlagWithFlag(ctx, "profile", "csr")
 		}
@@ -318,28 +298,32 @@ func createAction(ctx *cli.Context) error {
 			Subject: pkix.Name{
 				CommonName: subject,
 			},
-			DNSNames:    dnsNames,
-			IPAddresses: ips,
+			DNSNames:       dnsNames,
+			IPAddresses:    ips,
+			EmailAddresses: emails,
 		}
-		csrBytes, err := stepx509.CreateCertificateRequest(rand.Reader, _csr, priv)
+		var csrBytes []byte
+		csrBytes, err = stepx509.CreateCertificateRequest(rand.Reader, _csr, priv)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		pubPEM = &pem.Block{
+		pubPEMs = []*pem.Block{{
 			Type:    "CERTIFICATE REQUEST",
 			Bytes:   csrBytes,
 			Headers: map[string]string{},
-		}
+		}}
 		outputType = "certificate signing request"
 	case "x509":
 		var (
-			err       error
 			prof      = ctx.String("profile")
 			caPath    = ctx.String("ca")
 			caKeyPath = ctx.String("ca-key")
 			profile   x509util.Profile
 		)
+		if bundle && prof != "leaf" {
+			return errs.IncompatibleFlagValue(ctx, "bundle", "profile", prof)
+		}
 		switch prof {
 		case "leaf", "intermediate-ca":
 			if caPath == "" {
@@ -350,7 +334,8 @@ func createAction(ctx *cli.Context) error {
 			}
 			switch prof {
 			case "leaf":
-				issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
+				var issIdentity *x509util.Identity
+				issIdentity, err = loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -358,15 +343,14 @@ func createAction(ctx *cli.Context) error {
 					issIdentity.Key, x509util.GenerateKeyPair(kty, crv, size),
 					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
 					x509util.WithDNSNames(dnsNames),
-					x509util.WithIPAddresses(ips))
+					x509util.WithIPAddresses(ips),
+					x509util.WithEmailAddresses(emails))
 				if err != nil {
 					return errors.WithStack(err)
 				}
 			case "intermediate-ca":
-				issIdentity, err := loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
-				if err != nil {
-					return errors.WithStack(err)
-				}
+				var issIdentity *x509util.Identity
+				issIdentity, err = loadIssuerIdentity(ctx, prof, caPath, caKeyPath)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -375,7 +359,8 @@ func createAction(ctx *cli.Context) error {
 					x509util.GenerateKeyPair(kty, crv, size),
 					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
 					x509util.WithDNSNames(dnsNames),
-					x509util.WithIPAddresses(ips))
+					x509util.WithIPAddresses(ips),
+					x509util.WithEmailAddresses(emails))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -385,21 +370,41 @@ func createAction(ctx *cli.Context) error {
 				x509util.GenerateKeyPair(kty, crv, size),
 				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
 				x509util.WithDNSNames(dnsNames),
-				x509util.WithIPAddresses(ips))
+				x509util.WithIPAddresses(ips),
+				x509util.WithEmailAddresses(emails))
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		case "self-signed":
+			if !ctx.Bool("subtle") {
+				return errs.RequiredWithFlagValue(ctx, "profile", "self-signed", "subtle")
+			}
+			profile, err = x509util.NewSelfSignedLeafProfile(subject,
+				x509util.GenerateKeyPair(kty, crv, size),
+				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
+				x509util.WithDNSNames(dnsNames),
+				x509util.WithIPAddresses(ips),
+				x509util.WithEmailAddresses(emails))
 			if err != nil {
 				return errors.WithStack(err)
 			}
 		default:
-			return errs.InvalidFlagValue(ctx, "profile", prof, "leaf, intermediate-ca, root-ca")
+			return errs.InvalidFlagValue(ctx, "profile", prof, "leaf, intermediate-ca, root-ca, self-signed")
 		}
-		crtBytes, err := profile.CreateCertificate()
+		var crtBytes []byte
+		crtBytes, err = profile.CreateCertificate()
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		pubPEM = &pem.Block{
-			Type:    "CERTIFICATE",
-			Bytes:   crtBytes,
-			Headers: map[string]string{},
+		pubPEMs = []*pem.Block{{
+			Type:  "CERTIFICATE",
+			Bytes: crtBytes,
+		}}
+		if bundle {
+			pubPEMs = append(pubPEMs, &pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: profile.Issuer().Raw,
+			})
 		}
 		priv = profile.SubjectPrivateKey()
 		outputType = "certificate"
@@ -407,7 +412,11 @@ func createAction(ctx *cli.Context) error {
 		return errs.NewError("unexpected type: %s", typ)
 	}
 
-	if err := utils.WriteFile(crtFile, pem.EncodeToMemory(pubPEM), 0600); err != nil {
+	pubBytes := []byte{}
+	for _, pp := range pubPEMs {
+		pubBytes = append(pubBytes, pem.EncodeToMemory(pp)...)
+	}
+	if err = utils.WriteFile(crtFile, pubBytes, 0600); err != nil {
 		return errs.FileError(err, crtFile)
 	}
 
@@ -417,7 +426,8 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 	} else {
-		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key")
+		var pass []byte
+		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key")
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}

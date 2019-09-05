@@ -190,6 +190,16 @@ func WithIPAddresses(ips []net.IP) WithOption {
 	}
 }
 
+// WithEmailAddresses returns a Profile modifier which sets the Email Addresses
+// that will be bound to the subject alternative name extension of the Certificate.
+func WithEmailAddresses(emails []string) WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.EmailAddresses = emails
+		return nil
+	}
+}
+
 // WithHosts returns a Profile modifier which sets the DNS Names and IP Addresses
 // that will be bound to the subject Certificate.
 //
@@ -351,7 +361,7 @@ func (b *base) CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, erro
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if err := utils.WriteFile(crtOut, pem.EncodeToMemory(&pem.Block{
+	if err = utils.WriteFile(crtOut, pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: crtBytes,
 	}), 0600); err != nil {

@@ -76,50 +76,9 @@ $ step crypto keypair foo.pub foo.key --kty OKP --curve Ed25519
 '''
 `,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "kty",
-				Value: "EC",
-				Usage: `The <kty> (key type) to create.
-If unset, default is EC.
-
-: <kty> is a case-sensitive string and must be one of:
-
-    **EC**
-    :  Create an **elliptic curve** keypair
-
-    **OKP**
-    :  Create an octet key pair (for **"Ed25519"** curve)
-
-    **RSA**
-    :  Create an **RSA** keypair
-`,
-			},
-			cli.IntFlag{
-				Name: "size",
-				Usage: `The <size> (in bits) of the key for RSA and oct key types. RSA keys require a
-minimum key size of 2048 bits. If unset, default is 2048 bits for RSA keys and 128 bits for oct keys.`,
-			},
-			cli.StringFlag{
-				Name: "crv, curve",
-				Usage: `The elliptic <curve> to use for EC and OKP key types. Corresponds
-to the **"crv"** JWK parameter. Valid curves are defined in JWA [RFC7518]. If
-unset, default is P-256 for EC keys and Ed25519 for OKP keys.
-
-: <curve> is a case-sensitive string and must be one of:
-
-    **P-256**
-    :  NIST P-256 Curve
-
-    **P-384**
-    :  NIST P-384 Curve
-
-    **P-521**
-    :  NIST P-521 Curve
-
-    **Ed25519**
-    :  Ed25519 Curve
-`,
-			},
+			flags.KTY,
+			flags.Size,
+			flags.Curve,
 			cli.StringFlag{
 				Name: "from-jwk",
 				Usage: `Create a PEM representing the key encoded in an
@@ -134,7 +93,7 @@ existing <jwk-file> instead of creating a new key.`,
 }
 
 func createAction(ctx *cli.Context) (err error) {
-	if err := errs.NumberOfArguments(ctx, 2); err != nil {
+	if err = errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
 
@@ -175,7 +134,8 @@ func createAction(ctx *cli.Context) (err error) {
 			return errs.IncompatibleFlagWithFlag(ctx, "from-jwk", "size")
 		}
 
-		jwk, err := jose.ParseKey(fromJWK)
+		var jwk *jose.JSONWebKey
+		jwk, err = jose.ParseKey(fromJWK)
 		if err != nil {
 			return err
 		}
@@ -187,7 +147,11 @@ func createAction(ctx *cli.Context) (err error) {
 			priv = jwk.Key
 		}
 	} else {
-		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
+		var (
+			kty, crv string
+			size     int
+		)
+		kty, crv, size, err = utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
 			"curve", "size")
 		if err != nil {
 			return err
@@ -217,7 +181,8 @@ func createAction(ctx *cli.Context) (err error) {
 			return err
 		}
 	} else {
-		pass, err := ui.PromptPassword("Please enter the password to encrypt the private key", ui.WithValue(password))
+		var pass []byte
+		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key", ui.WithValue(password))
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}

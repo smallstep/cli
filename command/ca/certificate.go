@@ -20,9 +20,9 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
-		[**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-		[**--san**=<SAN>]`,
+[**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--not-before**=<time|duration>] [**--not-after**=<time|duration>] [**--san**=<SAN>]
+[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -72,6 +72,16 @@ $ step ca certificate --offline internal.example.com internal.crt internal.key
 Request a new certificate using an OIDC provisioner:
 '''
 $ step ca certificate --token $(step oauth --oidc --bare) joe@example.com joe.crt joe.key
+'''
+
+Request a new certificate using an OIDC provisioner while remaining in the console:
+'''
+$ step ca certificate joe@example.com joe.crt joe.key --issuer Google --console
+'''
+
+Request a new certificate with an RSA public key (default is ECDSA256):
+'''
+$ step ca certificate foo.internal foo.crt foo.key --kty RSA --size 4096
 '''`,
 		Flags: []cli.Flag{
 			tokenFlag,
@@ -82,15 +92,22 @@ $ step ca certificate --token $(step oauth --oidc --bare) joe@example.com joe.cr
 			notAfterCertFlag,
 			cli.StringSliceFlag{
 				Name: "san",
-				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
-authorized to request. A certificate signing request using this token must match
-the complete set of subjective alternative names in the token 1:1. Use the '--san'
-flag multiple times to configure multiple SANs. The '--san' flag and the '--token'
-flag are mutually exlusive.`,
+				Usage: `Add DNS Name, IP Address, or Email Address Subjective Alternative Names (SANs)
+that the token is authorized to request. A certificate signing request using
+this token must match the complete set of subjective alternative names in the
+token 1:1. Use the '--san' flag multiple times to configure multiple SANs. The
+'--san' flag and the '--token' flag are mutually exlusive.`,
 			},
 			offlineFlag,
 			caConfigFlag,
+			cli.BoolFlag{
+				Name:  "console",
+				Usage: "Complete the flow while remaining inside the terminal",
+			},
 			flags.Force,
+			flags.KTY,
+			flags.Size,
+			flags.Curve,
 		},
 	}
 }
@@ -125,7 +142,7 @@ func certificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	req, pk, err := flow.CreateSignRequest(tok, subject, sans)
+	req, pk, err := flow.CreateSignRequest(ctx, tok, subject, sans)
 	if err != nil {
 		return err
 	}
@@ -157,7 +174,7 @@ func certificateAction(ctx *cli.Context) error {
 		return errors.New("token is not supported")
 	}
 
-	if err := flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
+	if err = flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
 		return err
 	}
 

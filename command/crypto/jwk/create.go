@@ -177,32 +177,8 @@ If unset, default is EC.
     :  Create an **RSA** keypair
 `,
 			},
-			cli.IntFlag{
-				Name: "size",
-				Usage: `The <size> (in bits) of the key for RSA and oct key types. RSA keys require a
-minimum key size of 2048 bits. If unset, default is 2048 bits for RSA keys and 128 bits for oct keys.`,
-			},
-			cli.StringFlag{
-				Name: "crv, curve",
-				Usage: `The elliptic <curve> to use for EC and OKP key types. Corresponds
-to the **"crv"** JWK parameter. Valid curves are defined in JWA [RFC7518]. If
-unset, default is P-256 for EC keys and Ed25519 for OKP keys.
-
-: <curve> is a case-sensitive string and must be one of:
-
-    **P-256**
-    :  NIST P-256 Curve
-
-    **P-384**
-    :  NIST P-384 Curve
-
-    **P-521**
-    :  NIST P-521 Curve
-
-    **Ed25519**
-    :  Ed25519 Curve
-`,
-			},
+			flags.Size,
+			flags.Curve,
 			cli.StringFlag{
 				Name: "alg, algorithm",
 				Usage: `The <algorithm> intended for use with this key. Corresponds to the
@@ -404,7 +380,7 @@ existing <pem-file> instead of creating a new key.`,
 
 func createAction(ctx *cli.Context) (err error) {
 	// require public and private files
-	if err := errs.NumberOfArguments(ctx, 2); err != nil {
+	if err = errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
 
@@ -502,7 +478,8 @@ func createAction(ctx *cli.Context) (err error) {
 	} else {
 		// A hash of a symmetric key can leak information, so we only thumbprint asymmetric keys.
 		if kty != "oct" {
-			hash, err := jwk.Thumbprint(crypto.SHA256)
+			var hash []byte
+			hash, err = jwk.Thumbprint(crypto.SHA256)
 			if err != nil {
 				return errors.Wrap(err, "error generating JWK thumbprint")
 			}
@@ -515,7 +492,7 @@ func createAction(ctx *cli.Context) (err error) {
 		jwk.Algorithm = alg
 	}
 
-	if err := jose.ValidateJWK(jwk); err != nil {
+	if err = jose.ValidateJWK(jwk); err != nil {
 		return err
 	}
 
@@ -531,7 +508,7 @@ func createAction(ctx *cli.Context) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "error marshaling JWK")
 	}
-	if err := utils.WriteFile(pubFile, b, 0600); err != nil {
+	if err = utils.WriteFile(pubFile, b, 0600); err != nil {
 		return errs.FileError(err, pubFile)
 	}
 
@@ -547,12 +524,14 @@ func createAction(ctx *cli.Context) (err error) {
 		var rcpt jose.Recipient
 		// Generate JWE encryption key.
 		if jose.SupportsPBKDF2 {
-			key, err := ui.PromptPassword("Please enter the password to encrypt the private JWK", ui.WithValue(password))
+			var key []byte
+			key, err = ui.PromptPassword("Please enter the password to encrypt the private JWK", ui.WithValue(password))
 			if err != nil {
 				return errors.Wrap(err, "error reading password")
 			}
 
-			salt, err := randutil.Salt(pbkdf2SaltSize)
+			var salt []byte
+			salt, err = randutil.Salt(pbkdf2SaltSize)
 			if err != nil {
 				return err
 			}
@@ -564,7 +543,8 @@ func createAction(ctx *cli.Context) (err error) {
 				PBES2Salt:  salt,
 			}
 		} else {
-			key, err := randutil.Alphanumeric(32)
+			var key string
+			key, err = randutil.Alphanumeric(32)
 			if err != nil {
 				return errors.Wrap(err, "error generating password")
 			}
@@ -579,18 +559,20 @@ func createAction(ctx *cli.Context) (err error) {
 
 		opts := new(jose.EncrypterOptions)
 		opts.WithContentType(jose.ContentType("jwk+json"))
-		encrypter, err := jose.NewEncrypter(jose.DefaultEncAlgorithm, rcpt, opts)
+		var encrypter jose.Encrypter
+		encrypter, err = jose.NewEncrypter(jose.DefaultEncAlgorithm, rcpt, opts)
 		if err != nil {
 			return errors.Wrap(err, "error creating cipher")
 		}
 
-		obj, err := encrypter.Encrypt(b)
+		var obj *jose.JSONWebEncryption
+		obj, err = encrypter.Encrypt(b)
 		if err != nil {
 			return errors.Wrap(err, "error encrypting JWK")
 		}
 
 		var out bytes.Buffer
-		if err := json.Indent(&out, []byte(obj.FullSerialize()), "", "  "); err != nil {
+		if err = json.Indent(&out, []byte(obj.FullSerialize()), "", "  "); err != nil {
 			return errors.Wrap(err, "error formatting JSON")
 		}
 		b = out.Bytes()
@@ -600,7 +582,7 @@ func createAction(ctx *cli.Context) (err error) {
 			return errors.Wrap(err, "error marshaling JWK")
 		}
 	}
-	if err := utils.WriteFile(privFile, b, 0600); err != nil {
+	if err = utils.WriteFile(privFile, b, 0600); err != nil {
 		return errs.FileError(err, privFile)
 	}
 

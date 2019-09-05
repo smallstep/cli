@@ -8,9 +8,11 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"html"
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/ssh"
@@ -76,7 +78,7 @@ func GetRootCAPath() string {
 	return filepath.Join(config.StepPath(), publicPath, "root_ca.crt")
 }
 
-// GetOTTKeyPath returns the path where the ont-time token key is stored based
+// GetOTTKeyPath returns the path where the one-time token key is stored based
 // on the STEPPATH environment variable.
 func GetOTTKeyPath() string {
 	return filepath.Join(config.StepPath(), privatePath, "ott_key")
@@ -125,37 +127,34 @@ func GetProvisionerKey(caURL, rootFile, kid string) (string, error) {
 
 // PKI represents the Public Key Infrastructure used by a certificate authority.
 type PKI struct {
-	root, rootKey, rootFingerprint  string
-	intermediate, intermediateKey   string
-	sshHostCert, sshHostKey         string
-	sshUserCert, sshUserKey         string
-	country, locality, organization string
-	config, defaults                string
-	ottPublicKey                    *jose.JSONWebKey
-	ottPrivateKey                   *jose.JSONWebEncryption
-	provisioner                     string
-	address                         string
-	dnsNames                        []string
-	caURL                           string
-	enableSSH                       bool
+	root, rootKey, rootFingerprint string
+	intermediate, intermediateKey  string
+	sshHostCert, sshHostKey        string
+	sshUserCert, sshUserKey        string
+	config, defaults               string
+	ottPublicKey                   *jose.JSONWebKey
+	ottPrivateKey                  *jose.JSONWebEncryption
+	provisioner                    string
+	address                        string
+	dnsNames                       []string
+	caURL                          string
+	enableSSH                      bool
 }
 
 // New creates a new PKI configuration.
 func New(public, private, config string) (*PKI, error) {
-	var err error
-
-	if _, err = os.Stat(public); os.IsNotExist(err) {
+	if _, err := os.Stat(public); os.IsNotExist(err) {
 		if err = os.MkdirAll(public, 0700); err != nil {
 			return nil, errs.FileError(err, public)
 		}
 	}
-	if _, err = os.Stat(private); os.IsNotExist(err) {
+	if _, err := os.Stat(private); os.IsNotExist(err) {
 		if err = os.MkdirAll(private, 0700); err != nil {
 			return nil, errs.FileError(err, private)
 		}
 	}
 	if len(config) > 0 {
-		if _, err = os.Stat(config); os.IsNotExist(err) {
+		if _, err := os.Stat(config); os.IsNotExist(err) {
 			if err = os.MkdirAll(config, 0700); err != nil {
 				return nil, errs.FileError(err, config)
 			}
@@ -168,6 +167,7 @@ func New(public, private, config string) (*PKI, error) {
 		return s, errors.Wrapf(err, "error getting absolute path for %s", name)
 	}
 
+	var err error
 	p := &PKI{
 		provisioner: "step-cli",
 		address:     "127.0.0.1:9000",
@@ -320,10 +320,27 @@ func (p *PKI) GenerateSSHSigningKeys(password []byte) error {
 	return nil
 }
 
+func (p *PKI) askFeedback() {
+	ui.Println()
+	ui.Printf("\033[1mFEEDBACK\033[0m %s %s\n",
+		html.UnescapeString("&#"+strconv.Itoa(128525)+";"),
+		html.UnescapeString("&#"+strconv.Itoa(127867)+";"))
+	ui.Println("      The \033[1mstep\033[0m utility is not instrumented for usage statistics. It does not")
+	ui.Println("      phone home. But your feedback is extremely valuable. Any information you")
+	ui.Println("      can provide regarding how you’re using `step` helps. Please send us a")
+	ui.Println("      sentence or two, good or bad: \033[1mfeedback@smallstep.com\033[0m or join")
+	ui.Println("      \033[1mhttps://gitter.im/smallstep/community\033[0m.")
+}
+
 // TellPKI outputs the locations of public and private keys generated
 // generated for a new PKI. Generally this will consist of a root certificate
 // and key and an intermediate certificate and key.
 func (p *PKI) TellPKI() {
+	p.tellPKI()
+	p.askFeedback()
+}
+
+func (p *PKI) tellPKI() {
 	ui.Println()
 	ui.PrintSelected("Root certificate", p.root)
 	ui.PrintSelected("Root private key", p.rootKey)
@@ -372,7 +389,7 @@ func WithoutDB() Option {
 // Save stores the pki on a json file that will be used as the certificate
 // authority configuration.
 func (p *PKI) Save(opt ...Option) error {
-	p.TellPKI()
+	p.tellPKI()
 
 	key, err := p.ottPrivateKey.CompactSerialize()
 	if err != nil {
@@ -420,7 +437,7 @@ func (p *PKI) Save(opt ...Option) error {
 
 	b, err := json.MarshalIndent(config, "", "   ")
 	if err != nil {
-		return errors.Wrapf(err, "error marshalling %s", p.config)
+		return errors.Wrapf(err, "error marshaling %s", p.config)
 	}
 	if err = utils.WriteFile(p.config, b, 0666); err != nil {
 		return errs.FileError(err, p.config)
@@ -429,7 +446,8 @@ func (p *PKI) Save(opt ...Option) error {
 	// Generate the CA URL.
 	if p.caURL == "" {
 		p.caURL = p.dnsNames[0]
-		_, port, err := net.SplitHostPort(p.address)
+		var port string
+		_, port, err = net.SplitHostPort(p.address)
 		if err != nil {
 			return errors.Wrapf(err, "error parsing %s", p.address)
 		}
@@ -448,7 +466,7 @@ func (p *PKI) Save(opt ...Option) error {
 	}
 	b, err = json.MarshalIndent(defaults, "", "   ")
 	if err != nil {
-		return errors.Wrapf(err, "error marshalling %s", p.defaults)
+		return errors.Wrapf(err, "error marshaling %s", p.defaults)
 	}
 	if err = utils.WriteFile(p.defaults, b, 0666); err != nil {
 		return errs.FileError(err, p.defaults)
@@ -461,6 +479,8 @@ func (p *PKI) Save(opt ...Option) error {
 	}
 	ui.Println()
 	ui.Println("Your PKI is ready to go. To generate certificates for individual services see 'step help ca'.")
+
+	p.askFeedback()
 
 	return nil
 }

@@ -87,7 +87,7 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 		}
 
 		// Unmarshal the plain (or decrypted JWK)
-		if err := json.Unmarshal(b, jwk); err != nil {
+		if err = json.Unmarshal(b, jwk); err != nil {
 			return nil, errors.Errorf("error reading %s: unsupported format", filename)
 		}
 	case pemKeyType:

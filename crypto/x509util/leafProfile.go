@@ -31,6 +31,20 @@ func NewLeafProfile(cn string, iss *x509.Certificate, issPriv crypto.PrivateKey,
 	return newProfile(&Leaf{}, sub, iss, issPriv, withOps...)
 }
 
+// NewSelfSignedLeafProfile returns a new leaf x509 Certificate profile.
+// A new public/private key pair will be generated for the Profile if
+// not set in the `withOps` profile modifiers.
+func NewSelfSignedLeafProfile(cn string, withOps ...WithOption) (Profile, error) {
+	sub := defaultLeafTemplate(pkix.Name{CommonName: cn}, pkix.Name{CommonName: cn})
+	p, err := newProfile(&Leaf{}, sub, sub, nil, withOps...)
+	if err != nil {
+		return nil, err
+	}
+	// self-signed certificate
+	p.SetIssuerPrivateKey(p.SubjectPrivateKey())
+	return p, nil
+}
+
 // NewLeafProfileWithCSR returns a new leaf x509 Certificate Profile with
 // Subject Certificate fields populated directly from the CSR.
 // A public/private keypair **WILL NOT** be generated for this profile because

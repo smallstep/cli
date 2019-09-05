@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -129,6 +130,10 @@ func init() {
 				Name:  "jwt",
 				Usage: "Generate a JWT Auth token instead of an OAuth Token (only works with service accounts)",
 			},
+			cli.StringFlag{
+				Name:  "listen",
+				Usage: "Callback listener URL",
+			},
 			cli.BoolFlag{
 				Name:   "implicit",
 				Usage:  "Uses the implicit flow to authenticate the user. Requires **--insecure** and **--client-id** flags.",
@@ -148,10 +153,11 @@ func init() {
 
 func oauthCmd(c *cli.Context) error {
 	opts := &options{
-		Provider: c.String("provider"),
-		Email:    c.String("email"),
-		Console:  c.Bool("console"),
-		Implicit: c.Bool("implicit"),
+		Provider:         c.String("provider"),
+		Email:            c.String("email"),
+		Console:          c.Bool("console"),
+		Implicit:         c.Bool("implicit"),
+		CallbackListener: c.String("listen"),
 	}
 	if err := opts.Validate(); err != nil {
 		return err
@@ -199,7 +205,7 @@ func oauthCmd(c *cli.Context) error {
 			return errors.Wrapf(err, "error reading account from %s", filename)
 		}
 		account := make(map[string]interface{})
-		if err := json.Unmarshal(b, &account); err != nil {
+		if err = json.Unmarshal(b, &account); err != nil {
 			return errors.Wrapf(err, "error reading %s: unsupported format", filename)
 		}
 
@@ -274,16 +280,17 @@ func oauthCmd(c *cli.Context) error {
 }
 
 type options struct {
-	Provider string
-	Email    string
-	Console  bool
-	Implicit bool
+	Provider         string
+	Email            string
+	Console          bool
+	Implicit         bool
+	CallbackListener string
 }
 
 // Validate validates the options.
 func (o *options) Validate() error {
 	if o.Provider != "google" && !strings.HasPrefix(o.Provider, "https://") {
-		return errors.New("Use a valid provider: google")
+		return errors.New("use a valid provider: google")
 	}
 	return nil
 }
@@ -302,6 +309,7 @@ type oauth struct {
 	codeChallenge    string
 	nonce            string
 	implicit         bool
+	CallbackListener string
 	errCh            chan error
 	tokCh            chan *token
 }
@@ -337,6 +345,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			codeChallenge:    challenge,
 			nonce:            nonce,
 			implicit:         opts.Implicit,
+			CallbackListener: opts.CallbackListener,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -371,6 +380,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			codeChallenge:    challenge,
 			nonce:            nonce,
 			implicit:         opts.Implicit,
+			CallbackListener: opts.CallbackListener,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -385,7 +395,7 @@ func disco(provider string) (map[string]interface{}, error) {
 	// TODO: OIDC and OAuth specify two different ways of constructing this
 	// URL. This is the OIDC way. Probably want to try both. See
 	// https://tools.ietf.org/html/rfc8414#section-5
-	if strings.Index(url.Path, "/.well-known/openid-configuration") == -1 {
+	if !strings.Contains(url.Path, "/.well-known/openid-configuration") {
 		url.Path = path.Join(url.Path, "/.well-known/openid-configuration")
 	}
 	resp, err := http.Get(url.String())
@@ -398,17 +408,37 @@ func disco(provider string) (map[string]interface{}, error) {
 		return nil, errors.Wrapf(err, "error retrieving %s", url.String())
 	}
 	details := make(map[string]interface{})
-	if err := json.Unmarshal(b, &details); err != nil {
+	if err = json.Unmarshal(b, &details); err != nil {
 		return nil, errors.Wrapf(err, "error reading %s: unsupported format", url.String())
 	}
 	return details, err
+}
+
+// NewServer creates http server
+func (o *oauth) NewServer() (*httptest.Server, error) {
+	if o.CallbackListener == "" {
+		return httptest.NewServer(o), nil
+	}
+	l, err := net.Listen("tcp", o.CallbackListener)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error listening on %s", o.CallbackListener)
+	}
+	srv := &httptest.Server{
+		Listener: l,
+		Config:   &http.Server{Handler: o},
+	}
+	srv.Start()
+	return srv, nil
 }
 
 // DoLoopbackAuthorization performs the log in into the identity provider
 // opening a browser and using a redirect_uri in a loopback IP address
 // (http://127.0.0.1:port or http://[::1]:port).
 func (o *oauth) DoLoopbackAuthorization() (*token, error) {
-	srv := httptest.NewServer(o)
+	srv, err := o.NewServer()
+	if err != nil {
+		return nil, err
+	}
 	o.redirectURI = srv.URL
 	defer srv.Close()
 
@@ -686,7 +716,6 @@ func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />`))
 	w.Write([]byte(`Click <a href="javascript:redirect();">here</a> if your browser does not automatically redirect you`))
 	w.Write([]byte(`</p></body></html>`))
-	return
 }
 
 // Auth returns the OAuth 2.0 authentication url.

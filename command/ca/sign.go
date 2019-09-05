@@ -22,8 +22,9 @@ func signCertificateCommand() cli.Command {
 		Action: command.ActionFunc(signCertificateAction),
 		Usage:  "generate a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
-		[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]`,
+[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+[**--console**]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
@@ -63,6 +64,10 @@ $ step ca sign --offline internal internal.csr internal.crt
 			offlineFlag,
 			caConfigFlag,
 			flags.Force,
+			cli.BoolFlag{
+				Name:  "console",
+				Usage: "Complete the flow while remaining inside the terminal",
+			},
 		},
 	}
 }
@@ -151,6 +156,12 @@ func mergeSans(ctx *cli.Context, csr *x509.CertificateRequest) []string {
 	}
 	for _, ip := range csr.IPAddresses {
 		s := ip.String()
+		if _, ok := m[s]; !ok {
+			uniq = append(uniq, s)
+			m[s] = true
+		}
+	}
+	for _, s := range csr.EmailAddresses {
 		if _, ok := m[s]; !ok {
 			uniq = append(uniq, s)
 			m[s] = true

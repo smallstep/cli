@@ -213,23 +213,22 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 
 // CreateSignRequest is a helper function that given an x509 OTT returns a
 // simple but secure sign request as well as the private key used.
-func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) (*api.SignRequest, crypto.PrivateKey, error) {
+func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject string, sans []string) (*api.SignRequest, crypto.PrivateKey, error) {
 	jwt, err := token.ParseInsecure(tok)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pk, err := keys.GenerateDefaultKey()
+	kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, false, "kty", "curve", "size")
+	if err != nil {
+		return nil, nil, err
+	}
+	pk, err := keys.GenerateKey(kty, crv, size)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var emails []string
-	dnsNames, ips := splitSANs(sans, jwt.Payload.SANs)
-	if jwt.Payload.Email != "" {
-		emails = append(emails, jwt.Payload.Email)
-	}
-
+	dnsNames, ips, emails := splitSANs(sans, jwt.Payload.SANs)
 	switch jwt.Payload.Type() {
 	case token.AWS:
 		doc := jwt.Payload.Amazon.InstanceIdentityDocument
@@ -241,7 +240,7 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips = splitSANs(defaultSANs)
+			dnsNames, ips, emails = splitSANs(defaultSANs)
 		}
 	case token.GCP:
 		ce := jwt.Payload.Google.ComputeEngine
@@ -253,7 +252,7 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips = splitSANs(defaultSANs)
+			dnsNames, ips, emails = splitSANs(defaultSANs)
 		}
 	case token.Azure:
 		if len(ips) == 0 && len(dnsNames) == 0 {
@@ -263,8 +262,13 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips = splitSANs(defaultSANs)
+			dnsNames, ips, emails = splitSANs(defaultSANs)
 		}
+	case token.OIDC:
+		if jwt.Payload.Email != "" {
+			emails = append(emails, jwt.Payload.Email)
+		}
+		subject = jwt.Payload.Subject
 	default: // Use common name in the token
 		subject = jwt.Payload.Subject
 	}
@@ -273,10 +277,9 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 		Subject: pkix.Name{
 			CommonName: subject,
 		},
-		SignatureAlgorithm: keys.DefaultSignatureAlgorithm,
-		DNSNames:           dnsNames,
-		IPAddresses:        ips,
-		EmailAddresses:     emails,
+		DNSNames:       dnsNames,
+		IPAddresses:    ips,
+		EmailAddresses: emails,
 	}
 
 	csr, err := x509.CreateCertificateRequest(rand.Reader, template, pk)
@@ -297,8 +300,8 @@ func (f *CertificateFlow) CreateSignRequest(tok, subject string, sans []string) 
 }
 
 // splitSANs unifies the SAN collections passed as arguments and returns a list
-// of DNS names and a list of IP addresses.
-func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP) {
+// of DNS names, a list of IP addresses, and a list of emails.
+func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email []string) {
 	m := make(map[string]bool)
 	var unique []string
 	for _, sans := range args {

@@ -16,6 +16,11 @@ var sectionRe = regexp.MustCompile(`(?m:^##)`)
 
 //var sectionRe = regexp.MustCompile(`^## [^\n]*$`)
 
+type frontmatterData struct {
+	Data   interface{}
+	Parent string
+}
+
 // HelpPrinter overwrites cli.HelpPrinter and prints the formatted help to the terminal.
 func HelpPrinter(w io.Writer, templ string, data interface{}) {
 	b := helpPreprocessor(w, templ, data)
@@ -34,11 +39,24 @@ func htmlHelpPrinter(w io.Writer, templ string, data interface{}) []byte {
 	return html
 }
 
-func markdownHelpPrinter(w io.Writer, templ string, data interface{}) {
+func markdownHelpPrinter(w io.Writer, templ string, parent string, data interface{}) {
 	b := helpPreprocessor(w, templ, data)
+
+	frontmatter := frontmatterData{
+		Data:   data,
+		Parent: parent,
+	}
+
 	var frontMatterTemplate = `---
 layout: auto-doc
-title: {{.HelpName}}
+title: {{.Data.HelpName}}
+menu:{{if .Parent}}
+  docs:
+    parent: {{.Parent}}{{else}}
+  main:
+    name: "Reference"
+    parent: "Documentation"
+    weight: 300{{end}}
 ---
 
 `
@@ -46,7 +64,7 @@ title: {{.HelpName}}
 	if err != nil {
 		panic(err)
 	}
-	err = t.Execute(w, data)
+	err = t.Execute(w, frontmatter)
 	if err != nil {
 		panic(err)
 	}

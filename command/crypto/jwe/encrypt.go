@@ -249,7 +249,7 @@ func encryptAction(ctx *cli.Context) error {
 		}
 
 		// Validate jwk
-		if err := jose.ValidateJWK(jwk); err != nil {
+		if err = jose.ValidateJWK(jwk); err != nil {
 			return err
 		}
 
