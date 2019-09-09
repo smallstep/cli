@@ -1,42 +1,26 @@
 package ca
 
 import (
-	"crypto"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
-	"strings"
-	"time"
 
-	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pki"
-	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
-	"github.com/smallstep/cli/token"
-	"github.com/smallstep/cli/token/provision"
-	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
-type provisionersSelect struct {
-	Name        string
-	Provisioner provisioner.Interface
-}
-
-const (
-	signType = iota
-	revokeType
-)
-
 func tokenCommand() cli.Command {
+	// Avoid the conflict with --not-before --not-after
+	certNotBeforeFlag := flags.NotBefore
+	certNotAfterFlag := flags.NotAfter
+	certNotBeforeFlag.Name = "cert-not-before"
+	certNotAfterFlag.Name = "cert-not-after"
+
 	return cli.Command{
 		Name:   "token",
 		Action: command.ActionFunc(tokenAction),
@@ -141,12 +125,18 @@ $ step ca token --offline --revoke 146103349666685108195655980390445292315
 '''
 `,
 		Flags: []cli.Flag{
-			provisionerKidFlag,
-			provisionerIssuerFlag,
-			caURLFlag,
-			rootFlag,
+			flags.CaURL,
+			flags.CaConfig,
+			flags.Force,
+			flags.Root,
+			flags.Provisioner,
+			certNotAfterFlag,
+			certNotBeforeFlag,
 			notBeforeFlag,
 			notAfterFlag,
+			provisionerKidFlag,
+			sshPrincipalFlag,
+			sshHostFlag,
 			cli.StringSliceFlag{
 				Name: "san",
 				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
@@ -174,8 +164,10 @@ requires the flags <--ca-config> or <--kid>, <--issuer>, <--key>, <--ca-url>, an
 				Usage: `Create a token for authorizing 'Revoke' requests. The audience will
 be invalid for any other API request.`,
 			},
-			caConfigFlag,
-			flags.Force,
+			cli.BoolFlag{
+				Name:  "ssh",
+				Usage: `Create a token for authorizing an SSH certificate signing request.`,
+			},
 		},
 	}
 }
@@ -188,12 +180,42 @@ func tokenAction(ctx *cli.Context) error {
 	subject := ctx.Args().Get(0)
 	outputFile := ctx.String("output-file")
 	offline := ctx.Bool("offline")
+	// x.509 flags
 	sans := ctx.StringSlice("san")
+	isRevoke := ctx.Bool("revoke")
+	// ssh flags
+	isSSH := ctx.Bool("ssh")
+	isHost := ctx.Bool("host")
+	principals := ctx.StringSlice("principal")
+
+	switch {
+	case isSSH && isRevoke:
+		return errs.IncompatibleFlagWithFlag(ctx, "ssh", "revoke")
+	case isSSH && len(sans) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "ssh", "san")
+	case isHost && len(sans) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "host", "san")
+	case len(principals) > 0 && len(sans) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "principal", "san")
+	case !isSSH && isHost:
+		return errs.RequiredWithFlag(ctx, "host", "ssh")
+	case !isSSH && len(principals) > 0:
+		return errs.RequiredWithFlag(ctx, "principal", "ssh")
+	}
 
 	// Default token type is always a 'Sign' token.
-	typ := signType
-	if ctx.Bool("revoke") {
-		typ = revokeType
+	var typ int
+	switch {
+	case isSSH && isHost:
+		typ = cautils.SSHHostSignType
+		sans = principals
+	case isSSH && !isHost:
+		typ = cautils.SSHUserSignType
+		sans = principals
+	case isRevoke:
+		typ = cautils.RevokeType
+	default:
+		typ = cautils.SignType
 	}
 
 	caURL := ctx.String("ca-url")
@@ -210,7 +232,7 @@ func tokenAction(ctx *cli.Context) error {
 	}
 
 	// --san and --type revoke are incompatible. Revocation tokens do not support SANs.
-	if typ == revokeType && len(sans) > 0 {
+	if typ == cautils.RevokeType && len(sans) > 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "san", "revoke")
 	}
 
@@ -224,15 +246,24 @@ func tokenAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 
-	var err error
+	// parse certificates durations
+	certNotBefore, err := api.ParseTimeDuration(ctx.String("cert-not-before"))
+	if err != nil {
+		return errs.InvalidFlagValue(ctx, "cert-not-before", ctx.String("cert-not-before"), "")
+	}
+	certNotAfter, err := api.ParseTimeDuration(ctx.String("cert-not-after"))
+	if err != nil {
+		return errs.InvalidFlagValue(ctx, "cert-not-after", ctx.String("cert-not-after"), "")
+	}
+
 	var token string
 	if offline {
-		token, err = offlineTokenFlow(ctx, typ, subject, sans)
+		token, err = cautils.OfflineTokenFlow(ctx, typ, subject, sans, notBefore, notAfter, certNotBefore, certNotAfter)
 		if err != nil {
 			return err
 		}
 	} else {
-		token, err = newTokenFlow(ctx, typ, subject, sans, caURL, root, notBefore, notAfter)
+		token, err = cautils.NewTokenFlow(ctx, typ, subject, sans, caURL, root, notBefore, notAfter, certNotBefore, certNotAfter)
 		if err != nil {
 			return err
 		}
@@ -242,353 +273,4 @@ func tokenAction(ctx *cli.Context) error {
 	}
 	fmt.Println(token)
 	return nil
-}
-
-// parseAudience creates the ca audience url from the ca-url
-func parseAudience(ctx *cli.Context, tokType int) (string, error) {
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return "", errs.RequiredFlag(ctx, "ca-url")
-	}
-
-	audience, err := url.Parse(caURL)
-	if err != nil {
-		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
-	}
-	switch strings.ToLower(audience.Scheme) {
-	case "https", "":
-		var path string
-		switch tokType {
-		// default
-		case signType:
-			path = "/1.0/sign"
-		// revocation token
-		case revokeType:
-			path = "/1.0/revoke"
-		default:
-			return "", errors.Errorf("unexpected token type: %d", tokType)
-		}
-		audience.Scheme = "https"
-		audience = audience.ResolveReference(&url.URL{Path: path})
-		return audience.String(), nil
-	default:
-		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "")
-	}
-}
-
-// generateToken generates a provisioning or bootstrap token with the given
-// parameters.
-func generateToken(typ int, sub string, sans []string, kid, iss, aud, root string, notBefore, notAfter time.Time, jwk *jose.JSONWebKey) (string, error) {
-	// A random jwt id will be used to identify duplicated tokens
-	jwtID, err := randutil.Hex(64) // 256 bits
-	if err != nil {
-		return "", err
-	}
-
-	tokOptions := []token.Options{
-		token.WithJWTID(jwtID),
-		token.WithKid(kid),
-		token.WithIssuer(iss),
-		token.WithAudience(aud),
-	}
-	if len(root) > 0 {
-		tokOptions = append(tokOptions, token.WithRootCA(root))
-	}
-
-	// If 'sign' token then add SANs.
-	if typ == signType {
-		// If there are no SANs then add the 'subject' (common-name) as the only SAN.
-		if len(sans) == 0 {
-			sans = []string{sub}
-		}
-		tokOptions = append(tokOptions, token.WithSANS(sans))
-	}
-
-	if !notBefore.IsZero() || !notAfter.IsZero() {
-		if notBefore.IsZero() {
-			notBefore = time.Now()
-		}
-		if notAfter.IsZero() {
-			notAfter = notBefore.Add(token.DefaultValidity)
-		}
-		tokOptions = append(tokOptions, token.WithValidity(notBefore, notAfter))
-	}
-
-	tok, err := provision.New(sub, tokOptions...)
-	if err != nil {
-		return "", err
-	}
-
-	return tok.SignedString(jwk.Algorithm, jwk.Key)
-}
-
-// newTokenFlow implements the common flow used to generate a token
-func newTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time) (string, error) {
-	// Get audience from ca-url
-	audience, err := parseAudience(ctx, typ)
-	if err != nil {
-		return "", err
-	}
-
-	provisioners, err := pki.GetProvisioners(caURL, root)
-	if err != nil {
-		return "", err
-	}
-
-	p, err := provisionerPrompt(ctx, provisioners)
-	if err != nil {
-		return "", err
-	}
-
-	switch p := p.(type) {
-	case *provisioner.OIDC: // Run step oauth
-		args := []string{"oauth", "--oidc", "--bare",
-			"--provider", p.ConfigurationEndpoint,
-			"--client-id", p.ClientID, "--client-secret", p.ClientSecret}
-		if ctx.IsSet("console") {
-			args = append(args, "--console")
-		}
-		out, err := exec.Step(args...)
-		if err != nil {
-			return "", err
-		}
-		return strings.TrimSpace(string(out)), nil
-	case *provisioner.GCP: // Do the identity request to get the token
-		sharedContext.DisableCustomSANs = p.DisableCustomSANs
-		return p.GetIdentityToken(subject, caURL)
-	case *provisioner.AWS: // Do the identity request to get the token
-		sharedContext.DisableCustomSANs = p.DisableCustomSANs
-		return p.GetIdentityToken(subject, caURL)
-	case *provisioner.Azure: // Do the identity request to get the token
-		sharedContext.DisableCustomSANs = p.DisableCustomSANs
-		return p.GetIdentityToken(subject, caURL)
-	}
-
-	// JWK provisioner
-	prov, ok := p.(*provisioner.JWK)
-	if !ok {
-		return "", errors.Errorf("unknown provisioner type %T", p)
-	}
-
-	kid := prov.Key.KeyID
-	issuer := prov.Name
-
-	var opts []jose.Option
-	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
-		opts = append(opts, jose.WithPasswordFile(passwordFile))
-	}
-
-	var jwk *jose.JSONWebKey
-	if keyFile := ctx.String("key"); len(keyFile) == 0 {
-		// Get private key from CA
-		var encrypted string
-		encrypted, err = pki.GetProvisionerKey(caURL, root, kid)
-		if err != nil {
-			return "", err
-		}
-
-		// Add template with check mark
-		opts = append(opts, jose.WithUIOptions(
-			ui.WithPromptTemplates(ui.PromptTemplates()),
-		))
-
-		var decrypted []byte
-		decrypted, err = jose.Decrypt("Please enter the password to decrypt the provisioner key", []byte(encrypted), opts...)
-		if err != nil {
-			return "", err
-		}
-
-		jwk = new(jose.JSONWebKey)
-		if err = json.Unmarshal(decrypted, jwk); err != nil {
-			return "", errors.Wrap(err, "error unmarshalling provisioning key")
-		}
-	} else {
-		// Get private key from given key file
-		jwk, err = jose.ParseKey(keyFile, opts...)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return generateToken(typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
-}
-
-// offlineTokenFlow generates a provisioning token using either
-//   1. static configuration from ca.json (created with `step ca init`)
-//   2. input from command line flags
-// These two options are mutually exclusive and priority is given to ca.json.
-func offlineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string) (string, error) {
-	caConfig := ctx.String("ca-config")
-	if caConfig == "" {
-		return "", errs.InvalidFlagValue(ctx, "ca-config", "", "")
-	}
-
-	notBefore, notAfter, err := parseValidity(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	// Using the offline CA
-	if utils.FileExists(caConfig) {
-		var offlineCA *offlineCA
-		offlineCA, err = newOfflineCA(caConfig)
-		if err != nil {
-			return "", err
-		}
-		return offlineCA.GenerateToken(ctx, typ, subject, sans, notBefore, notAfter)
-	}
-
-	kid := ctx.String("kid")
-	issuer := ctx.String("issuer")
-	keyFile := ctx.String("key")
-	passwordFile := ctx.String("password-file")
-
-	// Require issuer and keyFile if ca.json does not exists.
-	// kid can be passed or created using jwk.Thumbprint.
-	switch {
-	case len(issuer) == 0:
-		return "", errs.RequiredWithFlag(ctx, "offline", "issuer")
-	case len(keyFile) == 0:
-		return "", errs.RequiredWithFlag(ctx, "offline", "key")
-	}
-
-	// Get audience from ca-url
-	audience, err := parseAudience(ctx, typ)
-	if err != nil {
-		return "", err
-	}
-
-	// Get root from argument or default location
-	root := ctx.String("root")
-	if len(root) == 0 {
-		root = pki.GetRootCAPath()
-		if utils.FileExists(root) {
-			return "", errs.RequiredFlag(ctx, "root")
-		}
-	}
-
-	// Parse key
-	var opts []jose.Option
-	if len(passwordFile) != 0 {
-		opts = append(opts, jose.WithPasswordFile(passwordFile))
-	}
-	jwk, err := jose.ParseKey(keyFile, opts...)
-	if err != nil {
-		return "", err
-	}
-
-	// Get the kid if it's not passed as an argument
-	if len(kid) == 0 {
-		hash, err := jwk.Thumbprint(crypto.SHA256)
-		if err != nil {
-			return "", errors.Wrap(err, "error generating JWK thumbprint")
-		}
-		kid = base64.RawURLEncoding.EncodeToString(hash)
-	}
-
-	return generateToken(typ, subject, sans, kid, issuer, audience, root, notBefore, notAfter, jwk)
-}
-
-func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {
-	// Filter by type
-	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-		switch p.GetType() {
-		case provisioner.TypeJWK, provisioner.TypeOIDC:
-			return true
-		case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
-			return true
-		default:
-			return false
-		}
-	})
-
-	if len(provisioners) == 0 {
-		return nil, errors.New("cannot create a new token: the CA does not have any provisioner configured")
-	}
-
-	// Filter by kid
-	if kid := ctx.String("kid"); len(kid) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			switch p := p.(type) {
-			case *provisioner.JWK:
-				return p.Key.KeyID == kid
-			case *provisioner.OIDC:
-				return p.ClientID == kid
-			default:
-				return false
-			}
-		})
-		if len(provisioners) == 0 {
-			return nil, errs.InvalidFlagValue(ctx, "kid", kid, "")
-		}
-	}
-
-	// Filter by issuer (provisioner name)
-	if issuer := ctx.String("issuer"); len(issuer) != 0 {
-		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			return p.GetName() == issuer
-		})
-		if len(provisioners) == 0 {
-			return nil, errs.InvalidFlagValue(ctx, "issuer", issuer, "")
-		}
-	}
-
-	// Select provisioner
-	var items []*provisionersSelect
-	for _, prov := range provisioners {
-		switch p := prov.(type) {
-		case *provisioner.JWK:
-			items = append(items, &provisionersSelect{
-				Name:        fmt.Sprintf("%s (%s) [kid: %s]", p.Name, p.GetType(), p.Key.KeyID),
-				Provisioner: p,
-			})
-		case *provisioner.OIDC:
-			items = append(items, &provisionersSelect{
-				Name:        fmt.Sprintf("%s (%s) [client: %s]", p.Name, p.GetType(), p.ClientID),
-				Provisioner: p,
-			})
-		case *provisioner.GCP:
-			items = append(items, &provisionersSelect{
-				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
-				Provisioner: p,
-			})
-		case *provisioner.AWS:
-			items = append(items, &provisionersSelect{
-				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
-				Provisioner: p,
-			})
-		case *provisioner.Azure:
-			items = append(items, &provisionersSelect{
-				Name:        fmt.Sprintf("%s (%s) [tenant: %s]", p.Name, p.GetType(), p.TenantID),
-				Provisioner: p,
-			})
-		default:
-			continue
-		}
-	}
-
-	if len(items) == 1 {
-		if err := ui.PrintSelected("Provisioner", items[0].Name); err != nil {
-			return nil, err
-		}
-		return items[0].Provisioner, nil
-	}
-
-	i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Provisioner")))
-	if err != nil {
-		return nil, err
-	}
-
-	return items[i].Provisioner, nil
-}
-
-// provisionerFilter returns a slice of provisioners that pass the given filter.
-func provisionerFilter(provisioners provisioner.List, f func(provisioner.Interface) bool) provisioner.List {
-	var result provisioner.List
-	for _, p := range provisioners {
-		if f(p) {
-			result = append(result, p)
-		}
-	}
-	return result
 }

@@ -310,8 +310,8 @@
   revision = "de77670473b5492f5d0bce155b5c01534c2d13f7"
 
 [[projects]]
-  branch = "master"
-  digest = "1:ff01f6a3e431fa98b75ea2e7fa30cf1805e10c54fc85eb8742e9db852f7306c3"
+  branch = "ssh-ca"
+  digest = "1:6122a459c2fc45bbab40570f11b23b999f2056f54ce9453c98f27b86ee0ee9e6"
   name = "github.com/smallstep/certificates"
   packages = [
     "api",
@@ -324,7 +324,7 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "8516ea2fc6b33ae59bc0a731e2c8a52c7d914931"
+  revision = "61d52a8510bc69cd12e69a679123ae144536078d"
 
 [[projects]]
   branch = "master"
@@ -418,7 +418,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:92e6039249b009932cb9f850f7e043412c8d3377e85f873d98f18937ad919add"
+  digest = "1:019f6540f7acff019e4196ea9b76b920949175cbfc582b1f18f5deb3a4381aa7"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
@@ -430,6 +430,7 @@
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
+    "internal/chacha20",
     "internal/subtle",
     "nacl/auth",
     "nacl/box",
@@ -440,6 +441,8 @@
     "poly1305",
     "salsa20/salsa",
     "scrypt",
+    "ssh",
+    "ssh/agent",
     "ssh/terminal",
   ]
   pruneopts = "UT"
@@ -584,6 +587,8 @@
     "golang.org/x/crypto/ocsp",
     "golang.org/x/crypto/pbkdf2",
     "golang.org/x/crypto/scrypt",
+    "golang.org/x/crypto/ssh",
+    "golang.org/x/crypto/ssh/agent",
     "golang.org/x/net/html",
     "gopkg.in/square/go-jose.v2",
     "gopkg.in/square/go-jose.v2/jwt",

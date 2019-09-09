@@ -11,14 +11,17 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ocsp"
 )
@@ -113,6 +116,11 @@ the step CA):
 $ step ca revoke --offline --cert foo.crt --key foo.key
 '''`,
 		Flags: []cli.Flag{
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Offline,
+			flags.Root,
+			flags.Token,
 			cli.StringFlag{
 				Name:  "reasonCode",
 				Value: "",
@@ -180,12 +188,6 @@ attribute certificate have been compromised (reasonCode=10).
 				Name:  "key",
 				Usage: `The <path> to the key corresponding to the cert that should be revoked.`,
 			},
-			tokenFlag,
-			notBeforeFlag,
-			caURLFlag,
-			rootFlag,
-			offlineFlag,
-			caConfigFlag,
 		},
 	}
 }
@@ -267,13 +269,13 @@ type revokeTokenClaims struct {
 }
 
 type revokeFlow struct {
-	offlineCA *offlineCA
+	offlineCA *cautils.OfflineCA
 	offline   bool
 }
 
 func newRevokeFlow(ctx *cli.Context, certFile, keyFile string) (*revokeFlow, error) {
 	var err error
-	var offlineClient *offlineCA
+	var offlineClient *cautils.OfflineCA
 
 	offline := ctx.Bool("offline")
 	if offline {
@@ -281,7 +283,7 @@ func newRevokeFlow(ctx *cli.Context, certFile, keyFile string) (*revokeFlow, err
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		offlineClient, err = newOfflineCA(caConfig)
+		offlineClient, err = cautils.NewOfflineCA(caConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +300,7 @@ func newRevokeFlow(ctx *cli.Context, certFile, keyFile string) (*revokeFlow, err
 	}, nil
 }
 
-func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (caClient, error) {
+func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.CaClient, error) {
 	if f.offline {
 		return f.offlineCA, nil
 	}
@@ -350,7 +352,7 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (caClient
 func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, error) {
 	// For offline just generate the token
 	if f.offline {
-		return f.offlineCA.GenerateToken(ctx, revokeType, *subject, nil, time.Time{}, time.Time{})
+		return f.offlineCA.GenerateToken(ctx, cautils.RevokeType, *subject, nil, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 	}
 
 	// Use online CA to get the provisioners and generate the token
@@ -375,7 +377,7 @@ func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, e
 		}
 	}
 
-	return newTokenFlow(ctx, revokeType, *subject, nil, caURL, root, time.Time{}, time.Time{})
+	return cautils.NewTokenFlow(ctx, cautils.RevokeType, *subject, nil, caURL, root, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 }
 
 func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {

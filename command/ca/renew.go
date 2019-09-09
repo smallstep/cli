@@ -26,6 +26,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -124,8 +125,11 @@ files, certificates, and keys created with **step ca init**:
 $ step ca renew --offline internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
-			caURLFlag,
-			rootFlag,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Force,
+			flags.Offline,
+			flags.Root,
 			cli.StringFlag{
 				Name:  "out,output-file",
 				Usage: "The new certificate <file> path. Defaults to overwriting the <crt-file> positional argument",
@@ -170,9 +174,6 @@ Requires the **--daemon** flag. The <duration> is a sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "1.5h", or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
-			offlineFlag,
-			caConfigFlag,
-			flags.Force,
 		},
 	}
 }
@@ -339,7 +340,7 @@ func runExecCmd(execCmd string) error {
 }
 
 type renewer struct {
-	client    caClient
+	client    cautils.CaClient
 	transport *http.Transport
 	keyFile   string
 	offline   bool
@@ -367,14 +368,14 @@ func newRenewer(ctx *cli.Context, caURL, crtFile, keyFile, rootFile string) (*re
 		},
 	}
 
-	var client caClient
+	var client cautils.CaClient
 	offline := ctx.Bool("offline")
 	if offline {
 		caConfig := ctx.String("ca-config")
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		client, err = newOfflineCA(caConfig)
+		client, err = cautils.NewOfflineCA(caConfig)
 		if err != nil {
 			return nil, err
 		}

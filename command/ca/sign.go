@@ -2,6 +2,7 @@ package ca
 
 import (
 	"crypto/x509"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -9,7 +10,9 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -52,19 +55,16 @@ files, certificates, and keys created with **step ca init**:
 $ step ca sign --offline internal internal.csr internal.crt
 '''`,
 		Flags: []cli.Flag{
-			tokenFlag,
-			provisionerIssuerFlag,
-			caURLFlag,
-			rootFlag,
-			notBeforeFlag,
-			notAfterFlag,
-			offlineFlag,
-			caConfigFlag,
+			flags.CaConfig,
+			flags.CaURL,
 			flags.Force,
-			cli.BoolFlag{
-				Name:  "console",
-				Usage: "Complete the flow while remaining inside the terminal",
-			},
+			flags.NotBefore,
+			flags.NotAfter,
+			flags.Offline,
+			flags.Provisioner,
+			flags.Root,
+			flags.Token,
+			consoleFlag,
 		},
 	}
 }
@@ -77,7 +77,7 @@ func signCertificateAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	csrFile := args.Get(0)
 	crtFile := args.Get(1)
-	token := ctx.String("token")
+	tok := ctx.String("token")
 	offline := ctx.Bool("offline")
 
 	csrInt, err := pemutil.Read(csrFile)
@@ -91,21 +91,19 @@ func signCertificateAction(ctx *cli.Context) error {
 
 	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
-	if offline && len(token) != 0 {
+	if offline && len(tok) != 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
 	}
 
 	// certificate flow unifies online and offline flows on a single api
-	flow, err := newCertificateFlow(ctx)
+	flow, err := cautils.NewCertificateFlow(ctx)
 	if err != nil {
 		return err
 	}
 
-	if len(token) == 0 {
+	if len(tok) == 0 {
 		sans := mergeSans(ctx, csr)
-		if tok, err := flow.GenerateToken(ctx, csr.Subject.CommonName, sans); err == nil {
-			token = tok
-		} else {
+		if tok, err = flow.GenerateToken(ctx, csr.Subject.CommonName, sans); err != nil {
 			return err
 		}
 	} else {
@@ -114,7 +112,23 @@ func signCertificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	if err := flow.Sign(ctx, token, api.NewCertificateRequest(csr), crtFile); err != nil {
+	// Validate common name
+	jwt, err := token.ParseInsecure(tok)
+	if err != nil {
+		return errors.Wrap(err, "error parsing flag '--token'")
+	}
+	switch jwt.Payload.Type() {
+	case token.AWS, token.GCP, token.Azure:
+		// Common name will be validated on the server side, it depends on
+		// server configuration.
+	default:
+		if strings.ToLower(jwt.Payload.Subject) != strings.ToLower(csr.Subject.CommonName) {
+			return errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", jwt.Payload.Subject, csr.Subject.CommonName)
+		}
+	}
+
+	// Sign
+	if err := flow.Sign(ctx, tok, api.NewCertificateRequest(csr), crtFile); err != nil {
 		return err
 	}
 

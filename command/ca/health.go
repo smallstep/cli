@@ -7,6 +7,7 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
@@ -42,8 +43,8 @@ $ step ca health
 ok
 '''`,
 		Flags: []cli.Flag{
-			caURLFlag,
-			rootFlag,
+			flags.CaURL,
+			flags.Root,
 		},
 	}
 }
