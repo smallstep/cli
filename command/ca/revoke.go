@@ -18,6 +18,7 @@ import (
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
@@ -115,6 +116,11 @@ the step CA):
 $ step ca revoke --offline --cert foo.crt --key foo.key
 '''`,
 		Flags: []cli.Flag{
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Offline,
+			flags.Root,
+			flags.Token,
 			cli.StringFlag{
 				Name:  "reasonCode",
 				Value: "",
@@ -182,11 +188,6 @@ attribute certificate have been compromised (reasonCode=10).
 				Name:  "key",
 				Usage: `The <path> to the key corresponding to the cert that should be revoked.`,
 			},
-			tokenFlag,
-			caURLFlag,
-			rootFlag,
-			offlineFlag,
-			caConfigFlag,
 		},
 	}
 }

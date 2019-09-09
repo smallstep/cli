@@ -348,10 +348,10 @@ func (p *PKI) tellPKI() {
 	ui.PrintSelected("Intermediate certificate", p.intermediate)
 	ui.PrintSelected("Intermediate private key", p.intermediateKey)
 	if p.enableSSH {
-		ui.PrintSelected("SSH user certificate", p.sshUserCert)
-		ui.PrintSelected("SSH user private key", p.sshUserKey)
-		ui.PrintSelected("SSH host certificate", p.sshHostCert)
-		ui.PrintSelected("SSH host private key", p.sshHostKey)
+		ui.PrintSelected("SSH user root certificate", p.sshUserCert)
+		ui.PrintSelected("SSH user root private key", p.sshUserKey)
+		ui.PrintSelected("SSH host root certificate", p.sshHostCert)
+		ui.PrintSelected("SSH host root private key", p.sshHostKey)
 	}
 }
 

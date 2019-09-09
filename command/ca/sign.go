@@ -55,19 +55,16 @@ files, certificates, and keys created with **step ca init**:
 $ step ca sign --offline internal internal.csr internal.crt
 '''`,
 		Flags: []cli.Flag{
-			tokenFlag,
-			provisionerIssuerFlag,
-			caURLFlag,
-			rootFlag,
-			notBeforeCertFlag,
-			notAfterCertFlag,
-			offlineFlag,
-			caConfigFlag,
+			flags.CaConfig,
+			flags.CaURL,
 			flags.Force,
-			cli.BoolFlag{
-				Name:  "console",
-				Usage: "Complete the flow while remaining inside the terminal",
-			},
+			flags.NotBefore,
+			flags.NotAfter,
+			flags.Offline,
+			flags.Provisioner,
+			flags.Root,
+			flags.Token,
+			consoleFlag,
 		},
 	}
 }

@@ -16,8 +16,8 @@ import (
 
 func tokenCommand() cli.Command {
 	// Avoid the conflict with --not-before --not-after
-	certNotBeforeFlag := notBeforeCertFlag
-	certNotAfterFlag := notAfterCertFlag
+	certNotBeforeFlag := flags.NotBefore
+	certNotAfterFlag := flags.NotAfter
 	certNotBeforeFlag.Name = "cert-not-before"
 	certNotAfterFlag.Name = "cert-not-after"
 
@@ -125,12 +125,18 @@ $ step ca token --offline --revoke 146103349666685108195655980390445292315
 '''
 `,
 		Flags: []cli.Flag{
-			provisionerKidFlag,
-			provisionerIssuerFlag,
-			caURLFlag,
-			rootFlag,
+			flags.CaURL,
+			flags.CaConfig,
+			flags.Force,
+			flags.Root,
+			flags.Provisioner,
+			certNotAfterFlag,
+			certNotBeforeFlag,
 			notBeforeFlag,
 			notAfterFlag,
+			provisionerKidFlag,
+			sshPrincipalFlag,
+			sshHostFlag,
 			cli.StringSliceFlag{
 				Name: "san",
 				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
@@ -162,12 +168,6 @@ be invalid for any other API request.`,
 				Name:  "ssh",
 				Usage: `Create a token for authorizing an SSH certificate signing request.`,
 			},
-			sshPrincipalFlag,
-			sshHostFlag,
-			certNotBeforeFlag,
-			certNotAfterFlag,
-			caConfigFlag,
-			flags.Force,
 		},
 	}
 }

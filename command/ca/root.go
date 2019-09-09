@@ -51,9 +51,9 @@ $ step ca root root_ca.crt \
   --fingerprint 0d7d3834cf187726cf331c40a31aa7ef6b29ba4df601416c9788f6ee01058cf3
 '''`,
 		Flags: []cli.Flag{
-			caURLFlag,
-			fingerprintFlag,
+			flags.CaURL,
 			flags.Force,
+			fingerprintFlag,
 		},
 	}
 }

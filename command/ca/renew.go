@@ -125,8 +125,11 @@ files, certificates, and keys created with **step ca init**:
 $ step ca renew --offline internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
-			caURLFlag,
-			rootFlag,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Force,
+			flags.Offline,
+			flags.Root,
 			cli.StringFlag{
 				Name:  "out,output-file",
 				Usage: "The new certificate <file> path. Defaults to overwriting the <crt-file> positional argument",
@@ -171,9 +174,6 @@ Requires the **--daemon** flag. The <duration> is a sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "1.5h", or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
-			offlineFlag,
-			caConfigFlag,
-			flags.Force,
 		},
 	}
 }
