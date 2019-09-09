@@ -20,7 +20,7 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
-[**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>] [**--san**=<SAN>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]`,
 		Description: `**step ca certificate** command generates a new certificate pair
@@ -84,12 +84,19 @@ Request a new certificate with an RSA public key (default is ECDSA256):
 $ step ca certificate foo.internal foo.crt foo.key --kty RSA --size 4096
 '''`,
 		Flags: []cli.Flag{
-			tokenFlag,
-			provisionerIssuerFlag,
-			caURLFlag,
-			rootFlag,
-			notBeforeCertFlag,
-			notAfterCertFlag,
+			flags.CaURL,
+			flags.Curve,
+			flags.Force,
+			flags.KTY,
+			flags.NotAfter,
+			flags.NotBefore,
+			flags.Provisioner,
+			flags.Root,
+			flags.Size,
+			flags.Token,
+			flags.Offline,
+			flags.CaConfig,
+			consoleFlag,
 			cli.StringSliceFlag{
 				Name: "san",
 				Usage: `Add DNS Name, IP Address, or Email Address Subjective Alternative Names (SANs)
@@ -98,16 +105,6 @@ this token must match the complete set of subjective alternative names in the
 token 1:1. Use the '--san' flag multiple times to configure multiple SANs. The
 '--san' flag and the '--token' flag are mutually exlusive.`,
 			},
-			offlineFlag,
-			caConfigFlag,
-			cli.BoolFlag{
-				Name:  "console",
-				Usage: "Complete the flow while remaining inside the terminal",
-			},
-			flags.Force,
-			flags.KTY,
-			flags.Size,
-			flags.Curve,
 		},
 	}
 }

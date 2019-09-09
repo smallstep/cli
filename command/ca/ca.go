@@ -2,13 +2,11 @@ package ca
 
 import (
 	"net/url"
-	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/ca/provisioner"
-	"github.com/smallstep/cli/config"
 	"github.com/urfave/cli"
 )
 
@@ -87,25 +85,9 @@ $ step ca renew internal.crt internal.key \
 
 // common flags used in several commands
 var (
-	caURLFlag = cli.StringFlag{
-		Name:  "ca-url",
-		Usage: "<URI> of the targeted Step Certificate Authority.",
-	}
-
-	rootFlag = cli.StringFlag{
-		Name:  "root",
-		Usage: "The path to the PEM <file> used as the root certificate authority.",
-	}
-
 	fingerprintFlag = cli.StringFlag{
 		Name:  "fingerprint",
 		Usage: "The <fingerprint> of the targeted root certificate.",
-	}
-
-	tokenFlag = cli.StringFlag{
-		Name: "token",
-		Usage: `The one-time <token> used to authenticate with the CA in order to create the
-certificate.`,
 	}
 
 	notBeforeFlag = cli.StringFlag{
@@ -126,46 +108,9 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 "us" (or "µs"), "ms", "s", "m", "h".`,
 	}
 
-	notBeforeCertFlag = cli.StringFlag{
-		Name: "not-before",
-		Usage: `The <time|duration> when the certificate validity period starts. If a <time> is
-used it is expected to be in RFC 3339 format. If a <duration> is used, it is a
-sequence of decimal numbers, each with optional fraction and a unit suffix, such
-as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
-"s", "m", "h".`,
-	}
-
-	notAfterCertFlag = cli.StringFlag{
-		Name: "not-after",
-		Usage: `The <time|duration> when the certificate validity period ends. If a <time> is
-used it is expected to be in RFC 3339 format. If a <duration> is used, it is a
-sequence of decimal numbers, each with optional fraction and a unit suffix, such
-as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
-"s", "m", "h".`,
-	}
-
-	offlineFlag = cli.BoolFlag{
-		Name: "offline",
-		Usage: `Creates a certificate without contacting the certificate authority. Offline mode
-uses the configuration, certificates, and keys created with **step ca init**,
-but can accept a different configuration file using '--ca-config>' flag.`,
-	}
-
-	caConfigFlag = cli.StringFlag{
-		Name: "ca-config",
-		Usage: `The <path> to the certificate authority configuration file. Defaults to
-$STEPPATH/config/ca.json`,
-		Value: filepath.Join(config.StepPath(), "config", "ca.json"),
-	}
-
 	provisionerKidFlag = cli.StringFlag{
 		Name:  "kid",
 		Usage: "The provisioner <kid> to use.",
-	}
-
-	provisionerIssuerFlag = cli.StringFlag{
-		Name:  "issuer,provisioner",
-		Usage: "The provisioner <name> to use.",
 	}
 
 	passwordFileFlag = cli.StringFlag{
@@ -186,6 +131,11 @@ generating key.`,
 	sshHostFlag = cli.BoolFlag{
 		Name:  "host",
 		Usage: `Create a host certificate instead of a user certificate.`,
+	}
+
+	consoleFlag = cli.BoolFlag{
+		Name:  "console",
+		Usage: "Complete the flow while remaining inside the terminal",
 	}
 )
 

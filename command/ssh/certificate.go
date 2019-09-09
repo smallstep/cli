@@ -57,6 +57,12 @@ var (
 		Name:  "add-user",
 		Usage: `Create a user provisioner certificate used to create a new user.`,
 	}
+
+	sshPrivateKeyFlag = cli.StringFlag{
+		Name: "private-key",
+		Usage: `When signing an existing public key, use this flag to specify the corresponding
+private key so that the pair can be added to an SSH Agent.`,
+	}
 )
 
 func certificateCommand() cli.Command {
@@ -65,7 +71,11 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "sign a SSH certificate using the the SSH CA",
 		UsageText: `**step ssh certificate** <key-id> <key-file>
-		[**--host**] [**--sign**]`,
+[**--host**] [**--sign**] [**--principal**=<string>] [**--password-file**=<path>]
+[**--provisioner-password-file**=<path>] [**--add-user**]
+[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--no-password**] [**--insecure**] [**--force**]`,
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
 
@@ -134,34 +144,36 @@ $ step ssh certificate --host --sign \
 	internal.example.com ssh_host_ecdsa_key.pub
 '''
 
-Generate a new key pair, and a certificate with custom principals (user/host names):
+Generate an ssh certificate with custom principals from an existing key pair and
+add the certificate to the ssh agent:
 '''
 $ step ssh certificate --principal max --principal mariano --sign \
-	ops@work id_ecdsa
+	ops@work id_ecdsa.pub --private-key id_ecdsa_key
 '''
 
-Sign an SSH public key generating a certificate with given token:
+Generate a new key pair and a certificate using a given token:
 '''
 $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 '''`,
 		Flags: []cli.Flag{
-			flags.Token,
-			sshPrincipalFlag,
-			sshHostFlag,
-			sshSignFlag,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Force,
+			flags.Insecure,
+			flags.Root,
+			flags.NoPassword,
 			flags.NotBefore,
 			flags.NotAfter,
-			sshPasswordFileFlag,
-			flags.Provisioner,
-			sshProvisionerPasswordFlag,
-			sshAddUserFlag,
-			flags.CaURL,
-			flags.Root,
 			flags.Offline,
-			flags.CaConfig,
-			flags.NoPassword,
-			flags.Insecure,
-			flags.Force,
+			flags.Provisioner,
+			flags.Token,
+			sshAddUserFlag,
+			sshHostFlag,
+			sshPasswordFileFlag,
+			sshPrincipalFlag,
+			sshPrivateKeyFlag,
+			sshProvisionerPasswordFlag,
+			sshSignFlag,
 		},
 	}
 }
@@ -189,6 +201,7 @@ func certificateAction(ctx *cli.Context) error {
 	provisionerPasswordFile := ctx.String("provisioner-password-file")
 	noPassword := ctx.Bool("no-password")
 	insecure := ctx.Bool("insecure")
+	sshPrivKeyFile := ctx.String("private-key")
 	validAfter, validBefore, err := flags.ParseTimeDuration(ctx)
 	if err != nil {
 		return err
@@ -253,7 +266,7 @@ func certificateAction(ctx *cli.Context) error {
 	var pub, priv interface{}
 
 	if isSign {
-		// Used given public key
+		// Use public key supplied as input.
 		in, err := utils.ReadFile(keyFile)
 		if err != nil {
 			return err
@@ -261,7 +274,12 @@ func certificateAction(ctx *cli.Context) error {
 
 		sshPub, _, _, _, err = ssh.ParseAuthorizedKey(in)
 		if err != nil {
-			return errors.Wrap(err, "error parsing public key")
+			return errors.Wrap(err, "error parsing ssh public key")
+		}
+		if len(sshPrivKeyFile) > 0 {
+			if priv, err = pemutil.Read(sshPrivKeyFile); err != nil {
+				return errors.Wrap(err, "error parsing private key")
+			}
 		}
 	} else {
 		// Generate keypair
@@ -352,11 +370,13 @@ func certificateAction(ctx *cli.Context) error {
 	}
 	ui.PrintSelected("Certificate", crtFile)
 
-	// Attempt to add key to agent
-	if err := sshAddKeyToAgent(subject, resp.Certificate.Certificate, priv); err != nil {
-		ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
-	} else {
-		ui.PrintSelected("SSH Agent", "yes")
+	// Attempt to add key to agent if private key defined.
+	if priv != nil {
+		if err := sshAddKeyToAgent(subject, resp.Certificate.Certificate, priv); err != nil {
+			ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
+		} else {
+			ui.PrintSelected("SSH Agent", "yes")
+		}
 	}
 
 	if isAddUser {

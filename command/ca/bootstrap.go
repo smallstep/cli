@@ -35,13 +35,14 @@ url, the root certificate location and its fingerprint.
 After the bootstrap, ca commands do not need to specify the flags
 --ca-url, --root or --fingerprint if we want to use the same environment.`,
 		Flags: []cli.Flag{
-			caURLFlag,
+			flags.CaURL,
+			flags.Force,
 			fingerprintFlag,
 			cli.BoolFlag{
 				Name:  "install",
 				Usage: "Install the root certificate into the system truststore.",
 			},
-			flags.Force},
+		},
 	}
 }
 
