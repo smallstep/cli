@@ -111,6 +111,8 @@ e.g. `v1.0.2`
     <b>$ ./update --cli v1.0.3</b>
     </code></pre>
 
+    Commit and push the submodule updates to master.
+
 6. **Update the smallstep/smallstep Homebrew tap.**
 
     > **NOTE**: this only needs to be done for standard releases.
