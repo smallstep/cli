@@ -50,13 +50,9 @@ func markdownHelpPrinter(w io.Writer, templ string, parent string, data interfac
 	var frontMatterTemplate = `---
 layout: auto-doc
 title: {{.Data.HelpName}}
-menu:{{if .Parent}}
+{{if .Parent}}menu:
   docs:
-    parent: {{.Parent}}{{else}}
-  main:
-    name: "Reference"
-    parent: "Documentation"
-    weight: 300{{end}}
+    parent: {{.Parent}}{{else}}private: true{{end}}
 ---
 
 `
