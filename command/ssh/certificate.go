@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -403,9 +404,22 @@ func sshAddKeyToAgent(subject string, cert *ssh.Certificate, priv interface{}) e
 		return errors.Wrap(err, "error connecting with ssh-agent")
 	}
 	client := agent.NewClient(conn)
+	var (
+		lifetime uint64
+		now      = uint64(time.Now().Unix())
+	)
+	if cert.ValidBefore == ssh.CertTimeInfinity {
+		// 0 indicates that the certificate should never expire from the agent.
+		lifetime = 0
+	} else if cert.ValidBefore <= now {
+		return errors.New("error adding certificate to ssh agent - certificate is already expired")
+	} else {
+		lifetime = cert.ValidBefore - now
+	}
 	return errors.Wrap(client.Add(agent.AddedKey{
-		PrivateKey:  priv,
-		Certificate: cert,
-		Comment:     subject,
+		PrivateKey:   priv,
+		Certificate:  cert,
+		Comment:      subject,
+		LifetimeSecs: uint32(lifetime),
 	}), "error adding key to agent")
 }
