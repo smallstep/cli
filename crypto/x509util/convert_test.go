@@ -143,9 +143,9 @@ func TestParseEd25519NoError(t *testing.T) {
 	}
 	cert, err := x509.ParseCertificate(block.Bytes)
 	assert.FatalError(t, err)
-	assert.Equals(t, x509.UnknownPublicKeyAlgorithm, cert.PublicKeyAlgorithm)
-	assert.Equals(t, x509.UnknownSignatureAlgorithm, cert.SignatureAlgorithm)
-	assert.Nil(t, cert.PublicKey)
+	assert.Equals(t, x509.Ed25519, cert.PublicKeyAlgorithm)
+	assert.Equals(t, x509.Ed25519.String(), cert.SignatureAlgorithm.String())
+	assert.NotNil(t, cert.PublicKey)
 	assert.Len(t, 64, cert.Signature)
 
 	block, rest = pem.Decode([]byte(ed25519Csr))
@@ -154,9 +154,9 @@ func TestParseEd25519NoError(t *testing.T) {
 	}
 	csr, err := x509.ParseCertificateRequest(block.Bytes)
 	assert.FatalError(t, err)
-	assert.Equals(t, x509.UnknownPublicKeyAlgorithm, csr.PublicKeyAlgorithm)
-	assert.Equals(t, x509.UnknownSignatureAlgorithm, csr.SignatureAlgorithm)
-	assert.Nil(t, csr.PublicKey)
+	assert.Equals(t, x509.Ed25519, csr.PublicKeyAlgorithm)
+	assert.Equals(t, x509.Ed25519.String(), csr.SignatureAlgorithm.String())
+	assert.NotNil(t, csr.PublicKey)
 	assert.Len(t, 64, csr.Signature)
 }
 
