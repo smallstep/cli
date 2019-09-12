@@ -160,7 +160,7 @@ e.g. `v1.0.2`
 
     > **NOTE**: this only needs to be done for standard releases.
 
-    Follow the steps [here](https://github.com/smallstep/website#cli-documentation).
+    Follow the steps [here](https://github.com/smallstep/docs/blob/master/runbook/release.md).
 
 *All Done!*
 

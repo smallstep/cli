@@ -129,8 +129,8 @@ func GetProvisionerKey(caURL, rootFile, kid string) (string, error) {
 type PKI struct {
 	root, rootKey, rootFingerprint string
 	intermediate, intermediateKey  string
-	sshHostCert, sshHostKey        string
-	sshUserCert, sshUserKey        string
+	sshHostPubKey, sshHostKey      string
+	sshUserPubKey, sshUserKey      string
 	config, defaults               string
 	ottPublicKey                   *jose.JSONWebKey
 	ottPrivateKey                  *jose.JSONWebEncryption
@@ -185,10 +185,10 @@ func New(public, private, config string) (*PKI, error) {
 	if p.intermediateKey, err = getPath(private, "intermediate_ca_key"); err != nil {
 		return nil, err
 	}
-	if p.sshHostCert, err = getPath(public, "ssh_host_key.pub"); err != nil {
+	if p.sshHostPubKey, err = getPath(public, "ssh_host_key.pub"); err != nil {
 		return nil, err
 	}
-	if p.sshUserCert, err = getPath(public, "ssh_user_key.pub"); err != nil {
+	if p.sshUserPubKey, err = getPath(public, "ssh_user_key.pub"); err != nil {
 		return nil, err
 	}
 	if p.sshHostKey, err = getPath(private, "ssh_host_key"); err != nil {
@@ -304,7 +304,7 @@ func (p *PKI) GenerateIntermediateCertificate(name string, rootCrt *x509.Certifi
 // GenerateSSHSigningKeys generates and encrypts a private key used for signing
 // SSH user certificates and a private key used for signing host certificates.
 func (p *PKI) GenerateSSHSigningKeys(password []byte) error {
-	var pubNames = []string{p.sshHostCert, p.sshUserCert}
+	var pubNames = []string{p.sshHostPubKey, p.sshUserPubKey}
 	var privNames = []string{p.sshHostKey, p.sshUserKey}
 	for i := 0; i < 2; i++ {
 		pub, priv, err := keys.GenerateDefaultKeyPair()
@@ -358,9 +358,9 @@ func (p *PKI) tellPKI() {
 	ui.PrintSelected("Intermediate certificate", p.intermediate)
 	ui.PrintSelected("Intermediate private key", p.intermediateKey)
 	if p.enableSSH {
-		ui.PrintSelected("SSH user root certificate", p.sshUserCert)
+		ui.PrintSelected("SSH user root certificate", p.sshUserPubKey)
 		ui.PrintSelected("SSH user root private key", p.sshUserKey)
-		ui.PrintSelected("SSH host root certificate", p.sshHostCert)
+		ui.PrintSelected("SSH host root certificate", p.sshHostPubKey)
 		ui.PrintSelected("SSH host root private key", p.sshHostKey)
 	}
 }
