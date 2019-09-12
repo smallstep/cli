@@ -209,6 +209,16 @@ func New(public, private, config string) (*PKI, error) {
 	return p, nil
 }
 
+// GetCAConfigPath returns the path of the CA configuration file.
+func (p *PKI) GetCAConfigPath() string {
+	return p.config
+}
+
+// GetRootFingerprint returns the root fingerprint.
+func (p *PKI) GetRootFingerprint() string {
+	return p.rootFingerprint
+}
+
 // SetProvisioner sets the provisioner name of the OTT keys.
 func (p *PKI) SetProvisioner(s string) {
 	p.provisioner = s
@@ -386,17 +396,14 @@ func WithoutDB() Option {
 	}
 }
 
-// Save stores the pki on a json file that will be used as the certificate
-// authority configuration.
-func (p *PKI) Save(opt ...Option) error {
-	p.tellPKI()
-
+// GenerateConfig returns the step certificates configuration.
+func (p *PKI) GenerateConfig(opt ...Option) (*authority.Config, error) {
 	key, err := p.ottPrivateKey.CompactSerialize()
 	if err != nil {
-		return errors.Wrap(err, "error serializing private key")
+		return nil, errors.Wrap(err, "error serializing private key")
 	}
 
-	config := authority.Config{
+	config := &authority.Config{
 		Root:             []string{p.root},
 		FederatedRoots:   []string{},
 		IntermediateCert: p.intermediate,
@@ -430,9 +437,22 @@ func (p *PKI) Save(opt ...Option) error {
 
 	// Apply configuration modifiers
 	for _, o := range opt {
-		if err = o(&config); err != nil {
-			return err
+		if err = o(config); err != nil {
+			return nil, err
 		}
+	}
+
+	return config, nil
+}
+
+// Save stores the pki on a json file that will be used as the certificate
+// authority configuration.
+func (p *PKI) Save(opt ...Option) error {
+	p.tellPKI()
+
+	config, err := p.GenerateConfig(opt...)
+	if err != nil {
+		return err
 	}
 
 	b, err := json.MarshalIndent(config, "", "   ")
