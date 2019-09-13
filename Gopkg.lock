@@ -350,11 +350,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f41de3b55032e81c12f4d109e6c5222e1cff573197a3652b800ca8ac2aaada35"
+  digest = "1:ed2675437d82ab6a22647a5069d3f0e5a94a0a1595598819854f382567b1fae2"
   name = "github.com/smallstep/truststore"
   packages = ["."]
   pruneopts = "UT"
-  revision = "8418f8a7d0b74e79026254b4ad23c67dd77fe5f0"
+  revision = "e16045d94a61ca04b60d5d246da3117e7eeb1ecf"
 
 [[projects]]
   branch = "master"
