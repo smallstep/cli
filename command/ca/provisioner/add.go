@@ -32,7 +32,9 @@ func addCommand() cli.Command {
 [**--aws-account**=<id>]
 [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
-[**--instance-age**=<duration>] [**--disable-custom-sans**] [**--disable-trust-on-first-use**]`,
+[**--instance-age**=<duration>] [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
+
+**step ca provisioner add** <name> **--type**=ACME **--ca-config**=<file>`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "ca-config",
@@ -57,6 +59,9 @@ and must be one of:
 
     **Azure**
     : Uses Microsoft Azure identity tokens.
+
+    **ACME**
+    : Uses the ACME protocol to create certificates.
 `,
 			},
 			cli.BoolFlag{
@@ -211,6 +216,10 @@ document and will allow multiple certificates from the same instance:
 '''
 $ step ca provisioner add Amazon --type AWS --ca-config ca.json \
   --aws-account 123456789 --disable-custom-sans --disable-trust-on-first-use
+
+Add an ACME provisioner.
+'''
+$ step ca provisioner add acme-smallstep --type ACME --ca-config ca.json
 '''`,
 	}
 }
@@ -255,6 +264,8 @@ func addAction(ctx *cli.Context) (err error) {
 		list, err = addAzureProvisioner(ctx, name, provMap)
 	case provisioner.TypeGCP:
 		list, err = addGCPProvisioner(ctx, name, provMap)
+	case provisioner.TypeACME:
+		list, err = addACMEProvisioner(ctx, name, provMap)
 	default:
 		return errors.Errorf("unknown type %s: this should not happen", typ)
 	}
@@ -478,6 +489,23 @@ func addGCPProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 	return
 }
 
+func addACMEProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
+	p := &provisioner.ACME{
+		Type: provisioner.TypeACME.String(),
+		Name: name,
+	}
+
+	// Check for duplicates
+	if _, ok := provMap[p.GetID()]; !ok {
+		provMap[p.GetID()] = true
+	} else {
+		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID==%s", p.GetID())
+	}
+
+	list = append(list, p)
+	return
+}
+
 func parseIntaceAge(ctx *cli.Context) (provisioner.Duration, error) {
 	age := ctx.Duration("instance-age")
 	if age == 0 {
@@ -502,6 +530,8 @@ func parseProvisionerType(ctx *cli.Context) (provisioner.Type, error) {
 		return provisioner.TypeAWS, nil
 	case "azure":
 		return provisioner.TypeAzure, nil
+	case "acme":
+		return provisioner.TypeACME, nil
 	default:
 		return 0, errs.InvalidFlagValue(ctx, "type", typ, "JWK, OIDC, AWS, Azure, GCP")
 	}

@@ -24,7 +24,8 @@ func signCertificateCommand() cli.Command {
 		UsageText: `**step ca sign** <csr-file> <crt-file>
 [**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--console**]`,
+[**--acme**=<uri>] [**--standalone**] [**--webroot**=<path>]
+[**--contact**=<email>] [**--http-listen**=<address>] [**--console**]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
@@ -53,6 +54,32 @@ Sign a new certificate using the offline mode, requires the configuration
 files, certificates, and keys created with **step ca init**:
 '''
 $ step ca sign --offline internal internal.csr internal.crt
+'''
+
+**step CA ACME** - In order to use the step CA ACME protocol you must add a
+ACME provisioner to the step CA config. See **step ca provisioner add -h**.
+
+Sign a CSR using the step CA ACME server and a standalone server
+to serve the challenges locally (standalone mode is the default):
+'''
+$ step ca sign foo.csr foo.crt --provisioner my-acme-provisioner
+'''
+
+Sign a CSR using the step CA ACME server and an existing server
+along with webroot mode to serve the challenges locally:
+'''
+$ step ca sign foo.csr foo.crt \
+  --provisioner my-acme-provisioner --webroot "./acme-www" \
+'''
+
+Sign a CSR using the ACME protocol served by another online CA (not step CA,
+e.g. letsencrypt). NOTE: Let's Encrypt requires that the Subject Common Name
+of a requested certificate be validated as an Identifier in the ACME order along
+with any other SANS. Therefore, the Common Name must be a valid DNS Name. The
+step CA does not impose this requirement.
+'''
+$ step ca sign foo.csr foo.crt \
+--acme https://acme-staging-v02.api.letsencrypt.org/directory
 '''`,
 		Flags: []cli.Flag{
 			flags.CaConfig,
@@ -65,6 +92,40 @@ $ step ca sign --offline internal internal.csr internal.crt
 			flags.Root,
 			flags.Token,
 			consoleFlag,
+			cli.StringFlag{
+				Name: "acme",
+				Usage: `ACME directory URL to be used for requesting certificates via the ACME protocol.
+Use this flag to define an ACME server other than the Step CA. If this flag is
+absent and an ACME provisioner has been selected then the '--ca-url' flag must be defined.`,
+			},
+			cli.BoolFlag{
+				Name: "standalone",
+				Usage: `Get a certificate using the ACME protocol and standalone mode for validation.
+Standalone is a mode in which the step process will run a server that will
+will respond to ACME challenge validation requests. Standalone is the default
+mode for serving challenge validation requests.`,
+			},
+			cli.StringFlag{
+				Name: "webroot",
+				Usage: `Get a certificate using the ACME protocol and webroot mode for validation.
+Webroot is a mode in which the step process will write a challenge file to a location
+being served by an existing fileserver in order to respond to ACME challenge
+validation requests.`,
+			},
+			cli.StringSliceFlag{
+				Name: "contact",
+				Usage: `Email addresses for contact as part of the ACME protocol. These contacts
+may be used to warn of certificate expration or other certificate lifetime events.
+Use the '--contact' flag multiple times to configure multiple contacts.`,
+			},
+			cli.StringFlag{
+				Name: "http-listen",
+				Usage: `Use a non-standard http address, behind a reverse proxy or load balancer, for
+serving ACME challenges. The default address is :80, which requires super user
+(sudo) privileges. This flag must be used in conjunction with the '--standalone'
+flag.`,
+				Value: ":80",
+			},
 		},
 	}
 }
@@ -88,6 +149,9 @@ func signCertificateAction(ctx *cli.Context) error {
 	if !ok {
 		return errors.Errorf("error parsing %s: file is not a certificate request", csrFile)
 	}
+	if err = csr.CheckSignature(); err != nil {
+		return errors.Wrapf(err, "csr has invalid signature")
+	}
 
 	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
@@ -102,13 +166,19 @@ func signCertificateAction(ctx *cli.Context) error {
 	}
 
 	if len(tok) == 0 {
+		// Use the ACME protocol with a different certificate authority.
+		if ctx.IsSet("acme") {
+			return cautils.ACMESignCSRFlow(ctx, csr, crtFile, "")
+		}
 		sans := mergeSans(ctx, csr)
 		if tok, err = flow.GenerateToken(ctx, csr.Subject.CommonName, sans); err != nil {
-			return err
-		}
-	} else {
-		if len(ctx.StringSlice("san")) > 0 {
-			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
+			switch k := err.(type) {
+			// Use the ACME flow with the step certificate authority.
+			case *cautils.ErrACMEToken:
+				return cautils.ACMESignCSRFlow(ctx, csr, crtFile, k.Name)
+			default:
+				return err
+			}
 		}
 	}
 

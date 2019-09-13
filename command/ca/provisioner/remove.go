@@ -52,7 +52,10 @@ and must be one of:
     : Use Google instance identity tokens.
 
     **Azure**
-    : Uses Microsoft Azure identity tokens.`,
+    : Uses Microsoft Azure identity tokens.
+
+    **ACME**
+    : Uses ACME protocol.`,
 			},
 		},
 		Description: `**step ca provisioner remove** removes one or more provisioners
@@ -82,6 +85,11 @@ $ step ca provisioner remove Google --ca-config ca.json \
 '''
 
 Remove the cloud identity provisioner given name and a type:
+'''
+$ step ca provisioner remove Amazon --ca-config ca.json --type AWS
+'''
+
+Remove the ACME provisioner by name:
 '''
 $ step ca provisioner remove Amazon --ca-config ca.json --type AWS
 '''`,
@@ -145,8 +153,8 @@ func removeAction(ctx *cli.Context) error {
 				if clientID != "" && pp.ClientID != clientID {
 					provisioners = append(provisioners, p)
 				}
-			case *provisioner.AWS, *provisioner.Azure, *provisioner.GCP:
-				// they are filtered by type
+			case *provisioner.AWS, *provisioner.Azure, *provisioner.GCP, *provisioner.ACME:
+				// they are filtered by type and name.
 			default:
 				continue
 			}

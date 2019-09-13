@@ -283,6 +283,8 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, typ int, subject string, san
 	case *provisioner.Azure: // Do the identity request to get the token
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
+	case *provisioner.ACME: // ACME provisioners do not implement the token flow.
+		return "", &ErrACMEToken{p.GetID()}
 	}
 
 	// JWK provisioner

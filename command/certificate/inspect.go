@@ -22,8 +22,8 @@ func inspectCommand() cli.Command {
 		Name:   "inspect",
 		Action: cli.ActionFunc(inspectAction),
 		Usage:  `print certificate or CSR details in human readable format`,
-		UsageText: `**step certificate inspect** <crt_file> [**--bundle**]
-[**--format**=<format>] [**--roots**=<root-bundle>]`,
+		UsageText: `**step certificate inspect** <crt_file>
+[**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]`,
 		Description: `**step certificate inspect** prints the details of a certificate
 or CSR in a human readable format. Output from the inspect command is printed to
 STDERR instead of STDOUT unless. This is an intentional barrier to accidental
