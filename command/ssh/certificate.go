@@ -129,6 +129,17 @@ Generate a new SSH key pair and user certificate:
 $ step ssh certificate mariano@work id_ecdsa
 '''
 
+Generate a new SSH key pair and user certificate and set the lifetime to 2hrs:
+'''
+$ step ssh certificate mariano@work id_ecdsa --not-after 2h
+'''
+
+Generate a new SSH key pair and user certificate and set the lifetime to begin
+2hrs from now and last for 8hrs:
+'''
+$ step ssh certificate mariano@work id_ecdsa --not-before 2h --not-after 10h
+'''
+
 Sign an SSH public key and generate a user certificate:
 '''
 $ step ssh certificate --sign mariano@work id_ecdsa.pub
