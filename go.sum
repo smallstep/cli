@@ -161,6 +161,7 @@ github.com/sirupsen/logrus v1.4.2 h1:SPIRibHv4MatM3XXNO2BJeFLZwZ2LvZgfQ5+UNI2im4
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5 h1:lX6ybsQW9Agn3qK/W1Z39Z4a6RyEMGem/gXUYW0axYk=
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
+github.com/smallstep/certificates v0.13.3 h1:iCb4FbthYMQe4PmSyWFw5sLlJA2QUS2XK0mJDpGey1U=
 github.com/smallstep/certificates v0.13.4-0.20191018210018-0a96062b7696 h1:opSHLqzpZzfpMTmiZMzd+XCKwEqF33Kjsrviq5xzfxc=
 github.com/smallstep/certificates v0.13.4-0.20191018210018-0a96062b7696/go.mod h1:eZ90IBg01k2RKND3sAKXVI0atx5/lzCNX0sA0DqwcUg=
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191030004513-ff13b2a6991d h1:ToJHQ5qrZsOBYoTmOaMRiqxTTaO2jVRpN+WtrVrJz2U=
