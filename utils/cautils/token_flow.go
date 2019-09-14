@@ -88,7 +88,7 @@ func NewTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		args := []string{"oauth", "--oidc", "--bare",
 			"--provider", p.ConfigurationEndpoint,
 			"--client-id", p.ClientID, "--client-secret", p.ClientSecret}
-		if ctx.IsSet("console") {
+		if ctx.Bool("console") {
 			args = append(args, "--console")
 		}
 		out, err := exec.Step(args...)
