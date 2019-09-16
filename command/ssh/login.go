@@ -51,7 +51,9 @@ func loginAction(ctx *cli.Context) error {
 
 	// Arguments
 	subject := ctx.Args().First()
-	principals := []string{subject}
+	principals := []string{
+		provisioner.SanitizeSSHUserPrincipal(subject),
+	}
 
 	// Flags
 	token := ctx.String("token")
