@@ -9,14 +9,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/smallstep/cli/crypto/sshutil"
-	"golang.org/x/crypto/ed25519"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
+	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/ssh"
 )
 
