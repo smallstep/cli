@@ -27,6 +27,7 @@ $ step ssh certificate --host internal.example.com ssh_host_ecdsa_key
 		Subcommands: cli.Commands{
 			certificateCommand(),
 			loginCommand(),
+			inspectCommand(),
 		},
 	}
 
