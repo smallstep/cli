@@ -132,7 +132,7 @@ func init() {
 			},
 			cli.StringFlag{
 				Name:  "listen",
-				Usage: "Callback listener URL",
+				Usage: "Callback listener <address> (e.g. \":10000\")",
 			},
 			cli.BoolFlag{
 				Name:   "implicit",
@@ -292,6 +292,11 @@ func (o *options) Validate() error {
 	if o.Provider != "google" && !strings.HasPrefix(o.Provider, "https://") {
 		return errors.New("use a valid provider: google")
 	}
+	if o.CallbackListener != "" {
+		if _, _, err := net.SplitHostPort(o.CallbackListener); err != nil {
+			return errors.Wrapf(err, "invalid value '%s' for flag '--listen'", o.CallbackListener)
+		}
+	}
 	return nil
 }
 
@@ -419,7 +424,14 @@ func (o *oauth) NewServer() (*httptest.Server, error) {
 	if o.CallbackListener == "" {
 		return httptest.NewServer(o), nil
 	}
-	l, err := net.Listen("tcp", o.CallbackListener)
+	host, port, err := net.SplitHostPort(o.CallbackListener)
+	if err != nil {
+		return nil, err
+	}
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	l, err := net.Listen("tcp", net.JoinHostPort(host, port))
 	if err != nil {
 		return nil, errors.Wrapf(err, "error listening on %s", o.CallbackListener)
 	}
