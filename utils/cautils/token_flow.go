@@ -102,6 +102,9 @@ func NewTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 		if ctx.Bool("console") {
 			args = append(args, "--console")
 		}
+		if p.ListenAddress != "" {
+			args = append(args, "--listen", p.ListenAddress)
+		}
 		out, err := exec.Step(args...)
 		if err != nil {
 			return "", err
