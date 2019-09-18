@@ -135,6 +135,10 @@ By default it will accept any SAN in the CSR.`,
 with the same instance will be accepted. By default only the first request
 will be accepted.`,
 			},
+			cli.BoolFlag{
+				Name:  "ssh",
+				Usage: `Enable SSH on the new providers.`,
+			},
 		},
 		Description: `**step ca provisioner add** adds one or more provisioners
 to the configuration and writes the new configuration back to the CA config.
@@ -159,6 +163,11 @@ Add a single JWK provisioner using an auto-generated asymmetric key pair:
 '''
 $ step ca provisioner add max@smallstep.com --ca-config ca.json \
 --create
+'''
+
+Add a single JWK provisioner with ssh enabled:
+'''
+$ step ca provisioner add max@smallstep.com --ca-config ca.json --ssh --create
 '''
 
 Add a list of provisioners for a single name:
@@ -310,6 +319,7 @@ func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 			Name:         name,
 			Key:          jwk,
 			EncryptedKey: encryptedKey,
+			Claims:       getClaims(ctx),
 		}
 		// Check for duplicates
 		if _, ok := provMap[p.GetID()]; !ok {
@@ -347,9 +357,10 @@ func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 
 		// Initialize provisioner and check for duplicates
 		p := &provisioner.JWK{
-			Type: provisioner.TypeJWK.String(),
-			Name: name,
-			Key:  &key,
+			Type:   provisioner.TypeJWK.String(),
+			Name:   name,
+			Key:    &key,
+			Claims: getClaims(ctx),
 		}
 		if _, ok := provMap[p.GetID()]; !ok {
 			provMap[p.GetID()] = true
@@ -399,6 +410,7 @@ func addOIDCProvisioner(ctx *cli.Context, name string, provMap map[string]bool) 
 		ConfigurationEndpoint: confURL,
 		Admins:                ctx.StringSlice("admin"),
 		Domains:               ctx.StringSlice("domain"),
+		Claims:                getClaims(ctx),
 	}
 	// Check for duplicates
 	if _, ok := provMap[p.GetID()]; !ok {
@@ -423,6 +435,7 @@ func addAWSProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
 		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
 		InstanceAge:            d,
+		Claims:                 getClaims(ctx),
 	}
 
 	// Check for duplicates
@@ -449,6 +462,7 @@ func addAzureProvisioner(ctx *cli.Context, name string, provMap map[string]bool)
 		ResourceGroups:         ctx.StringSlice("azure-resource-group"),
 		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
 		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
+		Claims:                 getClaims(ctx),
 	}
 
 	// Check for duplicates
@@ -476,6 +490,7 @@ func addGCPProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
 		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
 		InstanceAge:            d,
+		Claims:                 getClaims(ctx),
 	}
 
 	// Check for duplicates
@@ -491,8 +506,9 @@ func addGCPProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 
 func addACMEProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
 	p := &provisioner.ACME{
-		Type: provisioner.TypeACME.String(),
-		Name: name,
+		Type:   provisioner.TypeACME.String(),
+		Name:   name,
+		Claims: getClaims(ctx),
 	}
 
 	// Check for duplicates
@@ -504,6 +520,16 @@ func addACMEProvisioner(ctx *cli.Context, name string, provMap map[string]bool) 
 
 	list = append(list, p)
 	return
+}
+
+func getClaims(ctx *cli.Context) *provisioner.Claims {
+	if ctx.Bool("ssh") {
+		enable := true
+		return &provisioner.Claims{
+			EnableSSHCA: &enable,
+		}
+	}
+	return nil
 }
 
 func parseIntaceAge(ctx *cli.Context) (provisioner.Duration, error) {
