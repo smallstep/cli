@@ -47,7 +47,7 @@ type Payload struct {
 	IdentityProvider string            `json:"idp"`
 	ObjectID         string            `json:"oid"`
 	TenantID         string            `json:"tid"`
-	Version          string            `json:"ver"`
+	Version          interface{}       `json:"ver"`
 	XMSMirID         string            `json:"xms_mirid"`
 	Google           *GCPGooglePayload `json:"google"` // GCP token claims
 	Amazon           *AWSAmazonPayload `json:"amazon"` // AWS token claims
