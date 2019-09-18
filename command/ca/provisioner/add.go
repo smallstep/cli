@@ -172,6 +172,10 @@ provisioning tokens.`,
 PEM formatted bundle (can have multiple PEM blocks in the same file) of public
 keys and x509 Certificates.`,
 			},
+			cli.BoolFlag{
+				Name:  "ssh",
+				Usage: `Enable SSH on the new providers.`,
+			},
 		},
 		Description: `**step ca provisioner add** adds one or more provisioners
 to the configuration and writes the new configuration back to the CA config.
