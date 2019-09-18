@@ -137,7 +137,7 @@ will be accepted.`,
 			},
 			cli.BoolFlag{
 				Name:  "ssh",
-				Usage: `Enable SSH on the new providers.`,
+				Usage: `Enable SSH on the new provisioners.`,
 			},
 		},
 		Description: `**step ca provisioner add** adds one or more provisioners
