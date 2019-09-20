@@ -14,6 +14,19 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// NewCertSigner creates a new signer with the given certificate and private key.
+func NewCertSigner(cert *ssh.Certificate, priv interface{}) (ssh.Signer, error) {
+	signer, err := ssh.NewSignerFromKey(priv)
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating signer")
+	}
+	certSigner, err := ssh.NewCertSigner(cert, signer)
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating signer")
+	}
+	return certSigner, nil
+}
+
 // PublicKey returns the Go's crypto.PublicKey of an ssh.PublicKey.
 func PublicKey(key ssh.PublicKey) (crypto.PublicKey, error) {
 	_, in, ok := parseString(key.Marshal())
