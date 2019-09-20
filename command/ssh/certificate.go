@@ -2,10 +2,7 @@ package ssh
 
 import (
 	"bytes"
-	"net"
-	"os"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -13,6 +10,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
@@ -20,50 +18,6 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
-)
-
-var (
-	sshPrincipalFlag = cli.StringSliceFlag{
-		Name: "principal,n",
-		Usage: `Add the principals (users or hosts) that the token is authorized to
-		request. The signing request using this token won't be able to add
-		extra names. Use the '--principal' flag multiple times to configure
-		multiple ones. The '--principal' flag and the '--token' flag are
-		mutually exlusive.`,
-	}
-
-	sshHostFlag = cli.BoolFlag{
-		Name:  "host",
-		Usage: `Create a host certificate instead of a user certificate.`,
-	}
-
-	sshSignFlag = cli.BoolFlag{
-		Name:  "sign",
-		Usage: `Sign the public key passed as an argument instead of creating one.`,
-	}
-
-	sshPasswordFileFlag = cli.StringFlag{
-		Name:  "password-file",
-		Usage: `The path to the <file> containing the password to encrypt the private key.`,
-	}
-
-	sshProvisionerPasswordFlag = cli.StringFlag{
-		Name: "provisioner-password-file",
-		Usage: `The path to the <file> containing the password to decrypt the one-time token
-		generating key.`,
-	}
-
-	sshAddUserFlag = cli.BoolFlag{
-		Name:  "add-user",
-		Usage: `Create a user provisioner certificate used to create a new user.`,
-	}
-
-	sshPrivateKeyFlag = cli.StringFlag{
-		Name: "private-key",
-		Usage: `When signing an existing public key, use this flag to specify the corresponding
-private key so that the pair can be added to an SSH Agent.`,
-	}
 )
 
 func certificateCommand() cli.Command {
@@ -384,10 +338,15 @@ func certificateAction(ctx *cli.Context) error {
 
 	// Attempt to add key to agent if private key defined.
 	if priv != nil {
-		if err := sshAddKeyToAgent(subject, resp.Certificate.Certificate, priv); err != nil {
+		if agent, err := sshutil.DialAgent(); err != nil {
 			ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 		} else {
-			ui.PrintSelected("SSH Agent", "yes")
+			defer agent.Close()
+			if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
+				ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
+			} else {
+				ui.PrintSelected("SSH Agent", "yes")
+			}
 		}
 	}
 
@@ -406,31 +365,4 @@ func marshalPublicKey(key ssh.PublicKey, subject string) []byte {
 		return append(b[:i], []byte(" "+subject+"\n")...)
 	}
 	return append(b, []byte(" "+subject+"\n")...)
-}
-
-func sshAddKeyToAgent(subject string, cert *ssh.Certificate, priv interface{}) error {
-	socket := os.Getenv("SSH_AUTH_SOCK")
-	conn, err := net.Dial("unix", socket)
-	if err != nil {
-		return errors.Wrap(err, "error connecting with ssh-agent")
-	}
-	client := agent.NewClient(conn)
-	var (
-		lifetime uint64
-		now      = uint64(time.Now().Unix())
-	)
-	if cert.ValidBefore == ssh.CertTimeInfinity {
-		// 0 indicates that the certificate should never expire from the agent.
-		lifetime = 0
-	} else if cert.ValidBefore <= now {
-		return errors.New("error adding certificate to ssh agent - certificate is already expired")
-	} else {
-		lifetime = cert.ValidBefore - now
-	}
-	return errors.Wrap(client.Add(agent.AddedKey{
-		PrivateKey:   priv,
-		Certificate:  cert,
-		Comment:      subject,
-		LifetimeSecs: uint32(lifetime),
-	}), "error adding key to agent")
 }
