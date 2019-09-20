@@ -8,6 +8,8 @@ import (
 	"path"
 	"runtime"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // version and buildTime are filled in during build by the Makefile
@@ -58,6 +60,19 @@ func init() {
 	}
 	// cleanup
 	stepPath = path.Clean(stepPath)
+}
+
+// Home returns the user home directory using the environment variable HOME or
+// the os/user package.
+func Home() (string, error) {
+	if home := os.Getenv("HOME"); home != "" {
+		return home, nil
+	}
+	usr, err := user.Current()
+	if err != nil || usr.HomeDir == "" {
+		return "", errors.New("error obtaining home directory, please define environment variable HOME")
+	}
+	return usr.HomeDir, nil
 }
 
 // Set updates the Version and ReleaseDate
