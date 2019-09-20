@@ -101,10 +101,13 @@ integration: bin/$(BINNAME)
 # Linting
 #########################################
 
+fmt:
+	$Q gofmt -l -w $(SRC)
+
 lint:
 	$Q LOG_LEVEL=error golangci-lint run
 
-.PHONY: lint
+.PHONY: fmt lint
 
 #########################################
 # Install
