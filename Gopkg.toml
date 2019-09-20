@@ -52,7 +52,7 @@
   unused-packages = true
 
 [[constraint]]
-  branch = "okta-support"
+  branch = "master"
   name = "github.com/smallstep/certificates"
 
 [[constraint]]
