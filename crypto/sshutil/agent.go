@@ -1,6 +1,7 @@
 package sshutil
 
 import (
+	"bytes"
 	"net"
 	"os"
 	"time"
@@ -10,8 +11,8 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-// ErrKeyNotFound is the error returned if a key is not found.
-var ErrKeyNotFound = errors.New("key not found")
+// ErrNotFound is the error returned if a something is not found.
+var ErrNotFound = errors.New("not found")
 
 // Agent represents a client to an ssh.Agent.
 type Agent struct {
@@ -38,6 +39,11 @@ func (a *Agent) Close() error {
 	return a.Conn.Close()
 }
 
+// AuthMethod returns the ssh.Agent as an ssh.AuthMethod.
+func (a *Agent) AuthMethod() ssh.AuthMethod {
+	return ssh.PublicKeysCallback(a.Signers)
+}
+
 // GetKey retrieves a key from the agent by the given comment.
 func (a *Agent) GetKey(comment string) (*agent.Key, error) {
 	keys, err := a.List()
@@ -49,7 +55,29 @@ func (a *Agent) GetKey(comment string) (*agent.Key, error) {
 			return key, nil
 		}
 	}
-	return nil, ErrKeyNotFound
+	return nil, ErrNotFound
+}
+
+// GetSigner returns a signer that has a key with the given comment.
+func (a *Agent) GetSigner(comment string) (ssh.Signer, error) {
+	key, err := a.GetKey(comment)
+	if err != nil {
+		return nil, err
+	}
+
+	signers, err := a.Signers()
+	if err != nil {
+		return nil, errors.Wrap(err, "error listing signers")
+	}
+
+	keyBytes := key.Marshal()
+	for _, sig := range signers {
+		if bytes.Equal(keyBytes, sig.PublicKey().Marshal()) {
+			return sig, nil
+		}
+	}
+
+	return nil, ErrNotFound
 }
 
 // AddCertificate adds the given certificate to the agent.
