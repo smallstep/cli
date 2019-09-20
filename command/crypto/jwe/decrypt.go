@@ -141,7 +141,7 @@ func decryptAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error decrypting data")
 	}
 
-	fmt.Printf(string(decrypted))
+	fmt.Print(string(decrypted))
 
 	return nil
 }
