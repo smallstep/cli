@@ -6,12 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"golang.org/x/crypto/ssh/terminal"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/config"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // ShellOption is the type used to add new options to the shell.
@@ -25,9 +24,17 @@ func WithAuthMethod(am ssh.AuthMethod) ShellOption {
 	}
 }
 
-// WithCertAuthMethod adds a signer with the given certificate as an
+// WithSigner adds the given signer as an ssh.AuthMethod.
+func WithSigner(signer ssh.Signer) ShellOption {
+	return func(s *Shell) error {
+		s.authMethods = append(s.authMethods, ssh.PublicKeys(signer))
+		return nil
+	}
+}
+
+// WithCertificate adds a signer with the given certificate as an
 // ssh.AuthMethod.
-func WithCertAuthMethod(cert *ssh.Certificate, priv interface{}) ShellOption {
+func WithCertificate(cert *ssh.Certificate, priv interface{}) ShellOption {
 	return func(s *Shell) error {
 		signer, err := NewCertSigner(cert, priv)
 		if err != nil {
@@ -78,7 +85,7 @@ func WithBastion(user, address string) ShellOption {
 	}
 }
 
-// withDefaultAuthMethod adds the ssh.Agent as an authmethod.
+// withDefaultAuthMethod adds the ssh.Agent as an ssh.AuthMethod.
 func withDefaultAuthMethod() ShellOption {
 	return func(s *Shell) error {
 		agent, err := DialAgent()
