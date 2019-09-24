@@ -270,6 +270,12 @@ func MutuallyExclusiveFlags(ctx *cli.Context, flag1, flag2 string) error {
 	return errors.Errorf("flag '--%s' and flag '--%s' are mutually exclusive", flag1, flag2)
 }
 
+// UnsupportedFlag returns an error with a message saying that the given flag is
+// not yet supported.
+func UnsupportedFlag(ctx *cli.Context, flag string) error {
+	return errors.Errorf("flag '--%s' is not yet supported", flag)
+}
+
 // usage returns the command usage text if set or a default usage string.
 func usage(ctx *cli.Context) string {
 	if len(ctx.Command.UsageText) == 0 {
