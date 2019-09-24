@@ -4,7 +4,9 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/config"
@@ -12,6 +14,18 @@ import (
 	"golang.org/x/crypto/ssh/knownhosts"
 	"golang.org/x/crypto/ssh/terminal"
 )
+
+// ProxyCommand replaces %%, %h, %p, and %r in the given command.
+//  %%  A literal `%`.
+//  %h  The remote hostname.
+//  %p  The remote port.
+//  %r  The remote username.
+func ProxyCommand(cmd, user, host, port string) string {
+	cmd = strings.Replace(cmd, "%%", "%", -1)
+	cmd = strings.Replace(cmd, "%h", host, -1)
+	cmd = strings.Replace(cmd, "%p", port, -1)
+	return strings.Replace(cmd, "%r", user, -1)
+}
 
 // ShellOption is the type used to add new options to the shell.
 type ShellOption func(s *Shell) error
@@ -54,7 +68,7 @@ func WithAddUser(user string, cert *ssh.Certificate, priv interface{}) ShellOpti
 }
 
 // WithBastion forward the connection through the given bastion address.
-func WithBastion(user, address string) ShellOption {
+func WithBastion(user, address, command string) ShellOption {
 	return func(s *Shell) error {
 		s.dialer = func(callback ssh.HostKeyCallback) (*ssh.Client, error) {
 			// Connect to bastion
@@ -72,6 +86,37 @@ func WithBastion(user, address string) ShellOption {
 				return nil, errors.Wrapf(err, "error connecting %s", s.address)
 			}
 			c, chans, reqs, err := ssh.NewClientConn(conn, s.address, &ssh.ClientConfig{
+				User:            s.user,
+				Auth:            s.authMethods,
+				HostKeyCallback: callback,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return ssh.NewClient(c, chans, reqs), nil
+		}
+		return nil
+	}
+}
+
+// WithProxyCommand forwards the connection through the given command
+func WithProxyCommand(command string) ShellOption {
+	return func(s *Shell) error {
+		s.dialer = func(callback ssh.HostKeyCallback) (*ssh.Client, error) {
+			host, port, err := net.SplitHostPort(s.address)
+			if err != nil {
+				return nil, errors.Wrap(err, "error parsing address")
+			}
+			pr, pw := net.Pipe()
+			args := strings.Fields(ProxyCommand(command, s.user, host, port))
+			cmd := exec.Command(args[0], args[1:]...)
+			cmd.Stdin = pw
+			cmd.Stdout = pw
+			cmd.Stderr = os.Stderr
+			if err := cmd.Start(); err != nil {
+				return nil, errors.Wrap(err, "error running proxy command")
+			}
+			c, chans, reqs, err := ssh.NewClientConn(pr, s.address, &ssh.ClientConfig{
 				User:            s.user,
 				Auth:            s.authMethods,
 				HostKeyCallback: callback,
@@ -170,22 +215,6 @@ func NewShell(user, address string, opts ...ShellOption) (*Shell, error) {
 		return nil, err
 	}
 
-	// Create client config
-	// config := &ssh.ClientConfig{
-	// 	User: user,
-	// 	Auth: []ssh.AuthMethod{
-	// 		ssh.PublicKeys(signer),
-	// 	},
-	// 	HostKeyCallback: knownHosts,
-	// }
-
-	// // Connect to ssh server
-	// address = formatAddress(address)
-	// client, err := ssh.Dial("tcp", address, config)
-	// if err != nil {
-	// 	return nil, errors.Wrapf(err, "error connecting %s", address)
-	// }
-
 	return shell, nil
 }
 
@@ -201,6 +230,18 @@ func (s *Shell) apply(opts []ShellOption) error {
 // Close finalizes the connection.
 func (s *Shell) Close() error {
 	return s.client.Close()
+}
+
+// Run runs cmd on the remote host.
+func (s *Shell) Run(cmd string) error {
+	// Create a session
+	session, err := s.client.NewSession()
+	if err != nil {
+		return errors.Wrap(err, "error creating a session")
+	}
+	defer session.Close()
+
+	return session.Run(cmd)
 }
 
 // RemoteShell starts a login shell on the remote host.
