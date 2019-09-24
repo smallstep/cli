@@ -39,7 +39,7 @@ TODO`,
 			sshPasswordFileFlag,
 			sshConnectFlag,
 			cli.StringFlag{
-				Name:  "bastion",
+				Name:  "bastion,b",
 				Usage: "TODO",
 			},
 			cli.StringFlag{
