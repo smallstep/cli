@@ -54,6 +54,13 @@ hkjOPQIBBggqhkjOPQMBBwNCAASKj0MvK6CUzFqRLfDTQNQp0Zt5dcHYx+Dq1Wh9
 AwIDRwAwRAIgZgz9gdx9inOp6bSX4EkYiUCyLV9xGvabovu5C9UkRr8CIBGBbkp0
 l4tesAKoXelsLygJjPuUGRLK+OtdjPBIN1Zo
 -----END CERTIFICATE REQUEST-----`
+	testCSRKeytool = `-----BEGIN NEW CERTIFICATE REQUEST-----
+MIHYMIGAAgEAMB4xHDAaBgNVBAMTE2hlbGxvLnNtYWxsc3RlcC5jb20wWTATBgcq
+hkjOPQIBBggqhkjOPQMBBwNCAASKj0MvK6CUzFqRLfDTQNQp0Zt5dcHYx+Dq1Wh9
+5dhqf1Fu9+1m5+LKkgBWoZmo7sJH0RuSjIdv/sZwpBrkdn2soAAwCgYIKoZIzj0E
+AwIDRwAwRAIgZgz9gdx9inOp6bSX4EkYiUCyLV9xGvabovu5C9UkRr8CIBGBbkp0
+l4tesAKoXelsLygJjPuUGRLK+OtdjPBIN1Zo
+-----END NEW CERTIFICATE REQUEST-----`
 )
 
 type testdata struct {
@@ -663,6 +670,13 @@ func TestParseKey_x509(t *testing.T) {
 	csr, err := x509.ParseCertificateRequest(b.Bytes)
 	assert.FatalError(t, err)
 	key, err = ParseKey([]byte(testCSR))
+	assert.FatalError(t, err)
+	assert.Equals(t, csr.PublicKey, key)
+
+	b, _ = pem.Decode([]byte(testCSRKeytool))
+	csr, err = x509.ParseCertificateRequest(b.Bytes)
+	assert.FatalError(t, err)
+	key, err = ParseKey([]byte(testCSRKeytool))
 	assert.FatalError(t, err)
 	assert.Equals(t, csr.PublicKey, key)
 }
