@@ -21,15 +21,6 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-// CaClient is the interface implemented by client used to sign, renew, or
-// revoke certificates.
-type CaClient interface {
-	Sign(req *api.SignRequest) (*api.SignResponse, error)
-	SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error)
-	Renew(tr http.RoundTripper) (*api.SignResponse, error)
-	Revoke(req *api.RevokeRequest, tr http.RoundTripper) (*api.RevokeResponse, error)
-}
-
 // OfflineCA is a wrapper on top of the certificates authority methods that is
 // used to sign certificates without an online CA.
 type OfflineCA struct {
@@ -264,6 +255,27 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 	}
 
 	return &api.RevokeResponse{Status: "ok"}, nil
+}
+
+// SSHKeys is a wrapper on top of certificate SSHKeys method. It returns a apinSSHKeysResponse.
+func (c *OfflineCA) SSHKeys() (*api.SSHKeysResponse, error) {
+	keys, err := c.authority.GetSSHKeys()
+	if err != nil {
+		return nil, err
+	}
+
+	var host, user *api.SSHPublicKey
+	if keys.HostKey != nil {
+		host = &api.SSHPublicKey{PublicKey: keys.HostKey}
+	}
+	if keys.UserKey != nil {
+		user = &api.SSHPublicKey{PublicKey: keys.UserKey}
+	}
+
+	return &api.SSHKeysResponse{
+		HostKey: host,
+		UserKey: user,
+	}, nil
 }
 
 // GenerateToken creates the token used by the authority to authorize requests.
