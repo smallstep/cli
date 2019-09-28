@@ -52,3 +52,23 @@ func WriteFile(filename string, data []byte, perm os.FileMode) error {
 
 	return ioutil.WriteFile(filename, data, perm)
 }
+
+// AppendNewLine appends the given data at the end of the file. If the last
+// character of the file does not contain an LF it prepends it to the data.
+func AppendNewLine(filename string, data []byte, perm os.FileMode) error {
+	f, err := OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, perm)
+	if err != nil {
+		return err
+	}
+	// Read last character
+	if st, err := f.File.Stat(); err == nil && st.Size() != 0 {
+		last := make([]byte, 1)
+		f.Seek(-1, 2)
+		f.Read(last)
+		if last[0] != '\n' {
+			f.WriteString("\n")
+		}
+	}
+	f.Write(data)
+	return f.Close()
+}
