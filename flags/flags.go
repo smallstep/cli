@@ -75,6 +75,12 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
 		Usage: "Force the overwrite of files without asking.",
 	}
 
+	// DryRun is a cli.Flag used to avoid the writing of files.
+	DryRun = cli.BoolFlag{
+		Name:  "dry-run",
+		Usage: "Executes the command without changing any file.",
+	}
+
 	// PasswordFile is a cli.Flag used to pass a file to encrypt or decrypt a
 	// private key.
 	PasswordFile = cli.StringFlag{
