@@ -52,7 +52,7 @@
   unused-packages = true
 
 [[constraint]]
-  branch = "master"
+  branch = "ssh-config"
   name = "github.com/smallstep/certificates"
 
 [[constraint]]
