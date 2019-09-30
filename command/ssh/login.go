@@ -99,8 +99,15 @@ func loginAction(ctx *cli.Context) error {
 	agent, agentErr := sshutil.DialAgent()
 
 	// Connect to the remote shell using the previous certificate in the agent
-	if agent != nil && address != "" && !force {
+	if agent != nil && !force {
 		if signer, err := agent.GetSigner(subject); err == nil {
+			// Just return if key is present
+			if address == "" {
+				ui.Printf("The key %s is already present in the SSH agent.\n", subject)
+				return nil
+			}
+
+			// Use signer to connect to the remote server
 			opts := []sshutil.ShellOption{
 				sshutil.WithSigner(signer),
 			}
