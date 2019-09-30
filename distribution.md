@@ -92,7 +92,9 @@ e.g. `v1.0.2`
     * **step_1.0.3_linux_amd64.tar.gz**: tarball containing a statically compiled linux binary.
     * **step_1.0.3_darwin_amd64.tar.gz**: tarball containing a statically compiled darwin binary.
 
-5. **Update the AUR Arch Linux packages**
+5. **Release [`smallstep/certificates`](https://github.com/smallstep/certificates/blob/master/distribution.md).**
+
+6. **Update the AUR Arch Linux packages**
 
     <pre><code>
     ### <b>SETUP</b> ###
@@ -113,13 +115,13 @@ e.g. `v1.0.2`
 
     Commit and push the submodule updates to master.
 
-6. **Update the smallstep/smallstep Homebrew tap.**
+7. **Update the smallstep/smallstep Homebrew tap.**
 
     > **NOTE**: this only needs to be done for standard releases.
 
     Follow the steps [here](https://github.com/smallstep/homebrew-smallstep#how-to-update-the-formula).
 
-7. **Update Homebrew Core.**
+8. **Update Homebrew Core.**
 
     > **NOTE**: this only needs to be done for standard releases.
 
@@ -156,13 +158,13 @@ e.g. `v1.0.2`
        </code></pre>
 
 
-8. **Update the documentation on the website**
+9. **Update the documentation on the website**
 
     > **NOTE**: this only needs to be done for standard releases.
 
     Follow the steps [here](https://github.com/smallstep/docs/blob/master/runbook/release.md).
 
-*All Done!*
+**All Done!**
 
 ## Versioning
 
