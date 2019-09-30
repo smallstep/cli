@@ -48,11 +48,37 @@ $ step ssh config --dry-run
 Print the line to add to the host TrustedUserCAKeys file:
 '''
 $ step ssh config --host --dry-run
+'''
+
+Add the certificate authority used to sign host certificates to your
+known_hosts:
+'''
+$ step ssh config
+'''
+
+Add the certificate authority used to sign client certificates to your
+sshd_config:
+'''
+$ step ssh config --host
+'''
+
+Add the certificate authority used to sign client certificates and
+configure a specific host certificate and key:
+'''
+$ step ssh config --host --cert host-key-cert.pub --key host-key
 '''`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "host",
 				Usage: "Configures a SSH server instead of a client.",
+			},
+			cli.StringFlag{
+				Name:  "cert",
+				Usage: "The <path> of the host certificate to add in the OpenSSH daemon configuration.",
+			},
+			cli.StringFlag{
+				Name:  "key",
+				Usage: "The <path> of the host key to add in the OpenSSH daemon configuration.",
 			},
 			cli.StringFlag{
 				Name:  "sshd-config",
@@ -77,6 +103,17 @@ type statusCoder interface {
 }
 
 func configAction(ctx *cli.Context) error {
+	isHost := ctx.Bool("host")
+	cert := ctx.String("cert")
+	key := ctx.String("key")
+
+	switch {
+	case !isHost && cert != "":
+		return errs.RequiredWithFlag(ctx, "cert", "host")
+	case !isHost && key != "":
+		return errs.RequiredWithFlag(ctx, "key", "host")
+	}
+
 	client, err := cautils.NewClient(ctx)
 	if err != nil {
 		return err
@@ -92,7 +129,7 @@ func configAction(ctx *cli.Context) error {
 	}
 
 	// Host configuration
-	if ctx.Bool("host") {
+	if isHost {
 		if keys.UserKey == nil {
 			return errors.New("step certificates is not configured with an ssh.userKey")
 		}
@@ -100,11 +137,7 @@ func configAction(ctx *cli.Context) error {
 			return configActionDryRun(ctx, keys.UserKey)
 		}
 
-		filename := ctx.String("sshd-config")
-		if filename == "" {
-			return errs.RequiredWithFlag(ctx, "sshd-config", "host")
-		}
-		return editSSHDConfig(filename, keys.UserKey.PublicKey)
+		return editSSHDConfig(ctx, keys.UserKey.PublicKey)
 	}
 
 	// User configuration
@@ -115,15 +148,7 @@ func configAction(ctx *cli.Context) error {
 		return configActionDryRun(ctx, keys.HostKey)
 	}
 
-	filename := ctx.String("known-hosts")
-	if filename == "" {
-		home, err := config.Home()
-		if err != nil {
-			return errs.RequiredFlag(ctx, "known-hosts")
-		}
-		filename = filepath.Join(home, ".ssh", "known_hosts")
-	}
-	return editKknownHosts(filename, keys.HostKey)
+	return editKknownHosts(ctx, keys.HostKey)
 }
 
 func configActionDryRun(ctx *cli.Context, key ssh.PublicKey) error {
@@ -135,7 +160,15 @@ func configActionDryRun(ctx *cli.Context, key ssh.PublicKey) error {
 	return nil
 }
 
-func editKknownHosts(filename string, key ssh.PublicKey) error {
+func editKknownHosts(ctx *cli.Context, key ssh.PublicKey) error {
+	filename := ctx.String("known-hosts")
+	if filename == "" {
+		home, err := config.Home()
+		if err != nil {
+			return errs.RequiredFlag(ctx, "known-hosts")
+		}
+		filename = filepath.Join(home, ".ssh", "known_hosts")
+	}
 	mode := os.FileMode(0644)
 	if st, err := os.Stat(filename); err == nil {
 		mode = st.Mode()
@@ -144,7 +177,12 @@ func editKknownHosts(filename string, key ssh.PublicKey) error {
 	return utils.AppendNewLine(filename, []byte(cert), mode)
 }
 
-func editSSHDConfig(filename string, key ssh.PublicKey) error {
+func editSSHDConfig(ctx *cli.Context, key ssh.PublicKey) error {
+	filename := ctx.String("sshd-config")
+	if filename == "" {
+		filename = "/etc/ssh/sshd_config"
+	}
+
 	st, err := os.Stat(filename)
 	if err != nil {
 		return errs.FileError(err, filename)
@@ -157,7 +195,7 @@ func editSSHDConfig(filename string, key ssh.PublicKey) error {
 	base := filepath.Dir(abs)
 
 	// Parse sshd_config
-	var caFilename string
+	var caFilename, hostCertificate, hostKey string
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return errs.FileError(err, filename)
@@ -165,14 +203,34 @@ func editSSHDConfig(filename string, key ssh.PublicKey) error {
 	config, start, end := findConfiguration(bytes.NewReader(b))
 	for _, cfg := range config {
 		fields := strings.Fields(cfg)
-		if len(fields) >= 2 && fields[0] == "TrustedUserCAKeys" {
-			caFilename = fields[1]
-			break
+		if len(fields) >= 2 {
+			switch fields[0] {
+			case "TrustedUserCAKeys":
+				caFilename = fields[1]
+			case "HostCertificate":
+				hostCertificate = fields[1]
+			case "HostKey":
+				hostKey = fields[1]
+			}
 		}
 	}
 	if caFilename == "" {
 		caFilename = filepath.Join(base, "ca.pub")
 		config = append(config, fmt.Sprintf("TrustedUserCAKeys %s", caFilename))
+	}
+	if cert := ctx.String("cert"); cert != "" && cert != hostCertificate {
+		path, err := filepath.Abs(cert)
+		if err != nil {
+			return errors.Wrapf(err, "error getting absolute path for %s", cert)
+		}
+		config = append(config, fmt.Sprintf("HostCertificate %s", path))
+	}
+	if key := ctx.String("key"); key != "" && key != hostKey {
+		path, err := filepath.Abs(key)
+		if err != nil {
+			return errors.Wrapf(err, "error getting absolute path for %s", key)
+		}
+		config = append(config, fmt.Sprintf("HostKey %s", path))
 	}
 
 	// Write sshd_config
