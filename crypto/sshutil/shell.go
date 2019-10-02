@@ -2,6 +2,7 @@ package sshutil
 
 import (
 	"io"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -316,6 +317,52 @@ func (s *Shell) RemoteShell() error {
 	return session.Wait()
 }
 
+// LocalForward creates a local listener in the bindAddress forwarding the
+// packages to the remote hostAddress.
+func (s *Shell) LocalForward(bindNetwork, bindAddress, hostNetwork, hostAddress string) error {
+	l, err := net.Listen(bindNetwork, bindAddress)
+	if err != nil {
+		return errors.Wrapf(err, "error listening on %s", bindAddress)
+	}
+	defer l.Close()
+
+	remote, err := s.client.Dial(hostNetwork, hostAddress)
+	if err != nil {
+		return errors.Wrapf(err, "error dialing %s", hostAddress)
+	}
+	defer remote.Close()
+
+	for {
+		local, err := l.Accept()
+		if err != nil {
+			return errors.Wrapf(err, "error connecting to %s", bindAddress)
+		}
+		handleConn(local, remote)
+	}
+}
+
+// RemoteForward creates a remote listener in the bindAddress and forwards the
+// packages to the local hostAddress.
+func (s *Shell) RemoteForward(bindNetwork, bindAddress, hostNetwork, hostAddress string) error {
+	l, err := s.client.Listen(bindNetwork, bindAddress)
+	if err != nil {
+		return errors.Wrapf(err, "error listening on %s", bindAddress)
+	}
+	defer l.Close()
+
+	for {
+		local, err := net.Dial(hostNetwork, hostAddress)
+		if err != nil {
+			return errors.Wrapf(err, "error dialing %s", hostAddress)
+		}
+		remote, err := l.Accept()
+		if err != nil {
+			return errors.Wrapf(err, "error connection to %s", bindAddress)
+		}
+		handleConn(remote, local)
+	}
+}
+
 func requestPty(session *ssh.Session, h, w int, modes ssh.TerminalModes) (err error) {
 	var terms []string
 	switch t := os.Getenv("TERM"); t {
@@ -332,4 +379,28 @@ func requestPty(session *ssh.Session, h, w int, modes ssh.TerminalModes) (err er
 		}
 	}
 	return errors.Wrap(err, "error getting pseudo terminal")
+}
+
+func handleConn(local, remote net.Conn) {
+	chDone := make(chan bool)
+
+	// Start remote -> local data transfer
+	go func() {
+		_, err := io.Copy(local, remote)
+		if err != nil {
+			log.Println("error while copy remote->local:", err)
+		}
+		chDone <- true
+	}()
+
+	// Start local -> remote data transfer
+	go func() {
+		_, err := io.Copy(remote, local)
+		if err != nil {
+			log.Println(err)
+		}
+		chDone <- true
+	}()
+
+	<-chDone
 }
