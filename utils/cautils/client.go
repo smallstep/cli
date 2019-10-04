@@ -19,6 +19,7 @@ type CaClient interface {
 	Renew(tr http.RoundTripper) (*api.SignResponse, error)
 	Revoke(req *api.RevokeRequest, tr http.RoundTripper) (*api.RevokeResponse, error)
 	SSHKeys() (*api.SSHKeysResponse, error)
+	SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse, error)
 }
 
 // NewClient returns a client of an online or offline CA. Requires the flags
