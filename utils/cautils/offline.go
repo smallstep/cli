@@ -257,7 +257,8 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 	return &api.RevokeResponse{Status: "ok"}, nil
 }
 
-// SSHKeys is a wrapper on top of certificate SSHKeys method. It returns a apinSSHKeysResponse.
+// SSHKeys is a wrapper on top of the GetSSHKeys method. It returns an
+// api.SSHKeysResponse.
 func (c *OfflineCA) SSHKeys() (*api.SSHKeysResponse, error) {
 	keys, err := c.authority.GetSSHKeys()
 	if err != nil {
@@ -276,6 +277,27 @@ func (c *OfflineCA) SSHKeys() (*api.SSHKeysResponse, error) {
 		HostKey: host,
 		UserKey: user,
 	}, nil
+}
+
+// SSHConfig is a wrapper on top of the GetSSHConfig method. It returns an
+// api.SSHConfigResponse.
+func (c *OfflineCA) SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse, error) {
+	ts, err := c.authority.GetSSHConfig(req.Type, req.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	var config api.SSHConfigResponse
+	switch req.Type {
+	case provisioner.SSHUserCert:
+		config.UserTemplates = ts
+	case provisioner.SSHHostCert:
+		config.UserTemplates = ts
+	default:
+		return nil, errors.New("it should hot get here")
+	}
+
+	return &config, nil
 }
 
 // GenerateToken creates the token used by the authority to authorize requests.
