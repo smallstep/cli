@@ -265,18 +265,34 @@ func (c *OfflineCA) SSHKeys() (*api.SSHKeysResponse, error) {
 		return nil, err
 	}
 
-	var host, user *api.SSHPublicKey
-	if keys.HostKey != nil {
-		host = &api.SSHPublicKey{PublicKey: keys.HostKey}
+	resp := new(api.SSHKeysResponse)
+	for _, k := range keys.HostKeys {
+		resp.HostKeys = append(resp.HostKeys, api.SSHPublicKey{PublicKey: k})
 	}
-	if keys.UserKey != nil {
-		user = &api.SSHPublicKey{PublicKey: keys.UserKey}
+	for _, k := range keys.UserKeys {
+		resp.UserKeys = append(resp.UserKeys, api.SSHPublicKey{PublicKey: k})
 	}
 
-	return &api.SSHKeysResponse{
-		HostKey: host,
-		UserKey: user,
-	}, nil
+	return resp, nil
+}
+
+// SSHFederation is a wrapper on top of the GetSSHFederatedKeys method. It
+// returns an api.SSHKeysResponse.
+func (c *OfflineCA) SSHFederation() (*api.SSHKeysResponse, error) {
+	keys, err := c.authority.GetSSHFederatedKeys()
+	if err != nil {
+		return nil, err
+	}
+
+	resp := new(api.SSHKeysResponse)
+	for _, k := range keys.HostKeys {
+		resp.HostKeys = append(resp.HostKeys, api.SSHPublicKey{PublicKey: k})
+	}
+	for _, k := range keys.UserKeys {
+		resp.UserKeys = append(resp.UserKeys, api.SSHPublicKey{PublicKey: k})
+	}
+
+	return resp, nil
 }
 
 // SSHConfig is a wrapper on top of the GetSSHConfig method. It returns an
