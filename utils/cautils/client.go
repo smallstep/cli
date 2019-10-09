@@ -15,11 +15,11 @@ import (
 // certificates among other things.
 type CaClient interface {
 	Sign(req *api.SignRequest) (*api.SignResponse, error)
-	SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error)
 	Renew(tr http.RoundTripper) (*api.SignResponse, error)
 	Revoke(req *api.RevokeRequest, tr http.RoundTripper) (*api.RevokeResponse, error)
-	SSHKeys() (*api.SSHKeysResponse, error)
-	SSHFederation() (*api.SSHKeysResponse, error)
+	SSHSign(req *api.SSHSignRequest) (*api.SSHSignResponse, error)
+	SSHRoots() (*api.SSHRootsResponse, error)
+	SSHFederation() (*api.SSHRootsResponse, error)
 	SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse, error)
 }
 

@@ -166,35 +166,6 @@ func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 	}, nil
 }
 
-// SignSSH is a wrapper on top of certificate Authorize and SignSSH methods. It
-// returns an api.SignSSHResponse with the signed certificate.
-func (c *OfflineCA) SignSSH(req *api.SignSSHRequest) (*api.SignSSHResponse, error) {
-	publicKey, err := ssh.ParsePublicKey(req.PublicKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "error parsing publicKey")
-	}
-	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SignSSHMethod)
-	opts, err := c.authority.Authorize(ctx, req.OTT)
-	if err != nil {
-		return nil, err
-	}
-	signOpts := provisioner.SSHOptions{
-		CertType:    req.CertType,
-		Principals:  req.Principals,
-		ValidAfter:  req.ValidAfter,
-		ValidBefore: req.ValidBefore,
-	}
-	cert, err := c.authority.SignSSH(publicKey, signOpts, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &api.SignSSHResponse{
-		Certificate: api.SSHCertificate{
-			Certificate: cert,
-		},
-	}, nil
-}
-
 // Renew is a wrapper on top of certificates Renew method. It returns an
 // api.SignResponse with the requested certificate and the intermediate.
 func (c *OfflineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
@@ -257,15 +228,44 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 	return &api.RevokeResponse{Status: "ok"}, nil
 }
 
-// SSHKeys is a wrapper on top of the GetSSHKeys method. It returns an
-// api.SSHKeysResponse.
-func (c *OfflineCA) SSHKeys() (*api.SSHKeysResponse, error) {
-	keys, err := c.authority.GetSSHKeys()
+// SSHSign is a wrapper on top of certificate Authorize and SignSSH methods. It
+// returns an api.SSHSignResponse with the signed certificate.
+func (c *OfflineCA) SSHSign(req *api.SSHSignRequest) (*api.SSHSignResponse, error) {
+	publicKey, err := ssh.ParsePublicKey(req.PublicKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing publicKey")
+	}
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SignSSHMethod)
+	opts, err := c.authority.Authorize(ctx, req.OTT)
+	if err != nil {
+		return nil, err
+	}
+	signOpts := provisioner.SSHOptions{
+		CertType:    req.CertType,
+		Principals:  req.Principals,
+		ValidAfter:  req.ValidAfter,
+		ValidBefore: req.ValidBefore,
+	}
+	cert, err := c.authority.SignSSH(publicKey, signOpts, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &api.SSHSignResponse{
+		Certificate: api.SSHCertificate{
+			Certificate: cert,
+		},
+	}, nil
+}
+
+// SSHRoots is a wrapper on top of the GetSSHRoots method. It returns an
+// api.SSHRootsResponse.
+func (c *OfflineCA) SSHRoots() (*api.SSHRootsResponse, error) {
+	keys, err := c.authority.GetSSHRoots()
 	if err != nil {
 		return nil, err
 	}
 
-	resp := new(api.SSHKeysResponse)
+	resp := new(api.SSHRootsResponse)
 	for _, k := range keys.HostKeys {
 		resp.HostKeys = append(resp.HostKeys, api.SSHPublicKey{PublicKey: k})
 	}
@@ -276,15 +276,15 @@ func (c *OfflineCA) SSHKeys() (*api.SSHKeysResponse, error) {
 	return resp, nil
 }
 
-// SSHFederation is a wrapper on top of the GetSSHFederatedKeys method. It
-// returns an api.SSHKeysResponse.
-func (c *OfflineCA) SSHFederation() (*api.SSHKeysResponse, error) {
-	keys, err := c.authority.GetSSHFederatedKeys()
+// SSHFederation is a wrapper on top of the GetSSHFederation method. It returns
+// an api.SSHRootsResponse.
+func (c *OfflineCA) SSHFederation() (*api.SSHRootsResponse, error) {
+	keys, err := c.authority.GetSSHFederation()
 	if err != nil {
 		return nil, err
 	}
 
-	resp := new(api.SSHKeysResponse)
+	resp := new(api.SSHRootsResponse)
 	for _, k := range keys.HostKeys {
 		resp.HostKeys = append(resp.HostKeys, api.SSHPublicKey{PublicKey: k})
 	}
