@@ -122,7 +122,7 @@ func FlagValueInsecure(ctx *cli.Context, flag string, value string) error {
 }
 
 // InvalidFlagValue returns an error with the given value being missing or
-// invalid for the given flag. Optionally it lists the given formated options
+// invalid for the given flag. Optionally it lists the given formatted options
 // at the end.
 func InvalidFlagValue(ctx *cli.Context, flag string, value string, options string) error {
 	var format string
@@ -167,9 +167,9 @@ func IncompatibleFlagValues(ctx *cli.Context, flag, value, incompatibleWith,
 		flag, value, incompatibleWith, incompatibleWithValue)
 }
 
-// IncompatibleFlagValueWithFlagValue returns an error with the given value being missing or
-// invalid for the given flag. Optionally it lists the given formated options
-// at the end.
+// IncompatibleFlagValueWithFlagValue returns an error with the given value
+// being missing or invalid for the given flag. Optionally it lists the given
+// formatted options at the end.
 func IncompatibleFlagValueWithFlagValue(ctx *cli.Context, flag string, value string,
 	withFlag string, withValue, options string) error {
 	format := fmt.Sprintf("flag '--%s %s' is incompatible with flag '--%s %s'",
