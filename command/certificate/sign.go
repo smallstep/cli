@@ -13,10 +13,11 @@ import (
 
 func signCommand() cli.Command {
 	return cli.Command{
-		Name:      "sign",
-		Action:    cli.ActionFunc(signAction),
-		Usage:     "sign a certificate signing request (CSR)",
-		UsageText: `**step certificate sign** <csr_file> <crt_file> <key_file>`,
+		Name:   "sign",
+		Action: cli.ActionFunc(signAction),
+		Usage:  "sign a certificate signing request (CSR)",
+		UsageText: `**step certificate sign** <csr_file> <crt_file> <key_file>
+[**--bundle**]`,
 		Description: `**step certificate sign** generates a signed
 certificate from a certificate signing request (CSR).
 
@@ -38,12 +39,22 @@ This command returns 0 on success and \>0 if any error occurs.
 ## EXAMPLES
 
 Sign a certificate signing request:
-
 '''
 $ step certificate sign ./certificate-signing-request.csr \
 ./issuer-certificate.crt ./issuer-private-key.priv
 '''
-`,
+
+Sign a certificate signing request and bundle the new certificate with the issuer:
+'''
+$ step certificate sign ./certificate-signing-request.csr \
+./issuer-certificate.crt ./issuer-private-key.priv --bundle
+'''`,
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "bundle",
+				Usage: `Bundle the new leaf certificate with the signing certificate.`,
+			},
+		},
 	}
 }
 
@@ -64,7 +75,7 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if err := csr.CheckSignature(); err != nil {
+	if err = x509util.CheckCertificateRequestSignature(csr); err != nil {
 		return errors.Wrapf(err, "Certificate Request has invalid signature")
 	}
 
@@ -83,12 +94,21 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.Wrapf(err, "failure creating new leaf certificate from input csr")
 	}
-	block := &pem.Block{
+	pubPEMs := []*pem.Block{{
 		Type:  "CERTIFICATE",
 		Bytes: crtBytes,
+	}}
+	if ctx.Bool("bundle") {
+		pubPEMs = append(pubPEMs, &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: issuerIdentity.Crt.Raw,
+		})
 	}
-	fmt.Printf("%s", string(pem.EncodeToMemory(block)))
+	pubBytes := []byte{}
+	for _, pp := range pubPEMs {
+		pubBytes = append(pubBytes, pem.EncodeToMemory(pp)...)
+	}
+	fmt.Printf("%s", string(pubBytes))
 
-	//tok := ctx.String("token")
 	return nil
 }

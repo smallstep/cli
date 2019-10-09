@@ -32,16 +32,17 @@ Bootstrap will store the root certificate in <$STEPPATH/certs/root_ca.crt> and
 create a configuration file in <$STEPPATH/configs/defaults.json> with the CA
 url, the root certificate location and its fingerprint.
 
-After the bootstrap, ca commands do not need to specify the flags 
+After the bootstrap, ca commands do not need to specify the flags
 --ca-url, --root or --fingerprint if we want to use the same environment.`,
 		Flags: []cli.Flag{
-			caURLFlag,
+			flags.CaURL,
+			flags.Force,
 			fingerprintFlag,
 			cli.BoolFlag{
 				Name:  "install",
 				Usage: "Install the root certificate into the system truststore.",
 			},
-			flags.Force},
+		},
 	}
 }
 
@@ -76,11 +77,11 @@ func bootstrapAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error downloading root certificate")
 	}
 
-	if err := os.MkdirAll(filepath.Dir(rootFile), 0700); err != nil {
+	if err = os.MkdirAll(filepath.Dir(rootFile), 0700); err != nil {
 		return errs.FileError(err, rootFile)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(configFile), 0700); err != nil {
+	if err = os.MkdirAll(filepath.Dir(configFile), 0700); err != nil {
 		return errs.FileError(err, configFile)
 	}
 

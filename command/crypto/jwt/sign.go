@@ -22,9 +22,9 @@ func signCommand() cli.Command {
 		Action: cli.ActionFunc(signAction),
 		Usage:  "create a signed JWT data structure",
 		UsageText: `**step crypto jwt sign** [- | <filename>]
-		[**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
-        [**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>] [**--key**=<jwk>]
-        [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]`,
+[**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
+[**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>] [**--key**=<path>]
+[**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]`,
 		Description: `**step crypto jwt sign** command generates a signed JSON Web Token (JWT) by
 computing a digital signature or message authentication code for a JSON
 payload. By default, the payload to sign is read from STDIN and the JWT will
@@ -166,7 +166,7 @@ with sufficient entropy to satisfy the collision-resistance criteria.`,
 			},
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The key to use to sign the JWT. The <key> argument should be the name of a file.
+				Usage: `The <path> to the key with which to sign the JWT.
 JWTs can be signed using a private JWK (or a JWK encrypted as a JWE payload) or
 a PEM encoded private key (or a private key encrypted using the modes described
 on RFC 1423 or with PBES2+PBKDF2 described in RFC 2898).`,
@@ -285,12 +285,12 @@ func signAction(ctx *cli.Context) error {
 	if jwk.Algorithm == "" {
 		return errors.New("flag '--alg' is required with the given key")
 	}
-	if err := jose.ValidateJWK(jwk); err != nil {
+	if err = jose.ValidateJWK(jwk); err != nil {
 		return err
 	}
 
 	// Validate exp
-	if !isSubtle && ctx.IsSet("exp") && jose.NumericDate(ctx.Int64("exp")).Time().Before(time.Now()) {
+	if !isSubtle && ctx.IsSet("exp") && jose.UnixNumericDate(ctx.Int64("exp")).Time().Before(time.Now()) {
 		return errors.New("flag '--exp' must be in the future unless the '--subtle' flag is provided")
 	}
 
@@ -299,16 +299,16 @@ func signAction(ctx *cli.Context) error {
 		Issuer:    ctx.String("iss"),
 		Subject:   ctx.String("sub"),
 		Audience:  ctx.StringSlice("aud"),
-		Expiry:    jose.NumericDate(ctx.Int64("exp")),
-		NotBefore: jose.NumericDate(ctx.Int64("nbf")),
-		IssuedAt:  jose.NumericDate(ctx.Int64("iat")),
+		Expiry:    jose.UnixNumericDate(ctx.Int64("exp")),
+		NotBefore: jose.UnixNumericDate(ctx.Int64("nbf")),
+		IssuedAt:  jose.UnixNumericDate(ctx.Int64("iat")),
 		ID:        ctx.String("jti"),
 	}
 	now := time.Now()
-	if c.NotBefore == 0 {
+	if c.NotBefore == nil {
 		c.NotBefore = jose.NewNumericDate(now)
 	}
-	if c.IssuedAt == 0 {
+	if c.IssuedAt == nil {
 		c.IssuedAt = jose.NewNumericDate(now)
 	}
 	if c.ID == "" && ctx.IsSet("jti") {
@@ -326,7 +326,7 @@ func signAction(ctx *cli.Context) error {
 			return errors.New("flag '--aud' is required unless '--subtle' is used")
 		case len(c.Subject) == 0:
 			return errors.New("flag '--sub' is required unless '--subtle' is used")
-		case c.Expiry == 0:
+		case c.Expiry == nil:
 			return errors.New("flag '--exp' is required unless '--subtle' is used")
 		case c.Expiry.Time().Before(time.Now()):
 			return errors.New("flag '--exp' must be in the future unless '--subtle' is used")
@@ -372,7 +372,7 @@ func readPayload(filename string) (interface{}, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "error reading data")
 		}
-		if st.Size() == 0 {
+		if st.Size() == 0 && st.Mode()&os.ModeNamedPipe == 0 {
 			return make(map[string]interface{}), nil
 		}
 		r = os.Stdin

@@ -2,7 +2,6 @@ package key
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
@@ -19,6 +18,7 @@ import (
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/ssh"
 )
 
 func formatCommand() cli.Command {
@@ -44,15 +44,16 @@ And DER encoded keys will be converted to PEM with the following rules:
  * RSA private keys will use the PEM-encoded PKCS#1 format.
  * Ed25519 private keys will use the PEM-encoded PKCS#8 format.
 
-The flags **--pkcs8**, **--pem** and **--der** can be use to change the previous
-defaults. For example we can use **--pkcs8** to save a PKCS#1 RSA key to the
-PKCS#8 form. Or we can combine **--pem** and **--pkcs8** to convert to PKCS#8 a
-PEM file.
+The flags **--pkcs8**, **--pem**, **--der**, and **--ssh** can be use to change
+the previous defaults. For example we can use **--pkcs8** to save a PKCS#1 RSA
+key to the PKCS#8 form. Or we can combine **--pem** and **--pkcs8** to convert
+to PKCS#8 a PEM file.
 
 ## POSITIONAL ARGUMENTS
 
-<crt_file>
-:  Path to a certificate file.
+<key-file>
+:  Path to a file with a public or private key, or the public key of an
+   X.509 certificate.
 
 ## EXIT CODES
 
@@ -65,12 +66,17 @@ Convert a PEM file to DER:
 $ step crypto key format key.pem
 '''
 
-Convert DER file to PEM.
+Convert DER file to PEM:
 '''
 $ step crypto key format key.der
 '''
 
-Convert PEM file to DER and write to disk.
+Convert a PEM file to OpenSSH:
+'''
+$ step crypto key format --ssh key.pem
+'''
+
+Convert PEM file to DER and write to disk:
 '''
 $ step crypto key format key.pem --out key.der
 '''
@@ -101,13 +107,17 @@ $ step crypto key format --der --pkcs8 key.der --out key-pkcs8.der
 			},
 			cli.BoolFlag{
 				Name: "pem",
-				Usage: `Uses PEM as the result encoding format. If neither **--pem** nor **--der** are
-set it will always switch to the other format.`,
+				Usage: `Uses PEM as the result encoding format. If neither **--pem** nor **--der** nor
+**--ssh** are set it will always switch to the DER format.`,
 			},
 			cli.BoolFlag{
 				Name: "der",
-				Usage: `Uses DER as the result enconfig format. If neither **--pem** nor **--der** are
-set it will always switch to the other format.`,
+				Usage: `Uses DER as the result enconfig format. If neither **--pem** nor **--der** nor
+**--ssh** are set it will always switch to the PEM format.`,
+			},
+			cli.BoolFlag{
+				Name:  "ssh",
+				Usage: `Uses OpenSSH as the result encoding format on public keys.`,
 			},
 			cli.StringFlag{
 				Name:  "out",
@@ -139,6 +149,7 @@ func formatAction(ctx *cli.Context) error {
 		out        = ctx.String("out")
 		toPEM      = ctx.Bool("pem")
 		toDER      = ctx.Bool("der")
+		toSSH      = ctx.Bool("ssh")
 		noPassword = ctx.Bool("no-password")
 		insecure   = ctx.Bool("insecure")
 		key        interface{}
@@ -170,17 +181,30 @@ func formatAction(ctx *cli.Context) error {
 			return err
 		}
 		// convert to DER if not specified
-		if !toPEM && !toDER {
+		if !toPEM && !toDER && !toSSH {
 			toDER = true
+		}
+	case isSSHPublicKey(b):
+		if key, err = pemutil.ParseSSH(b); err != nil {
+			return err
+		}
+		// convert to PEM if not specified
+		if !toPEM && !toDER && !toSSH {
+			toPEM = true
 		}
 	default: // assuming DER format
 		if key, err = pemutil.ParseDER(b); err != nil {
 			return err
 		}
 		// convert to PEM if not specified
-		if !toPEM && !toDER {
+		if !toPEM && !toDER && !toSSH {
 			toPEM = true
 		}
+	}
+
+	// If it's a certificate grab it's public key
+	if cert, ok := key.(*x509.Certificate); ok {
+		key = cert.PublicKey
 	}
 
 	switch {
@@ -192,8 +216,12 @@ func formatAction(ctx *cli.Context) error {
 		if ob, err = convertToDER(ctx, key); err != nil {
 			return err
 		}
+	case toSSH:
+		if ob, err = convertToSSH(ctx, key); err != nil {
+			return err
+		}
 	default:
-		return errors.New("error formating key: it should not get here")
+		return errors.New("error formatting key: it should not get here")
 	}
 
 	if out == "" {
@@ -212,18 +240,39 @@ func formatAction(ctx *cli.Context) error {
 	return nil
 }
 
+func isSSHPublicKey(in []byte) bool {
+	switch {
+	case bytes.HasPrefix(in, []byte(ssh.KeyAlgoRSA)),
+		bytes.HasPrefix(in, []byte(ssh.KeyAlgoDSA)),
+		bytes.HasPrefix(in, []byte(ssh.KeyAlgoECDSA256)),
+		bytes.HasPrefix(in, []byte(ssh.KeyAlgoECDSA384)),
+		bytes.HasPrefix(in, []byte(ssh.KeyAlgoECDSA521)),
+		bytes.HasPrefix(in, []byte(ssh.KeyAlgoED25519)):
+		return true
+	default:
+		return false
+	}
+}
+
 func convertToPEM(ctx *cli.Context, key interface{}) (b []byte, err error) {
 	opts := []pemutil.Options{
 		pemutil.WithPKCS8(ctx.Bool("pkcs8")),
 	}
-	// Add password if necessary
-	if _, ok := key.(crypto.PrivateKey); ok && !ctx.Bool("no-password") {
-		if passFile := ctx.String("password-file"); passFile != "" {
-			opts = append(opts, pemutil.WithPasswordFile(passFile))
-		} else {
-			opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key"))
+
+	if !ctx.Bool("no-password") {
+		switch key.(type) {
+		case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey:
+		case *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
+			if passFile := ctx.String("password-file"); passFile != "" {
+				opts = append(opts, pemutil.WithPasswordFile(passFile))
+			} else {
+				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key"))
+			}
+		default:
+			return nil, errors.Errorf("unsupported key type %T", key)
 		}
 	}
+
 	block, err := pemutil.Serialize(key, opts...)
 	if err != nil {
 		return nil, err
@@ -250,7 +299,22 @@ func convertToDER(ctx *cli.Context, key interface{}) (b []byte, err error) {
 	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey: // always PKIX
 		b, err = pemutil.MarshalPKIXPublicKey(key)
 	default:
-		return nil, errors.Errorf("unsupoorted key type %T", key)
+		return nil, errors.Errorf("unsupported key type %T", key)
 	}
 	return
+}
+
+func convertToSSH(ctx *cli.Context, key interface{}) ([]byte, error) {
+	switch key.(type) {
+	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey:
+		k, err := ssh.NewPublicKey(key)
+		if err != nil {
+			return nil, errors.Wrap(err, "error converting public key")
+		}
+		return ssh.MarshalAuthorizedKey(k), nil
+	case *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
+		return nil, errors.New("ssh format is only supported on public keys")
+	default:
+		return nil, errors.Errorf("unsupported key type %T", key)
+	}
 }

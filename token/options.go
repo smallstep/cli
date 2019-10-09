@@ -40,6 +40,15 @@ func WithRootCA(path string) Options {
 	}
 }
 
+// WithSHA returns an Options function that sets the SHA claim to the given
+// value.
+func WithSHA(sum string) Options {
+	return func(c *Claims) error {
+		c.Set(RootSHAClaim, sum)
+		return nil
+	}
+}
+
 // WithSANS returns an Options function that sets the list of required SANs
 // in the token claims.
 func WithSANS(sans []string) Options {
@@ -47,6 +56,22 @@ func WithSANS(sans []string) Options {
 		c.Set(SANSClaim, sans)
 		return nil
 	}
+}
+
+// WithStep returns an Options function that sets the step claim in the payload.
+func WithStep(v interface{}) Options {
+	return func(c *Claims) error {
+		c.Set(StepClaim, v)
+		return nil
+	}
+}
+
+// WithSSH returns an Options function that sets the step claim with the ssh
+// property in the value.
+func WithSSH(v interface{}) Options {
+	return WithStep(map[string]interface{}{
+		"ssh": v,
+	})
 }
 
 // WithValidity validates boundary inputs and sets the 'nbf' (NotBefore) and

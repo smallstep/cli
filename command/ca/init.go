@@ -2,6 +2,7 @@ package ca
 
 import (
 	"crypto/rand"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
-	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -22,9 +22,12 @@ func initCommand() cli.Command {
 		Action: cli.ActionFunc(initAction),
 		Usage:  "initialize the CA PKI",
 		UsageText: `**step ca init**
-		[**--root**=<file>] [**--key**=<file>] [**--pki**]`,
+[**--root**=<path>] [**--key**=<path>] [**--pki**] [**--ssh**] [**--name**=<name>]
+[**dns**=<dns>] [**address**=<address>] [**provisioner**=<name>]
+[**provisioner-password-file**=<path>] [**password-file**=<path>]
+[**with-ca-url**=<url>] [**no-db**]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
- used by the Certificate Authority`,
+ used by the Certificate Authority.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:   "root",
@@ -40,13 +43,17 @@ func initCommand() cli.Command {
 				Name:  "pki",
 				Usage: "Generate only the PKI without the CA configuration.",
 			},
+			cli.BoolFlag{
+				Name:  "ssh",
+				Usage: `Create keys to sign SSH certificates.`,
+			},
 			cli.StringFlag{
 				Name:  "name",
 				Usage: "The <name> of the new PKI.",
 			},
 			cli.StringFlag{
 				Name:  "dns",
-				Usage: "The comma sepparated DNS <names> or IP addresses of the new CA.",
+				Usage: "The comma separated DNS <names> or IP addresses of the new CA.",
 			},
 			cli.StringFlag{
 				Name:  "address",
@@ -68,35 +75,43 @@ func initCommand() cli.Command {
 				Name:  "with-ca-url",
 				Usage: `<URI> of the Step Certificate Authority to write in defaults.json`,
 			},
+			cli.BoolFlag{
+				Name:  "no-db",
+				Usage: `Generate a CA configuration without the DB stanza. No persistence layer.`,
+			},
 		},
 	}
 }
 
 func initAction(ctx *cli.Context) (err error) {
-	if err := assertCryptoRand(); err != nil {
+	if err = assertCryptoRand(); err != nil {
 		return err
 	}
 
-	var rootCrt *stepx509.Certificate
+	var rootCrt *x509.Certificate
 	var rootKey interface{}
 
+	caURL := ctx.String("with-ca-url")
 	root := ctx.String("root")
 	key := ctx.String("key")
-	configure := !ctx.Bool("pki")
-	caURL := ctx.String("with-ca-url")
 	switch {
 	case len(root) > 0 && len(key) == 0:
 		return errs.RequiredWithFlag(ctx, "root", "key")
 	case len(root) == 0 && len(key) > 0:
 		return errs.RequiredWithFlag(ctx, "key", "root")
 	case len(root) > 0 && len(key) > 0:
-		var err error
-		if rootCrt, err = pemutil.ReadStepCertificate(root); err != nil {
+		if rootCrt, err = pemutil.ReadCertificate(root); err != nil {
 			return err
 		}
 		if rootKey, err = pemutil.Read(key); err != nil {
 			return err
 		}
+	}
+
+	configure := !ctx.Bool("pki")
+	noDB := ctx.Bool("no-db")
+	if !configure && noDB {
+		return errs.IncompatibleFlagWithFlag(ctx, "pki", "no-db")
 	}
 
 	var password string
@@ -129,7 +144,8 @@ func initAction(ctx *cli.Context) (err error) {
 	}
 
 	if configure {
-		names, err := ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])",
+		var names string
+		names, err = ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])",
 			ui.WithValidateFunc(ui.DNS()), ui.WithValue(ctx.String("dns")))
 		if err != nil {
 			return err
@@ -144,13 +160,15 @@ func initAction(ctx *cli.Context) (err error) {
 			dnsNames = append(dnsNames, strings.TrimSpace(name))
 		}
 
-		address, err := ui.Prompt("What address will your new CA listen at? (e.g. :443)",
+		var address string
+		address, err = ui.Prompt("What address will your new CA listen at? (e.g. :443)",
 			ui.WithValidateFunc(ui.Address()), ui.WithValue(ctx.String("address")))
 		if err != nil {
 			return err
 		}
 
-		provisioner, err := ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)",
+		var provisioner string
+		provisioner, err = ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)",
 			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("provisioner")))
 		if err != nil {
 			return err
@@ -171,11 +189,11 @@ func initAction(ctx *cli.Context) (err error) {
 	if configure {
 		// Generate provisioner key pairs.
 		if len(provisionerPassword) > 0 {
-			if err := p.GenerateKeyPairs(provisionerPassword); err != nil {
+			if err = p.GenerateKeyPairs(provisionerPassword); err != nil {
 				return err
 			}
 		} else {
-			if err := p.GenerateKeyPairs(pass); err != nil {
+			if err = p.GenerateKeyPairs(pass); err != nil {
 				return err
 			}
 		}
@@ -195,7 +213,7 @@ func initAction(ctx *cli.Context) (err error) {
 	} else {
 		fmt.Println()
 		fmt.Print("Copying root certificate... \n")
-		if err := p.WriteRootCertificate(rootCrt, rootKey, pass); err != nil {
+		if err = p.WriteRootCertificate(rootCrt, rootKey, pass); err != nil {
 			return err
 		}
 		fmt.Println("all done!")
@@ -209,16 +227,28 @@ func initAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
+	if ctx.Bool("ssh") {
+		fmt.Println()
+		fmt.Print("Generating user and host SSH certificate signing keys... \n")
+		if err := p.GenerateSSHSigningKeys(pass); err != nil {
+			return err
+		}
+	}
+
 	fmt.Println("all done!")
 
 	if !configure {
 		p.TellPKI()
 		return nil
 	}
-	return p.Save()
+	opts := []pki.Option{}
+	if noDB {
+		opts = append(opts, pki.WithoutDB())
+	}
+	return p.Save(opts...)
 }
 
-// assertCrytoRand asserts that a cryptographically secure random number
+// assertCryptoRand asserts that a cryptographically secure random number
 // generator is available, it will return an error otherwise.
 func assertCryptoRand() error {
 	buf := make([]byte, 64)

@@ -17,7 +17,7 @@ func verifyCommand() cli.Command {
 		Action: cli.ActionFunc(verifyAction),
 		Usage:  "verify a signed JWS data structure and return the payload",
 		UsageText: `**step crypto jws verify**
-[**--alg**=<algorithm>] [**--key**=<key>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+[**--alg**=<algorithm>] [**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jws verify** reads a JWS data structure from STDIN; checks that
 the algorithm are in agreement with expectations; verifies the digital
 signature or message authentication code as appropriate; and outputs the
@@ -46,8 +46,8 @@ algorithm downgrade attacks. To disable this protection you can pass the
 			},
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The key to use to verify the JWS. The <key> argument should be the name of a
-file. The contents of the file can be a public or private JWK (or a JWK
+				Usage: `The <path> to the key with which to verify the JWS.
+The contents of the file can be a public or private JWK (or a JWK
 encrypted as a JWE payload) or a public or private PEM (or a private key
 encrypted using the modes described on RFC 1423 or with PBES2+PBKDF2 described
 in RFC 2898).`,
@@ -158,7 +158,7 @@ func verifyAction(ctx *cli.Context) error {
 	if jwk.Algorithm == "" {
 		return errors.New("flag '--alg' is required with the given key")
 	}
-	if err := jose.ValidateJWK(jwk); err != nil {
+	if err = jose.ValidateJWK(jwk); err != nil {
 		return err
 	}
 

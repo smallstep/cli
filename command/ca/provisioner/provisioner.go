@@ -46,6 +46,8 @@ with the following properties:
     default.
   * **defaultTLSCertDuration**: default duration of the certificate, set to 24h
     by default.
+  * **disableRenewal**: whether or not to disable certificate renewal, set to false
+    by default.
 
 ## EXAMPLES
 

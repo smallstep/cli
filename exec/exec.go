@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -8,6 +9,7 @@ import (
 	"path"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/pkg/errors"
@@ -92,6 +94,37 @@ func OpenInBrowser(url string) error {
 	return errors.WithStack(cmd.Start())
 }
 
+// Step executes step with the given commands and returns the standard output.
+func Step(args ...string) ([]byte, error) {
+	var stdout bytes.Buffer
+	cmd := exec.Command(os.Args[0], args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = &stdout
+
+	if err := cmd.Start(); nil != err {
+		return nil, errors.Wrapf(err, "error starting: %s %s", os.Args[0], strings.Join(args, " "))
+	}
+	if err := cmd.Wait(); nil != err {
+		return nil, errors.Wrapf(err, "error running: %s %s", os.Args[0], strings.Join(args, " "))
+	}
+
+	return stdout.Bytes(), nil
+}
+
+// Command executes the given command with it's arguments and returns the
+// standard output.
+func Command(name string, args ...string) ([]byte, error) {
+	var stderr bytes.Buffer
+	cmd := exec.Command(name, args...)
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error running %s %s:\n%s", name, strings.Join(args, " "), stderr.String())
+	}
+	return out, nil
+}
+
 func run(name string, arg ...string) (*exec.Cmd, chan int, error) {
 	cmd := exec.Command(name, arg...)
 	cmd.Stderr = os.Stderr
@@ -131,7 +164,12 @@ func errorAndExit(name string, err error) {
 
 // signalHandler forwards all the signals to the cmd.
 func signalHandler(cmd *exec.Cmd, exitCh chan int) {
-	signals := make(chan os.Signal)
+	// signal.Notify prefers a buffered channel. From documentation: "For a
+	// channel used for notification of just one signal value, a buffer of size
+	// 1 is sufficient." As we do not know how many signal values the cmd is
+	// expecting we select 1 as a sane default. In the future maybe we can make
+	// this value configurable.
+	signals := make(chan os.Signal, 1)
 	signal.Notify(signals)
 	defer signal.Stop(signals)
 	for {

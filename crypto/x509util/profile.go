@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/sha1"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
@@ -15,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 )
 
@@ -197,6 +198,16 @@ func WithIPAddresses(ips []net.IP) WithOption {
 	}
 }
 
+// WithEmailAddresses returns a Profile modifier which sets the Email Addresses
+// that will be bound to the subject alternative name extension of the Certificate.
+func WithEmailAddresses(emails []string) WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.EmailAddresses = emails
+		return nil
+	}
+}
+
 // WithHosts returns a Profile modifier which sets the DNS Names and IP Addresses
 // that will be bound to the subject Certificate.
 //
@@ -267,7 +278,7 @@ func newProfile(p Profile, sub, iss *x509.Certificate, issPriv crypto.PrivateKey
 	}
 
 	if sub.SubjectKeyId == nil {
-		pubBytes, err := x509.MarshalPKIXPublicKey(p.SubjectPublicKey())
+		pubBytes, err := stepx509.MarshalPKIXPublicKey(p.SubjectPublicKey())
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to marshal public key to bytes")
 		}
@@ -372,17 +383,21 @@ func (b *base) GenerateDefaultKeyPair() error {
 // CreateCertificate creates an x509 Certificate using the configuration stored
 // in the profile.
 func (b *base) CreateCertificate() ([]byte, error) {
-	sub := b.Subject()
 	if b.SubjectPublicKey() == nil {
-		return nil, errors.Errorf("Profile does not have subject public key. Need to call 'profile.GenKeys(...)' or use setters to populate keys")
+		return nil, errors.Errorf("Profile does not have subject public key. Need to call 'profile.GenerateKeyPair(...)' or use setters to populate keys")
 	}
 	if b.issPriv == nil {
 		return nil, errors.Errorf("Profile does not have issuer private key. Use setters to populate this field.")
 	}
+
+	sub := ToStepX509Certificate(b.Subject())
+	iss := ToStepX509Certificate(b.Issuer())
 	if len(b.ext) > 0 {
 		sub.ExtraExtensions = append(sub.ExtraExtensions, b.ext...)
 	}
-	bytes, err := x509.CreateCertificate(rand.Reader, sub, b.Issuer(), b.SubjectPublicKey(), b.issPriv)
+
+	// Using stepx509 to be able to create certs with ed25519
+	bytes, err := stepx509.CreateCertificate(rand.Reader, sub, iss, b.SubjectPublicKey(), b.issPriv)
 	return bytes, errors.WithStack(err)
 }
 
@@ -393,7 +408,7 @@ func (b *base) CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, erro
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if err := utils.WriteFile(crtOut, pem.EncodeToMemory(&pem.Block{
+	if err = utils.WriteFile(crtOut, pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: crtBytes,
 	}), 0600); err != nil {

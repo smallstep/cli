@@ -58,6 +58,9 @@ type ContentEncryption = jose.ContentEncryption
 // SignatureAlgorithm represents a signature (or MAC) algorithm.
 type SignatureAlgorithm = jose.SignatureAlgorithm
 
+// Signature represents a signature.
+type Signature = jose.Signature
+
 // ErrCryptoFailure indicates an error in a cryptographic primitive.
 var ErrCryptoFailure = jose.ErrCryptoFailure
 
@@ -88,6 +91,9 @@ type SigningKey = jose.SigningKey
 
 // SignerOptions represents options that can be set when creating signers.
 type SignerOptions = jose.SignerOptions
+
+// Header represents the read-only JOSE header for JWE/JWS objects.
+type Header = jose.Header
 
 // HeaderKey represents the type used as a key in the protected header of a JWS
 // object.
@@ -207,8 +213,18 @@ func NewEncrypter(enc ContentEncryption, rcpt Recipient, opts *EncrypterOptions)
 }
 
 // NewNumericDate constructs NumericDate from time.Time value.
-func NewNumericDate(t time.Time) NumericDate {
+func NewNumericDate(t time.Time) *NumericDate {
 	return jwt.NewNumericDate(t)
+}
+
+// UnixNumericDate returns a NumericDate from the given seconds since the UNIX
+// Epoch time. For backward compatibility is s is 0, a nil value will be returned.
+func UnixNumericDate(s int64) *NumericDate {
+	if s == 0 {
+		return nil
+	}
+	out := NumericDate(s)
+	return &out
 }
 
 // NewSigner creates an appropriate signer based on the key type

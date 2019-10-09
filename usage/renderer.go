@@ -38,6 +38,7 @@ type list struct {
 	parent *list
 }
 
+/* TODO: commented because unused
 func (l *list) isUnordered() bool {
 	return !l.isOrdered() && !l.isDefinition()
 }
@@ -46,14 +47,15 @@ func (l *list) isOrdered() bool {
 	return l.flags&md.ListTypeOrdered != 0
 }
 
-func (l *list) isDefinition() bool {
-	return l.flags&md.ListTypeDefinition != 0
-}
-
 func (l *list) containsBlock() bool {
 	// TODO: Not sure if we have to check every item or if it gets
 	// automatically set on the list?
 	return l.flags&md.ListItemContainsBlock != 0
+}
+*/
+
+func (l *list) isDefinition() bool {
+	return l.flags&md.ListTypeDefinition != 0
 }
 
 type bufqueue struct {
@@ -105,9 +107,11 @@ func (r *Renderer) inParagraph() bool {
 	return r.inpara
 }
 
+/* TODO: commented because unused
 func (r *Renderer) inList() bool {
 	return r.list != nil
 }
+*/
 
 func (r *Renderer) renderParagraphKeepBreaks(buf *bytes.Buffer) {
 	scanner := bufio.NewScanner(buf)
@@ -229,14 +233,13 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 				w.Init(r.out.w, 0, 8, 4, ' ', tabwriter.StripEscape)
 				for _, item := range r.list.items {
 					fmt.Fprintf(w, strings.TrimRight(string(item.term), " \n"))
-					fmt.Fprintf(w, "\t")
+					fmt.Fprintf(w, "\n")
 					for _, def := range item.definitions {
-						fmt.Fprintf(w, strings.Trim(string(def), " \n"))
+						fmt.Fprintf(w, strings.TrimRight(string(def), " \n"))
 					}
-					fmt.Fprintf(w, "\t\n")
+					fmt.Fprintf(w, "\n\n")
 				}
 				w.Flush()
-				r.printf("\n")
 			} else {
 				ordered := (node.ListFlags&md.ListTypeOrdered != 0)
 				unordered := (node.ListFlags&md.ListTypeOrdered == 0 && node.ListFlags&md.ListTypeDefinition == 0)

@@ -53,9 +53,9 @@ $ step ca roots roots.pem \
     --root /path/to/root_ca.crt
 '''`,
 		Flags: []cli.Flag{
-			caURLFlag,
-			rootFlag,
+			flags.CaURL,
 			flags.Force,
+			flags.Root,
 		},
 	}
 }
@@ -90,9 +90,9 @@ $ step ca federation federation.pem \
 '''
 `,
 		Flags: []cli.Flag{
-			caURLFlag,
-			rootFlag,
+			flags.CaURL,
 			flags.Force,
+			flags.Root,
 		},
 	}
 }

@@ -3,6 +3,8 @@ package usage
 import (
 	"bytes"
 	"fmt"
+	"html"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -116,6 +118,15 @@ This documentation is available online at https://smallstep.com/docs/cli
 ## COPYRIGHT
 
 {{.Copyright}}
+
+## FEEDBACK ` +
+	html.UnescapeString("&#"+strconv.Itoa(128525)+";") + " " +
+	html.UnescapeString("&#"+strconv.Itoa(127867)+";") +
+	`
+
+The **step** utility is not instrumented for usage statistics. It does not phone home.
+But your feedback is extremely valuable. Any information you can provide regarding how you’re using **step** helps.
+Please send us a sentence or two, good or bad: **feedback@smallstep.com** or join https://gitter.im/smallstep/community.
 {{end}}
 `
 

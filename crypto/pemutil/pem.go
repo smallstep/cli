@@ -4,18 +4,22 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
-	realx509 "crypto/x509"
+	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"os"
+
+	"golang.org/x/crypto/ssh"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ed25519"
@@ -140,7 +144,7 @@ func WithFirstBlock() Options {
 
 // ReadCertificate returns a *x509.Certificate from the given filename. It
 // supports certificates formats PEM and DER.
-func ReadCertificate(filename string) (*realx509.Certificate, error) {
+func ReadCertificate(filename string, opts ...Options) (*x509.Certificate, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errs.FileError(err, filename)
@@ -148,34 +152,8 @@ func ReadCertificate(filename string) (*realx509.Certificate, error) {
 
 	// PEM format
 	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
-		crt, err := Read(filename)
-		if err != nil {
-			return nil, err
-		}
-		switch crt := crt.(type) {
-		case *realx509.Certificate:
-			return crt, nil
-		default:
-			return nil, errors.Errorf("error decoding PEM: file '%s' does not contain a certificate", filename)
-		}
-	}
-
-	// DER format (binary)
-	crt, err := realx509.ParseCertificate(b)
-	return crt, errors.Wrapf(err, "error parsing %s", filename)
-}
-
-// ReadStepCertificate returns a *x509.Certificate from the given filename. It
-// supports certificates formats PEM and DER.
-func ReadStepCertificate(filename string) (*x509.Certificate, error) {
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, errs.FileError(err, filename)
-	}
-
-	// PEM format
-	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
-		crt, err := Read(filename, []Options{WithStepCrypto()}...)
+		var crt interface{}
+		crt, err = Read(filename, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -192,6 +170,76 @@ func ReadStepCertificate(filename string) (*x509.Certificate, error) {
 	return crt, errors.Wrapf(err, "error parsing %s", filename)
 }
 
+// ReadCertificateBundle returns a list of *x509.Certificate from the given
+// filename. It supports certificates formats PEM and DER. If a DER-formatted
+// file is given only one certificate will be returned.
+func ReadCertificateBundle(filename string) ([]*x509.Certificate, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errs.FileError(err, filename)
+	}
+
+	// PEM format
+	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
+		var block *pem.Block
+		var bundle []*x509.Certificate
+		for len(b) > 0 {
+			block, b = pem.Decode(b)
+			if block == nil {
+				break
+			}
+			if block.Type != "CERTIFICATE" {
+				return nil, errors.Errorf("error decoding PEM: file '%s' is not a certificate bundle", filename)
+			}
+			var crt *x509.Certificate
+			crt, err = x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error parsing %s", filename)
+			}
+			bundle = append(bundle, crt)
+		}
+		if len(b) > 0 {
+			return nil, errors.Errorf("error decoding PEM: file '%s' contains unexpected data", filename)
+		}
+		return bundle, nil
+	}
+
+	// DER format (binary)
+	crt, err := x509.ParseCertificate(b)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error parsing %s", filename)
+	}
+	return []*x509.Certificate{crt}, nil
+}
+
+// ReadStepCertificate returns a *x509.Certificate from the given filename. It
+// supports certificates formats PEM and DER.
+func ReadStepCertificate(filename string) (*stepx509.Certificate, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errs.FileError(err, filename)
+	}
+
+	// PEM format
+	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
+		var crt interface{}
+		crt, err = Read(filename, []Options{WithStepCrypto()}...)
+		if err != nil {
+			return nil, err
+		}
+		switch crt := crt.(type) {
+		case *stepx509.Certificate:
+			return crt, nil
+		default:
+			return nil, errors.Errorf("error decoding PEM: file '%s' does not contain a certificate", filename)
+		}
+	}
+
+	// DER format (binary)
+	crt, err := stepx509.ParseCertificate(b)
+	return crt, errors.Wrapf(err, "error parsing %s", filename)
+}
+
 // Parse returns the key or certificate PEM-encoded in the given bytes.
 func Parse(b []byte, opts ...Options) (interface{}, error) {
 	// Populate options
@@ -203,9 +251,9 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 	block, rest := pem.Decode(b)
 	switch {
 	case block == nil:
-		return nil, errors.Errorf("error decoding %s: is not a valid PEM encoded key", ctx.filename)
+		return nil, errors.Errorf("error decoding %s: is not a valid PEM encoded block", ctx.filename)
 	case len(rest) > 0 && !ctx.firstBlock:
-		return nil, errors.Errorf("error decoding %s: contains more than one key", ctx.filename)
+		return nil, errors.Errorf("error decoding %s: contains more than one PEM endoded block", ctx.filename)
 	}
 
 	// PEM is encrypted: ask for password
@@ -243,17 +291,17 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE":
 		if ctx.stepCrypto {
-			crt, err := x509.ParseCertificate(block.Bytes)
+			crt, err := stepx509.ParseCertificate(block.Bytes)
 			return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
 		}
-		crt, err := realx509.ParseCertificate(block.Bytes)
+		crt, err := x509.ParseCertificate(block.Bytes)
 		return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
-	case "CERTIFICATE REQUEST":
+	case "CERTIFICATE REQUEST", "NEW CERTIFICATE REQUEST":
 		if ctx.stepCrypto {
-			csr, err := x509.ParseCertificateRequest(block.Bytes)
+			csr, err := stepx509.ParseCertificateRequest(block.Bytes)
 			return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
 		}
-		csr, err := realx509.ParseCertificateRequest(block.Bytes)
+		csr, err := x509.ParseCertificateRequest(block.Bytes)
 		return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	default:
 		return nil, errors.Errorf("error decoding %s: contains an unexpected header '%s'", ctx.filename, block.Type)
@@ -290,12 +338,13 @@ func Read(filename string, opts ...Options) (interface{}, error) {
 
 // Serialize will serialize the input to a PEM formatted block and apply
 // modifiers.
-func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
+func Serialize(in interface{}, opts ...Options) (*pem.Block, error) {
 	ctx := new(context)
 	if err := ctx.apply(opts); err != nil {
 		return nil, err
 	}
 
+	var p *pem.Block
 	switch k := in.(type) {
 	case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey:
 		b, err := MarshalPKIXPublicKey(k)
@@ -357,7 +406,7 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 			Type:  "CERTIFICATE",
 			Bytes: k.Raw,
 		}
-	case *realx509.Certificate:
+	case *stepx509.Certificate:
 		p = &pem.Block{
 			Type:  "CERTIFICATE",
 			Bytes: k.Raw,
@@ -367,7 +416,7 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 			Type:  "CERTIFICATE REQUEST",
 			Bytes: k.Raw,
 		}
-	case *realx509.CertificateRequest:
+	case *stepx509.CertificateRequest:
 		p = &pem.Block{
 			Type:  "CERTIFICATE REQUEST",
 			Bytes: k.Raw,
@@ -379,14 +428,16 @@ func Serialize(in interface{}, opts ...Options) (p *pem.Block, err error) {
 	// Apply options on the PEM blocks.
 	if ctx.password != nil {
 		if _, ok := in.(crypto.PrivateKey); ok && ctx.pkcs8 {
+			var err error
 			p, err = EncryptPKCS8PrivateKey(rand.Reader, p.Bytes, ctx.password, DefaultEncCipher)
 			if err != nil {
 				return nil, err
 			}
 		} else {
+			var err error
 			p, err = x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, ctx.password, DefaultEncCipher)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to serialze to PEM")
+				return nil, errors.Wrap(err, "failed to serialize to PEM")
 			}
 		}
 	}
@@ -413,7 +464,7 @@ func ParseDER(b []byte) (interface{}, error) {
 
 	// Try public key
 	if err != nil {
-		if key, err = x509.ParsePKIXPublicKey(b); err != nil {
+		if key, err = ParsePKIXPublicKey(b); err != nil {
 			if key, err = x509.ParsePKCS1PublicKey(b); err != nil {
 				return nil, errors.New("error decoding DER; bad format")
 			}
@@ -421,4 +472,82 @@ func ParseDER(b []byte) (interface{}, error) {
 	}
 
 	return key, nil
+}
+
+// ParseSSH parses parses a public key from an authorized_keys file used in
+// OpenSSH according to the sshd(8) manual page.
+func ParseSSH(b []byte) (interface{}, error) {
+	key, _, _, _, err := ssh.ParseAuthorizedKey(b)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing OpenSSH key")
+	}
+
+	switch key.Type() {
+	case ssh.KeyAlgoRSA:
+		var w struct {
+			Name string
+			E    *big.Int
+			N    *big.Int
+		}
+		if err := ssh.Unmarshal(key.Marshal(), &w); err != nil {
+			return nil, errors.Wrap(err, "error unmarshaling key")
+		}
+
+		if w.E.BitLen() > 24 {
+			return nil, errors.New("error unmarshaling key: exponent too large")
+		}
+		e := w.E.Int64()
+		if e < 3 || e&1 == 0 {
+			return nil, errors.New("error unmarshaling key: incorrect exponent")
+		}
+
+		key := new(rsa.PublicKey)
+		key.E = int(e)
+		key.N = w.N
+		return key, nil
+
+	case ssh.KeyAlgoECDSA256, ssh.KeyAlgoECDSA384, ssh.KeyAlgoECDSA521:
+		var w struct {
+			Name     string
+			ID       string
+			KeyBytes []byte
+		}
+		if err := ssh.Unmarshal(key.Marshal(), &w); err != nil {
+			return nil, errors.Wrap(err, "error unmarshaling key")
+		}
+
+		key := new(ecdsa.PublicKey)
+		switch w.Name {
+		case ssh.KeyAlgoECDSA256:
+			key.Curve = elliptic.P256()
+		case ssh.KeyAlgoECDSA384:
+			key.Curve = elliptic.P384()
+		case ssh.KeyAlgoECDSA521:
+			key.Curve = elliptic.P521()
+		default:
+			return nil, errors.Errorf("unsupported ecdsa curve %s", w.Name)
+		}
+
+		key.X, key.Y = elliptic.Unmarshal(key.Curve, w.KeyBytes)
+		if key.X == nil || key.Y == nil {
+			return nil, errors.New("invalid ecdsa curve point")
+		}
+		return key, nil
+
+	case ssh.KeyAlgoED25519:
+		var w struct {
+			Name     string
+			KeyBytes []byte
+		}
+		if err := ssh.Unmarshal(key.Marshal(), &w); err != nil {
+			return nil, errors.Wrap(err, "error unmarshaling key")
+		}
+		return ed25519.PublicKey(w.KeyBytes), nil
+
+	case ssh.KeyAlgoDSA:
+		return nil, errors.Errorf("step does not support DSA keys")
+
+	default:
+		return nil, errors.Errorf("unsupported key type %T", key)
+	}
 }

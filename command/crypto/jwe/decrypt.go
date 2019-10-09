@@ -19,7 +19,7 @@ func decryptCommand() cli.Command {
 		Action: cli.ActionFunc(decryptAction),
 		Usage:  "verify a JWE and decrypt ciphertext",
 		UsageText: `**step crypto jwe decrypt**
-		[**--key**=<jwk>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+		[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jwe decrypt** verifies a JWE read from STDIN and decrypts the
 ciphertext printing it to STDOUT. If verification fails a non-zero failure
 code is returned. If verification succeeds the command returns 0.
@@ -28,7 +28,7 @@ For examples, see **step help crypto jwe**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The JWE recipient's private key. The <key> argument should be the name of a file
+				Usage: `The <path> to the JWE recipient's private key. The argument should be the name of a file
 containing a private JWK (or a JWK encrypted as a JWE payload) or a PEM encoded
 private key (or a private key encrypted using the modes described on RFC 1423 or
 with PBES2+PBKDF2 described in RFC 2898).`,
@@ -129,7 +129,7 @@ func decryptAction(ctx *cli.Context) error {
 		}
 
 		// Validate jwk
-		if err := jose.ValidateJWK(jwk); err != nil {
+		if err = jose.ValidateJWK(jwk); err != nil {
 			return err
 		}
 
@@ -141,7 +141,7 @@ func decryptAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error decrypting data")
 	}
 
-	fmt.Printf(string(decrypted))
+	fmt.Print(string(decrypted))
 
 	return nil
 }

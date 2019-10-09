@@ -26,6 +26,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -116,10 +117,19 @@ Renew the certificate and convert it to DER:
 $ step ca renew --daemon --renew-period 16h \
   --exec "step certificate format --force --out internal.der internal.crt" \
   internal.crt internal.key
+'''
+
+Renew a certificate using the offline mode, requires the configuration
+files, certificates, and keys created with **step ca init**:
+'''
+$ step ca renew --offline internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
-			caURLFlag,
-			rootFlag,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Force,
+			flags.Offline,
+			flags.Root,
 			cli.StringFlag{
 				Name:  "out,output-file",
 				Usage: "The new certificate <file> path. Defaults to overwriting the <crt-file> positional argument",
@@ -134,7 +144,6 @@ renew endpoint at the same time. The <duration> is a sequence of decimal numbers
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
-			flags.Force,
 			cli.IntFlag{
 				Name: "pid",
 				Usage: `The process id to signal after the certificate has been renewed. By default the
@@ -245,7 +254,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 			"validity period; renew-period=%v, cert-validity-period=%v", renewPeriod, cvp)
 	}
 
-	renewer, err := newRenewer(caURL, crtFile, keyFile, rootFile)
+	renewer, err := newRenewer(ctx, caURL, crtFile, keyFile, rootFile)
 	if err != nil {
 		return err
 	}
@@ -331,12 +340,13 @@ func runExecCmd(execCmd string) error {
 }
 
 type renewer struct {
-	client    *ca.Client
+	client    cautils.CaClient
 	transport *http.Transport
 	keyFile   string
+	offline   bool
 }
 
-func newRenewer(caURL, crtFile, keyFile, rootFile string) (*renewer, error) {
+func newRenewer(ctx *cli.Context, caURL, crtFile, keyFile, rootFile string) (*renewer, error) {
 	cert, err := tls.LoadX509KeyPair(crtFile, keyFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "error loading certificates")
@@ -358,15 +368,29 @@ func newRenewer(caURL, crtFile, keyFile, rootFile string) (*renewer, error) {
 		},
 	}
 
-	client, err := ca.NewClient(caURL, ca.WithTransport(tr))
-	if err != nil {
-		return nil, err
+	var client cautils.CaClient
+	offline := ctx.Bool("offline")
+	if offline {
+		caConfig := ctx.String("ca-config")
+		if caConfig == "" {
+			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
+		}
+		client, err = cautils.NewOfflineCA(caConfig)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		client, err = ca.NewClient(caURL, ca.WithTransport(tr))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &renewer{
 		client:    client,
 		transport: tr,
 		keyFile:   keyFile,
+		offline:   offline,
 	}, nil
 }
 

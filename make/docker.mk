@@ -43,21 +43,27 @@ docker-tag:
 docker-push-tag: docker-tag
 	$(call DOCKER_PUSH,step-cli,$(VERSION))
 
+docker-push-tag-latest:
+	$(call DOCKER_PUSH,step-cli,latest)
+
 # Rely on DOCKER_USERNAME and DOCKER_PASSWORD being set inside the CI or
 # equivalent environment
 docker-login:
 	$Q docker login -u="$(DOCKER_USERNAME)" -p="$(DOCKER_PASSWORD)"
 
-.PHONY: docker-tag docker-push-tag docker-login
+.PHONY: docker-tag docker-push-tag docker-push-tag-latest docker-login
 
 #################################################
 # Targets for different type of builds
 #################################################
 
-# For all builds on the master branch we build the container but do not push.
+# For all builds we build the docker container
 docker-master: docker
 
-# For all builds of a tagged release we build and push the container.
-docker-release: docker-master docker-login docker-push-tag
+# For all builds with a release candidate tag
+docker-release-candidate: docker-master docker-login docker-push-tag
 
-.PHONY: docker-master docker-release
+# For all builds of a release tag
+docker-release: docker-release-candidate docker-push-tag-latest
+
+.PHONY: docker-master docker-release-candidate docker-release

@@ -41,6 +41,10 @@ func HelpCommand() cli.Command {
 				Name:  "report",
 				Usage: "Writes a JSON report to the HTML docs directory.",
 			},
+			cli.BoolFlag{
+				Name:  "hugo",
+				Usage: "Writes hugo (vs jekyll) compatible markdown files",
+			},
 		},
 	}
 }

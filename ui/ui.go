@@ -87,12 +87,6 @@ func PrintSelected(name, value string, opts ...Option) error {
 
 // Prompt creates a runs a promptui.Prompt with the given label.
 func Prompt(label string, opts ...Option) (string, error) {
-	clean, err := preparePromptTerminal()
-	if err != nil {
-		return "", err
-	}
-	defer clean()
-
 	o := &options{
 		promptTemplates: PromptTemplates(),
 	}
@@ -102,6 +96,13 @@ func Prompt(label string, opts ...Option) (string, error) {
 	if o.value != "" {
 		return o.getValue()
 	}
+
+	// Prompt using the terminal
+	clean, err := preparePromptTerminal()
+	if err != nil {
+		return "", err
+	}
+	defer clean()
 
 	prompt := &promptui.Prompt{
 		Label:     label,
@@ -120,12 +121,6 @@ func Prompt(label string, opts ...Option) (string, error) {
 // PromptPassword creates a runs a promptui.Prompt with the given label. This
 // prompt will mask the key entries with \r.
 func PromptPassword(label string, opts ...Option) ([]byte, error) {
-	clean, err := preparePromptTerminal()
-	if err != nil {
-		return nil, err
-	}
-	defer clean()
-
 	// Using a not printable character as they work better than \r
 	o := &options{
 		mask:            1,
@@ -137,6 +132,13 @@ func PromptPassword(label string, opts ...Option) ([]byte, error) {
 	if o.value != "" {
 		return o.getValueBytes()
 	}
+
+	// Prompt using the terminal
+	clean, err := preparePromptTerminal()
+	if err != nil {
+		return nil, err
+	}
+	defer clean()
 
 	prompt := &promptui.Prompt{
 		Label:     label,
@@ -175,16 +177,16 @@ func PromptPasswordGenerate(label string, opts ...Option) ([]byte, error) {
 
 // Select creates and runs a promptui.Select with the given label and items.
 func Select(label string, items interface{}, opts ...Option) (int, string, error) {
+	o := &options{
+		selectTemplates: SelectTemplates(label),
+	}
+	o.apply(opts)
+
 	clean, err := prepareSelectTerminal()
 	if err != nil {
 		return 0, "", err
 	}
 	defer clean()
-
-	o := &options{
-		selectTemplates: SelectTemplates(label),
-	}
-	o.apply(opts)
 
 	prompt := &promptui.Select{
 		Label:     label,

@@ -38,6 +38,7 @@ func TestOptions(t *testing.T) {
 		{"WithJWTID fail", WithJWTID(""), empty, true},
 		{"WithKid ok", WithKid("value"), &Claims{ExtraHeaders: map[string]interface{}{"kid": "value"}}, false},
 		{"WithKid fail", WithKid(""), empty, true},
+		{"WithSHA ok", WithSHA("6908751f68290d4573ae0be39a98c8b9b7b7d4e8b2a6694b7509946626adfe98"), &Claims{ExtraClaims: map[string]interface{}{"sha": "6908751f68290d4573ae0be39a98c8b9b7b7d4e8b2a6694b7509946626adfe98"}}, false},
 	}
 
 	for _, tt := range tests {

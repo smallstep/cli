@@ -12,6 +12,7 @@ import (
 
 // version and buildTime are filled in during build by the Makefile
 var (
+	name      = "Smallstep CLI"
 	buildTime = "N/A"
 	commit    = "N/A"
 )
@@ -46,14 +47,12 @@ func init() {
 		}
 	}
 
-	// Check for presence or create it if necessary
+	// Check for presence or attempt to create it if necessary.
+	//
+	// Some environments (e.g. third party docker images) might fail creating
+	// the directory, so this should not panic if it can't.
 	if fi, err := os.Stat(stepPath); err != nil {
-		if err := os.MkdirAll(stepPath, 0700); err != nil {
-			if e, ok := err.(*os.PathError); ok {
-				err = e.Err
-			}
-			l.Fatalf("Error creating '%s': %s.", stepPath, err)
-		}
+		os.MkdirAll(stepPath, 0700)
 	} else if !fi.IsDir() {
 		l.Fatalf("File '%s' is not a directory.", stepPath)
 	}
@@ -62,7 +61,8 @@ func init() {
 }
 
 // Set updates the Version and ReleaseDate
-func Set(v, t string) {
+func Set(n, v, t string) {
+	name = n
 	buildTime = t
 	commit = v
 }
@@ -74,8 +74,8 @@ func Version() string {
 		out = "0000000-dev"
 	}
 
-	return fmt.Sprintf("Smallstep CLI/%s (%s/%s)",
-		out, runtime.GOOS, runtime.GOARCH)
+	return fmt.Sprintf("%s/%s (%s/%s)",
+		name, out, runtime.GOOS, runtime.GOARCH)
 }
 
 // ReleaseDate returns the time of when the binary was built

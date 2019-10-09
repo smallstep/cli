@@ -30,52 +30,65 @@ func markdownHelpAction(ctx *cli.Context) error {
 		return errs.FileError(err, dir)
 	}
 
+	isHugo := ctx.Bool("hugo")
+
 	// app index
 	index := path.Join(dir, "step.md")
 	w, err := os.Create(index)
 	if err != nil {
 		return errs.FileError(err, index)
 	}
-	markdownHelpPrinter(w, mdAppHelpTemplate, ctx.App)
+	markdownHelpPrinter(w, mdAppHelpTemplate, "", ctx.App)
 	if err := w.Close(); err != nil {
 		return errs.FileError(err, index)
 	}
 
 	// Subcommands
 	for _, cmd := range ctx.App.Commands {
-		if err := markdownHelpCommand(ctx.App, cmd, path.Join(dir, cmd.Name)); err != nil {
+		if err := markdownHelpCommand(ctx.App, cmd, cmd, path.Join(dir, cmd.Name), isHugo); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func markdownHelpCommand(app *cli.App, cmd cli.Command, base string) error {
+func markdownHelpCommand(app *cli.App, cmd cli.Command, parent cli.Command, base string, isHugo bool) error {
 	if err := os.MkdirAll(base, 0755); err != nil {
 		return errs.FileError(err, base)
 	}
 
-	index := path.Join(base, "index.md")
+	fileName := "index.md"
+	// preserve jekyll compatibility for transition period
+	if isHugo && len(cmd.Subcommands) > 0 {
+		fileName = "_index.md"
+	}
+
+	index := path.Join(base, fileName)
 	w, err := os.Create(index)
 	if err != nil {
 		return errs.FileError(err, index)
 	}
 
+	parentName := parent.HelpName
+	if cmd.HelpName == parent.HelpName {
+		parentName = "step"
+	}
+
 	if len(cmd.Subcommands) == 0 {
-		markdownHelpPrinter(w, mdCommandHelpTemplate, cmd)
+		markdownHelpPrinter(w, mdCommandHelpTemplate, parentName, cmd)
 		return errs.FileError(w.Close(), index)
 	}
 
 	ctx := cli.NewContext(app, nil, nil)
 	ctx.App = createCliApp(ctx, cmd)
-	markdownHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
+	markdownHelpPrinter(w, mdSubcommandHelpTemplate, parentName, ctx.App)
 	if err := w.Close(); err != nil {
 		return errs.FileError(err, index)
 	}
 
 	for _, sub := range cmd.Subcommands {
 		sub.HelpName = fmt.Sprintf("%s %s", cmd.HelpName, sub.Name)
-		if err := markdownHelpCommand(app, sub, path.Join(base, sub.Name)); err != nil {
+		if err := markdownHelpCommand(app, sub, cmd, path.Join(base, sub.Name), isHugo); err != nil {
 			return err
 		}
 	}

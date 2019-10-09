@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/urfave/cli"
@@ -18,11 +19,14 @@ import (
 	"github.com/smallstep/cli/usage"
 
 	// Enabled commands
+	_ "github.com/smallstep/cli/command/base64"
 	_ "github.com/smallstep/cli/command/ca"
 	_ "github.com/smallstep/cli/command/certificate"
 	_ "github.com/smallstep/cli/command/crypto"
+	_ "github.com/smallstep/cli/command/fileserver"
 	_ "github.com/smallstep/cli/command/oauth"
 	_ "github.com/smallstep/cli/command/path"
+	_ "github.com/smallstep/cli/command/ssh"
 
 	// Profiling and debugging
 	_ "net/http/pprof"
@@ -37,11 +41,12 @@ var Version = "N/A"
 var BuildTime = "N/A"
 
 func init() {
-	config.Set(Version, BuildTime)
+	config.Set("Smallstep CLI", Version, BuildTime)
 	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
+	defer panicHandler()
 	// Override global framework components
 	cli.VersionPrinter = func(c *cli.Context) {
 		version.Command(c)
@@ -93,6 +98,22 @@ func main() {
 	}
 }
 
+func panicHandler() {
+	if r := recover(); r != nil {
+		if os.Getenv("STEPDEBUG") == "1" {
+			fmt.Fprintf(os.Stderr, "%s\n", config.Version())
+			fmt.Fprintf(os.Stderr, "Release Date: %s\n\n", config.ReleaseDate())
+			panic(r)
+		} else {
+			fmt.Fprintln(os.Stderr, "Something unexpected happened.")
+			fmt.Fprintln(os.Stderr, "If you want to help us debug the problem, please run:")
+			fmt.Fprintf(os.Stderr, "STEPDEBUG=1 %s\n", strings.Join(os.Args, " "))
+			fmt.Fprintln(os.Stderr, "and send the output to info@smallstep.com")
+			os.Exit(2)
+		}
+	}
+}
+
 func flagValue(f cli.Flag) reflect.Value {
 	fv := reflect.ValueOf(f)
 	for fv.Kind() == reflect.Ptr {
@@ -108,7 +129,11 @@ func stringifyFlag(f cli.Flag) string {
 	usage := fv.FieldByName("Usage").String()
 	placeholder := placeholderString.FindString(usage)
 	if placeholder == "" {
-		placeholder = "<value>"
+		switch f.(type) {
+		case cli.BoolFlag, cli.BoolTFlag:
+		default:
+			placeholder = "<value>"
+		}
 	}
 	return cli.FlagNamePrefixer(fv.FieldByName("Name").String(), placeholder) + "\t" + usage
 }

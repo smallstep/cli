@@ -4,7 +4,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
-	realx509 "crypto/x509"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
 	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/pkg/x509"
+	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -54,6 +54,13 @@ hkjOPQIBBggqhkjOPQMBBwNCAASKj0MvK6CUzFqRLfDTQNQp0Zt5dcHYx+Dq1Wh9
 AwIDRwAwRAIgZgz9gdx9inOp6bSX4EkYiUCyLV9xGvabovu5C9UkRr8CIBGBbkp0
 l4tesAKoXelsLygJjPuUGRLK+OtdjPBIN1Zo
 -----END CERTIFICATE REQUEST-----`
+	testCSRKeytool = `-----BEGIN NEW CERTIFICATE REQUEST-----
+MIHYMIGAAgEAMB4xHDAaBgNVBAMTE2hlbGxvLnNtYWxsc3RlcC5jb20wWTATBgcq
+hkjOPQIBBggqhkjOPQMBBwNCAASKj0MvK6CUzFqRLfDTQNQp0Zt5dcHYx+Dq1Wh9
+5dhqf1Fu9+1m5+LKkgBWoZmo7sJH0RuSjIdv/sZwpBrkdn2soAAwCgYIKoZIzj0E
+AwIDRwAwRAIgZgz9gdx9inOp6bSX4EkYiUCyLV9xGvabovu5C9UkRr8CIBGBbkp0
+l4tesAKoXelsLygJjPuUGRLK+OtdjPBIN1Zo
+-----END NEW CERTIFICATE REQUEST-----`
 )
 
 type testdata struct {
@@ -162,7 +169,8 @@ func TestReadCertificate(t *testing.T) {
 		{"testdata/ca.der", nil},
 		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
 		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
-		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded key")},
+		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded block")},
+		{"testdata/badder.crt", errors.New("error parsing testdata/badder.crt: asn1: syntax error: data truncated")},
 		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
 	}
 
@@ -174,7 +182,39 @@ func TestReadCertificate(t *testing.T) {
 			}
 		} else {
 			assert.NoError(t, err)
-			assert.Type(t, &realx509.Certificate{}, crt)
+			assert.Type(t, &x509.Certificate{}, crt)
+		}
+	}
+}
+
+func TestReadCertificateBundle(t *testing.T) {
+	tests := []struct {
+		fn  string
+		len int
+		err error
+	}{
+		{"testdata/ca.crt", 1, nil},
+		{"testdata/ca.der", 1, nil},
+		{"testdata/bundle.crt", 2, nil},
+		{"testdata/notexists.crt", 0, errors.New("open testdata/notexists.crt failed: no such file or directory")},
+		{"testdata/badca.crt", 0, errors.New("error parsing testdata/badca.crt")},
+		{"testdata/badpem.crt", 0, errors.New("error decoding PEM: file 'testdata/badpem.crt' contains unexpected data")},
+		{"testdata/badder.crt", 0, errors.New("error parsing testdata/badder.crt: asn1: syntax error: data truncated")},
+		{"testdata/openssl.p256.pem", 0, errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' is not a certificate bundle")},
+	}
+
+	for _, tc := range tests {
+		certs, err := ReadCertificateBundle(tc.fn)
+		if tc.err != nil {
+			if assert.Error(t, err, tc.fn) {
+				assert.HasPrefix(t, err.Error(), tc.err.Error())
+			}
+		} else {
+			assert.NoError(t, err)
+			assert.Len(t, tc.len, certs, tc.fn)
+			for i := range certs {
+				assert.Type(t, &x509.Certificate{}, certs[i])
+			}
 		}
 	}
 }
@@ -188,7 +228,8 @@ func TestReadStepCertificate(t *testing.T) {
 		{"testdata/ca.der", nil},
 		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
 		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
-		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded key")},
+		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: is not a valid PEM encoded block")},
+		{"testdata/badder.crt", errors.New("error parsing testdata/badder.crt: asn1: syntax error: data truncated")},
 		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
 	}
 
@@ -200,7 +241,7 @@ func TestReadStepCertificate(t *testing.T) {
 			}
 		} else {
 			assert.NoError(t, err)
-			assert.Type(t, &x509.Certificate{}, crt)
+			assert.Type(t, &stepx509.Certificate{}, crt)
 		}
 	}
 }
@@ -273,7 +314,7 @@ func TestParsePEM(t *testing.T) {
 			return &ParseTest{
 				in:      b,
 				opts:    nil,
-				cmpType: &realx509.Certificate{},
+				cmpType: &x509.Certificate{},
 			}
 		},
 		"success-stepx509-crt": func(t *testing.T) *ParseTest {
@@ -282,7 +323,7 @@ func TestParsePEM(t *testing.T) {
 			return &ParseTest{
 				in:      b,
 				opts:    []Options{WithStepCrypto()},
-				cmpType: &x509.Certificate{},
+				cmpType: &stepx509.Certificate{},
 			}
 		},
 	}
@@ -416,7 +457,8 @@ func TestSerialize(t *testing.T) {
 						assert.Equals(t, p.Type, "RSA PRIVATE KEY")
 						assert.Equals(t, p.Headers["Proc-Type"], "4,ENCRYPTED")
 
-						der, err := x509.DecryptPEMBlock(p, []byte(test.pass))
+						var der []byte
+						der, err = x509.DecryptPEMBlock(p, []byte(test.pass))
 						assert.FatalError(t, err)
 						assert.Equals(t, der, x509.MarshalPKCS1PrivateKey(k))
 					}
@@ -424,7 +466,8 @@ func TestSerialize(t *testing.T) {
 					assert.False(t, x509.IsEncryptedPEMBlock(p))
 					assert.Equals(t, p.Type, "PUBLIC KEY")
 
-					b, err := x509.MarshalPKIXPublicKey(k)
+					var b []byte
+					b, err = x509.MarshalPKIXPublicKey(k)
 					assert.FatalError(t, err)
 					assert.Equals(t, p.Bytes, b)
 				case *ecdsa.PrivateKey:
@@ -440,17 +483,20 @@ func TestSerialize(t *testing.T) {
 						actualBytes, err = x509.DecryptPEMBlock(p, []byte(test.pass))
 						assert.FatalError(t, err)
 					}
-					expectedBytes, err := x509.MarshalECPrivateKey(k)
+					var expectedBytes []byte
+					expectedBytes, err = x509.MarshalECPrivateKey(k)
 					assert.FatalError(t, err)
 					assert.Equals(t, actualBytes, expectedBytes)
 
 					if test.file != "" {
 						// Check key permissions
-						fileInfo, err := os.Stat(test.file)
+						var fileInfo os.FileInfo
+						fileInfo, err = os.Stat(test.file)
 						assert.FatalError(t, err)
 						assert.Equals(t, fileInfo.Mode(), os.FileMode(0600))
 						// Verify that key written to file is correct
-						keyFileBytes, err := ioutil.ReadFile(test.file)
+						var keyFileBytes []byte
+						keyFileBytes, err = ioutil.ReadFile(test.file)
 						assert.FatalError(t, err)
 						pemKey, _ := pem.Decode(keyFileBytes)
 						assert.Equals(t, pemKey.Type, "EC PRIVATE KEY")
@@ -624,6 +670,13 @@ func TestParseKey_x509(t *testing.T) {
 	csr, err := x509.ParseCertificateRequest(b.Bytes)
 	assert.FatalError(t, err)
 	key, err = ParseKey([]byte(testCSR))
+	assert.FatalError(t, err)
+	assert.Equals(t, csr.PublicKey, key)
+
+	b, _ = pem.Decode([]byte(testCSRKeytool))
+	csr, err = x509.ParseCertificateRequest(b.Bytes)
+	assert.FatalError(t, err)
+	key, err = ParseKey([]byte(testCSRKeytool))
 	assert.FatalError(t, err)
 	assert.Equals(t, csr.PublicKey, key)
 }

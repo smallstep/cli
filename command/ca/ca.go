@@ -68,9 +68,10 @@ $ step ca renew internal.crt internal.key \
 			healthCommand(),
 			initCommand(),
 			bootstrapCommand(),
-			newTokenCommand(),
-			newCertificateCommand(),
+			tokenCommand(),
+			certificateCommand(),
 			renewCertificateCommand(),
+			revokeCertificateCommand(),
 			provisioner.Command(),
 			signCertificateCommand(),
 			rootComand(),
@@ -84,25 +85,9 @@ $ step ca renew internal.crt internal.key \
 
 // common flags used in several commands
 var (
-	caURLFlag = cli.StringFlag{
-		Name:  "ca-url",
-		Usage: "<URI> of the targeted Step Certificate Authority.",
-	}
-
-	rootFlag = cli.StringFlag{
-		Name:  "root",
-		Usage: "The path to the PEM <file> used as the root certificate authority.",
-	}
-
 	fingerprintFlag = cli.StringFlag{
 		Name:  "fingerprint",
 		Usage: "The <fingerprint> of the targeted root certificate.",
-	}
-
-	tokenFlag = cli.StringFlag{
-		Name: "token",
-		Usage: `The one-time <token> used to authenticate with the CA in order to create the
-certificate.`,
 	}
 
 	notBeforeFlag = cli.StringFlag{
@@ -128,15 +113,29 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 		Usage: "The provisioner <kid> to use.",
 	}
 
-	provisionerIssuerFlag = cli.StringFlag{
-		Name:  "issuer",
-		Usage: "The provisioner <name> to use.",
-	}
-
 	passwordFileFlag = cli.StringFlag{
 		Name: "password-file",
 		Usage: `The path to the <file> containing the password to decrypt the one-time token
 generating key.`,
+	}
+
+	sshPrincipalFlag = cli.StringSliceFlag{
+		Name: "principal,n",
+		Usage: `Add the principals (users or hosts) that the token is authorized to
+		request. The signing request using this token won't be able to add
+		extra names. Use the '--principal' flag multiple times to configure
+		multiple ones. The '--principal' flag and the '--token' flag are
+		mutually exlusive.`,
+	}
+
+	sshHostFlag = cli.BoolFlag{
+		Name:  "host",
+		Usage: `Create a host certificate instead of a user certificate.`,
+	}
+
+	consoleFlag = cli.BoolFlag{
+		Name:  "console",
+		Usage: "Complete the flow while remaining inside the terminal",
 	}
 )
 

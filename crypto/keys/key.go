@@ -20,6 +20,12 @@ var (
 	DefaultKeySize = 2048
 	// DefaultKeyCurve is the default curve of a private key.
 	DefaultKeyCurve = "P-256"
+	// DefaultSignatureAlgorithm is the default signature algorithm used on a
+	// certificate with the default key type.
+	DefaultSignatureAlgorithm = x509.ECDSAWithSHA256
+	// MinRSAKeyBytes is the minimum acceptable size (in bytes) for RSA keys
+	// signed by the authority.
+	MinRSAKeyBytes = 256
 )
 
 // PublicKey extracts a public key from a private key.
