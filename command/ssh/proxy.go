@@ -29,7 +29,7 @@ func proxyCommand() cli.Command {
 
 ## EXAMPLES
 
-`,
+TODO`,
 		Flags: []cli.Flag{
 			sshConnectFlag,
 			cli.StringFlag{
