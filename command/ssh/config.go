@@ -107,9 +107,9 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 
 	// Prints user or host keys
 	if isRoots || isFederation {
-		var roots *api.SSHKeysResponse
+		var roots *api.SSHRootsResponse
 		if isRoots {
-			roots, err = client.SSHKeys()
+			roots, err = client.SSHRoots()
 		} else {
 			roots, err = client.SSHFederation()
 		}

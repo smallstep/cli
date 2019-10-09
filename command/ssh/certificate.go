@@ -275,7 +275,7 @@ func certificateAction(ctx *cli.Context) error {
 		sshAuPubBytes = sshAuPub.Marshal()
 	}
 
-	resp, err := caClient.SignSSH(&api.SignSSHRequest{
+	resp, err := caClient.SSHSign(&api.SSHSignRequest{
 		PublicKey:        sshPub.Marshal(),
 		OTT:              token,
 		Principals:       principals,
