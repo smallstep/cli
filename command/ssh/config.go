@@ -19,7 +19,6 @@ import (
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
-	"golang.org/x/crypto/ssh"
 )
 
 func configCommand() cli.Command {
@@ -34,12 +33,12 @@ func configCommand() cli.Command {
 
 Print the public keys used to verify user certificates:
 '''
-$ step ssh config --keys
+$ step ssh config --roots
 '''
 
 Print the public keys used to verify host certificates:
 '''
-$ step ssh config --host --keys
+$ step ssh config --host --roots
 '''
 
 Apply configuration templates on the user system:
@@ -62,8 +61,12 @@ $ step ssh config --set User=joe --set Bastion=bastion.example.com
 				Usage: "Configures a SSH server instead of a client.",
 			},
 			cli.BoolFlag{
-				Name:  "keys",
-				Usage: "Prints the public key used to verify user or host certificates.",
+				Name:  "roots",
+				Usage: "Prints the public keys used to verify user or host certificates.",
+			},
+			cli.BoolFlag{
+				Name:  "federation",
+				Usage: "Prints all the public keys in the federation. These keys are used to verify user or host certificates",
 			},
 			cli.StringSliceFlag{
 				Name:  "set",
@@ -84,11 +87,17 @@ type statusCoder interface {
 
 func configAction(ctx *cli.Context) (recoverErr error) {
 	isHost := ctx.Bool("host")
-	isKeys := ctx.Bool("keys")
+	isRoots := ctx.Bool("roots")
+	isFederation := ctx.Bool("federation")
 	sets := ctx.StringSlice("set")
 
-	if isKeys && len(sets) > 0 {
-		return errs.IncompatibleFlagWithFlag(ctx, "keys", "set")
+	switch {
+	case isRoots && isFederation:
+		return errs.IncompatibleFlagWithFlag(ctx, "roots", "federation")
+	case isRoots && len(sets) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "roots", "set")
+	case isFederation && len(sets) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "federation", "set")
 	}
 
 	client, err := cautils.NewClient(ctx)
@@ -97,8 +106,13 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	}
 
 	// Prints user or host keys
-	if isKeys {
-		keys, err := client.SSHKeys()
+	if isRoots || isFederation {
+		var roots *api.SSHKeysResponse
+		if isRoots {
+			roots, err = client.SSHKeys()
+		} else {
+			roots, err = client.SSHFederation()
+		}
 		if err != nil {
 			if e, ok := err.(statusCoder); ok && e.StatusCode() == http.StatusNotFound {
 				return errors.New("step certificates is not configured with SSH support")
@@ -106,20 +120,22 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 			return errors.Wrap(err, "error getting ssh public keys")
 		}
 
-		var key ssh.PublicKey
+		var keys []api.SSHPublicKey
 		if isHost {
-			if keys.HostKey == nil {
+			if len(roots.HostKeys) == 0 {
 				return errors.New("step certificates is not configured with an ssh.hostKey")
 			}
-			key = keys.HostKey
+			keys = roots.HostKeys
 		} else {
-			if keys.UserKey == nil {
+			if len(roots.UserKeys) == 0 {
 				return errors.New("step certificates is not configured with an ssh.userKey")
 			}
-			key = keys.UserKey
+			keys = roots.UserKeys
 		}
 
-		fmt.Printf("%s %s\n", key.Type(), base64.StdEncoding.EncodeToString(key.Marshal()))
+		for _, key := range keys {
+			fmt.Printf("%s %s\n", key.Type(), base64.StdEncoding.EncodeToString(key.Marshal()))
+		}
 		return nil
 	}
 
