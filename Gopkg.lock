@@ -367,7 +367,7 @@
 
 [[projects]]
   branch = "ssh-config"
-  digest = "1:83cfdac1cc6ed2276f8234a7d1f0f2f556f2c39161a0e7b68aa4a250597d0fa4"
+  digest = "1:b09f3c6712889671aa4e534965c3d3ca0fdf302bfb6e60a061d3e603f3b3a499"
   name = "github.com/smallstep/certificates"
   packages = [
     "acme",
@@ -379,11 +379,12 @@
     "db",
     "logging",
     "monitoring",
+    "pki",
     "server",
     "templates",
   ]
   pruneopts = "UT"
-  revision = "962800676f0cc222216c500499e1ed3610695b20"
+  revision = "829a86a5d7043974d27bf8b668988a90c08d1beb"
 
 [[projects]]
   branch = "master"
@@ -636,7 +637,7 @@
     "github.com/smallstep/certificates/authority",
     "github.com/smallstep/certificates/authority/provisioner",
     "github.com/smallstep/certificates/ca",
-    "github.com/smallstep/certificates/db",
+    "github.com/smallstep/certificates/pki",
     "github.com/smallstep/certinfo",
     "github.com/smallstep/truststore",
     "github.com/smallstep/zcrypto/x509",

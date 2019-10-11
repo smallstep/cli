@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/smallstep/certificates/api"
+	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"

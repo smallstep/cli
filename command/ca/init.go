@@ -7,9 +7,9 @@ import (
 	"io"
 	"strings"
 
+	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
@@ -132,7 +132,7 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	p, err := pki.New(pki.GetPublicPath(), pki.GetSecretsPath(), pki.GetConfigPath())
+	p, err := pki.New()
 	if err != nil {
 		return err
 	}
