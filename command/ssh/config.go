@@ -139,9 +139,10 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return nil
 	}
 
-	var data map[string]string
+	data := map[string]string{
+		"StepPath": config.StepPath(),
+	}
 	if len(sets) > 0 {
-		data = make(map[string]string, len(sets))
 		for _, s := range sets {
 			i := strings.Index(s, "=")
 			if i == -1 {
