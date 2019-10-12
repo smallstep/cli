@@ -4,8 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -16,7 +14,6 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
-	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
@@ -191,50 +188,18 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 
 	if ctx.Bool("dry-run") {
 		for _, t := range templates {
-			ui.Printf("{{ \"%s\" | bold }}\n", mustAbs(t.Path))
+			ui.Printf("{{ \"%s\" | bold }}\n", config.StepAbs(t.Path))
 			fmt.Println(string(t.Content))
 		}
 		return nil
 	}
 
 	for _, t := range templates {
-		path := mustAbs(t.Path)
-		dir := filepath.Dir(path)
-		if _, err := os.Stat(dir); err != nil {
-			if err := os.MkdirAll(dir, 0700); err != nil {
-				return errors.Wrapf(err, "error creating %s", dir)
-			}
+		if err := t.Write(); err != nil {
+			return err
 		}
-		if t.Type == "file" {
-			if err := utils.WriteFile(path, t.Content, 0600); err != nil {
-				return err
-			}
-		} else {
-			if err := utils.WriteSnippet(path, t.Content, 0600); err != nil {
-				return err
-			}
-		}
-		ui.Printf(`{{ "%s" | green }} {{ "%s" | bold }}`+"\n", ui.IconGood, path)
+		ui.Printf(`{{ "%s" | green }} {{ "%s" | bold }}`+"\n", ui.IconGood, config.StepAbs(t.Path))
 	}
 
 	return nil
-}
-
-var home string
-
-func mustAbs(path string) string {
-	var err error
-	if strings.HasPrefix(path, "~") {
-		if home == "" {
-			if home, err = config.Home(); err != nil {
-				panic(err)
-			}
-		}
-		path = strings.Replace(path, "~", home, 1)
-	}
-	path, err = filepath.Abs(path)
-	if err != nil {
-		panic(errors.Wrap(err, "error obtaining absolute path"))
-	}
-	return path
 }
