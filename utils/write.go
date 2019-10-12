@@ -119,6 +119,9 @@ func WriteSnippet(filename string, data []byte, perm os.FileMode) error {
 	}
 	f.WriteString(fmt.Sprintf("%s @ %s\n", SnippetHeader, time.Now().UTC().Format(time.RFC3339)))
 	f.Write(data)
+	if !bytes.HasSuffix(data, []byte("\n")) {
+		f.WriteString("\n")
+	}
 	f.WriteString(SnippetFooter + "\n")
 	f.Write(b[end:])
 	return f.Close()
