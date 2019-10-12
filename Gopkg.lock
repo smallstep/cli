@@ -367,7 +367,7 @@
 
 [[projects]]
   branch = "ssh-config"
-  digest = "1:b09f3c6712889671aa4e534965c3d3ca0fdf302bfb6e60a061d3e603f3b3a499"
+  digest = "1:4aee31af843b3defb86e909c513c478f522ff5ecb701b61ab588c4998148b1ab"
   name = "github.com/smallstep/certificates"
   packages = [
     "acme",
@@ -384,7 +384,7 @@
     "templates",
   ]
   pruneopts = "UT"
-  revision = "829a86a5d7043974d27bf8b668988a90c08d1beb"
+  revision = "7a8ec397aced1ce99dc6f0ad5d0b27e00abfe721"
 
 [[projects]]
   branch = "master"
