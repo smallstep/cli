@@ -182,13 +182,8 @@ type Shell struct {
 func NewShell(user, address string, opts ...ShellOption) (*Shell, error) {
 	address = formatAddress(address)
 
-	home, err := config.Home()
-	if err != nil {
-		return nil, err
-	}
-
 	// Use known_host as HostKeyCallback
-	knownHosts, err := knownhosts.New(filepath.Join(home, ".ssh", "known_hosts"))
+	knownHosts, err := knownhosts.New(filepath.Join(config.Home(), ".ssh", "known_hosts"))
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading known_hosts")
 	}
