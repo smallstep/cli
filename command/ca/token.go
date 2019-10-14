@@ -26,10 +26,12 @@ func tokenCommand() cli.Command {
 		Action: command.ActionFunc(tokenAction),
 		Usage:  "generate an OTT granting access to the CA",
 		UsageText: `**step ca token** <subject>
-		[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-		[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<path>]
-		[**--san**=<SAN>] [**--offline**] [**--revoke**]`,
+[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<path>]
+[**--san**=<SAN>] [**--offline**] [**--revoke**]
+[**--x5c-cert**=<path>] [**--x5c-key**=<path>]
+[**--ssh**] [**--host**] [**--principal**=<string>]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
@@ -123,41 +125,42 @@ Get a new token in offline mode for a 'Revoke' request:
 '''
 $ step ca token --offline --revoke 146103349666685108195655980390445292315
 '''
-`,
+
+Get a new token for an SSH user certificate:
+'''
+$ step ca token max@smallstep.com max_ecdsa --ssh
+'''
+
+Get a new token for an SSH host certificate:
+'''
+$ step ca token my-remote.hostname remote_ecdsa --ssh --host
+'''`,
 		Flags: []cli.Flag{
 			certNotAfterFlag,
 			certNotBeforeFlag,
-			notBeforeFlag,
-			notAfterFlag,
+			passwordFileFlag,
 			provisionerKidFlag,
+			sanFlag,
 			sshPrincipalFlag,
 			sshHostFlag,
 			flags.CaURL,
 			flags.CaConfig,
 			flags.Force,
+			flags.NotAfter,
+			flags.NotBefore,
+			flags.Offline,
 			flags.Root,
 			flags.Provisioner,
-			cli.StringSliceFlag{
-				Name: "san",
-				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs) that the token is
-authorized to request. A certificate signing request using this token must match
-the complete set of subjective alternative names in the token 1:1. Use the '--san'
-flag multiple times to configure multiple SANs.`,
-			},
+			flags.X5cCert,
+			flags.X5cKey,
 			cli.StringFlag{
 				Name: "key",
 				Usage: `The private key <path> used to sign the JWT. This is usually downloaded from
 the certificate authority.`,
 			},
-			passwordFileFlag,
 			cli.StringFlag{
 				Name:  "output-file",
 				Usage: "The destination <file> of the generated one-time token.",
-			},
-			cli.BoolFlag{
-				Name: "offline",
-				Usage: `Creates a token without contacting the certificate authority. Offline mode
-requires the flags <--ca-config> or <--kid>, <--issuer>, <--key>, <--ca-url>, and <--root>.`,
 			},
 			cli.BoolFlag{
 				Name: "revoke",

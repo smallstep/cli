@@ -198,6 +198,11 @@ func RequiredWithFlagValue(ctx *cli.Context, flag, value, required string) error
 	return errors.Errorf("'--%s %s' requires the '--%s' flag", flag, value, required)
 }
 
+// RequiredWithProvisionerTypeFlag returns an error with the required flag message.
+func RequiredWithProvisionerTypeFlag(ctx *cli.Context, provisionerType, required string) error {
+	return errors.Errorf("provisioner type '%s' requires the '--%s' flag", provisionerType, required)
+}
+
 // RequiredInsecureFlag returns an error with the given flag requiring the
 // insecure flag message.
 func RequiredInsecureFlag(ctx *cli.Context, flag string) error {

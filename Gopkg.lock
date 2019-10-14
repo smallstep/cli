@@ -311,7 +311,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7778523b4b497ee6734b21a4a25cd310891682f5fe789fb372ea4227a5302251"
+  digest = "1:875a13bf23c93e78f7759f10131b2de18f672a500cd2958ae845391f9582105a"
   name = "github.com/smallstep/certificates"
   packages = [
     "acme",
@@ -326,19 +326,19 @@
     "server",
   ]
   pruneopts = "UT"
-  revision = "effb490d276f33b8cdab661df8b57a8ded67e082"
+  revision = "397c6466a275a80dcdafbd5794019f6dcb2cd8ff"
 
 [[projects]]
   branch = "master"
-  digest = "1:743362bd9879b63a73c060d74cfd90d46aab4913aea2b0714ceaacee64e6a9fa"
+  digest = "1:d750722b69f0d4a148081bb34223b75ff7548c6cbe973f13d8e7fc7415dae703"
   name = "github.com/smallstep/certinfo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "78e21b44234ef6ddeb58f5e8aad2ed09975b694a"
+  revision = "b0e530932339444db78082d59a4c08c2a474bd82"
 
 [[projects]]
   branch = "master"
-  digest = "1:9c1b7052fa8f2c918efd60ed5ae3c70ccbba08967c58ec71067535449a3ba220"
+  digest = "1:7d03323edb817ca94efaee5489cde6acd06ceeaca9e6eee106d2d6a90deca997"
   name = "github.com/smallstep/nosql"
   packages = [
     ".",
@@ -348,7 +348,7 @@
     "mysql",
   ]
   pruneopts = "UT"
-  revision = "a0934e12468769d8cbede3ed316c47a4b88de4ca"
+  revision = "f80b3f432de0662f07ebd58fe52b0a119fe5dcd9"
 
 [[projects]]
   branch = "master"
@@ -360,7 +360,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:822ad7c8c41fe68fb9c9c95ad7e77a1172e216d9e3e527451819927448b6dee6"
+  digest = "1:50d0982e9577010169a965dbfaccb3d1992b5b4bcf308da6c86fec1959d91c91"
   name = "github.com/smallstep/zcrypto"
   packages = [
     "json",
@@ -369,7 +369,7 @@
     "x509/pkix",
   ]
   pruneopts = "UT"
-  revision = "6bab21fcaafc3d150cf793b6d5f25fe32f49c80e"
+  revision = "9fc4bea33f7023fde193f6b0ee1dc4b990b88f4b"
 
 [[projects]]
   branch = "master"

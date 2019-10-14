@@ -25,7 +25,8 @@ func signCertificateCommand() cli.Command {
 [**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--acme**=<uri>] [**--standalone**] [**--webroot**=<path>]
-[**--contact**=<email>] [**--http-listen**=<address>] [**--console**]`,
+[**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
+[**--x5c-cert**=<path>] [**--x5c-key**=<path>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
@@ -56,6 +57,12 @@ files, certificates, and keys created with **step ca init**:
 $ step ca sign --offline internal internal.csr internal.crt
 '''
 
+Sign a new certificate using an X5C provisioner:
+NOTE: You must have a X5C provisioner configured (using **step ca provisioner add**).
+'''
+$ step ca sign foo.internal foo.csr foo.crt --x5c-cert leaf-x5c.crt --x5c-key leaf-x5c.key
+'''
+
 **step CA ACME** - In order to use the step CA ACME protocol you must add a
 ACME provisioner to the step CA config. See **step ca provisioner add -h**.
 
@@ -84,48 +91,21 @@ $ step ca sign foo.csr foo.crt \
 		Flags: []cli.Flag{
 			flags.CaConfig,
 			flags.CaURL,
-			flags.Force,
-			flags.NotBefore,
-			flags.NotAfter,
-			flags.Offline,
-			flags.Provisioner,
 			flags.Root,
 			flags.Token,
+			flags.Provisioner,
+			flags.NotBefore,
+			flags.NotAfter,
+			flags.Force,
+			flags.Offline,
 			consoleFlag,
-			cli.StringFlag{
-				Name: "acme",
-				Usage: `ACME directory URL to be used for requesting certificates via the ACME protocol.
-Use this flag to define an ACME server other than the Step CA. If this flag is
-absent and an ACME provisioner has been selected then the '--ca-url' flag must be defined.`,
-			},
-			cli.BoolFlag{
-				Name: "standalone",
-				Usage: `Get a certificate using the ACME protocol and standalone mode for validation.
-Standalone is a mode in which the step process will run a server that will
-will respond to ACME challenge validation requests. Standalone is the default
-mode for serving challenge validation requests.`,
-			},
-			cli.StringFlag{
-				Name: "webroot",
-				Usage: `Get a certificate using the ACME protocol and webroot mode for validation.
-Webroot is a mode in which the step process will write a challenge file to a location
-being served by an existing fileserver in order to respond to ACME challenge
-validation requests.`,
-			},
-			cli.StringSliceFlag{
-				Name: "contact",
-				Usage: `Email addresses for contact as part of the ACME protocol. These contacts
-may be used to warn of certificate expration or other certificate lifetime events.
-Use the '--contact' flag multiple times to configure multiple contacts.`,
-			},
-			cli.StringFlag{
-				Name: "http-listen",
-				Usage: `Use a non-standard http address, behind a reverse proxy or load balancer, for
-serving ACME challenges. The default address is :80, which requires super user
-(sudo) privileges. This flag must be used in conjunction with the '--standalone'
-flag.`,
-				Value: ":80",
-			},
+			flags.X5cCert,
+			flags.X5cKey,
+			acmeFlag,
+			acmeStandaloneFlag,
+			acmeWebrootFlag,
+			acmeContactFlag,
+			acmeHTTPListenFlag,
 		},
 	}
 }

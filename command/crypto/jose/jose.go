@@ -102,7 +102,7 @@ func trimPrefix(err error) error {
 	return errors.New(strings.TrimPrefix(err.Error(), "square/go-jose: "))
 }
 
-var stripWhitespaceRegex = regexp.MustCompile("\\s")
+var stripWhitespaceRegex = regexp.MustCompile(`\s`)
 
 // stripWhitespace strip all newlines and whitespace
 func stripWhitespace(data string) string {
