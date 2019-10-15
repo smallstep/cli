@@ -47,7 +47,7 @@ func Home() string {
 
 // StepAbs returns the given path relative to the StepPath if it's not an
 // absolute path, relative to the home directory using the special string "~/",
-// or relative to the working directory using "./"
+// or relative to the working directory using "./" or "../"
 //
 // Relative paths like 'certs/root_ca.crt' will be converted to
 // '$STEPPATH/certs/root_ca.crt', but paths like './certs/root_ca.crt' will be
@@ -63,7 +63,7 @@ func StepAbs(path string) string {
 	switch {
 	case strings.HasPrefix(slashed, "~/"):
 		return filepath.Join(homePath, path[2:])
-	case strings.HasPrefix(slashed, "./"):
+	case strings.HasPrefix(slashed, "./"), strings.HasPrefix(slashed, "../"):
 		if abs, err := filepath.Abs(path); err == nil {
 			return abs
 		}

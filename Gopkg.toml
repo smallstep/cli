@@ -43,7 +43,7 @@ ignored = ["github.com/Masterminds/semver/v3"]
   version = "2.3.1"
 
 [[constraint]]
-  branch = "master"
+  branch = "ssh-login"
   name = "github.com/urfave/cli"
 
 [[constraint]]
