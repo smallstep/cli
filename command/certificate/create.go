@@ -182,7 +182,7 @@ recommended. Requires **--insecure** flag.`,
 	:  Generate a leaf x.509 certificate suitable for use with TLs.
 
     **intermediate-ca**
-    :  Generate a certificate that can be used to sign additional leaf or intermediate certificates.
+    :  Generate a certificate that can be used to sign additional leaf certificates.
 
     **root-ca**
     :  Generate a new self-signed root certificate suitable for use as a root CA.
