@@ -199,15 +199,17 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 		return err
 	}
 
-	serverBlock, err := pemutil.Serialize(resp.ServerPEM.Certificate)
-	if err != nil {
-		return err
+	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
+		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
 	}
-	caBlock, err := pemutil.Serialize(resp.CaPEM.Certificate)
-	if err != nil {
-		return err
+	var data []byte
+	for _, certPEM := range resp.CertChainPEM {
+		pemblk, err := pemutil.Serialize(certPEM)
+		if err != nil {
+			return errors.Wrap(err, "error serializing from step-ca API response")
+		}
+		data = append(data, pem.EncodeToMemory(pemblk)...)
 	}
-	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
 	return utils.WriteFile(crtFile, data, 0600)
 }
 

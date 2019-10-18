@@ -137,6 +137,14 @@ func (c *OfflineCA) Provisioners() provisioner.List {
 	return c.config.AuthorityConfig.Provisioners
 }
 
+func certChainToPEM(certChain []*x509.Certificate) []api.Certificate {
+	certChainPEM := make([]api.Certificate, 0, len(certChain))
+	for _, c := range certChain {
+		certChainPEM = append(certChainPEM, api.Certificate{Certificate: c})
+	}
+	return certChainPEM
+}
+
 // Sign is a wrapper on top of certificates Authorize and Sign methods. It
 // returns an api.SignResponse with the requested certificate and the
 // intermediate.
@@ -150,14 +158,20 @@ func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 		NotBefore: req.NotBefore,
 		NotAfter:  req.NotAfter,
 	}
-	cert, ca, err := c.authority.Sign(req.CsrPEM.CertificateRequest, signOpts, opts...)
+	certChain, err := c.authority.Sign(req.CsrPEM.CertificateRequest, signOpts, opts...)
 	if err != nil {
 		return nil, err
 	}
+	certChainPEM := certChainToPEM(certChain)
+	var caPEM api.Certificate
+	if len(certChainPEM) > 1 {
+		caPEM = certChainPEM[1]
+	}
 	return &api.SignResponse{
-		ServerPEM:  api.Certificate{Certificate: cert},
-		CaPEM:      api.Certificate{Certificate: ca},
-		TLSOptions: c.authority.GetTLSOptions(),
+		ServerPEM:    certChainPEM[0],
+		CaPEM:        caPEM,
+		CertChainPEM: certChainPEM,
+		TLSOptions:   c.authority.GetTLSOptions(),
 	}, nil
 }
 
@@ -201,14 +215,20 @@ func (c *OfflineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 		return nil, errors.Wrap(err, "error parsing certificate")
 	}
 	// renew cert using authority
-	cert, ca, err := c.authority.Renew(peer)
+	certChain, err := c.authority.Renew(peer)
 	if err != nil {
 		return nil, err
 	}
+	certChainPEM := certChainToPEM(certChain)
+	var caPEM api.Certificate
+	if len(certChainPEM) > 1 {
+		caPEM = certChainPEM[1]
+	}
 	return &api.SignResponse{
-		ServerPEM:  api.Certificate{Certificate: cert},
-		CaPEM:      api.Certificate{Certificate: ca},
-		TLSOptions: c.authority.GetTLSOptions(),
+		ServerPEM:    certChainPEM[0],
+		CaPEM:        caPEM,
+		CertChainPEM: certChainPEM,
+		TLSOptions:   c.authority.GetTLSOptions(),
 	}, nil
 }
 
