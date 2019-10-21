@@ -400,16 +400,17 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 		return nil, errors.Wrap(err, "error renewing certificate")
 	}
 
-	serverBlock, err := pemutil.Serialize(resp.ServerPEM.Certificate)
-	if err != nil {
-		return nil, err
+	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
+		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
 	}
-	caBlock, err := pemutil.Serialize(resp.CaPEM.Certificate)
-	if err != nil {
-		return nil, err
+	var data []byte
+	for _, certPEM := range resp.CertChainPEM {
+		pemblk, err := pemutil.Serialize(certPEM)
+		if err != nil {
+			return nil, errors.Wrap(err, "error serializing certificate PEM")
+		}
+		data = append(data, pem.EncodeToMemory(pemblk)...)
 	}
-	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
-
 	if err := utils.WriteFile(outFile, data, 0600); err != nil {
 		return nil, errs.FileError(err, outFile)
 	}
