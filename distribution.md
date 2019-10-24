@@ -18,7 +18,7 @@ e.g. `v1.0.2`
 1. **Update smallstep/certificates.**
 
     ```
-    $ dep ensure -update github.com/smallstep/certificates
+    $ go get -u github.com/smallstep/certificates
     ```
 
 2. **Commit all changes.**

@@ -12,9 +12,8 @@ should exist within its own package if possible. For example, `version` and
 Any package used by a command but does not contain explicit business logic
 directly related to the command should exist in the top-level of this
 repository. For example, the `github.com/smallstep/cli/flags` and
-`github.com/smallstep/cli/errs` package are used by many different
-commands and contain functionality for defining flags and creating/manipulating
-errors.
+`github.com/smallstep/cli/errs` package are used by many different commands and
+contain functionality for defining flags and creating/manipulating errors.
 
 ### Adding a Command
 
