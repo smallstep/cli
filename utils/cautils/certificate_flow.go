@@ -204,7 +204,7 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 	}
 	var data []byte
 	for _, certPEM := range resp.CertChainPEM {
-		pemblk, err := pemutil.Serialize(certPEM)
+		pemblk, err := pemutil.Serialize(certPEM.Certificate)
 		if err != nil {
 			return errors.Wrap(err, "error serializing from step-ca API response")
 		}
