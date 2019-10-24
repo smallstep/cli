@@ -48,6 +48,6 @@ require (
 	golang.org/x/net v0.0.0-20181029044818-c44066c5c816
 	golang.org/x/sys v0.0.0-20181031143558-9b800f95dbbc // indirect
 	google.golang.org/appengine v1.5.0 // indirect
-	gopkg.in/square/go-jose.v2 v2.3.1
+	gopkg.in/square/go-jose.v2 v2.4.0
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 )
