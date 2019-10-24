@@ -27,6 +27,19 @@ func NewCertSigner(cert *ssh.Certificate, priv interface{}) (ssh.Signer, error) 
 	return certSigner, nil
 }
 
+// ParseCertificate returns a certificate from the marshaled bytes.
+func ParseCertificate(in []byte) (*ssh.Certificate, error) {
+	pub, err := ssh.ParsePublicKey(in)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing certificate")
+	}
+	cert, ok := pub.(*ssh.Certificate)
+	if !ok {
+		return nil, errors.Errorf("error parsing certificate: %T is not a certificate", pub)
+	}
+	return cert, nil
+}
+
 // PublicKey returns the Go's crypto.PublicKey of an ssh.PublicKey.
 func PublicKey(key ssh.PublicKey) (crypto.PublicKey, error) {
 	_, in, ok := parseString(key.Marshal())

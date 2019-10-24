@@ -11,6 +11,43 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
+type options struct {
+	filterBySignatureKey func(*agent.Key) bool
+}
+
+func newOptions(opts []AgentOption) *options {
+	o := new(options)
+	for _, fn := range opts {
+		fn(o)
+	}
+	return o
+}
+
+// AgentOption is the type used for variadic options in Agent methods.
+type AgentOption func(o *options)
+
+// WithSignatureKey filters certificate not signed by the given signing keys.
+func WithSignatureKey(keys []ssh.PublicKey) AgentOption {
+	signingKeys := make([][]byte, len(keys))
+	for i, k := range keys {
+		signingKeys[i] = k.Marshal()
+	}
+	return func(o *options) {
+		o.filterBySignatureKey = func(k *agent.Key) bool {
+			cert, err := ParseCertificate(k.Marshal())
+			if err != nil {
+				return false
+			}
+			for _, b := range signingKeys {
+				if bytes.Equal(b, cert.SignatureKey.Marshal()) {
+					return true
+				}
+			}
+			return false
+		}
+	}
+}
+
 // ErrNotFound is the error returned if a something is not found.
 var ErrNotFound = errors.New("not found")
 
@@ -45,22 +82,25 @@ func (a *Agent) AuthMethod() ssh.AuthMethod {
 }
 
 // GetKey retrieves a key from the agent by the given comment.
-func (a *Agent) GetKey(comment string) (*agent.Key, error) {
+func (a *Agent) GetKey(comment string, opts ...AgentOption) (*agent.Key, error) {
+	o := newOptions(opts)
 	keys, err := a.List()
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing keys")
 	}
 	for _, key := range keys {
 		if key.Comment == comment {
-			return key, nil
+			if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
+				return key, nil
+			}
 		}
 	}
 	return nil, ErrNotFound
 }
 
 // GetSigner returns a signer that has a key with the given comment.
-func (a *Agent) GetSigner(comment string) (ssh.Signer, error) {
-	key, err := a.GetKey(comment)
+func (a *Agent) GetSigner(comment string, opts ...AgentOption) (ssh.Signer, error) {
+	key, err := a.GetKey(comment, opts...)
 	if err != nil {
 		return nil, err
 	}
