@@ -100,6 +100,10 @@ provisioner with it.`,
 				Usage: `The <secret> used to obtain the OpenID Connect tokens.`,
 			},
 			cli.StringFlag{
+				Name:  "listen-address",
+				Usage: `The callback <address> used in the OpenID Connect flow (e.g. \":10000\")`,
+			},
+			cli.StringFlag{
 				Name:  "configuration-endpoint",
 				Usage: `OpenID Connect configuration <url>.`,
 			},
@@ -463,6 +467,7 @@ func addOIDCProvisioner(ctx *cli.Context, name string, provMap map[string]bool) 
 		Admins:                ctx.StringSlice("admin"),
 		Domains:               ctx.StringSlice("domain"),
 		Claims:                getClaims(ctx),
+		ListenAddress:         ctx.String("listen-address"),
 	}
 	// Check for duplicates
 	if _, ok := provMap[p.GetID()]; !ok {
