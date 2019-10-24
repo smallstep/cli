@@ -405,7 +405,7 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 	}
 	var data []byte
 	for _, certPEM := range resp.CertChainPEM {
-		pemblk, err := pemutil.Serialize(certPEM)
+		pemblk, err := pemutil.Serialize(certPEM.Certificate)
 		if err != nil {
 			return nil, errors.Wrap(err, "error serializing certificate PEM")
 		}

@@ -15,8 +15,6 @@ To get started with local development, you will need three things:
 
 - Golang installed locally (instructions available
 [here](https://golang.org/doc/install)).
-- dep installed locally (instructions available
-[here](https://golang.github.io/dep/docs/installation.html)).
 - A version of `make` available for usage of the `Makefile`.
 - The repository checked out in the appropriate location of your `$GOPATH`.
 
@@ -32,7 +30,7 @@ Once you've cloned the repository to the appropriate location, you will now be
 able to install any other dependencies via the `make bootstrap` command.
 
 You should only ever need to run this command once, as it will ensure you have
-the right version of `dep` and `gometalinter` installed.
+the right version of `gometalinter` installed.
 
 ### Building step
 
@@ -85,10 +83,10 @@ make lint
 ### Adding and Removing Dependencies
 
 To add any dependency to the repository, simply import it into your code and
-then run `dep ensure` which will update the `Gopkg.lock` file. A specific
-version of a dependency can be specified by adding it to the `Gopkg.toml` file
-and running `dep ensure`.
+then run `go get <pkg>` which will update the `go.mod` and `go.sum` file. A
+specific version of a dependency can be specified by adding it to the `go.mod`
+file.
 
-To remove a dependency, simply remove it from the codebase and any mention of
-it in the `Gopkg.toml` file and run `dep ensure` which will remove it from the
-`vendor` folder while updating the `Gopkg.lock` file.
+To remove a dependency, simply remove it from the codebase and any mention of it
+in the `go.mod` file and run `go mod tidy` which will remove it from the the
+`go.sum` file.
