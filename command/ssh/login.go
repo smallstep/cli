@@ -3,13 +3,12 @@ package ssh
 import (
 	"time"
 
-	"github.com/smallstep/cli/crypto/sshutil"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
+	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
@@ -90,7 +89,21 @@ func loginAction(ctx *cli.Context) error {
 
 	// Connect to the remote shell using the previous certificate in the agent
 	if agent != nil && !force {
-		if signer, err := agent.GetSigner(subject); err == nil {
+		// Add filter by user key
+		client, err := cautils.NewClient(ctx)
+		if err != nil {
+			return err
+		}
+		var opts []sshutil.AgentOption
+		if roots, err := client.SSHRoots(); err == nil && len(roots.UserKeys) > 0 {
+			userKeys := make([]ssh.PublicKey, len(roots.UserKeys))
+			for i, uk := range roots.UserKeys {
+				userKeys[i] = uk.PublicKey
+			}
+			opts = append(opts, sshutil.WithSignatureKey(userKeys))
+		}
+		// Get signing keys
+		if signer, err := agent.GetSigner(subject, opts...); err == nil {
 			// Just return if key is present
 			if address == "" {
 				ui.Printf("The key %s is already present in the SSH agent.\n", subject)
