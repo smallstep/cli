@@ -54,47 +54,53 @@ hkjOPQIBBggqhkjOPQMBBwNCAASKj0MvK6CUzFqRLfDTQNQp0Zt5dcHYx+Dq1Wh9
 AwIDRwAwRAIgZgz9gdx9inOp6bSX4EkYiUCyLV9xGvabovu5C9UkRr8CIBGBbkp0
 l4tesAKoXelsLygJjPuUGRLK+OtdjPBIN1Zo
 -----END CERTIFICATE REQUEST-----`
+	testCSRKeytool = `-----BEGIN NEW CERTIFICATE REQUEST-----
+MIHYMIGAAgEAMB4xHDAaBgNVBAMTE2hlbGxvLnNtYWxsc3RlcC5jb20wWTATBgcq
+hkjOPQIBBggqhkjOPQMBBwNCAASKj0MvK6CUzFqRLfDTQNQp0Zt5dcHYx+Dq1Wh9
+5dhqf1Fu9+1m5+LKkgBWoZmo7sJH0RuSjIdv/sZwpBrkdn2soAAwCgYIKoZIzj0E
+AwIDRwAwRAIgZgz9gdx9inOp6bSX4EkYiUCyLV9xGvabovu5C9UkRr8CIBGBbkp0
+l4tesAKoXelsLygJjPuUGRLK+OtdjPBIN1Zo
+-----END NEW CERTIFICATE REQUEST-----`
 )
 
 type testdata struct {
 	typ       keyType
 	encrypted bool
-	pkcs8     bool
 }
 
 var files = map[string]testdata{
-	"testdata/openssl.p256.pem":              {ecdsaPrivateKey, false, false},
-	"testdata/openssl.p256.pub.pem":          {ecdsaPublicKey, false, false},
-	"testdata/openssl.p256.enc.pem":          {ecdsaPrivateKey, true, false},
-	"testdata/openssl.p384.pem":              {ecdsaPrivateKey, false, false},
-	"testdata/openssl.p384.pub.pem":          {ecdsaPublicKey, false, false},
-	"testdata/openssl.p384.enc.pem":          {ecdsaPrivateKey, true, false},
-	"testdata/openssl.p521.pem":              {ecdsaPrivateKey, false, false},
-	"testdata/openssl.p521.pub.pem":          {ecdsaPublicKey, false, false},
-	"testdata/openssl.p521.enc.pem":          {ecdsaPrivateKey, true, false},
-	"testdata/openssl.rsa1024.pem":           {rsaPrivateKey, false, false},
-	"testdata/openssl.rsa1024.pub.pem":       {rsaPublicKey, false, false},
-	"testdata/openssl.rsa1024.enc.pem":       {rsaPrivateKey, true, false},
-	"testdata/openssl.rsa2048.pem":           {rsaPrivateKey, false, false},
-	"testdata/openssl.rsa2048.pub.pem":       {rsaPublicKey, false, false},
-	"testdata/openssl.rsa2048.enc.pem":       {rsaPrivateKey, true, false},
-	"testdata/pkcs8/openssl.ed25519.pem":     {ed25519PrivateKey, false, true},
-	"testdata/pkcs8/openssl.ed25519.pub.pem": {ed25519PublicKey, false, true},
-	"testdata/pkcs8/openssl.ed25519.enc.pem": {ed25519PrivateKey, true, true},
-	"testdata/pkcs8/openssl.p256.pem":        {ecdsaPrivateKey, false, true},
-	"testdata/pkcs8/openssl.p256.pub.pem":    {ecdsaPublicKey, false, true},
-	"testdata/pkcs8/openssl.p256.enc.pem":    {ecdsaPrivateKey, true, true},
-	"testdata/pkcs8/openssl.p384.pem":        {ecdsaPrivateKey, false, true},
-	"testdata/pkcs8/openssl.p384.pub.pem":    {ecdsaPublicKey, false, true},
-	"testdata/pkcs8/openssl.p384.enc.pem":    {ecdsaPrivateKey, true, true},
-	"testdata/pkcs8/openssl.p521.pem":        {ecdsaPrivateKey, false, true},
-	"testdata/pkcs8/openssl.p521.pub.pem":    {ecdsaPublicKey, false, true},
-	"testdata/pkcs8/openssl.p521.enc.pem":    {ecdsaPrivateKey, true, true},
-	"testdata/pkcs8/openssl.rsa2048.pem":     {rsaPrivateKey, false, true},
-	"testdata/pkcs8/openssl.rsa2048.pub.pem": {rsaPublicKey, false, true},
-	"testdata/pkcs8/openssl.rsa2048.enc.pem": {rsaPrivateKey, true, true},
-	"testdata/pkcs8/openssl.rsa4096.pem":     {rsaPrivateKey, false, true},
-	"testdata/pkcs8/openssl.rsa4096.pub.pem": {rsaPublicKey, false, true},
+	"testdata/openssl.p256.pem":              {ecdsaPrivateKey, false},
+	"testdata/openssl.p256.pub.pem":          {ecdsaPublicKey, false},
+	"testdata/openssl.p256.enc.pem":          {ecdsaPrivateKey, true},
+	"testdata/openssl.p384.pem":              {ecdsaPrivateKey, false},
+	"testdata/openssl.p384.pub.pem":          {ecdsaPublicKey, false},
+	"testdata/openssl.p384.enc.pem":          {ecdsaPrivateKey, true},
+	"testdata/openssl.p521.pem":              {ecdsaPrivateKey, false},
+	"testdata/openssl.p521.pub.pem":          {ecdsaPublicKey, false},
+	"testdata/openssl.p521.enc.pem":          {ecdsaPrivateKey, true},
+	"testdata/openssl.rsa1024.pem":           {rsaPrivateKey, false},
+	"testdata/openssl.rsa1024.pub.pem":       {rsaPublicKey, false},
+	"testdata/openssl.rsa1024.enc.pem":       {rsaPrivateKey, true},
+	"testdata/openssl.rsa2048.pem":           {rsaPrivateKey, false},
+	"testdata/openssl.rsa2048.pub.pem":       {rsaPublicKey, false},
+	"testdata/openssl.rsa2048.enc.pem":       {rsaPrivateKey, true},
+	"testdata/pkcs8/openssl.ed25519.pem":     {ed25519PrivateKey, false},
+	"testdata/pkcs8/openssl.ed25519.pub.pem": {ed25519PublicKey, false},
+	"testdata/pkcs8/openssl.ed25519.enc.pem": {ed25519PrivateKey, true},
+	"testdata/pkcs8/openssl.p256.pem":        {ecdsaPrivateKey, false},
+	"testdata/pkcs8/openssl.p256.pub.pem":    {ecdsaPublicKey, false},
+	"testdata/pkcs8/openssl.p256.enc.pem":    {ecdsaPrivateKey, true},
+	"testdata/pkcs8/openssl.p384.pem":        {ecdsaPrivateKey, false},
+	"testdata/pkcs8/openssl.p384.pub.pem":    {ecdsaPublicKey, false},
+	"testdata/pkcs8/openssl.p384.enc.pem":    {ecdsaPrivateKey, true},
+	"testdata/pkcs8/openssl.p521.pem":        {ecdsaPrivateKey, false},
+	"testdata/pkcs8/openssl.p521.pub.pem":    {ecdsaPublicKey, false},
+	"testdata/pkcs8/openssl.p521.enc.pem":    {ecdsaPrivateKey, true},
+	"testdata/pkcs8/openssl.rsa2048.pem":     {rsaPrivateKey, false},
+	"testdata/pkcs8/openssl.rsa2048.pub.pem": {rsaPublicKey, false},
+	"testdata/pkcs8/openssl.rsa2048.enc.pem": {rsaPrivateKey, true},
+	"testdata/pkcs8/openssl.rsa4096.pem":     {rsaPrivateKey, false},
+	"testdata/pkcs8/openssl.rsa4096.pub.pem": {rsaPublicKey, false},
 }
 
 func TestRead(t *testing.T) {
@@ -663,6 +669,13 @@ func TestParseKey_x509(t *testing.T) {
 	csr, err := x509.ParseCertificateRequest(b.Bytes)
 	assert.FatalError(t, err)
 	key, err = ParseKey([]byte(testCSR))
+	assert.FatalError(t, err)
+	assert.Equals(t, csr.PublicKey, key)
+
+	b, _ = pem.Decode([]byte(testCSRKeytool))
+	csr, err = x509.ParseCertificateRequest(b.Bytes)
+	assert.FatalError(t, err)
+	key, err = ParseKey([]byte(testCSRKeytool))
 	assert.FatalError(t, err)
 	assert.Equals(t, csr.PublicKey, key)
 }

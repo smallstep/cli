@@ -17,6 +17,7 @@ type Type int
 const (
 	Unknown Type = iota
 	JWK          // Smallstep JWK
+	X5C          // Smallstep JWK with x5c header
 	OIDC         // OpenID Connect
 	GCP          // Google Cloud Platform
 	AWS          // Amazon Web Services

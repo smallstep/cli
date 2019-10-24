@@ -24,7 +24,7 @@
 #   go-tests = true
 #   unused-packages = true
 
-ignored = ["github.com/Masterminds/semver/v3"]
+ignored = ["github.com/Masterminds/semver/v3", "github.com/Masterminds/sprig/v3"]
 
 [[override]]
   name = "gopkg.in/alecthomas/kingpin.v3-unstable"

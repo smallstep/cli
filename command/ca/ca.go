@@ -85,27 +85,63 @@ $ step ca renew internal.crt internal.key \
 
 // common flags used in several commands
 var (
+	acmeFlag = cli.StringFlag{
+		Name: "acme",
+		Usage: `ACME directory <url> to be used for requesting certificates via the ACME protocol.
+Use this flag to define an ACME server other than the Step CA. If this flag is
+absent and an ACME provisioner has been selected then the '--ca-url' flag must be defined.`,
+	}
+
+	acmeContactFlag = cli.StringSliceFlag{
+		Name: "contact",
+		Usage: `The <email-address> used for contact as part of the ACME protocol. These contacts
+may be used to warn of certificate expiration or other certificate lifetime events.
+Use the '--contact' flag multiple times to configure multiple contacts.`,
+	}
+
+	acmeHTTPListenFlag = cli.StringFlag{
+		Name: "http-listen",
+		Usage: `Use a non-standard http <address>, behind a reverse proxy or load balancer, for
+serving ACME challenges. The default address is :80, which requires super user
+(sudo) privileges. This flag must be used in conjunction with the '--standalone'
+flag.`,
+		Value: ":80",
+	}
+	/*
+			TODO: Not implemented yet.
+			acmeHTTPSListenFlag = cli.StringFlag{
+				Name: "https-listen",
+				Usage: `Use a non-standard https address, behind a reverse proxy or load balancer, for
+		serving ACME challenges. The default address is :443, which requires super user
+		(sudo) privileges. This flag must be used in conjunction with the '--standalone'
+		flag.`,
+				Value: ":443",
+			}
+	*/
+	acmeStandaloneFlag = cli.BoolFlag{
+		Name: "standalone",
+		Usage: `Get a certificate using the ACME protocol and standalone mode for validation.
+Standalone is a mode in which the step process will run a server that will
+will respond to ACME challenge validation requests. Standalone is the default
+mode for serving challenge validation requests.`,
+	}
+
+	acmeWebrootFlag = cli.StringFlag{
+		Name: "webroot",
+		Usage: `Specify a <path> to use as a 'web root' for validation in the ACME protocol.
+Webroot is a mode in which the step process will write a challenge file to a
+location being served by an existing fileserver in order to respond to ACME
+challenge validation requests.`,
+	}
+
+	consoleFlag = cli.BoolFlag{
+		Name:  "console",
+		Usage: "Complete the flow while remaining inside the terminal",
+	}
+
 	fingerprintFlag = cli.StringFlag{
 		Name:  "fingerprint",
 		Usage: "The <fingerprint> of the targeted root certificate.",
-	}
-
-	notBeforeFlag = cli.StringFlag{
-		Name: "not-before",
-		Usage: `The <time|duration> set in the NotBefore (nbf) property of the token. If a
-<time> is used it is expected to be in RFC 3339 format. If a <duration> is
-used, it is a sequence of decimal numbers, each with optional fraction and a
-unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".`,
-	}
-
-	notAfterFlag = cli.StringFlag{
-		Name: "not-after",
-		Usage: `The <time|duration> set in the Expiration (exp) property of the token. If a
-<time> is used it is expected to be in RFC 3339 format. If a <duration> is
-used, it is a sequence of decimal numbers, each with optional fraction and a
-unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".`,
 	}
 
 	provisionerKidFlag = cli.StringFlag{
@@ -119,9 +155,18 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 generating key.`,
 	}
 
+	sanFlag = cli.StringSliceFlag{
+		Name: "san",
+		Usage: `Add <dns|ip|email> Subject Alternative Name(s) (SANs)
+that should be authorized. A certificate signing request using this token must
+match the complete set of SANs in the token 1:1. Use the '--san' flag multiple
+times to configure multiple SANs. The '--san' flag and the '--token' flag are
+mutually exlusive.`,
+	}
+
 	sshPrincipalFlag = cli.StringSliceFlag{
 		Name: "principal,n",
-		Usage: `Add the principals (users or hosts) that the token is authorized to
+		Usage: `Add the principals (user or host <name>s) that the token is authorized to
 		request. The signing request using this token won't be able to add
 		extra names. Use the '--principal' flag multiple times to configure
 		multiple ones. The '--principal' flag and the '--token' flag are
@@ -131,11 +176,6 @@ generating key.`,
 	sshHostFlag = cli.BoolFlag{
 		Name:  "host",
 		Usage: `Create a host certificate instead of a user certificate.`,
-	}
-
-	consoleFlag = cli.BoolFlag{
-		Name:  "console",
-		Usage: "Complete the flow while remaining inside the terminal",
 	}
 )
 

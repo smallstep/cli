@@ -40,10 +40,10 @@ used in combination w/ the **--kid** or **--client-id** flag.`,
 				Usage: `The <type> of provisioner to remove. Type is a case-insensitive string
 and must be one of:
     **JWK**
-    : Uses an JWK key pair to sign bootstrap tokens.
+    : Uses an JWK key pair to sign provisioning tokens.
 
     **OIDC**
-    : Uses an OpenID Connect provider to sign bootstrap tokens.
+    : Uses an OpenID Connect provider to sign provisioning tokens.
 
     **AWS**
     : Uses Amazon AWS instance identity documents.
@@ -55,7 +55,10 @@ and must be one of:
     : Uses Microsoft Azure identity tokens.
 
     **ACME**
-    : Uses ACME protocol.`,
+    : Uses ACME protocol.
+
+    **X5C**
+    : Uses an X509 Certificate / private key pair to sign provisioning tokens.`,
 			},
 		},
 		Description: `**step ca provisioner remove** removes one or more provisioners
@@ -92,6 +95,11 @@ $ step ca provisioner remove Amazon --ca-config ca.json --type AWS
 Remove the ACME provisioner by name:
 '''
 $ step ca provisioner remove Amazon --ca-config ca.json --type AWS
+'''
+
+Remove the X5C provisioner by name:
+'''
+$ step ca provisioner remove my-x5c-provisioner --type x5c
 '''`,
 	}
 }
@@ -153,7 +161,7 @@ func removeAction(ctx *cli.Context) error {
 				if clientID != "" && pp.ClientID != clientID {
 					provisioners = append(provisioners, p)
 				}
-			case *provisioner.AWS, *provisioner.Azure, *provisioner.GCP, *provisioner.ACME:
+			case *provisioner.AWS, *provisioner.Azure, *provisioner.GCP, *provisioner.ACME, *provisioner.X5C:
 				// they are filtered by type and name.
 			default:
 				continue

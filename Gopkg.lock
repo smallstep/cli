@@ -10,22 +10,6 @@
   revision = "e2d15f34fcf99d5dbb871c820ec73f710fca9815"
 
 [[projects]]
-  digest = "1:3b10c6fd33854dc41de2cf78b7bae105da94c2789b6fa5b9ac9e593ea43484ac"
-  name = "github.com/Masterminds/goutils"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "41ac8693c5c10a92ea1ff5ac3a7f95646f6123b0"
-  version = "v1.1.0"
-
-[[projects]]
-  digest = "1:181a6a5506bd83827d826df5b3272040e92c487516b2fc8edd066be941d68d9e"
-  name = "github.com/Masterminds/sprig"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "0e09f04f09aede2cc36cbecad7ec27b0055303e0"
-  version = "v3.0.0"
-
-[[projects]]
   branch = "master"
   digest = "1:655f3b07160fbe90713062296ef215c096ad4308bdc0081620cacd9b9d46dce5"
   name = "github.com/ThomasRooney/gexpect"
@@ -141,36 +125,12 @@
   version = "v1.0.21"
 
 [[projects]]
-  digest = "1:582b704bebaa06b48c29b0cec224a6058a09c86883aaddabde889cd1a5f73e1b"
-  name = "github.com/google/uuid"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "0cd6bf5da1e1c83f8b45653022c74f71af0538a4"
-  version = "v1.1.1"
-
-[[projects]]
-  digest = "1:f9a5e090336881be43cfc1cf468330c1bdd60abdc9dd194e0b1ab69f4b94dd7c"
-  name = "github.com/huandu/xstrings"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "f02667b379e2fb5916c3cda2cf31e0eb885d79f8"
-  version = "v1.2.0"
-
-[[projects]]
   branch = "master"
   digest = "1:22725c01ecd8ed0c0f0078944305a57053340d92878b02db925c660cc4accf64"
   name = "github.com/icrowley/fake"
   packages = ["."]
   pruneopts = "UT"
   revision = "4178557ae428460c3780a381c824a1f3aceb6325"
-
-[[projects]]
-  digest = "1:78d28d5b84a26159c67ea51996a230da4bc07cac648adaae1dfb5fc0ec8e40d3"
-  name = "github.com/imdario/mergo"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "1afb36080aec31e0d1528973ebe6721b191b0369"
-  version = "v0.3.8"
 
 [[projects]]
   branch = "master"
@@ -242,22 +202,6 @@
   pruneopts = "UT"
   revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
   version = "v0.0.4"
-
-[[projects]]
-  digest = "1:09ca328575f38b80969ccf857f6d7302f2ce09d53778ea7aaba526cfd2cec739"
-  name = "github.com/mitchellh/copystructure"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "9a1b6f44e8da0e0e374624fb0a825a231b00c537"
-  version = "v1.0.0"
-
-[[projects]]
-  digest = "1:2a7e6f8bebdca6bd8bc359c37f01ae1c4ea4f8481eaabf93b1ae4863f15b72c7"
-  name = "github.com/mitchellh/reflectwalk"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "3e2c75dfad4fbf904b58782a80fd595c760ad185"
-  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
@@ -367,7 +311,7 @@
 
 [[projects]]
   branch = "ssh-config"
-  digest = "1:59bf7b7acda48e42e714bc711b20e72b367e5d8a07525ca90eb7dea0ec89e0a7"
+  digest = "1:e9bfc95253d8c83b865ff3d21d9cb3001d296d2f546afdd63ef3428c69db6ea1"
   name = "github.com/smallstep/certificates"
   packages = [
     "acme",
@@ -384,19 +328,19 @@
     "templates",
   ]
   pruneopts = "UT"
-  revision = "dc24f2764732fd21b963699e187ffcd6bfea21c7"
+  revision = "4669bef8c70096b1eb2a42a1136fe8343b20b002"
 
 [[projects]]
   branch = "master"
-  digest = "1:743362bd9879b63a73c060d74cfd90d46aab4913aea2b0714ceaacee64e6a9fa"
+  digest = "1:d750722b69f0d4a148081bb34223b75ff7548c6cbe973f13d8e7fc7415dae703"
   name = "github.com/smallstep/certinfo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "78e21b44234ef6ddeb58f5e8aad2ed09975b694a"
+  revision = "b0e530932339444db78082d59a4c08c2a474bd82"
 
 [[projects]]
   branch = "master"
-  digest = "1:9c1b7052fa8f2c918efd60ed5ae3c70ccbba08967c58ec71067535449a3ba220"
+  digest = "1:7d03323edb817ca94efaee5489cde6acd06ceeaca9e6eee106d2d6a90deca997"
   name = "github.com/smallstep/nosql"
   packages = [
     ".",
@@ -406,7 +350,7 @@
     "mysql",
   ]
   pruneopts = "UT"
-  revision = "a0934e12468769d8cbede3ed316c47a4b88de4ca"
+  revision = "f80b3f432de0662f07ebd58fe52b0a119fe5dcd9"
 
 [[projects]]
   branch = "master"
@@ -418,7 +362,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:822ad7c8c41fe68fb9c9c95ad7e77a1172e216d9e3e527451819927448b6dee6"
+  digest = "1:50d0982e9577010169a965dbfaccb3d1992b5b4bcf308da6c86fec1959d91c91"
   name = "github.com/smallstep/zcrypto"
   packages = [
     "json",
@@ -427,7 +371,7 @@
     "x509/pkix",
   ]
   pruneopts = "UT"
-  revision = "6bab21fcaafc3d150cf793b6d5f25fe32f49c80e"
+  revision = "9fc4bea33f7023fde193f6b0ee1dc4b990b88f4b"
 
 [[projects]]
   branch = "master"
@@ -440,14 +384,6 @@
   ]
   pruneopts = "UT"
   revision = "d84eaafe274f9dc1f811ebfbb073e18c466e2a44"
-
-[[projects]]
-  digest = "1:08d65904057412fc0270fc4812a1c90c594186819243160dc779a402d4b6d0bc"
-  name = "github.com/spf13/cast"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "8c9545af88b134710ab1cd196795e7f2388358d7"
-  version = "v1.3.0"
 
 [[projects]]
   digest = "1:c40d65817cdd41fac9aa7af8bed56927bb2d6d47e4fea566a74880f5c2b1c41e"

@@ -270,7 +270,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
 		jitter := rand.Int63n(int64(expiresIn / 20))
-		if d := leaf.NotAfter.Sub(time.Now()); d > expiresIn+time.Duration(jitter) {
+		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
 			return nil
 		}
@@ -287,7 +287,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Duration) time.Duration {
 	if renewPeriod > 0 {
 		// Renew now if it will be expired in renewPeriod
-		if (leaf.NotAfter.Sub(time.Now()) - renewPeriod) <= 0 {
+		if (time.Until(leaf.NotAfter) - renewPeriod) <= 0 {
 			return 0
 		}
 		return renewPeriod
@@ -298,7 +298,7 @@ func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Durat
 		expiresIn = period / 3
 	}
 
-	d := leaf.NotAfter.Sub(time.Now()) - expiresIn
+	d := time.Until(leaf.NotAfter) - expiresIn
 	n := rand.Int63n(int64(period / 20))
 	d -= time.Duration(n)
 	if d < 0 {
@@ -400,16 +400,17 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 		return nil, errors.Wrap(err, "error renewing certificate")
 	}
 
-	serverBlock, err := pemutil.Serialize(resp.ServerPEM.Certificate)
-	if err != nil {
-		return nil, err
+	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
+		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
 	}
-	caBlock, err := pemutil.Serialize(resp.CaPEM.Certificate)
-	if err != nil {
-		return nil, err
+	var data []byte
+	for _, certPEM := range resp.CertChainPEM {
+		pemblk, err := pemutil.Serialize(certPEM)
+		if err != nil {
+			return nil, errors.Wrap(err, "error serializing certificate PEM")
+		}
+		data = append(data, pem.EncodeToMemory(pemblk)...)
 	}
-	data := append(pem.EncodeToMemory(serverBlock), pem.EncodeToMemory(caBlock)...)
-
 	if err := utils.WriteFile(outFile, data, 0600); err != nil {
 		return nil, errs.FileError(err, outFile)
 	}

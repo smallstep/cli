@@ -1,9 +1,6 @@
 package cautils
 
 import (
-	"crypto"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -13,8 +10,6 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/exec"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -77,9 +72,9 @@ func (e *ErrACMEToken) Error() string {
 }
 
 // NewTokenFlow implements the common flow used to generate a token
-func NewTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
+func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	// Get audience from ca-url
-	audience, err := parseAudience(ctx, typ)
+	audience, err := parseAudience(ctx, tokType)
 	if err != nil {
 		return "", err
 	}
@@ -88,98 +83,45 @@ func NewTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, caUR
 	if err != nil {
 		return "", err
 	}
-
 	p, err := provisionerPrompt(ctx, provisioners)
 	if err != nil {
 		return "", err
 	}
 
+	tokAttrs := tokenAttrs{
+		subject:       subject,
+		root:          root,
+		caURL:         caURL,
+		audience:      audience,
+		sans:          sans,
+		notBefore:     notBefore,
+		notAfter:      notAfter,
+		certNotBefore: certNotBefore,
+		certNotAfter:  certNotAfter,
+	}
+
 	switch p := p.(type) {
-	case *provisioner.OIDC: // Run step oauth
-		args := []string{"oauth", "--oidc", "--bare",
-			"--provider", p.ConfigurationEndpoint,
-			"--client-id", p.ClientID, "--client-secret", p.ClientSecret}
-		if ctx.Bool("console") {
-			args = append(args, "--console")
-		}
-		if p.ListenAddress != "" {
-			args = append(args, "--listen", p.ListenAddress)
-		}
-		out, err := exec.Step(args...)
-		if err != nil {
-			return "", err
-		}
-		return strings.TrimSpace(string(out)), nil
-	case *provisioner.GCP: // Do the identity request to get the token
+	case *provisioner.OIDC: // Run step oauth.
+		return generateOIDCToken(ctx, p)
+	case *provisioner.X5C: // Get a JWT with an X5C header and signature.
+		return generateX5CToken(ctx, p, tokType, tokAttrs)
+	case *provisioner.GCP: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, caURL)
-	case *provisioner.AWS: // Do the identity request to get the token
+	case *provisioner.AWS: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, caURL)
-	case *provisioner.Azure: // Do the identity request to get the token
+	case *provisioner.Azure: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, caURL)
-	case *provisioner.ACME: // Return an error with the provisioner ID
+	case *provisioner.ACME: // Return an error with the provisioner ID.
 		return "", &ErrACMEToken{p.GetName()}
-	}
-
-	// JWK provisioner
-	prov, ok := p.(*provisioner.JWK)
-	if !ok {
-		return "", errors.Errorf("unknown provisioner type %T", p)
-	}
-
-	kid := prov.Key.KeyID
-	issuer := prov.Name
-
-	var opts []jose.Option
-	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
-		opts = append(opts, jose.WithPasswordFile(passwordFile))
-	}
-
-	var jwk *jose.JSONWebKey
-	if keyFile := ctx.String("key"); len(keyFile) == 0 {
-		// Get private key from CA
-		encrypted, err := pki.GetProvisionerKey(caURL, root, kid)
-		if err != nil {
-			return "", err
+	default: // Default is assumed to be a standard JWT.
+		jwkP, ok := p.(*provisioner.JWK)
+		if !ok {
+			return "", errors.Errorf("unknown provisioner type %T", p)
 		}
-
-		// Add template with check mark
-		opts = append(opts, jose.WithUIOptions(
-			ui.WithPromptTemplates(ui.PromptTemplates()),
-		))
-
-		decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key", []byte(encrypted), opts...)
-		if err != nil {
-			return "", err
-		}
-
-		jwk = new(jose.JSONWebKey)
-		if err := json.Unmarshal(decrypted, jwk); err != nil {
-			return "", errors.Wrap(err, "error unmarshalling provisioning key")
-		}
-	} else {
-		// Get private key from given key file
-		jwk, err = jose.ParseKey(keyFile, opts...)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	// Generate token
-	tokenGen := NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
-	switch typ {
-	case SignType:
-		return tokenGen.SignToken(subject, sans)
-	case RevokeType:
-		return tokenGen.RevokeToken(subject)
-	case SSHUserSignType:
-		return tokenGen.SignSSHToken(subject, provisioner.SSHUserCert, sans, certNotBefore, certNotAfter)
-	case SSHHostSignType:
-		return tokenGen.SignSSHToken(subject, provisioner.SSHHostCert, sans, certNotBefore, certNotAfter)
-	default:
-		return tokenGen.Token(subject)
+		return generateJWKToken(ctx, jwkP, tokType, tokAttrs)
 	}
 }
 
@@ -204,15 +146,13 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 
 	kid := ctx.String("kid")
 	issuer := ctx.String("issuer")
-	keyFile := ctx.String("key")
-	passwordFile := ctx.String("password-file")
 
 	// Require issuer and keyFile if ca.json does not exists.
 	// kid can be passed or created using jwk.Thumbprint.
 	switch {
 	case len(issuer) == 0:
 		return "", errs.RequiredWithFlag(ctx, "offline", "issuer")
-	case len(keyFile) == 0:
+	case len(ctx.String("key")) == 0:
 		return "", errs.RequiredWithFlag(ctx, "offline", "key")
 	}
 
@@ -231,53 +171,49 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 		}
 	}
 
-	// Parse key
-	var opts []jose.Option
-	if len(passwordFile) != 0 {
-		opts = append(opts, jose.WithPasswordFile(passwordFile))
-	}
-	jwk, err := jose.ParseKey(keyFile, opts...)
-	if err != nil {
-		return "", err
-	}
-
-	// Get the kid if it's not passed as an argument
-	if len(kid) == 0 {
-		hash, err := jwk.Thumbprint(crypto.SHA256)
-		if err != nil {
-			return "", errors.Wrap(err, "error generating JWK thumbprint")
-		}
-		kid = base64.RawURLEncoding.EncodeToString(hash)
+	tokAttrs := tokenAttrs{
+		subject:       subject,
+		root:          root,
+		audience:      audience,
+		issuer:        issuer,
+		kid:           kid,
+		sans:          sans,
+		notBefore:     notBefore,
+		notAfter:      notAfter,
+		certNotBefore: certNotBefore,
+		certNotAfter:  certNotAfter,
 	}
 
-	// Generate token
-	tokenGen := NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
-	switch typ {
-	case SignType:
-		return tokenGen.SignToken(subject, sans)
-	case RevokeType:
-		return tokenGen.RevokeToken(subject)
-	case SSHUserSignType:
-		return tokenGen.SignSSHToken(subject, provisioner.SSHUserCert, sans, certNotBefore, certNotAfter)
-	case SSHHostSignType:
-		return tokenGen.SignSSHToken(subject, provisioner.SSHHostCert, sans, certNotBefore, certNotAfter)
+	switch {
+	case ctx.IsSet("x5c-cert") || ctx.IsSet("x5c-key"):
+		return generateX5CToken(ctx, nil, typ, tokAttrs)
 	default:
-		return tokenGen.Token(subject)
+		return generateJWKToken(ctx, nil, typ, tokAttrs)
 	}
 }
 
+func allowX5CProvisionerFilter(p provisioner.Interface) bool {
+	return p.GetType() == provisioner.TypeX5C
+}
+
 func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {
-	// Filter by type
-	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-		switch p.GetType() {
-		case provisioner.TypeJWK, provisioner.TypeOIDC, provisioner.TypeACME:
-			return true
-		case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
-			return true
-		default:
-			return false
-		}
-	})
+	switch {
+	// If x5c flags then only list x5c provisioners.
+	case ctx.IsSet("x5c-cert") || ctx.IsSet("x5c-key"):
+		provisioners = provisionerFilter(provisioners, allowX5CProvisionerFilter)
+	// List all available provisioners.
+	default:
+		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+			switch p.GetType() {
+			case provisioner.TypeJWK, provisioner.TypeX5C, provisioner.TypeOIDC, provisioner.TypeACME:
+				return true
+			case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
+				return true
+			default:
+				return false
+			}
+		})
+	}
 
 	if len(provisioners) == 0 {
 		return nil, errors.New("cannot create a new token: the CA does not have any provisioner configured")
@@ -340,6 +276,11 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 				Provisioner: p,
 			})
 		case *provisioner.ACME:
+			items = append(items, &provisionersSelect{
+				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
+				Provisioner: p,
+			})
+		case *provisioner.X5C:
 			items = append(items, &provisionersSelect{
 				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
 				Provisioner: p,

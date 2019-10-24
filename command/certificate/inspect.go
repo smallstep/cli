@@ -244,7 +244,7 @@ func inspectAction(ctx *cli.Context) error {
 	switch blocks[0].Type {
 	case "CERTIFICATE":
 		return inspectCertificates(ctx, blocks)
-	case "CERTIFICATE REQUEST": // only one is supported
+	case "CERTIFICATE REQUEST", "NEW CERTIFICATE REQUEST": // only one is supported
 		return inspectCertificateRequest(ctx, blocks[0])
 	default:
 		return errors.Errorf("Invalid PEM type in %s. Expected [CERTIFICATE|CERTIFICATE REQUEST] but got %s)", crtFile, block.Type)

@@ -157,3 +157,15 @@ func WithKid(s string) Options {
 		return nil
 	}
 }
+
+// WithX5CFile returns a Options that sets the header x5c claims.
+func WithX5CFile(certFile string, key interface{}) Options {
+	return func(c *Claims) error {
+		certStrs, err := jose.ValidateX5C(certFile, key)
+		if err != nil {
+			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
+		}
+		c.SetHeader("x5c", certStrs)
+		return nil
+	}
+}

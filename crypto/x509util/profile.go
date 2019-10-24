@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/pem"
 	"math/big"
 	"net"
@@ -49,6 +50,10 @@ var (
 		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
 		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
 	}
+
+	// oidExtensionCTPoison is the OID for the certificate transparency poison
+	// extension defined in RFC6962.
+	oidExtensionCTPoison = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 11129, 2, 4, 3}
 )
 
 // Profile is an interface that certificate profiles (e.g. leaf,
@@ -67,11 +72,14 @@ type Profile interface {
 	GenerateKeyPair(string, string, int) error
 	DefaultDuration() time.Duration
 	CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, error)
+	AddExtension(pkix.Extension)
+	RemoveExtension(asn1.ObjectIdentifier)
 }
 
 type base struct {
 	iss     *x509.Certificate
 	sub     *x509.Certificate
+	ext     []pkix.Extension
 	subPub  interface{}
 	subPriv interface{}
 	issPriv interface{}
@@ -223,6 +231,21 @@ func WithHosts(hosts string) WithOption {
 	}
 }
 
+// WithCTPoison returns a Profile modifier that adds the CT poison extension
+// defined in RFC6962.
+func WithCTPoison() WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.ExtraExtensions = append(crt.ExtraExtensions, pkix.Extension{
+			Id:       oidExtensionCTPoison,
+			Critical: true,
+			Value:    asn1.NullBytes,
+		})
+		return nil
+	}
+
+}
+
 // newProfile initializes the given profile.
 //
 // If the public/private key pair of the subject identity are not set by
@@ -312,6 +335,27 @@ func (b *base) SetSubjectPublicKey(pub interface{}) {
 	b.subPub = pub
 }
 
+func (b *base) AddExtension(ext pkix.Extension) {
+	b.ext = append(b.ext, ext)
+}
+
+func (b *base) RemoveExtension(oid asn1.ObjectIdentifier) {
+	for i, ext := range b.ext {
+		if ext.Id.Equal(oid) {
+			b.ext = append(b.ext[:i], b.ext[i+1:]...)
+			break
+		}
+	}
+	if b.sub != nil {
+		for i, ext := range b.sub.ExtraExtensions {
+			if ext.Id.Equal(oid) {
+				b.sub.ExtraExtensions = append(b.sub.ExtraExtensions[:i], b.sub.ExtraExtensions[i+1:]...)
+				break
+			}
+		}
+	}
+}
+
 func (b *base) DefaultDuration() time.Duration {
 	return DefaultCertValidity
 }
@@ -348,6 +392,9 @@ func (b *base) CreateCertificate() ([]byte, error) {
 
 	sub := ToStepX509Certificate(b.Subject())
 	iss := ToStepX509Certificate(b.Issuer())
+	if len(b.ext) > 0 {
+		sub.ExtraExtensions = append(sub.ExtraExtensions, b.ext...)
+	}
 
 	// Using stepx509 to be able to create certs with ed25519
 	bytes, err := stepx509.CreateCertificate(rand.Reader, sub, iss, b.SubjectPublicKey(), b.issPriv)

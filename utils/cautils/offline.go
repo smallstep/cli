@@ -8,7 +8,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -17,9 +16,6 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
-	"github.com/smallstep/cli/exec"
-	"github.com/smallstep/cli/jose"
-	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh"
@@ -132,6 +128,14 @@ func (c *OfflineCA) Provisioners() provisioner.List {
 	return c.config.AuthorityConfig.Provisioners
 }
 
+func certChainToPEM(certChain []*x509.Certificate) []api.Certificate {
+	certChainPEM := make([]api.Certificate, 0, len(certChain))
+	for _, c := range certChain {
+		certChainPEM = append(certChainPEM, api.Certificate{Certificate: c})
+	}
+	return certChainPEM
+}
+
 // Sign is a wrapper on top of certificates Authorize and Sign methods. It
 // returns an api.SignResponse with the requested certificate and the
 // intermediate.
@@ -145,14 +149,20 @@ func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 		NotBefore: req.NotBefore,
 		NotAfter:  req.NotAfter,
 	}
-	cert, ca, err := c.authority.Sign(req.CsrPEM.CertificateRequest, signOpts, opts...)
+	certChain, err := c.authority.Sign(req.CsrPEM.CertificateRequest, signOpts, opts...)
 	if err != nil {
 		return nil, err
 	}
+	certChainPEM := certChainToPEM(certChain)
+	var caPEM api.Certificate
+	if len(certChainPEM) > 1 {
+		caPEM = certChainPEM[1]
+	}
 	return &api.SignResponse{
-		ServerPEM:  api.Certificate{Certificate: cert},
-		CaPEM:      api.Certificate{Certificate: ca},
-		TLSOptions: c.authority.GetTLSOptions(),
+		ServerPEM:    certChainPEM[0],
+		CaPEM:        caPEM,
+		CertChainPEM: certChainPEM,
+		TLSOptions:   c.authority.GetTLSOptions(),
 	}, nil
 }
 
@@ -167,14 +177,20 @@ func (c *OfflineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 		return nil, errors.Wrap(err, "error parsing certificate")
 	}
 	// renew cert using authority
-	cert, ca, err := c.authority.Renew(peer)
+	certChain, err := c.authority.Renew(peer)
 	if err != nil {
 		return nil, err
 	}
+	certChainPEM := certChainToPEM(certChain)
+	var caPEM api.Certificate
+	if len(certChainPEM) > 1 {
+		caPEM = certChainPEM[1]
+	}
 	return &api.SignResponse{
-		ServerPEM:  api.Certificate{Certificate: cert},
-		CaPEM:      api.Certificate{Certificate: ca},
-		TLSOptions: c.authority.GetTLSOptions(),
+		ServerPEM:    certChainPEM[0],
+		CaPEM:        caPEM,
+		CertChainPEM: certChainPEM,
+		TLSOptions:   c.authority.GetTLSOptions(),
 	}, nil
 }
 
@@ -313,92 +329,51 @@ func (c *OfflineCA) SSHCheckHost(principal string) (*api.SSHCheckPrincipalRespon
 }
 
 // GenerateToken creates the token used by the authority to authorize requests.
-func (c *OfflineCA) GenerateToken(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
+func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	// Use ca.json configuration for the root and audience
 	root := c.Root()
-	audience := c.Audience(typ)
+	audience := c.Audience(tokType)
 
 	// Get provisioner to use
 	provisioners := c.Provisioners()
-
 	p, err := provisionerPrompt(ctx, provisioners)
 	if err != nil {
 		return "", err
 	}
 
+	tokAttrs := tokenAttrs{
+		subject:       subject,
+		root:          root,
+		caURL:         c.CaURL(),
+		audience:      audience,
+		sans:          sans,
+		notBefore:     notBefore,
+		notAfter:      notAfter,
+		certNotBefore: certNotBefore,
+		certNotAfter:  certNotAfter,
+	}
+
 	switch p := p.(type) {
-	case *provisioner.OIDC: // Run step oauth
-		args := []string{"oauth", "--oidc", "--bare",
-			"--provider", p.ConfigurationEndpoint,
-			"--client-id", p.ClientID, "--client-secret", p.ClientSecret}
-		if ctx.Bool("console") {
-			args = append(args, "--console")
-		}
-		if p.ListenAddress != "" {
-			args = append(args, "--listen", p.ListenAddress)
-		}
-		out, err := exec.Step(args...)
-		if err != nil {
-			return "", err
-		}
-		return strings.TrimSpace(string(out)), nil
-	case *provisioner.GCP: // Do the identity request to get the token
+	case *provisioner.OIDC: // Run step oauth.
+		return generateOIDCToken(ctx, p)
+	case *provisioner.X5C: // Get a JWT with an X5C header and signature.
+		return generateX5CToken(ctx, p, tokType, tokAttrs)
+	case *provisioner.GCP: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
-	case *provisioner.AWS: // Do the identity request to get the token
+	case *provisioner.AWS: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
-	case *provisioner.Azure: // Do the identity request to get the token
+	case *provisioner.Azure: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
-	case *provisioner.ACME: // ACME provisioners do not implement the token flow.
-		return "", &ErrACMEToken{p.GetID()}
-	}
-
-	// JWK provisioner
-	prov, ok := p.(*provisioner.JWK)
-	if !ok {
-		return "", errors.Errorf("unknown provisioner type %T", p)
-	}
-
-	kid := prov.Key.KeyID
-	issuer := prov.Name
-	encryptedKey := prov.EncryptedKey
-
-	// Decrypt encrypted key
-	opts := []jose.Option{
-		jose.WithUIOptions(ui.WithPromptTemplates(ui.PromptTemplates())),
-	}
-	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
-		opts = append(opts, jose.WithPasswordFile(passwordFile))
-	}
-
-	if len(encryptedKey) == 0 {
-		return "", errors.Errorf("provisioner '%s' does not have an 'encryptedKey' property", kid)
-	}
-
-	decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key", []byte(encryptedKey), opts...)
-	if err != nil {
-		return "", err
-	}
-
-	jwk := new(jose.JSONWebKey)
-	if err := json.Unmarshal(decrypted, jwk); err != nil {
-		return "", errors.Wrap(err, "error unmarshalling provisioning key")
-	}
-
-	// Generate token
-	tokenGen := NewTokenGenerator(kid, issuer, audience, root, notBefore, notAfter, jwk)
-	switch typ {
-	case SignType:
-		return tokenGen.SignToken(subject, sans)
-	case RevokeType:
-		return tokenGen.RevokeToken(subject)
-	case SSHUserSignType:
-		return tokenGen.SignSSHToken(subject, provisioner.SSHUserCert, sans, certNotBefore, certNotAfter)
-	case SSHHostSignType:
-		return tokenGen.SignSSHToken(subject, provisioner.SSHHostCert, sans, certNotBefore, certNotAfter)
-	default:
-		return tokenGen.Token(subject)
+	case *provisioner.ACME: // Return an error with the provisioner ID.
+		return "", &ErrACMEToken{p.GetName()}
+	default: // Default is assumed to be a standard JWT.
+		jwkP, ok := p.(*provisioner.JWK)
+		if !ok {
+			return "", errors.Errorf("unknown provisioner type %T", p)
+		}
+		return generateJWKToken(ctx, jwkP, tokType, tokAttrs)
 	}
 }

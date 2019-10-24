@@ -158,6 +158,20 @@ but can accept a different configuration file using '--ca-config>' flag.`,
 $STEPPATH/config/ca.json`,
 		Value: filepath.Join(config.StepPath(), "config", "ca.json"),
 	}
+
+	// X5cCert is a cli.Flag used to pass the x5c header certificate for a JWT.
+	X5cCert = cli.StringFlag{
+		Name:  "x5c-cert",
+		Usage: "Certificate (<chain>) in PEM format to store in the 'x5c' header of a JWT.",
+	}
+
+	// X5cKey is a cli.Flag used to pass the private key corresponding to the x5c-cert
+	// that is used to sign the token.
+	X5cKey = cli.StringFlag{
+		Name: "x5c-key",
+		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate that will
+be stored in the 'x5c' header.`,
+	}
 )
 
 // ParseTimeOrDuration is a helper that returns the time or the current time

@@ -109,7 +109,7 @@ func (c CLICommand) run() (CLIOutput, error) {
 	cmd.Stderr = io.MultiWriter(&stderr, &combined)
 	cmd.Stdin = c.stdin
 	err := cmd.Run()
-	return CLIOutput{string(stdout.Bytes()), string(stderr.Bytes()), string(combined.Bytes())}, err
+	return CLIOutput{stdout.String(), stderr.String(), combined.String()}, err
 }
 
 func (c CLICommand) spawn() (*gexpect.ExpectSubprocess, error) {

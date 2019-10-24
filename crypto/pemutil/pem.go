@@ -296,7 +296,7 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 		}
 		crt, err := x509.ParseCertificate(block.Bytes)
 		return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
-	case "CERTIFICATE REQUEST":
+	case "CERTIFICATE REQUEST", "NEW CERTIFICATE REQUEST":
 		if ctx.stepCrypto {
 			csr, err := stepx509.ParseCertificateRequest(block.Bytes)
 			return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
