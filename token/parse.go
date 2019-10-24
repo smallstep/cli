@@ -55,24 +55,6 @@ type Payload struct {
 	K8sSASecretName         string            `json:"kubernetes.io/serviceaccount/secret.name,omitempty"`
 	K8sSAServiceAccountName string            `json:"kubernetes.io/serviceaccount/service-account.name,omitempty"`
 	K8sSAServiceAccountUID  string            `json:"kubernetes.io/serviceaccount/service-account.uid,omitempty"`
-	Google                  *GCPGooglePayload `json:"google"`  // GCP token claims
-	Amazon                  *AWSAmazonPayload `json:"amazon"`  // AWS token claims
-	Azure                   *AzurePayload     `json:"azure"`   // Azure token claims
-	SHA                     string            `json:"sha"`     // JWK token claims
-	SANs                    []string          `json:"sans"`    // ...
-	AtHash                  string            `json:"at_hash"` // OIDC token claims
-	AuthorizedParty         string            `json:"azp"`     // ...
-	Email                   string            `json:"email"`
-	EmailVerified           bool              `json:"email_verified"`
-	Hd                      string            `json:"hd"`
-	Nonce                   string            `json:"nonce"`
-	AppID                   string            `json:"appid"`    // Azure token claims
-	AppIDAcr                string            `json:"appidacr"` // ...
-	IdentityProvider        string            `json:"idp"`
-	ObjectID                string            `json:"oid"`
-	TenantID                string            `json:"tid"`
-	Version                 interface{}       `json:"ver"`
-	XMSMirID                string            `json:"xms_mirid"`
 	Google                  *GCPGooglePayload `json:"google"` // GCP token claims
 	Amazon                  *AWSAmazonPayload `json:"amazon"` // AWS token claims
 	Azure                   *AzurePayload     `json:"azure"`  // Azure token claims
