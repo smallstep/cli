@@ -1,21 +1,31 @@
 package ssh
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
 )
 
 func logoutCommand() cli.Command {
 	return cli.Command{
-		Name:      "logout",
-		Action:    command.ActionFunc(logoutAction),
-		Usage:     "removes a private key from the ssh-agent and revoke",
-		UsageText: `**step ssh logout** <subject>`,
+		Name:   "logout",
+		Action: command.ActionFunc(logoutAction),
+		Usage:  "removes a private key from the ssh-agent and revoke",
+		UsageText: `**step ssh logout** <subject>
+		[**--all**] [**--revoke**=<file>] [**--ca-url**=<uri>]
+		[**--root**=<file>] [**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh logout** commands removes a key from the ssh-agent and optionally
 revokes the key creating a Key Revocation List file.
+
+By default it only removes certificate keys signed by step-certificates, but the
+flag **--all** can be used to remove all keys with a given subject or all keys.
 
 ## POSITIONAL ARGUMENTS
 
@@ -24,9 +34,14 @@ revokes the key creating a Key Revocation List file.
 
 ## EXAMPLES
 
-Remove the key mariano@work from the SSH agent:
+Remove the certificate mariano@work from the SSH agent:
 '''
 $ step ssh logout mariano@work
+'''
+
+Remove the all the keys and certificates for mariano@work from the SSH agent:
+'''
+$ step ssh logout --all mariano@work
 '''
 
 Remove the key mariano@work from the agent listening in /tmp/ssh/agent:
@@ -52,12 +67,16 @@ $ step ssh logout --revoke /etc/ssh/revoked_keys mariano@work
 				Name:  "revoke",
 				Usage: "Removes the key and updates a Key Revocation List <file> or KRL.",
 			},
+			flags.CaURL,
+			flags.Root,
+			flags.Offline,
+			flags.CaConfig,
 		},
 	}
 }
 
 func logoutAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
 		return err
 	}
 
@@ -66,11 +85,11 @@ func logoutAction(ctx *cli.Context) error {
 	all := ctx.Bool("all")
 	revoke := ctx.String("revoke")
 
-	_, _ = subject, all
-
 	switch {
 	case revoke != "":
 		return errs.UnsupportedFlag(ctx, "revoke")
+	case ctx.NArg() == 0 && !all:
+		return errs.TooFewArguments(ctx)
 	}
 
 	agent, err := sshutil.DialAgent()
@@ -80,24 +99,37 @@ func logoutAction(ctx *cli.Context) error {
 	defer agent.Close()
 
 	// Remove all
-	if all {
+	if all && ctx.NArg() == 0 {
 		if err := agent.RemoveAll(); err != nil {
 			return errors.Wrap(err, "error removing all keys")
 		}
+		fmt.Println("All identities removed.")
+		return nil
 	}
 
 	// Remove if comment == subject
-	keys, err := agent.List()
-	if err != nil {
-		return errors.Wrap(err, "error listing keys")
-	}
-	for _, key := range keys {
-		if key.Comment == subject {
-			if err := agent.Remove(key); err != nil {
-				return errors.Wrap(err, "error removing key")
+	var opts []sshutil.AgentOption
+	if !all {
+		// Remove only keys signed by the CA
+		client, err := cautils.NewClient(ctx)
+		if err != nil {
+			return err
+		}
+		if roots, err := client.SSHRoots(); err == nil && len(roots.UserKeys) > 0 {
+			userKeys := make([]ssh.PublicKey, len(roots.UserKeys))
+			for i, uk := range roots.UserKeys {
+				userKeys[i] = uk.PublicKey
 			}
+			opts = append(opts, sshutil.WithSignatureKey(userKeys))
 		}
 	}
-
+	if err := agent.RemoveKeys(subject, opts...); err != nil {
+		return err
+	}
+	if all {
+		fmt.Printf("All identities removed: %s\n", subject)
+	} else {
+		fmt.Printf("Identity removed: %s\n", subject)
+	}
 	return nil
 }

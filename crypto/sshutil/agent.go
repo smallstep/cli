@@ -38,8 +38,9 @@ func WithSignatureKey(keys []ssh.PublicKey) AgentOption {
 			if err != nil {
 				return false
 			}
-			for _, b := range signingKeys {
-				if bytes.Equal(b, cert.SignatureKey.Marshal()) {
+			b := cert.SignatureKey.Marshal()
+			for _, sb := range signingKeys {
+				if bytes.Equal(b, sb) {
 					return true
 				}
 			}
@@ -118,6 +119,27 @@ func (a *Agent) GetSigner(comment string, opts ...AgentOption) (ssh.Signer, erro
 	}
 
 	return nil, ErrNotFound
+}
+
+// RemoveKeys removes the keys with the given comment from the agent.
+func (a *Agent) RemoveKeys(comment string, opts ...AgentOption) error {
+	o := newOptions(opts)
+	keys, err := a.List()
+	if err != nil {
+		return errors.Wrap(err, "error listing keys")
+	}
+
+	for _, key := range keys {
+		if key.Comment == comment {
+			if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
+				if err := a.Remove(key); err != nil {
+					return errors.Wrap(err, "error removing key")
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // AddCertificate adds the given certificate to the agent.
