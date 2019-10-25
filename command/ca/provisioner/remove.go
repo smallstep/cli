@@ -58,7 +58,10 @@ and must be one of:
     : Uses ACME protocol.
 
     **X5C**
-    : Uses an X509 Certificate / private key pair to sign provisioning tokens.`,
+    : Uses an X509 Certificate / private key pair to sign provisioning tokens.
+
+    **K8sSA**
+    : Uses Kubernetes Service Account tokens.`,
 			},
 		},
 		Description: `**step ca provisioner remove** removes one or more provisioners
@@ -97,9 +100,14 @@ Remove the ACME provisioner by name:
 $ step ca provisioner remove Amazon --ca-config ca.json --type AWS
 '''
 
-Remove the X5C provisioner by name:
+Remove an X5C provisioner by name:
 '''
 $ step ca provisioner remove my-x5c-provisioner --type x5c
+'''
+
+Remove a K8sSA provisioner by name:
+'''
+$ step ca provisioner remove k8sSA-default --type k8sSA
 '''`,
 	}
 }
@@ -161,7 +169,8 @@ func removeAction(ctx *cli.Context) error {
 				if clientID != "" && pp.ClientID != clientID {
 					provisioners = append(provisioners, p)
 				}
-			case *provisioner.AWS, *provisioner.Azure, *provisioner.GCP, *provisioner.ACME, *provisioner.X5C:
+			case *provisioner.AWS, *provisioner.Azure, *provisioner.GCP,
+				*provisioner.ACME, *provisioner.X5C, *provisioner.K8sSA:
 				// they are filtered by type and name.
 			default:
 				continue

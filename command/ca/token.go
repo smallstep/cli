@@ -31,7 +31,8 @@ func tokenCommand() cli.Command {
 [**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<path>]
 [**--san**=<SAN>] [**--offline**] [**--revoke**]
 [**--x5c-cert**=<path>] [**--x5c-key**=<path>]
-[**--ssh**] [**--host**] [**--principal**=<string>]`,
+[**--ssh**] [**--host**] [**--principal**=<string>]
+[**--k8ssa-token-path**=<file>`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
@@ -171,6 +172,7 @@ be invalid for any other API request.`,
 				Name:  "ssh",
 				Usage: `Create a token for authorizing an SSH certificate signing request.`,
 			},
+			k8sSATokenPathFlag,
 		},
 	}
 }

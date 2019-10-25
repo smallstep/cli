@@ -116,6 +116,8 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 		return p.GetIdentityToken(subject, caURL)
 	case *provisioner.ACME: // Return an error with the provisioner ID.
 		return "", &ErrACMEToken{p.GetName()}
+	case *provisioner.K8sSA: // Ge the Kubernetes service account token.
+		return generateK8sSAToken(ctx, p)
 	default: // Default is assumed to be a standard JWT.
 		jwkP, ok := p.(*provisioner.JWK)
 		if !ok {
@@ -205,7 +207,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	default:
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			switch p.GetType() {
-			case provisioner.TypeJWK, provisioner.TypeX5C, provisioner.TypeOIDC, provisioner.TypeACME:
+			case provisioner.TypeJWK, provisioner.TypeX5C, provisioner.TypeOIDC, provisioner.TypeACME, provisioner.TypeK8sSA:
 				return true
 			case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
 				return true
@@ -281,6 +283,11 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 				Provisioner: p,
 			})
 		case *provisioner.X5C:
+			items = append(items, &provisionersSelect{
+				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
+				Provisioner: p,
+			})
+		case *provisioner.K8sSA:
 			items = append(items, &provisionersSelect{
 				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
 				Provisioner: p,

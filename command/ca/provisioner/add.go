@@ -1,8 +1,11 @@
 package provisioner
 
 import (
+	"crypto/ecdsa"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"io/ioutil"
 	"net/url"
 	"strings"
 
@@ -16,6 +19,7 @@ import (
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/ed25519"
 )
 
 func addCommand() cli.Command {
@@ -31,8 +35,11 @@ func addCommand() cli.Command {
 [**--configuration-endpoint**=<url>] [**--domain**=<domain>]
 [**--admin**=<email>]...
 
-**step ca provisioner add** <name> **--type**=x5c
-[**--x5c-root**] [**--ca-config**=<file>]...
+**step ca provisioner add** <name> **--type**=x5c **--x5c-root**=<file>
+[**--ca-config**=<file>]...
+
+**step ca provisioner add** <name> **--type**=k8sSA
+[**--pem-keys=<file>**] [**--ca-config**=<file>]...
 
 **step ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
 [**--ca-config**=<file>] [**--aws-account**=<id>]
@@ -68,7 +75,9 @@ and must be one of:
 
     **X5C**
     : Uses an X509 Certificate / private key pair to sign provisioning tokens.
-`,
+
+    **K8sSA**
+    : Uses Kubernetes Service Account tokens.`,
 			},
 			flags.PasswordFile,
 			cli.BoolFlag{
@@ -153,8 +162,15 @@ will be accepted.`,
 			// X5C provisioner flags
 			cli.StringFlag{
 				Name: "x5c-root",
-				Usage: `Root certificate (chain) <path> used to validate the signature on X5C
+				Usage: `Root certificate (chain) <file> used to validate the signature on X5C
 provisioning tokens.`,
+			},
+			// K8sSA provisioner flags
+			cli.StringFlag{
+				Name: "pem-keys",
+				Usage: `Public key <file> for validating signatures on K8s Service Account Tokens.
+PEM formatted bundle (can have multiple PEM blocks in the same file) of public
+keys and x509 Certificates.`,
 			},
 		},
 		Description: `**step ca provisioner add** adds one or more provisioners
@@ -252,6 +268,11 @@ $ step ca provisioner add acme-smallstep --type ACME --ca-config ca.json
 Add an X5C provisioner.
 '''
 $ step ca provisioner add x5c-smallstep --type X5C --x5c-root x5cRoot.crt
+'''
+
+Add a K8s Service Account provisioner.
+'''
+$ step ca provisioner add my-kube-provisioner --type K8sSA --pem-keys keys.pub
 '''`,
 	}
 }
@@ -300,6 +321,8 @@ func addAction(ctx *cli.Context) (err error) {
 		list, err = addACMEProvisioner(ctx, name, provMap)
 	case provisioner.TypeX5C:
 		list, err = addX5CProvisioner(ctx, name, provMap)
+	case provisioner.TypeK8sSA:
+		list, err = addK8sSAProvisioner(ctx, name, provMap)
 	default:
 		return errors.Errorf("unknown type %s: this should not happen", typ)
 	}
@@ -588,6 +611,75 @@ func addX5CProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 	return
 }
 
+// addK8sSAProvisioner returns a provisioner list containing a kubernetes
+// service account provisioner.
+// NOTE: step-ca currently only supports one k8sSA provisioner (because we do
+// not have a good way of distinguishing between tokens), therefore w/e `name`
+// is entered by the user will be overwritten by a default value.
+func addK8sSAProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
+	if ctx.Bool("ssh") {
+		return nil, errors.New("kubernetes service account provisioner does not support ssh certificate actions")
+	}
+
+	pemKeysF := ctx.String("pem-keys")
+	if len(pemKeysF) == 0 {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "pem-keys")
+	}
+
+	pemKeysB, err := ioutil.ReadFile(pemKeysF)
+	if err != nil {
+		return nil, errors.Wrap(err, "error reading pem keys")
+	}
+
+	var (
+		block   *pem.Block
+		rest    = pemKeysB
+		pemKeys = []interface{}{}
+	)
+	for rest != nil {
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
+		key, err := pemutil.ParseKey(pem.EncodeToMemory(block))
+		if err != nil {
+			return nil, errors.Wrapf(err, "error parsing public key from %s", pemKeysF)
+		}
+		switch q := key.(type) {
+		case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey:
+		default:
+			return nil, errors.Errorf("Unexpected public key type %T in %s", q, pemKeysF)
+		}
+		pemKeys = append(pemKeys, key)
+	}
+
+	var pubKeyBytes []byte
+	for _, k := range pemKeys {
+		blk, err := pemutil.Serialize(k)
+		if err != nil {
+			return nil, errors.Wrap(err, "error serializing pem key")
+		}
+		pubKeyBytes = append(pubKeyBytes, pem.EncodeToMemory(blk)...)
+	}
+
+	p := &provisioner.K8sSA{
+		Type:    provisioner.TypeK8sSA.String(),
+		Name:    name,
+		Claims:  getClaims(ctx),
+		PubKeys: pubKeyBytes,
+	}
+
+	// Check for duplicates
+	if _, ok := provMap[p.GetID()]; !ok {
+		provMap[p.GetID()] = true
+	} else {
+		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetID())
+	}
+
+	list = append(list, p)
+	return
+}
+
 func getClaims(ctx *cli.Context) *provisioner.Claims {
 	if ctx.Bool("ssh") {
 		enable := true
@@ -626,7 +718,9 @@ func parseProvisionerType(ctx *cli.Context) (provisioner.Type, error) {
 		return provisioner.TypeACME, nil
 	case "x5c":
 		return provisioner.TypeX5C, nil
+	case "k8ssa":
+		return provisioner.TypeK8sSA, nil
 	default:
-		return 0, errs.InvalidFlagValue(ctx, "type", typ, "JWK, OIDC, AWS, Azure, GCP, ACME, X5C")
+		return 0, errs.InvalidFlagValue(ctx, "type", typ, "JWK, OIDC, AWS, Azure, GCP, ACME, X5C, K8sSA")
 	}
 }

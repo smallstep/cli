@@ -25,7 +25,8 @@ func certificateCommand() cli.Command {
 [**--san**=<SAN>] [**--acme**=<path>] [**--standalone**] [**--webroot**=<path>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--bundle**]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
-[**--x5c-cert**=<path>] [**--x5c-key**=<path>]`,
+[**--x5c-cert**=<path>] [**--x5c-key**=<path>]
+[**--k8ssa-token-path**=<file>`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -139,6 +140,7 @@ $ step ca certificate foo.internal foo.crt foo.key \
 			acmeWebrootFlag,
 			acmeContactFlag,
 			acmeHTTPListenFlag,
+			k8sSATokenPathFlag,
 		},
 	}
 }
@@ -209,7 +211,7 @@ func certificateAction(ctx *cli.Context) error {
 		if email := req.CsrPEM.EmailAddresses[0]; email != subject {
 			return errors.Errorf("token email '%s' and argument '%s' do not match", email, subject)
 		}
-	case token.AWS, token.GCP, token.Azure:
+	case token.AWS, token.GCP, token.Azure, token.K8sSA:
 		// Common name will be validated on the server side, it depends on
 		// server configuration.
 	default:
