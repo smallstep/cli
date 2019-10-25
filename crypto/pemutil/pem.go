@@ -482,6 +482,10 @@ func ParseSSH(b []byte) (interface{}, error) {
 		return nil, errors.Wrap(err, "error parsing OpenSSH key")
 	}
 
+	if cert, ok := key.(*ssh.Certificate); ok {
+		key = cert.Key
+	}
+
 	switch key.Type() {
 	case ssh.KeyAlgoRSA:
 		var w struct {

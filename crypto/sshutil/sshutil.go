@@ -7,6 +7,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rsa"
 	"encoding/binary"
+	"fmt"
 	"math/big"
 
 	"github.com/pkg/errors"
@@ -59,6 +60,67 @@ func PublicKey(key ssh.PublicKey) (crypto.PublicKey, error) {
 	default:
 		return nil, errors.Errorf("public key %s is not supported", key.Type())
 	}
+}
+
+// Fingerprint returns the key size, fingerprint, comment and algorithm of a
+// public key.
+func Fingerprint(in []byte) (string, error) {
+	key, comment, _, _, err := ssh.ParseAuthorizedKey(in)
+	if err != nil {
+		return "", errors.Wrap(err, "error parsing public key")
+	}
+	if comment == "" {
+		comment = "no comment"
+	}
+
+	var isCert bool
+	if cert, ok := key.(*ssh.Certificate); ok {
+		key = cert.Key
+		isCert = true
+	}
+
+	var typ string
+	var size int
+	switch key.Type() {
+	case ssh.KeyAlgoECDSA256:
+		typ, size = "ECDSA", 256
+	case ssh.KeyAlgoECDSA384:
+		typ, size = "ECDSA", 384
+	case ssh.KeyAlgoECDSA521:
+		typ, size = "ECDSA", 521
+	case ssh.KeyAlgoED25519:
+		typ, size = "ED25519", 256
+	case ssh.KeyAlgoRSA:
+		typ = "RSA"
+		_, in, ok := parseString(key.Marshal())
+		if !ok {
+			return "", errors.New("public key is invalid")
+		}
+		k, err := parseRSA(in)
+		if err != nil {
+			return "", err
+		}
+		size = 8 * k.Size()
+	case ssh.KeyAlgoDSA:
+		typ = "DSA"
+		_, in, ok := parseString(key.Marshal())
+		if !ok {
+			return "", errors.New("public key is invalid")
+		}
+		k, err := parseDSA(in)
+		if err != nil {
+			return "", err
+		}
+		size = k.Parameters.P.BitLen()
+	default:
+		return "", errors.Errorf("public key %s is not supported", key.Type())
+	}
+
+	if isCert {
+		typ = typ + "-CERT"
+	}
+
+	return fmt.Sprintf("%d %s %s (%s)", size, ssh.FingerprintSHA256(key), comment, typ), nil
 }
 
 func parseString(in []byte) (out, rest []byte, ok bool) {
