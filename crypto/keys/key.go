@@ -1,6 +1,7 @@
 package keys
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -11,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/ssh"
 )
 
 var (
@@ -82,9 +84,54 @@ func ExtractKey(in interface{}) (interface{}, error) {
 		return k.PublicKey, nil
 	case *stepx509.CertificateRequest:
 		return k.PublicKey, nil
+	case *ssh.Certificate:
+		sshCryptoPubKey, ok := k.Key.(ssh.CryptoPublicKey)
+		if !ok {
+			return nil, errors.New("ssh public key could not be cast to ssh CryptoPublicKey")
+		}
+		return sshCryptoPubKey.CryptoPublicKey(), nil
+	case ssh.PublicKey:
+		sshCryptoPubKey, ok := k.(ssh.CryptoPublicKey)
+		if !ok {
+			return nil, errors.New("ssh public key could not be cast to ssh CryptoPublicKey")
+		}
+		return sshCryptoPubKey.CryptoPublicKey(), nil
 	default:
 		return nil, errors.Errorf("cannot extract the key from type '%T'", k)
 	}
+}
+
+// VerifyPair that the public key matches the given private key.
+func VerifyPair(pubkey interface{}, key interface{}) error {
+	switch pub := pubkey.(type) {
+	case *rsa.PublicKey:
+		priv, ok := key.(*rsa.PrivateKey)
+		if !ok {
+			return errors.New("private key type does not match public key type")
+		}
+		if pub.N.Cmp(priv.N) != 0 {
+			return errors.New("private key does not match public key")
+		}
+	case *ecdsa.PublicKey:
+		priv, ok := key.(*ecdsa.PrivateKey)
+		if !ok {
+			return errors.New("private key type does not match public key type")
+		}
+		if pub.X.Cmp(priv.X) != 0 || pub.Y.Cmp(priv.Y) != 0 {
+			return errors.New("private key does not match public key")
+		}
+	case ed25519.PublicKey:
+		priv, ok := key.(ed25519.PrivateKey)
+		if !ok {
+			return errors.New("private key type does not match public key type")
+		}
+		if !bytes.Equal(priv.Public().(ed25519.PublicKey), pub) {
+			return errors.New("private key does not match public key")
+		}
+	default:
+		return errors.Errorf("unsupported public key type %T", pub)
+	}
+	return nil
 }
 
 func generateECKey(crv string) (interface{}, error) {

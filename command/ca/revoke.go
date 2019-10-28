@@ -116,11 +116,14 @@ the step CA):
 $ step ca revoke --offline --cert foo.crt --key foo.key
 '''`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
-			flags.CaURL,
-			flags.Offline,
-			flags.Root,
-			flags.Token,
+			cli.StringFlag{
+				Name:  "cert",
+				Usage: `The path to the <cert> that should be revoked.`,
+			},
+			cli.StringFlag{
+				Name:  "key",
+				Usage: `The <path> to the key corresponding to the cert that should be revoked.`,
+			},
 			cli.StringFlag{
 				Name:  "reasonCode",
 				Value: "",
@@ -180,14 +183,11 @@ attribute certificate have been compromised (reasonCode=10).
 				Name:  "reason",
 				Usage: `The <string> representing the reason for which the cert is being revoked.`,
 			},
-			cli.StringFlag{
-				Name:  "cert",
-				Usage: `The path to the <cert> that should be revoked.`,
-			},
-			cli.StringFlag{
-				Name:  "key",
-				Usage: `The <path> to the key corresponding to the cert that should be revoked.`,
-			},
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Offline,
+			flags.Root,
+			flags.Token,
 		},
 	}
 }

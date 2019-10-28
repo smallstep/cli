@@ -1,9 +1,6 @@
 package x509util
 
 import (
-	"bytes"
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
@@ -16,46 +13,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
-	"golang.org/x/crypto/ed25519"
 )
 
 // Fingerprint returns the SHA-256 fingerprint of the certificate.
 func Fingerprint(cert *x509.Certificate) string {
 	sum := sha256.Sum256(cert.Raw)
 	return strings.ToLower(hex.EncodeToString(sum[:]))
-}
-
-// VerifyCertKey that the public key of a certificate matches the given private key.
-func VerifyCertKey(cert *x509.Certificate, key interface{}) error {
-	switch pub := cert.PublicKey.(type) {
-	case *rsa.PublicKey:
-		priv, ok := key.(*rsa.PrivateKey)
-		if !ok {
-			return errors.New("private key type does not match public key type")
-		}
-		if pub.N.Cmp(priv.N) != 0 {
-			return errors.New("private key does not match public key")
-		}
-	case *ecdsa.PublicKey:
-		priv, ok := key.(*ecdsa.PrivateKey)
-		if !ok {
-			return errors.New("private key type does not match public key type")
-		}
-		if pub.X.Cmp(priv.X) != 0 || pub.Y.Cmp(priv.Y) != 0 {
-			return errors.New("private key does not match public key")
-		}
-	case ed25519.PublicKey:
-		priv, ok := key.(ed25519.PrivateKey)
-		if !ok {
-			return errors.New("private key type does not match public key type")
-		}
-		if !bytes.Equal(priv.Public().(ed25519.PublicKey), pub) {
-			return errors.New("private key does not match public key")
-		}
-	default:
-		return errors.Errorf("unsupported public key type %T", pub)
-	}
-	return nil
 }
 
 // SplitSANs splits a slice of Subject Alternative Names into slices of

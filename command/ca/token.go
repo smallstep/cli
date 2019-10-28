@@ -31,6 +31,7 @@ func tokenCommand() cli.Command {
 [**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<path>]
 [**--san**=<SAN>] [**--offline**] [**--revoke**]
 [**--x5c-cert**=<path>] [**--x5c-key**=<path>]
+[**--sshpop-cert**=<path>] [**--sshpop-key**=<path>]
 [**--ssh**] [**--host**] [**--principal**=<string>]
 [**--k8ssa-token-path**=<file>`,
 		Description: `**step ca token** command generates a one-time token granting access to the
@@ -154,6 +155,8 @@ $ step ca token my-remote.hostname remote_ecdsa --ssh --host
 			flags.Provisioner,
 			flags.X5cCert,
 			flags.X5cKey,
+			flags.SSHPOPCert,
+			flags.SSHPOPKey,
 			cli.StringFlag{
 				Name: "key",
 				Usage: `The private key <path> used to sign the JWT. This is usually downloaded from
@@ -166,6 +169,16 @@ the certificate authority.`,
 			cli.BoolFlag{
 				Name: "revoke",
 				Usage: `Create a token for authorizing 'Revoke' requests. The audience will
+be invalid for any other API request.`,
+			},
+			cli.BoolFlag{
+				Name: "renew",
+				Usage: `Create a token for authorizing 'renew' requests. The audience will
+be invalid for any other API request.`,
+			},
+			cli.BoolFlag{
+				Name: "rekey",
+				Usage: `Create a token for authorizing 'rekey' requests. The audience will
 be invalid for any other API request.`,
 			},
 			cli.BoolFlag{
@@ -188,14 +201,14 @@ func tokenAction(ctx *cli.Context) error {
 	// x.509 flags
 	sans := ctx.StringSlice("san")
 	isRevoke := ctx.Bool("revoke")
+	isRenew := ctx.Bool("renew")
+	isRekey := ctx.Bool("rekey")
 	// ssh flags
 	isSSH := ctx.Bool("ssh")
 	isHost := ctx.Bool("host")
 	principals := ctx.StringSlice("principal")
 
 	switch {
-	case isSSH && isRevoke:
-		return errs.IncompatibleFlagWithFlag(ctx, "ssh", "revoke")
 	case isSSH && len(sans) > 0:
 		return errs.IncompatibleFlagWithFlag(ctx, "ssh", "san")
 	case isHost && len(sans) > 0:
@@ -210,17 +223,28 @@ func tokenAction(ctx *cli.Context) error {
 
 	// Default token type is always a 'Sign' token.
 	var typ int
-	switch {
-	case isSSH && isHost:
-		typ = cautils.SSHHostSignType
-		sans = principals
-	case isSSH && !isHost:
-		typ = cautils.SSHUserSignType
-		sans = principals
-	case isRevoke:
-		typ = cautils.RevokeType
-	default:
-		typ = cautils.SignType
+	if isSSH {
+		switch {
+		case isRevoke:
+			typ = cautils.SSHRevokeType
+		case isRenew:
+			typ = cautils.SSHRenewType
+		case isRekey:
+			typ = cautils.SSHRekeyType
+		case isHost:
+			typ = cautils.SSHHostSignType
+			sans = principals
+		default:
+			typ = cautils.SSHUserSignType
+			sans = principals
+		}
+	} else {
+		switch {
+		case isRevoke:
+			typ = cautils.RevokeType
+		default:
+			typ = cautils.SignType
+		}
 	}
 
 	caURL := ctx.String("ca-url")

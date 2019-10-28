@@ -62,7 +62,7 @@ func NewCertificateFlow(ctx *cli.Context) (*CertificateFlow, error) {
 }
 
 // GetClient returns the client used to send requests to the CA.
-func (f *CertificateFlow) GetClient(ctx *cli.Context, subject, tok string) (CaClient, error) {
+func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string) (CaClient, error) {
 	if f.offline {
 		return f.offlineCA, nil
 	}
@@ -134,17 +134,7 @@ func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 
 // GenerateSSHToken generates a token used to authorize the sign of an SSH
 // certificate.
-func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType string, principals []string, validAfter, validBefore provisioner.TimeDuration) (string, error) {
-	var typ int
-	switch certType {
-	case provisioner.SSHUserCert:
-		typ = SSHUserSignType
-	case provisioner.SSHHostCert:
-		typ = SSHHostSignType
-	default:
-		return "", errors.Errorf("unsupported cert type %s", certType)
-	}
-
+func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, typ int, principals []string, validAfter, validBefore provisioner.TimeDuration) (string, error) {
 	if f.offline {
 		return f.offlineCA.GenerateToken(ctx, typ, subject, principals, time.Time{}, time.Time{}, validAfter, validBefore)
 	}
@@ -176,7 +166,7 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject, certType s
 
 // Sign signs the CSR using the online or the offline certificate authority.
 func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {
-	client, err := f.GetClient(ctx, csr.Subject.CommonName, token)
+	client, err := f.GetClient(ctx, token)
 	if err != nil {
 		return err
 	}

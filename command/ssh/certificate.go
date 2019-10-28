@@ -197,11 +197,17 @@ func certificateAction(ctx *cli.Context) error {
 		crtFile = baseName + "-cert.pub"
 	}
 
-	var certType string
+	var (
+		certType string
+		tokType  int
+	)
+
 	if isHost {
 		certType = provisioner.SSHHostCert
+		tokType = cautils.SSHHostSignType
 	} else {
 		certType = provisioner.SSHUserCert
+		tokType = cautils.SSHUserSignType
 	}
 
 	// By default use the first part of the subject as a principal
@@ -218,12 +224,12 @@ func certificateAction(ctx *cli.Context) error {
 		return err
 	}
 	if len(token) == 0 {
-		if token, err = flow.GenerateSSHToken(ctx, subject, certType, principals, validAfter, validBefore); err != nil {
+		if token, err = flow.GenerateSSHToken(ctx, subject, tokType, principals, validAfter, validBefore); err != nil {
 			return err
 		}
 	}
 
-	caClient, err := flow.GetClient(ctx, subject, token)
+	caClient, err := flow.GetClient(ctx, token)
 	if err != nil {
 		return err
 	}

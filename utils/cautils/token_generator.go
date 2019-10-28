@@ -192,6 +192,40 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 	}
 }
 
+func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, tokAttrs tokenAttrs) (string, error) {
+	sshPOPCertFile := ctx.String("sshpop-cert")
+	sshPOPKeyFile := ctx.String("sshpop-key")
+	if len(sshPOPCertFile) == 0 {
+		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "SSHPOP", "sshpop-cert")
+	}
+	if len(sshPOPKeyFile) == 0 {
+		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "SSHPOP", "sshpop-key")
+	}
+
+	// Get private key from given key file
+	var opts []jose.Option
+	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
+		opts = append(opts, jose.WithPasswordFile(passwordFile))
+	}
+	jwk, err := jose.ParseKey(sshPOPKeyFile, opts...)
+	if err != nil {
+		return "", err
+	}
+	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
+		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetID()), tokAttrs.root,
+		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
+	switch tokType {
+	case SSHRevokeType:
+		return tokenGen.Token(tokAttrs.subject, token.WithSSHPOPFile(sshPOPCertFile, jwk.Key))
+	case SSHRenewType:
+		return tokenGen.Token(tokAttrs.subject, token.WithSSHPOPFile(sshPOPCertFile, jwk.Key))
+	case SSHRekeyType:
+		return tokenGen.Token(tokAttrs.subject, token.WithSSHPOPFile(sshPOPCertFile, jwk.Key))
+	default:
+		return "", errors.Errorf("unexpected requested token type for SSHPOP token: %d", tokType)
+	}
+}
+
 // loadJWK loads a JWK based on the following system:
 //  1. If a private key is specified on the command line, then load the JWK from
 //     that private key.

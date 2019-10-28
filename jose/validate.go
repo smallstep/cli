@@ -6,12 +6,43 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/x509util"
 	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/ssh"
 )
+
+// ValidateSSHPOP validates the given SSH certificate and key for use in an
+// sshpop header.
+func ValidateSSHPOP(certFile string, key interface{}) (string, error) {
+	if certFile == "" {
+		return "", errors.New("ssh certfile cannot be empty")
+	}
+	certBytes, err := ioutil.ReadFile(certFile)
+	if err != nil {
+		return "", errors.Wrapf(err, "error reading ssh certificate from %s", certFile)
+	}
+	sshpub, _, _, _, err := ssh.ParseAuthorizedKey(certBytes)
+	if err != nil {
+		return "", errors.Wrapf(err, "error parsing ssh public key from %s", certFile)
+	}
+	cert, ok := sshpub.(*ssh.Certificate)
+	if !ok {
+		return "", errors.New("error casting ssh public key to ssh certificate")
+	}
+	pubkey, err := keys.ExtractKey(cert)
+	if err != nil {
+		return "", errors.Wrap(err, "error extracting public key from ssh public key interface")
+	}
+	if err = keys.VerifyPair(pubkey, key); err != nil {
+		return "", errors.Wrap(err, "error verifying ssh key pair")
+	}
+
+	return base64.StdEncoding.EncodeToString(cert.Marshal()), nil
+}
 
 // ValidateX5C validates the given x5c certificate chain and key for use in an
 // x5c header.
@@ -24,7 +55,7 @@ func ValidateX5C(certFile string, key interface{}) ([]string, error) {
 		return nil, errors.Wrap(err, "error reading x5c certificate chain from file")
 	}
 
-	if err = x509util.VerifyCertKey(certs[0], key); err != nil {
+	if err = keys.VerifyPair(certs[0].PublicKey, key); err != nil {
 		return nil, errors.Wrap(err, "error verifying x5c certificate and key")
 	}
 

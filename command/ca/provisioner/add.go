@@ -77,7 +77,10 @@ and must be one of:
     : Uses an X509 Certificate / private key pair to sign provisioning tokens.
 
     **K8sSA**
-    : Uses Kubernetes Service Account tokens.`,
+    : Uses Kubernetes Service Account tokens.
+
+    **SSHPOP**
+    : Uses an SSH Certificate / private key pair to sign provisioning tokens.`,
 			},
 			flags.PasswordFile,
 			cli.BoolFlag{
@@ -281,6 +284,10 @@ $ step ca provisioner add x5c-smallstep --type X5C --x5c-root x5cRoot.crt
 Add a K8s Service Account provisioner.
 '''
 $ step ca provisioner add my-kube-provisioner --type K8sSA --pem-keys keys.pub
+
+Add an SSH-POP provisioner.
+'''
+$ step ca provisioner add sshpop-smallstep --type SSHPOP
 '''`,
 	}
 }
@@ -331,6 +338,8 @@ func addAction(ctx *cli.Context) (err error) {
 		list, err = addX5CProvisioner(ctx, name, provMap)
 	case provisioner.TypeK8sSA:
 		list, err = addK8sSAProvisioner(ctx, name, provMap)
+	case provisioner.TypeSSHPOP:
+		list, err = addSSHPOPProvisioner(ctx, name, provMap)
 	default:
 		return errors.Errorf("unknown type %s: this should not happen", typ)
 	}
@@ -689,6 +698,26 @@ func addK8sSAProvisioner(ctx *cli.Context, name string, provMap map[string]bool)
 	return
 }
 
+// addSSHPOPProvisioner returns a provisioner list containing a SSHPOP provisioner.
+func addSSHPOPProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
+	ctx.Set("ssh", "true")
+	p := &provisioner.SSHPOP{
+		Type:   provisioner.TypeSSHPOP.String(),
+		Name:   name,
+		Claims: getClaims(ctx),
+	}
+
+	// Check for duplicates
+	if _, ok := provMap[p.GetID()]; !ok {
+		provMap[p.GetID()] = true
+	} else {
+		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetID())
+	}
+
+	list = append(list, p)
+	return
+}
+
 func getClaims(ctx *cli.Context) *provisioner.Claims {
 	if ctx.Bool("ssh") {
 		enable := true
@@ -727,9 +756,11 @@ func parseProvisionerType(ctx *cli.Context) (provisioner.Type, error) {
 		return provisioner.TypeACME, nil
 	case "x5c":
 		return provisioner.TypeX5C, nil
+	case "sshpop":
+		return provisioner.TypeSSHPOP, nil
 	case "k8ssa":
 		return provisioner.TypeK8sSA, nil
 	default:
-		return 0, errs.InvalidFlagValue(ctx, "type", typ, "JWK, OIDC, AWS, Azure, GCP, ACME, X5C, K8sSA")
+		return 0, errs.InvalidFlagValue(ctx, "type", typ, "JWK, OIDC, AWS, Azure, GCP, ACME, X5C, SSHPOP, K8sSA")
 	}
 }
