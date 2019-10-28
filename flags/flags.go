@@ -165,12 +165,26 @@ $STEPPATH/config/ca.json`,
 		Usage: "Certificate (<chain>) in PEM format to store in the 'x5c' header of a JWT.",
 	}
 
-	// X5cKey is a cli.Flag used to pass the private key corresponding to the x5c-cert
+	// X5cKey is a cli.Flag used to pass the private key (corresponding to the x5c-cert)
 	// that is used to sign the token.
 	X5cKey = cli.StringFlag{
 		Name: "x5c-key",
 		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate that will
 be stored in the 'x5c' header.`,
+	}
+
+	// SSHPOPCert is a cli.Flag used to pass the sshpop header certificate for a JWT.
+	SSHPOPCert = cli.StringFlag{
+		Name:  "sshpop-cert",
+		Usage: "Certificate (<chain>) in PEM format to store in the 'sshpop' header of a JWT.",
+	}
+
+	// SSHPOPKey is a cli.Flag used to pass the private key (corresponding to the sshpop-cert)
+	// that is used to sign the token.
+	SSHPOPKey = cli.StringFlag{
+		Name: "sshpop-key",
+		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate that will
+be stored in the 'sshpop' header.`,
 	}
 )
 

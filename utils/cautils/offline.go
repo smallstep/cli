@@ -108,6 +108,14 @@ func (c *OfflineCA) Audience(tokType int) string {
 	switch tokType {
 	case RevokeType:
 		return fmt.Sprintf("https://%s/revoke", c.config.DNSNames[0])
+	case SSHUserSignType, SSHHostSignType:
+		return fmt.Sprintf("https://%s/ssh/sign", c.config.DNSNames[0])
+	case SSHRenewType:
+		return fmt.Sprintf("https://%s/ssh/renew", c.config.DNSNames[0])
+	case SSHRevokeType:
+		return fmt.Sprintf("https://%s/ssh/revoke", c.config.DNSNames[0])
+	case SSHRekeyType:
+		return fmt.Sprintf("https://%s/ssh/rekey", c.config.DNSNames[0])
 	default:
 		return fmt.Sprintf("https://%s/sign", c.config.DNSNames[0])
 	}
@@ -204,11 +212,15 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 			ReasonCode:  req.ReasonCode,
 			PassiveOnly: req.Passive,
 		}
+		ctx = provisioner.NewContextWithMethod(context.Background(), provisioner.RevokeMethod)
 		err error
 	)
 	if len(req.OTT) > 0 {
 		opts.OTT = req.OTT
 		opts.MTLS = false
+		if _, err = c.authority.Authorize(ctx, opts.OTT); err != nil {
+			return nil, err
+		}
 	} else {
 		// it should not panic as this is always internal code
 		tr := rt.(*http.Transport)
@@ -221,7 +233,7 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 	}
 
 	// revoke cert using authority
-	if err := c.authority.Revoke(&opts); err != nil {
+	if err := c.authority.Revoke(ctx, &opts); err != nil {
 		return nil, err
 	}
 
@@ -255,6 +267,74 @@ func (c *OfflineCA) SSHSign(req *api.SSHSignRequest) (*api.SSHSignResponse, erro
 			Certificate: cert,
 		},
 	}, nil
+}
+
+// SSHRevoke is a wrapper on top of certificates SSHRevoke method. It returns an
+// api.SSHRevokeResponse.
+func (c *OfflineCA) SSHRevoke(req *api.SSHRevokeRequest) (*api.SSHRevokeResponse, error) {
+	opts := authority.RevokeOptions{
+		Serial:      req.Serial,
+		Reason:      req.Reason,
+		ReasonCode:  req.ReasonCode,
+		PassiveOnly: req.Passive,
+		OTT:         req.OTT,
+		MTLS:        false,
+	}
+
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.RevokeSSHMethod)
+	if _, err := c.authority.Authorize(ctx, opts.OTT); err != nil {
+		return nil, err
+	}
+	if err := c.authority.Revoke(ctx, &opts); err != nil {
+		return nil, err
+	}
+
+	return &api.SSHRevokeResponse{Status: "ok"}, nil
+}
+
+// SSHRenew is a wrapper on top of certificates SSHRenew method. It returns an
+// api.SSHRenewResponse.
+func (c *OfflineCA) SSHRenew(req *api.SSHRenewRequest) (*api.SSHRenewResponse, error) {
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.RenewSSHMethod)
+	_, err := c.authority.Authorize(ctx, req.OTT)
+	if err != nil {
+		return nil, err
+	}
+	oldCert, err := provisioner.ExtractSSHPOPCert(req.OTT)
+	if err != nil {
+		return nil, err
+	}
+	cert, err := c.authority.RenewSSH(oldCert)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.SSHRenewResponse{Certificate: api.SSHCertificate{Certificate: cert}}, nil
+}
+
+// SSHRekey is a wrapper on top of certificates SSHRekey method. It returns an
+// api.SSHRekeyResponse.
+func (c *OfflineCA) SSHRekey(req *api.SSHRekeyRequest) (*api.SSHRekeyResponse, error) {
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.RekeySSHMethod)
+	signOpts, err := c.authority.Authorize(ctx, req.OTT)
+	if err != nil {
+		return nil, err
+	}
+	oldCert, err := provisioner.ExtractSSHPOPCert(req.OTT)
+	if err != nil {
+		return nil, err
+	}
+	sshPub, err := ssh.ParsePublicKey(req.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	cert, err := c.authority.RekeySSH(oldCert, sshPub, signOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.SSHRekeyResponse{Certificate: api.SSHCertificate{Certificate: cert}}, nil
 }
 
 // SSHRoots is a wrapper on top of the GetSSHRoots method. It returns an
@@ -328,6 +408,18 @@ func (c *OfflineCA) SSHCheckHost(principal string) (*api.SSHCheckPrincipalRespon
 	}, nil
 }
 
+// SSHGetHosts is a wrapper on top of the CheckSSHHost method. It returns an
+// api.SSHCheckPrincipalResponse.
+func (c *OfflineCA) SSHGetHosts() (*api.SSHGetHostsResponse, error) {
+	hosts, err := c.authority.GetSSHHosts()
+	if err != nil {
+		return nil, err
+	}
+	return &api.SSHGetHostsResponse{
+		Hosts: hosts,
+	}, nil
+}
+
 // GenerateToken creates the token used by the authority to authorize requests.
 func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	// Use ca.json configuration for the root and audience
@@ -358,6 +450,10 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string,
 		return generateOIDCToken(ctx, p)
 	case *provisioner.X5C: // Get a JWT with an X5C header and signature.
 		return generateX5CToken(ctx, p, tokType, tokAttrs)
+	case *provisioner.SSHPOP: // Generate an SSHPOP token using ssh cert + key.
+		return generateSSHPOPToken(ctx, p, tokType, tokAttrs)
+	case *provisioner.K8sSA: // Get the Kubernetes service account token.
+		return generateK8sSAToken(ctx, p)
 	case *provisioner.GCP: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())

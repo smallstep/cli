@@ -169,3 +169,15 @@ func WithX5CFile(certFile string, key interface{}) Options {
 		return nil
 	}
 }
+
+// WithSSHPOPFile returns a Options that sets the header sshpop claims.
+func WithSSHPOPFile(certFile string, key interface{}) Options {
+	return func(c *Claims) error {
+		certStrs, err := jose.ValidateSSHPOP(certFile, key)
+		if err != nil {
+			return errors.Wrap(err, "error validating SSH certificate and key for use in sshpop header")
+		}
+		c.SetHeader("sshpop", certStrs)
+		return nil
+	}
+}

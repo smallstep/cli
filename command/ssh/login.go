@@ -142,12 +142,12 @@ func loginAction(ctx *cli.Context) error {
 			validAfter = provisioner.NewTimeDuration(time.Now().Add(-1 * time.Minute))
 		}
 
-		if token, err = flow.GenerateSSHToken(ctx, subject, provisioner.SSHUserCert, principals, validAfter, validBefore); err != nil {
+		if token, err = flow.GenerateSSHToken(ctx, subject, cautils.SSHUserSignType, principals, validAfter, validBefore); err != nil {
 			return err
 		}
 	}
 
-	caClient, err := flow.GetClient(ctx, subject, token)
+	caClient, err := flow.GetClient(ctx, token)
 	if err != nil {
 		return err
 	}

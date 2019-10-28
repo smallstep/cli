@@ -167,12 +167,12 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 		validAfter := provisioner.NewTimeDuration(time.Now().Add(-1 * time.Minute))
 		validBefore := provisioner.TimeDuration{}
 
-		token, err := flow.GenerateSSHToken(ctx, subject, provisioner.SSHUserCert, principals, validAfter, validBefore)
+		token, err := flow.GenerateSSHToken(ctx, subject, cautils.SSHUserSignType, principals, validAfter, validBefore)
 		if err != nil {
 			return err
 		}
 
-		caClient, err := flow.GetClient(ctx, subject, token)
+		caClient, err := flow.GetClient(ctx, token)
 		if err != nil {
 			return err
 		}

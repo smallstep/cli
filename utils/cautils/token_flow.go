@@ -26,6 +26,9 @@ const (
 	RevokeType
 	SSHUserSignType
 	SSHHostSignType
+	SSHRevokeType
+	SSHRenewType
+	SSHRekeyType
 )
 
 // parseAudience creates the ca audience url from the ca-url
@@ -49,6 +52,12 @@ func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 		// revocation token
 		case RevokeType:
 			path = "/1.0/revoke"
+		case SSHRevokeType:
+			path = "/1.0/ssh/revoke"
+		case SSHRenewType:
+			path = "/1.0/ssh/renew"
+		case SSHRekeyType:
+			path = "/1.0/ssh/rekey"
 		default:
 			return "", errors.Errorf("unexpected token type: %d", tokType)
 		}
@@ -105,6 +114,10 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 		return generateOIDCToken(ctx, p)
 	case *provisioner.X5C: // Get a JWT with an X5C header and signature.
 		return generateX5CToken(ctx, p, tokType, tokAttrs)
+	case *provisioner.SSHPOP: // Generate a SSHPOP token using an ssh cert + key.
+		return generateSSHPOPToken(ctx, p, tokType, tokAttrs)
+	case *provisioner.K8sSA: // Get the Kubernetes service account token.
+		return generateK8sSAToken(ctx, p)
 	case *provisioner.GCP: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, caURL)
@@ -116,8 +129,6 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 		return p.GetIdentityToken(subject, caURL)
 	case *provisioner.ACME: // Return an error with the provisioner ID.
 		return "", &ErrACMEToken{p.GetName()}
-	case *provisioner.K8sSA: // Ge the Kubernetes service account token.
-		return generateK8sSAToken(ctx, p)
 	default: // Default is assumed to be a standard JWT.
 		jwkP, ok := p.(*provisioner.JWK)
 		if !ok {
@@ -198,17 +209,24 @@ func allowX5CProvisionerFilter(p provisioner.Interface) bool {
 	return p.GetType() == provisioner.TypeX5C
 }
 
+func allowSSHPOPProvisionerFilter(p provisioner.Interface) bool {
+	return p.GetType() == provisioner.TypeSSHPOP
+}
+
 func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {
 	switch {
 	// If x5c flags then only list x5c provisioners.
 	case ctx.IsSet("x5c-cert") || ctx.IsSet("x5c-key"):
 		provisioners = provisionerFilter(provisioners, allowX5CProvisionerFilter)
+	// If sshpop flags then only list sshpop provisioners.
+	case ctx.IsSet("sshpop-cert") || ctx.IsSet("sshpop-key"):
+		provisioners = provisionerFilter(provisioners, allowSSHPOPProvisionerFilter)
 	// List all available provisioners.
 	default:
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			switch p.GetType() {
 			case provisioner.TypeJWK, provisioner.TypeX5C, provisioner.TypeOIDC,
-				provisioner.TypeACME, provisioner.TypeK8sSA:
+				provisioner.TypeACME, provisioner.TypeK8sSA, provisioner.TypeSSHPOP:
 				return true
 			case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
 				return true
@@ -263,29 +281,14 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 				Name:        fmt.Sprintf("%s (%s) [client: %s]", p.Name, p.GetType(), p.ClientID),
 				Provisioner: p,
 			})
-		case *provisioner.GCP:
-			items = append(items, &provisionersSelect{
-				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
-				Provisioner: p,
-			})
-		case *provisioner.AWS:
-			items = append(items, &provisionersSelect{
-				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
-				Provisioner: p,
-			})
 		case *provisioner.Azure:
 			items = append(items, &provisionersSelect{
 				Name:        fmt.Sprintf("%s (%s) [tenant: %s]", p.Name, p.GetType(), p.TenantID),
 				Provisioner: p,
 			})
-		case *provisioner.ACME:
+		case *provisioner.GCP, *provisioner.AWS, *provisioner.X5C, *provisioner.SSHPOP, *provisioner.ACME:
 			items = append(items, &provisionersSelect{
-				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
-				Provisioner: p,
-			})
-		case *provisioner.X5C:
-			items = append(items, &provisionersSelect{
-				Name:        fmt.Sprintf("%s (%s)", p.Name, p.GetType()),
+				Name:        fmt.Sprintf("%s (%s)", p.GetName(), p.GetType()),
 				Provisioner: p,
 			})
 		case *provisioner.K8sSA:
