@@ -22,6 +22,7 @@ const (
 	GCP          // Google Cloud Platform
 	AWS          // Amazon Web Services
 	Azure        // Microsoft Azure
+	K8sSA        // Kubernetes Service Account
 )
 
 // JSONWebToken represents a JSON Web Token (as specified in RFC7519). Using the
@@ -35,24 +36,28 @@ type JSONWebToken struct {
 // addition to the standard claims it contains the ones supported in step ca.
 type Payload struct {
 	jose.Claims
-	SHA              string            `json:"sha"`     // JWK token claims
-	SANs             []string          `json:"sans"`    // ...
-	AtHash           string            `json:"at_hash"` // OIDC token claims
-	AuthorizedParty  string            `json:"azp"`     // ...
-	Email            string            `json:"email"`
-	EmailVerified    bool              `json:"email_verified"`
-	Hd               string            `json:"hd"`
-	Nonce            string            `json:"nonce"`
-	AppID            string            `json:"appid"`    // Azure token claims
-	AppIDAcr         string            `json:"appidacr"` // ...
-	IdentityProvider string            `json:"idp"`
-	ObjectID         string            `json:"oid"`
-	TenantID         string            `json:"tid"`
-	Version          interface{}       `json:"ver"`
-	XMSMirID         string            `json:"xms_mirid"`
-	Google           *GCPGooglePayload `json:"google"` // GCP token claims
-	Amazon           *AWSAmazonPayload `json:"amazon"` // AWS token claims
-	Azure            *AzurePayload     `json:"azure"`  // Azure token claims
+	SHA                     string            `json:"sha"`     // JWK token claims
+	SANs                    []string          `json:"sans"`    // ...
+	AtHash                  string            `json:"at_hash"` // OIDC token claims
+	AuthorizedParty         string            `json:"azp"`     // ...
+	Email                   string            `json:"email"`
+	EmailVerified           bool              `json:"email_verified"`
+	Hd                      string            `json:"hd"`
+	Nonce                   string            `json:"nonce"`
+	AppID                   string            `json:"appid"`    // Azure token claims
+	AppIDAcr                string            `json:"appidacr"` // ...
+	IdentityProvider        string            `json:"idp"`
+	ObjectID                string            `json:"oid"`
+	TenantID                string            `json:"tid"`
+	Version                 interface{}       `json:"ver"`
+	XMSMirID                string            `json:"xms_mirid"`
+	K8sSANamespace          string            `json:"kubernetes.io/serviceaccount/namespace,omitempty"`
+	K8sSASecretName         string            `json:"kubernetes.io/serviceaccount/secret.name,omitempty"`
+	K8sSAServiceAccountName string            `json:"kubernetes.io/serviceaccount/service-account.name,omitempty"`
+	K8sSAServiceAccountUID  string            `json:"kubernetes.io/serviceaccount/service-account.uid,omitempty"`
+	Google                  *GCPGooglePayload `json:"google"` // GCP token claims
+	Amazon                  *AWSAmazonPayload `json:"amazon"` // AWS token claims
+	Azure                   *AzurePayload     `json:"azure"`  // Azure token claims
 }
 
 // Type returns the type of the payload.
@@ -64,6 +69,8 @@ func (p Payload) Type() Type {
 		return AWS
 	case p.Azure != nil:
 		return Azure
+	case len(p.K8sSANamespace) > 0:
+		return K8sSA
 	case len(p.SHA) > 0 || len(p.SANs) > 0:
 		return JWK
 	case p.Email != "":

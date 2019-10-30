@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -139,6 +140,18 @@ type tokenAttrs struct {
 	sans                        []string
 	notBefore, notAfter         time.Time
 	certNotBefore, certNotAfter provisioner.TimeDuration
+}
+
+func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) {
+	path := ctx.String("k8ssa-token-path")
+	if len(path) == 0 {
+		path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	}
+	tokBytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", errors.Wrap(err, "error reading kubernetes service account token")
+	}
+	return string(tokBytes), nil
 }
 
 func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttrs tokenAttrs) (string, error) {
