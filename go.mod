@@ -4,8 +4,6 @@ go 1.13
 
 require (
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
-	github.com/asaskevich/govalidator v0.0.0-20180315120708-ccb8e960c48f // indirect
-	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/corpix/uarand v0.0.0-20170903190822-2b8494104d86 // indirect
 	github.com/go-chi/chi v4.0.2+incompatible // indirect
@@ -35,5 +33,4 @@ require (
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	gopkg.in/square/go-jose.v2 v2.4.0
-	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 )

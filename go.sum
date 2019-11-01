@@ -201,12 +201,20 @@ github.com/smallstep/nosql v0.1.1/go.mod h1:qyxCqeyGwkuM6bfJSY3sg+aiXEiD0GbQOPzI
 =======
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191023014154-4669bef8c700 h1:uIDgnm6/yq07DzGHGXmzg0/sHdaW8G/KxepeNGgiHN8=
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191023014154-4669bef8c700/go.mod h1:/WOAB2LkcjkEbKG5rDol+A22Lp3UsttkLPLkY7tVtuk=
+github.com/smallstep/certificates v0.14.0-rc.1.0.20191025192352-8ef9b020ed24 h1:BnutRqtot5ywM7MBBi9rhzrVrGIMeIbDXNuaJhakl6M=
+github.com/smallstep/certificates v0.14.0-rc.1.0.20191025192352-8ef9b020ed24/go.mod h1:043iBnsMvNhQ+QFwSh0N6JR3H2yamHPPAc78vCf+8Tc=
 github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339 h1:5T/ToU20n2NinSGxSsq72Wx55ETzXU3WbrYVs96oiiw=
 github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339/go.mod h1:n4YHPL9hJIyB+N4F2rPBy3mpPxMxTGJP5Pdsyaoc2Ns=
 github.com/smallstep/cli v0.12.1-0.20191016010425-15911d8625df/go.mod h1:zGPm8vWCqzvDqkdC1laFJNdIOjNSB8V4qDp68Ny538o=
+github.com/smallstep/cli v0.14.0-rc.1.0.20191024214139-914a67ed80c2/go.mod h1:GoA1cE4YrZRRvVbFlPKJUsMuWHnFBX+R88j1pmpbGgk=
 github.com/smallstep/nosql v0.1.1-0.20191009043502-4b26d8029e61 h1:XM3mkHNBc6bEQhrZNEma+iz63xrmRFfCocmAEObeg/s=
 github.com/smallstep/nosql v0.1.1-0.20191009043502-4b26d8029e61/go.mod h1:MFhYHIE/0V7OOHjYzjnWHqySJ40PVbwhjy24UBkJI2g=
+<<<<<<< HEAD
 >>>>>>> Update certificates version.
+=======
+github.com/smallstep/nosql v0.1.1 h1:ijeE3CM00SddioodNl/LWRQINNNCK1dLUsjZDwpUbNg=
+github.com/smallstep/nosql v0.1.1/go.mod h1:qyxCqeyGwkuM6bfJSY3sg+aiXEiD0GbQOPzIF8/ZD8Q=
+>>>>>>> Upgrade certificates dependency.
 github.com/smallstep/truststore v0.9.3 h1:YAbCOZN4PrGApIPwUd95b71blpRJ/ZlbM9o6XwUugjo=
 github.com/smallstep/truststore v0.9.3/go.mod h1:PRSkpRIhAYBK/KLWkHNgRdYgzWMEy45bN7PSJCfKKGE=
 github.com/smallstep/zcrypto v0.0.0-20191008000232-9fc4bea33f70 h1:msly2lrUgqZ9uhzHdn8rkSfgIl/UVUeG9CD6FoANMcM=
@@ -296,6 +304,7 @@ golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7/go.mod h1:yigFU9vqHzYiE8U
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 h1:ObdrDkeb4kJdCP557AjRjq69pTHfNouLtWZG7j9rPN8=
 golang.org/x/net v0.0.0-20180724234803-3673e40ba225/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
+golang.org/x/net v0.0.0-20190424112056-4829fb13d2c6/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/net v0.0.0-20190620200207-3b0461eec859 h1:R/3boaszxrf1GEUWTVDzSKVwLmSJpwZ1yqXm8j0v2QI=
 golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
 golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
@@ -303,7 +312,12 @@ golang.org/x/sys v0.0.0-20180905080454-ebe1bf3edb33/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190412213103-97732733099d h1:+R4KGOnez64A81RvjARKc4UT5/tI9ujCIVX+P5KiHuI=
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+<<<<<<< HEAD
 >>>>>>> Update certificates version.
+=======
+golang.org/x/sys v0.0.0-20190424175732-18eb32c0e2f0 h1:V+O002es++Mnym06Rj/S6Fl7VCsgRBgVDGb/NoZVHUg=
+golang.org/x/sys v0.0.0-20190424175732-18eb32c0e2f0/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+>>>>>>> Upgrade certificates dependency.
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/tools v0.0.0-20170915040203-e531a2a1c15f/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
