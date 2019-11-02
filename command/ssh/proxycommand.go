@@ -117,7 +117,7 @@ func proxycommandAction(ctx *cli.Context) error {
 	})
 	registration, err := getRegistryResponse(registryURL.String(), username, password)
 	if err != nil {
-		// return err
+		return err
 	}
 
 	// Connect through bastion
