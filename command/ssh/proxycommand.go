@@ -12,20 +12,21 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/sshutil"
+	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
-	"golang.org/x/crypto/ssh"
-
-	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
 )
+
+const sshDefaultPath = "/usr/bin/ssh"
 
 type registryResponse struct {
 	User     string `json:"user"`
@@ -112,7 +113,7 @@ func proxycommandAction(ctx *cli.Context) error {
 
 	// Connect to the registration server
 	registryURL = registryURL.ResolveReference(&url.URL{
-		Path:     path.Join("/auth/bastion", host),
+		Path:     path.Join("/auth/bastions", host),
 		RawQuery: url.Values{"user": []string{user}}.Encode(),
 	})
 	registration, err := getRegistryResponse(registryURL.String(), username, password)
@@ -223,6 +224,15 @@ func getRegistryResponse(rawurl, username, password string) (registryResponse, e
 	}
 	defer resp.Body.Close()
 
+	// Fail or assume no bastion on 404
+	if resp.StatusCode >= 400 {
+		if resp.StatusCode == http.StatusNotFound {
+			return Nil, nil
+		}
+		return Nil, errors.New(http.StatusText(resp.StatusCode))
+	}
+
+	// Read response
 	var registration registryResponse
 	if err := json.NewDecoder(resp.Body).Decode(&registration); err != nil {
 		return Nil, errors.Wrap(err, "error decoding registry response")
@@ -262,6 +272,11 @@ func proxyDirect(host, port string) error {
 }
 
 func proxyBastion(r registryResponse) error {
+	sshPath, err := exec.LookPath("ssh")
+	if err != nil {
+		sshPath = sshDefaultPath
+	}
+
 	args := []string{}
 	if r.User != "" {
 		args = append(args, "-l", r.User)
@@ -281,6 +296,6 @@ func proxyBastion(r registryResponse) error {
 	if r.Command != "" {
 		args = append(args, r.Command)
 	}
-	exec.Exec("ssh", args...)
+	exec.Exec(sshPath, args...)
 	return nil
 }
