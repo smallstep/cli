@@ -6,13 +6,16 @@ require (
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
+	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.3.1
+	github.com/mattn/go-colorable v0.1.4 // indirect
+	github.com/mattn/go-isatty v0.0.10 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/pquerna/otp v1.0.0
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v0.0.0-20170918181015-86672fcb3f95
 	github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5
-	github.com/smallstep/certificates v0.14.0-rc.1.0.20191025192352-8ef9b020ed24
+	github.com/smallstep/certificates v0.14.0-rc.1.0.20191105020910-861a6537690f
 	github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339
 	github.com/smallstep/truststore v0.9.3
 	github.com/smallstep/zcrypto v0.0.0-20191008000232-9fc4bea33f70
