@@ -631,10 +631,6 @@ func addX5CProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 // not have a good way of distinguishing between tokens), therefore w/e `name`
 // is entered by the user will be overwritten by a default value.
 func addK8sSAProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	if ctx.Bool("ssh") {
-		return nil, errors.New("kubernetes service account provisioner does not support ssh certificate actions")
-	}
-
 	pemKeysF := ctx.String("pem-keys")
 	if len(pemKeysF) == 0 {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "pem-keys")

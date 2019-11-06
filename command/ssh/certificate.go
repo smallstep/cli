@@ -30,7 +30,8 @@ func certificateCommand() cli.Command {
 [**--provisioner-password-file**=<path>] [**--add-user**]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--no-password**] [**--insecure**] [**--force**]`,
+[**--root**=<path>] [**--no-password**] [**--insecure**] [**--force**]
+[**--x5c-cert**=<path>] [**--x5c-key**=<path>] [**--k8ssa-token-path=<path>]`,
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
 
@@ -140,6 +141,9 @@ $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 			sshPrivateKeyFlag,
 			sshProvisionerPasswordFlag,
 			sshSignFlag,
+			flags.X5cCert,
+			flags.X5cKey,
+			flags.K8sSATokenPathFlag,
 		},
 	}
 }
@@ -286,6 +290,7 @@ func certificateAction(ctx *cli.Context) error {
 		OTT:              token,
 		Principals:       principals,
 		CertType:         certType,
+		KeyID:            subject,
 		ValidAfter:       validAfter,
 		ValidBefore:      validBefore,
 		AddUserPublicKey: sshAuPubBytes,

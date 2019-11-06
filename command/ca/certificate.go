@@ -25,8 +25,7 @@ func certificateCommand() cli.Command {
 [**--san**=<SAN>] [**--acme**=<path>] [**--standalone**] [**--webroot**=<path>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--bundle**]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
-[**--x5c-cert**=<path>] [**--x5c-key**=<path>]
-[**--k8ssa-token-path**=<file>`,
+[**--x5c-cert**=<path>] [**--x5c-key**=<path>] [**--k8ssa-token-path**=<file>`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -146,7 +145,7 @@ $ step ca certificate foo.internal foo.crt foo.key \
 			acmeWebrootFlag,
 			acmeContactFlag,
 			acmeHTTPListenFlag,
-			k8sSATokenPathFlag,
+			flags.K8sSATokenPathFlag,
 		},
 	}
 }

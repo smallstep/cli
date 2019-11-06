@@ -22,12 +22,12 @@ func signCertificateCommand() cli.Command {
 		Action: command.ActionFunc(signCertificateAction),
 		Usage:  "generate a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
-[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<path>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--acme**=<uri>] [**--standalone**] [**--webroot**=<path>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
 [**--x5c-cert**=<path>] [**--x5c-key**=<path>]
-[**--k8ssa-token-path**=<file>`,
+[**--k8ssa-token-path**=<path>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
@@ -107,7 +107,7 @@ $ step ca sign foo.csr foo.crt \
 			acmeWebrootFlag,
 			acmeContactFlag,
 			acmeHTTPListenFlag,
-			k8sSATokenPathFlag,
+			flags.K8sSATokenPathFlag,
 		},
 	}
 }
