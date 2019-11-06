@@ -26,9 +26,17 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-const sshDefaultPath = "/usr/bin/ssh"
+const (
+	sshDefaultPath    = "/usr/bin/ssh"
+	sshDefaultCommand = "nc %h %p"
+)
 
 type registryResponse struct {
+	Hostname string  `json:"hostname"`
+	Bastion  bastion `json:"bastion"`
+}
+
+type bastion struct {
 	User     string `json:"user"`
 	Hostname string `json:"hostname"`
 	Port     string `json:"port"`
@@ -113,7 +121,7 @@ func proxycommandAction(ctx *cli.Context) error {
 
 	// Connect to the registration server
 	registryURL = registryURL.ResolveReference(&url.URL{
-		Path:     path.Join("/auth/bastions", host),
+		Path:     path.Join("/auth/hosts", host, "bastion"),
 		RawQuery: url.Values{"user": []string{user}}.Encode(),
 	})
 	registration, err := getRegistryResponse(registryURL.String(), username, password)
@@ -122,7 +130,7 @@ func proxycommandAction(ctx *cli.Context) error {
 	}
 
 	// Connect through bastion
-	if registration.Hostname != "" {
+	if registration.Bastion.Hostname != "" {
 		return proxyBastion(registration)
 	}
 
@@ -278,23 +286,25 @@ func proxyBastion(r registryResponse) error {
 	}
 
 	args := []string{}
-	if r.User != "" {
-		args = append(args, "-l", r.User)
+	if r.Bastion.User != "" {
+		args = append(args, "-l", r.Bastion.User)
 	}
-	if r.Port != "" {
-		args = append(args, "-p", r.Port)
+	if r.Bastion.Port != "" {
+		args = append(args, "-p", r.Bastion.Port)
 	}
-	if r.Flags != "" {
+	if r.Bastion.Flags != "" {
 		// BUG(mariano): This is a naive way of doing it as it doesn't
 		// support strings, but it should work for most of the cases in ssh.
 		// For more advance cases the package
 		// github.com/kballard/go-shellquote can be used.
-		fields := strings.Fields(r.Flags)
+		fields := strings.Fields(r.Bastion.Flags)
 		args = append(args, fields...)
 	}
 	args = append(args, r.Hostname)
-	if r.Command != "" {
-		args = append(args, r.Command)
+	if r.Bastion.Command == "" {
+		args = append(args, r.Bastion.Command)
+	} else {
+		args = append(args, sshDefaultCommand)
 	}
 	exec.Exec(sshPath, args...)
 	return nil
