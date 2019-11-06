@@ -125,6 +125,12 @@ $ step ca certificate foo.internal foo.crt foo.key \
 			flags.Root,
 			flags.Token,
 			flags.Provisioner,
+			cli.StringFlag{
+				Name: "provisioner-password-file",
+				Usage: `The path to the <file> containing the password to decrypt the one-time token
+				generating key.`,
+			},
+			flags.PasswordFile,
 			flags.KTY,
 			flags.Curve,
 			flags.Size,
@@ -157,12 +163,17 @@ func certificateAction(ctx *cli.Context) error {
 	tok := ctx.String("token")
 	offline := ctx.Bool("offline")
 	sans := ctx.StringSlice("san")
+	provisionerPasswordFile := ctx.String("provisioner-password-file")
 
 	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
 	if offline && len(tok) != 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
 	}
+
+	// Hack to make the flag "password-file" the content of
+	// "provisioner-password-file" so the token command works as expected
+	ctx.Set("password-file", provisionerPasswordFile)
 
 	// certificate flow unifies online and offline flows on a single api
 	flow, err := cautils.NewCertificateFlow(ctx)
