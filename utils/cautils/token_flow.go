@@ -47,11 +47,13 @@ func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 		var path string
 		switch tokType {
 		// default
-		case SignType, SSHUserSignType, SSHHostSignType:
+		case SignType:
 			path = "/1.0/sign"
 		// revocation token
 		case RevokeType:
 			path = "/1.0/revoke"
+		case SSHUserSignType, SSHHostSignType:
+			path = "/1.0/ssh/sign"
 		case SSHRevokeType:
 			path = "/1.0/ssh/revoke"
 		case SSHRenewType:
@@ -213,6 +215,10 @@ func allowSSHPOPProvisionerFilter(p provisioner.Interface) bool {
 	return p.GetType() == provisioner.TypeSSHPOP
 }
 
+func allowK8sSAProvisionerFilter(p provisioner.Interface) bool {
+	return p.GetType() == provisioner.TypeK8sSA
+}
+
 func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {
 	switch {
 	// If x5c flags then only list x5c provisioners.
@@ -221,6 +227,9 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	// If sshpop flags then only list sshpop provisioners.
 	case ctx.IsSet("sshpop-cert") || ctx.IsSet("sshpop-key"):
 		provisioners = provisionerFilter(provisioners, allowSSHPOPProvisionerFilter)
+	// If k8ssa-token-path flag is set then we must be using the k8sSA provisioner.
+	case ctx.IsSet("k8ssa-token-path"):
+		provisioners = provisionerFilter(provisioners, allowK8sSAProvisionerFilter)
 	// List all available provisioners.
 	default:
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {

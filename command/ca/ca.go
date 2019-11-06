@@ -144,12 +144,6 @@ challenge validation requests.`,
 		Usage: "The <fingerprint> of the targeted root certificate.",
 	}
 
-	k8sSATokenPathFlag = cli.StringFlag{
-		Name:  "k8ssa-token-path",
-		Usage: `Configure the <file> from which to read the kubernetes service account token.`,
-		Value: `/var/run/secrets/kubernetes.io/serviceaccount/token`,
-	}
-
 	provisionerKidFlag = cli.StringFlag{
 		Name:  "kid",
 		Usage: "The provisioner <kid> to use.",

@@ -69,6 +69,14 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
 		Name: "insecure",
 	}
 
+	// K8sSATokenPathFlag is an optional flag that allows modification of the
+	// kubernetes service account token path.
+	K8sSATokenPathFlag = cli.StringFlag{
+		Name:  "k8ssa-token-path",
+		Usage: `Configure the <file> from which to read the kubernetes service account token.`,
+		Value: `/var/run/secrets/kubernetes.io/serviceaccount/token`,
+	}
+
 	// Force is a cli.Flag used to overwrite files.
 	Force = cli.BoolFlag{
 		Name:  "f,force",

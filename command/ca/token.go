@@ -26,14 +26,14 @@ func tokenCommand() cli.Command {
 		Action: command.ActionFunc(tokenAction),
 		Usage:  "generate an OTT granting access to the CA",
 		UsageText: `**step ca token** <subject>
-[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<path>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<path>]
+[**--password-file**=<path>] [**--output-file**=<path>] [**--key**=<path>]
 [**--san**=<SAN>] [**--offline**] [**--revoke**]
 [**--x5c-cert**=<path>] [**--x5c-key**=<path>]
 [**--sshpop-cert**=<path>] [**--sshpop-key**=<path>]
 [**--ssh**] [**--host**] [**--principal**=<string>]
-[**--k8ssa-token-path**=<file>`,
+[**--k8ssa-token-path**=<path>`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
@@ -185,7 +185,7 @@ be invalid for any other API request.`,
 				Name:  "ssh",
 				Usage: `Create a token for authorizing an SSH certificate signing request.`,
 			},
-			k8sSATokenPathFlag,
+			flags.K8sSATokenPathFlag,
 		},
 	}
 }
