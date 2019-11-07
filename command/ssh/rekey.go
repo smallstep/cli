@@ -30,7 +30,8 @@ func rekeyCommand() cli.Command {
 [**--password-file**=<path>] [**--offline**] [**--ca-config**=<path>]
 [**--force**]`,
 		Description: `**step ssh rerekey** command generates a new SSH Certificate
-and key using an existing SSH Cerfificate (signed by **step-ca**) as a template.
+and key using an existing SSH Cerfificate and key pair to authenticate and
+templatize the request.
 This command uses [step certificates](https://github.com/smallstep/certificates).
 
 ## POSITIONAL ARGUMENTS
@@ -46,15 +47,20 @@ This command uses [step certificates](https://github.com/smallstep/certificates)
 Rekey an ssh certificate:
 '''
 $ step ssh rekey id_ecdsa-cert.pub id_ecdsa
+'''
+
+Rekey an ssh certificate but don't overwrite the existing certificate and key:
+'''
+$ step ssh rekey id_ecdsa-cert.pub id_ecdsa --new-cert id2_ecdsa-cert.pub --new-key id2_ecdsa
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:  "cert",
-				Usage: `The path to the <cert> that should be revoked.`,
+				Name:  "new-cert",
+				Usage: `The <path> to the cert that should be rekey-ed.`,
 			},
 			cli.StringFlag{
-				Name:  "key",
-				Usage: `The <path> to the key corresponding to the cert that should be revoked.`,
+				Name:  "new-key",
+				Usage: `The <path> to the key corresponding to the cert that should be rekey-ed.`,
 			},
 			sshProvisionerPasswordFlag,
 			flags.Provisioner,
