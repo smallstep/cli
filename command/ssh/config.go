@@ -55,19 +55,21 @@ $ step ssh config --set User=joe --set Bastion=bastion.example.com
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "host",
-				Usage: "Configures a SSH server instead of a client.",
+				Usage: `Configures a SSH server instead of a client.`,
 			},
 			cli.BoolFlag{
 				Name:  "roots",
-				Usage: "Prints the public keys used to verify user or host certificates.",
+				Usage: `Prints the public keys used to verify user or host certificates.`,
 			},
 			cli.BoolFlag{
-				Name:  "federation",
-				Usage: "Prints all the public keys in the federation. These keys are used to verify user or host certificates",
+				Name: "federation",
+				Usage: `Prints all the public keys in the federation. These keys are used to verify
+user or host certificates`,
 			},
 			cli.StringSliceFlag{
-				Name:  "set",
-				Usage: "The <key=value> used as a variable in the templates. Use the flag multiple times to multiple variables.",
+				Name: "set",
+				Usage: `The <key=value> used as a variable in the templates. Use the flag multiple
+times to set multiple variables.`,
 			},
 			flags.DryRun,
 			flags.CaURL,
@@ -183,7 +185,6 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 				panic(rec)
 			}
 		}
-		return
 	}()
 
 	if ctx.Bool("dry-run") {
