@@ -300,7 +300,7 @@ func proxyBastion(r registryResponse) error {
 		fields := strings.Fields(r.Bastion.Flags)
 		args = append(args, fields...)
 	}
-	args = append(args, r.Hostname)
+	args = append(args, r.Bastion.Hostname)
 	if r.Bastion.Command == "" {
 		args = append(args, r.Bastion.Command)
 	} else {
