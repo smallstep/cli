@@ -26,10 +26,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-const (
-	sshDefaultPath    = "/usr/bin/ssh"
-	sshDefaultCommand = "nc %h %p"
-)
+const sshDefaultPath = "/usr/bin/ssh"
 
 type registryResponse struct {
 	Hostname string  `json:"hostname"`
@@ -131,7 +128,7 @@ func proxycommandAction(ctx *cli.Context) error {
 
 	// Connect through bastion
 	if registration.Bastion.Hostname != "" {
-		return proxyBastion(registration)
+		return proxyBastion(registration, user, host, port)
 	}
 
 	// Connect directly
@@ -279,7 +276,7 @@ func proxyDirect(host, port string) error {
 	return nil
 }
 
-func proxyBastion(r registryResponse) error {
+func proxyBastion(r registryResponse, user, host, port string) error {
 	sshPath, err := exec.LookPath("ssh")
 	if err != nil {
 		sshPath = sshDefaultPath
@@ -301,10 +298,10 @@ func proxyBastion(r registryResponse) error {
 		args = append(args, fields...)
 	}
 	args = append(args, r.Bastion.Hostname)
-	if r.Bastion.Command == "" {
-		args = append(args, r.Bastion.Command)
+	if r.Bastion.Command != "" {
+		args = append(args, sshutil.ProxyCommand(r.Bastion.Command, user, host, port))
 	} else {
-		args = append(args, sshDefaultCommand)
+		args = append(args, "nc", host, port)
 	}
 	exec.Exec(sshPath, args...)
 	return nil
