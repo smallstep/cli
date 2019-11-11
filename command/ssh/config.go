@@ -76,6 +76,7 @@ times to set multiple variables.`,
 			flags.Root,
 			flags.Offline,
 			flags.CaConfig,
+			flags.Force,
 		},
 	}
 }
