@@ -19,7 +19,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v0.0.0-20170918181015-86672fcb3f95
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5
-	github.com/smallstep/certificates v0.14.0-rc.1.0.20191106235404-946094d2b795
+	github.com/smallstep/certificates v0.14.0-rc.1.0.20191111193754-54826ded8327
 	github.com/smallstep/certinfo v0.0.0-20191029235839-00563809d483
 	github.com/smallstep/truststore v0.9.3
 	github.com/smallstep/zcrypto v0.0.0-20191030000234-ab27e7ba0886
@@ -32,4 +32,4 @@ require (
 	gopkg.in/square/go-jose.v2 v2.4.0
 )
 
-//replace github.com/smallstep/certificates => ../certificates
+// replace github.com/smallstep/certificates => ../certificates
