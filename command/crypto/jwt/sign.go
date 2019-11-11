@@ -26,7 +26,7 @@ func signCommand() cli.Command {
 [**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
 [**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>]
 [**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]
-[**--x5c-cert=<path>**] [**--x5c-key=<path>]`,
+[**--password-file**=<path>] [**--x5c-cert**=<path>] [**--x5c-key**=<path>]`,
 		Description: `**step crypto jwt sign** command generates a signed JSON Web Token (JWT) by
 computing a digital signature or message authentication code for a JSON
 payload. By default, the payload to sign is read from STDIN and the JWT will
