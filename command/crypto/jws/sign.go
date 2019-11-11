@@ -22,8 +22,8 @@ func signCommand() cli.Command {
 		Usage:  "create a signed JWS data structure",
 		UsageText: `**step crypto jws sign** [- | <filename>]
 [**--alg**=<algorithm>] [**--jku**=<jwk-url>] [**--jwk**] [**--typ**=<type>]
-[**--cty=<content-type>] [**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]
-[**--x5c-cert=<path>**] [**--x5c-key=<path>]`,
+[**--cty**=<content-type>] [**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]
+[**--password-file**=<path>] [**--x5c-cert**=<path>] [**--x5c-key**=<path>]`,
 		// others: x5u, x5c, x5t, x5t#S256, and crit
 		Description: `**step crypto jws sign** generates a signed JSON Web Signature (JWS) by
 computing a digital signature or message authentication code for an arbitrary
@@ -157,6 +157,7 @@ the **"kid"** member of one of the JWKs in the JWK Set.`,
 				Name:   "no-kid",
 				Hidden: true,
 			},
+			flags.PasswordFile,
 			flags.X5cCert,
 		},
 	}
@@ -223,6 +224,9 @@ func signAction(ctx *cli.Context) error {
 	}
 	if isSubtle {
 		options = append(options, jose.WithSubtle(true))
+	}
+	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
+		options = append(options, jose.WithPasswordFile(passwordFile))
 	}
 
 	// Read key from --key or --jwks
