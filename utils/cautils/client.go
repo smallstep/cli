@@ -26,6 +26,7 @@ type CaClient interface {
 	SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse, error)
 	SSHCheckHost(principal string) (*api.SSHCheckPrincipalResponse, error)
 	SSHGetHosts() (*api.SSHGetHostsResponse, error)
+	SSHBastion(req *api.SSHBastionRequest) (*api.SSHBastionResponse, error)
 }
 
 // NewClient returns a client of an online or offline CA. Requires the flags

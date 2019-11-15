@@ -420,6 +420,19 @@ func (c *OfflineCA) SSHGetHosts() (*api.SSHGetHostsResponse, error) {
 	}, nil
 }
 
+// SSHBastion is a wrapper on top of the GetSSHBastion method. It returns an
+// api.SSHBastionResponse.
+func (c *OfflineCA) SSHBastion(req *api.SSHBastionRequest) (*api.SSHBastionResponse, error) {
+	bastion, err := c.authority.GetSSHBastion(req.User, req.Hostname)
+	if err != nil {
+		return nil, err
+	}
+	return &api.SSHBastionResponse{
+		Hostname: req.Hostname,
+		Bastion:  bastion,
+	}, nil
+}
+
 // GenerateToken creates the token used by the authority to authorize requests.
 func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	// Use ca.json configuration for the root and audience

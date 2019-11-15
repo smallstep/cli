@@ -5,9 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
-	"path"
 	"strings"
 	"sync"
 	"time"
@@ -64,18 +62,6 @@ This command will add the user to the ssh-agent if necessary.
 <port>
 :  The port to connect to.`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "registry",
-				Usage: "The <url> of the registration server.",
-			},
-			cli.StringFlag{
-				Name:  "username",
-				Usage: "The <user> to authenticate on the registration server.",
-			},
-			cli.StringFlag{
-				Name:  "password",
-				Usage: "The <password> to authenticate on the registration server.",
-			},
 			flags.Provisioner,
 			flags.CaURL,
 			flags.Root,
@@ -93,42 +79,20 @@ func proxycommandAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	user, host, port := args[0], args[1], args[2]
 
-	registry := ctx.String("registry")
-	username := ctx.String("username")
-	password := ctx.String("password")
-
-	switch {
-	case registry == "":
-		return errs.RequiredFlag(ctx, "registry")
-	case username == "":
-		return errs.RequiredFlag(ctx, "username")
-	case password == "":
-		return errs.RequiredFlag(ctx, "password")
-	}
-
-	registryURL, err := url.Parse(registry)
-	if err != nil {
-		return errors.Wrap(err, "error parsing registry url")
-	}
-
 	// Check if user is logged in
 	if err := doLoginIfNeeded(ctx, user); err != nil {
 		return err
 	}
 
-	// Connect to the registration server
-	registryURL = registryURL.ResolveReference(&url.URL{
-		Path:     path.Join("/auth/hosts", host, "bastion"),
-		RawQuery: url.Values{"user": []string{user}}.Encode(),
-	})
-	registration, err := getRegistryResponse(registryURL.String(), username, password)
+	// Get the configured bastion if any
+	r, err := getBastion(ctx, user, host)
 	if err != nil {
 		return err
 	}
 
 	// Connect through bastion
-	if registration.Bastion.Hostname != "" {
-		return proxyBastion(registration, user, host, port)
+	if r.Bastion != nil && r.Bastion.Hostname != "" {
+		return proxyBastion(r, user, host, port)
 	}
 
 	// Connect directly
@@ -215,6 +179,17 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 	return nil
 }
 
+func getBastion(ctx *cli.Context, user, host string) (*api.SSHBastionResponse, error) {
+	client, err := cautils.NewClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return client.SSHBastion(&api.SSHBastionRequest{
+		User:     user,
+		Hostname: host,
+	})
+}
+
 func getRegistryResponse(rawurl, username, password string) (registryResponse, error) {
 	var Nil registryResponse
 	req, err := http.NewRequest("GET", rawurl, http.NoBody)
@@ -276,7 +251,7 @@ func proxyDirect(host, port string) error {
 	return nil
 }
 
-func proxyBastion(r registryResponse, user, host, port string) error {
+func proxyBastion(r *api.SSHBastionResponse, user, host, port string) error {
 	sshPath, err := exec.LookPath("ssh")
 	if err != nil {
 		sshPath = sshDefaultPath
