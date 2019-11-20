@@ -10,13 +10,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-func getHostsCommand() cli.Command {
+func hostsCommand() cli.Command {
 	return cli.Command{
-		Name:      "get-hosts",
-		Action:    command.ActionFunc(getHostsAction),
+		Name:      "hosts",
+		Action:    command.ActionFunc(hostsAction),
 		Usage:     "returns a list of all valid hosts",
-		UsageText: `**step ssh get-hosts**`,
-		Description: `**step ssh get-hosts** returns a list of valid hosts for SSH.
+		UsageText: `**step ssh hosts**`,
+		Description: `**step ssh hosts** returns a list of valid hosts for SSH.
 
 This command returns a zero exit status then the server exists, it will return 1
 otherwise.
@@ -27,7 +27,7 @@ otherwise.
 
 Get a list of valid hosts for SSH:
 '''
-$ step ssh get-hosts
+$ step ssh hosts
 '''`,
 		Flags: []cli.Flag{
 			flags.CaURL,
@@ -38,7 +38,7 @@ $ step ssh get-hosts
 	}
 }
 
-func getHostsAction(ctx *cli.Context) error {
+func hostsAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 0); err != nil {
 		return err
 	}

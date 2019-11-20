@@ -50,7 +50,7 @@ $ step ssh certificate --host internal.example.com ssh_host_ecdsa_key
 			proxyCommand(),
 			proxycommandCommand(),
 			checkHostCommand(),
-			getHostsCommand(),
+			hostsCommand(),
 			renewCommand(),
 			revokeCommand(),
 			rekeyCommand(),

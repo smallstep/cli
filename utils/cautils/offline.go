@@ -411,7 +411,7 @@ func (c *OfflineCA) SSHCheckHost(principal string) (*api.SSHCheckPrincipalRespon
 // SSHGetHosts is a wrapper on top of the CheckSSHHost method. It returns an
 // api.SSHCheckPrincipalResponse.
 func (c *OfflineCA) SSHGetHosts() (*api.SSHGetHostsResponse, error) {
-	hosts, err := c.authority.GetSSHHosts()
+	hosts, err := c.authority.GetSSHHosts(nil)
 	if err != nil {
 		return nil, err
 	}
