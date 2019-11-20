@@ -5,10 +5,12 @@ go 1.13
 require (
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
+	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/go-chi/chi v4.0.2+incompatible // indirect
 	github.com/golangci/golangci-lint v1.18.0 // indirect
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
+	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.3.1
 	github.com/mattn/go-colorable v0.1.4 // indirect
@@ -31,6 +33,7 @@ require (
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	gopkg.in/square/go-jose.v2 v2.4.0
+	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 )
 
-// replace github.com/smallstep/certificates => ../certificates
+replace github.com/smallstep/certificates => ../certificates

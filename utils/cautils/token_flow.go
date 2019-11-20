@@ -140,6 +140,28 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 	}
 }
 
+// NewIdentityTokenFlow implements the flow to generate a token using only an
+// OIDC provisioner.
+func NewIdentityTokenFlow(ctx *cli.Context, caURL, root string) (string, error) {
+	provisioners, err := pki.GetProvisioners(caURL, root)
+	if err != nil {
+		return "", err
+	}
+	provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+		return p.GetType() == provisioner.TypeOIDC
+	})
+	p, err := provisionerPrompt(ctx, provisioners)
+	if err != nil {
+		return "", err
+	}
+	switch p := p.(type) {
+	case *provisioner.OIDC:
+		return generateOIDCToken(ctx, p)
+	default:
+		return "", errors.Errorf("bootstrap flow does not support the %s provisioner", p.GetType())
+	}
+}
+
 // OfflineTokenFlow generates a provisioning token using either
 //   1. static configuration from ca.json (created with `step ca init`)
 //   2. input from command line flags
