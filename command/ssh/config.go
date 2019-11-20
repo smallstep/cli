@@ -54,6 +54,10 @@ Apply configuration templates with custom variables:
 $ step ssh config --set User=joe --set Bastion=bastion.example.com
 '''`,
 		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "team",
+				Usage: "The team name used to bootstrap the environment.",
+			},
 			cli.BoolFlag{
 				Name:  "host",
 				Usage: `Configures a SSH server instead of a client.`,
@@ -87,18 +91,34 @@ type statusCoder interface {
 }
 
 func configAction(ctx *cli.Context) (recoverErr error) {
+	team := ctx.String("team")
 	isHost := ctx.Bool("host")
 	isRoots := ctx.Bool("roots")
 	isFederation := ctx.Bool("federation")
 	sets := ctx.StringSlice("set")
 
 	switch {
+	case team != "" && isHost:
+		return errs.IncompatibleFlagWithFlag(ctx, "roots", "host")
+	case team != "" && isRoots:
+		return errs.IncompatibleFlagWithFlag(ctx, "roots", "roots")
+	case team != "" && isFederation:
+		return errs.IncompatibleFlagWithFlag(ctx, "roots", "federation")
+	case team != "" && len(sets) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "roots", "set")
 	case isRoots && isFederation:
 		return errs.IncompatibleFlagWithFlag(ctx, "roots", "federation")
 	case isRoots && len(sets) > 0:
 		return errs.IncompatibleFlagWithFlag(ctx, "roots", "set")
 	case isFederation && len(sets) > 0:
 		return errs.IncompatibleFlagWithFlag(ctx, "federation", "set")
+	}
+
+	// Bootstrap team
+	if team != "" {
+		if err := cautils.BootstrapTeam(ctx, team); err != nil {
+			return err
+		}
 	}
 
 	// Prepare retry function
