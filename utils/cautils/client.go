@@ -31,7 +31,7 @@ type CaClient interface {
 
 // NewClient returns a client of an online or offline CA. Requires the flags
 // `offline`, `ca-config`, `ca-url`, and `root`.
-func NewClient(ctx *cli.Context) (CaClient, error) {
+func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
 	if ctx.Bool("offline") {
 		caConfig := ctx.String("ca-config")
 		if caConfig == "" {
@@ -51,5 +51,6 @@ func NewClient(ctx *cli.Context) (CaClient, error) {
 			return nil, errs.RequiredFlag(ctx, "root")
 		}
 	}
-	return ca.NewClient(caURL, ca.WithRootFile(root))
+	opts = append([]ca.ClientOption{ca.WithRootFile(root)}, opts...)
+	return ca.NewClient(caURL, opts...)
 }

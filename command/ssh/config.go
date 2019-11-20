@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/errs"
@@ -100,7 +101,14 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return errs.IncompatibleFlagWithFlag(ctx, "federation", "set")
 	}
 
-	client, err := cautils.NewClient(ctx)
+	// Prepare retry function
+	retryFunc, err := loginOnUnauthorized(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Initialize CA client with login if needed.
+	client, err := cautils.NewClient(ctx, ca.WithRetryFunc(retryFunc))
 	if err != nil {
 		return err
 	}

@@ -164,6 +164,22 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, typ
 	return NewTokenFlow(ctx, typ, subject, principals, caURL, root, time.Time{}, time.Time{}, validAfter, validBefore)
 }
 
+// GenerateIdentityToken generates a token using only an OIDC provisioner.
+func (f *CertificateFlow) GenerateIdentityToken(ctx *cli.Context) (string, error) {
+	caURL := ctx.String("ca-url")
+	if len(caURL) == 0 {
+		return "", errs.RequiredFlag(ctx, "ca-url")
+	}
+	root := ctx.String("root")
+	if len(root) == 0 {
+		root = pki.GetRootCAPath()
+		if _, err := os.Stat(root); err != nil {
+			return "", errs.RequiredFlag(ctx, "root")
+		}
+	}
+	return NewIdentityTokenFlow(ctx, caURL, root)
+}
+
 // Sign signs the CSR using the online or the offline certificate authority.
 func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {
 	client, err := f.GetClient(ctx, token)
