@@ -82,6 +82,21 @@ func (a *Agent) AuthMethod() ssh.AuthMethod {
 	return ssh.PublicKeysCallback(a.Signers)
 }
 
+// HasKeys returns if a key filtered with the given options exists.
+func (a *Agent) HasKeys(opts ...AgentOption) (bool, error) {
+	o := newOptions(opts)
+	keys, err := a.List()
+	if err != nil {
+		return false, errors.Wrap(err, "error listing keys")
+	}
+	for _, key := range keys {
+		if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // ListKeys returns the list of keys in the agent.
 func (a *Agent) ListKeys(opts ...AgentOption) ([]*agent.Key, error) {
 	o := newOptions(opts)
