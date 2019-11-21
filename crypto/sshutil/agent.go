@@ -82,6 +82,37 @@ func (a *Agent) AuthMethod() ssh.AuthMethod {
 	return ssh.PublicKeysCallback(a.Signers)
 }
 
+// ListKeys returns the list of keys in the agent.
+func (a *Agent) ListKeys(opts ...AgentOption) ([]*agent.Key, error) {
+	o := newOptions(opts)
+	keys, err := a.List()
+	if err != nil {
+		return nil, errors.Wrap(err, "error listing keys")
+	}
+	var list []*agent.Key
+	for _, key := range keys {
+		if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
+			list = append(list, key)
+		}
+	}
+	return list, nil
+}
+
+// ListCertificates returns the list of certificates in the agent.
+func (a *Agent) ListCertificates(opts ...AgentOption) ([]*ssh.Certificate, error) {
+	keys, err := a.ListKeys(opts...)
+	if err != nil {
+		return nil, err
+	}
+	var list []*ssh.Certificate
+	for _, key := range keys {
+		if cert, err := ParseCertificate(key.Marshal()); err == nil {
+			list = append(list, cert)
+		}
+	}
+	return list, nil
+}
+
 // GetKey retrieves a key from the agent by the given comment.
 func (a *Agent) GetKey(comment string, opts ...AgentOption) (*agent.Key, error) {
 	o := newOptions(opts)
