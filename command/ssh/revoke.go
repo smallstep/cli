@@ -7,8 +7,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/command/ca"
+	cmdca "github.com/smallstep/cli/command/ca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
@@ -151,7 +152,7 @@ func revokeAction(ctx *cli.Context) error {
 
 	reason := ctx.String("reason")
 	// Convert the reasonCode flag to an OCSP revocation code.
-	reasonCode, err := ca.ReasonCodeToNum(ctx.String("reasonCode"))
+	reasonCode, err := cmdca.ReasonCodeToNum(ctx.String("reasonCode"))
 	if err != nil {
 		return err
 	}
@@ -168,7 +169,13 @@ func revokeAction(ctx *cli.Context) error {
 		}
 	}
 
-	caClient, err := flow.GetClient(ctx, token)
+	// Prepare retry function
+	retryFunc, err := loginOnUnauthorized(ctx)
+	if err != nil {
+		return err
+	}
+
+	caClient, err := flow.GetClient(ctx, token, ca.WithRetryFunc(retryFunc))
 	if err != nil {
 		return err
 	}

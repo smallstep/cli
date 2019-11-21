@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -47,7 +48,13 @@ func checkHostAction(ctx *cli.Context) error {
 		return err
 	}
 
-	client, err := cautils.NewClient(ctx)
+	// Prepare retry function
+	retryFunc, err := loginOnUnauthorized(ctx)
+	if err != nil {
+		return err
+	}
+
+	client, err := cautils.NewClient(ctx, ca.WithRetryFunc(retryFunc))
 	if err != nil {
 		return err
 	}
