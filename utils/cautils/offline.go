@@ -144,6 +144,16 @@ func certChainToPEM(certChain []*x509.Certificate) []api.Certificate {
 	return certChainPEM
 }
 
+// Version is a wrapper on top of the Version method. It returns
+// an api.VersionResponse.
+func (c *OfflineCA) Version() (*api.VersionResponse, error) {
+	v := c.authority.Version()
+	return &api.VersionResponse{
+		Version:                     v.Version,
+		RequireClientAuthentication: v.RequireClientAuthentication,
+	}, nil
+}
+
 // Sign is a wrapper on top of certificates Authorize and Sign methods. It
 // returns an api.SignResponse with the requested certificate and the
 // intermediate.
