@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"os/user"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -12,11 +13,13 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/config"
+	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
 )
 
 func configCommand() cli.Command {
@@ -177,6 +180,38 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 				return errs.InvalidFlagValue(ctx, "set", s, "")
 			}
 			data[s[:i]] = s[i+1:]
+		}
+	}
+
+	// Try to get the user from a certificate
+	if _, ok := data["User"]; !ok {
+		if agent, err := sshutil.DialAgent(); err == nil {
+			var opts []sshutil.AgentOption
+			if roots, err := client.SSHRoots(); err == nil && len(roots.UserKeys) > 0 {
+				userKeys := make([]ssh.PublicKey, len(roots.UserKeys))
+				for i, uk := range roots.UserKeys {
+					userKeys[i] = uk.PublicKey
+				}
+				opts = append(opts, sshutil.WithSignatureKey(userKeys))
+			}
+			if certs, err := agent.ListCertificates(opts...); err == nil && len(certs) > 0 {
+				if p := certs[0].ValidPrincipals; len(p) > 0 {
+					data["User"] = p[0]
+				}
+			}
+		}
+	}
+
+	// Ask the user for an username
+	if _, ok := data["User"]; !ok {
+		opts := []ui.Option{
+			ui.WithValidateNotEmpty(),
+		}
+		if usr, err := user.Current(); err == nil {
+			opts = append(opts, ui.WithDefaultValue(usr.Username))
+		}
+		if name, err := ui.Prompt("Please type your SSH username", opts...); err == nil {
+			data["User"] = name
 		}
 	}
 
