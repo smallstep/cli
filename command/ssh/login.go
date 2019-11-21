@@ -197,6 +197,14 @@ func loginAction(ctx *cli.Context) error {
 		identityKey = key
 	}
 
+	// NOTE: For OIDC token the principals should be completely empty. The OIDC
+	// provisioner is responsible for setting default principals by using an
+	// identity function.
+	if email, ok := tokenHasEmail(token); ok {
+		principals = []string{}
+		subject = email
+	}
+
 	resp, err := caClient.SSHSign(&api.SSHSignRequest{
 		PublicKey:        sshPub.Marshal(),
 		OTT:              token,

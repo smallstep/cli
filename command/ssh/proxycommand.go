@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"crypto"
 	"encoding/json"
 	"io"
 	"net"
@@ -13,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/sshutil"
@@ -146,9 +148,34 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 		return err
 	}
 
+	// NOTE: For OIDC token the principals should be completely empty. The OIDC
+	// provisioner is responsible for setting default principals by using an
+	// identity function.
+	if email, ok := tokenHasEmail(token); ok {
+		principals = []string{}
+		subject = email
+	}
+
 	caClient, err := flow.GetClient(ctx, token)
 	if err != nil {
 		return err
+	}
+
+	version, err := caClient.Version()
+	if err != nil {
+		return err
+	}
+
+	// Generate identity certificate (x509) if necessary
+	var identityCSR api.CertificateRequest
+	var identityKey crypto.PrivateKey
+	if version.RequireClientAuthentication {
+		csr, key, err := ca.NewIdentityRequest(subject)
+		if err != nil {
+			return err
+		}
+		identityCSR = *csr
+		identityKey = key
 	}
 
 	// Generate keypair
@@ -170,9 +197,17 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 		CertType:    provisioner.SSHUserCert,
 		ValidAfter:  validAfter,
 		ValidBefore: validBefore,
+		IdentityCSR: identityCSR,
 	})
 	if err != nil {
 		return err
+	}
+
+	// Write x509 identity certificate
+	if version.RequireClientAuthentication {
+		if err := ca.WriteDefaultIdentity(resp.IdentityCertificate, identityKey); err != nil {
+			return err
+		}
 	}
 
 	// Add certificate and private key to agent
