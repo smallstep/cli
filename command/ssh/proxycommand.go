@@ -112,68 +112,72 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 		return err
 	}
 
-	var opts []sshutil.AgentOption
+	// Check if a user key exists
 	if roots, err := client.SSHRoots(); err == nil && len(roots.UserKeys) > 0 {
 		userKeys := make([]ssh.PublicKey, len(roots.UserKeys))
 		for i, uk := range roots.UserKeys {
 			userKeys[i] = uk.PublicKey
 		}
-		opts = append(opts, sshutil.WithSignatureKey(userKeys))
+		exists, err := agent.HasKeys(sshutil.WithSignatureKey(userKeys))
+		if err != nil {
+			return err
+		}
+		if exists {
+			return nil
+		}
 	}
 
-	// Do login flow if key is not in agent
-	if exists, err := agent.HasKeys(opts...); err != nil || !exists || len(opts) == 0 {
-		flow, err := cautils.NewCertificateFlow(ctx)
-		if err != nil {
-			return err
-		}
+	// Do login flow
+	flow, err := cautils.NewCertificateFlow(ctx)
+	if err != nil {
+		return err
+	}
 
-		principals := []string{subject}
+	principals := []string{subject}
 
-		// Make sure the validAfter is in the past. It avoids `Certificate
-		// invalid: not yet valid` errors if the times are not in sync
-		// perfectly.
-		validAfter := provisioner.NewTimeDuration(time.Now().Add(-1 * time.Minute))
-		validBefore := provisioner.TimeDuration{}
+	// Make sure the validAfter is in the past. It avoids `Certificate
+	// invalid: not yet valid` errors if the times are not in sync
+	// perfectly.
+	validAfter := provisioner.NewTimeDuration(time.Now().Add(-1 * time.Minute))
+	validBefore := provisioner.TimeDuration{}
 
-		token, err := flow.GenerateSSHToken(ctx, subject, cautils.SSHUserSignType, principals, validAfter, validBefore)
-		if err != nil {
-			return err
-		}
+	token, err := flow.GenerateSSHToken(ctx, subject, cautils.SSHUserSignType, principals, validAfter, validBefore)
+	if err != nil {
+		return err
+	}
 
-		caClient, err := flow.GetClient(ctx, token)
-		if err != nil {
-			return err
-		}
+	caClient, err := flow.GetClient(ctx, token)
+	if err != nil {
+		return err
+	}
 
-		// Generate keypair
-		pub, priv, err := keys.GenerateDefaultKeyPair()
-		if err != nil {
-			return err
-		}
+	// Generate keypair
+	pub, priv, err := keys.GenerateDefaultKeyPair()
+	if err != nil {
+		return err
+	}
 
-		sshPub, err := ssh.NewPublicKey(pub)
-		if err != nil {
-			return errors.Wrap(err, "error creating public key")
-		}
+	sshPub, err := ssh.NewPublicKey(pub)
+	if err != nil {
+		return errors.Wrap(err, "error creating public key")
+	}
 
-		// Sign certificate in the CA
-		resp, err := caClient.SSHSign(&api.SSHSignRequest{
-			PublicKey:   sshPub.Marshal(),
-			OTT:         token,
-			Principals:  principals,
-			CertType:    provisioner.SSHUserCert,
-			ValidAfter:  validAfter,
-			ValidBefore: validBefore,
-		})
-		if err != nil {
-			return err
-		}
+	// Sign certificate in the CA
+	resp, err := caClient.SSHSign(&api.SSHSignRequest{
+		PublicKey:   sshPub.Marshal(),
+		OTT:         token,
+		Principals:  principals,
+		CertType:    provisioner.SSHUserCert,
+		ValidAfter:  validAfter,
+		ValidBefore: validBefore,
+	})
+	if err != nil {
+		return err
+	}
 
-		// Add certificate and private key to agent
-		if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
-			return err
-		}
+	// Add certificate and private key to agent
+	if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
+		return err
 	}
 
 	return nil
