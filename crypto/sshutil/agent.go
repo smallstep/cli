@@ -168,24 +168,26 @@ func (a *Agent) GetSigner(comment string, opts ...AgentOption) (ssh.Signer, erro
 }
 
 // RemoveKeys removes the keys with the given comment from the agent.
-func (a *Agent) RemoveKeys(comment string, opts ...AgentOption) error {
+func (a *Agent) RemoveKeys(comment string, opts ...AgentOption) (bool, error) {
 	o := newOptions(opts)
 	keys, err := a.List()
 	if err != nil {
-		return errors.Wrap(err, "error listing keys")
+		return false, errors.Wrap(err, "error listing keys")
 	}
 
+	var removed bool
 	for _, key := range keys {
 		if key.Comment == comment {
 			if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
 				if err := a.Remove(key); err != nil {
-					return errors.Wrap(err, "error removing key")
+					return false, errors.Wrap(err, "error removing key")
 				}
+				removed = true
 			}
 		}
 	}
 
-	return nil
+	return removed, nil
 }
 
 // AddCertificate adds the given certificate to the agent.
