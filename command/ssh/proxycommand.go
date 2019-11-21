@@ -122,7 +122,7 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 	}
 
 	// Do login flow if key is not in agent
-	if _, err := agent.GetSigner(subject, opts...); err != nil {
+	if exists, err := agent.HasKeys(opts...); err != nil || !exists || len(opts) == 0 {
 		flow, err := cautils.NewCertificateFlow(ctx)
 		if err != nil {
 			return err
