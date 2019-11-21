@@ -62,7 +62,7 @@ func NewCertificateFlow(ctx *cli.Context) (*CertificateFlow, error) {
 }
 
 // GetClient returns the client used to send requests to the CA.
-func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string) (CaClient, error) {
+func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.ClientOption) (CaClient, error) {
 	if f.offline {
 		return f.offlineCA, nil
 	}
@@ -76,7 +76,6 @@ func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string) (CaClient, err
 		return nil, errors.Wrap(err, "error parsing flag '--token'")
 	}
 	// Prepare client for bootstrap or provisioning tokens
-	var options []ca.ClientOption
 	if len(jwt.Payload.SHA) > 0 && len(jwt.Payload.Audience) > 0 && strings.HasPrefix(strings.ToLower(jwt.Payload.Audience[0]), "http") {
 		if len(caURL) == 0 {
 			caURL = jwt.Payload.Audience[0]
