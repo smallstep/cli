@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -97,7 +98,13 @@ func renewAction(ctx *cli.Context) error {
 		return err
 	}
 
-	caClient, err := flow.GetClient(ctx, token)
+	// Prepare retry function
+	retryFunc, err := loginOnUnauthorized(ctx)
+	if err != nil {
+		return err
+	}
+
+	caClient, err := flow.GetClient(ctx, token, ca.WithRetryFunc(retryFunc))
 	if err != nil {
 		return err
 	}
