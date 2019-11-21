@@ -41,19 +41,20 @@ be abc.
 
 ## EXAMPLES
 
-Generate a new SSH certificate and add it to the agent:
+Request a new SSH certificate and add it to the agent:
 '''
 $ step ssh login joe@example.com
+'''
+
+Request a new SSH certificate valid only for 1h:
+'''
+$ step ssh login --not-after 1h joe@smallstep.com
 '''`,
 		Flags: []cli.Flag{
 			flags.Token,
 			sshAddUserFlag,
-			sshPasswordFileFlag,
-			sshConnectFlag,
-			sshBastionFlag,
-			sshBastionCommandFlag,
-			sshProxyFlag,
 			flags.Provisioner,
+			flags.ProvisionerPasswordFile,
 			flags.NotBefore,
 			flags.NotAfter,
 			flags.CaURL,
@@ -84,25 +85,19 @@ func loginAction(ctx *cli.Context) error {
 		return err
 	}
 
-	// SSH client flags
-	address := ctx.String("connect")
-	proxyCommand := ctx.String("proxy")
-	bastionAddress := ctx.String("bastion")
-	bastionCommand := ctx.String("bastion-command")
+	// Hack to make the flag "password-file" the content of
+	// "provisioner-password-file" so the token command works as expected
+	ctx.Set("password-file", ctx.String("provisioner-password-file"))
 
-	switch {
-	case proxyCommand != "" && bastionAddress != "":
-		return errs.IncompatibleFlagWithFlag(ctx, "proxy", "bastion")
-	case bastionAddress != "" && bastionCommand == "":
-		return errs.RequiredWithFlag(ctx, "bastion", "bastion-command")
+	// Connect to the SSH agent.
+	// step ssh login requires an ssh agent.
+	agent, err := sshutil.DialAgent()
+	if err != nil {
+		return err
 	}
 
-	// Connect with SSH agent if available
-	agent, agentErr := sshutil.DialAgent()
-
-	// Connect to the remote shell using the previous certificate in the agent
-	if agent != nil && !force {
-		// Add filter by user key
+	// Check for a previous key signed by the CA.
+	if !force {
 		client, err := cautils.NewClient(ctx)
 		if err != nil {
 			return err
@@ -115,30 +110,11 @@ func loginAction(ctx *cli.Context) error {
 			}
 			opts = append(opts, sshutil.WithSignatureKey(userKeys))
 		}
-		// Get signing keys
-		if signer, err := agent.GetSigner(subject, opts...); err == nil {
-			// Just return if key is present
-			if address == "" {
-				ui.Printf("The key %s is already present in the SSH agent.\n", subject)
-				return nil
-			}
 
-			// Use signer to connect to the remote server
-			opts := []sshutil.ShellOption{
-				sshutil.WithSigner(signer),
-			}
-			if proxyCommand != "" {
-				opts = append(opts, sshutil.WithProxyCommand(proxyCommand))
-			}
-			if bastionAddress != "" {
-				opts = append(opts, sshutil.WithBastion(user, bastionAddress, bastionCommand))
-			}
-
-			shell, err := sshutil.NewShell(user, address, opts...)
-			if err != nil {
-				return err
-			}
-			return shell.RemoteShell()
+		// Just return if key is present
+		if _, err := agent.GetKey(subject, opts...); err == nil {
+			ui.Printf("The key %s is already present in the SSH agent.\n", subject)
+			return nil
 		}
 	}
 
@@ -237,55 +213,18 @@ func loginAction(ctx *cli.Context) error {
 		}
 	}
 
-	if agent == nil {
-		ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, agentErr)
+	// Attempt to add key to agent if private key defined.
+	if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
+		ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 	} else {
-		// Attempt to add key to agent if private key defined.
-		if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
+		ui.PrintSelected("SSH Agent", "yes")
+	}
+	if isAddUser {
+		if err := agent.AddCertificate(subject, resp.AddUserCertificate.Certificate, auPriv); err != nil {
 			ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 		} else {
 			ui.PrintSelected("SSH Agent", "yes")
 		}
-		if isAddUser {
-			if err := agent.AddCertificate(subject, resp.AddUserCertificate.Certificate, auPriv); err != nil {
-				ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
-			} else {
-				ui.PrintSelected("SSH Agent", "yes")
-			}
-		}
-	}
-
-	// Connect to the remote shell using the new certificate
-	if address != "" {
-		if isAddUser {
-			auCert := resp.AddUserCertificate.Certificate
-			auOpts := []sshutil.ShellOption{
-				sshutil.WithCertificate(auCert, auPriv),
-			}
-			shell, err := sshutil.NewShell(auCert.ValidPrincipals[0], address, auOpts...)
-			if err != nil {
-				return err
-			}
-			if err := shell.Run(""); err != nil {
-				return err
-			}
-		}
-
-		opts := []sshutil.ShellOption{
-			sshutil.WithCertificate(resp.Certificate.Certificate, priv),
-		}
-		if proxyCommand != "" {
-			opts = append(opts, sshutil.WithProxyCommand(proxyCommand))
-		}
-		if bastionAddress != "" {
-			opts = append(opts, sshutil.WithBastion(user, bastionAddress, bastionCommand))
-		}
-
-		shell, err := sshutil.NewShell(user, address, opts...)
-		if err != nil {
-			return err
-		}
-		return shell.RemoteShell()
 	}
 
 	return nil
