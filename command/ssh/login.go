@@ -1,11 +1,13 @@
 package ssh
 
 import (
+	"crypto"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/sshutil"
@@ -178,6 +180,23 @@ func loginAction(ctx *cli.Context) error {
 		sshAuPubBytes = sshAuPub.Marshal()
 	}
 
+	version, err := caClient.Version()
+	if err != nil {
+		return err
+	}
+
+	// Generate identity certificate (x509) if necessary
+	var identityCSR api.CertificateRequest
+	var identityKey crypto.PrivateKey
+	if version.RequireClientAuthentication {
+		csr, key, err := ca.NewIdentityRequest(subject)
+		if err != nil {
+			return err
+		}
+		identityCSR = *csr
+		identityKey = key
+	}
+
 	resp, err := caClient.SSHSign(&api.SSHSignRequest{
 		PublicKey:        sshPub.Marshal(),
 		OTT:              token,
@@ -186,9 +205,17 @@ func loginAction(ctx *cli.Context) error {
 		ValidAfter:       validAfter,
 		ValidBefore:      validBefore,
 		AddUserPublicKey: sshAuPubBytes,
+		IdentityCSR:      identityCSR,
 	})
 	if err != nil {
 		return err
+	}
+
+	// Write x509 identity certificate
+	if version.RequireClientAuthentication {
+		if err := ca.WriteDefaultIdentity(resp.IdentityCertificate, identityKey); err != nil {
+			return err
+		}
 	}
 
 	if agent == nil {

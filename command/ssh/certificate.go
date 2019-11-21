@@ -2,11 +2,13 @@ package ssh
 
 import (
 	"bytes"
+	"crypto"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -239,6 +241,23 @@ func certificateAction(ctx *cli.Context) error {
 		return err
 	}
 
+	version, err := caClient.Version()
+	if err != nil {
+		return err
+	}
+
+	// Generate identity certificate (x509) if necessary
+	var identityCSR api.CertificateRequest
+	var identityKey crypto.PrivateKey
+	if version.RequireClientAuthentication {
+		csr, key, err := ca.NewIdentityRequest(subject)
+		if err != nil {
+			return err
+		}
+		identityCSR = *csr
+		identityKey = key
+	}
+
 	var sshPub ssh.PublicKey
 	var pub, priv interface{}
 
@@ -312,6 +331,7 @@ func certificateAction(ctx *cli.Context) error {
 		ValidAfter:       validAfter,
 		ValidBefore:      validBefore,
 		AddUserPublicKey: sshAuPubBytes,
+		IdentityCSR:      identityCSR,
 	})
 	if err != nil {
 		return err
@@ -355,6 +375,13 @@ func certificateAction(ctx *cli.Context) error {
 			return err
 		}
 		if err := utils.WriteFile(baseName+"-provisioner-cert.pub", marshalPublicKey(resp.AddUserCertificate, id), 0644); err != nil {
+			return err
+		}
+	}
+
+	// Write x509 identity certificate
+	if version.RequireClientAuthentication {
+		if err := ca.WriteDefaultIdentity(resp.IdentityCertificate, identityKey); err != nil {
 			return err
 		}
 	}
