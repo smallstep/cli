@@ -5,6 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -45,7 +46,14 @@ func hostsAction(ctx *cli.Context) error {
 		return err
 	}
 
-	client, err := cautils.NewClient(ctx)
+	// Prepare retry function
+	retryFunc, err := loginOnUnauthorized(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Initialize CA client with login if needed.
+	client, err := cautils.NewClient(ctx, ca.WithRetryFunc(retryFunc))
 	if err != nil {
 		return err
 	}
