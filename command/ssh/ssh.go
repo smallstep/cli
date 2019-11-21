@@ -1,9 +1,6 @@
 package ssh
 
 import (
-	"crypto/rand"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -173,28 +170,9 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 			return fail(err)
 		}
 
-		// Generate identity Keys (x509)
-		identityKey, err := keys.GenerateDefaultKey()
+		// Generate identity CSR (x509)
+		identityCSR, identityKey, err := ca.NewIdentityRequest(jwt.Payload.Email)
 		if err != nil {
-			return fail(err)
-		}
-
-		template := &x509.CertificateRequest{
-			Subject: pkix.Name{
-				CommonName: jwt.Payload.Email,
-			},
-			EmailAddresses: []string{jwt.Payload.Email},
-		}
-
-		csr, err := x509.CreateCertificateRequest(rand.Reader, template, identityKey)
-		if err != nil {
-			return fail(err)
-		}
-		cr, err := x509.ParseCertificateRequest(csr)
-		if err != nil {
-			return fail(err)
-		}
-		if err := cr.CheckSignature(); err != nil {
 			return fail(err)
 		}
 
@@ -202,7 +180,7 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 			PublicKey:   sshPub.Marshal(),
 			OTT:         tok,
 			CertType:    provisioner.SSHUserCert,
-			IdentityCSR: api.CertificateRequest{CertificateRequest: cr},
+			IdentityCSR: *identityCSR,
 		})
 		if err != nil {
 			return fail(err)
