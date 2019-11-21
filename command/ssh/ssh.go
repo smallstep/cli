@@ -122,11 +122,6 @@ private key so that the pair can be added to an SSH Agent.`,
 )
 
 func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
-	agent, err := sshutil.DialAgent()
-	if err != nil {
-		return nil, err
-	}
-
 	flow, err := cautils.NewCertificateFlow(ctx)
 	if err != nil {
 		return nil, err
@@ -190,9 +185,10 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 		if err := ca.WriteDefaultIdentity(resp.IdentityCertificate, identityKey); err != nil {
 			return fail(err)
 		}
-		// Add ssh certificate to the agent
-		if err := agent.AddCertificate(jwt.Payload.Email, resp.Certificate.Certificate, priv); err != nil {
-			return fail(err)
+
+		// Add ssh certificate to the agent, ignore errors.
+		if agent, err := sshutil.DialAgent(); err == nil {
+			agent.AddCertificate(jwt.Payload.Email, resp.Certificate.Certificate, priv)
 		}
 
 		return true
