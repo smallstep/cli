@@ -107,7 +107,6 @@ func logoutAction(ctx *cli.Context) error {
 		return nil
 	}
 
-	// Remove if comment == subject
 	var opts []sshutil.AgentOption
 	if !all {
 		// Remove only keys signed by the CA
@@ -123,12 +122,19 @@ func logoutAction(ctx *cli.Context) error {
 			opts = append(opts, sshutil.WithSignatureKey(userKeys))
 		}
 	}
-	if err := agent.RemoveKeys(subject, opts...); err != nil {
+
+	// Remove if comment == subject
+	found, err := agent.RemoveKeys(subject, opts...)
+	if err != nil {
 		return err
 	}
-	if all {
+
+	switch {
+	case !found:
+		fmt.Printf("Identity not found: %s\n", subject)
+	case all:
 		fmt.Printf("All identities removed: %s\n", subject)
-	} else {
+	default:
 		fmt.Printf("Identity removed: %s\n", subject)
 	}
 	return nil
