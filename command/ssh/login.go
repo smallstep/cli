@@ -24,16 +24,27 @@ func loginCommand() cli.Command {
 		Name:      "login",
 		Action:    command.ActionFunc(loginAction),
 		Usage:     "adds a SSH certificate into the authentication agent",
-		UsageText: `**step ssh login** <principal>`,
-		Description: `**step ssh login** command ...
+		UsageText: `**step ssh login** <key-id>`,
+		Description: `**step ssh login** generates a new SSH key pair and send a request to [step
+certificates](https://github.com/smallstep/certificates) to sign a user
+certificate. This certificate will be automatically added to the SSH agent.
+
+With a certificate servers may trust only the CA key and verify its signature on
+a certificate rather than trusting many user keys.
 
 ## POSITIONAL ARGUMENTS
 
-TODO
+<key-id>
+:  The certificate identity. If no principals are passed we will use
+the key-id as a principal, if it has the format abc@def then the principal will
+be abc.
 
 ## EXAMPLES
 
-TODO`,
+Generate a new SSH certificate and add it to the agent:
+'''
+$ step ssh login joe@example.com
+'''`,
 		Flags: []cli.Flag{
 			flags.Token,
 			sshAddUserFlag,
