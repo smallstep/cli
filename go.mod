@@ -11,6 +11,7 @@ require (
 	github.com/golangci/golangci-lint v1.18.0 // indirect
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
 	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.3.1
 	github.com/mattn/go-colorable v0.1.4 // indirect
@@ -22,7 +23,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v0.0.0-20170918181015-86672fcb3f95
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5
-	github.com/smallstep/certificates v0.14.0-rc.1.0.20191115043238-35b753924398
+	github.com/smallstep/certificates v0.14.0-rc.1.0.20191121000331-80ee3645c452
 	github.com/smallstep/certinfo v0.0.0-20191029235839-00563809d483
 	github.com/smallstep/truststore v0.9.3
 	github.com/smallstep/zcrypto v0.0.0-20191030000234-ab27e7ba0886
