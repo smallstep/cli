@@ -45,7 +45,14 @@ func BootstrapTeam(ctx *cli.Context, name string) error {
 		return errors.Wrap(err, "error getting team data")
 	}
 
-	if _, err := exec.Step("ca", "bootstrap", "--ca-url", r.CaURL, "--fingerprint", r.Fingerprint); err != nil {
+	args := []string{"ca", "bootstrap",
+		"--ca-url", r.CaURL,
+		"--fingerprint", r.Fingerprint,
+	}
+	if ctx.Bool("force") {
+		args = append(args, "--force")
+	}
+	if _, err := exec.Step(args...); err != nil {
 		return errors.Wrap(err, "error getting team data")
 	}
 
