@@ -23,7 +23,7 @@ require (
 	github.com/smallstep/certificates v0.14.0-rc.1.0.20191121031219-87ce2c9b4b6c
 	github.com/smallstep/certinfo v0.0.0-20191029235839-00563809d483
 	github.com/smallstep/truststore v0.9.3
-	github.com/smallstep/zcrypto v0.0.0-20191030000234-ab27e7ba0886
+	github.com/smallstep/zcrypto v0.0.0-20191122194514-76530dff70e7
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
 	github.com/stretchr/testify v1.4.0
 	github.com/urfave/cli v1.20.1-0.20181029213200-b67dcf995b6a
