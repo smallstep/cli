@@ -137,8 +137,8 @@ github.com/smallstep/truststore v0.9.3 h1:YAbCOZN4PrGApIPwUd95b71blpRJ/ZlbM9o6Xw
 github.com/smallstep/truststore v0.9.3/go.mod h1:PRSkpRIhAYBK/KLWkHNgRdYgzWMEy45bN7PSJCfKKGE=
 github.com/smallstep/zcrypto v0.0.0-20191008000232-9fc4bea33f70 h1:msly2lrUgqZ9uhzHdn8rkSfgIl/UVUeG9CD6FoANMcM=
 github.com/smallstep/zcrypto v0.0.0-20191008000232-9fc4bea33f70/go.mod h1:8LA6x9T22WADMj89Ksf6DnOVCOJF3zLKUdSRAcZmW4U=
-github.com/smallstep/zcrypto v0.0.0-20191030000234-ab27e7ba0886 h1:HEgbQkocPpJBCEoOhQ+o8dNDwFqQ9t2r8CbF367Sc2c=
-github.com/smallstep/zcrypto v0.0.0-20191030000234-ab27e7ba0886/go.mod h1:8LA6x9T22WADMj89Ksf6DnOVCOJF3zLKUdSRAcZmW4U=
+github.com/smallstep/zcrypto v0.0.0-20191122194514-76530dff70e7 h1:x6mW1P4yKOQjwZlLIuhanWwtAyBrQxk5EidukTkKZnM=
+github.com/smallstep/zcrypto v0.0.0-20191122194514-76530dff70e7/go.mod h1:8LA6x9T22WADMj89Ksf6DnOVCOJF3zLKUdSRAcZmW4U=
 github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f h1:mZxeNDk2+xg4eTEuR4y6z2+i6HBvcWjtdscDiUmBRzc=
 github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f/go.mod h1:GeHHT7sJDI9ti3oEaFnvx1F4N8n3ZSw2YM1+sbEoxc4=
 github.com/spf13/cast v1.3.0 h1:oget//CVOEoFewqQxwr0Ej5yjygnqGkvggSE/gB35Q8=
