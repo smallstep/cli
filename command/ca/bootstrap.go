@@ -15,6 +15,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
 )
@@ -36,12 +37,13 @@ After the bootstrap, ca commands do not need to specify the flags
 --ca-url, --root or --fingerprint if we want to use the same environment.`,
 		Flags: []cli.Flag{
 			flags.CaURL,
-			flags.Force,
 			fingerprintFlag,
+			flags.Team,
 			cli.BoolFlag{
 				Name:  "install",
 				Usage: "Install the root certificate into the system truststore.",
 			},
+			flags.Force,
 		},
 	}
 }
@@ -55,10 +57,13 @@ type bootstrapConfig struct {
 func bootstrapAction(ctx *cli.Context) error {
 	caURL := ctx.String("ca-url")
 	fingerprint := ctx.String("fingerprint")
+	team := ctx.String("team")
 	rootFile := pki.GetRootCAPath()
 	configFile := filepath.Join(config.StepPath(), "config", "defaults.json")
 
 	switch {
+	case team != "":
+		return cautils.BootstrapTeam(ctx, team)
 	case len(caURL) == 0:
 		return errs.RequiredFlag(ctx, "ca-url")
 	case len(fingerprint) == 0:
