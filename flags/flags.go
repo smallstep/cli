@@ -202,6 +202,11 @@ be stored in the 'x5c' header.`,
 		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate that will
 be stored in the 'sshpop' header.`,
 	}
+
+	Team = cli.StringFlag{
+		Name:  "team",
+		Usage: "The team <name> used to bootstrap the environment.",
+	}
 )
 
 // ParseTimeOrDuration is a helper that returns the time or the current time

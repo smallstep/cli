@@ -37,6 +37,9 @@ func BootstrapTeam(ctx *cli.Context, name string) error {
 		return errors.Wrap(err, "error getting team data")
 	}
 	if resp.StatusCode >= 400 {
+		if resp.StatusCode == http.StatusNotFound {
+			return errors.New("error getting team data: team does not exist")
+		}
 		return errors.Wrap(readError(resp.Body), "error getting team data")
 	}
 
