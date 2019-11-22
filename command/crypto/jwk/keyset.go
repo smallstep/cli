@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/utils/sysutils"
 	"github.com/urfave/cli"
 )
 
@@ -232,7 +233,7 @@ func rwLockKeySet(filename string) (jwks *jose.JSONWebKeySet, writeFunc func(boo
 	fd := int(f.Fd())
 
 	// non-blocking exclusive lock
-	err = syscall.Flock(fd, syscall.LOCK_EX|syscall.LOCK_NB)
+	err = sysutils.FileLock(fd)
 	switch err {
 	case nil: // continue
 	case syscall.EWOULDBLOCK:
@@ -248,7 +249,7 @@ func rwLockKeySet(filename string) (jwks *jose.JSONWebKeySet, writeFunc func(boo
 	// close and unlock file on errors
 	defer func() {
 		if err != nil {
-			syscall.Flock(fd, syscall.LOCK_UN)
+			sysutils.FileUnlock(fd)
 			f.Close()
 		}
 	}()
@@ -289,7 +290,7 @@ func rwLockKeySet(filename string) (jwks *jose.JSONWebKeySet, writeFunc func(boo
 			}
 		}
 
-		if err1 := syscall.Flock(fd, syscall.LOCK_UN); err1 != nil {
+		if err1 := sysutils.FileUnlock(fd); err1 != nil {
 			err = errors.Wrapf(err1, "error unlocking %s", filename)
 		}
 

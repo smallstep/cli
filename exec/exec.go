@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/utils/sysutils"
 )
 
 // LookPath is an alias for exec.LookPath. It searches for an executable named
@@ -44,7 +45,7 @@ func Exec(name string, arg ...string) {
 		return
 	}
 	args := append([]string{name}, arg...)
-	if err := syscall.Exec(name, args, os.Environ()); err != nil {
+	if err := sysutils.Exec(name, args, os.Environ()); err != nil {
 		errorAndExit(name, err)
 	}
 }
