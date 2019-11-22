@@ -27,6 +27,7 @@ import (
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
+	"github.com/smallstep/cli/utils/sysutils"
 	"github.com/urfave/cli"
 )
 
@@ -320,7 +321,7 @@ func runKillPid(pid, signum int) error {
 	if pid == 0 {
 		return nil
 	}
-	if err := syscall.Kill(pid, syscall.Signal(signum)); err != nil {
+	if err := sysutils.Kill(pid, syscall.Signal(signum)); err != nil {
 		return errors.Wrapf(err, "kill %d with signal %d failed", pid, signum)
 	}
 	return nil

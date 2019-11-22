@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"os"
-	"syscall"
 	"text/template"
 
 	"github.com/chzyer/readline"
@@ -202,7 +201,7 @@ func Select(label string, items interface{}, opts ...Option) (int, string, error
 
 func preparePromptTerminal() (func(), error) {
 	nothing := func() {}
-	if !readline.IsTerminal(syscall.Stdin) {
+	if !readline.DefaultIsTerminal() {
 		tty, err := os.Open("/dev/tty")
 		if err != nil {
 			return nothing, errors.Wrap(err, "error allocating terminal")
@@ -232,7 +231,7 @@ func preparePromptTerminal() (func(), error) {
 
 func prepareSelectTerminal() (func(), error) {
 	nothing := func() {}
-	if !readline.IsTerminal(syscall.Stdin) {
+	if !readline.DefaultIsTerminal() {
 		tty, err := os.Open("/dev/tty")
 		if err != nil {
 			return nothing, errors.Wrap(err, "error allocating terminal")
