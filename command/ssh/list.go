@@ -75,6 +75,11 @@ func listAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error listing identities")
 	}
 
+	if len(keys) == 0 {
+		fmt.Println("The agent has no identities.")
+		return nil
+	}
+
 	if ctx.Bool("raw") {
 		for _, k := range keys {
 			if ctx.NArg() == 0 || k.Comment == subject {
