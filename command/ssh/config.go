@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os/user"
+	"runtime"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -171,6 +172,7 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	}
 
 	data := map[string]string{
+		"GOOS":     runtime.GOOS,
 		"StepPath": config.StepPath(),
 	}
 	if len(sets) > 0 {
