@@ -3,6 +3,7 @@ module github.com/smallstep/cli
 go 1.13
 
 require (
+	github.com/Microsoft/go-winio v0.4.14
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e

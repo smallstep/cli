@@ -2,7 +2,9 @@
 
 package sysutils
 
-import "syscall"
+import (
+	"syscall"
+)
 
 func flock(fd int, how int) error {
 	return syscall.Flock(fd, how)

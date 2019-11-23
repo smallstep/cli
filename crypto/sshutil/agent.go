@@ -3,7 +3,7 @@ package sshutil
 import (
 	"bytes"
 	"net"
-	"os"
+	"runtime"
 	"time"
 
 	"github.com/pkg/errors"
@@ -61,15 +61,7 @@ type Agent struct {
 // DialAgent returns an ssh.Agent client. It uses the SSH_AUTH_SOCK to connect
 // to the agent.
 func DialAgent() (*Agent, error) {
-	socket := os.Getenv("SSH_AUTH_SOCK")
-	conn, err := net.Dial("unix", socket)
-	if err != nil {
-		return nil, errors.Wrap(err, "error connecting with ssh-agent")
-	}
-	return &Agent{
-		ExtendedAgent: agent.NewClient(conn),
-		Conn:          conn,
-	}, nil
+	return dialAgent()
 }
 
 // Close closes the connection to the agent.
@@ -204,6 +196,12 @@ func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv inter
 	} else {
 		lifetime = cert.ValidBefore - now
 	}
+
+	// Windows SSH agent fails with a lifetime
+	if runtime.GOOS == "windows" {
+		lifetime = 0
+	}
+
 	return errors.Wrap(a.Add(agent.AddedKey{
 		PrivateKey:   priv,
 		Certificate:  cert,
