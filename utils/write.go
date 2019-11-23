@@ -98,10 +98,7 @@ func WriteSnippet(filename string, data []byte, perm os.FileMode) error {
 
 	// Read file contents
 	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return WriteFile(filename, data, perm)
-		}
+	if err != nil && !os.IsNotExist(err) {
 		return errs.FileError(err, filename)
 	}
 
@@ -113,9 +110,11 @@ func WriteSnippet(filename string, data []byte, perm os.FileMode) error {
 	if err != nil {
 		return errs.FileError(err, filename)
 	}
-	f.Write(b[:start])
-	if start == end {
-		f.WriteString("\n")
+	if len(b) > 0 {
+		f.Write(b[:start])
+		if start == end {
+			f.WriteString("\n")
+		}
 	}
 	f.WriteString(fmt.Sprintf("%s @ %s\n", SnippetHeader, time.Now().UTC().Format(time.RFC3339)))
 	f.Write(data)
@@ -123,7 +122,9 @@ func WriteSnippet(filename string, data []byte, perm os.FileMode) error {
 		f.WriteString("\n")
 	}
 	f.WriteString(SnippetFooter + "\n")
-	f.Write(b[end:])
+	if len(b) > 0 {
+		f.Write(b[end:])
+	}
 	return f.Close()
 }
 
