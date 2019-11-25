@@ -31,6 +31,7 @@ require (
 	github.com/weppos/publicsuffix-go v0.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
+	golang.org/x/sys v0.0.0-20191008105621-543471e840be
 	gopkg.in/square/go-jose.v2 v2.4.0
 )
 
