@@ -13,6 +13,7 @@ import (
 
 type options struct {
 	filterBySignatureKey func(*agent.Key) bool
+	removeExpiredKey     func(*Agent, *agent.Key) bool
 }
 
 func newOptions(opts []AgentOption) *options {
@@ -42,6 +43,23 @@ func WithSignatureKey(keys []ssh.PublicKey) AgentOption {
 			for _, sb := range signingKeys {
 				if bytes.Equal(b, sb) {
 					return true
+				}
+			}
+			return false
+		}
+	}
+}
+
+// WithRemoveExpiredCerts will remove the expired certificates automatically.
+func WithRemoveExpiredCerts(t time.Time) AgentOption {
+	unixNow := t.Unix()
+	return func(o *options) {
+		o.removeExpiredKey = func(a *Agent, k *agent.Key) bool {
+			if cert, err := ParseCertificate(k.Marshal()); err == nil {
+				if before := int64(cert.ValidBefore); cert.ValidBefore != uint64(ssh.CertTimeInfinity) && (unixNow >= before || before < 0) {
+					if err := a.Remove(k); err == nil {
+						return true
+					}
 				}
 			}
 			return false
@@ -82,6 +100,9 @@ func (a *Agent) HasKeys(opts ...AgentOption) (bool, error) {
 		return false, errors.Wrap(err, "error listing keys")
 	}
 	for _, key := range keys {
+		if o.removeExpiredKey != nil && o.removeExpiredKey(a, key) {
+			continue
+		}
 		if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
 			return true, nil
 		}
@@ -98,6 +119,9 @@ func (a *Agent) ListKeys(opts ...AgentOption) ([]*agent.Key, error) {
 	}
 	var list []*agent.Key
 	for _, key := range keys {
+		if o.removeExpiredKey != nil && o.removeExpiredKey(a, key) {
+			continue
+		}
 		if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
 			list = append(list, key)
 		}
@@ -129,6 +153,9 @@ func (a *Agent) GetKey(comment string, opts ...AgentOption) (*agent.Key, error) 
 	}
 	for _, key := range keys {
 		if key.Comment == comment {
+			if o.removeExpiredKey != nil && o.removeExpiredKey(a, key) {
+				continue
+			}
 			if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
 				return key, nil
 			}
