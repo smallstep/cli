@@ -44,7 +44,7 @@ $ step ssh certificate --host internal.example.com ssh_host_ecdsa_key
 			inspectCommand(),
 			listCommand(),
 			fingerPrintCommand(),
-			proxyCommand(),
+			// proxyCommand(),
 			proxycommandCommand(),
 			checkHostCommand(),
 			hostsCommand(),
