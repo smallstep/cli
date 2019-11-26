@@ -102,8 +102,9 @@ func proxyAction(ctx *cli.Context) error {
 	wg := new(sync.WaitGroup)
 	errCh := make(chan error, 1)
 	if local != "" {
+		wg.Add(1)
 		go func() {
-			wg.Add(1)
+			defer wg.Done()
 			bindNetwork, bindAddress, hostNetwork, hostAddress, err := parseForward(ctx, "L")
 			if err != nil {
 				errCh <- err
@@ -115,8 +116,9 @@ func proxyAction(ctx *cli.Context) error {
 	}
 
 	if remote != "" {
+		wg.Add(1)
 		go func() {
-			wg.Add(1)
+			defer wg.Done()
 			bindNetwork, bindAddress, hostNetwork, hostAddress, err := parseForward(ctx, "R")
 			if err != nil {
 				errCh <- err
