@@ -120,7 +120,7 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 		for i, uk := range roots.UserKeys {
 			userKeys[i] = uk.PublicKey
 		}
-		exists, err := agent.HasKeys(sshutil.WithSignatureKey(userKeys))
+		exists, err := agent.HasKeys(sshutil.WithSignatureKey(userKeys), sshutil.WithRemoveExpiredCerts(time.Now()))
 		if err != nil {
 			return err
 		}

@@ -102,7 +102,9 @@ func loginAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		var opts []sshutil.AgentOption
+		opts := []sshutil.AgentOption{
+			sshutil.WithRemoveExpiredCerts(time.Now()),
+		}
 		if roots, err := client.SSHRoots(); err == nil && len(roots.UserKeys) > 0 {
 			userKeys := make([]ssh.PublicKey, len(roots.UserKeys))
 			for i, uk := range roots.UserKeys {
