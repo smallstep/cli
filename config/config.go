@@ -63,7 +63,7 @@ func StepAbs(path string) string {
 	switch {
 	case strings.HasPrefix(slashed, "~/"):
 		return filepath.Join(homePath, path[2:])
-	case strings.HasPrefix(slashed, "./"):
+	case strings.HasPrefix(slashed, "./"), strings.HasPrefix(slashed, "../"):
 		if abs, err := filepath.Abs(path); err == nil {
 			return abs
 		}
