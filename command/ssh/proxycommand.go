@@ -43,10 +43,12 @@ type bastion struct {
 
 func proxycommandCommand() cli.Command {
 	return cli.Command{
-		Name:      "proxycommand",
-		Action:    command.ActionFunc(proxycommandAction),
-		Usage:     "proxy ssh connections according to the host registry",
-		UsageText: `**step ssh proxycommand** <user> <host> <port>`,
+		Name:   "proxycommand",
+		Action: command.ActionFunc(proxycommandAction),
+		Usage:  "proxy ssh connections according to the host registry",
+		UsageText: `**step ssh proxycommand** <user> <host> <port>
+		[**--provisioner**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+		[**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh proxycommand** looks into the host registry
 and proxies the ssh connection according to its configuration. This command
 is used in the ssh client config with <ProxyCommand> keyword.

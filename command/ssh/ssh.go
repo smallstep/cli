@@ -29,12 +29,52 @@ func init() {
 
 Generate a new SSH key pair and user certificate:
 '''
-$ step ssh certificate mariano@work id_ecdsa
+$ step ssh certificate joe@work id_ecdsa
 '''
 
 Generate a new SSH key pair and host certificate:
 '''
 $ step ssh certificate --host internal.example.com ssh_host_ecdsa_key
+'''
+
+Add a new user certificate to the agent:
+'''
+$ step ssh login joe@example.com
+'''
+
+Remove a certificate from the agent:
+'''
+$ step ssh logout joe@example.com
+'''
+
+List all keys in the agent:
+'''
+$ step ssh list
+'''
+
+Configure a user environment with the SSH templates:
+'''
+$ step ssh config
+'''
+
+Inspect an ssh certificate file:
+'''
+$ step ssh inspect id_ecdsa-cert.pub
+'''
+
+Inspect an ssh certificate in the agent:
+'''
+$ step ssh list --raw joe@example.com | step ssh inspect
+'''
+
+List all the hosts you have access to:
+'''
+$ step ssh hosts
+'''
+
+Login into one host:
+'''
+$ ssh internal.example.com
 '''`,
 		Subcommands: cli.Commands{
 			certificateCommand(),

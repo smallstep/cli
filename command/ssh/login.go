@@ -21,10 +21,14 @@ import (
 
 func loginCommand() cli.Command {
 	return cli.Command{
-		Name:      "login",
-		Action:    command.ActionFunc(loginAction),
-		Usage:     "adds a SSH certificate into the authentication agent",
-		UsageText: `**step ssh login** <key-id>`,
+		Name:   "login",
+		Action: command.ActionFunc(loginAction),
+		Usage:  "adds a SSH certificate into the authentication agent",
+		UsageText: `**step ssh login** <key-id>
+		[**--token**=<token>] [**--provisioner**=<name>] [**--provisioner-password-file**=<file>]
+		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+		[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
+		[**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh login** generates a new SSH key pair and send a request to [step
 certificates](https://github.com/smallstep/certificates) to sign a user
 certificate. This certificate will be automatically added to the SSH agent.

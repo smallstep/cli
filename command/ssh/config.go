@@ -25,11 +25,19 @@ import (
 
 func configCommand() cli.Command {
 	return cli.Command{
-		Name:      "config",
-		Action:    command.ActionFunc(configAction),
-		Usage:     "configures ssh to be used with certificates",
-		UsageText: `**step ssh config**`,
-		Description: `**step ssh config** configures SSH to be used with certificates.
+		Name:   "config",
+		Action: command.ActionFunc(configAction),
+		Usage:  "configures ssh to be used with certificates",
+		UsageText: `**step ssh config**
+		[**--team=name] [**--host**] [**--set=<key=value>**]
+		[**--dry-run**] [**--roots**] [**--federation**]
+		[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
+		[**--offline**] [**--ca-config**=<path>]`,
+		Description: `**step ssh config** configures SSH to be used with certificates. It also supports
+flags to inspect the root certificates used to sign the certificates.
+
+This command uses the templates defined in step-certificates to set up user and
+hosts environments.
 
 ## EXAMPLES
 
@@ -60,7 +68,7 @@ $ step ssh config --set User=joe --set Bastion=bastion.example.com
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "team",
-				Usage: "The team name used to bootstrap the environment.",
+				Usage: "The team <name> used to bootstrap the environment.",
 			},
 			cli.BoolFlag{
 				Name:  "host",

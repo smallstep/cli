@@ -17,12 +17,11 @@ func logoutCommand() cli.Command {
 	return cli.Command{
 		Name:   "logout",
 		Action: command.ActionFunc(logoutAction),
-		Usage:  "removes a private key from the ssh-agent and revoke",
+		Usage:  "removes a private key from the ssh-agent",
 		UsageText: `**step ssh logout** <subject>
-		[**--all**] [**--revoke**=<file>] [**--ca-url**=<uri>]
-		[**--root**=<file>] [**--offline**] [**--ca-config**=<path>]`,
-		Description: `**step ssh logout** commands removes a key from the ssh-agent and optionally
-revokes the key creating a Key Revocation List file.
+		[**--all**] [**--ca-url**=<uri>] [**--root**=<file>]
+		[**--offline**] [**--ca-config**=<path>]`,
+		Description: `**step ssh logout** commands removes a key from the ssh-agent.
 
 By default it only removes certificate keys signed by step-certificates, but the
 flag **--all** can be used to remove all keys with a given subject or all keys.
@@ -52,20 +51,11 @@ $ SSH_AUTH_SOCK=/tmp/ssh/agent step ssh logout mariano@work
 Remove all the keys stored in the SSH agent:
 '''
 $ step ssh logout --all
-'''
-
-Remove and revoke the key mariano@work:
-'''
-$ step ssh logout --revoke /etc/ssh/revoked_keys mariano@work
 '''`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "all",
 				Usage: "Removes all the keys stored in the SSH agent.",
-			},
-			cli.StringFlag{
-				Name:  "revoke",
-				Usage: "Removes the key and updates a Key Revocation List <file> or KRL.",
 			},
 			flags.CaURL,
 			flags.Root,
@@ -81,14 +71,9 @@ func logoutAction(ctx *cli.Context) error {
 	}
 
 	subject := ctx.Args().First()
-	// Flags
-	all := ctx.Bool("all")
-	revoke := ctx.String("revoke")
 
-	switch {
-	case revoke != "":
-		return errs.UnsupportedFlag(ctx, "revoke")
-	case ctx.NArg() == 0 && !all:
+	all := ctx.Bool("all")
+	if ctx.NArg() == 0 && !all {
 		return errs.TooFewArguments(ctx)
 	}
 
