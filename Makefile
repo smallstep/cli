@@ -46,6 +46,9 @@ binary-linux:
 binary-darwin:
 	$(call BUNDLE_MAKE,darwin,amd64,$(BINARY_OUTPUT)darwin/)
 
+binary-windows:
+	$(call BUNDLE_MAKE,windows,amd64,$(BINARY_OUTPUT)windows/)
+
 define BUNDLE
 	$(q)set -e; BUNDLE_DIR=$(BINARY_OUTPUT)$(1)/bundle; \
 	stepName=step_$(2); \
@@ -54,7 +57,7 @@ define BUNDLE
 	trap "rm -rf $$TMP" EXIT INT QUIT TERM; \
 	newdir=$$TMP/$$stepName; \
 	mkdir -p $$newdir/bin; \
-	cp $(BINARY_OUTPUT)$(1)/bin/step $$newdir/bin/; \
+	cp $(BINARY_OUTPUT)$(1)/bin/step $$newdir/bin/$(4); \
 	cp README.md $$newdir/; \
 	NEW_BUNDLE=$(RELEASE)/step_$(2)_$(1)_$(3).tar.gz; \
 	rm -f $$NEW_BUNDLE; \
@@ -62,12 +65,15 @@ define BUNDLE
 endef
 
 bundle-linux: binary-linux
-	$(call BUNDLE,linux,$(VERSION),amd64)
+	$(call BUNDLE,linux,$(VERSION),amd64,step)
 
 bundle-darwin: binary-darwin
-	$(call BUNDLE,darwin,$(VERSION),amd64)
+	$(call BUNDLE,darwin,$(VERSION),amd64,step)
 
-.PHONY: binary-linux binary-darwin bundle-linux bundle-darwin
+bundle-windows: binary-windows
+	$(call BUNDLE,windows,$(VERSION),amd64,step.exe)
+
+.PHONY: binary-linux binary-darwin binary-windows bundle-linux bundle-darwin bundle-windows
 
 #################################################
 # Targets for creating OS specific artifacts and archives
@@ -77,13 +83,15 @@ artifacts-linux-tag: bundle-linux debian
 
 artifacts-darwin-tag: bundle-darwin
 
+artifacts-windows-tag: bundle-windows
+
 artifacts-archive-tag:
 	$Q mkdir -p $(RELEASE)
 	$Q git archive v$(VERSION) | gzip > $(RELEASE)/step-cli_$(VERSION).tar.gz
 
-artifacts-tag: artifacts-linux-tag artifacts-darwin-tag artifacts-archive-tag
+artifacts-tag: artifacts-linux-tag artifacts-darwin-tag artifacts-windows-tag artifacts-archive-tag
 
-.PHONY: artifacts-linux-tag artifacts-darwin-tag artifacts-archive-tag artifacts-tag
+.PHONY: artifacts-linux-tag artifacts-darwin-tag artifacts-windows-tag artifacts-archive-tag artifacts-tag
 
 #################################################
 # Targets for creating step artifacts
