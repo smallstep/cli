@@ -15,16 +15,16 @@ import (
 
 func hostsCommand() cli.Command {
 	return cli.Command{
-		Name:      "hosts",
-		Action:    command.ActionFunc(hostsAction),
-		Usage:     "returns a list of all valid hosts",
-		UsageText: `**step ssh hosts**`,
+		Name:   "hosts",
+		Action: command.ActionFunc(hostsAction),
+		Usage:  "returns a list of all valid hosts",
+		UsageText: `**step ssh hosts**
+		[**--ca-url**=<uri>] [**--root**=<file>]
+		[**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh hosts** returns a list of valid hosts for SSH.
 
 This command returns a zero exit status then the server exists, it will return 1
 otherwise.
-
-## POSITIONAL ARGUMENTS
 
 ## EXAMPLES
 

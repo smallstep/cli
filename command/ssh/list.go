@@ -15,7 +15,7 @@ func listCommand() cli.Command {
 		Name:      "list",
 		Action:    command.ActionFunc(listAction),
 		Usage:     "list public keys known to the ssh agent",
-		UsageText: `**step ssh list** [<subject>]`,
+		UsageText: `**step ssh list** [<subject>] [**--raw**]`,
 		Description: `**step ssh list** list public key identities known to the ssh agent.
 
 By default it prints key fingerprints, to list the raw key use the flag **--raw**.
