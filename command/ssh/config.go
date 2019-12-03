@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"os/user"
 	"runtime"
 	"strings"
 
@@ -196,34 +195,29 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	if !isHost {
 		// Try to get the user from a certificate
 		if _, ok := data["User"]; !ok {
-			if agent, err := sshutil.DialAgent(); err == nil {
-				var opts []sshutil.AgentOption
-				if roots, err := client.SSHRoots(); err == nil && len(roots.UserKeys) > 0 {
-					userKeys := make([]ssh.PublicKey, len(roots.UserKeys))
-					for i, uk := range roots.UserKeys {
-						userKeys[i] = uk.PublicKey
-					}
-					opts = append(opts, sshutil.WithSignatureKey(userKeys))
+			agent, err := sshutil.DialAgent()
+			if err != nil {
+				return err
+			}
+
+			var opts []sshutil.AgentOption
+			if roots, err := client.SSHRoots(); err == nil && len(roots.UserKeys) > 0 {
+				userKeys := make([]ssh.PublicKey, len(roots.UserKeys))
+				for i, uk := range roots.UserKeys {
+					userKeys[i] = uk.PublicKey
 				}
-				if certs, err := agent.ListCertificates(opts...); err == nil && len(certs) > 0 {
-					if p := certs[0].ValidPrincipals; len(p) > 0 {
-						data["User"] = p[0]
-					}
+				opts = append(opts, sshutil.WithSignatureKey(userKeys))
+			}
+			if certs, err := agent.ListCertificates(opts...); err == nil && len(certs) > 0 {
+				if p := certs[0].ValidPrincipals; len(p) > 0 {
+					data["User"] = p[0]
 				}
 			}
 		}
 
-		// Ask the user for an username
+		// Force a user to have a username
 		if _, ok := data["User"]; !ok {
-			opts := []ui.Option{
-				ui.WithValidateNotEmpty(),
-			}
-			if usr, err := user.Current(); err == nil {
-				opts = append(opts, ui.WithDefaultValue(usr.Username))
-			}
-			if name, err := ui.Prompt("Please type your SSH username", opts...); err == nil {
-				data["User"] = name
-			}
+			return errors.New("ssh certificate not found: please run `step ssh login <identity>`")
 		}
 	}
 
