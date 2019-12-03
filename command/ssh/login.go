@@ -24,7 +24,7 @@ func loginCommand() cli.Command {
 		Name:   "login",
 		Action: command.ActionFunc(loginAction),
 		Usage:  "adds a SSH certificate into the authentication agent",
-		UsageText: `**step ssh login** <key-id>
+		UsageText: `**step ssh login** <identity>
 		[**--token**=<token>] [**--provisioner**=<name>] [**--provisioner-password-file**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 		[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -38,10 +38,10 @@ a certificate rather than trusting many user keys.
 
 ## POSITIONAL ARGUMENTS
 
-<key-id>
+<identity>
 :  The certificate identity. If no principals are passed we will use
-the key-id as a principal, if it has the format abc@def then the principal will
-be abc.
+the identity as a principal, if it has the format abc@def then the
+principal will be abc.
 
 ## EXAMPLES
 
