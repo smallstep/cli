@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/urfave/cli"
-
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/version"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/usage"
+	"github.com/urfave/cli"
 
 	// Enabled commands
 	_ "github.com/smallstep/cli/command/base64"
@@ -42,6 +42,7 @@ var BuildTime = "N/A"
 
 func init() {
 	config.Set("Smallstep CLI", Version, BuildTime)
+	ca.UserAgent = config.Version()
 	rand.Seed(time.Now().UnixNano())
 }
 
