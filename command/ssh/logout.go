@@ -18,7 +18,7 @@ func logoutCommand() cli.Command {
 		Name:   "logout",
 		Action: command.ActionFunc(logoutAction),
 		Usage:  "removes a private key from the ssh-agent",
-		UsageText: `**step ssh logout** <subject>
+		UsageText: `**step ssh logout** <identity>
 		[**--all**] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh logout** commands removes a key from the ssh-agent.
@@ -28,8 +28,8 @@ flag **--all** can be used to remove all keys with a given subject or all keys.
 
 ## POSITIONAL ARGUMENTS
 
-<subject>
-:  The SSH subject or comment in the key.
+<identity>
+:  The certificate identity or comment in the key.
 
 ## EXAMPLES
 
