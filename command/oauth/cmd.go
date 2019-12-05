@@ -48,6 +48,8 @@ const (
 	oobCallbackUrn = "urn:ietf:wg:oauth:2.0:oob"
 	// The URN for token request grant type jwt-bearer
 	jwtBearerUrn = "urn:ietf:params:oauth:grant-type:jwt-bearer"
+
+	successRedirectUri = "https://smallstep.com/app/teams/sso/success"
 )
 
 type token struct {
@@ -675,12 +677,7 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte(`<html><head><title>OAuth Request Successful</title>`))
-	w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
-	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />Look for the token on the command line`))
-	w.Write([]byte(`</p></body></html>`))
+	http.Redirect(w, req, successRedirectUri, 302)
 	o.tokCh <- tok
 }
 
@@ -698,12 +695,7 @@ func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte(`<html><head><title>OAuth Request Successful</title>`))
-		w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
-		w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />Look for the token on the command line`))
-		w.Write([]byte(`</p></body></html>`))
+		http.Redirect(w, req, successRedirectUri, 302)
 
 		expiresIn, _ := strconv.Atoi(q.Get("expires_in"))
 		o.tokCh <- &token{
