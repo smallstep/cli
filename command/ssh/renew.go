@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -23,12 +22,14 @@ func renewCommand() cli.Command {
 		Name:   "renew",
 		Action: command.ActionFunc(renewAction),
 		Usage:  "renew a SSH certificate using the SSH CA",
-		UsageText: `**step ssh renew** <ssh-cert> <ssh-key> <new-ssh-cert>
-[**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<path>]
-[**--password-file**=<path>] [**--offline**] [**--ca-config**=<path>]
-[**--force**]`,
+		UsageText: `**step ssh renew** <ssh-cert> <ssh-key>
+		[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<path>]
+		[**--force**] [**--ca-url**=<uri>] [**--root**=<path>]
+		[**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh renew** command renews an SSH Cerfificate
-using [step certificates](https://github.com/smallstep/certificates).
+using [step certificates](https://github.com/smallstep/certificates). 
+It writes the new certificate to disk - either overwriting <ssh-cert> or
+using a new file when the **--out**=<file> flag is used.
 
 ## POSITIONAL ARGUMENTS
 
@@ -38,23 +39,29 @@ using [step certificates](https://github.com/smallstep/certificates).
 <ssh-key>
 :  The ssh certificate private key.
 
-<new-ssh-cert>
-:  The path where the new SSH Certificate should be written.
-
 ## EXAMPLES
 
-Renew an ssh certificate:
+Renew an ssh certificate overwriting the previous one:
 '''
-$ step ssh renew id_ecdsa-cert.pub id_ecdsa new-id_ecdsa-cer.pub
+$ step ssh renew -f id_ecdsa-cert.pub id_ecdsa
+'''
+
+Renew an ssh certificate with a custom out file:
+'''
+$ step ssh renew -out new-id_ecdsa-cer.pub id_ecdsa-cert.pub id_ecdsa
 '''`,
 		Flags: []cli.Flag{
-			sshProvisionerPasswordFlag,
+			cli.StringFlag{
+				Name:  "out,output-file",
+				Usage: "The new certificate <file> path. Defaults to overwriting the <ssh-cert> positional argument",
+			},
 			flags.Provisioner,
+			sshProvisionerPasswordFlag,
+			flags.Force,
 			flags.CaURL,
 			flags.Root,
 			flags.Offline,
 			flags.CaConfig,
-			flags.Force,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
 		},
@@ -62,14 +69,19 @@ $ step ssh renew id_ecdsa-cert.pub id_ecdsa new-id_ecdsa-cer.pub
 }
 
 func renewAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 3); err != nil {
+	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
 
 	args := ctx.Args()
 	certFile := args.Get(0)
 	keyFile := args.Get(1)
-	newCertFile := args.Get(2)
+
+	// Flags
+	outFile := ctx.String("out")
+	if outFile == "" {
+		outFile = certFile
+	}
 
 	flow, err := cautils.NewCertificateFlow(ctx)
 	if err != nil {
@@ -98,13 +110,7 @@ func renewAction(ctx *cli.Context) error {
 		return err
 	}
 
-	// Prepare retry function
-	retryFunc, err := loginOnUnauthorized(ctx)
-	if err != nil {
-		return err
-	}
-
-	caClient, err := flow.GetClient(ctx, token, ca.WithRetryFunc(retryFunc))
+	caClient, err := flow.GetClient(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -117,10 +123,10 @@ func renewAction(ctx *cli.Context) error {
 	}
 
 	// Write certificate
-	if err := utils.WriteFile(newCertFile, marshalPublicKey(resp.Certificate, cert.KeyId), 0644); err != nil {
+	if err := utils.WriteFile(outFile, marshalPublicKey(resp.Certificate, cert.KeyId), 0644); err != nil {
 		return err
 	}
-	ui.PrintSelected("Certificate", newCertFile)
+	ui.PrintSelected("Certificate", outFile)
 
 	return nil
 }
