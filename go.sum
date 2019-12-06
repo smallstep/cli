@@ -121,10 +121,6 @@ github.com/smallstep/certificates v0.14.0-rc.1.0.20191023014154-4669bef8c700/go.
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191025192352-8ef9b020ed24/go.mod h1:043iBnsMvNhQ+QFwSh0N6JR3H2yamHPPAc78vCf+8Tc=
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191126035953-e88034bea402 h1:hd6ddwLXMeqgS+ilPxPut1O9q8LqTYa+qbt++Q9wgjY=
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191126035953-e88034bea402/go.mod h1:r2UTcAZNriKlwvNNXymNAcF3iKL6mTYOYrOCtBYYGJU=
-github.com/smallstep/certificates v0.14.0-rc.1.0.20191128013006-b25cbbe6caa1 h1:4z2NJUd8NPZ7M8WFs/F1EvHqGeDyG4MLeVdhZM+2+ys=
-github.com/smallstep/certificates v0.14.0-rc.1.0.20191128013006-b25cbbe6caa1/go.mod h1:8leACUXHFo0JVm9YcrcX09aar2H8hz1BAWxD1D/GpsU=
-github.com/smallstep/certificates v0.14.0-rc.1.0.20191203173957-55237d635cfa h1:NN2OExJ/B+ZImuj7QFw27RBb8yrdR6HY2m8ZWUUr2DY=
-github.com/smallstep/certificates v0.14.0-rc.1.0.20191203173957-55237d635cfa/go.mod h1:8leACUXHFo0JVm9YcrcX09aar2H8hz1BAWxD1D/GpsU=
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191204200446-83129fd59f43 h1:8W0tt4G89LLxYDIMa6ugKsnA6NB/GTJuKSQvZnSdkUo=
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191204200446-83129fd59f43/go.mod h1:8leACUXHFo0JVm9YcrcX09aar2H8hz1BAWxD1D/GpsU=
 github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339 h1:5T/ToU20n2NinSGxSsq72Wx55ETzXU3WbrYVs96oiiw=
