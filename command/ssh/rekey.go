@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -26,14 +25,13 @@ func rekeyCommand() cli.Command {
 		Action: command.ActionFunc(rekeyAction),
 		Usage:  "rekey a SSH certificate using the SSH CA",
 		UsageText: `**step ssh rekey** <ssh-cert> <ssh-key>
-[**--new-cert**=<path>] [**--new-key**=<path>]
-[**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<path>]
-[**--password-file**=<path>] [**--offline**] [**--ca-config**=<path>]
-[**--force**]`,
-		Description: `**step ssh rerekey** command generates a new SSH Certificate
-and key using an existing SSH Cerfificate and key pair to authenticate and
-templatize the request.
-This command uses [step certificates](https://github.com/smallstep/certificates).
+[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<path>]
+[**--force**] [**--ca-url**=<uri>] [**--root**=<path>]
+[**--offline**] [**--ca-config**=<path>]`,
+		Description: `**step ssh rerekey** command generates a new SSH Certificate and key using
+an existing SSH Cerfificate and key pair to authenticate and templatize the
+request. It writes the new certificate to disk - either overwriting
+<ssh-cert> or using new files when the **--out**=<file> flag is used.
 
 ## POSITIONAL ARGUMENTS
 
@@ -50,28 +48,24 @@ Rekey an ssh certificate:
 $ step ssh rekey id_ecdsa-cert.pub id_ecdsa
 '''
 
-Rekey an ssh certificate but don't overwrite the existing certificate and key:
+Rekey an ssh certificate creating id2_ecdsa, id2_ecdsa.pub, and id2_ecdsa-cert.pub:
 '''
-$ step ssh rekey id_ecdsa-cert.pub id_ecdsa --new-cert id2_ecdsa-cert.pub --new-key id2_ecdsa
+$ step ssh rekey --out id2_ecdsa id_ecdsa-cert.pub id_ecdsa
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:  "new-cert",
-				Usage: `The <path> to the cert that should be rekey-ed.`,
+				Name:  "out",
+				Usage: `The new key <file> path. Defaults to overwriting the <ssh-cert> positional argument.`,
 			},
-			cli.StringFlag{
-				Name:  "new-key",
-				Usage: `The <path> to the key corresponding to the cert that should be rekey-ed.`,
-			},
-			sshProvisionerPasswordFlag,
 			flags.Provisioner,
+			sshProvisionerPasswordFlag,
 			flags.NoPassword,
 			flags.Insecure,
+			flags.Force,
 			flags.CaURL,
 			flags.Root,
 			flags.Offline,
 			flags.CaConfig,
-			flags.Force,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
 		},
@@ -87,18 +81,22 @@ func rekeyAction(ctx *cli.Context) error {
 	certFile := args.Get(0)
 	keyFile := args.Get(1)
 
-	newCertFile := ctx.String("new-cert")
-	newKeyFile := ctx.String("new-key")
+	// SSH uses fixed suffixes for public keys and certificates
+	var newPubFile, newCertFile, newKeyFile string
+	if out := ctx.String("out"); out != "" {
+		newPubFile = out + ".pub"
+		newCertFile = out + "-cert.pub"
+		newKeyFile = out
+	} else {
+		newPubFile = keyFile + ".pub"
+		newCertFile = certFile
+		newKeyFile = keyFile
+	}
+
+	// Extra flags
 	passwordFile := ctx.String("password-file")
 	noPassword := ctx.Bool("no-password")
 	insecure := ctx.Bool("insecure")
-	if len(newCertFile) == 0 {
-		newCertFile = certFile
-	}
-	if len(newKeyFile) == 0 {
-		newKeyFile = keyFile
-	}
-	pubFile := newKeyFile + ".pub"
 
 	flow, err := cautils.NewCertificateFlow(ctx)
 	if err != nil {
@@ -127,13 +125,7 @@ func rekeyAction(ctx *cli.Context) error {
 		return err
 	}
 
-	// Prepare retry function
-	retryFunc, err := loginOnUnauthorized(ctx)
-	if err != nil {
-		return err
-	}
-
-	caClient, err := flow.GetClient(ctx, token, ca.WithRetryFunc(retryFunc))
+	caClient, err := flow.GetClient(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -173,7 +165,8 @@ func rekeyAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if err := utils.WriteFile(pubFile, marshalPublicKey(sshPub, cert.KeyId), 0644); err != nil {
+	// Write public key
+	if err := utils.WriteFile(newPubFile, marshalPublicKey(sshPub, cert.KeyId), 0644); err != nil {
 		return err
 	}
 
@@ -181,8 +174,9 @@ func rekeyAction(ctx *cli.Context) error {
 	if err := utils.WriteFile(newCertFile, marshalPublicKey(resp.Certificate, cert.KeyId), 0644); err != nil {
 		return err
 	}
+
 	ui.PrintSelected("Private Key", newKeyFile)
-	ui.PrintSelected("Public Key", pubFile)
+	ui.PrintSelected("Public Key", newPubFile)
 	ui.PrintSelected("Certificate", newCertFile)
 
 	return nil
