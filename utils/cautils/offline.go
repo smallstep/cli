@@ -408,8 +408,8 @@ func (c *OfflineCA) SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse
 
 // SSHCheckHost is a wrapper on top of the CheckSSHHost method. It returns an
 // api.SSHCheckPrincipalResponse.
-func (c *OfflineCA) SSHCheckHost(principal string) (*api.SSHCheckPrincipalResponse, error) {
-	exists, err := c.authority.CheckSSHHost(principal)
+func (c *OfflineCA) SSHCheckHost(principal string, tok string) (*api.SSHCheckPrincipalResponse, error) {
+	exists, err := c.authority.CheckSSHHost(context.Background(), principal, tok)
 	if err != nil {
 		return nil, err
 	}
