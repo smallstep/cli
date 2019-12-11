@@ -5,17 +5,15 @@ go 1.13
 require (
 	github.com/Microsoft/go-winio v0.4.14
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
-	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
-	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
 	github.com/manifoldco/promptui v0.3.1
 	github.com/pkg/errors v0.8.1
 	github.com/pquerna/otp v1.0.0
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v0.0.0-20170918181015-86672fcb3f95
 	github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5
-	github.com/smallstep/certificates v0.14.0-rc.1.0.20191210005525-50152391a397
+	github.com/smallstep/certificates v0.14.0-rc.1.0.20191211225650-623be4ef09c8
 	github.com/smallstep/certinfo v0.0.0-20191029235839-00563809d483
 	github.com/smallstep/truststore v0.9.3
 	github.com/smallstep/zcrypto v0.0.0-20191122194514-76530dff70e7
@@ -26,7 +24,6 @@ require (
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/sys v0.0.0-20191008105621-543471e840be
 	gopkg.in/square/go-jose.v2 v2.4.0
-	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 )
 
 //replace github.com/smallstep/certificates => ../certificates
