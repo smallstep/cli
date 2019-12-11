@@ -91,7 +91,7 @@ Install `step` via [Homebrew](https://brew.sh/):
 
 Download and install the latest Debian package from [releases](https://github.com/smallstep/cli/releases):
 
-<pre><code><b>$ wget https://github.com/smallstep/cli/releases/download/vX.Y.Z/step_X.Y.Z_amd64.deb</b>
+<pre><code><b>$ wget https://github.com/smallstep/cli/releases/download/vX.Y.Z/step-cli_X.Y.Z_amd64.deb</b>
 
 # Install the Debian package:
 <b>$ sudo dpkg -i step_X.Y.Z_amd64.deb</b></code></pre>
