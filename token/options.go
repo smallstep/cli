@@ -170,6 +170,23 @@ func WithX5CFile(certFile string, key interface{}) Options {
 	}
 }
 
+// WithX5CInsecureFile returns a Options that sets the header x5cAllowInvalid claims.
+// The `x5c` claims can only be accessed by running a method on the jose Token
+// which validates the certificate chain before returning it. This option serves
+// a use case where the user would prefer not to validate the certificate chain
+// before returning it. Presumably the user would then perform their own validation.
+// NOTE: here be dragons. Use WithX5CFile unless you know what you are doing.
+func WithX5CInsecureFile(certFile string, key interface{}) Options {
+	return func(c *Claims) error {
+		certStrs, err := jose.ValidateX5C(certFile, key)
+		if err != nil {
+			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
+		}
+		c.SetHeader(jose.X5cInsecureKey, certStrs)
+		return nil
+	}
+}
+
 // WithSSHPOPFile returns a Options that sets the header sshpop claims.
 func WithSSHPOPFile(certFile string, key interface{}) Options {
 	return func(c *Claims) error {

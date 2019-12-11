@@ -3,11 +3,15 @@ package ssh
 import (
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
@@ -50,18 +54,41 @@ func checkHostAction(ctx *cli.Context) error {
 		return err
 	}
 
-	// Prepare retry function
-	retryFunc, err := loginOnUnauthorized(ctx)
+	client, err := cautils.NewClient(ctx)
 	if err != nil {
 		return err
 	}
-
-	client, err := cautils.NewClient(ctx, ca.WithRetryFunc(retryFunc))
+	version, err := client.Version()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error retrieving client version info")
 	}
 
-	resp, err := client.SSHCheckHost(ctx.Args().First())
+	var (
+		tok      string
+		hostname = ctx.Args().First()
+	)
+	if version.RequireClientAuthentication {
+		id, err := ca.LoadDefaultIdentity()
+		if err != nil {
+			return errors.Wrap(err, "error loading the deault x5c identity\n\nPlease run 'step ssh login <identity>'")
+		}
+
+		if id != nil {
+			// Get private key from given key file
+			jwk, err := jose.ParseKey(id.Key)
+			if err != nil {
+				return err
+			}
+			tokenGen := cautils.NewTokenGenerator(jwk.KeyID, "x5c-identity",
+				"/ssh/check-host", "", time.Time{}, time.Time{}, jwk)
+			tok, err = tokenGen.Token(hostname, token.WithX5CInsecureFile(id.Certificate, jwk.Key))
+			if err != nil {
+				return errors.Wrap(err, "error generating identity x5c token for /ssh/check-host request")
+			}
+		}
+	}
+
+	resp, err := client.SSHCheckHost(hostname, tok)
 	if err != nil {
 		return err
 	}

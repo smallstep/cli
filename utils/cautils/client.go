@@ -24,7 +24,7 @@ type CaClient interface {
 	SSHRoots() (*api.SSHRootsResponse, error)
 	SSHFederation() (*api.SSHRootsResponse, error)
 	SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse, error)
-	SSHCheckHost(principal string) (*api.SSHCheckPrincipalResponse, error)
+	SSHCheckHost(principal string, token string) (*api.SSHCheckPrincipalResponse, error)
 	SSHGetHosts() (*api.SSHGetHostsResponse, error)
 	SSHBastion(req *api.SSHBastionRequest) (*api.SSHBastionResponse, error)
 	Version() (*api.VersionResponse, error)
