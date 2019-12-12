@@ -250,7 +250,7 @@ func certificateAction(ctx *cli.Context) error {
 	var identityCSR api.CertificateRequest
 	var identityKey crypto.PrivateKey
 	if version.RequireClientAuthentication {
-		csr, key, err := ca.NewIdentityRequest(subject)
+		csr, key, err := ca.CreateIdentityRequest(subject)
 		if err != nil {
 			return err
 		}
