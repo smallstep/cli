@@ -206,7 +206,7 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 		}
 
 		// Generate identity CSR (x509)
-		identityCSR, identityKey, err := ca.NewIdentityRequest(jwt.Payload.Email)
+		identityCSR, identityKey, err := ca.CreateIdentityRequest(jwt.Payload.Email)
 		if err != nil {
 			return fail(err)
 		}
