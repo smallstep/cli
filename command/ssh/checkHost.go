@@ -70,7 +70,7 @@ func checkHostAction(ctx *cli.Context) error {
 	if version.RequireClientAuthentication {
 		id, err := ca.LoadDefaultIdentity()
 		if err != nil {
-			return errors.Wrap(err, "error loading the deault x5c identity\n\nPlease run 'step ssh login <identity>'")
+			return errors.Wrap(err, "error loading the default x5c identity\n\nPlease run 'step ssh login <identity>'")
 		}
 
 		if id != nil {
