@@ -302,3 +302,8 @@ func FileError(err error, filename string) error {
 		return Wrap(err, "unexpected error on %s", filename)
 	}
 }
+
+// FriendlyError is an interface for returning friendly error messages to the user.
+type FriendlyError interface {
+	Message() string
+}
