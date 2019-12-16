@@ -7,6 +7,7 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/certificates/errs"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/sshutil"
@@ -243,4 +244,27 @@ func tokenHasEmail(s string) (string, bool) {
 		return "", false
 	}
 	return jwt.Payload.Email, jwt.Payload.Email != ""
+}
+
+func sshConfigErr(err error) error {
+	return &errs.Error{
+		Err: err,
+		Msg: "There is a problem with your step configuration. Please run 'step ssh config'." +
+			"Re-run with STEPDEBUG=1 for more information.",
+	}
+}
+
+func contactAdminErr(err error) error {
+	return &errs.Error{
+		Err: err,
+		Msg: "There is a problem with your step configuration. Please contact an administrator.\n" +
+			"Re-run with STEPDEBUG=1 for more information.",
+	}
+}
+
+func debugErr(err error) error {
+	return &errs.Error{
+		Err: err,
+		Msg: "An error occurred in the step process. Re-run with STEPDEBUG=1 for more information.",
+	}
 }
