@@ -131,6 +131,8 @@ github.com/smallstep/certificates v0.14.0-rc.1.0.20191212211617-7ecb831e07d0 h1:
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191212211617-7ecb831e07d0/go.mod h1:4ticnxHkzRiYmEbsNMxK5WsIkM8eC+V8ndPicBGBfS4=
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191213215656-d2100821138c h1:ptyTe7dkeLdMJ3vGmZRdf0PFPCjSvhHCNeYLWqqVM+A=
 github.com/smallstep/certificates v0.14.0-rc.1.0.20191213215656-d2100821138c/go.mod h1:HMXt9hWBm7M7ZrUy0uZ/T/077te2x9bnXZCxrdVsBf4=
+github.com/smallstep/certificates v0.14.0-rc.1.0.20191217223348-bd6eca6342b2 h1:RvwvdyhjdMUkAbpbniHB96pLdMhDiJPmjspMvN14dUY=
+github.com/smallstep/certificates v0.14.0-rc.1.0.20191217223348-bd6eca6342b2/go.mod h1:yu8G4HTsCuQycxHon2x8LTNw6hOQFq4QhdmpikD6vmI=
 github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339 h1:5T/ToU20n2NinSGxSsq72Wx55ETzXU3WbrYVs96oiiw=
 github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339 h1:5T/ToU20n2NinSGxSsq72Wx55ETzXU3WbrYVs96oiiw=
 github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339/go.mod h1:n4YHPL9hJIyB+N4F2rPBy3mpPxMxTGJP5Pdsyaoc2Ns=
