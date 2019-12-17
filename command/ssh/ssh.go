@@ -249,16 +249,14 @@ func tokenHasEmail(s string) (string, bool) {
 func sshConfigErr(err error) error {
 	return &errs.Error{
 		Err: err,
-		Msg: "There is a problem with your step configuration. Please run 'step ssh config'." +
-			"Re-run with STEPDEBUG=1 for more information.",
+		Msg: "There is a problem with your step configuration. Please run 'step ssh config'.",
 	}
 }
 
 func contactAdminErr(err error) error {
 	return &errs.Error{
 		Err: err,
-		Msg: "There is a problem with your step configuration. Please contact an administrator.\n" +
-			"Re-run with STEPDEBUG=1 for more information.",
+		Msg: "There is a problem with your step configuration. Please contact an administrator.",
 	}
 }
 
