@@ -2,11 +2,13 @@ package ssh
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
+	caErrs "github.com/smallstep/certificates/errs"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -56,11 +58,11 @@ func checkHostAction(ctx *cli.Context) error {
 
 	client, err := cautils.NewClient(ctx)
 	if err != nil {
-		return err
+		return contactAdminErr(errors.Wrap(err, "error generating ca client"))
 	}
 	version, err := client.Version()
 	if err != nil {
-		return errors.Wrap(err, "error retrieving client version info")
+		return contactAdminErr(errors.Wrap(err, "error retrieving client version info"))
 	}
 
 	var (
@@ -70,27 +72,28 @@ func checkHostAction(ctx *cli.Context) error {
 	if version.RequireClientAuthentication {
 		id, err := ca.LoadDefaultIdentity()
 		if err != nil {
-			return errors.Wrap(err, "error loading the default x5c identity\n\nPlease run 'step ssh login <identity>'")
+			return sshConfigErr(errors.Wrap(err, "error loading the default x5c identity"))
 		}
 
 		if id != nil {
-			// Get private key from given key file
+			// Get private key from given key file.
 			jwk, err := jose.ParseKey(id.Key)
 			if err != nil {
-				return err
+				return debugErr(errors.Wrap(err, "error parsing x5c key from identity file"))
 			}
 			tokenGen := cautils.NewTokenGenerator(jwk.KeyID, "x5c-identity",
 				"/ssh/check-host", "", time.Time{}, time.Time{}, jwk)
 			tok, err = tokenGen.Token(hostname, token.WithX5CInsecureFile(id.Certificate, jwk.Key))
 			if err != nil {
-				return errors.Wrap(err, "error generating identity x5c token for /ssh/check-host request")
+				return sshConfigErr(errors.Wrap(err, "error generating identity x5c token for /ssh/check-host request"))
 			}
 		}
 	}
 
 	resp, err := client.SSHCheckHost(hostname, tok)
 	if err != nil {
-		return err
+		return caErrs.Wrap(http.StatusInternalServerError, err,
+			"error checking ssh host eligibility")
 	}
 
 	fmt.Println(resp.Exists)
