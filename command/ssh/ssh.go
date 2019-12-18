@@ -263,6 +263,6 @@ func contactAdminErr(err error) error {
 func debugErr(err error) error {
 	return &errs.Error{
 		Err: err,
-		Msg: "An error occurred in the step process. Re-run with STEPDEBUG=1 for more information.",
+		Msg: "An error occurred in the step process. Please contact an administrator.",
 	}
 }
