@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/ca/identity"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -173,6 +174,13 @@ func rekeyAction(ctx *cli.Context) error {
 	// Write certificate
 	if err := utils.WriteFile(newCertFile, marshalPublicKey(resp.Certificate, cert.KeyId), 0644); err != nil {
 		return err
+	}
+
+	// Write renewed identity
+	if len(resp.IdentityCertificate) > 0 {
+		if err := identity.WriteIdentityCertificate(resp.IdentityCertificate); err != nil {
+			return err
+		}
 	}
 
 	ui.PrintSelected("Private Key", newKeyFile)

@@ -57,6 +57,12 @@ func NewOfflineCA(configFile string) (*OfflineCA, error) {
 	}, nil
 }
 
+// GetRootCAs return the cert pool for the ca, as it's an offline ca, a pool is
+// not required and it always returns nil.
+func (c *OfflineCA) GetRootCAs() *x509.CertPool {
+	return nil
+}
+
 // VerifyClientCert verifies and validates the client cert/key pair
 // using the offline CA root and intermediate certificates.
 func (c *OfflineCA) VerifyClientCert(certFile, keyFile string) error {

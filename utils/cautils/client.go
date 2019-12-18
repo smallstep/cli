@@ -1,6 +1,7 @@
 package cautils
 
 import (
+	"crypto/x509"
 	"net/http"
 	"os"
 
@@ -28,6 +29,7 @@ type CaClient interface {
 	SSHGetHosts() (*api.SSHGetHostsResponse, error)
 	SSHBastion(req *api.SSHBastionRequest) (*api.SSHBastionResponse, error)
 	Version() (*api.VersionResponse, error)
+	GetRootCAs() *x509.CertPool
 }
 
 // NewClient returns a client of an online or offline CA. Requires the flags
