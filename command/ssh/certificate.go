@@ -393,7 +393,7 @@ func certificateAction(ctx *cli.Context) error {
 	ui.PrintSelected("Certificate", crtFile)
 
 	// Attempt to add key to agent if private key defined.
-	if priv != nil {
+	if priv != nil && certType == provisioner.SSHUserCert {
 		if agent, err := sshutil.DialAgent(); err != nil {
 			ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 		} else {

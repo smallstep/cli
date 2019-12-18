@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"strconv"
 
+	"github.com/smallstep/certificates/ca/identity"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
@@ -126,6 +128,14 @@ func renewAction(ctx *cli.Context) error {
 	if err := utils.WriteFile(outFile, marshalPublicKey(resp.Certificate, cert.KeyId), 0644); err != nil {
 		return err
 	}
+
+	// Write renewed identity
+	if len(resp.IdentityCertificate) > 0 {
+		if err := identity.WriteIdentityCertificate(resp.IdentityCertificate); err != nil {
+			return err
+		}
+	}
+
 	ui.PrintSelected("Certificate", outFile)
 
 	return nil
