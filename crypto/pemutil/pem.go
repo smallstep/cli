@@ -105,7 +105,7 @@ func WithPasswordFile(filename string) Options {
 // WithPasswordPrompt ask the user for a password and adds it to the context.
 func WithPasswordPrompt(prompt string) Options {
 	return func(ctx *context) error {
-		b, err := ui.PromptPassword(prompt)
+		b, err := ui.PromptPassword(prompt, ui.WithValidateNotEmpty())
 		if err != nil {
 			return err
 		}
