@@ -12,7 +12,7 @@ require (
 	github.com/pquerna/otp v1.0.0
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v0.0.0-20170918181015-86672fcb3f95
-	github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5
+	github.com/smallstep/assert v0.0.0-20200103212524-b99dc1097b15
 	github.com/smallstep/certificates v0.14.0-rc.1.0.20191218224459-1fa35491ea07
 	github.com/smallstep/certinfo v0.0.0-20191029235839-00563809d483
 	github.com/smallstep/truststore v0.9.3
