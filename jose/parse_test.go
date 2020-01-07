@@ -3,6 +3,7 @@ package jose
 import (
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
@@ -11,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/smallstep/assert"
-	"golang.org/x/crypto/ed25519"
 )
 
 const (

@@ -1,6 +1,7 @@
 package pemutil
 
 import (
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/x509"
 	"io/ioutil"
@@ -8,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/smallstep/assert"
-	"golang.org/x/crypto/ed25519"
 )
 
 func TestEncryptDecryptPKCS8(t *testing.T) {
