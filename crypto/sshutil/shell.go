@@ -173,7 +173,6 @@ type Shell struct {
 	user        string
 	address     string
 	authMethods []ssh.AuthMethod
-	signer      ssh.Signer
 	client      *ssh.Client
 	dialer      func(callback ssh.HostKeyCallback) (*ssh.Client, error)
 }

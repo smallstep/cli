@@ -2,10 +2,8 @@ package ssh
 
 import (
 	"crypto"
-	"encoding/json"
 	"io"
 	"net"
-	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -27,19 +25,6 @@ import (
 )
 
 const sshDefaultPath = "/usr/bin/ssh"
-
-type registryResponse struct {
-	Hostname string  `json:"hostname"`
-	Bastion  bastion `json:"bastion"`
-}
-
-type bastion struct {
-	User     string `json:"user"`
-	Hostname string `json:"hostname"`
-	Port     string `json:"port"`
-	Command  string `json:"cmd"`
-	Flags    string `json:"flags"`
-}
 
 func proxycommandCommand() cli.Command {
 	return cli.Command{
@@ -229,37 +214,6 @@ func getBastion(ctx *cli.Context, user, host string) (*api.SSHBastionResponse, e
 		User:     user,
 		Hostname: host,
 	})
-}
-
-func getRegistryResponse(rawurl, username, password string) (registryResponse, error) {
-	var Nil registryResponse
-	req, err := http.NewRequest("GET", rawurl, http.NoBody)
-	if err != nil {
-		return Nil, errors.Wrap(err, "error creating request")
-	}
-	req.SetBasicAuth(username, password)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return Nil, errors.Wrap(err, "error doing registry request")
-	}
-	defer resp.Body.Close()
-
-	// Fail or assume no bastion on 404
-	if resp.StatusCode >= 400 {
-		if resp.StatusCode == http.StatusNotFound {
-			return Nil, nil
-		}
-		return Nil, errors.New(http.StatusText(resp.StatusCode))
-	}
-
-	// Read response
-	var registration registryResponse
-	if err := json.NewDecoder(resp.Body).Decode(&registration); err != nil {
-		return Nil, errors.Wrap(err, "error decoding registry response")
-	}
-
-	return registration, nil
 }
 
 func proxyDirect(host, port string) error {

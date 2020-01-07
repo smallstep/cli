@@ -232,10 +232,10 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 				w := new(tabwriter.Writer)
 				w.Init(r.out.w, 0, 8, 4, ' ', tabwriter.StripEscape)
 				for _, item := range r.list.items {
-					fmt.Fprintf(w, strings.TrimRight(string(item.term), " \n"))
-					fmt.Fprintf(w, "\n")
+					fmt.Fprint(w, strings.TrimRight(string(item.term), " \n"))
+					fmt.Fprint(w, "\n")
 					for _, def := range item.definitions {
-						fmt.Fprintf(w, strings.TrimRight(string(def), " \n"))
+						fmt.Fprint(w, strings.TrimRight(string(def), " \n"))
 					}
 					fmt.Fprintf(w, "\n\n")
 				}
