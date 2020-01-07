@@ -1,12 +1,9 @@
 package ssh
 
 import (
-	"crypto/rsa"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
@@ -62,17 +59,4 @@ func fingerprint(ctx *cli.Context) error {
 	}
 	fmt.Println(s)
 	return nil
-}
-
-func getRSASize(b []byte) (int, error) {
-	k, err := pemutil.ParseSSH(b)
-	if err != nil {
-		return 0, err
-	}
-	switch key := k.(type) {
-	case *rsa.PublicKey:
-		return 8 * key.Size(), nil
-	default:
-		return 0, errors.Errorf("unexpected key type %T", key)
-	}
 }

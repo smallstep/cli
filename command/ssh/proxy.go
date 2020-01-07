@@ -14,6 +14,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// nolint:deadcode,unused
 func proxyCommand() cli.Command {
 	return cli.Command{
 		Name:      "proxy",
@@ -47,6 +48,7 @@ TODO`,
 	}
 }
 
+// nolint:unused
 func proxyAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
@@ -138,11 +140,13 @@ func proxyAction(ctx *cli.Context) error {
 	return <-errCh
 }
 
+// nolint:unused
 func isNumber(s string) bool {
 	_, err := strconv.Atoi(s)
 	return err == nil
 }
 
+// nolint:unused
 func makeAddress(host, port string) string {
 	switch host {
 	case "":
@@ -154,6 +158,7 @@ func makeAddress(host, port string) string {
 	}
 }
 
+// nolint:unused
 func parseForward(ctx *cli.Context, flag string) (bindNetwork, bindAddress, hostNetwork, hostAddress string, err error) {
 	value := ctx.String(flag)
 	parts := strings.Split(value, ":")

@@ -49,7 +49,7 @@ const (
 	// The URN for token request grant type jwt-bearer
 	jwtBearerUrn = "urn:ietf:params:oauth:grant-type:jwt-bearer"
 
-	successRedirectUri = "https://smallstep.com/app/teams/sso/success"
+	successRedirectURI = "https://smallstep.com/app/teams/sso/success"
 )
 
 type token struct {
@@ -677,7 +677,7 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	http.Redirect(w, req, successRedirectUri, 302)
+	http.Redirect(w, req, successRedirectURI, 302)
 	o.tokCh <- tok
 }
 
@@ -695,7 +695,7 @@ func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		http.Redirect(w, req, successRedirectUri, 302)
+		http.Redirect(w, req, successRedirectURI, 302)
 
 		expiresIn, _ := strconv.Atoi(q.Get("expires_in"))
 		o.tokCh <- &token{
