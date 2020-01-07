@@ -19,7 +19,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/errs"
-	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"golang.org/x/crypto/ed25519"
@@ -35,7 +34,6 @@ type context struct {
 	perm       os.FileMode
 	password   []byte
 	pkcs8      bool
-	stepCrypto bool
 	firstBlock bool
 }
 
@@ -124,15 +122,6 @@ func WithPKCS8(v bool) Options {
 	}
 }
 
-// WithStepCrypto returns cryptographic primitives of the modified step Crypto
-// library.
-func WithStepCrypto() Options {
-	return func(ctx *context) error {
-		ctx.stepCrypto = true
-		return nil
-	}
-}
-
 // WithFirstBlock will avoid failing if a PEM contains more than one block or
 // certificate and it will only look at the first.
 func WithFirstBlock() Options {
@@ -212,34 +201,6 @@ func ReadCertificateBundle(filename string) ([]*x509.Certificate, error) {
 	return []*x509.Certificate{crt}, nil
 }
 
-// ReadStepCertificate returns a *x509.Certificate from the given filename. It
-// supports certificates formats PEM and DER.
-func ReadStepCertificate(filename string) (*stepx509.Certificate, error) {
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, errs.FileError(err, filename)
-	}
-
-	// PEM format
-	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
-		var crt interface{}
-		crt, err = Read(filename, []Options{WithStepCrypto()}...)
-		if err != nil {
-			return nil, err
-		}
-		switch crt := crt.(type) {
-		case *stepx509.Certificate:
-			return crt, nil
-		default:
-			return nil, errors.Errorf("error decoding PEM: file '%s' does not contain a certificate", filename)
-		}
-	}
-
-	// DER format (binary)
-	crt, err := stepx509.ParseCertificate(b)
-	return crt, errors.Wrapf(err, "error parsing %s", filename)
-}
-
 // Parse returns the key or certificate PEM-encoded in the given bytes.
 func Parse(b []byte, opts ...Options) (interface{}, error) {
 	// Populate options
@@ -290,17 +251,9 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 		priv, err := ParsePKCS8PrivateKey(block.Bytes)
 		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE":
-		if ctx.stepCrypto {
-			crt, err := stepx509.ParseCertificate(block.Bytes)
-			return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
-		}
 		crt, err := x509.ParseCertificate(block.Bytes)
 		return crt, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE REQUEST", "NEW CERTIFICATE REQUEST":
-		if ctx.stepCrypto {
-			csr, err := stepx509.ParseCertificateRequest(block.Bytes)
-			return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
-		}
 		csr, err := x509.ParseCertificateRequest(block.Bytes)
 		return csr, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	default:
@@ -406,17 +359,7 @@ func Serialize(in interface{}, opts ...Options) (*pem.Block, error) {
 			Type:  "CERTIFICATE",
 			Bytes: k.Raw,
 		}
-	case *stepx509.Certificate:
-		p = &pem.Block{
-			Type:  "CERTIFICATE",
-			Bytes: k.Raw,
-		}
 	case *x509.CertificateRequest:
-		p = &pem.Block{
-			Type:  "CERTIFICATE REQUEST",
-			Bytes: k.Raw,
-		}
-	case *stepx509.CertificateRequest:
 		p = &pem.Block{
 			Type:  "CERTIFICATE REQUEST",
 			Bytes: k.Raw,

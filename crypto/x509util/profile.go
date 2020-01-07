@@ -16,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
-	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 )
 
@@ -278,7 +277,7 @@ func newProfile(p Profile, sub, iss *x509.Certificate, issPriv crypto.PrivateKey
 	}
 
 	if sub.SubjectKeyId == nil {
-		pubBytes, err := stepx509.MarshalPKIXPublicKey(p.SubjectPublicKey())
+		pubBytes, err := x509.MarshalPKIXPublicKey(p.SubjectPublicKey())
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to marshal public key to bytes")
 		}
@@ -390,14 +389,13 @@ func (b *base) CreateCertificate() ([]byte, error) {
 		return nil, errors.Errorf("Profile does not have issuer private key. Use setters to populate this field.")
 	}
 
-	sub := ToStepX509Certificate(b.Subject())
-	iss := ToStepX509Certificate(b.Issuer())
+	sub := b.Subject()
+	iss := b.Issuer()
 	if len(b.ext) > 0 {
 		sub.ExtraExtensions = append(sub.ExtraExtensions, b.ext...)
 	}
 
-	// Using stepx509 to be able to create certs with ed25519
-	bytes, err := stepx509.CreateCertificate(rand.Reader, sub, iss, b.SubjectPublicKey(), b.issPriv)
+	bytes, err := x509.CreateCertificate(rand.Reader, sub, iss, b.SubjectPublicKey(), b.issPriv)
 	return bytes, errors.WithStack(err)
 }
 

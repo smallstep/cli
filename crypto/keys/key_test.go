@@ -2,6 +2,7 @@ package keys
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -9,8 +10,6 @@ import (
 	"testing"
 
 	"github.com/smallstep/assert"
-	stepx509 "github.com/smallstep/cli/pkg/x509"
-	"golang.org/x/crypto/ed25519"
 )
 
 const (
@@ -97,13 +96,9 @@ func TestExtractKey(t *testing.T) {
 	b, _ := pem.Decode([]byte(testCRT))
 	cert, err := x509.ParseCertificate(b.Bytes)
 	assert.FatalError(t, err)
-	stepCert, err := stepx509.ParseCertificate(b.Bytes)
-	assert.FatalError(t, err)
 
 	b, _ = pem.Decode([]byte(testCSR))
 	csr, err := x509.ParseCertificateRequest(b.Bytes)
-	assert.FatalError(t, err)
-	stepCsr, err := stepx509.ParseCertificateRequest(b.Bytes)
 	assert.FatalError(t, err)
 
 	type args struct {
@@ -124,8 +119,6 @@ func TestExtractKey(t *testing.T) {
 		{"oct key", args{octKey}, octKey, false},
 		{"certificate", args{cert}, cert.PublicKey, false},
 		{"csr", args{csr}, csr.PublicKey, false},
-		{"step certificate", args{stepCert}, stepCert.PublicKey, false},
-		{"step csr", args{stepCsr}, stepCsr.PublicKey, false},
 		{"fail", args{"fooo"}, nil, true},
 	}
 	for _, tt := range tests {

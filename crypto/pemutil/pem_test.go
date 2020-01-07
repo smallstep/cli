@@ -3,6 +3,7 @@ package pemutil
 import (
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -17,8 +18,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
 	"github.com/smallstep/cli/crypto/keys"
-	stepx509 "github.com/smallstep/cli/pkg/x509"
-	"golang.org/x/crypto/ed25519"
 )
 
 type keyType int
@@ -218,33 +217,6 @@ func TestReadCertificateBundle(t *testing.T) {
 	}
 }
 
-func TestReadStepCertificate(t *testing.T) {
-	tests := []struct {
-		fn  string
-		err error
-	}{
-		{"testdata/ca.crt", nil},
-		{"testdata/ca.der", nil},
-		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
-		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
-		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: not a valid PEM encoded block")},
-		{"testdata/badder.crt", errors.New("error parsing testdata/badder.crt: asn1: syntax error: data truncated")},
-		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
-	}
-
-	for _, tc := range tests {
-		crt, err := ReadStepCertificate(tc.fn)
-		if tc.err != nil {
-			if assert.Error(t, err) {
-				assert.HasPrefix(t, err.Error(), tc.err.Error())
-			}
-		} else {
-			assert.NoError(t, err)
-			assert.Type(t, &stepx509.Certificate{}, crt)
-		}
-	}
-}
-
 func TestParsePEM(t *testing.T) {
 	type ParseTest struct {
 		in      []byte
@@ -314,15 +286,6 @@ func TestParsePEM(t *testing.T) {
 				in:      b,
 				opts:    nil,
 				cmpType: &x509.Certificate{},
-			}
-		},
-		"success-stepx509-crt": func(t *testing.T) *ParseTest {
-			b, err := ioutil.ReadFile("testdata/ca.crt")
-			assert.FatalError(t, err)
-			return &ParseTest{
-				in:      b,
-				opts:    []Options{WithStepCrypto()},
-				cmpType: &stepx509.Certificate{},
 			}
 		},
 	}
