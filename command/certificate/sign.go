@@ -75,7 +75,7 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if err = x509util.CheckCertificateRequestSignature(csr); err != nil {
+	if err = csr.CheckSignature(); err != nil {
 		return errors.Wrapf(err, "Certificate Request has invalid signature")
 	}
 

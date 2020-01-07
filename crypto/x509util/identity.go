@@ -26,7 +26,7 @@ func NewIdentity(c *x509.Certificate, k interface{}) *Identity {
 // format) from disk.
 func LoadIdentityFromDisk(crtPath, keyPath string, pemOpts ...pemutil.Options) (*Identity, error) {
 	// Read using stepx509 to parse the PublicKey
-	crt, err := pemutil.ReadStepCertificate(crtPath)
+	crt, err := pemutil.ReadCertificate(crtPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -40,5 +40,5 @@ func LoadIdentityFromDisk(crtPath, keyPath string, pemOpts ...pemutil.Options) (
 		return nil, errors.WithStack(err)
 	}
 
-	return NewIdentity(ToX509Certificate(crt), key), nil
+	return NewIdentity(crt, key), nil
 }

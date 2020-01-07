@@ -2,6 +2,7 @@ package certificate
 
 import (
 	"crypto/rand"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
-	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -294,7 +294,7 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 
-		_csr := &stepx509.CertificateRequest{
+		csr := &x509.CertificateRequest{
 			Subject: pkix.Name{
 				CommonName: subject,
 			},
@@ -302,8 +302,7 @@ func createAction(ctx *cli.Context) error {
 			IPAddresses:    ips,
 			EmailAddresses: emails,
 		}
-		var csrBytes []byte
-		csrBytes, err = stepx509.CreateCertificateRequest(rand.Reader, _csr, priv)
+		csrBytes, err := x509.CreateCertificateRequest(rand.Reader, csr, priv)
 		if err != nil {
 			return errors.WithStack(err)
 		}
