@@ -449,7 +449,12 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	}
 
 	if af.csr == nil {
-		af.priv, err = keys.GenerateDefaultKey()
+		insecure := af.ctx.Bool("insecure")
+		kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, insecure, "kty", "curve", "size")
+		if err != nil {
+			return nil, err
+		}
+		af.priv, err = keys.GenerateKey(kty, crv, size)
 		if err != nil {
 			return nil, errors.Wrap(err, "error generating private key")
 		}
