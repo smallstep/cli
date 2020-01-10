@@ -1,14 +1,13 @@
 linters-settings:
   govet:
     check-shadowing: true
-    # Disabled due to error on go
-    # settings:
-    #   printf:
-    #     funcs:
-    #       - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
-    #       - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
-    #       - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
-    #       - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+    settings:
+      printf:
+        funcs:
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
   golint:
     min-confidence: 0
   gocyclo:

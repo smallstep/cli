@@ -15,7 +15,7 @@ OUTPUT_ROOT=output/
 #########################################
 
 bootstra%:
-	$Q GO111MODULE=on go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.22.2
+	$Q curl -sSfL https://raw.githubusercontent.com/smallstep/cli/master/make/golangci-install.sh | sh -s -- -b $(go env GOPATH)/bin v1.22.2
 
 .PHONY: bootstra%
 
