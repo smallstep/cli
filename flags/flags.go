@@ -207,6 +207,11 @@ be stored in the 'sshpop' header.`,
 		Name:  "team",
 		Usage: "The team <name> used to bootstrap the environment.",
 	}
+
+	RedirectURL = cli.StringFlag{
+		Name:  "redirect-url",
+		Usage: "Terminal OAuth redirect <url>.",
+	}
 )
 
 // ParseTimeOrDuration is a helper that returns the time or the current time
