@@ -25,7 +25,7 @@ func bootstrapCommand() cli.Command {
 		Name:      "bootstrap",
 		Action:    command.ActionFunc(bootstrapAction),
 		Usage:     "initialize the environment to use the CA commands",
-		UsageText: `**step ca bootstrap** [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**]`,
+		UsageText: `**step ca bootstrap** [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**] [**--redirect-url**=<url>]`,
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
 authority and sets up the current environment to use it.
 
@@ -43,6 +43,7 @@ After the bootstrap, ca commands do not need to specify the flags
 				Name:  "install",
 				Usage: "Install the root certificate into the system truststore.",
 			},
+			flags.RedirectURL,
 			flags.Force,
 		},
 	}
@@ -52,6 +53,7 @@ type bootstrapConfig struct {
 	CA          string `json:"ca-url"`
 	Fingerprint string `json:"fingerprint"`
 	Root        string `json:"root"`
+	Redirect    string `json:"redirect-url"`
 }
 
 func bootstrapAction(ctx *cli.Context) error {
@@ -60,6 +62,7 @@ func bootstrapAction(ctx *cli.Context) error {
 	team := ctx.String("team")
 	rootFile := pki.GetRootCAPath()
 	configFile := filepath.Join(config.StepPath(), "config", "defaults.json")
+	redirectURL := ctx.String("redirect-url")
 
 	switch {
 	case team != "":
@@ -108,6 +111,7 @@ func bootstrapAction(ctx *cli.Context) error {
 		CA:          caURL,
 		Fingerprint: fingerprint,
 		Root:        pki.GetRootCAPath(),
+		Redirect:    redirectURL,
 	}, "", "  ")
 	if err != nil {
 		return errors.Wrap(err, "error marshaling defaults.json")

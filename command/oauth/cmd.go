@@ -24,6 +24,7 @@ import (
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/urfave/cli"
 )
@@ -48,8 +49,6 @@ const (
 	oobCallbackUrn = "urn:ietf:wg:oauth:2.0:oob"
 	// The URN for token request grant type jwt-bearer
 	jwtBearerUrn = "urn:ietf:params:oauth:grant-type:jwt-bearer"
-
-	successRedirectURI = "https://smallstep.com/app/teams/sso/success"
 )
 
 type token struct {
@@ -146,6 +145,7 @@ func init() {
 				Usage:  "Allows the use of insecure flows.",
 				Hidden: true,
 			},
+			flags.RedirectURL,
 		},
 		Action: oauthCmd,
 	}
@@ -160,6 +160,7 @@ func oauthCmd(c *cli.Context) error {
 		Console:          c.Bool("console"),
 		Implicit:         c.Bool("implicit"),
 		CallbackListener: c.String("listen"),
+		TerminalRedirect: c.String("redirect-url"),
 	}
 	if err := opts.Validate(); err != nil {
 		return err
@@ -287,6 +288,7 @@ type options struct {
 	Console          bool
 	Implicit         bool
 	CallbackListener string
+	TerminalRedirect string
 }
 
 // Validate validates the options.
@@ -317,6 +319,7 @@ type oauth struct {
 	nonce            string
 	implicit         bool
 	CallbackListener string
+	terminalRedirect string
 	errCh            chan error
 	tokCh            chan *token
 }
@@ -353,6 +356,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			nonce:            nonce,
 			implicit:         opts.Implicit,
 			CallbackListener: opts.CallbackListener,
+			terminalRedirect: opts.TerminalRedirect,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -388,6 +392,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			nonce:            nonce,
 			implicit:         opts.Implicit,
 			CallbackListener: opts.CallbackListener,
+			terminalRedirect: opts.TerminalRedirect,
 			errCh:            make(chan error),
 			tokCh:            make(chan *token),
 		}, nil
@@ -677,7 +682,11 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	http.Redirect(w, req, successRedirectURI, 302)
+	if o.terminalRedirect != "" {
+		http.Redirect(w, req, o.terminalRedirect, 302)
+	} else {
+		o.success(w)
+	}
 	o.tokCh <- tok
 }
 
@@ -695,7 +704,11 @@ func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		http.Redirect(w, req, successRedirectURI, 302)
+		if o.terminalRedirect != "" {
+			http.Redirect(w, req, o.terminalRedirect, 302)
+		} else {
+			o.success(w)
+		}
 
 		expiresIn, _ := strconv.Atoi(q.Get("expires_in"))
 		o.tokCh <- &token{
@@ -772,6 +785,15 @@ func (o *oauth) Exchange(tokenEndpoint, code string) (*token, error) {
 	}
 
 	return &tok, nil
+}
+
+func (o *oauth) success(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(`<html><head><title>OAuth Request Successful</title>`))
+	w.Write([]byte(`</head><body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))
+	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br />Look for the token on the command line`))
+	w.Write([]byte(`</p></body></html>`))
 }
 
 func (o *oauth) badRequest(w http.ResponseWriter, msg string) {
