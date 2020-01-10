@@ -3,13 +3,13 @@ package x509util
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"testing"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
-	stepx509 "github.com/smallstep/cli/pkg/x509"
 )
 
 func TestCSR_LoadCSRFromBytes(t *testing.T) {
@@ -35,16 +35,16 @@ func TestCSR_LoadCSRFromBytes(t *testing.T) {
 				if err != nil {
 					return nil, err
 				}
-				template := &stepx509.CertificateRequest{
+				template := &x509.CertificateRequest{
 					Subject: pkix.Name{
 						Country:      []string{"Foo"},
 						Organization: []string{"Smallstep"},
 						CommonName:   "Bar",
 					},
-					SignatureAlgorithm: stepx509.SHA256WithRSA,
+					SignatureAlgorithm: x509.SHA256WithRSA,
 				}
 
-				bytes, err := stepx509.CreateCertificateRequest(rand.Reader, template, keypair)
+				bytes, err := x509.CreateCertificateRequest(rand.Reader, template, keypair)
 				if err != nil {
 					return nil, err
 				}

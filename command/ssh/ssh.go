@@ -139,27 +139,6 @@ var (
 		Usage: `When signing an existing public key, use this flag to specify the corresponding
 private key so that the pair can be added to an SSH Agent.`,
 	}
-
-	sshConnectFlag = cli.StringFlag{
-		Name:  "connect,c",
-		Usage: "Remote <host:port> to connect to.",
-	}
-
-	sshBastionFlag = cli.StringFlag{
-		Name:  "via,bastion",
-		Usage: "The <server> to use to proxy an ssh connection.",
-	}
-
-	sshBastionCommandFlag = cli.StringFlag{
-		Name:  "via-command,bastion-command",
-		Usage: "The <command> to proxy the connection through a bastion server. Defaults to `nc -q0 %h %p`.",
-		Value: "nc -q0 %h %p",
-	}
-
-	sshProxyFlag = cli.StringFlag{
-		Name:  "proxy,p",
-		Usage: "The <command> to use to connect to the server.",
-	}
 )
 
 func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {

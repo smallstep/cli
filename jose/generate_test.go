@@ -2,6 +2,7 @@ package jose
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/smallstep/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/ed25519"
 )
 
 func TestGenerateJWK(t *testing.T) {

@@ -319,7 +319,7 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.
 		if err := tok.UnsafeClaimsWithoutVerification(&claims); err != nil {
 			return nil, errors.Wrap(err, "error parsing flag '--token'")
 		}
-		if strings.ToLower(claims.Subject) != strings.ToLower(serial) {
+		if !strings.EqualFold(claims.Subject, serial) {
 			return nil, errors.Errorf("token subject '%s' and serial number '%s' do not match", claims.Subject, serial)
 		}
 

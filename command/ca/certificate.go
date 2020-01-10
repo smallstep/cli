@@ -211,7 +211,7 @@ func certificateAction(ctx *cli.Context) error {
 		if ctx.String("token") != "" && len(sans) > 0 {
 			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
 		}
-		if strings.ToLower(subject) != strings.ToLower(req.CsrPEM.Subject.CommonName) {
+		if !strings.EqualFold(subject, req.CsrPEM.Subject.CommonName) {
 			return errors.Errorf("token subject '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
 	case token.OIDC: // Validate that the subject matches an email SAN

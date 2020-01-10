@@ -174,7 +174,7 @@ func signCertificateAction(ctx *cli.Context) error {
 		// Common name will be validated on the server side, it depends on
 		// server configuration.
 	default:
-		if strings.ToLower(jwt.Payload.Subject) != strings.ToLower(csr.Subject.CommonName) {
+		if !strings.EqualFold(jwt.Payload.Subject, csr.Subject.CommonName) {
 			return errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", jwt.Payload.Subject, csr.Subject.CommonName)
 		}
 	}

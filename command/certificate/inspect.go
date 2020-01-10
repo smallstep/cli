@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certinfo"
 	"github.com/smallstep/cli/errs"
-	stepx509 "github.com/smallstep/cli/pkg/x509"
 	"github.com/smallstep/cli/utils"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
@@ -257,7 +256,7 @@ func inspectCertificates(ctx *cli.Context, blocks []*pem.Block) error {
 	case "text":
 		var text string
 		for _, block := range blocks {
-			crt, err := stepx509.ParseCertificate(block.Bytes)
+			crt, err := x509.ParseCertificate(block.Bytes)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -309,7 +308,7 @@ func inspectCertificateRequest(ctx *cli.Context, block *pem.Block) error {
 	switch format {
 	case "text":
 		var text string
-		csr, err := stepx509.ParseCertificateRequest(block.Bytes)
+		csr, err := x509.ParseCertificateRequest(block.Bytes)
 		if err != nil {
 			return errors.WithStack(err)
 		}

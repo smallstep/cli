@@ -175,7 +175,7 @@ func installAction(ctx *cli.Context) error {
 
 	fmt.Printf("Certificate %s has been installed.\n", filename)
 	// Print certificate info (ignore errors)
-	if cert, err := pemutil.ReadStepCertificate(filename); err == nil {
+	if cert, err := pemutil.ReadCertificate(filename); err == nil {
 		if s, err := certinfo.CertificateShortText(cert); err == nil {
 			fmt.Print(s)
 		}
@@ -206,7 +206,7 @@ func uninstallAction(ctx *cli.Context) error {
 
 	fmt.Printf("Certificate %s has been removed.\n", filename)
 	// Print certificate info (ignore errors)
-	if cert, err := pemutil.ReadStepCertificate(filename); err == nil {
+	if cert, err := pemutil.ReadCertificate(filename); err == nil {
 		if s, err := certinfo.CertificateShortText(cert); err == nil {
 			fmt.Print(s)
 		}

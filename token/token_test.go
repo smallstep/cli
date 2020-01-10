@@ -1,6 +1,7 @@
 package token
 
 import (
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
 	"reflect"
@@ -10,7 +11,6 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/jose"
-	"golang.org/x/crypto/ed25519"
 )
 
 func TestClaims_Set(t *testing.T) {
