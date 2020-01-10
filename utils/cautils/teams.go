@@ -48,9 +48,12 @@ func BootstrapTeam(ctx *cli.Context, name string) error {
 		return errors.Wrap(err, "error getting team data")
 	}
 
+	sshRedirect := "https://smallstep.com/app/teams/sso/success"
+
 	args := []string{"ca", "bootstrap",
 		"--ca-url", r.CaURL,
 		"--fingerprint", r.Fingerprint,
+		"--redirect-url", sshRedirect,
 	}
 	if ctx.Bool("force") {
 		args = append(args, "--force")
