@@ -5,7 +5,6 @@ go 1.13
 require (
 	github.com/Microsoft/go-winio v0.4.14
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
-	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
 	github.com/manifoldco/promptui v0.3.1
@@ -14,7 +13,7 @@ require (
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200103212524-b99dc1097b15
-	github.com/smallstep/certificates v0.14.0-rc.1.0.20200110185849-085ae821636e
+	github.com/smallstep/certificates v0.14.0-rc.1.0.20200111012147-3ce267cdd6b7
 	github.com/smallstep/certinfo v1.0.0
 	github.com/smallstep/truststore v0.9.3
 	github.com/smallstep/zcrypto v0.0.0-20191122194514-76530dff70e7
