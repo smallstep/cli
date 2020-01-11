@@ -15,7 +15,7 @@ OUTPUT_ROOT=output/
 #########################################
 
 bootstra%:
-	$Q curl -sSfL https://raw.githubusercontent.com/smallstep/cli/master/make/golangci-install.sh | sh -s -- -b $(go env GOPATH)/bin v1.22.2
+	$Q curl -sSfL https://raw.githubusercontent.com/smallstep/cli/master/make/golangci-install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.22.2
 
 .PHONY: bootstra%
 
