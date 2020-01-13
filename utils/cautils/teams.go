@@ -17,6 +17,7 @@ import (
 type bootstrapAPIResponse struct {
 	CaURL       string `json:"url"`
 	Fingerprint string `json:"fingerprint"`
+	RedirectURL string `json:"redirect-url"`
 }
 
 // BootstrapTeam does a request to api.smallstep.com to bootstrap the
@@ -58,12 +59,14 @@ func BootstrapTeam(ctx *cli.Context, name string) error {
 		return errors.Wrap(err, "error getting team data")
 	}
 
-	sshRedirect := "https://smallstep.com/app/teams/sso/success"
+	if r.RedirectURL == "" {
+		r.RedirectURL = "https://smallstep.com/app/teams/sso/success"
+	}
 
 	args := []string{"ca", "bootstrap",
 		"--ca-url", r.CaURL,
 		"--fingerprint", r.Fingerprint,
-		"--redirect-url", sshRedirect,
+		"--redirect-url", r.RedirectURL,
 	}
 	if ctx.Bool("force") {
 		args = append(args, "--force")
