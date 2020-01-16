@@ -14,7 +14,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200103212524-b99dc1097b15
 	github.com/smallstep/certificates v0.14.0-rc.1.0.20200111012147-3ce267cdd6b7
-	github.com/smallstep/certinfo v1.0.0
+	github.com/smallstep/certinfo v1.1.0
 	github.com/smallstep/truststore v0.9.3
 	github.com/smallstep/zcrypto v0.0.0-20191122194514-76530dff70e7
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f

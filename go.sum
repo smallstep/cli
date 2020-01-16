@@ -522,6 +522,8 @@ github.com/smallstep/certinfo v0.0.0-20191029235839-00563809d483 h1:D7D2SPv6XS5w
 github.com/smallstep/certinfo v0.0.0-20191029235839-00563809d483/go.mod h1:xmx5n8+7jI0lrjTUwc8WMMqXeOHRyxYUW9U1wrvP3Vo=
 github.com/smallstep/certinfo v1.0.0 h1:rzQJga5cU5DiIvNzQOr9Chp2u+qcZxL1Cy+A2bHbB4g=
 github.com/smallstep/certinfo v1.0.0/go.mod h1:xmx5n8+7jI0lrjTUwc8WMMqXeOHRyxYUW9U1wrvP3Vo=
+github.com/smallstep/certinfo v1.1.0 h1:pz6tNR4npdeWkQmQWey2NLELquX79+aJGbpevmUpYT8=
+github.com/smallstep/certinfo v1.1.0/go.mod h1:1gQJekdPwPvUwFWGTi7bZELmQT09cxC9wJ0VBkBNiwU=
 github.com/smallstep/cli v0.12.1-0.20191016010425-15911d8625df/go.mod h1:zGPm8vWCqzvDqkdC1laFJNdIOjNSB8V4qDp68Ny538o=
 github.com/smallstep/cli v0.13.3/go.mod h1:zGPm8vWCqzvDqkdC1laFJNdIOjNSB8V4qDp68Ny538o=
 github.com/smallstep/cli v0.14.0-rc.1.0.20191024214139-914a67ed80c2/go.mod h1:GoA1cE4YrZRRvVbFlPKJUsMuWHnFBX+R88j1pmpbGgk=
