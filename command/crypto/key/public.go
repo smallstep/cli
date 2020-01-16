@@ -81,13 +81,13 @@ func publicAction(ctx *cli.Context) error {
 	}
 
 	if out := ctx.String("out"); out == "" {
-		block, err := pemutil.Serialize(pub)
+		block, err := pemutil.Serialize(pub.Public())
 		if err != nil {
 			return err
 		}
 		os.Stdout.Write(pem.EncodeToMemory(block))
 	} else {
-		_, err = pemutil.Serialize(pub, pemutil.ToFile(out, 0600))
+		_, err = pemutil.Serialize(pub.Public(), pemutil.ToFile(out, 0600))
 		if err != nil {
 			return err
 		}
