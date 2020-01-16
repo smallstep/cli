@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/exec"
@@ -12,8 +13,6 @@ import (
 
 	"github.com/pkg/errors"
 )
-
-const apiEndpoint = "https://api.smallstep.com"
 
 type bootstrapAPIResponse struct {
 	CaURL       string `json:"url"`
@@ -23,16 +22,27 @@ type bootstrapAPIResponse struct {
 // BootstrapTeam does a request to api.smallstep.com to bootstrap the
 // configuration of the given team name.
 func BootstrapTeam(ctx *cli.Context, name string) error {
-	u, err := url.Parse(apiEndpoint)
-	if err != nil {
-		return errors.Wrapf(err, "error parsing %s", apiEndpoint)
+	apiEndpoint := ctx.String("team-url")
+	if apiEndpoint == "" {
+		// Use the default endpoint..
+		u := url.URL{
+			Scheme: "https",
+			Host:   "api.smallstep.com",
+			Path:   "/v1/teams/" + name + "/cas/default",
+		}
+		apiEndpoint = u.String()
+	} else {
+		// The user specified a custom endpoint..
+		apiEndpoint = strings.ReplaceAll(apiEndpoint, "<>", name)
+		u, err := url.Parse(apiEndpoint)
+		if err != nil {
+			return errors.Wrapf(err, "error parsing %s", apiEndpoint)
+		}
+		apiEndpoint = u.String()
 	}
-	u = u.ResolveReference(&url.URL{
-		Path: "/v1/teams/" + name + "/cas/default",
-	})
 
 	// Using public PKI
-	resp, err := http.Get(u.String())
+	resp, err := http.Get(apiEndpoint)
 	if err != nil {
 		return errors.Wrap(err, "error getting team data")
 	}

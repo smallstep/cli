@@ -31,7 +31,7 @@ func configCommand() cli.Command {
 		[**--team=name] [**--host**] [**--set=<key=value>**]
 		[**--dry-run**] [**--roots**] [**--federation**]
 		[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--offline**] [**--ca-config**=<path>]`,
+		[**--offline**] [**--ca-config**=<path>] [**--team-url=<url>**]`,
 		Description: `**step ssh config** configures SSH to be used with certificates. It also supports
 flags to inspect the root certificates used to sign the certificates.
 
@@ -72,6 +72,11 @@ $ step ssh config --set User=joe --set Bastion=bastion.example.com
 			cli.BoolFlag{
 				Name:  "host",
 				Usage: `Configures a SSH server instead of a client.`,
+			},
+			cli.StringFlag{
+				Name: "team-url",
+				Usage: `The <url> step queries to retrieve initial team configuration. Only used with
+the --team option. If the url contains "<>" placeholders, they are replaced with the team name.`,
 			},
 			cli.BoolFlag{
 				Name:  "roots",
