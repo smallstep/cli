@@ -152,6 +152,7 @@ func rekeyAction(ctx *cli.Context) error {
 
 	// Private key (with password unless --no-password --insecure)
 	opts := []pemutil.Options{
+		pemutil.WithOpenSSH(true),
 		pemutil.ToFile(newKeyFile, 0600),
 	}
 	switch {
