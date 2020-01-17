@@ -651,6 +651,10 @@ func TestParseDER(t *testing.T) {
 func TestParseKey(t *testing.T) {
 	var key interface{}
 	for fn, td := range files {
+		// skip ssh public keys
+		if strings.HasPrefix(fn, "testdata/openssh") && strings.HasSuffix(fn, ".pub.pem") {
+			continue
+		}
 		t.Run(fn, func(t *testing.T) {
 			data, err := ioutil.ReadFile(fn)
 			assert.FatalError(t, err)
@@ -681,6 +685,7 @@ func TestParseKey(t *testing.T) {
 		})
 	}
 }
+
 func TestParseKey_x509(t *testing.T) {
 	b, _ := pem.Decode([]byte(testCRT))
 	cert, err := x509.ParseCertificate(b.Bytes)
@@ -702,4 +707,70 @@ func TestParseKey_x509(t *testing.T) {
 	key, err = ParseKey([]byte(testCSRKeytool))
 	assert.FatalError(t, err)
 	assert.Equals(t, csr.PublicKey, key)
+}
+
+func TestParseSSH(t *testing.T) {
+	var key interface{}
+	for fn, td := range files {
+		if !strings.HasPrefix(fn, "testdata/openssh") || !strings.HasSuffix(fn, ".pub.pem") {
+			continue
+		}
+		t.Run(fn, func(t *testing.T) {
+			data, err := ioutil.ReadFile(fn)
+			assert.FatalError(t, err)
+			key, err = ParseSSH(data)
+			assert.FatalError(t, err)
+			assert.NotNil(t, key)
+
+			switch td.typ {
+			case ecdsaPublicKey:
+				assert.Type(t, &ecdsa.PublicKey{}, key)
+			case ed25519PublicKey:
+				assert.Type(t, ed25519.PublicKey{}, key)
+			case rsaPublicKey:
+				assert.Type(t, &rsa.PublicKey{}, key)
+			default:
+				t.Errorf("type %T not supported", key)
+			}
+		})
+	}
+}
+
+func TestOpenSSH(t *testing.T) {
+	for fn, td := range files {
+		if strings.HasSuffix(fn, ".pub.pem") {
+			continue
+		}
+		t.Run(fn, func(t *testing.T) {
+			opts := []Options{
+				WithOpenSSH(true),
+				WithComment("test@smallstep.com"),
+			}
+			if td.encrypted {
+				opts = append(opts, WithPassword([]byte("mypassword")))
+			}
+
+			key, err := Read(fn, opts...)
+			assert.FatalError(t, err)
+
+			// using their own methods
+			block, err := SerializeOpenSSHPrivateKey(key, opts...)
+			assert.FatalError(t, err)
+
+			key2, err := ParseOpenSSHPrivateKey(block.Bytes, opts...)
+			assert.FatalError(t, err)
+
+			assert.Equals(t, key, key2)
+
+			// using main methods
+			block2, err := Serialize(key2, opts...)
+			assert.FatalError(t, err)
+			// salt must be different
+			assert.NotEquals(t, block, block2)
+
+			key3, err := Parse(pem.EncodeToMemory(block2), opts...)
+			assert.FatalError(t, err)
+			assert.Equals(t, key2, key3)
+		})
+	}
 }
