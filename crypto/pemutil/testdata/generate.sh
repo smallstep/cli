@@ -1,6 +1,7 @@
 #!/bin/sh
 
 OPENSSL="/usr/local/Cellar/openssl@1.1/1.1.1-pre8/bin/openssl"
+SSH_KEYGEN="/usr/bin/ssh-keygen"
 
 #######################################
 # PKCS#8                              #
@@ -66,3 +67,31 @@ $OPENSSL ec -outform PEM -in openssl.p521.pem -pubout -out openssl.p521.pub.pem
 $OPENSSL ec -outform PEM -in openssl.p256.pem -aes-256-cbc -passout pass:mypassword -out openssl.p256.enc.pem
 $OPENSSL ec -outform PEM -in openssl.p384.pem -des -passout pass:mypassword -out openssl.p384.enc.pem
 $OPENSSL ec -outform PEM -in openssl.p521.pem -des3 -passout pass:mypassword -out openssl.p521.enc.pem
+
+#######################################
+# OPENSSH                             #
+#######################################
+
+# EC
+for size in 256 384 521
+do
+   $SSH_KEYGEN -t ecdsa -b $size -f openssh.p$size.pem -N ""
+   mv openssh.p$size.pem.pub openssh.p$size.pub.pem
+   cp openssh.p$size.pem openssh.p$size.enc.pem
+   $SSH_KEYGEN -p -N mypassword -f openssh.p$size.enc.pem
+done
+
+# Ed25519
+$SSH_KEYGEN -t ed25519 -f openssh.ed25519.pem -N ""
+mv openssh.ed25519.pem.pub openssh.ed25519.pub.pem
+cp openssh.ed25519.pem openssh.ed25519.enc.pem
+$SSH_KEYGEN -p -N mypassword -f openssh.ed25519.enc.pem
+
+# RSA
+for size in 1024 2048
+do
+   $SSH_KEYGEN -t rsa -b $size -f openssh.rsa$size.pem -N ""
+   mv openssh.rsa$size.pem.pub openssh.rsa$size.pub.pem
+   cp openssh.rsa$size.pem openssh.rsa$size.enc.pem
+   $SSH_KEYGEN -p -N mypassword -f openssh.rsa$size.enc.pem
+done
