@@ -117,7 +117,7 @@ $ step crypto key format --der --pkcs8 key.der --out key-pkcs8.der
 			},
 			cli.BoolFlag{
 				Name:  "ssh",
-				Usage: `Uses OpenSSH as the result encoding format on public keys.`,
+				Usage: `Uses OpenSSH as the result encoding format.`,
 			},
 			cli.StringFlag{
 				Name:  "out",
@@ -313,7 +313,21 @@ func convertToSSH(ctx *cli.Context, key interface{}) ([]byte, error) {
 		}
 		return ssh.MarshalAuthorizedKey(k), nil
 	case *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
-		return nil, errors.New("ssh format is only supported on public keys")
+		opts := []pemutil.Options{
+			pemutil.WithOpenSSH(true),
+		}
+		if !ctx.Bool("no-password") {
+			if passFile := ctx.String("password-file"); passFile != "" {
+				opts = append(opts, pemutil.WithPasswordFile(passFile))
+			} else {
+				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key"))
+			}
+		}
+		block, err := pemutil.Serialize(key, opts...)
+		if err != nil {
+			return nil, err
+		}
+		return pem.EncodeToMemory(block), nil
 	default:
 		return nil, errors.Errorf("unsupported key type %T", key)
 	}
