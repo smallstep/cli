@@ -425,7 +425,7 @@ func SerializeOpenSSHPrivateKey(key crypto.PrivateKey, opts ...Options) (*pem.Bl
 		// Derive key to encrypt the private key block.
 		k, err := bcrypt_pbkdf.Key(ctx.password, salt, sshDefaultRounds, sshDefaultKeyLength+aes.BlockSize)
 		if err != nil {
-			return nil, errors.Wrap(err, "error deriving password")
+			return nil, errors.Wrap(err, "error deriving decryption key")
 		}
 
 		// Encrypt the private key using the derived secret.

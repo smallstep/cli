@@ -197,6 +197,7 @@ func TestRead(t *testing.T) {
 					assert.NoError(t, err)
 					switch k := k.(type) {
 					case *ecdsa.PublicKey:
+						// See ecdsa.Sign https://golang.org/pkg/crypto/ecdsa/#Sign
 						ecdsaSignature := struct {
 							R, S *big.Int
 						}{}

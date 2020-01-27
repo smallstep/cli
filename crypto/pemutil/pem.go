@@ -140,8 +140,8 @@ func WithOpenSSH(v bool) Options {
 	}
 }
 
-// WithComment is an option used in the Serialize method to use add a comment in
-// the OpenSSH private keys. WithOpenSSH must be set to true too.
+// WithComment is an option used in the Serialize method to add a comment in the
+// OpenSSH private keys. WithOpenSSH must be set to true too.
 func WithComment(comment string) Options {
 	return func(ctx *context) error {
 		ctx.comment = comment
