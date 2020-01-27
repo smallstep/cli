@@ -4,12 +4,15 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
+	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
 	"io/ioutil"
+	"math/big"
 	"os"
 	"reflect"
 	"strings"
@@ -83,6 +86,24 @@ var files = map[string]testdata{
 	"testdata/openssl.rsa2048.pem":           {rsaPrivateKey, false},
 	"testdata/openssl.rsa2048.pub.pem":       {rsaPublicKey, false},
 	"testdata/openssl.rsa2048.enc.pem":       {rsaPrivateKey, true},
+	"testdata/openssh.ed25519.enc.pem":       {ed25519PrivateKey, true},
+	"testdata/openssh.ed25519.pem":           {ed25519PrivateKey, false},
+	"testdata/openssh.ed25519.pub.pem":       {ed25519PublicKey, false},
+	"testdata/openssh.p256.enc.pem":          {ecdsaPrivateKey, true},
+	"testdata/openssh.p256.pem":              {ecdsaPrivateKey, false},
+	"testdata/openssh.p256.pub.pem":          {ecdsaPublicKey, false},
+	"testdata/openssh.p384.enc.pem":          {ecdsaPrivateKey, true},
+	"testdata/openssh.p384.pem":              {ecdsaPrivateKey, false},
+	"testdata/openssh.p384.pub.pem":          {ecdsaPublicKey, false},
+	"testdata/openssh.p521.enc.pem":          {ecdsaPrivateKey, true},
+	"testdata/openssh.p521.pem":              {ecdsaPrivateKey, false},
+	"testdata/openssh.p521.pub.pem":          {ecdsaPublicKey, false},
+	"testdata/openssh.rsa1024.enc.pem":       {rsaPrivateKey, true},
+	"testdata/openssh.rsa1024.pem":           {rsaPrivateKey, false},
+	"testdata/openssh.rsa1024.pub.pem":       {rsaPublicKey, false},
+	"testdata/openssh.rsa2048.enc.pem":       {rsaPrivateKey, true},
+	"testdata/openssh.rsa2048.pem":           {rsaPrivateKey, false},
+	"testdata/openssh.rsa2048.pub.pem":       {rsaPublicKey, false},
 	"testdata/pkcs8/openssl.ed25519.pem":     {ed25519PrivateKey, false},
 	"testdata/pkcs8/openssl.ed25519.pub.pem": {ed25519PublicKey, false},
 	"testdata/pkcs8/openssl.ed25519.enc.pem": {ed25519PrivateKey, true},
@@ -102,59 +123,100 @@ var files = map[string]testdata{
 	"testdata/pkcs8/openssl.rsa4096.pub.pem": {rsaPublicKey, false},
 }
 
+func readOrParseSSH(fn string) (interface{}, error) {
+	if strings.HasPrefix(fn, "testdata/openssh") && strings.HasSuffix(fn, ".pub.pem") {
+		b, err := ioutil.ReadFile(fn)
+		if err != nil {
+			return nil, err
+		}
+		return ParseSSH(b)
+	}
+	return Read(fn)
+}
+
 func TestRead(t *testing.T) {
 	var err error
 	var key interface{}
 
 	for fn, td := range files {
-		if td.encrypted {
-			key, err = Read(fn, WithPassword([]byte("mypassword")))
-		} else {
-			key, err = Read(fn)
-		}
-
-		assert.NotNil(t, key)
-		assert.NoError(t, err)
-
-		switch td.typ {
-		case ecdsaPublicKey:
-			assert.Type(t, &ecdsa.PublicKey{}, key)
-		case ecdsaPrivateKey:
-			assert.Type(t, &ecdsa.PrivateKey{}, key)
-		case ed25519PublicKey:
-			assert.Type(t, ed25519.PublicKey{}, key)
-		case ed25519PrivateKey:
-			assert.Type(t, ed25519.PrivateKey{}, key)
-		case rsaPublicKey:
-			assert.Type(t, &rsa.PublicKey{}, key)
-		case rsaPrivateKey:
-			assert.Type(t, &rsa.PrivateKey{}, key)
-		default:
-			t.Errorf("type %T not supported", key)
-		}
-
-		// Check encrypted against non-encrypted
-		if td.encrypted {
-			k, err := Read(strings.Replace(fn, ".enc", "", 1))
-			assert.NoError(t, err)
-			assert.Equals(t, k, key)
-		}
-
-		// Check against public
-		switch td.typ {
-		case ecdsaPrivateKey, ed25519PrivateKey, rsaPrivateKey:
-			pub := strings.Replace(fn, ".enc", "", 1)
-			pub = strings.Replace(pub, "pem", "pub.pem", 1)
-
-			k, err := Read(pub)
-			assert.NoError(t, err)
-
-			if pk, ok := key.(crypto.Signer); ok {
-				assert.Equals(t, k, pk.Public())
+		t.Run(fn, func(t *testing.T) {
+			if td.encrypted {
+				key, err = Read(fn, WithPassword([]byte("mypassword")))
 			} else {
-				t.Errorf("key for %s does not satisfies the crypto.Signer interface", fn)
+				key, err = readOrParseSSH(fn)
 			}
-		}
+
+			assert.NotNil(t, key)
+			assert.NoError(t, err)
+
+			switch td.typ {
+			case ecdsaPublicKey:
+				assert.Type(t, &ecdsa.PublicKey{}, key)
+			case ecdsaPrivateKey:
+				assert.Type(t, &ecdsa.PrivateKey{}, key)
+			case ed25519PublicKey:
+				assert.Type(t, ed25519.PublicKey{}, key)
+			case ed25519PrivateKey:
+				assert.Type(t, ed25519.PrivateKey{}, key)
+			case rsaPublicKey:
+				assert.Type(t, &rsa.PublicKey{}, key)
+			case rsaPrivateKey:
+				assert.Type(t, &rsa.PrivateKey{}, key)
+			default:
+				t.Errorf("type %T not supported", key)
+			}
+
+			// Check encrypted against non-encrypted
+			if td.encrypted {
+				k, err := Read(strings.Replace(fn, ".enc", "", 1))
+				assert.NoError(t, err)
+				assert.Equals(t, k, key)
+			}
+
+			// Check against public
+			switch td.typ {
+			case ecdsaPrivateKey, ed25519PrivateKey, rsaPrivateKey:
+				pub := strings.Replace(fn, ".enc", "", 1)
+				pub = strings.Replace(pub, "pem", "pub.pem", 1)
+
+				k, err := readOrParseSSH(pub)
+				assert.NoError(t, err)
+
+				if pk, ok := key.(crypto.Signer); ok {
+					assert.Equals(t, k, pk.Public())
+
+					var signature, digest []byte
+					message := []byte("message")
+					if _, ok := pk.(ed25519.PrivateKey); ok {
+						signature, err = pk.Sign(rand.Reader, message, crypto.Hash(0))
+					} else {
+						sum := sha256.Sum256(message)
+						digest = sum[:]
+						signature, err = pk.Sign(rand.Reader, digest, crypto.SHA256)
+					}
+					assert.NoError(t, err)
+					switch k := k.(type) {
+					case *ecdsa.PublicKey:
+						// See ecdsa.Sign https://golang.org/pkg/crypto/ecdsa/#Sign
+						ecdsaSignature := struct {
+							R, S *big.Int
+						}{}
+						asn1.Unmarshal(signature, &ecdsaSignature)
+						verified := ecdsa.Verify(k, digest, ecdsaSignature.R, ecdsaSignature.S)
+						assert.True(t, verified)
+					case ed25519.PublicKey:
+						verified := ed25519.Verify(k, []byte("message"), signature)
+						assert.True(t, verified)
+					case *rsa.PublicKey:
+						err := rsa.VerifyPKCS1v15(k, crypto.SHA256, digest, signature)
+						assert.NoError(t, err)
+					}
+
+				} else {
+					t.Errorf("key for %s does not satisfies the crypto.Signer interface", fn)
+				}
+			}
+		})
 	}
 }
 
@@ -590,6 +652,10 @@ func TestParseDER(t *testing.T) {
 func TestParseKey(t *testing.T) {
 	var key interface{}
 	for fn, td := range files {
+		// skip ssh public keys
+		if strings.HasPrefix(fn, "testdata/openssh") && strings.HasSuffix(fn, ".pub.pem") {
+			continue
+		}
 		t.Run(fn, func(t *testing.T) {
 			data, err := ioutil.ReadFile(fn)
 			assert.FatalError(t, err)
@@ -620,6 +686,7 @@ func TestParseKey(t *testing.T) {
 		})
 	}
 }
+
 func TestParseKey_x509(t *testing.T) {
 	b, _ := pem.Decode([]byte(testCRT))
 	cert, err := x509.ParseCertificate(b.Bytes)
@@ -641,4 +708,70 @@ func TestParseKey_x509(t *testing.T) {
 	key, err = ParseKey([]byte(testCSRKeytool))
 	assert.FatalError(t, err)
 	assert.Equals(t, csr.PublicKey, key)
+}
+
+func TestParseSSH(t *testing.T) {
+	var key interface{}
+	for fn, td := range files {
+		if !strings.HasPrefix(fn, "testdata/openssh") || !strings.HasSuffix(fn, ".pub.pem") {
+			continue
+		}
+		t.Run(fn, func(t *testing.T) {
+			data, err := ioutil.ReadFile(fn)
+			assert.FatalError(t, err)
+			key, err = ParseSSH(data)
+			assert.FatalError(t, err)
+			assert.NotNil(t, key)
+
+			switch td.typ {
+			case ecdsaPublicKey:
+				assert.Type(t, &ecdsa.PublicKey{}, key)
+			case ed25519PublicKey:
+				assert.Type(t, ed25519.PublicKey{}, key)
+			case rsaPublicKey:
+				assert.Type(t, &rsa.PublicKey{}, key)
+			default:
+				t.Errorf("type %T not supported", key)
+			}
+		})
+	}
+}
+
+func TestOpenSSH(t *testing.T) {
+	for fn, td := range files {
+		if strings.HasSuffix(fn, ".pub.pem") {
+			continue
+		}
+		t.Run(fn, func(t *testing.T) {
+			opts := []Options{
+				WithOpenSSH(true),
+				WithComment("test@smallstep.com"),
+			}
+			if td.encrypted {
+				opts = append(opts, WithPassword([]byte("mypassword")))
+			}
+
+			key, err := Read(fn, opts...)
+			assert.FatalError(t, err)
+
+			// using their own methods
+			block, err := SerializeOpenSSHPrivateKey(key, opts...)
+			assert.FatalError(t, err)
+
+			key2, err := ParseOpenSSHPrivateKey(block.Bytes, opts...)
+			assert.FatalError(t, err)
+
+			assert.Equals(t, key, key2)
+
+			// using main methods
+			block2, err := Serialize(key2, opts...)
+			assert.FatalError(t, err)
+			// salt must be different
+			assert.NotEquals(t, block, block2)
+
+			key3, err := Parse(pem.EncodeToMemory(block2), opts...)
+			assert.FatalError(t, err)
+			assert.Equals(t, key2, key3)
+		})
+	}
 }

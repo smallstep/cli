@@ -341,6 +341,7 @@ func certificateAction(ctx *cli.Context) error {
 	if !isSign {
 		// Private key (with password unless --no-password --insecure)
 		opts := []pemutil.Options{
+			pemutil.WithOpenSSH(true),
 			pemutil.ToFile(keyFile, 0600),
 		}
 		switch {
@@ -368,7 +369,7 @@ func certificateAction(ctx *cli.Context) error {
 	// Write Add User keys and certs
 	if isAddUser {
 		id := provisioner.SanitizeSSHUserPrincipal(subject) + "-provisioner"
-		if _, err := pemutil.Serialize(auPriv, pemutil.ToFile(baseName+"-provisioner", 0600)); err != nil {
+		if _, err := pemutil.Serialize(auPriv, pemutil.WithOpenSSH(true), pemutil.ToFile(baseName+"-provisioner", 0600)); err != nil {
 			return err
 		}
 		if err := utils.WriteFile(baseName+"-provisioner.pub", marshalPublicKey(sshAuPub, id), 0644); err != nil {

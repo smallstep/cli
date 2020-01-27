@@ -33,6 +33,8 @@ type context struct {
 	perm       os.FileMode
 	password   []byte
 	pkcs8      bool
+	openSSH    bool
+	comment    string
 	firstBlock bool
 }
 
@@ -56,6 +58,14 @@ func (c *context) apply(opts []Options) error {
 
 // Options is the type to add attributes to the context.
 type Options func(o *context) error
+
+// withContext replaces the context with the given one.
+func withContext(c *context) Options {
+	return func(ctx *context) error {
+		*ctx = *c
+		return nil
+	}
+}
 
 // WithFilename is a method that adds the given filename to the context.
 func WithFilename(name string) Options {
@@ -117,6 +127,24 @@ func WithPasswordPrompt(prompt string) Options {
 func WithPKCS8(v bool) Options {
 	return func(ctx *context) error {
 		ctx.pkcs8 = v
+		return nil
+	}
+}
+
+// WithOpenSSH is an option used in the Serialize method to use OpenSSH encoding
+// form on the private keys. With v set to false default form will be used.
+func WithOpenSSH(v bool) Options {
+	return func(ctx *context) error {
+		ctx.openSSH = v
+		return nil
+	}
+}
+
+// WithComment is an option used in the Serialize method to add a comment in the
+// OpenSSH private keys. WithOpenSSH must be set to true too.
+func WithComment(comment string) Options {
+	return func(ctx *context) error {
+		ctx.comment = comment
 		return nil
 	}
 }
@@ -246,8 +274,11 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 	case "EC PRIVATE KEY":
 		priv, err := x509.ParseECPrivateKey(block.Bytes)
 		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
-	case "PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY":
+	case "PRIVATE KEY", "ENCRYPTED PRIVATE KEY":
 		priv, err := ParsePKCS8PrivateKey(block.Bytes)
+		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
+	case "OPENSSH PRIVATE KEY":
+		priv, err := ParseOpenSSHPrivateKey(block.Bytes, withContext(ctx))
 		return priv, errors.Wrapf(err, "error parsing %s", ctx.filename)
 	case "CERTIFICATE":
 		crt, err := x509.ParseCertificate(block.Bytes)
@@ -308,7 +339,8 @@ func Serialize(in interface{}, opts ...Options) (*pem.Block, error) {
 			Bytes: b,
 		}
 	case *rsa.PrivateKey:
-		if ctx.pkcs8 {
+		switch {
+		case ctx.pkcs8:
 			b, err := MarshalPKCS8PrivateKey(k)
 			if err != nil {
 				return nil, err
@@ -317,14 +349,17 @@ func Serialize(in interface{}, opts ...Options) (*pem.Block, error) {
 				Type:  "PRIVATE KEY",
 				Bytes: b,
 			}
-		} else {
+		case ctx.openSSH:
+			return SerializeOpenSSHPrivateKey(k, withContext(ctx))
+		default:
 			p = &pem.Block{
 				Type:  "RSA PRIVATE KEY",
 				Bytes: x509.MarshalPKCS1PrivateKey(k),
 			}
 		}
 	case *ecdsa.PrivateKey:
-		if ctx.pkcs8 {
+		switch {
+		case ctx.pkcs8:
 			b, err := MarshalPKCS8PrivateKey(k)
 			if err != nil {
 				return nil, err
@@ -333,7 +368,9 @@ func Serialize(in interface{}, opts ...Options) (*pem.Block, error) {
 				Type:  "PRIVATE KEY",
 				Bytes: b,
 			}
-		} else {
+		case ctx.openSSH:
+			return SerializeOpenSSHPrivateKey(k, withContext(ctx))
+		default:
 			b, err := x509.MarshalECPrivateKey(k)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to marshal private key")
@@ -343,15 +380,20 @@ func Serialize(in interface{}, opts ...Options) (*pem.Block, error) {
 				Bytes: b,
 			}
 		}
-	case ed25519.PrivateKey: // force the use of pkcs8
-		ctx.pkcs8 = true
-		b, err := MarshalPKCS8PrivateKey(k)
-		if err != nil {
-			return nil, err
-		}
-		p = &pem.Block{
-			Type:  "PRIVATE KEY",
-			Bytes: b,
+	case ed25519.PrivateKey:
+		switch {
+		case !ctx.pkcs8 && ctx.openSSH:
+			return SerializeOpenSSHPrivateKey(k, withContext(ctx))
+		default: // Ed25519 keys will use pkcs8 by default
+			ctx.pkcs8 = true
+			b, err := MarshalPKCS8PrivateKey(k)
+			if err != nil {
+				return nil, err
+			}
+			p = &pem.Block{
+				Type:  "PRIVATE KEY",
+				Bytes: b,
+			}
 		}
 	case *x509.Certificate:
 		p = &pem.Block{
