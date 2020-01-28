@@ -1,10 +1,13 @@
 # Changelog
-All notable changes to this project will be documented in this file.
+
+NOTE: Please look to the technical section of the [smallstep blog](https://smallstep.com/tags/technical/)
+for all release notes for step cli and certificates.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 0.0.2] - DATE
+
+## [0.0.2]
 ### Added
 - `--bundle` flag to cert/inspect for inpecting all the full chain or bundle
 given a path. Default behavior is unchanged; only inspect the first (leaf)
