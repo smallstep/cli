@@ -263,7 +263,7 @@ func (c *OfflineCA) SSHSign(req *api.SSHSignRequest) (*api.SSHSignResponse, erro
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing publicKey")
 	}
-	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SignSSHMethod)
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SSHSignMethod)
 	opts, err := c.authority.Authorize(ctx, req.OTT)
 	if err != nil {
 		return nil, err
@@ -297,7 +297,7 @@ func (c *OfflineCA) SSHRevoke(req *api.SSHRevokeRequest) (*api.SSHRevokeResponse
 		MTLS:        false,
 	}
 
-	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.RevokeSSHMethod)
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SSHRevokeMethod)
 	if _, err := c.authority.Authorize(ctx, opts.OTT); err != nil {
 		return nil, err
 	}
@@ -311,12 +311,12 @@ func (c *OfflineCA) SSHRevoke(req *api.SSHRevokeRequest) (*api.SSHRevokeResponse
 // SSHRenew is a wrapper on top of certificates SSHRenew method. It returns an
 // api.SSHRenewResponse.
 func (c *OfflineCA) SSHRenew(req *api.SSHRenewRequest) (*api.SSHRenewResponse, error) {
-	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.RenewSSHMethod)
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SSHRenewMethod)
 	_, err := c.authority.Authorize(ctx, req.OTT)
 	if err != nil {
 		return nil, err
 	}
-	oldCert, err := provisioner.ExtractSSHPOPCert(req.OTT)
+	oldCert, _, err := provisioner.ExtractSSHPOPCert(req.OTT)
 	if err != nil {
 		return nil, err
 	}
@@ -331,12 +331,12 @@ func (c *OfflineCA) SSHRenew(req *api.SSHRenewRequest) (*api.SSHRenewResponse, e
 // SSHRekey is a wrapper on top of certificates SSHRekey method. It returns an
 // api.SSHRekeyResponse.
 func (c *OfflineCA) SSHRekey(req *api.SSHRekeyRequest) (*api.SSHRekeyResponse, error) {
-	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.RekeySSHMethod)
+	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SSHRekeyMethod)
 	signOpts, err := c.authority.Authorize(ctx, req.OTT)
 	if err != nil {
 		return nil, err
 	}
-	oldCert, err := provisioner.ExtractSSHPOPCert(req.OTT)
+	oldCert, _, err := provisioner.ExtractSSHPOPCert(req.OTT)
 	if err != nil {
 		return nil, err
 	}
