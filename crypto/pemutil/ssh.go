@@ -135,10 +135,16 @@ func ParseOpenSSHPrivateKey(key []byte, opts ...Options) (crypto.PrivateKey, err
 
 	var pk1 openSSHPrivateKeyBlock
 	if err := ssh.Unmarshal(w.PrivKeyBlock, &pk1); err != nil {
+		if w.KdfName != "none" || w.CipherName != "none" {
+			return nil, errors.New("incorrect passphrase supplied")
+		}
 		return nil, err
 	}
 
 	if pk1.Check1 != pk1.Check2 {
+		if w.KdfName != "none" || w.CipherName != "none" {
+			return nil, errors.New("incorrect passphrase supplied")
+		}
 		return nil, errors.New("error decoding key: check mismatch")
 	}
 
