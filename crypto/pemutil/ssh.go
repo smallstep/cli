@@ -193,7 +193,7 @@ func ParseOpenSSHPrivateKey(key []byte, opts ...Options) (crypto.PrivateKey, err
 		key := struct {
 			Curve   string
 			Pub     []byte
-			Priv    []byte
+			D       *big.Int
 			Comment string
 			Pad     []byte `ssh:"rest"`
 		}{}
@@ -223,17 +223,16 @@ func ParseOpenSSHPrivateKey(key []byte, opts ...Options) (crypto.PrivateKey, err
 		N := curve.Params().N
 		X, Y := elliptic.Unmarshal(curve, key.Pub)
 		if X == nil || Y == nil {
-			return nil, errors.New("error decoding key: failed to unmarshal curve")
+			return nil, errors.New("error decoding key: failed to unmarshal public key")
 		}
 
-		D := new(big.Int).SetBytes(key.Priv)
-		if D.Cmp(N) >= 0 {
+		if key.D.Cmp(N) >= 0 {
 			return nil, errors.New("error decoding key: scalar is out of range")
 		}
 
-		x, y := curve.ScalarBaseMult(key.Priv)
+		x, y := curve.ScalarBaseMult(key.D.Bytes())
 		if x.Cmp(X) != 0 || y.Cmp(Y) != 0 {
-			return nil, errors.New("error decoding key: public key does not match")
+			return nil, errors.New("error decoding key: public key does not match private key")
 		}
 
 		return &ecdsa.PrivateKey{
@@ -242,7 +241,7 @@ func ParseOpenSSHPrivateKey(key []byte, opts ...Options) (crypto.PrivateKey, err
 				X:     X,
 				Y:     Y,
 			},
-			D: D,
+			D: key.D,
 		}, nil
 	case ssh.KeyAlgoED25519:
 		key := struct {
@@ -369,10 +368,10 @@ func SerializeOpenSSHPrivateKey(key crypto.PrivateKey, opts ...Options) (*pem.Bl
 		key := struct {
 			Curve   string
 			Pub     []byte
-			Priv    []byte
+			D       *big.Int
 			Comment string
 		}{
-			curve, pub, k.D.Bytes(),
+			curve, pub, k.D,
 			ctx.comment,
 		}
 		pk1.Keytype = keyType
