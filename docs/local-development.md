@@ -30,7 +30,7 @@ Once you've cloned the repository to the appropriate location, you will now be
 able to install any other dependencies via the `make bootstrap` command.
 
 You should only ever need to run this command once, as it will ensure you have
-the right version of `gometalinter` installed.
+the right version of `golangci-lint` installed.
 
 ### Building step
 
@@ -48,12 +48,6 @@ Run the unit tests:
 
 ```
 make test
-```
-
-For a more verbose version of the unit tests:
-
-```
-make vtest
 ```
 
 #### Integration Tests
