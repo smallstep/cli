@@ -29,7 +29,7 @@ func BootstrapTeam(ctx *cli.Context, name string) error {
 		u := url.URL{
 			Scheme: "https",
 			Host:   "api.smallstep.com",
-			Path:   "/v1/teams/" + name + "/cas/default",
+			Path:   "/v1/teams/" + name + "/authorities/ssh",
 		}
 		apiEndpoint = u.String()
 	} else {
