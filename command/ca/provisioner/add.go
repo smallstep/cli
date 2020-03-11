@@ -280,6 +280,7 @@ $ step ca provisioner add x5c-smallstep --type X5C --x5c-root x5cRoot.crt
 Add a K8s Service Account provisioner.
 '''
 $ step ca provisioner add my-kube-provisioner --type K8sSA --pem-keys keys.pub
+'''
 
 Add an SSH-POP provisioner.
 '''
