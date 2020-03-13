@@ -113,6 +113,11 @@ var (
 		Usage: `Create a host certificate instead of a user certificate.`,
 	}
 
+	sshHostIDFlag = cli.StringFlag{
+		Name:  "host-id",
+		Usage: `Specify a <UUID> to identify the host rather than using an auto-generated UUID derived from the machine-id.`,
+	}
+
 	sshSignFlag = cli.BoolFlag{
 		Name:  "sign",
 		Usage: `Sign the public key passed as an argument instead of creating one.`,

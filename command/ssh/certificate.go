@@ -3,8 +3,13 @@ package ssh
 import (
 	"bytes"
 	"crypto"
+	"crypto/hmac"
+	"crypto/sha256"
+	"io/ioutil"
+	"net/url"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
@@ -29,7 +34,7 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "sign a SSH certificate using the the SSH CA",
 		UsageText: `**step ssh certificate** <key-id> <key-file>
-[**--host**] [**--sign**] [**--principal**=<string>] [**--password-file**=<path>]
+[**--host**] [--host-id**] [**--sign**] [**--principal**=<string>] [**--password-file**=<path>]
 [**--provisioner-password-file**=<path>] [**--add-user**]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>]
@@ -139,6 +144,7 @@ $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 			flags.Token,
 			sshAddUserFlag,
 			sshHostFlag,
+			sshHostIDFlag,
 			sshPasswordFileFlag,
 			sshPrincipalFlag,
 			sshPrivateKeyFlag,
@@ -167,6 +173,7 @@ func certificateAction(ctx *cli.Context) error {
 	// Flags
 	token := ctx.String("token")
 	isHost := ctx.Bool("host")
+	hostID := ctx.String("host-id")
 	isSign := ctx.Bool("sign")
 	isAddUser := ctx.Bool("add-user")
 	principals := ctx.StringSlice("principal")
@@ -254,6 +261,28 @@ func certificateAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
+
+		// All host identity certs need a URI SAN to work with our ssh API.
+		if isHost {
+			var u = uuid.Nil
+			if hostID == "" {
+				u, err = deriveMachineID()
+				if err != nil {
+					return err
+				}
+			} else {
+				u, err = uuid.Parse(hostID)
+				if err != nil {
+					return err
+				}
+			}
+			uri, err := url.Parse(u.URN())
+			if err != nil {
+				return err
+			}
+			csr.URIs = append(csr.URIs, uri)
+		}
+
 		identityCSR = *csr
 		identityKey = key
 	}
@@ -428,4 +457,28 @@ func marshalPublicKey(key ssh.PublicKey, subject string) []byte {
 type oidcPayload struct {
 	jose.Claims
 	Email string `json:"email"` // OIDC indicator
+}
+
+func deriveMachineID() (uuid.UUID, error) {
+	// use /etc/machine-id
+	machineID, err := ioutil.ReadFile("/etc/machine-id")
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	// 32 bytes, not secret
+	key := []byte("moon machines mortify more minds")
+	mac := hmac.New(sha256.New, key)
+	mac.Write(machineID)
+	machineHash := mac.Sum(nil)
+
+	// convert to uuid, definitely not thread-safe
+	r := bytes.NewReader(machineHash)
+	uuid.SetRand(r)
+	defer uuid.SetRand(nil)
+	u, err := uuid.NewRandom()
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return u, nil
 }
