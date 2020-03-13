@@ -65,7 +65,7 @@ func hostsAction(ctx *cli.Context) error {
 
 	w := new(tabwriter.Writer)
 	// Format in tab-separated columns with a tab stop of 8.
-	w.Init(os.Stdout, 0, 8, 0, '\t', 0)
+	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
 	fmt.Fprintln(w, "HOSTNAME\tID\tTAGS")
 	for _, h := range resp.Hosts {
