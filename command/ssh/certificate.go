@@ -203,6 +203,8 @@ func certificateAction(ctx *cli.Context) error {
 		return errs.IncompatibleFlagWithFlag(ctx, "token", "provisioner-password-file")
 	case isHost && isAddUser:
 		return errs.IncompatibleFlagWithFlag(ctx, "host", "add-user")
+	case !isHost && hostID != "":
+		return errors.New("flag '--host-id' can only be pass if '--host' is set")
 	case isAddUser && len(principals) > 1:
 		return errors.New("flag '--add-user' is incompatible with more than one principal")
 	}
@@ -270,17 +272,17 @@ func certificateAction(ctx *cli.Context) error {
 			if hostID == "" {
 				u, err = deriveMachineID()
 				if err != nil {
-					return err
+					return errs.Wrap(err, "Unalbe to derive a host-id. Make sure /etc/machine-id exists or pass an explicit id with --host-id.")
 				}
 			} else {
 				u, err = uuid.Parse(hostID)
 				if err != nil {
-					return err
+					return errs.InvalidFlagValue(ctx, sshHostIDFlag.Name, hostID, "")
 				}
 			}
 			uri, err := url.Parse(u.URN())
 			if err != nil {
-				return err
+				return errs.Wrap(err, "failed parsing uuid urn")
 			}
 			csr.URIs = append(csr.URIs, uri)
 
@@ -288,14 +290,14 @@ func certificateAction(ctx *cli.Context) error {
 			// TODO: support setting fields in the CSR a better way
 			csrBytes, err := x509.CreateCertificateRequest(rand.Reader, csr.CertificateRequest, key)
 			if err != nil {
-				return err
+				return errs.Wrap(err, "failed creating certificate request")
 			}
 			newCSR, err := x509.ParseCertificateRequest(csrBytes)
 			if err != nil {
-				return err
+				return errs.Wrap(err, "failed parsing certificate request bytes")
 			}
 			if err := newCSR.CheckSignature(); err != nil {
-				return err
+				return errs.Wrap(err, "failed signature check on new csr")
 			}
 			csr.CertificateRequest = newCSR
 		}
