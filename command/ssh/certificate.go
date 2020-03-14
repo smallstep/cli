@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
+	"crypto/x509"
 	"io/ioutil"
 	"net/url"
 	"strings"
@@ -281,6 +283,21 @@ func certificateAction(ctx *cli.Context) error {
 				return err
 			}
 			csr.URIs = append(csr.URIs, uri)
+
+			// Need to re-make the csr
+			// TODO: support setting fields in the CSR a better way
+			csrBytes, err := x509.CreateCertificateRequest(rand.Reader, csr.CertificateRequest, key)
+			if err != nil {
+				return err
+			}
+			newCSR, err := x509.ParseCertificateRequest(csrBytes)
+			if err != nil {
+				return err
+			}
+			if err := newCSR.CheckSignature(); err != nil {
+				return err
+			}
+			csr.CertificateRequest = newCSR
 		}
 
 		identityCSR = *csr
