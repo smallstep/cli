@@ -272,7 +272,7 @@ func certificateAction(ctx *cli.Context) error {
 			if hostID == "" {
 				u, err = deriveMachineID()
 				if err != nil {
-					return errs.Wrap(err, "Unalbe to derive a host-id. Make sure /etc/machine-id exists or pass an explicit id with --host-id.")
+					return errs.Wrap(err, "Unable to derive a host-id. Make sure /etc/machine-id exists or pass an explicit id with --host-id.")
 				}
 			} else {
 				u, err = uuid.Parse(hostID)
@@ -284,11 +284,18 @@ func certificateAction(ctx *cli.Context) error {
 			if err != nil {
 				return errs.Wrap(err, "failed parsing uuid urn")
 			}
-			csr.URIs = append(csr.URIs, uri)
 
-			// Need to re-make the csr
-			// TODO: support setting fields in the CSR a better way
-			csrBytes, err := x509.CreateCertificateRequest(rand.Reader, csr.CertificateRequest, key)
+			// Hack to add the URI.
+			// TODO: the proper solution would be to add support in
+			// x509util.SplitSANs.
+			template := &x509.CertificateRequest{
+				Subject:        csr.Subject,
+				DNSNames:       csr.DNSNames,
+				IPAddresses:    csr.IPAddresses,
+				EmailAddresses: csr.EmailAddresses,
+				URIs:           []*url.URL{uri},
+			}
+			csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, key)
 			if err != nil {
 				return errs.Wrap(err, "failed creating certificate request")
 			}
