@@ -3,9 +3,7 @@ package ssh
 import (
 	"bytes"
 	"crypto"
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/x509"
 	"io/ioutil"
 	"net/url"
@@ -27,6 +25,7 @@ import (
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -492,19 +491,19 @@ func deriveMachineID() (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	// 32 bytes, not secret
-	key := []byte("moon machines mortify more minds")
-	mac := hmac.New(sha256.New, key)
-	mac.Write(machineID)
-	machineHash := mac.Sum(nil)
-
-	// convert to uuid, definitely not thread-safe
-	r := bytes.NewReader(machineHash)
-	uuid.SetRand(r)
-	defer uuid.SetRand(nil)
-	u, err := uuid.NewRandom()
+	// 16 bytes, not secret
+	key := []byte("man moon machine")
+	mac, err := blake2b.New(16, key)
 	if err != nil {
 		return uuid.Nil, err
 	}
+	mac.Write(machineID)
+	machineHash := mac.Sum(nil)
+	var u uuid.UUID
+	copy(u[:], machineHash)
+	// Make it a v4 uuid (taken from uuid.NewRandom):
+	u[6] = (u[6] & 0x0f) | 0x40 // Version 4
+	u[8] = (u[8] & 0x3f) | 0x80 // Variant is 10
+
 	return u, nil
 }
