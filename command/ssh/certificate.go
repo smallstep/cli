@@ -35,7 +35,7 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "sign a SSH certificate using the the SSH CA",
 		UsageText: `**step ssh certificate** <key-id> <key-file>
-[**--host**] [--host-id**] [**--sign**] [**--principal**=<string>] [**--password-file**=<path>]
+[**--host**] [--**host-id**] [**--sign**] [**--principal**=<string>] [**--password-file**=<path>]
 [**--provisioner-password-file**=<path>] [**--add-user**]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>]
@@ -203,7 +203,7 @@ func certificateAction(ctx *cli.Context) error {
 	case isHost && isAddUser:
 		return errs.IncompatibleFlagWithFlag(ctx, "host", "add-user")
 	case !isHost && hostID != "":
-		return errors.New("flag '--host-id' can only be pass if '--host' is set")
+		return errs.RequiredWithFlag(ctx, sshHostIDFlag.Name, sshHostFlag.Name)
 	case isAddUser && len(principals) > 1:
 		return errors.New("flag '--add-user' is incompatible with more than one principal")
 	}
