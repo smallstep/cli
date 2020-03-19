@@ -147,6 +147,12 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 generating key.`,
 	}
 
+	ProvisionerPasswordFileWithAlias = cli.StringFlag{
+		Name: "provisioner-password-file,password-file",
+		Usage: `The path to the <file> containing the password to decrypt the one-time token
+generating key.`,
+	}
+
 	// CaURL is a cli.Flag used to pass the CA url.
 	CaURL = cli.StringFlag{
 		Name:  "ca-url",

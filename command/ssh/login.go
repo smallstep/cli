@@ -58,7 +58,7 @@ $ step ssh login --not-after 1h joe@smallstep.com
 			flags.Token,
 			sshAddUserFlag,
 			flags.Provisioner,
-			flags.ProvisionerPasswordFile,
+			flags.ProvisionerPasswordFileWithAlias,
 			flags.NotBefore,
 			flags.NotAfter,
 			flags.CaURL,
@@ -88,10 +88,6 @@ func loginAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-
-	// Hack to make the flag "password-file" the content of
-	// "provisioner-password-file" so the token command works as expected
-	ctx.Set("password-file", ctx.String("provisioner-password-file"))
 
 	// Connect to the SSH agent.
 	// step ssh login requires an ssh agent.
