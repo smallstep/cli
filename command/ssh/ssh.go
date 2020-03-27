@@ -114,8 +114,9 @@ var (
 	}
 
 	sshHostIDFlag = cli.StringFlag{
-		Name:  "host-id",
-		Usage: `Specify a <UUID> to identify the host rather than using an auto-generated UUID derived from the machine-id.`,
+		Name: "host-id",
+		Usage: `Specify a <UUID> to identify the host rather than using an auto-generated UUID.
+		If "machine" is passed, derive a UUID from "/etc/machine-id."`,
 	}
 
 	sshSignFlag = cli.BoolFlag{

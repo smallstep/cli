@@ -120,6 +120,19 @@ $ step ssh certificate --host --sign \
 	internal.example.com ssh_host_ecdsa_key.pub
 '''
 
+Sign an SSH public key and generate a host certificate with a custom uuid:
+'''
+$ step ssh certificate --host --host-id 00000000-0000-0000-0000-000000000000 \
+	--sign internal.example.com ssh_host_ecdsa_key.pub
+'''
+
+Sign an SSH public key and generate a host certificate with a uuid derived
+from '/etc/machine-id':
+'''
+$ step ssh certificate --host --host-id machine --sign \
+	internal.example.com ssh_host_ecdsa_key.pub
+'''
+
 Generate an ssh certificate with custom principals from an existing key pair and
 add the certificate to the ssh agent:
 '''
@@ -268,15 +281,21 @@ func certificateAction(ctx *cli.Context) error {
 		// All host identity certs need a URI SAN to work with our ssh API.
 		if isHost {
 			var u = uuid.Nil
-			if hostID == "" {
+			switch hostID {
+			case "":
+				u, err = uuid.NewRandom()
+				if err != nil {
+					return errs.Wrap(err, "Unable to generate a host-id.")
+				}
+			case "machine":
 				u, err = deriveMachineID()
 				if err != nil {
-					return errs.Wrap(err, "Unable to derive a host-id. Make sure /etc/machine-id exists or pass an explicit id with --host-id.")
+					return errs.Wrap(err, "Unable to derive a host-id. Make sure /etc/machine-id exists.")
 				}
-			} else {
+			default:
 				u, err = uuid.Parse(hostID)
 				if err != nil {
-					return errs.InvalidFlagValue(ctx, sshHostIDFlag.Name, hostID, "")
+					return errs.InvalidFlagValue(ctx, sshHostIDFlag.Name, hostID, "[ machine | <UUID> ]")
 				}
 			}
 			uri, err := url.Parse(u.URN())
