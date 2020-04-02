@@ -69,14 +69,14 @@ func hostsAction(ctx *cli.Context) error {
 
 	fmt.Fprintln(w, "HOSTNAME\tID\tTAGS")
 	for _, h := range resp.Hosts {
-		groups := ""
-		for i, hg := range h.HostGroups {
+		tags := ""
+		for i, ht := range h.HostTags {
 			if i > 0 {
-				groups += ","
+				tags += ","
 			}
-			groups += hg.Name
+			tags += ht.Name + "=" + ht.Value
 		}
-		fmt.Fprintln(w, fmt.Sprintf("%s\t%s\t%s", h.Hostname, h.HostID, groups))
+		fmt.Fprintln(w, fmt.Sprintf("%s\t%s\t%s", h.Hostname, h.HostID, tags))
 	}
 	w.Flush()
 	return nil
