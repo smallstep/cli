@@ -1,10 +1,13 @@
-#compdef _step step
+#compdef step
 
 function _step {
   local -a opts
   opts=("${(@f)$(_CLI_ZSH_AUTOCOMPLETE_HACK=1 ${words[@]:0:#words[@]-1} --generate-bash-completion)}")
-
-  _describe 'values' opts
-
-  return
+  if [[ "${opts}" != "" ]]; then
+    _describe -t step-commands 'values' opts
+  else
+    _path_files
+  fi
 }
+
+_step "$@"
