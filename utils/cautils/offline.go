@@ -274,7 +274,7 @@ func (c *OfflineCA) SSHSign(req *api.SSHSignRequest) (*api.SSHSignResponse, erro
 		ValidAfter:  req.ValidAfter,
 		ValidBefore: req.ValidBefore,
 	}
-	cert, err := c.authority.SignSSH(publicKey, signOpts, opts...)
+	cert, err := c.authority.SignSSH(context.Background(), publicKey, signOpts, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (c *OfflineCA) SSHRenew(req *api.SSHRenewRequest) (*api.SSHRenewResponse, e
 	if err != nil {
 		return nil, err
 	}
-	cert, err := c.authority.RenewSSH(oldCert)
+	cert, err := c.authority.RenewSSH(context.Background(), oldCert)
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +345,7 @@ func (c *OfflineCA) SSHRekey(req *api.SSHRekeyRequest) (*api.SSHRekeyResponse, e
 		return nil, err
 	}
 
-	cert, err := c.authority.RekeySSH(oldCert, sshPub, signOpts...)
+	cert, err := c.authority.RekeySSH(context.Background(), oldCert, sshPub, signOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +356,7 @@ func (c *OfflineCA) SSHRekey(req *api.SSHRekeyRequest) (*api.SSHRekeyResponse, e
 // SSHRoots is a wrapper on top of the GetSSHRoots method. It returns an
 // api.SSHRootsResponse.
 func (c *OfflineCA) SSHRoots() (*api.SSHRootsResponse, error) {
-	keys, err := c.authority.GetSSHRoots()
+	keys, err := c.authority.GetSSHRoots(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -375,7 +375,7 @@ func (c *OfflineCA) SSHRoots() (*api.SSHRootsResponse, error) {
 // SSHFederation is a wrapper on top of the GetSSHFederation method. It returns
 // an api.SSHRootsResponse.
 func (c *OfflineCA) SSHFederation() (*api.SSHRootsResponse, error) {
-	keys, err := c.authority.GetSSHFederation()
+	keys, err := c.authority.GetSSHFederation(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -394,7 +394,7 @@ func (c *OfflineCA) SSHFederation() (*api.SSHRootsResponse, error) {
 // SSHConfig is a wrapper on top of the GetSSHConfig method. It returns an
 // api.SSHConfigResponse.
 func (c *OfflineCA) SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse, error) {
-	ts, err := c.authority.GetSSHConfig(req.Type, req.Data)
+	ts, err := c.authority.GetSSHConfig(context.Background(), req.Type, req.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -427,7 +427,7 @@ func (c *OfflineCA) SSHCheckHost(principal string, tok string) (*api.SSHCheckPri
 // SSHGetHosts is a wrapper on top of the CheckSSHHost method. It returns an
 // api.SSHCheckPrincipalResponse.
 func (c *OfflineCA) SSHGetHosts() (*api.SSHGetHostsResponse, error) {
-	hosts, err := c.authority.GetSSHHosts(nil)
+	hosts, err := c.authority.GetSSHHosts(context.Background(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -439,7 +439,7 @@ func (c *OfflineCA) SSHGetHosts() (*api.SSHGetHostsResponse, error) {
 // SSHBastion is a wrapper on top of the GetSSHBastion method. It returns an
 // api.SSHBastionResponse.
 func (c *OfflineCA) SSHBastion(req *api.SSHBastionRequest) (*api.SSHBastionResponse, error) {
-	bastion, err := c.authority.GetSSHBastion(req.User, req.Hostname)
+	bastion, err := c.authority.GetSSHBastion(context.Background(), req.User, req.Hostname)
 	if err != nil {
 		return nil, err
 	}
