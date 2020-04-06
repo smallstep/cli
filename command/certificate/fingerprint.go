@@ -75,6 +75,14 @@ authenticity of the remote server.
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
+			cli.BoolFlag{
+				Name:  "base64-url",
+				Usage: `Returns base64url-encoded thumbprint`,
+			},
+			cli.BoolFlag{
+				Name:  "base64",
+				Usage: `Returns base64-encoded thumbprint`,
+			},
 		},
 	}
 }
@@ -85,13 +93,24 @@ func fingerprintAction(ctx *cli.Context) error {
 	}
 
 	var (
-		certs    []*x509.Certificate
-		err      error
-		roots    = ctx.String("roots")
-		bundle   = ctx.Bool("bundle")
-		insecure = ctx.Bool("insecure")
-		crtFile  = ctx.Args().First()
+		certs     []*x509.Certificate
+		err       error
+		roots     = ctx.String("roots")
+		bundle    = ctx.Bool("bundle")
+		insecure  = ctx.Bool("insecure")
+		crtFile   = ctx.Args().First()
+		base64    = ctx.Bool("base64")
+		base64Url = ctx.Bool("base64-url")
+		encoding  = x509util.HexFingerprint
 	)
+
+	if base64 {
+		encoding = x509util.Base64Fingerprint
+	}
+
+	if base64Url {
+		encoding = x509util.Base64UrlFingerprint
+	}
 
 	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
 		certs, err = getPeerCertificates(addr, roots, insecure)
@@ -111,9 +130,9 @@ func fingerprintAction(ctx *cli.Context) error {
 
 	for i, crt := range certs {
 		if bundle {
-			fmt.Printf("%d: %s\n", i, x509util.Fingerprint(crt))
+			fmt.Printf("%d: %s\n", i, x509util.EncodedFingerprint(crt, encoding))
 		} else {
-			fmt.Println(x509util.Fingerprint(crt))
+			fmt.Println(x509util.EncodedFingerprint(crt, encoding))
 		}
 	}
 	return nil
