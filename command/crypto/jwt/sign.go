@@ -27,7 +27,7 @@ func signCommand() cli.Command {
 [**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
 [**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>]
 [**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]
-[**--password-file**=<path>] [**--x5c-cert**=<path>] [**--x5c-key**=<path>] [**--set=<key=value>**]`,
+[**--password-file**=<path>] [**--x5c-cert**=<path>] [**--x5c-key**=<path>] [**--header=<key=value>**]`,
 		Description: `**step crypto jwt sign** command generates a signed JSON Web Token (JWT) by
 computing a digital signature or message authentication code for a JSON
 payload. By default, the payload to sign is read from STDIN and the JWT will
@@ -202,7 +202,7 @@ the **"kid"** member of one of the JWKs in the JWK Set.`,
 			},
 			flags.X5cCert,
 			cli.StringSliceFlag{
-				Name: "set",
+				Name: "header",
 				Usage: `The <key=value> used as a header in the JWT token. Use the flag multiple 
 times to set multiple headers.`,
 			},
@@ -326,7 +326,7 @@ func signAction(ctx *cli.Context) error {
 		}
 	}
 
-	sets := ctx.StringSlice("set")
+	headers := ctx.StringSlice("header")
 
 	// Add claims
 	c := &jose.Claims{
@@ -375,8 +375,8 @@ func signAction(ctx *cli.Context) error {
 		so.WithHeader("kid", jwk.KeyID)
 	}
 
-	if len(sets) > 0 {
-		for _, s := range sets {
+	if len(headers) > 0 {
+		for _, s := range headers {
 			i := strings.Index(s, "=")
 			if i == -1 {
 				return errs.InvalidFlagValue(ctx, "set", s, "")
