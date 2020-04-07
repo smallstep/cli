@@ -3,6 +3,8 @@ package certificate
 import (
 	"crypto/x509"
 	"fmt"
+	"github.com/pkg/errors"
+	"strings"
 
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
@@ -75,13 +77,9 @@ authenticity of the remote server.
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
-			cli.BoolFlag{
-				Name:  "base64-url",
-				Usage: `Returns base64url-encoded thumbprint`,
-			},
-			cli.BoolFlag{
-				Name:  "base64",
-				Usage: `Returns base64-encoded thumbprint`,
+			cli.StringFlag{
+				Name:  "format",
+				Usage: `Allows fingerprint to be returned as "hex", "base64" or "base64-url".`,
 			},
 		},
 	}
@@ -93,23 +91,18 @@ func fingerprintAction(ctx *cli.Context) error {
 	}
 
 	var (
-		certs     []*x509.Certificate
-		err       error
-		roots     = ctx.String("roots")
-		bundle    = ctx.Bool("bundle")
-		insecure  = ctx.Bool("insecure")
-		crtFile   = ctx.Args().First()
-		base64    = ctx.Bool("base64")
-		base64Url = ctx.Bool("base64-url")
-		encoding  = x509util.HexFingerprint
+		certs    []*x509.Certificate
+		err      error
+		roots    = ctx.String("roots")
+		bundle   = ctx.Bool("bundle")
+		insecure = ctx.Bool("insecure")
+		crtFile  = ctx.Args().First()
+		format   = ctx.String("format")
 	)
 
-	if base64 {
-		encoding = x509util.Base64Fingerprint
-	}
-
-	if base64Url {
-		encoding = x509util.Base64UrlFingerprint
+	encoding, err := getFingerprintFormat(format)
+	if err != nil {
+		return err
 	}
 
 	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
@@ -136,4 +129,17 @@ func fingerprintAction(ctx *cli.Context) error {
 		}
 	}
 	return nil
+}
+
+func getFingerprintFormat(format string) (x509util.FingerprintEncoding, error) {
+	switch strings.ToLower(strings.TrimSpace(format)) {
+	case "hex", "":
+		return x509util.HexFingerprint, nil
+	case "base64":
+		return x509util.Base64Fingerprint, nil
+	case "base64url", "base64-url":
+		return x509util.Base64UrlFingerprint, nil
+	}
+	return x509util.HexFingerprint, errors.Errorf("error parsing fingerprint format: format '%s' is not a valid certificate fingerprint format", format)
+
 }

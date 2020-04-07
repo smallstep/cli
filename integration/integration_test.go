@@ -67,9 +67,10 @@ func TestCertificateFingerprint(t *testing.T) {
 		flag string
 		want string
 	}{
-		{"hex", "test_files/intermediate_ca.crt", "", "626dca961bfde13341b32e7711c7127612988dbc5d0082fb220efd8ab4087b4b"},
-		{"base64", "test_files/intermediate_ca.crt", " --base64", "Ym3Klhv94TNBsy53EccSdhKYjbxdAIL7Ig79irQIe0s="},
-		{"base64url", "test_files/intermediate_ca.crt", " --base64-url", "Ym3Klhv94TNBsy53EccSdhKYjbxdAIL7Ig79irQIe0s="},
+		{"default", "test_files/intermediate_ca.crt", "", "626dca961bfde13341b32e7711c7127612988dbc5d0082fb220efd8ab4087b4b"},
+		{"hex", "test_files/intermediate_ca.crt", " --format=hex", "626dca961bfde13341b32e7711c7127612988dbc5d0082fb220efd8ab4087b4b"},
+		{"base64", "test_files/intermediate_ca.crt", " --format=base64", "Ym3Klhv94TNBsy53EccSdhKYjbxdAIL7Ig79irQIe0s="},
+		{"base64url", "test_files/intermediate_ca.crt", " --format=base64-url", "Ym3Klhv94TNBsy53EccSdhKYjbxdAIL7Ig79irQIe0s="},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
