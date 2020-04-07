@@ -8,8 +8,8 @@ VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
 # .VERSION contains a slug populated by `git archive`.
 VERSION := $(or $(VERSION),$(shell ./.version.sh .VERSION))
 
--include make/common.mk
--include make/docker.mk
+include make/common.mk
+include make/docker.mk
 
 #########################################
 # Debian
