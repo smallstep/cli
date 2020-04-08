@@ -28,10 +28,11 @@ Please don't use the GitHub issue tracker to ask questions.
 
 ## Code Contribution
 
-'step cli` aims to become a fully featured online Certificate
-Authority. We encourage all contributions that meet the following criteria:
+'step cli` aims to become a fully featured toolkit for cryptographic primitives.
+We encourage all contributions that meet the following criteria:
 
-* fit naturally into a Certificate Authority.
+* fit naturally into a toolkit for creating and working with cryptographic
+primitives and higher order resources.
 * strive not to break existing functionality.
 * close or update an open [`step cli` issue](https://github.com/smallstep/cli/issues)
 
