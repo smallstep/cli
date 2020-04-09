@@ -36,6 +36,12 @@ Print details of the given key:
 '''
 $ step crypto key inspect priv.pem
 '''`,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "password-file",
+				Usage: "The path to the <file> containing passphrase to decrypt private key.",
+			},
+		},
 	}
 }
 
@@ -62,7 +68,14 @@ func inspectAction(ctx *cli.Context) error {
 	var key interface{}
 	switch {
 	case bytes.HasPrefix(b, []byte("-----BEGIN ")):
-		if key, err = pemutil.ParseKey(b); err != nil {
+		opts := []pemutil.Options{
+			pemutil.WithFilename(name),
+			pemutil.WithFirstBlock(),
+		}
+		if passFile := ctx.String("password-file"); passFile != "" {
+			opts = append(opts, pemutil.WithPasswordFile(passFile))
+		}
+		if key, err = pemutil.ParseKey(b, opts...); err != nil {
 			return err
 		}
 	case isSSHPublicKey(b):
