@@ -35,7 +35,14 @@ human readable format the public key corresponding to the given <key-file>.
 Print details of the given key:
 '''
 $ step crypto key inspect priv.pem
-'''`,
+'''
+
+## NOTES
+
+This command shows the raw parameters of the keys, it does not include headers
+that the marshaled version of the keys might have. For example, a marshaled
+version an EC public key will have 0x04 in the first byte to indicate the
+uncompressed form specified in section 4.3.6 of ANSI X9.62.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "password-file",
@@ -91,13 +98,13 @@ func inspectAction(ctx *cli.Context) error {
 	switch k := key.(type) {
 	case *rsa.PublicKey:
 		fmt.Printf("RSA Public-Key: (%d bit)\n", k.Size()*8)
-		bigIntPrinter("Modulus", k.N)
+		bigIntPaddedPrinter("Modulus", k.N, k.Size())
 		fmt.Printf("Exponent: %d (0x%x)\n", k.E, k.E)
 	case *rsa.PrivateKey:
 		fmt.Printf("RSA Private-Key: (%d bit)\n", k.Size()*8)
-		bigIntPrinter("Modulus", k.N)
+		bigIntPaddedPrinter("Modulus", k.N, k.Size())
 		fmt.Printf("Public Exponent: %d (0x%x)\n", k.E, k.E)
-		bigIntPrinter("Private Exponent", k.D)
+		bigIntPaddedPrinter("Private Exponent", k.D, k.Size())
 		for i := range k.Primes {
 			bigIntPrinter(fmt.Sprintf("Prime #%d", i+1), k.Primes[i])
 		}
@@ -105,26 +112,25 @@ func inspectAction(ctx *cli.Context) error {
 		bigIntPrinter("Exponent #2", k.Precomputed.Dq)
 		bigIntPrinter("Coefficient", k.Precomputed.Qinv)
 	case *ecdsa.PublicKey:
-		fmt.Printf("ECDSA Public-Key: (%d bit)\n", k.Params().BitSize)
-		bigIntPrinter("X", k.X)
-		bigIntPrinter("Y", k.Y)
+		byteLen := (k.Params().BitSize + 7) >> 3
+		fmt.Printf("EC Public-Key: (%d bit)\n", k.Params().BitSize)
+		bigIntPaddedPrinter("X", k.X, byteLen)
+		bigIntPaddedPrinter("Y", k.Y, byteLen)
 		fmt.Printf("Curve: %s\n", k.Params().Name)
 	case *ecdsa.PrivateKey:
-		fmt.Printf("ECDSA PrivateKey-Key: (%d bit)\n", k.Params().BitSize)
-		bigIntPrinter("X", k.X)
-		bigIntPrinter("Y", k.Y)
-		bigIntPrinter("D", k.D)
+		byteLen := (k.Params().BitSize + 7) >> 3
+		fmt.Printf("EC PrivateKey-Key: (%d bit)\n", k.Params().BitSize)
+		bigIntPaddedPrinter("X", k.X, byteLen)
+		bigIntPaddedPrinter("Y", k.Y, byteLen)
+		bigIntPaddedPrinter("D", k.D, byteLen)
 		fmt.Printf("Curve: %s\n", k.Params().Name)
 	case ed25519.PublicKey:
 		fmt.Printf("Ed25519 Public-Key: (%d bit)\n", 8*len(k))
-		fmt.Print("Public:")
-		bytesPrinter(k)
+		bytesPrinter("Public", k)
 	case ed25519.PrivateKey:
 		fmt.Printf("Ed25519 Private-Key: (%d bit)\n", 8*len(k))
-		fmt.Print("Public:")
-		bytesPrinter(k[32:])
-		fmt.Print("Private:")
-		bytesPrinter(k[:32])
+		bytesPrinter("Public", k[32:])
+		bytesPrinter("Private", k[:32])
 	default:
 		return errors.Errorf("unsupported key type '%T'", k)
 	}
@@ -133,11 +139,15 @@ func inspectAction(ctx *cli.Context) error {
 }
 
 func bigIntPrinter(name string, val *big.Int) {
-	fmt.Print(name + ":")
-	bytesPrinter(val.Bytes())
+	bytesPrinter(name, val.Bytes())
 }
 
-func bytesPrinter(bytes []byte) {
+func bigIntPaddedPrinter(name string, val *big.Int, size int) {
+	bytesPrinter(name, paddedBytes(val.Bytes(), size))
+}
+
+func bytesPrinter(name string, bytes []byte) {
+	fmt.Print(name + ":")
 	for i, b := range bytes {
 		if (i % 16) == 0 {
 			fmt.Print("\n    ")
@@ -148,4 +158,10 @@ func bytesPrinter(bytes []byte) {
 		}
 	}
 	fmt.Println()
+}
+
+func paddedBytes(b []byte, size int) []byte {
+	ret := make([]byte, size)
+	copy(ret[len(ret)-len(b):], b)
+	return ret
 }
