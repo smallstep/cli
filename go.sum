@@ -545,10 +545,10 @@ github.com/smallstep/certificates v0.14.0-rc.1.0.20200128212940-432ed0090f3d h1:
 github.com/smallstep/certificates v0.14.0-rc.1.0.20200128212940-432ed0090f3d/go.mod h1:lWKe0ZOg45lNWtByxh82fOfzXwx93S0TeWzTCOjc19k=
 github.com/smallstep/certificates v0.14.0-rc.2.0.20200129195847-7846696fbb69 h1:HJ1OZ3XLnTdZ96WTNDRMbXkONhi8TO6gcHK+aEPBa58=
 github.com/smallstep/certificates v0.14.0-rc.2.0.20200129195847-7846696fbb69/go.mod h1:vZjJp4hweYVx+rBouWEVOf3KlH2Yilxo/50dsj7y8aY=
-github.com/smallstep/certificates v0.14.0-rc.14.0.20200403191119-eb42ea90db94 h1:jiqAqiY/GjY1njXA847MDqW4rVrVak1Jr2Q3vW5sVGk=
-github.com/smallstep/certificates v0.14.0-rc.14.0.20200403191119-eb42ea90db94/go.mod h1:n1PNji2D/huvLmmWeeqa/l0PElHfItKWxzrlAkOeM9E=
 github.com/smallstep/certificates v0.14.0-rc.16 h1:Bn1+iaKoBAQJ4+qlrMkaNc/v45iroD2hZIBBnib1WE0=
 github.com/smallstep/certificates v0.14.0-rc.16/go.mod h1:n1PNji2D/huvLmmWeeqa/l0PElHfItKWxzrlAkOeM9E=
+github.com/smallstep/certificates v0.14.0 h1:QXwpyV8L2FzWYZKiHvrYyIIbL0+RJ0dYUERC3kssEkc=
+github.com/smallstep/certificates v0.14.0/go.mod h1:NKEa1Rd/EH6WQYsVXOaw1995HzgeoIokRu2ePBVodnA=
 github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339 h1:5T/ToU20n2NinSGxSsq72Wx55ETzXU3WbrYVs96oiiw=
 github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339 h1:5T/ToU20n2NinSGxSsq72Wx55ETzXU3WbrYVs96oiiw=
 github.com/smallstep/certinfo v0.0.0-20191008000228-b0e530932339/go.mod h1:n4YHPL9hJIyB+N4F2rPBy3mpPxMxTGJP5Pdsyaoc2Ns=
@@ -574,6 +574,7 @@ github.com/smallstep/cli v0.14.0-rc.1.0.20200111011727-83a91ec8e405/go.mod h1:MC
 github.com/smallstep/cli v0.14.0-rc.1.0.20200127233252-e55637e57819/go.mod h1:SUBVVdOk5XI7yllSupRYHzN5y4MBo89X27CN4P0d+Jw=
 github.com/smallstep/cli v0.14.0-rc.1.0.20200128213701-65805ae554f6/go.mod h1:50kmsPMAiR9XD0jHZYY19fkSSD3mKF9ztQjgtTLefjU=
 github.com/smallstep/cli v0.14.0-rc.3/go.mod h1:5kg85FrLTaQE0JgV3IZAxuVRS7G5qvV0hxOh0u/H6IE=
+github.com/smallstep/cli v0.14.0/go.mod h1:5v271wcYMSJX0y1PbmU6A95yAm5EVO2Y8Km8TNqqJqU=
 github.com/smallstep/nosql v0.1.1-0.20191009043502-4b26d8029e61/go.mod h1:MFhYHIE/0V7OOHjYzjnWHqySJ40PVbwhjy24UBkJI2g=
 github.com/smallstep/nosql v0.1.1 h1:ijeE3CM00SddioodNl/LWRQINNNCK1dLUsjZDwpUbNg=
 github.com/smallstep/nosql v0.1.1 h1:ijeE3CM00SddioodNl/LWRQINNNCK1dLUsjZDwpUbNg=
