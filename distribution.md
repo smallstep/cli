@@ -126,11 +126,21 @@ e.g. `v1.0.2`
     > **NOTE**: this only needs to be done for standard releases.
 
     1. Fork the homebrew-core repo if you don't already have it.
+
+        If you already have the `homebrew-core` repo with `upstream` remote set
+        to `homebrew-core` origin:
+
+        ```
+        git checkout master
+        git fetch --all
+        git pull upstream master
+        ```
+
     2. Create a branch in your fork.
 
-       <pre><code>
-       <b>$ git checkout -B step-v0.10.0</b>
-       </code></pre>
+        ```
+        git checkout -B step-0.10.0</b>
+        ```
 
     3. Apply changes from `smallstep/smallstep/step` tap.
 
