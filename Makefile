@@ -2,11 +2,33 @@ all: build lint test
 
 .PHONY: all
 
-# Version flags to embed in the binaries
+#################################################
+# Determine the type of `push` and `version`
+#################################################
+
+# If TRAVIS_TAG is set then we know this ref has been tagged.
+ifdef TRAVIS_TAG
+VERSION := $(TRAVIS_TAG)
+NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
+	ifeq ($(NOT_RC),)
+PUSHTYPE := "release-candidate"
+	else
+PUSHTYPE := "release"
+	endif
+else
 VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
 # If we are not in an active git dir then try reading the version from .VERSION.
 # .VERSION contains a slug populated by `git archive`.
 VERSION := $(or $(VERSION),$(shell ./.version.sh .VERSION))
+endif
+
+VERSION := $(shell echo $(VERSION) | sed 's/^v//')
+
+ifdef V
+$(info    TRAVIS_TAG is $(TRAVIS_TAG))
+$(info    VERSION is $(VERSION))
+$(info    PUSHTYPE is $(PUSHTYPE))
+endif
 
 include make/common.mk
 include make/docker.mk
