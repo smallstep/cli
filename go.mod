@@ -5,14 +5,9 @@ go 1.13
 require (
 	github.com/Microsoft/go-winio v0.4.14
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
-	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/corpix/uarand v0.1.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
-	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
-	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.3.1
 	github.com/pkg/errors v0.8.1
 	github.com/pquerna/otp v1.0.0
@@ -30,7 +25,6 @@ require (
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 	golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e
 	gopkg.in/square/go-jose.v2 v2.4.0
-	howett.net/plist v0.0.0-20200225050739-77e249a2e2ba // indirect
 )
 
 // replace github.com/smallstep/certificates => ../certificates
