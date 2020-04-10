@@ -24,19 +24,18 @@ bootstra%:
 # Determine the type of `push` and `version`
 #################################################
 
-# Version flags to embed in the binaries
-VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
-VERSION := $(shell echo $(VERSION) | sed 's/^v//')
-NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
-
 # If TRAVIS_TAG is set then we know this ref has been tagged.
 ifdef TRAVIS_TAG
+	VERSION := $(TRAVIS_TAG)
+	NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
 	ifeq ($(NOT_RC),)
 		PUSHTYPE=release-candidate
 	else
 		PUSHTYPE=release
 	endif
 else
+	VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
+	VERSION := $(shell echo $(VERSION) | sed 's/^v//')
 	PUSHTYPE=master
 endif
 
