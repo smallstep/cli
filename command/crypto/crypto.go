@@ -151,7 +151,7 @@ risks. That said, many of these factors are beyond the scope of this tool.
    half as strong against a quantum attack vs. a conventional attack, so your key
    needs to be twice as long for equivalent quantum-safe security. A 256 bit
    symmetric key in the context of a quantum attack is equivalent in strength to a
-   128 bit key in the context of a conventioanl attack.
+   128 bit key in the context of a conventional attack.
 `,
 		Subcommands: cli.Commands{
 			changePassCommand(),
