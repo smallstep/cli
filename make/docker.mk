@@ -1,21 +1,21 @@
 #########################################
 # Building Docker Image
 #
-# This uses a multi-stage build file. The first stage is a builder (that might be 
-# large in size). After the build has succeed, the statically linked binary is copies
-# to a new image that is optimized for size.
+# This uses a multi-stage build file. The first stage is a builder (that might
+# be large in size). After the build has succeeded, the statically linked
+# binary is copied to a new image that is optimized for size.
 #########################################
 
 docker-prepare:
 	# Ensure, we can build for ARM architecture
 	[ -f /proc/sys/fs/binfmt_misc/qemu-arm ] || docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
-	
+
 	# Register buildx builder
 	mkdir -p $$HOME/.docker/cli-plugins
-	
+
 	wget -O $$HOME/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
 	chmod +x $$HOME/.docker/cli-plugins/docker-buildx
-	
+
 	$$HOME/.docker/cli-plugins/docker-buildx create --name mybuilder --platform amd64 --platform arm || true
 	$$HOME/.docker/cli-plugins/docker-buildx use mybuilder
 
