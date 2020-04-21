@@ -42,16 +42,25 @@ docker-login:
 DOCKER_IMAGE_NAME = smallstep/cli
 PLATFORMS = --platform amd64 --platform 386 --platform arm
 
-# For all builds we build the docker container
+define DOCKER_BUILDX
+	# $(1) -- Image Tag
+	# $(2) -- Push (empty is no push | --push will push to dockerhub)
+	$$HOME/.docker/cli-plugins/docker-buildx build . --progress plain -t $(DOCKER_IMAGE_NAME):$(1) -f docker/Dockerfile $(PLATFORMS) $(2)
+endef
+
+# For non-master builds don't build the docker containers.
+docker-branch:
+
+# For master builds create the docker containers but don't push them.
 docker-master: docker-prepare
-	$$HOME/.docker/cli-plugins/docker-buildx build . --progress plain -t $(DOCKER_IMAGE_NAME):latest -f docker/Dockerfile $(PLATFORMS)
+	$(call DOCKER_BUILDX,latest,)
 
-# For all builds with a release candidate tag
+# For all builds with a release candidate tag build and push the containers.
 docker-release-candidate: docker-prepare docker-login
-	$$HOME/.docker/cli-plugins/docker-buildx build . --progress plain -t $(DOCKER_IMAGE_NAME):$(VERSION) -f docker/Dockerfile $(PLATFORMS) --push
+	$(call DOCKER_BUILDX,$(VERSION),--push)
 
-# For all builds of a release tag
+# For all builds with a release tag build and push the containers.
 docker-release: docker-prepare docker-login
-	$$HOME/.docker/cli-plugins/docker-buildx build . --progress plain -t $(DOCKER_IMAGE_NAME):latest -f docker/Dockerfile $(PLATFORMS) --push
+	$(call DOCKER_BUILDX,latest,--push)
 
-.PHONY: docker-master docker-release-candidate docker-release
+.PHONY: docker-branch docker-master docker-release-candidate docker-release

@@ -20,7 +20,11 @@ VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
 # If we are not in an active git dir then try reading the version from .VERSION.
 # .VERSION contains a slug populated by `git archive`.
 VERSION := $(or $(VERSION),$(shell ./.version.sh .VERSION))
+	ifeq ($(TRAVIS_BRANCH),master)
 PUSHTYPE := master
+	else
+PUSHTYPE := branch
+	endif
 endif
 
 VERSION := $(shell echo $(VERSION) | sed 's/^v//')
@@ -123,14 +127,18 @@ artifacts-tag: artifacts-linux-tag artifacts-darwin-tag artifacts-windows-tag ar
 #################################################
 # Targets for creating step artifacts
 #################################################
+#
+# For all builds that are not tagged and not on the master branch.
+artifacts-branch:
 
-# For all builds that are not tagged
+# For all builds on the master branch (or PRs targeting the master branch) that
+# are not tagged.
 artifacts-master:
 
-# For all builds with a release candidate tag
+# For all builds with a release candidate tag.
 artifacts-release-candidate: artifacts-tag
 
-# For all builds with a release tag
+# For all builds with a release tag.
 artifacts-release: artifacts-tag
 
 # This command is called by travis directly *after* a successful build
