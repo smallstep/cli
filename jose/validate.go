@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
+	"crypto/sha1"
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
@@ -68,6 +69,29 @@ func ValidateX5C(certFile string, key interface{}) ([]string, error) {
 		strs[i] = base64.StdEncoding.EncodeToString(cert.Raw)
 	}
 	return strs, nil
+}
+
+// ValidateX5T validates the given certificate and key for use in an x5t header
+func ValidateX5T(certFile string, key interface{}) (string, error) {
+	if certFile == "" {
+		return "", errors.New("x5t certfile cannot be empty")
+	}
+	cert, err := pemutil.ReadCertificate(certFile)
+	if err != nil {
+		return "", errors.Wrap(err, "error reading x5t certificate from file")
+	}
+	if err = keys.VerifyPair(cert.PublicKey, key); err != nil {
+		return "", errors.Wrap(err, "error verifying x5t certificate and key")
+	}
+	if cert.KeyUsage&x509.KeyUsageDigitalSignature == 0 {
+		return "", errors.New("x5t: certificate/private-key pair used to sign " +
+			"x5t token is not approved for digital signature")
+	}
+
+	// x5t is the base64 URL encoded SHA1 thumbprint
+	// (see https://tools.ietf.org/html/rfc7515#section-4.1.7)
+	fingerprint := sha1.Sum(cert.Raw)
+	return base64.URLEncoding.EncodeToString(fingerprint[:]), nil
 }
 
 // ValidateJWK validates the given JWK.
