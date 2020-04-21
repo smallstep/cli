@@ -270,10 +270,6 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	sans := ctx.StringSlice("san")
-	if len(sans) == 0 {
-		sans = []string{subject}
-	}
-	dnsNames, ips, emails := x509util.SplitSANs(sans)
 
 	var (
 		priv       interface{}
@@ -293,6 +289,11 @@ func createAction(ctx *cli.Context) error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		if len(sans) == 0 {
+			sans = []string{subject}
+		}
+		dnsNames, ips, emails := x509util.SplitSANs(sans)
 
 		csr := &x509.CertificateRequest{
 			Subject: pkix.Name{
@@ -320,6 +321,12 @@ func createAction(ctx *cli.Context) error {
 			caKeyPath = ctx.String("ca-key")
 			profile   x509util.Profile
 		)
+
+		if (len(sans) == 0) && (prof == "leaf") {
+			sans = []string{subject}
+		}
+		dnsNames, ips, emails := x509util.SplitSANs(sans)
+
 		if bundle && prof != "leaf" {
 			return errs.IncompatibleFlagValue(ctx, "bundle", "profile", prof)
 		}
