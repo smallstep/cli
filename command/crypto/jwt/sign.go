@@ -396,11 +396,11 @@ func signAction(ctx *cli.Context) error {
 	}
 
 	if isX5T {
-		certStrs, err := jose.ValidateX5T(x5tCertFile, jwk.Key)
+		fingerprint, err := jose.ValidateX5T(x5tCertFile, jwk.Key)
 		if err != nil {
-			return errors.Wrap(err, "error validating x5t certificate chain and key for use in x5t header")
+			return errors.Wrap(err, "error validating x5t certificate and key for use in x5t header")
 		}
-		so.WithHeader("x5t", certStrs)
+		so.WithHeader("x5t", fingerprint)
 	}
 
 	signer, err := jose.NewSigner(jose.SigningKey{
