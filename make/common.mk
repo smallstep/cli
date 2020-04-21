@@ -16,7 +16,7 @@ OUTPUT_ROOT=output/
 
 bootstra%:
 	# Using a released version of golangci-lint to take into account custom replacements in their go.mod
-	$Q curl -sSfL https://raw.githubusercontent.com/smallstep/cli/master/make/golangci-install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.19.1
+	$Q GO111MODULE=on go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
 
 .PHONY: bootstra%
 
@@ -78,7 +78,7 @@ fmt:
 	$Q gofmt -l -w $(SRC)
 
 lint:
-	$Q LOG_LEVEL=error golangci-lint run
+	$Q LOG_LEVEL=error golangci-lint run --timeout=30m
 
 .PHONY: fmt lint
 
