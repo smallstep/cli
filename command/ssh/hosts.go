@@ -76,7 +76,7 @@ func hostsAction(ctx *cli.Context) error {
 			}
 			tags += ht.Name + "=" + ht.Value
 		}
-		fmt.Fprintln(w, fmt.Sprintf("%s\t%s\t%s", h.Hostname, h.HostID, tags))
+		fmt.Fprintf(w, "%s\t%s\t%s\n", h.Hostname, h.HostID, tags)
 	}
 	w.Flush()
 	return nil
