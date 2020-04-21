@@ -195,18 +195,17 @@ $STEPPATH/config/ca.json`,
 be stored in the 'x5c' header.`,
 	}
 
-	// X5tCert is a cli.Flag used to pass the x5t header certificate thumbprint
-	// for a JWS or JWT.
+	// X5tCert is a cli.Flag used to pass the x5t header certificate thumbprint for a JWT.
 	X5tCert = cli.StringFlag{
 		Name:  "x5t-cert",
-		Usage: "Certificate in PEM format to use for the 'x5t' header of a JWS or JWT",
+		Usage: "Certificate (<chain>) in PEM format to use for the 'x5t' header of a JWT.",
 	}
 
 	// X5tKey is a cli.Flag used to pass the private key (corresponding to the x5t-cert)
 	// that is used to sign the token.
 	X5tKey = cli.StringFlag{
 		Name: "x5t-key",
-		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate used for 
+		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate used for
 the 'x5t' header.`,
 	}
 
