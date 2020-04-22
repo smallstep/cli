@@ -3,6 +3,7 @@ package certificate
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -47,19 +48,24 @@ func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate
 	return conn.ConnectionState().PeerCertificates, nil
 }
 
-// trimURLPrefix returns the url split into prefix and suffix and a bool which
-// tells if the input string had a recognizable URL prefix.
+// trimURL returns the host[:port] if the input is a URL, otherwise returns an
+// empty string (and 'isURL:false').
 //
 // Examples:
-// trimURLPrefix("https://smallstep.com") -> "https://", "smallstep.com", true
-// trimURLPrefix("./certs/root_ca.crt") -> "", "", false
-// trimURLPrefix("hTtPs://sMaLlStEp.cOm") -> "hTtPs://", "sMaLlStEp.cOm", true
-func trimURLPrefix(url string) (string, string, bool) {
-	tmp := strings.ToLower(url)
+// trimURL("https://smallstep.com/onbaording") -> "smallstep.com", true, nil
+// trimURL("https://ca.smallSTEP.com:8080") -> "ca.smallSTEP.com:8080", true, nil
+// trimURL("./certs/root_ca.crt") -> "", false, nil
+// trimURL("hTtPs://sMaLlStEp.cOm") -> "hTtPs://", "sMaLlStEp.cOm", true
+func trimURL(ref string) (string, bool, error) {
+	tmp := strings.ToLower(ref)
 	for _, prefix := range urlPrefixes {
 		if strings.HasPrefix(tmp, prefix) {
-			return url[:len(prefix)], url[len(prefix):], true
+			u, err := url.Parse(ref)
+			if err != nil {
+				return "", false, errors.Wrapf(err, "error parsing URL '%s'", ref)
+			}
+			return u.Host, true, nil
 		}
 	}
-	return "", "", false
+	return "", false, nil
 }

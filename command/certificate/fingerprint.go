@@ -86,14 +86,15 @@ func fingerprintAction(ctx *cli.Context) error {
 
 	var (
 		certs    []*x509.Certificate
-		err      error
 		roots    = ctx.String("roots")
 		bundle   = ctx.Bool("bundle")
 		insecure = ctx.Bool("insecure")
 		crtFile  = ctx.Args().First()
 	)
 
-	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
+	if addr, isURL, err := trimURL(crtFile); err != nil {
+		return err
+	} else if isURL {
 		certs, err = getPeerCertificates(addr, roots, insecure)
 		if err != nil {
 			return err

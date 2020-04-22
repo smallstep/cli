@@ -104,7 +104,9 @@ func verifyAction(ctx *cli.Context) error {
 		cert             *x509.Certificate
 	)
 
-	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
+	if addr, isURL, err := trimURL(crtFile); err != nil {
+		return err
+	} else if isURL {
 		peerCertificates, err := getPeerCertificates(addr, roots, false)
 		if err != nil {
 			return err
