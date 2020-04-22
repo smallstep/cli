@@ -199,7 +199,7 @@ func inspectAction(ctx *cli.Context) error {
 
 	var block *pem.Block
 	var blocks []*pem.Block
-	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
+	if _, addr, isURL := trimURL(crtFile); isURL {
 		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 		if err != nil {
 			return err

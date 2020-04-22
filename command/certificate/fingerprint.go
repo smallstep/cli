@@ -93,7 +93,7 @@ func fingerprintAction(ctx *cli.Context) error {
 		crtFile  = ctx.Args().First()
 	)
 
-	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
+	if _, addr, isURL := trimURL(crtFile); isURL {
 		certs, err = getPeerCertificates(addr, roots, insecure)
 		if err != nil {
 			return err

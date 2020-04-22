@@ -47,18 +47,18 @@ func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate
 	return conn.ConnectionState().PeerCertificates, nil
 }
 
-// trimURLPrefix returns the url split into prefix and suffix and a bool which
+// trimURL returns the url split into prefix and suffix and a bool which
 // tells if the input string had a recognizable URL prefix.
 //
 // Examples:
-// trimURLPrefix("https://smallstep.com") -> "https://", "smallstep.com", true
-// trimURLPrefix("./certs/root_ca.crt") -> "", "", false
-// trimURLPrefix("hTtPs://sMaLlStEp.cOm") -> "hTtPs://", "sMaLlStEp.cOm", true
-func trimURLPrefix(url string) (string, string, bool) {
+// trimURL("https://smallstep.com") -> "https://", "smallstep.com", true
+// trimURL("./certs/root_ca.crt") -> "", "", false
+// trimURL("hTtPs://sMaLlStEp.cOm") -> "hTtPs://", "sMaLlStEp.cOm", true
+func trimURL(url string) (string, string, bool) {
 	tmp := strings.ToLower(url)
 	for _, prefix := range urlPrefixes {
 		if strings.HasPrefix(tmp, prefix) {
-			return url[:len(prefix)], url[len(prefix):], true
+			return url[:len(prefix)], strings.TrimSuffix(url[len(prefix):], "/"), true
 		}
 	}
 	return "", "", false

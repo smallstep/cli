@@ -99,7 +99,7 @@ func lintAction(ctx *cli.Context) error {
 		insecure = ctx.Bool("insecure")
 		block    *pem.Block
 	)
-	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
+	if _, addr, isURL := trimURL(crtFile); isURL {
 		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 		if err != nil {
 			return err
