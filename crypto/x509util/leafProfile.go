@@ -55,8 +55,7 @@ func NewLeafProfileWithCSR(csr *x509.CertificateRequest, iss *x509.Certificate, 
 	}
 
 	sub := defaultLeafTemplate(csr.Subject, iss.Subject)
-	sub.Extensions = csr.Extensions
-	sub.ExtraExtensions = csr.ExtraExtensions
+	sub.ExtraExtensions = csr.Extensions
 	sub.DNSNames = csr.DNSNames
 	sub.EmailAddresses = csr.EmailAddresses
 	sub.IPAddresses = csr.IPAddresses
