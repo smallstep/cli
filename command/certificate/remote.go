@@ -48,25 +48,24 @@ func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate
 	return conn.ConnectionState().PeerCertificates, nil
 }
 
-var errNotURL = errors.New("input is not a URL")
-
-// trimURL returns the url split into prefix and suffix and a bool which
-// tells if the input string had a recognizable URL prefix.
+// trimURL returns the host[:port] if the input is a URL, otherwise returns an
+// empty string (and 'isURL:false').
 //
 // Examples:
-// trimURL("https://smallstep.com") -> "https://", "smallstep.com", true
-// trimURL("./certs/root_ca.crt") -> "", "", false
+// trimURL("https://smallstep.com/onbaording") -> "smallstep.com", true, nil
+// trimURL("https://ca.smallSTEP.com:8080") -> "ca.smallSTEP.com:8080", true, nil
+// trimURL("./certs/root_ca.crt") -> "", false, nil
 // trimURL("hTtPs://sMaLlStEp.cOm") -> "hTtPs://", "sMaLlStEp.cOm", true
-func trimURL(ref string) (string, string, error) {
+func trimURL(ref string) (string, bool, error) {
 	tmp := strings.ToLower(ref)
 	for _, prefix := range urlPrefixes {
 		if strings.HasPrefix(tmp, prefix) {
 			u, err := url.Parse(ref)
 			if err != nil {
-				return "", "", err
+				return "", false, errors.Wrapf(err, "error parsing URL '%s'", ref)
 			}
-			return u.Scheme, u.Host, nil
+			return u.Host, true, nil
 		}
 	}
-	return "", "", errNotURL
+	return "", false, nil
 }

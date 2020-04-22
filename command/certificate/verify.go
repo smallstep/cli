@@ -104,9 +104,9 @@ func verifyAction(ctx *cli.Context) error {
 		cert             *x509.Certificate
 	)
 
-	_, addr, err := trimURL(crtFile)
-	switch err {
-	case nil:
+	if addr, isURL, err := trimURL(crtFile); err != nil {
+		return err
+	} else if isURL {
 		peerCertificates, err := getPeerCertificates(addr, roots, false)
 		if err != nil {
 			return err
@@ -115,7 +115,7 @@ func verifyAction(ctx *cli.Context) error {
 		for _, pc := range peerCertificates {
 			intermediatePool.AddCert(pc)
 		}
-	case errNotURL:
+	} else {
 		crtBytes, err := ioutil.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)
@@ -151,8 +151,6 @@ func verifyAction(ctx *cli.Context) error {
 		if len(ipems) > 0 && !intermediatePool.AppendCertsFromPEM(ipems) {
 			return errors.Errorf("failure creating intermediate list from certificate '%s'", crtFile)
 		}
-	default:
-		return errors.Wrap(err, "error parsing URL")
 	}
 
 	if roots != "" {

@@ -4,7 +4,6 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
@@ -93,20 +92,18 @@ func fingerprintAction(ctx *cli.Context) error {
 		crtFile  = ctx.Args().First()
 	)
 
-	_, addr, err := trimURL(crtFile)
-	switch err {
-	case nil:
+	if addr, isURL, err := trimURL(crtFile); err != nil {
+		return err
+	} else if isURL {
 		certs, err = getPeerCertificates(addr, roots, insecure)
 		if err != nil {
 			return err
 		}
-	case errNotURL:
+	} else {
 		certs, err = pemutil.ReadCertificateBundle(crtFile)
 		if err != nil {
 			return err
 		}
-	default:
-		return errors.Wrap(err, "error parsing URL")
 	}
 
 	if !bundle {
