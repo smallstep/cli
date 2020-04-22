@@ -199,7 +199,9 @@ func inspectAction(ctx *cli.Context) error {
 
 	var block *pem.Block
 	var blocks []*pem.Block
-	if _, addr, isURL := trimURL(crtFile); isURL {
+	_, addr, err := trimURL(crtFile)
+	switch err {
+	case nil:
 		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 		if err != nil {
 			return err
@@ -210,7 +212,7 @@ func inspectAction(ctx *cli.Context) error {
 				Bytes: crt.Raw,
 			})
 		}
-	} else {
+	case errNotURL:
 		crtBytes, err := utils.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)
@@ -233,6 +235,8 @@ func inspectAction(ctx *cli.Context) error {
 			}
 			blocks = append(blocks, block)
 		}
+	default:
+		return errors.Wrap(err, "error parsing URL")
 	}
 
 	// Keep the first one if !bundle

@@ -3,6 +3,7 @@ package certificate
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -47,6 +48,8 @@ func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate
 	return conn.ConnectionState().PeerCertificates, nil
 }
 
+var errNotURL = errors.New("input is not a URL")
+
 // trimURL returns the url split into prefix and suffix and a bool which
 // tells if the input string had a recognizable URL prefix.
 //
@@ -54,12 +57,16 @@ func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate
 // trimURL("https://smallstep.com") -> "https://", "smallstep.com", true
 // trimURL("./certs/root_ca.crt") -> "", "", false
 // trimURL("hTtPs://sMaLlStEp.cOm") -> "hTtPs://", "sMaLlStEp.cOm", true
-func trimURL(url string) (string, string, bool) {
-	tmp := strings.ToLower(url)
+func trimURL(ref string) (string, string, error) {
+	tmp := strings.ToLower(ref)
 	for _, prefix := range urlPrefixes {
 		if strings.HasPrefix(tmp, prefix) {
-			return url[:len(prefix)], strings.TrimSuffix(url[len(prefix):], "/"), true
+			u, err := url.Parse(ref)
+			if err != nil {
+				return "", "", err
+			}
+			return u.Scheme, u.Host, nil
 		}
 	}
-	return "", "", false
+	return "", "", errNotURL
 }

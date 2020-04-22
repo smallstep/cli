@@ -99,7 +99,9 @@ func lintAction(ctx *cli.Context) error {
 		insecure = ctx.Bool("insecure")
 		block    *pem.Block
 	)
-	if _, addr, isURL := trimURL(crtFile); isURL {
+	_, addr, err := trimURL(crtFile)
+	switch err {
+	case nil:
 		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
 		if err != nil {
 			return err
@@ -109,7 +111,7 @@ func lintAction(ctx *cli.Context) error {
 			Type:  "CERTIFICATE",
 			Bytes: crt.Raw,
 		}
-	} else {
+	case errNotURL:
 		crtBytes, err := ioutil.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)
@@ -118,6 +120,8 @@ func lintAction(ctx *cli.Context) error {
 		if block == nil {
 			return errors.Errorf("could not parse certificate file '%s'", crtFile)
 		}
+	default:
+		return errors.Wrap(err, "error parsing URL")
 	}
 
 	zcrt, err := zx509.ParseCertificate(block.Bytes)
