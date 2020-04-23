@@ -55,7 +55,8 @@ func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate
 // trimURL("https://smallstep.com/onbaording") -> "smallstep.com", true, nil
 // trimURL("https://ca.smallSTEP.com:8080") -> "ca.smallSTEP.com:8080", true, nil
 // trimURL("./certs/root_ca.crt") -> "", false, nil
-// trimURL("hTtPs://sMaLlStEp.cOm") -> "hTtPs://", "sMaLlStEp.cOm", true
+// trimURL("hTtPs://sMaLlStEp.cOm") -> "sMaLlStEp.cOm", true, nil
+// trimURL("hTtPs://sMaLlStEp.cOm hello") -> "", false, err{"invalid url"}
 func trimURL(ref string) (string, bool, error) {
 	tmp := strings.ToLower(ref)
 	for _, prefix := range urlPrefixes {
