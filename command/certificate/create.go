@@ -322,7 +322,10 @@ func createAction(ctx *cli.Context) error {
 			profile   x509util.Profile
 		)
 
-		if (len(sans) == 0) && (prof == "leaf") {
+		// If the certificate is a leaf certificate (applies to self-signed leaf
+		// certs) then make sure it gets a default SAN equivalent to the CN if
+		// no other SANs were submitted.
+		if (len(sans) == 0) && ((prof == "leaf") || (prof == "self-signed")) {
 			sans = []string{subject}
 		}
 		dnsNames, ips, emails := x509util.SplitSANs(sans)
