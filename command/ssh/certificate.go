@@ -446,7 +446,7 @@ func certificateAction(ctx *cli.Context) error {
 	}
 
 	// Write Add User keys and certs
-	if isAddUser {
+	if isAddUser && resp.AddUserCertificate != nil {
 		id := provisioner.SanitizeSSHUserPrincipal(subject) + "-provisioner"
 		if _, err := pemutil.Serialize(auPriv, pemutil.WithOpenSSH(true), pemutil.ToFile(baseName+"-provisioner", 0600)); err != nil {
 			return err
@@ -486,10 +486,10 @@ func certificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	if isAddUser {
-		ui.PrintSelected("Provisioner Private Key", baseName+"-provisioner")
-		ui.PrintSelected("Provisioner Public Key", baseName+"-provisioner.pub")
-		ui.PrintSelected("Provisioner Certificate", baseName+"-provisioner-cert.pub")
+	if isAddUser && resp.AddUserCertificate != nil {
+		ui.PrintSelected("Add User Private Key", baseName+"-provisioner")
+		ui.PrintSelected("Add User Public Key", baseName+"-provisioner.pub")
+		ui.PrintSelected("Add User Certificate", baseName+"-provisioner-cert.pub")
 	}
 
 	return nil
