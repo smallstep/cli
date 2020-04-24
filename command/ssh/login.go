@@ -222,10 +222,12 @@ func loginAction(ctx *cli.Context) error {
 		ui.PrintSelected("SSH Agent", "yes")
 	}
 	if isAddUser {
-		if err := agent.AddCertificate(subject, resp.AddUserCertificate.Certificate, auPriv); err != nil {
-			ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
+		if resp.AddUserCertificate == nil {
+			ui.Printf(`{{ "%s" | red }} {{ "Add User Certificate:" | bold }} failed to create a provisioner certificate`+"\n", ui.IconBad)
+		} else if err := agent.AddCertificate(subject, resp.AddUserCertificate.Certificate, auPriv); err != nil {
+			ui.Printf(`{{ "%s" | red }} {{ "Add User Certificate:" | bold }} %v`+"\n", ui.IconBad, err)
 		} else {
-			ui.PrintSelected("SSH Agent", "yes")
+			ui.PrintSelected("Add User Certificate", "yes")
 		}
 	}
 
