@@ -22,10 +22,11 @@ import (
 
 func bootstrapCommand() cli.Command {
 	return cli.Command{
-		Name:      "bootstrap",
-		Action:    command.ActionFunc(bootstrapAction),
-		Usage:     "initialize the environment to use the CA commands",
-		UsageText: `**step ca bootstrap** [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**] [**--redirect-url**=<url>]`,
+		Name:   "bootstrap",
+		Action: command.ActionFunc(bootstrapAction),
+		Usage:  "initialize the environment to use the CA commands",
+		UsageText: `**step ca bootstrap** [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**]
+		[**--team**=name] [**--team-url**=url] [**--redirect-url**=<url>]`,
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
 authority and sets up the current environment to use it.
 
@@ -34,15 +35,46 @@ create a configuration file in <$STEPPATH/configs/defaults.json> with the CA
 url, the root certificate location and its fingerprint.
 
 After the bootstrap, ca commands do not need to specify the flags
---ca-url, --root or --fingerprint if we want to use the same environment.`,
+--ca-url, --root or --fingerprint if we want to use the same environment.
+
+## EXAMPLES
+
+Bootstrap using the CA url and a fingerprint:
+'''
+$ step ca bootstrap --ca-url https://ca.example.org \
+  --fingerprint d9d0978692f1c7cc791f5c343ce98771900721405e834cd27b9502cc719f5097
+'''
+
+Bootstrap and install the root certificate
+'''
+$ step ca bootstrap --ca-url https://ca.example.org \
+  --fingerprint d9d0978692f1c7cc791f5c343ce98771900721405e834cd27b9502cc719f5097 \
+  --install
+'''
+
+Bootstrap using a team name:
+'''
+$ step ca bootstrap --team superteam
+'''
+
+Bootstrap using a team in your environment, this requires an HTTP(S) server
+serving a JSON file like:
+'''
+{"url":"https://ca.example.org","fingerprint":"d9d0978692f1c7cc791f5c343ce98771900721405e834cd27b9502cc719f5097"}
+'''
+
+'''
+$ step ca bootstrap --team superteam --team-url https://config.example.org/superteam
+'''`,
 		Flags: []cli.Flag{
 			flags.CaURL,
 			fingerprintFlag,
-			flags.Team,
 			cli.BoolFlag{
 				Name:  "install",
 				Usage: "Install the root certificate into the system truststore.",
 			},
+			flags.Team,
+			flags.TeamURL,
 			flags.RedirectURL,
 			flags.Force,
 		},
