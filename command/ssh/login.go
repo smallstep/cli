@@ -223,7 +223,7 @@ func loginAction(ctx *cli.Context) error {
 	}
 	if isAddUser {
 		if resp.AddUserCertificate == nil {
-			ui.Printf(`{{ "%s" | red }} {{ "Add User:" | bold }} failed to create a provisioner certificate.`+"\n", ui.IconBad)
+			ui.Printf(`{{ "%s" | red }} {{ "Add User:" | bold }} failed to create a provisioner certificate`+"\n", ui.IconBad)
 		} else if err := agent.AddCertificate(subject, resp.AddUserCertificate.Certificate, auPriv); err != nil {
 			ui.Printf(`{{ "%s" | red }} {{ "Add User:" | bold }} %v`+"\n", ui.IconBad, err)
 		} else {
