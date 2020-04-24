@@ -214,6 +214,12 @@ be stored in the 'sshpop' header.`,
 		Usage: "The team <name> used to bootstrap the environment.",
 	}
 
+	TeamURL = cli.StringFlag{
+		Name: "team-url",
+		Usage: `The <url> step queries to retrieve initial team configuration. Only used with
+the --team option. If the url contains "\<\>" placeholders, they are replaced with the team name.`,
+	}
+
 	RedirectURL = cli.StringFlag{
 		Name:  "redirect-url",
 		Usage: "Terminal OAuth redirect <url>.",
