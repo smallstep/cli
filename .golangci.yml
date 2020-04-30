@@ -63,6 +63,7 @@ issues:
     - declaration of "err" shadows declaration at line
     - should have a package comment, unless it's in another file for this package
     - func `CLICommand.
+    - error strings should not be capitalized or end with punctuation or a newline
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration
 service:

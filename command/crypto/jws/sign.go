@@ -197,6 +197,9 @@ func signAction(ctx *cli.Context) error {
 		if len(x5cKeyFile) == 0 {
 			return errs.RequiredWithOrFlag(ctx, "x5c-cert", "key", "x5c-key")
 		}
+		if len(x5tCertFile) > 0 {
+			return errs.MutuallyExclusiveFlags(ctx, "x5c-cert", "x5t-cert")
+		}
 		if ctx.IsSet("jwk") {
 			return errs.MutuallyExclusiveFlags(ctx, "x5c-cert", "jwk")
 		}
@@ -211,6 +214,9 @@ func signAction(ctx *cli.Context) error {
 		if len(x5tKeyFile) == 0 {
 			return errs.RequiredWithOrFlag(ctx, "x5t-cert", "key", "x5t-key")
 		}
+		if len(x5cCertFile) > 0 {
+			return errs.MutuallyExclusiveFlags(ctx, "x5t-cert", "x5c-cert")
+		}
 		if ctx.IsSet("jwk") {
 			return errs.MutuallyExclusiveFlags(ctx, "x5t-cert", "jwk")
 		}
@@ -220,7 +226,7 @@ func signAction(ctx *cli.Context) error {
 		isX5T = true
 	}
 
-	if !isX5C || !isX5T {
+	if !isX5C && !isX5T {
 		// Validate key, jwks and kid
 		switch {
 		case key == "" && jwks == "":
