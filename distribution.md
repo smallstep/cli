@@ -63,7 +63,7 @@ e.g. `v1.0.2`
 
 3. Synchronize the versions of `cli` and `certificates`.
 
-    > NOTE: If you do not need to update the version of `certificates` required
+    > **NOTE**: If you do not need to update the version of `certificates` required
     > by the `cli` at this time (and vice versa) then thank your lucky stars and
     > move on to step 5.
 
@@ -72,11 +72,11 @@ e.g. `v1.0.2`
     > NOTE: In the subsequent steps let A.B.C be the new tag for the `cli` repo
     > and X.Y.Z be the new tag for the `certificates repo.
 
-    1. Complete steps 1 & 2 from the [certificates distribution doc][0].
+    1. Complete steps 1 & 2 from the [`certificates` distribution doc][1].
 
         Up to the part where a tag has been selected, but not applied.
 
-    2. Bump the version of `cli` in the [certificates go.mod][1] to `vA.B.C`.
+    2. Bump the version of `cli` in the [`certificates` go.mod][2] to `vA.B.C`.
 
     3. Commit the change to go.mod. And push the tag.
 
@@ -88,7 +88,7 @@ e.g. `v1.0.2`
         This pushed tag will break in Travis because `cli@vA.B.C` does not exist.
         That's okay.
 
-    4. Bump the version of `certificates` in the [cli go.mod][1] to `vX.Y.Z`.
+    4. Bump the version of `certificates` in the [`cli` go.mod][3] to `vX.Y.Z`.
 
     5. Commit the change to go.mod. And push the tag.
 
@@ -106,13 +106,13 @@ e.g. `v1.0.2`
         Keep looking it up in the browser or pinging it on the command line until
         it becomes available. ~10 - 20 mins.
 
-    7. In [Travis][2] restart the failed, tagged build for `cli` through the UI.
+    7. In [Travis][4] restart the failed, tagged build for `cli` through the UI.
 
         Now that the `sum.golang.org` entry for `cli` is available the build
         should be able to proceed past downloading the dependencies. Builds of
         `cli` can take up to 15 minutes so sit tight.
 
-    8. In [Travis][3] restart the failed, tagged build for `certificates` through
+    8. In [Travis][5] restart the failed, tagged build for `certificates` through
     the UI.
 
         Wait till the build of `cli` has completed successfully. The `step-ca`
@@ -123,7 +123,7 @@ e.g. `v1.0.2`
 
 4. **Tag it!**
 
-    > NOTE: skip this step if you've already tagged and pushed in the previous
+    > **NOTE**: Skip this step if you've already tagged and pushed in the previous
     > step.
 
     3. **Create a local tag.**
@@ -225,6 +225,12 @@ e.g. `v1.0.2`
     Follow the steps [here](https://github.com/smallstep/docs/blob/master/runbook/release.md).
 
 **All Done!**
+
+[1]: https://github.com/smallstep/certificates/blob/master/distribution.md
+[2]: https://github.com/smallstep/certificates/blob/master/go.mod
+[3]: https://github.com/smallstep/cli/blob/master/go.mod
+[4]: https://travis-ci.com/smallstep/cli/builds/
+[5]: https://travis-ci.com/smallstep/certificates/builds/
 
 ## Versioning
 
