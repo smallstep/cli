@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
+	"crypto/sha1"
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
@@ -44,30 +45,51 @@ func ValidateSSHPOP(certFile string, key interface{}) (string, error) {
 	return base64.StdEncoding.EncodeToString(cert.Marshal()), nil
 }
 
-// ValidateX5C validates the given x5c certificate chain and key for use in an
-// x5c header.
-func ValidateX5C(certFile string, key interface{}) ([]string, error) {
+func validateX5(certFile string, key interface{}) ([]*x509.Certificate, error) {
 	if certFile == "" {
-		return nil, errors.New("x5c certfile cannot be empty")
+		return nil, errors.New("certfile cannot be empty")
 	}
 	certs, err := pemutil.ReadCertificateBundle(certFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "error reading x5c certificate chain from file")
+		return nil, errors.Wrap(err, "error reading certificate chain from file")
 	}
 
 	if err = keys.VerifyPair(certs[0].PublicKey, key); err != nil {
-		return nil, errors.Wrap(err, "error verifying x5c certificate and key")
+		return nil, errors.Wrap(err, "error verifying certificate and key")
 	}
 
 	if certs[0].KeyUsage&x509.KeyUsageDigitalSignature == 0 {
-		return nil, errors.New("x5c: certificate/private-key pair used to sign " +
-			"x5c token is not approved for digital signature")
+		return nil, errors.New("certificate/private-key pair used to sign " +
+			"token is not approved for digital signature")
+	}
+	return certs, nil
+}
+
+// ValidateX5C validates the given certificate chain and key for use as a token
+// signer and x5t header.
+func ValidateX5C(certFile string, key interface{}) ([]string, error) {
+	certs, err := validateX5(certFile, key)
+	if err != nil {
+		return nil, errors.Wrap(err, "ValidateX5C")
 	}
 	strs := make([]string, len(certs))
 	for i, cert := range certs {
 		strs[i] = base64.StdEncoding.EncodeToString(cert.Raw)
 	}
 	return strs, nil
+}
+
+// ValidateX5T validates the given certificate and key for use as a token signer
+// and x5t header.
+func ValidateX5T(certFile string, key interface{}) (string, error) {
+	certs, err := validateX5(certFile, key)
+	if err != nil {
+		return "", errors.Wrap(err, "ValidateX5T")
+	}
+	// x5t is the base64 URL encoded SHA1 thumbprint
+	// (see https://tools.ietf.org/html/rfc7515#section-4.1.7)
+	fingerprint := sha1.Sum(certs[0].Raw)
+	return base64.URLEncoding.EncodeToString(fingerprint[:]), nil
 }
 
 // ValidateJWK validates the given JWK.
