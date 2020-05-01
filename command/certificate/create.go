@@ -179,7 +179,7 @@ recommended. Requires **--insecure** flag.`,
 : <profile> is a case-sensitive string and must be one of:
 
     **leaf**
-	:  Generate a leaf x.509 certificate suitable for use with TLs.
+	:  Generate a leaf x.509 certificate suitable for use with TLS.
 
     **intermediate-ca**
     :  Generate a certificate that can be used to sign additional leaf certificates.
