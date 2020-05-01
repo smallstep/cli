@@ -222,7 +222,7 @@ e.g. `v1.0.2`
 
     > **NOTE**: this only needs to be done for standard releases.
 
-    Follow the steps [here](https://github.com/smallstep/docs/blob/master/runbook/release.md).
+    Follow the steps [here](https://github.com/smallstep/docs/blob/master/runbook/open-source-release.md#lets-get-started).
 
 **All Done!**
 
