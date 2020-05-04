@@ -39,7 +39,7 @@ docker-login:
 # Targets for different type of builds
 #################################################
 
-DOCKER_IMAGE_NAME = smallstep/cli
+DOCKER_IMAGE_NAME = smallstep/step-cli
 PLATFORMS = --platform amd64 --platform 386 --platform arm
 
 define DOCKER_BUILDX
