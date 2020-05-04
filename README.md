@@ -94,7 +94,7 @@ Download and install the latest Debian package from [releases](https://github.co
 <pre><code><b>$ wget https://github.com/smallstep/cli/releases/download/vX.Y.Z/step-cli_X.Y.Z_amd64.deb</b>
 
 # Install the Debian package:
-<b>$ sudo dpkg -i step_X.Y.Z_amd64.deb</b></code></pre>
+<b>$ sudo dpkg -i step-cli_X.Y.Z_amd64.deb</b></code></pre>
 
 #### Arch Linux
 
