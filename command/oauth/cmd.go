@@ -447,6 +447,16 @@ func (o *oauth) NewServer() (*httptest.Server, error) {
 		Config:   &http.Server{Handler: o},
 	}
 	srv.Start()
+
+	// Update host to use for example localhost
+	if host != "127.0.0.1" {
+		_, p, err := net.SplitHostPort(l.Addr().String())
+		if err != nil {
+			return nil, errors.Wrapf(err, "error parsing %s", l.Addr().String())
+		}
+		srv.URL = "http://" + host + ":" + p
+	}
+
 	return srv, nil
 }
 
