@@ -48,7 +48,6 @@ the prefix 'base64:' and the standard base64 encoding of the data, e.g.
 'base64:081D3pFPBkwx1bURR9HQjiYbAUxigo0Z'. The prefix 'string:' is also
 accepted, but it will be equivalent to not using a prefix. Nonces cannot longer
 than 24 bytes.
-*/
 
 NaCl crypto_box is not meant to provide non-repudiation. On the contrary: they
 guarantee repudiability. A receiver can freely modify a boxed message, and
