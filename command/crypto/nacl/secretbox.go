@@ -32,6 +32,12 @@ uniqueness of nonces—for example, by using nonce 1 for the first message, nonc
 2 for the second message, etc. Nonces are long enough that randomly generated
 nonces have negligible risk of collision.
 
+By default nonce are alphanumeric, but it's possible to use binary nonces using
+the prefix 'base64:' and the standard base64 encoding of the data, e.g.
+'base64:081D3pFPBkwx1bURR9HQjiYbAUxigo0Z'. The prefix 'string:' is also
+accepted, but it will be equivalent to not using a prefix. Nonces cannot longer
+than 24 bytes.
+
 NaCl crypto_secretbox is crypto_secretbox_xsalsa20poly1305, a particular
 combination of Salsa20 and Poly1305 specified in "Cryptography in NaCl". This
 function is conjectured to meet the standard notions of privacy and
