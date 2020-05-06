@@ -52,6 +52,12 @@ $ cat message.txt | step crypto nacl secretbox seal nonce secretbox.key
 o2NJTsIJsk0dl4epiBwS1mM4xFED7iE
 '''
 
+Encrypt the message using a base64 nonce:
+'''
+$ cat message.txt | step crypto nacl secretbox seal base64:bm9uY2U= secretbox.key
+o2NJTsIJsk0dl4epiBwS1mM4xFED7iE
+'''
+
 Decrypt and authenticate the message:
 '''
 $ echo o2NJTsIJsk0dl4epiBwS1mM4xFED7iE | step crypto nacl secretbox open nonce secretbox.key
@@ -76,7 +82,18 @@ secret key and a nonce.
 
 This command uses an implementation of NaCl's crypto_secretbox_open function.
 
-For examples, see **step help crypto nacl secretbox**.`,
+For examples, see **step help crypto nacl secretbox**.
+
+## POSITIONAL ARGUMENTS
+
+<nonce>
+:  The nonce provided when the secretbox was sealed.
+
+:  To use a binary nonce use the prefix 'base64:' and the standard base64
+encoding. e.g. base64:081D3pFPBkwx1bURR9HQjiYbAUxigo0Z
+
+<key-file>
+:  The path to the shared key.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "raw",
@@ -98,7 +115,18 @@ a secret key and a nonce.
 
 This command uses an implementation of NaCl's crypto_secretbox function.
 
-For examples, see **step help crypto nacl secretbox**.`,
+For examples, see **step help crypto nacl secretbox**.
+
+## POSITIONAL ARGUMENTS
+
+<nonce>
+:  Must be unique for each distinct message for a given key.
+
+:  To use a binary nonce use the prefix 'base64:' and the standard base64
+encoding. e.g. base64:081D3pFPBkwx1bURR9HQjiYbAUxigo0Z
+
+<key-file>
+:  The path to the shared key.`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "raw",
@@ -114,7 +142,11 @@ func secretboxOpenAction(ctx *cli.Context) error {
 	}
 
 	args := ctx.Args()
-	nonce, keyFile := []byte(args[0]), args[1]
+	nonce, err := decodeNonce(args[0])
+	if err != nil {
+		return err
+	}
+	keyFile := args[1]
 
 	if len(nonce) > 24 {
 		return errors.New("nonce cannot be longer than 24 bytes")
@@ -168,7 +200,11 @@ func secretboxSealAction(ctx *cli.Context) error {
 	}
 
 	args := ctx.Args()
-	nonce, keyFile := []byte(args[0]), args[1]
+	nonce, err := decodeNonce(args[0])
+	if err != nil {
+		return err
+	}
+	keyFile := args[1]
 
 	if len(nonce) > 24 {
 		return errors.New("nonce cannot be longer than 24 bytes")

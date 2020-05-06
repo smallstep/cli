@@ -84,6 +84,12 @@ private key and validates the message from Bob using his public key:
 '''
 $ echo 0oM0A6xIezA6iMYssZECmbMRQh77mzDt | step crypto nacl box open nonce bob.box.pub alice.box.priv
 message
+'''
+
+Decrypt the message using a base64 nonce:
+'''
+$ echo 0oM0A6xIezA6iMYssZECmbMRQh77mzDt | step crypto nacl box open base64:bm9uY2U= bob.box.pub alice.box.priv
+message
 '''`,
 		Subcommands: cli.Commands{
 			boxKeypairCommand(),
@@ -137,6 +143,9 @@ For examples, see **step help crypto nacl box**.
 <nonce>
 :  The nonce provided when the box was sealed.
 
+:  To use a binary nonce use the prefix 'base64:' and the standard base64
+encoding. e.g. base64:081D3pFPBkwx1bURR9HQjiYbAUxigo0Z
+
 <sender-pub-key>
 :  The path to the public key of the peer that produced the sealed box.
 
@@ -170,6 +179,9 @@ For examples, see **step help crypto nacl box**.
 
 <nonce>
 :  Must be unique for each distinct message for a given pair of keys.
+
+:  To use a binary nonce use the prefix 'base64:' and the standard base64
+encoding. e.g. base64:081D3pFPBkwx1bURR9HQjiYbAUxigo0Z
 
 <recipient-pub-key>
 :  The path to the public key of the intended recipient of the sealed box.
@@ -220,7 +232,11 @@ func boxOpenAction(ctx *cli.Context) error {
 	}
 
 	args := ctx.Args()
-	nonce, pubFile, privFile := []byte(args[0]), args[1], args[2]
+	nonce, err := decodeNonce(args[0])
+	if err != nil {
+		return err
+	}
+	pubFile, privFile := args[1], args[2]
 
 	if len(nonce) > 24 {
 		return errors.New("nonce cannot be longer than 24 bytes")
@@ -282,7 +298,11 @@ func boxSealAction(ctx *cli.Context) error {
 	}
 
 	args := ctx.Args()
-	nonce, pubFile, privFile := []byte(args[0]), args[1], args[2]
+	nonce, err := decodeNonce(args[0])
+	if err != nil {
+		return err
+	}
+	pubFile, privFile := args[1], args[2]
 
 	if len(nonce) > 24 {
 		return errors.New("nonce cannot be longer than 24 bytes")
