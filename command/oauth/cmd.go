@@ -496,16 +496,26 @@ func (o *oauth) NewServer() (*httptest.Server, error) {
 	}
 	srv.Start()
 
-	// Update host to use for example localhost
-	if host != "127.0.0.1" {
-		_, p, err := net.SplitHostPort(l.Addr().String())
-		if err != nil {
-			return nil, errors.Wrapf(err, "error parsing %s", l.Addr().String())
-		}
-		srv.URL = "http://" + host + ":" + p
-	}
-
 	return srv, nil
+}
+
+// srv is a running httptest.Server.
+func GetRedirectURI(o *oauth, srv *httptest.Server) (string, error) {
+	host, port, err := net.SplitHostPort(srv.Listener.Addr().String())
+	if err != nil {
+		return "", err
+	}
+	if o.CallbackListener == "" {
+		return "http://" + host + ":" + port, nil
+	}
+	host, _, err = net.SplitHostPort(o.CallbackListener)
+	if err != nil {
+		return "", err
+	}
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	return "http://" + host + ":" + port, nil
 }
 
 // DoLoopbackAuthorization performs the log in into the identity provider
@@ -516,7 +526,10 @@ func (o *oauth) DoLoopbackAuthorization() (*token, error) {
 	if err != nil {
 		return nil, err
 	}
-	o.redirectURI = srv.URL
+	o.redirectURI, err = GetRedirectURI(o, srv)
+	if err != nil {
+		return nil, err
+	}
 	defer srv.Close()
 
 	// Get auth url and open it in a browser
