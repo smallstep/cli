@@ -42,7 +42,7 @@ func addCommand() cli.Command {
 [**--pem-keys=<file>**] [**--ca-config**=<file>]...
 
 **step ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
-[**--ca-config**=<file>] [**--aws-account**=<id>]
+[**--ca-config**=<file>] [**--aws-account**=<id>] [**--imds-version**=<versions>]
 [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--instance-age**=<duration>] [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
@@ -145,7 +145,14 @@ Use the flag multiple times to configure multiple service accounts.`,
 			cli.StringSliceFlag{
 				Name: "gcp-project",
 				Usage: `The Google project <id> used to validate the identity tokens.
-Use the flag multipl etimes to configure multiple projects`,
+Use the flag multiple times to configure multiple projects`,
+			},
+			cli.StringSliceFlag{
+				Name: "imds-version",
+				Usage: `AWS Instance Metadata Service version to use to validate identity documents.
+The current supported versions are "v1" or "v2".  By default v2 is used then a
+fallback is done to v1 if it is not available. Use the flag multiple times in the order of
+precedence if you wish to change the default behavior.`,
 			},
 			cli.DurationFlag{
 				Name: "instance-age",
@@ -233,10 +240,10 @@ $ step ca provisioner add Google --type oidc --ca-config ca.json \
   --domain smallstep.com
 '''
 
-Add an AWS provisioner on one account with a one hour of intance age:
+Add an AWS provisioner on one account with a one hour of intance age using IMDS v1 only:
 '''
 $ step ca provisioner add Amazon --type AWS --ca-config ca.json \
-  --aws-account 123456789 --instance-age 1h
+  --aws-account 123456789 --instance-age 1h --imds-version v1
 '''
 
 Add an GCP provisioner with two service accounts and two project ids:
@@ -491,12 +498,29 @@ func addAWSProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 		return nil, err
 	}
 
+	// validate IMDS versions before we send them over to the CA
+	imdsVersions := ctx.StringSlice("imds-version")
+	if len(imdsVersions) == 0 {
+		imdsVersions = []string{"v2", "v1"}
+	}
+	for _, v := range imdsVersions {
+		switch v {
+		case "v1":
+			// valid
+		case "v2":
+			// valid
+		default:
+			return nil, errors.Errorf("%s: not a supported AWS Instance Metadata Service version", v)
+		}
+	}
+
 	p := &provisioner.AWS{
 		Type:                   provisioner.TypeAWS.String(),
 		Name:                   name,
 		Accounts:               ctx.StringSlice("aws-account"),
 		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
 		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
+		IMDSVersions:           imdsVersions,
 		InstanceAge:            d,
 		Claims:                 getClaims(ctx),
 	}
