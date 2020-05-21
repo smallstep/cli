@@ -4,7 +4,6 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
 	"net"
@@ -24,6 +23,7 @@ import (
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/pkiutils"
 	"github.com/urfave/cli"
 )
 
@@ -235,6 +235,8 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		return nil, nil, err
 	}
 
+	pkixName, _ := pkiutils.ParseSubject(subject)
+
 	dnsNames, ips, emails := splitSANs(sans, jwt.Payload.SANs)
 	switch jwt.Payload.Type() {
 	case token.AWS:
@@ -245,7 +247,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 				fmt.Sprintf("ip-%s.%s.compute.internal", strings.Replace(doc.PrivateIP, ".", "-", -1), doc.Region),
 			}
 			if !sharedContext.DisableCustomSANs {
-				defaultSANs = append(defaultSANs, subject)
+				defaultSANs = append(defaultSANs, pkixName.CommonName)
 			}
 			dnsNames, ips, emails = splitSANs(defaultSANs)
 		}
@@ -257,7 +259,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 				fmt.Sprintf("%s.%s.c.%s.internal", ce.InstanceName, ce.Zone, ce.ProjectID),
 			}
 			if !sharedContext.DisableCustomSANs {
-				defaultSANs = append(defaultSANs, subject)
+				defaultSANs = append(defaultSANs, pkixName.CommonName)
 			}
 			dnsNames, ips, emails = splitSANs(defaultSANs)
 		}
@@ -267,7 +269,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 				jwt.Payload.Azure.VirtualMachine,
 			}
 			if !sharedContext.DisableCustomSANs {
-				defaultSANs = append(defaultSANs, subject)
+				defaultSANs = append(defaultSANs, pkixName.CommonName)
 			}
 			dnsNames, ips, emails = splitSANs(defaultSANs)
 		}
@@ -275,15 +277,14 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		if jwt.Payload.Email != "" {
 			emails = append(emails, jwt.Payload.Email)
 		}
-		subject = jwt.Payload.Subject
-	default: // Use common name in the token
-		subject = jwt.Payload.Subject
+		pkixName, _ = pkiutils.ParseSubject(jwt.Payload.Subject)
+
+	default: // Use subject in the token
+		pkixName, _ = pkiutils.ParseSubject(jwt.Payload.Subject)
 	}
 
 	template := &x509.CertificateRequest{
-		Subject: pkix.Name{
-			CommonName: subject,
-		},
+		Subject:        pkixName,
 		DNSNames:       dnsNames,
 		IPAddresses:    ips,
 		EmailAddresses: emails,

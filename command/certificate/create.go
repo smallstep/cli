@@ -3,7 +3,6 @@ package certificate
 import (
 	"crypto/rand"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/pem"
 
 	"github.com/pkg/errors"
@@ -15,6 +14,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/pkiutils"
 	"github.com/urfave/cli"
 )
 
@@ -290,15 +290,17 @@ func createAction(ctx *cli.Context) error {
 			return errors.WithStack(err)
 		}
 
-		if len(sans) == 0 {
-			sans = []string{subject}
+		// CSRs must include the CN in the SAN as required by the CA/B forum
+		n, _ := pkiutils.ParseSubject(subject)
+		if n.CommonName == "" {
+			return errors.WithStack(errors.New("common name (CN) is required in the certificate subject"))
 		}
+		sans = append(sans, n.CommonName)
 		dnsNames, ips, emails := x509util.SplitSANs(sans)
 
+		pkixName, _ := pkiutils.ParseSubject(subject)
 		csr := &x509.CertificateRequest{
-			Subject: pkix.Name{
-				CommonName: subject,
-			},
+			Subject:        pkixName,
 			DNSNames:       dnsNames,
 			IPAddresses:    ips,
 			EmailAddresses: emails,
@@ -322,11 +324,13 @@ func createAction(ctx *cli.Context) error {
 			profile   x509util.Profile
 		)
 
-		// If the certificate is a leaf certificate (applies to self-signed leaf
-		// certs) then make sure it gets a default SAN equivalent to the CN if
-		// no other SANs were submitted.
-		if (len(sans) == 0) && ((prof == "leaf") || (prof == "self-signed")) {
-			sans = []string{subject}
+		// leaf and self-signed certs must include the CN in the SAN as required by the CA/B forum
+		if (prof == "leaf") || (prof == "self-signed") {
+			n, _ := pkiutils.ParseSubject(subject)
+			if n.CommonName == "" {
+				return errors.WithStack(errors.New("common name (CN) is required in the certificate subject"))
+			}
+			sans = append(sans, n.CommonName)
 		}
 		dnsNames, ips, emails := x509util.SplitSANs(sans)
 

@@ -13,6 +13,7 @@ import (
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
+	"github.com/smallstep/cli/utils/pkiutils"
 	"github.com/urfave/cli"
 )
 
@@ -174,7 +175,8 @@ func signCertificateAction(ctx *cli.Context) error {
 		// Common name will be validated on the server side, it depends on
 		// server configuration.
 	default:
-		if !strings.EqualFold(jwt.Payload.Subject, csr.Subject.CommonName) {
+		pkixName, _ := pkiutils.ParseSubject(jwt.Payload.Subject)
+		if !strings.EqualFold(pkixName.CommonName, csr.Subject.CommonName) {
 			return errors.Errorf("token subject '%s' and CSR CommonName '%s' do not match", jwt.Payload.Subject, csr.Subject.CommonName)
 		}
 	}

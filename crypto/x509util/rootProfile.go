@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/utils/pkiutils"
 )
 
 // DefaultRootCertValidity is the default validity of a root certificate in the step PKI.
@@ -23,7 +24,8 @@ func (r *Root) DefaultDuration() time.Duration {
 
 // NewRootProfile returns a new root x509 Certificate profile.
 func NewRootProfile(name string, withOps ...WithOption) (Profile, error) {
-	crt := defaultRootTemplate(name)
+	pkixName, _ := pkiutils.ParseSubject(name)
+	crt := defaultRootTemplate(pkixName)
 	return NewRootProfileWithTemplate(crt, withOps...)
 }
 
@@ -38,7 +40,7 @@ func NewRootProfileWithTemplate(crt *x509.Certificate, withOps ...WithOption) (P
 	return p, nil
 }
 
-func defaultRootTemplate(cn string) *x509.Certificate {
+func defaultRootTemplate(sub pkix.Name) *x509.Certificate {
 	notBefore := time.Now()
 	return &x509.Certificate{
 		IsCA:                  true,
@@ -48,7 +50,7 @@ func defaultRootTemplate(cn string) *x509.Certificate {
 		BasicConstraintsValid: true,
 		MaxPathLen:            1,
 		MaxPathLenZero:        false,
-		Issuer:                pkix.Name{CommonName: cn},
-		Subject:               pkix.Name{CommonName: cn},
+		Issuer:                sub,
+		Subject:               sub,
 	}
 }

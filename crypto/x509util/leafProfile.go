@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/utils/pkiutils"
 )
 
 // Leaf implements the Profile for a leaf certificate.
@@ -27,7 +28,8 @@ func NewLeafProfileWithTemplate(sub *x509.Certificate, iss *x509.Certificate, is
 // A new public/private key pair will be generated for the Profile if
 // not set in the `withOps` profile modifiers.
 func NewLeafProfile(cn string, iss *x509.Certificate, issPriv crypto.PrivateKey, withOps ...WithOption) (Profile, error) {
-	sub := defaultLeafTemplate(pkix.Name{CommonName: cn}, iss.Subject)
+	pkixName, _ := pkiutils.ParseSubject(cn)
+	sub := defaultLeafTemplate(pkixName, iss.Subject)
 	return newProfile(&Leaf{}, sub, iss, issPriv, withOps...)
 }
 
@@ -35,7 +37,8 @@ func NewLeafProfile(cn string, iss *x509.Certificate, issPriv crypto.PrivateKey,
 // A new public/private key pair will be generated for the Profile if
 // not set in the `withOps` profile modifiers.
 func NewSelfSignedLeafProfile(cn string, withOps ...WithOption) (Profile, error) {
-	sub := defaultLeafTemplate(pkix.Name{CommonName: cn}, pkix.Name{CommonName: cn})
+	pkixName, _ := pkiutils.ParseSubject(cn)
+	sub := defaultLeafTemplate(pkixName, pkixName)
 	p, err := newProfile(&Leaf{}, sub, sub, nil, withOps...)
 	if err != nil {
 		return nil, err

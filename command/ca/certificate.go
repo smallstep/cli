@@ -11,6 +11,7 @@ import (
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
+	"github.com/smallstep/cli/utils/pkiutils"
 	"github.com/urfave/cli"
 )
 
@@ -211,7 +212,8 @@ func certificateAction(ctx *cli.Context) error {
 		if ctx.String("token") != "" && len(sans) > 0 {
 			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
 		}
-		if !strings.EqualFold(subject, req.CsrPEM.Subject.CommonName) {
+		pkixName, _ := pkiutils.ParseSubject(subject)
+		if !strings.EqualFold(pkixName.CommonName, req.CsrPEM.Subject.CommonName) {
 			return errors.Errorf("token subject '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
 	case token.OIDC: // Validate that the subject matches an email SAN

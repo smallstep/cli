@@ -5,6 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"time"
+
+	"github.com/smallstep/cli/utils/pkiutils"
 )
 
 // DefaultIntermediateCertValidity is the default validity of a intermediate certificate in the step PKI.
@@ -22,11 +24,12 @@ func (i *Intermediate) DefaultDuration() time.Duration {
 
 // NewIntermediateProfile returns a new intermediate x509 Certificate profile.
 func NewIntermediateProfile(name string, iss *x509.Certificate, issPriv crypto.PrivateKey, withOps ...WithOption) (Profile, error) {
-	sub := defaultIntermediateTemplate(name)
+	pkixName, _ := pkiutils.ParseSubject(name)
+	sub := defaultIntermediateTemplate(pkixName)
 	return newProfile(&Intermediate{}, sub, iss, issPriv, withOps...)
 }
 
-func defaultIntermediateTemplate(name string) *x509.Certificate {
+func defaultIntermediateTemplate(sub pkix.Name) *x509.Certificate {
 	notBefore := time.Now()
 	return &x509.Certificate{
 		IsCA:                  true,
@@ -36,7 +39,7 @@ func defaultIntermediateTemplate(name string) *x509.Certificate {
 		BasicConstraintsValid: true,
 		MaxPathLen:            0,
 		MaxPathLenZero:        true,
-		Issuer:                pkix.Name{CommonName: name},
-		Subject:               pkix.Name{CommonName: name},
+		Issuer:                sub,
+		Subject:               sub,
 	}
 }
