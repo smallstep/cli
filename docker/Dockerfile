@@ -1,4 +1,3 @@
-
 FROM golang:alpine AS builder
 
 RUN mkdir /src
