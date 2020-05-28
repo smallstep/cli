@@ -75,6 +75,10 @@ authenticity of the remote server.
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
+			cli.StringFlag{
+				Name:  "servername",
+				Usage: `TLS Server Name Indication that should be sent to request a specific certificate for validation.`,
+			},
 		},
 	}
 }
@@ -85,17 +89,18 @@ func fingerprintAction(ctx *cli.Context) error {
 	}
 
 	var (
-		certs    []*x509.Certificate
-		roots    = ctx.String("roots")
-		bundle   = ctx.Bool("bundle")
-		insecure = ctx.Bool("insecure")
-		crtFile  = ctx.Args().First()
+		certs      []*x509.Certificate
+		serverName = ctx.String("servername")
+		roots      = ctx.String("roots")
+		bundle     = ctx.Bool("bundle")
+		insecure   = ctx.Bool("insecure")
+		crtFile    = ctx.Args().First()
 	)
 
 	if addr, isURL, err := trimURL(crtFile); err != nil {
 		return err
 	} else if isURL {
-		certs, err = getPeerCertificates(addr, roots, insecure)
+		certs, err = getPeerCertificates(addr, serverName, roots, insecure)
 		if err != nil {
 			return err
 		}

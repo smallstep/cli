@@ -22,7 +22,7 @@ func inspectCommand() cli.Command {
 		Action: cli.ActionFunc(inspectAction),
 		Usage:  `print certificate or CSR details in human readable format`,
 		UsageText: `**step certificate inspect** <crt_file>
-[**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]`,
+[**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
 		Description: `**step certificate inspect** prints the details of a certificate
 or CSR in a human readable format. Output from the inspect command is printed to
 STDERR instead of STDOUT unless. This is an intentional barrier to accidental
@@ -172,6 +172,10 @@ if the input bundle includes any PEM that does not have type CERTIFICATE.`,
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
+			cli.StringFlag{
+				Name:  "servername",
+				Usage: `TLS Server Name Indication that should be sent to request a specific certificate for validation.`,
+			},
 		},
 	}
 }
@@ -182,12 +186,13 @@ func inspectAction(ctx *cli.Context) error {
 	}
 
 	var (
-		crtFile  = ctx.Args().Get(0)
-		bundle   = ctx.Bool("bundle")
-		format   = ctx.String("format")
-		roots    = ctx.String("roots")
-		short    = ctx.Bool("short")
-		insecure = ctx.Bool("insecure")
+		crtFile    = ctx.Args().Get(0)
+		bundle     = ctx.Bool("bundle")
+		format     = ctx.String("format")
+		roots      = ctx.String("roots")
+		serverName = ctx.String("servername")
+		short      = ctx.Bool("short")
+		insecure   = ctx.Bool("insecure")
 	)
 
 	if format != "text" && format != "json" {
@@ -202,7 +207,7 @@ func inspectAction(ctx *cli.Context) error {
 	if addr, isURL, err := trimURL(crtFile); err != nil {
 		return err
 	} else if isURL {
-		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
+		peerCertificates, err := getPeerCertificates(addr, serverName, roots, insecure)
 		if err != nil {
 			return err
 		}

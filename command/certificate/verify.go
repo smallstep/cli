@@ -86,6 +86,10 @@ authenticity of the remote server.
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
+			cli.StringFlag{
+				Name:  "servername",
+				Usage: `TLS Server Name Indication that should be sent to request a specific certificate for validation.`,
+			},
 		},
 	}
 }
@@ -98,6 +102,7 @@ func verifyAction(ctx *cli.Context) error {
 	var (
 		crtFile          = ctx.Args().Get(0)
 		host             = ctx.String("host")
+		serverName       = ctx.String("servername")
 		roots            = ctx.String("roots")
 		intermediatePool = x509.NewCertPool()
 		rootPool         *x509.CertPool
@@ -107,7 +112,7 @@ func verifyAction(ctx *cli.Context) error {
 	if addr, isURL, err := trimURL(crtFile); err != nil {
 		return err
 	} else if isURL {
-		peerCertificates, err := getPeerCertificates(addr, roots, false)
+		peerCertificates, err := getPeerCertificates(addr, serverName, roots, false)
 		if err != nil {
 			return err
 		}
