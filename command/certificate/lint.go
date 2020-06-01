@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/smallstep/zlint"
 	"github.com/urfave/cli"
@@ -15,10 +16,11 @@ import (
 
 func lintCommand() cli.Command {
 	return cli.Command{
-		Name:      "lint",
-		Action:    cli.ActionFunc(lintAction),
-		Usage:     `lint certificate details`,
-		UsageText: `**step certificate lint** <crt_file> [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
+		Name:   "lint",
+		Action: cli.ActionFunc(lintAction),
+		Usage:  `lint certificate details`,
+		UsageText: `**step certificate lint** <crt_file> [**--roots**=<root-bundle>]
+[**--servername**=<servername>]`,
 		Description: `**step certificate lint** checks a certificate for common
 errors and outputs the result in JSON format.
 
@@ -84,10 +86,7 @@ authenticity of the remote server.
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
-			cli.StringFlag{
-				Name:  "servername",
-				Usage: `TLS Server Name Indication that should be sent to request a specific certificate for validation.`,
-			},
+			flags.ServerName,
 		},
 	}
 }

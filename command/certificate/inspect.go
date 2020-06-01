@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certinfo"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
@@ -22,7 +23,8 @@ func inspectCommand() cli.Command {
 		Action: cli.ActionFunc(inspectAction),
 		Usage:  `print certificate or CSR details in human readable format`,
 		UsageText: `**step certificate inspect** <crt_file>
-[**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
+[**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]
+[**--servername**=<servername>]`,
 		Description: `**step certificate inspect** prints the details of a certificate
 or CSR in a human readable format. Output from the inspect command is printed to
 STDERR instead of STDOUT unless. This is an intentional barrier to accidental
@@ -172,10 +174,7 @@ if the input bundle includes any PEM that does not have type CERTIFICATE.`,
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
-			cli.StringFlag{
-				Name:  "servername",
-				Usage: `TLS Server Name Indication that should be sent to request a specific certificate for validation.`,
-			},
+			flags.ServerName,
 		},
 	}
 }

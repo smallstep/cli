@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
@@ -17,7 +18,7 @@ func verifyCommand() cli.Command {
 		Action: cli.ActionFunc(verifyAction),
 		Usage:  `verify a certificate`,
 		UsageText: `**step certificate verify** <crt_file> [**--host**=<host>]
-[**--roots**=<root-bundle>]`,
+[**--roots**=<root-bundle>] [**--servername**=<servername>]`,
 		Description: `**step certificate verify** executes the certificate path
 validation algorithm for x.509 certificates defined in RFC 5280. If the
 certificate is valid this command will return '0'. If validation fails, or if
@@ -86,10 +87,7 @@ authenticity of the remote server.
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
-			cli.StringFlag{
-				Name:  "servername",
-				Usage: `TLS Server Name Indication that should be sent to request a specific certificate for validation.`,
-			},
+			flags.ServerName,
 		},
 	}
 }

@@ -244,6 +244,13 @@ the --team option. If the url contains "\<\>" placeholders, they are replaced wi
 		Name:  "redirect-url",
 		Usage: "Terminal OAuth redirect <url>.",
 	}
+
+	// ServerName is a cli.Flag used to set the TLS Server Name Indication in
+	// request to a server.
+	ServerName = cli.StringFlag{
+		Name:  "servername",
+		Usage: `TLS Server Name Indication that should be sent to request a specific certificate from the server.`,
+	}
 )
 
 // ParseTimeOrDuration is a helper that returns the time or the current time
