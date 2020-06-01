@@ -7,15 +7,17 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
 func fingerprintCommand() cli.Command {
 	return cli.Command{
-		Name:      "fingerprint",
-		Action:    cli.ActionFunc(fingerprintAction),
-		Usage:     "print the fingerprint of a certificate",
-		UsageText: `**step certificate fingerprint** <crt-file>`,
+		Name:   "fingerprint",
+		Action: cli.ActionFunc(fingerprintAction),
+		Usage:  "print the fingerprint of a certificate",
+		UsageText: `**step certificate fingerprint** <crt-file>
+[**--bundle**] [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
 		Description: `**step certificate fingerprint** reads a certificate and prints to STDOUT the
 certificate SHA256 of the raw certificate.
 
@@ -75,6 +77,7 @@ authenticity of the remote server.
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
+			flags.ServerName,
 		},
 	}
 }
@@ -85,17 +88,18 @@ func fingerprintAction(ctx *cli.Context) error {
 	}
 
 	var (
-		certs    []*x509.Certificate
-		roots    = ctx.String("roots")
-		bundle   = ctx.Bool("bundle")
-		insecure = ctx.Bool("insecure")
-		crtFile  = ctx.Args().First()
+		certs      []*x509.Certificate
+		serverName = ctx.String("servername")
+		roots      = ctx.String("roots")
+		bundle     = ctx.Bool("bundle")
+		insecure   = ctx.Bool("insecure")
+		crtFile    = ctx.Args().First()
 	)
 
 	if addr, isURL, err := trimURL(crtFile); err != nil {
 		return err
 	} else if isURL {
-		certs, err = getPeerCertificates(addr, roots, insecure)
+		certs, err = getPeerCertificates(addr, serverName, roots, insecure)
 		if err != nil {
 			return err
 		}
