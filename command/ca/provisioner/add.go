@@ -183,6 +183,9 @@ keys and x509 Certificates.`,
 		Description: `**step ca provisioner add** adds one or more provisioners
 to the configuration and writes the new configuration back to the CA config.
 
+To pick up the new configuration you must SIGHUP (kill -1 <pid>) or restart the
+step-ca process.
+
 ## POSITIONAL ARGUMENTS
 
 <name>
@@ -346,7 +349,13 @@ func addAction(ctx *cli.Context) (err error) {
 	}
 
 	c.AuthorityConfig.Provisioners = append(c.AuthorityConfig.Provisioners, list...)
-	return c.Save(config)
+	if err = c.Save(config); err != nil {
+		return err
+	}
+
+	ui.Println("Success! Your `step-ca` config has been updated. To pick up the new configuration SIGHUP (kill -1 <pid>) or restart the step-ca process.")
+
+	return nil
 }
 
 func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
