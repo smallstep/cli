@@ -7,7 +7,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"os"
 
 	"github.com/pkg/errors"
@@ -140,12 +139,21 @@ Requires **--insecure** flag.`,
 }
 
 func formatAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
 		return err
 	}
 
+	var keyFile string
+	switch ctx.NArg() {
+	case 0:
+		keyFile = "-"
+	case 1:
+		keyFile = ctx.Args().First()
+	default:
+		return errs.TooManyArguments(ctx)
+	}
+
 	var (
-		keyFile    = ctx.Args().Get(0)
 		out        = ctx.String("out")
 		toPEM      = ctx.Bool("pem")
 		toDER      = ctx.Bool("der")
@@ -166,7 +174,7 @@ func formatAction(ctx *cli.Context) error {
 		return errs.RequiredInsecureFlag(ctx, "no-password")
 	}
 
-	b, err := ioutil.ReadFile(keyFile)
+	b, err := utils.ReadFile(keyFile)
 	if err != nil {
 		return errs.FileError(err, keyFile)
 	}
