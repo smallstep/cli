@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/pkg/errors"
@@ -116,6 +117,12 @@ $ step certificate inspect https://google.com --format json \
 --roots "./path/to/root/certificates/" --bundle
 '''
 
+Inspect a remote certificate chain in PEM format:
+
+'''
+$ step certificate inspect https://smallstep.com --format pem --bundle
+'''
+
 Inspect a local CSR in text format (default):
 
 '''
@@ -140,7 +147,10 @@ $ step certificate inspect foo.csr --format json
     :  Print output in unstructured text suitable for a human to read.
 
     **json**
-    :  Print output in JSON format.`,
+    :  Print output in JSON format.
+
+    **pem**
+    :  Print output in PEM format.`,
 			},
 			cli.StringFlag{
 				Name: "roots",
@@ -194,10 +204,10 @@ func inspectAction(ctx *cli.Context) error {
 		insecure   = ctx.Bool("insecure")
 	)
 
-	if format != "text" && format != "json" {
-		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
+	if format != "text" && format != "json" && format != "pem" {
+		return errs.InvalidFlagValue(ctx, "format", format, "text, json, pem")
 	}
-	if short && format == "json" {
+	if short && (format == "json" || format == "pem") {
 		return errs.IncompatibleFlagWithFlag(ctx, "short", "format json")
 	}
 
@@ -248,7 +258,7 @@ func inspectAction(ctx *cli.Context) error {
 
 	switch blocks[0].Type {
 	case "CERTIFICATE":
-		return inspectCertificates(ctx, blocks)
+		return inspectCertificates(ctx, blocks, os.Stdout)
 	case "CERTIFICATE REQUEST", "NEW CERTIFICATE REQUEST": // only one is supported
 		return inspectCertificateRequest(ctx, blocks[0])
 	default:
@@ -256,7 +266,7 @@ func inspectAction(ctx *cli.Context) error {
 	}
 }
 
-func inspectCertificates(ctx *cli.Context, blocks []*pem.Block) error {
+func inspectCertificates(ctx *cli.Context, blocks []*pem.Block, w io.Writer) error {
 	format, short := ctx.String("format"), ctx.Bool("short")
 	switch format {
 	case "text":
@@ -275,11 +285,10 @@ func inspectCertificates(ctx *cli.Context, blocks []*pem.Block) error {
 					return err
 				}
 			}
-			fmt.Print(text)
+			fmt.Fprint(w, text)
 		}
 		return nil
 	case "json":
-		var b []byte
 		var v interface{}
 		if len(blocks) == 1 {
 			zcrt, err := zx509.ParseCertificate(blocks[0].Bytes)
@@ -298,14 +307,23 @@ func inspectCertificates(ctx *cli.Context, blocks []*pem.Block) error {
 			}
 			v = zcrts
 		}
-		b, err := json.MarshalIndent(v, "", "  ")
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", "  ")
+		err := enc.Encode(v)
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		os.Stdout.Write(b)
+		return nil
+	case "pem":
+		for _, block := range blocks {
+			err := pem.Encode(w, block)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
 		return nil
 	default:
-		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
+		return errs.InvalidFlagValue(ctx, "format", format, "text, json, pem")
 	}
 }
 
