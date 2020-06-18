@@ -22,7 +22,7 @@ By default it prints key fingerprints, to list the raw key use the flag **--raw*
 
 ## POSITIONAL ARGUMENTS
 
-<ubject>
+<subject>
 :  Optional subject or comment to filter keys by.
 
 ## EXAMPLES
