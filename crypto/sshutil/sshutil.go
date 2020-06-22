@@ -1,11 +1,7 @@
 package sshutil
 
 import (
-	"crypto"
 	"crypto/dsa"
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/elliptic"
 	"crypto/rsa"
 	"encoding/binary"
 	"fmt"
@@ -39,27 +35,6 @@ func ParseCertificate(in []byte) (*ssh.Certificate, error) {
 		return nil, errors.Errorf("error parsing certificate: %T is not a certificate", pub)
 	}
 	return cert, nil
-}
-
-// PublicKey returns the Go's crypto.PublicKey of an ssh.PublicKey.
-func PublicKey(key ssh.PublicKey) (crypto.PublicKey, error) {
-	_, in, ok := parseString(key.Marshal())
-	if !ok {
-		return nil, errors.New("public key is invalid")
-	}
-
-	switch key.Type() {
-	case ssh.KeyAlgoRSA:
-		return parseRSA(in)
-	case ssh.KeyAlgoECDSA256, ssh.KeyAlgoECDSA384, ssh.KeyAlgoECDSA521, ssh.KeyAlgoSKECDSA256:
-		return parseECDSA(in)
-	case ssh.KeyAlgoED25519, ssh.KeyAlgoSKED25519:
-		return parseED25519(in)
-	case ssh.KeyAlgoDSA:
-		return parseDSA(in)
-	default:
-		return nil, errors.Errorf("public key %s is not supported", key.Type())
-	}
 }
 
 func publicKeyTypeAndSize(key ssh.PublicKey) (string, int, error) {
@@ -195,50 +170,4 @@ func parseRSA(in []byte) (*rsa.PublicKey, error) {
 	key.E = int(e)
 	key.N = w.N
 	return &key, nil
-}
-
-// parseECDSA parses an ECDSA key according to RFC 5656, section 3.1.
-func parseECDSA(in []byte) (*ecdsa.PublicKey, error) {
-	var w struct {
-		Curve    string
-		KeyBytes []byte
-		Rest     []byte `ssh:"rest"`
-	}
-
-	if err := ssh.Unmarshal(in, &w); err != nil {
-		return nil, errors.Wrap(err, "error unmarshalling public key")
-	}
-
-	key := new(ecdsa.PublicKey)
-
-	switch w.Curve {
-	case "nistp256":
-		key.Curve = elliptic.P256()
-	case "nistp384":
-		key.Curve = elliptic.P384()
-	case "nistp521":
-		key.Curve = elliptic.P521()
-	default:
-		return nil, errors.Errorf("unsupported curve %s", w.Curve)
-	}
-
-	key.X, key.Y = elliptic.Unmarshal(key.Curve, w.KeyBytes)
-	if key.X == nil || key.Y == nil {
-		return nil, errors.New("invalid curve point")
-	}
-
-	return key, nil
-}
-
-func parseED25519(in []byte) (ed25519.PublicKey, error) {
-	var w struct {
-		KeyBytes []byte
-		Rest     []byte `ssh:"rest"`
-	}
-
-	if err := ssh.Unmarshal(in, &w); err != nil {
-		return nil, errors.Wrap(err, "error unmarshalling public key")
-	}
-
-	return ed25519.PublicKey(w.KeyBytes), nil
 }
