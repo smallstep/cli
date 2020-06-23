@@ -50,6 +50,8 @@ func TestSplitSANs(t *testing.T) {
 	assert.FatalError(t, err)
 	u2, err := url.Parse("https://google.com/index.html")
 	assert.FatalError(t, err)
+	u3, err := url.Parse("urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959")
+	assert.FatalError(t, err)
 	tests := []struct {
 		name              string
 		sans, dns, emails []string
@@ -83,19 +85,19 @@ func TestSplitSANs(t *testing.T) {
 		},
 		{
 			name:   "all-uri",
-			sans:   []string{"https://ca.smallstep.com", "https://google.com/index.html"},
+			sans:   []string{"https://ca.smallstep.com", "urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959", "https://google.com/index.html"},
 			dns:    []string{},
 			ips:    []net.IP{},
 			emails: []string{},
-			uris:   []*url.URL{u1, u2},
+			uris:   []*url.URL{u1, u3, u2},
 		},
 		{
 			name:   "mix",
-			sans:   []string{"foo.internal", "https://ca.smallstep.com", "max@smallstep.com", "mariano@smallstep.com", "1.1.1.1", "bar.internal", "https://google.com/index.html"},
+			sans:   []string{"foo.internal", "https://ca.smallstep.com", "max@smallstep.com", "urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959", "mariano@smallstep.com", "1.1.1.1", "bar.internal", "https://google.com/index.html"},
 			dns:    []string{"foo.internal", "bar.internal"},
 			ips:    []net.IP{net.ParseIP("1.1.1.1")},
 			emails: []string{"max@smallstep.com", "mariano@smallstep.com"},
-			uris:   []*url.URL{u1, u2},
+			uris:   []*url.URL{u1, u3, u2},
 		},
 	}
 	for _, tt := range tests {
