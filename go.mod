@@ -14,7 +14,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.3.1
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.0.0
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
@@ -24,14 +24,15 @@ require (
 	github.com/smallstep/truststore v0.9.3
 	github.com/smallstep/zcrypto v0.0.0-20200203191936-fbc32cf76bce
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/urfave/cli v1.22.2
 	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e
 	gopkg.in/square/go-jose.v2 v2.4.0
 	howett.net/plist v0.0.0-20200419221736-3b63eb3a43b5 // indirect
 )
 
-// replace github.com/smallstep/certificates => ../certificates
+replace github.com/smallstep/certificates => ../certificates
+
 // replace github.com/smallstep/certinfo => ../certinfo

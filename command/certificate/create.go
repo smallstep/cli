@@ -293,7 +293,7 @@ func createAction(ctx *cli.Context) error {
 		if len(sans) == 0 {
 			sans = []string{subject}
 		}
-		dnsNames, ips, emails := x509util.SplitSANs(sans)
+		dnsNames, ips, emails, uris := x509util.SplitSANs(sans)
 
 		csr := &x509.CertificateRequest{
 			Subject: pkix.Name{
@@ -302,6 +302,7 @@ func createAction(ctx *cli.Context) error {
 			DNSNames:       dnsNames,
 			IPAddresses:    ips,
 			EmailAddresses: emails,
+			URIs:           uris,
 		}
 		csrBytes, err := x509.CreateCertificateRequest(rand.Reader, csr, priv)
 		if err != nil {
@@ -328,8 +329,6 @@ func createAction(ctx *cli.Context) error {
 		if (len(sans) == 0) && ((prof == "leaf") || (prof == "self-signed")) {
 			sans = []string{subject}
 		}
-		dnsNames, ips, emails := x509util.SplitSANs(sans)
-
 		if bundle && prof != "leaf" {
 			return errs.IncompatibleFlagValue(ctx, "bundle", "profile", prof)
 		}
@@ -351,9 +350,7 @@ func createAction(ctx *cli.Context) error {
 				profile, err = x509util.NewLeafProfile(subject, issIdentity.Crt,
 					issIdentity.Key, x509util.GenerateKeyPair(kty, crv, size),
 					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
-					x509util.WithDNSNames(dnsNames),
-					x509util.WithIPAddresses(ips),
-					x509util.WithEmailAddresses(emails))
+					x509util.WithSANs(sans))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -367,9 +364,7 @@ func createAction(ctx *cli.Context) error {
 					issIdentity.Crt, issIdentity.Key,
 					x509util.GenerateKeyPair(kty, crv, size),
 					x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
-					x509util.WithDNSNames(dnsNames),
-					x509util.WithIPAddresses(ips),
-					x509util.WithEmailAddresses(emails))
+					x509util.WithSANs(sans))
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -378,9 +373,7 @@ func createAction(ctx *cli.Context) error {
 			profile, err = x509util.NewRootProfile(subject,
 				x509util.GenerateKeyPair(kty, crv, size),
 				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
-				x509util.WithDNSNames(dnsNames),
-				x509util.WithIPAddresses(ips),
-				x509util.WithEmailAddresses(emails))
+				x509util.WithSANs(sans))
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -391,9 +384,7 @@ func createAction(ctx *cli.Context) error {
 			profile, err = x509util.NewSelfSignedLeafProfile(subject,
 				x509util.GenerateKeyPair(kty, crv, size),
 				x509util.WithNotBeforeAfterDuration(notBefore, notAfter, 0),
-				x509util.WithDNSNames(dnsNames),
-				x509util.WithIPAddresses(ips),
-				x509util.WithEmailAddresses(emails))
+				x509util.WithSANs(sans))
 			if err != nil {
 				return errors.WithStack(err)
 			}

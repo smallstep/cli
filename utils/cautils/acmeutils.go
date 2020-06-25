@@ -267,9 +267,9 @@ func finalizeOrder(ac *ca.ACMEClient, o *acme.Order, csr *x509.CertificateReques
 }
 
 func validateSANsForACME(sans []string) ([]string, error) {
-	dnsNames, ips, emails := splitSANs(sans)
-	if len(ips) > 0 || len(emails) > 0 {
-		return nil, errors.New("IP Address and Email Address SANs are not supported for ACME flow")
+	dnsNames, ips, emails, uris := splitSANs(sans)
+	if len(ips) > 0 || len(emails) > 0 || len(uris) > 0 {
+		return nil, errors.New("IP Address, Email Address, and URI SANs are not supported for ACME flow")
 	}
 	for _, dns := range dnsNames {
 		if strings.Contains(dns, "*") {
