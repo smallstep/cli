@@ -314,7 +314,9 @@ func certificateAction(ctx *cli.Context) error {
 				DNSNames:       csr.DNSNames,
 				IPAddresses:    csr.IPAddresses,
 				EmailAddresses: csr.EmailAddresses,
-				URIs:           append(csr.URIs, uri),
+				// Prepend the generated uri. There is code that expects the
+				// uuid URI to be the first one.
+				URIs: append([]*url.URL{uri}, csr.URIs...),
 			}
 			csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, key)
 			if err != nil {

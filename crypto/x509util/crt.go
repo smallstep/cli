@@ -39,6 +39,8 @@ func SplitSANs(sans []string) (dnsNames []string, ips []net.IP, emails []string,
 		} else if ip := net.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
 		} else {
+			// This is a hacky way to check if a SAN is a URL. If / when
+			// someone complains we can see about making it more "robust".
 			if u, err := url.Parse(san); err != nil || u.Scheme == "" {
 				// If not email, ip, or url, then dns name.
 				dnsNames = append(dnsNames, san)
