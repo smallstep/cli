@@ -309,15 +309,14 @@ func certificateAction(ctx *cli.Context) error {
 				return errs.Wrap(err, "failed parsing uuid urn")
 			}
 
-			// Hack to add the URI.
-			// TODO: the proper solution would be to add support in
-			// x509util.SplitSANs.
 			template := &x509.CertificateRequest{
 				Subject:        csr.Subject,
 				DNSNames:       csr.DNSNames,
 				IPAddresses:    csr.IPAddresses,
 				EmailAddresses: csr.EmailAddresses,
-				URIs:           []*url.URL{uri},
+				// Prepend the generated uri. There is code that expects the
+				// uuid URI to be the first one.
+				URIs: append([]*url.URL{uri}, csr.URIs...),
 			}
 			csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, key)
 			if err != nil {

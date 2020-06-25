@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"io/ioutil"
 	"net"
+	"net/url"
 	"testing"
 
 	"github.com/smallstep/assert"
@@ -45,18 +46,26 @@ func mustParseCertificate(t *testing.T, filename string) *x509.Certificate {
 }
 
 func TestSplitSANs(t *testing.T) {
+	u1, err := url.Parse("https://ca.smallstep.com")
+	assert.FatalError(t, err)
+	u2, err := url.Parse("https://google.com/index.html")
+	assert.FatalError(t, err)
+	u3, err := url.Parse("urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959")
+	assert.FatalError(t, err)
 	tests := []struct {
 		name              string
 		sans, dns, emails []string
 		ips               []net.IP
+		uris              []*url.URL
 	}{
-		{name: "empty", sans: []string{}, dns: []string{}, ips: []net.IP{}, emails: []string{}},
+		{name: "empty", sans: []string{}, dns: []string{}, ips: []net.IP{}, emails: []string{}, uris: []*url.URL{}},
 		{
 			name:   "all-dns",
 			sans:   []string{"foo.internal", "bar.internal"},
 			dns:    []string{"foo.internal", "bar.internal"},
 			ips:    []net.IP{},
 			emails: []string{},
+			uris:   []*url.URL{},
 		},
 		{
 			name:   "all-ip",
@@ -64,6 +73,7 @@ func TestSplitSANs(t *testing.T) {
 			dns:    []string{},
 			ips:    []net.IP{net.ParseIP("0.0.0.0"), net.ParseIP("127.0.0.1")},
 			emails: []string{},
+			uris:   []*url.URL{},
 		},
 		{
 			name:   "all-email",
@@ -71,21 +81,32 @@ func TestSplitSANs(t *testing.T) {
 			dns:    []string{},
 			ips:    []net.IP{},
 			emails: []string{"max@smallstep.com", "mariano@smallstep.com"},
+			uris:   []*url.URL{},
+		},
+		{
+			name:   "all-uri",
+			sans:   []string{"https://ca.smallstep.com", "urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959", "https://google.com/index.html"},
+			dns:    []string{},
+			ips:    []net.IP{},
+			emails: []string{},
+			uris:   []*url.URL{u1, u3, u2},
 		},
 		{
 			name:   "mix",
-			sans:   []string{"foo.internal", "max@smallstep.com", "mariano@smallstep.com", "1.1.1.1", "bar.internal"},
+			sans:   []string{"foo.internal", "https://ca.smallstep.com", "max@smallstep.com", "urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959", "mariano@smallstep.com", "1.1.1.1", "bar.internal", "https://google.com/index.html"},
 			dns:    []string{"foo.internal", "bar.internal"},
 			ips:    []net.IP{net.ParseIP("1.1.1.1")},
 			emails: []string{"max@smallstep.com", "mariano@smallstep.com"},
+			uris:   []*url.URL{u1, u3, u2},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dns, ips, emails := SplitSANs(tt.sans)
+			dns, ips, emails, uris := SplitSANs(tt.sans)
 			assert.Equals(t, dns, tt.dns)
 			assert.Equals(t, ips, tt.ips)
 			assert.Equals(t, emails, tt.emails)
+			assert.Equals(t, uris, tt.uris)
 		})
 	}
 }

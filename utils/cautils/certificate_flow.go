@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -235,7 +236,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		return nil, nil, err
 	}
 
-	dnsNames, ips, emails := splitSANs(sans, jwt.Payload.SANs)
+	dnsNames, ips, emails, uris := splitSANs(sans, jwt.Payload.SANs)
 	switch jwt.Payload.Type() {
 	case token.AWS:
 		doc := jwt.Payload.Amazon.InstanceIdentityDocument
@@ -247,7 +248,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips, emails = splitSANs(defaultSANs)
+			dnsNames, ips, emails, uris = splitSANs(defaultSANs)
 		}
 	case token.GCP:
 		ce := jwt.Payload.Google.ComputeEngine
@@ -259,7 +260,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips, emails = splitSANs(defaultSANs)
+			dnsNames, ips, emails, uris = splitSANs(defaultSANs)
 		}
 	case token.Azure:
 		if len(ips) == 0 && len(dnsNames) == 0 {
@@ -269,7 +270,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips, emails = splitSANs(defaultSANs)
+			dnsNames, ips, emails, uris = splitSANs(defaultSANs)
 		}
 	case token.OIDC:
 		if jwt.Payload.Email != "" {
@@ -287,6 +288,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		DNSNames:       dnsNames,
 		IPAddresses:    ips,
 		EmailAddresses: emails,
+		URIs:           uris,
 	}
 
 	csr, err := x509.CreateCertificateRequest(rand.Reader, template, pk)
@@ -308,7 +310,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 
 // splitSANs unifies the SAN collections passed as arguments and returns a list
 // of DNS names, a list of IP addresses, and a list of emails.
-func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email []string) {
+func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email []string, uris []*url.URL) {
 	m := make(map[string]bool)
 	var unique []string
 	for _, sans := range args {

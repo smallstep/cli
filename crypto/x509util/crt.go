@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"io/ioutil"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,10 +25,11 @@ func Fingerprint(cert *x509.Certificate) string {
 // SplitSANs splits a slice of Subject Alternative Names into slices of
 // IP Addresses and DNS Names. If an element is not an IP address, then it
 // is bucketed as a DNS Name.
-func SplitSANs(sans []string) (dnsNames []string, ips []net.IP, emails []string) {
+func SplitSANs(sans []string) (dnsNames []string, ips []net.IP, emails []string, uris []*url.URL) {
 	dnsNames = []string{}
 	ips = []net.IP{}
 	emails = []string{}
+	uris = []*url.URL{}
 	if sans == nil {
 		return
 	}
@@ -37,8 +39,14 @@ func SplitSANs(sans []string) (dnsNames []string, ips []net.IP, emails []string)
 		} else if ip := net.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
 		} else {
-			// If not IP then assume DNSName.
-			dnsNames = append(dnsNames, san)
+			// This is a hacky way to check if a SAN is a URL. If / when
+			// someone complains we can see about making it more "robust".
+			if u, err := url.Parse(san); err != nil || u.Scheme == "" {
+				// If not email, ip, or url, then dns name.
+				dnsNames = append(dnsNames, san)
+			} else {
+				uris = append(uris, u)
+			}
 		}
 	}
 	return

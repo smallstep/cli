@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
+	"net/url"
 	"strings"
 	"time"
 
@@ -203,6 +204,30 @@ func WithEmailAddresses(emails []string) WithOption {
 	return func(p Profile) error {
 		crt := p.Subject()
 		crt.EmailAddresses = emails
+		return nil
+	}
+}
+
+// WithURIs returns a Profile modifier which sets the URIs
+// that will be bound to the subject alternative name extension of the Certificate.
+func WithURIs(uris []*url.URL) WithOption {
+	return func(p Profile) error {
+		crt := p.Subject()
+		crt.URIs = uris
+		return nil
+	}
+}
+
+// WithSANs returns a profile modifier which set the dnsNames, emailAddresses,
+// ipAddresses, and URIs attributes of the Certificate.
+func WithSANs(sans []string) WithOption {
+	return func(p Profile) error {
+		dnsNames, ips, emails, uris := SplitSANs(sans)
+		cert := p.Subject()
+		cert.DNSNames = dnsNames
+		cert.IPAddresses = ips
+		cert.EmailAddresses = emails
+		cert.URIs = uris
 		return nil
 	}
 }
