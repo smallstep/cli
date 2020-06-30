@@ -61,7 +61,7 @@ e.g. `v1.0.2`
             is a release candidate, say `v1.0.2-rc.3`, then the version of the next
             standard release should be `v1.0.3`.
 
-3. Synchronize the versions of `cli` and `certificates`.
+3. **Synchronize the versions of `cli` and `certificates`.**
 
     > **NOTE**: If you do not need to update the version of `certificates` required
     > by the `cli` at this time (and vice versa) then thank your lucky stars and
@@ -70,7 +70,7 @@ e.g. `v1.0.2`
     Buckle up and get your affairs in order because here be dragons.
 
     > NOTE: In the subsequent steps let A.B.C be the new tag for the `cli` repo
-    > and X.Y.Z be the new tag for the `certificates repo.
+    > and X.Y.Z be the new tag for the `certificates` repo.
 
     1. Complete steps 1 & 2 from the [`certificates` distribution doc][1].
 
