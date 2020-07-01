@@ -101,10 +101,10 @@ e.g. `v1.0.2`
         yet had the chance to crawl and create an entry for the new tag.
 
     6. Wait for `https://sum.golang.org/lookup/github.com/smallstep/cli@vA.B.C`
-    to be come available.
+    to become available.
 
-        Keep looking it up in the browser or pinging it on the command line until
-        it becomes available. ~10 - 20 mins.
+        Keep looking it up in the browser or `curl`ing it from the command line
+        until it becomes available. ~10 - 20 mins.
 
     7. In [Travis][4] restart the failed, tagged build for `cli` through the UI.
 
@@ -126,7 +126,7 @@ e.g. `v1.0.2`
     > **NOTE**: Skip this step if you've already tagged and pushed in the previous
     > step.
 
-    3. **Create a local tag.**
+    1. **Create a local tag.**
 
         ```
         $ git tag v1.0.3   # standard release
@@ -134,7 +134,7 @@ e.g. `v1.0.2`
         $ git tag v1.0.3-rc.1  # release candidate
         ```
 
-    4. **Push the new tag to the remote origin.**
+    2. **Push the new tag to the remote origin.**
 
         ```
         $ git push origin tag v1.0.3   # standard release
@@ -143,86 +143,6 @@ e.g. `v1.0.2`
         ```
 
     Check the build status at [Travis-CI](https://travis-ci.com/smallstep/cli/builds/).
-
-5. **Update the AUR Arch Linux packages**
-
-    <pre><code>
-    ### <b>SETUP</b> ###
-    # clone the archlinux repo if you don't already have it.
-    <b>$ git clone git@github.com:smallstep/archlinux.git</b>
-
-    ### Get up to date...
-    <b>$ cd archlinux && git pull origin master && make</b>
-
-    ### Bump and push new versions
-
-    # If updating the packages for cli and ca
-    <b>$ ./update --cli v1.0.3 --ca v1.0.3</b>
-
-    # If only updating the package for cli
-    <b>$ ./update --cli v1.0.3</b>
-    </code></pre>
-
-    Commit and push the submodule updates to master.
-
-6. **Update the smallstep/smallstep Homebrew tap.**
-
-    > **NOTE**: this only needs to be done for standard releases.
-
-    Follow the steps [here](https://github.com/smallstep/homebrew-smallstep#how-to-update-the-formula).
-
-7. **Update Homebrew Core.**
-
-    > **NOTE**: this only needs to be done for standard releases.
-
-    1. Fork the homebrew-core repo if you don't already have it.
-
-        If you already have the `homebrew-core` repo with `upstream` remote set
-        to `homebrew-core` origin:
-
-        ```
-        git checkout master
-        git fetch --all
-        git pull upstream master
-        ```
-
-    2. Create a branch in your fork.
-
-        ```
-        git checkout -B step-0.10.0</b>
-        ```
-
-    3. Apply changes from `smallstep/smallstep/step` tap.
-
-       Take the diff from the `smallstep/homebrew-smallstep` repo and manually
-       apply it to your branch. The most common changes should be URL and SHA
-       updates.
-
-    4. Test the changes.
-
-       <pre><code>
-       # start fresh
-       <b>$ brew uninstall step</b>
-
-       # test install
-       <b>$ brew install --build-from-source Formula/step.rb</b>
-
-       # setup for audit and test
-       <b>$ sudo cp Formula/step.rb /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core/Formula/step.rb</b>
-
-       # audit
-       <b>$ brew audit --strict --online step</b>
-
-       # test
-       <b>$ brew test step</b>
-       </code></pre>
-
-
-8. **Update the documentation on the website**
-
-    > **NOTE**: this only needs to be done for standard releases.
-
-    Follow the steps [here](https://github.com/smallstep/docs/blob/master/runbook/open-source-release.md#lets-get-started).
 
 **All Done!**
 
