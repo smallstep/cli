@@ -3,6 +3,7 @@ package certificate
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"net"
 	"net/url"
 	"strings"
 
@@ -34,7 +35,9 @@ func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509
 			return nil, errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
 		}
 	}
-	if !strings.Contains(addr, ":") {
+	if ip := net.ParseIP(addr); ip != nil {
+		addr = net.JoinHostPort(addr, "443")
+	} else if !strings.Contains(addr, ":") {
 		addr += ":443"
 	}
 	tlsConfig := &tls.Config{RootCAs: rootCAs}
