@@ -32,7 +32,7 @@ func mustParseRSAKey(t *testing.T, filename string) *rsa.PrivateKey {
 
 func Test_base_CreateCertificate_KeyEncipherment(t *testing.T) {
 	// Issuer
-	iss := mustParseCertificate(t, "test_files/noPasscodeCA.crt")
+	iss := mustParseCertificate(t, "test_files/noPasscodeCa.crt")
 	issPriv := mustParseRSAKey(t, "test_files/noPasscodeCa.key")
 
 	mustCreateLeaf := func(key interface{}) Profile {
