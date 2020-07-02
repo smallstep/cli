@@ -3,6 +3,7 @@ package x509util
 import (
 	"crypto"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -407,7 +408,8 @@ func (b *base) GenerateDefaultKeyPair() error {
 // CreateCertificate creates an x509 Certificate using the configuration stored
 // in the profile.
 func (b *base) CreateCertificate() ([]byte, error) {
-	if b.SubjectPublicKey() == nil {
+	pub := b.SubjectPublicKey()
+	if pub == nil {
 		return nil, errors.Errorf("Profile does not have subject public key. Need to call 'profile.GenerateKeyPair(...)' or use setters to populate keys")
 	}
 	if b.issPriv == nil {
@@ -420,7 +422,16 @@ func (b *base) CreateCertificate() ([]byte, error) {
 		sub.ExtraExtensions = append(sub.ExtraExtensions, b.ext...)
 	}
 
-	bytes, err := x509.CreateCertificate(rand.Reader, sub, iss, b.SubjectPublicKey(), b.issPriv)
+	// Remove KeyEncipherment and DataEncipherment for non-rsa keys.
+	// See:
+	// https://github.com/golang/go/issues/36499
+	// https://tools.ietf.org/html/draft-ietf-lamps-5480-ku-clarifications-02
+	if _, ok := pub.(*rsa.PublicKey); !ok {
+		sub.KeyUsage &= ^x509.KeyUsageKeyEncipherment
+		sub.KeyUsage &= ^x509.KeyUsageDataEncipherment
+	}
+
+	bytes, err := x509.CreateCertificate(rand.Reader, sub, iss, pub, b.issPriv)
 	return bytes, errors.WithStack(err)
 }
 
