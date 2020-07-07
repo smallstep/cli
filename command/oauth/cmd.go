@@ -1,7 +1,6 @@
 package oauth
 
 import (
-	"bufio"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
@@ -26,6 +25,7 @@ import (
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
 
@@ -567,8 +567,7 @@ func (o *oauth) DoManualAuthorization() (*token, error) {
 
 	// Read from the command line
 	fmt.Fprint(os.Stderr, "Enter verification code: ")
-	reader := bufio.NewReader(os.Stdin)
-	code, err := reader.ReadString('\n')
+	code, err := utils.ReadString(os.Stdin)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
