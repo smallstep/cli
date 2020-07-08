@@ -142,8 +142,20 @@ $ step ca token my-remote.hostname remote_ecdsa --ssh --host
 			certNotBeforeFlag,
 			passwordFileFlag,
 			provisionerKidFlag,
-			sanFlag,
-			sshPrincipalFlag,
+			cli.StringSliceFlag{
+				Name: "san",
+				Usage: `Add <dns|ip|email> Subject Alternative Name(s) (SANs)
+that should be authorized. A certificate signing request using this token must
+match the complete set of SANs in the token 1:1. Use the '--san' flag multiple
+times to configure multiple SANs.`,
+			},
+			cli.StringSliceFlag{
+				Name: "principal,n",
+				Usage: `Add the principals (user or host <name>s) that the token is authorized to
+request. The signing request using this token won't be able to add
+extra names. Use the '--principal' flag multiple times to configure
+multiple principals.`,
+			},
 			sshHostFlag,
 			flags.CaURL,
 			flags.CaConfig,
