@@ -144,7 +144,7 @@ $ step ca token my-remote.hostname remote_ecdsa --ssh --host
 			provisionerKidFlag,
 			cli.StringSliceFlag{
 				Name: "san",
-				Usage: `Add <dns|ip|email> Subject Alternative Name(s) (SANs)
+				Usage: `Add <dns|ip|email|uri> Subject Alternative Name(s) (SANs)
 that should be authorized. A certificate signing request using this token must
 match the complete set of SANs in the token 1:1. Use the '--san' flag multiple
 times to configure multiple SANs.`,

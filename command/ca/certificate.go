@@ -120,7 +120,7 @@ $ step ca certificate foo.internal foo.crt foo.key \
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name: "san",
-				Usage: `Add <dns|ip|email> Subject Alternative Name(s) (SANs)
+				Usage: `Add <dns|ip|email|uri> Subject Alternative Name(s) (SANs)
 that should be authorized. Use the '--san' flag multiple times to configure
 multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			},
