@@ -101,7 +101,7 @@ $ ssh internal.example.com
 var (
 	sshPrincipalFlag = cli.StringSliceFlag{
 		Name: "principal,n",
-		Usage: `Add the specified principal (user or host) to the certificate request.
+		Usage: `Add the specified principal (user or host <name>s) to the certificate request.
 		This flag can be used multiple times. However, it cannot be used in conjunction
 		with '--token' when requesting certificates from OIDC, JWK, and X5C provisioners, or
 		from any provisioner with 'disableCustomSANs' set to 'true'. These provisioners will
