@@ -23,7 +23,7 @@ func verifyCommand() cli.Command {
 		Usage:  "verify a one-time password",
 		UsageText: `**step crypto otp verify** <secret-file>
 [**--period**=<seconds>] [**--skew**=<num>] [**--length**=<size>]
-[**--alg**=<alg>] [*--time**=<time>]`,
+[**--alg**=<alg>] [*--time**=<time|duration>]`,
 		Description: `**step crypto otp verify** does TOTP and HTOP`,
 		Flags: []cli.Flag{
 			cli.UintFlag{
@@ -50,8 +50,13 @@ one of: SHA1, SHA256, SHA512`,
 				Value: "SHA1",
 			},
 			cli.StringFlag{
-				Name:  "time",
-				Usage: `Time to use for TOTP calculation. Defaults to "time.Now()".`,
+				Name: "time",
+				Usage: `The <time|duration> to use for TOTP validation. If a <time> is
+used it is expected to be in RFC 3339 format. If a <duration> is used, it is a
+sequence of decimal numbers, each with optional fraction and a unit suffix, such
+as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
+"s", "m", "h". A <duration> value is added to the current time. An empty
+<time|duration> defaults to "time.Now()".`,
 			},
 			cli.BoolFlag{
 				Name:   "insecure",
