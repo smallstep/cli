@@ -21,6 +21,35 @@ import (
 	"github.com/smallstep/cli/utils"
 )
 
+// Cribbed directly from golang src crypto/x509/x509.go
+var (
+	oidExtSubjectKeyID          = asn1.ObjectIdentifier([]int{2, 5, 29, 14})
+	oidExtKeyUsage              = asn1.ObjectIdentifier([]int{2, 5, 29, 15})
+	oidExtExtendedKeyUsage      = asn1.ObjectIdentifier([]int{2, 5, 29, 37})
+	oidExtAuthorityKeyID        = asn1.ObjectIdentifier([]int{2, 5, 29, 35})
+	oidExtBasicConstraints      = asn1.ObjectIdentifier([]int{2, 5, 29, 19})
+	oidExtSubjectAltName        = asn1.ObjectIdentifier([]int{2, 5, 29, 17})
+	oidExtCertificatePolicies   = asn1.ObjectIdentifier([]int{2, 5, 29, 32})
+	oidExtNameConstraints       = asn1.ObjectIdentifier([]int{2, 5, 29, 30})
+	oidExtCRLDistributionPoints = asn1.ObjectIdentifier([]int{2, 5, 29, 31})
+	oidExtAuthorityInfoAccess   = asn1.ObjectIdentifier([]int{1, 3, 6, 1, 5, 5, 7, 1, 1})
+	oidStdExtHashMap            = map[string]struct{}{}
+	emptyStruct                 struct{}
+)
+
+func init() {
+	oidStdExtHashMap[oidExtSubjectKeyID.String()] = emptyStruct
+	oidStdExtHashMap[oidExtKeyUsage.String()] = emptyStruct
+	oidStdExtHashMap[oidExtExtendedKeyUsage.String()] = emptyStruct
+	oidStdExtHashMap[oidExtAuthorityKeyID.String()] = emptyStruct
+	oidStdExtHashMap[oidExtBasicConstraints.String()] = emptyStruct
+	oidStdExtHashMap[oidExtSubjectAltName.String()] = emptyStruct
+	oidStdExtHashMap[oidExtCertificatePolicies.String()] = emptyStruct
+	oidStdExtHashMap[oidExtNameConstraints.String()] = emptyStruct
+	oidStdExtHashMap[oidExtCRLDistributionPoints.String()] = emptyStruct
+	oidStdExtHashMap[oidExtAuthorityInfoAccess.String()] = emptyStruct
+}
+
 var (
 	// DefaultCertValidity is the minimum validity of an end-entity (not root or intermediate) certificate.
 	DefaultCertValidity = 24 * time.Hour
@@ -430,6 +459,19 @@ func (b *base) CreateCertificate() ([]byte, error) {
 		sub.KeyUsage &= ^x509.KeyUsageKeyEncipherment
 		sub.KeyUsage &= ^x509.KeyUsageDataEncipherment
 	}
+
+	// Only keep those extensions that are not considered standard x509 Ext as
+	// defined in RFC 5280 4.2.1. The x509/crypto lib applies extra (often
+	// necessary) logic when converting x509 templates to certificates -- but
+	// that logic is superseded by extensions in the ExtraExtensions list, which
+	// are copied to the certificate verbatim.
+	var exts []pkix.Extension
+	for _, ext := range sub.ExtraExtensions {
+		if _, ok := oidStdExtHashMap[ext.Id.String()]; !ok {
+			exts = append(exts, ext)
+		}
+	}
+	sub.ExtraExtensions = exts
 
 	bytes, err := x509.CreateCertificate(rand.Reader, sub, iss, pub, b.issPriv)
 	return bytes, errors.WithStack(err)
