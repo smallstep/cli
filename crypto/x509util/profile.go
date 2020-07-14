@@ -9,7 +9,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
-	"fmt"
 	"math/big"
 	"net"
 	"net/url"
@@ -22,36 +21,33 @@ import (
 	"github.com/smallstep/cli/utils"
 )
 
+// Cribbed directly from golang src crypto/x509/x509.go
 var (
-	oidExtSubjectKeyID          = []int{2, 5, 29, 14}
-	oidExtKeyUsage              = []int{2, 5, 29, 15}
-	oidExtExtendedKeyUsage      = []int{2, 5, 29, 37}
-	oidExtAuthorityKeyID        = []int{2, 5, 29, 35}
-	oidExtBasicConstraints      = []int{2, 5, 29, 19}
-	oidExtSubjectAltName        = []int{2, 5, 29, 17}
-	oidExtCertificatePolicies   = []int{2, 5, 29, 32}
-	oidExtNameConstraints       = []int{2, 5, 29, 30}
-	oidExtCRLDistributionPoints = []int{2, 5, 29, 31}
-	oidExtAuthorityInfoAccess   = []int{1, 3, 6, 1, 5, 5, 7, 1, 1}
-	oidStandardExtHashMap       = map[string]int{}
+	oidExtSubjectKeyID          = asn1.ObjectIdentifier([]int{2, 5, 29, 14})
+	oidExtKeyUsage              = asn1.ObjectIdentifier([]int{2, 5, 29, 15})
+	oidExtExtendedKeyUsage      = asn1.ObjectIdentifier([]int{2, 5, 29, 37})
+	oidExtAuthorityKeyID        = asn1.ObjectIdentifier([]int{2, 5, 29, 35})
+	oidExtBasicConstraints      = asn1.ObjectIdentifier([]int{2, 5, 29, 19})
+	oidExtSubjectAltName        = asn1.ObjectIdentifier([]int{2, 5, 29, 17})
+	oidExtCertificatePolicies   = asn1.ObjectIdentifier([]int{2, 5, 29, 32})
+	oidExtNameConstraints       = asn1.ObjectIdentifier([]int{2, 5, 29, 30})
+	oidExtCRLDistributionPoints = asn1.ObjectIdentifier([]int{2, 5, 29, 31})
+	oidExtAuthorityInfoAccess   = asn1.ObjectIdentifier([]int{1, 3, 6, 1, 5, 5, 7, 1, 1})
+	oidStdExtHashMap            = map[string]struct{}{}
+	emptyStruct                 struct{}
 )
 
 func init() {
-	oidStandardExtHashMap[oidHashKey(oidExtSubjectKeyID)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtKeyUsage)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtExtendedKeyUsage)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtAuthorityKeyID)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtBasicConstraints)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtSubjectAltName)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtCertificatePolicies)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtNameConstraints)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtCRLDistributionPoints)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtAuthorityInfoAccess)] = 1
-	oidStandardExtHashMap[oidHashKey(oidExtAuthorityInfoAccess)] = 1
-}
-
-func oidHashKey(id asn1.ObjectIdentifier) string {
-	return strings.Trim(strings.Replace(fmt.Sprint(id), " ", ".", -1), "[]")
+	oidStdExtHashMap[oidExtSubjectKeyID.String()] = emptyStruct
+	oidStdExtHashMap[oidExtKeyUsage.String()] = emptyStruct
+	oidStdExtHashMap[oidExtExtendedKeyUsage.String()] = emptyStruct
+	oidStdExtHashMap[oidExtAuthorityKeyID.String()] = emptyStruct
+	oidStdExtHashMap[oidExtBasicConstraints.String()] = emptyStruct
+	oidStdExtHashMap[oidExtSubjectAltName.String()] = emptyStruct
+	oidStdExtHashMap[oidExtCertificatePolicies.String()] = emptyStruct
+	oidStdExtHashMap[oidExtNameConstraints.String()] = emptyStruct
+	oidStdExtHashMap[oidExtCRLDistributionPoints.String()] = emptyStruct
+	oidStdExtHashMap[oidExtAuthorityInfoAccess.String()] = emptyStruct
 }
 
 var (
@@ -471,7 +467,7 @@ func (b *base) CreateCertificate() ([]byte, error) {
 	// are copied to the certificate verbatim.
 	var exts []pkix.Extension
 	for _, ext := range sub.ExtraExtensions {
-		if _, ok := oidStandardExtHashMap[oidHashKey(ext.Id)]; !ok {
+		if _, ok := oidStdExtHashMap[ext.Id.String()]; !ok {
 			exts = append(exts, ext)
 		}
 	}
