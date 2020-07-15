@@ -14,7 +14,7 @@ func fingerPrintCommand() cli.Command {
 	return cli.Command{
 		Name:      "fingerprint",
 		Action:    command.ActionFunc(fingerprint),
-		Usage:     "list public keys known to the ssh agent",
+		Usage:     "print the fingerprint of an SSH public key or certificate",
 		UsageText: `**step ssh fingerprint** <file>`,
 		Description: `**step ssh fingerprint** prints the fingerprint of an ssh public key or
 certificate.

@@ -28,22 +28,19 @@ func revokeCommand() cli.Command {
 [**--ca-config**=<path>] [**--password-file**=<path>] [**--offline**]
 [**--reason**=<string>] [**--reasonCode**=<code>]
 [**--sshpop-cert**=<path>] [**--sshpop-key**=<key>]`,
-		Description: `**step ssh revoke** command renews an SSH Cerfificate
+		Description: `**step ssh revoke** command revokes an SSH Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 
 ## POSITIONAL ARGUMENTS
 
-<ssh-cert>
-:  The ssh certificate to renew.
-
-<ssh-key>
-:  The ssh certificate private key.
+<serial-number>
+:  The serial number of the SSH certificate to revoke. 
 
 ## EXAMPLES
 
-Renew an ssh certificate:
+revoke an ssh certificate:
 '''
-$ step ssh renew id_ecdsa-cert.pub id_ecdsa new-id_ecdsa-cer.pub
+$ step ssh revoke 3997477584487736496
 '''`,
 		Flags: []cli.Flag{
 			flags.Token,

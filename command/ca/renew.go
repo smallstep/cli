@@ -1,6 +1,7 @@
 package ca
 
 import (
+	"crypto"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
@@ -130,6 +131,7 @@ $ step ca renew --offline internal.crt internal.key
 			flags.CaURL,
 			flags.Force,
 			flags.Offline,
+			flags.PasswordFile,
 			flags.Root,
 			cli.StringFlag{
 				Name:  "out,output-file",
@@ -186,14 +188,15 @@ func renewCertificateAction(ctx *cli.Context) error {
 	}
 
 	args := ctx.Args()
-	crtFile := args.Get(0)
+	certFile := args.Get(0)
 	keyFile := args.Get(1)
+	passFile := ctx.String("password-file")
 	isDaemon := ctx.Bool("daemon")
 	execCmd := ctx.String("exec")
 
 	outFile := ctx.String("out")
 	if len(outFile) == 0 {
-		outFile = crtFile
+		outFile = certFile
 	}
 
 	rootFile := ctx.String("root")
@@ -234,18 +237,12 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "signal", strconv.Itoa(signum), "")
 	}
 
-	cert, err := tls.LoadX509KeyPair(crtFile, keyFile)
+	cert, err := tlsLoadX509KeyPair(certFile, keyFile, passFile)
 	if err != nil {
-		return errors.Wrap(err, "error loading certificates")
+		return err
 	}
-	if len(cert.Certificate) == 0 {
-		return errors.New("error loading certificate: certificate chain is empty")
-	}
+	leaf := cert.Leaf
 
-	leaf, err := x509.ParseCertificate(cert.Certificate[0])
-	if err != nil {
-		return errors.Wrap(err, "error parsing certificate")
-	}
 	if leaf.NotAfter.Before(time.Now()) {
 		return errors.New("cannot renew an expired certificate")
 	}
@@ -255,7 +252,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 			"validity period; renew-period=%v, cert-validity-period=%v", renewPeriod, cvp)
 	}
 
-	renewer, err := newRenewer(ctx, caURL, crtFile, keyFile, rootFile)
+	renewer, err := newRenewer(ctx, caURL, cert, rootFile)
 	if err != nil {
 		return err
 	}
@@ -343,15 +340,11 @@ func runExecCmd(execCmd string) error {
 type renewer struct {
 	client    cautils.CaClient
 	transport *http.Transport
-	keyFile   string
+	key       crypto.PrivateKey
 	offline   bool
 }
 
-func newRenewer(ctx *cli.Context, caURL, crtFile, keyFile, rootFile string) (*renewer, error) {
-	cert, err := tls.LoadX509KeyPair(crtFile, keyFile)
-	if err != nil {
-		return nil, errors.Wrap(err, "error loading certificates")
-	}
+func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile string) (*renewer, error) {
 	if len(cert.Certificate) == 0 {
 		return nil, errors.New("error loading certificate: certificate chain is empty")
 	}
@@ -390,7 +383,7 @@ func newRenewer(ctx *cli.Context, caURL, crtFile, keyFile, rootFile string) (*re
 	return &renewer{
 		client:    client,
 		transport: tr,
-		keyFile:   keyFile,
+		key:       cert.PrivateKey,
 		offline:   offline,
 	}, nil
 }
@@ -419,17 +412,30 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 	return resp, nil
 }
 
+// RenewAndPrepareNext renews the cert and prepares the cert for it's next renewal.
+// NOTE: this function logs each time the certificate is successfully renewed.
 func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod time.Duration) (time.Duration, error) {
 	const durationOnErrors = 1 * time.Minute
+	Info := log.New(os.Stdout, "INFO: ", log.LstdFlags)
 
 	resp, err := r.Renew(outFile)
 	if err != nil {
 		return durationOnErrors, err
 	}
 
-	cert, err := tls.LoadX509KeyPair(outFile, r.keyFile)
+	x509Chain, err := pemutil.ReadCertificateBundle(outFile)
 	if err != nil {
-		return durationOnErrors, errors.Wrap(err, "error loading certificates")
+		return durationOnErrors, errs.Wrap(err, "error reading certificate chain")
+	}
+	x509ChainBytes := make([][]byte, len(x509Chain))
+	for i, c := range x509Chain {
+		x509ChainBytes[i] = c.Raw
+	}
+
+	cert := tls.Certificate{
+		Certificate: x509ChainBytes,
+		PrivateKey:  r.key,
+		Leaf:        x509Chain[0],
 	}
 	if len(cert.Certificate) == 0 {
 		return durationOnErrors, errors.New("error loading certificate: certificate chain is empty")
@@ -439,7 +445,9 @@ func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod tim
 	r.transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
 
 	// Get next renew duration
-	return nextRenewDuration(resp.ServerPEM.Certificate, expiresIn, renewPeriod), nil
+	next := nextRenewDuration(resp.ServerPEM.Certificate, expiresIn, renewPeriod)
+	Info.Printf("%s certificate renewed, next in %s", resp.ServerPEM.Certificate.Subject.CommonName, next.Round(time.Second))
+	return next, nil
 }
 
 func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Duration, afterRenew func() error) error {
@@ -458,29 +466,46 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 		case sig := <-signals:
 			switch sig {
 			case syscall.SIGHUP:
-				if n, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
+				if _, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
 					Error.Println(err)
-				} else {
-					next = n
-					Info.Printf("certificate renewed, next in %s", next.Round(time.Second))
-					if err := afterRenew(); err != nil {
-						Error.Println(err)
-					}
+				} else if err := afterRenew(); err != nil {
+					Error.Println(err)
 				}
 			case syscall.SIGINT, syscall.SIGTERM:
 				return nil
 			}
 		case <-time.After(next):
-			if n, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
-				next = n
+			if _, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
 				Error.Println(err)
-			} else {
-				next = n
-				Info.Printf("certificate renewed, next in %s", next.Round(time.Second))
-				if err := afterRenew(); err != nil {
-					Error.Println(err)
-				}
+			} else if err := afterRenew(); err != nil {
+				Error.Println(err)
 			}
 		}
 	}
+}
+
+func tlsLoadX509KeyPair(certFile, keyFile, passFile string) (tls.Certificate, error) {
+	x509Chain, err := pemutil.ReadCertificateBundle(certFile)
+	if err != nil {
+		return tls.Certificate{}, errs.Wrap(err, "error reading certificate chain")
+	}
+	x509ChainBytes := make([][]byte, len(x509Chain))
+	for i, c := range x509Chain {
+		x509ChainBytes[i] = c.Raw
+	}
+
+	opts := []pemutil.Options{pemutil.WithFilename(keyFile)}
+	if passFile != "" {
+		opts = append(opts, pemutil.WithPasswordFile(passFile))
+	}
+	pk, err := pemutil.Read(keyFile, opts...)
+	if err != nil {
+		return tls.Certificate{}, errs.Wrap(err, "error parsing private key")
+	}
+
+	return tls.Certificate{
+		Certificate: x509ChainBytes,
+		PrivateKey:  pk,
+		Leaf:        x509Chain[0],
+	}, nil
 }

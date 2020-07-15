@@ -72,7 +72,7 @@ $ step ca token 192.168.10.10
 
 Get a new token with custom Subject Alternative Names. The value of the 'sans'
 claim of the token will be ['1.1.1.1', 'hello.example.com'] - 'foobar' will not
-be in the 'sans' claim unless explicitly configured via the '--sans' flag:
+be in the 'sans' claim unless explicitly configured via the '--san' flag:
 '''
 $ step ca token foobar --san 1.1.1.1 --san hello.example.com
 '''
@@ -142,8 +142,20 @@ $ step ca token my-remote.hostname remote_ecdsa --ssh --host
 			certNotBeforeFlag,
 			passwordFileFlag,
 			provisionerKidFlag,
-			sanFlag,
-			sshPrincipalFlag,
+			cli.StringSliceFlag{
+				Name: "san",
+				Usage: `Add <dns|ip|email|uri> Subject Alternative Name(s) (SANs)
+that should be authorized. A certificate signing request using this token must
+match the complete set of SANs in the token 1:1. Use the '--san' flag multiple
+times to configure multiple SANs.`,
+			},
+			cli.StringSliceFlag{
+				Name: "principal,n",
+				Usage: `Add the principals (user or host <name>s) that the token is authorized to
+request. The signing request using this token won't be able to add
+extra names. Use the '--principal' flag multiple times to configure
+multiple principals.`,
+			},
 			sshHostFlag,
 			flags.CaURL,
 			flags.CaConfig,

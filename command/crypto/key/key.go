@@ -24,6 +24,7 @@ $ step crypto key format foo-key.pem
 		Subcommands: cli.Commands{
 			formatCommand(),
 			publicCommand(),
+			inspectCommand(),
 		},
 	}
 }

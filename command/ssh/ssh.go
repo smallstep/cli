@@ -101,11 +101,11 @@ $ ssh internal.example.com
 var (
 	sshPrincipalFlag = cli.StringSliceFlag{
 		Name: "principal,n",
-		Usage: `Add the principals (users or hosts) that the token is authorized to
-		request. The signing request using this token won't be able to add
-		extra names. Use the '--principal' flag multiple times to configure
-		multiple ones. The '--principal' flag and the '--token' flag are
-		mutually exlusive.`,
+		Usage: `Add the specified principal (user or host <name>s) to the certificate request.
+		This flag can be used multiple times. However, it cannot be used in conjunction
+		with '--token' when requesting certificates from OIDC, JWK, and X5C provisioners, or
+		from any provisioner with 'disableCustomSANs' set to 'true'. These provisioners will
+		use the contents of the token to determine the principals.`,
 	}
 
 	sshHostFlag = cli.BoolFlag{

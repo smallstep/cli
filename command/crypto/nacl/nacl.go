@@ -2,7 +2,9 @@ package nacl
 
 import (
 	"encoding/base64"
+	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
 
@@ -42,3 +44,23 @@ For more information on NaCl visit https://nacl.cr.yp.to`,
 }
 
 var b64Encoder = base64.RawURLEncoding
+
+// decodeNonce returns the nonce in bytes. If the input has the prefix base64:
+// it will decode the rest using the base64 standard encoding.
+func decodeNonce(in string) ([]byte, error) {
+	nonce := []byte(in)
+	switch {
+	case strings.HasPrefix(in, "string:"):
+		return nonce[7:], nil
+	case strings.HasPrefix(in, "base64:"):
+		input := nonce[7:]
+		nonce = make([]byte, base64.StdEncoding.DecodedLen(len(input)))
+		n, err := base64.StdEncoding.Decode(nonce, input)
+		if err != nil {
+			return nil, errors.Wrap(err, "error decoding base64 nonce")
+		}
+		return nonce[:n], nil
+	default:
+		return nonce, nil
+	}
+}

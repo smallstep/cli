@@ -118,7 +118,12 @@ $ step ca certificate foo.internal foo.crt foo.key \
 --acme https://acme-staging-v02.api.letsencrypt.org/directory --san bar.internal
 '''`,
 		Flags: []cli.Flag{
-			sanFlag,
+			cli.StringSliceFlag{
+				Name: "san",
+				Usage: `Add <dns|ip|email|uri> Subject Alternative Name(s) (SANs)
+that should be authorized. Use the '--san' flag multiple times to configure
+multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
+			},
 			flags.CaConfig,
 			flags.CaURL,
 			flags.Root,

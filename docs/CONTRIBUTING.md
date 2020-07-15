@@ -13,12 +13,6 @@ to manage issues, etc.
   * [Code Contribution Guidelines](#code-contribution-guidelines)
   * [Git Commit Message Guidelines](#git-commit-message-guidelines)
 
-## Asking Support Questions
-
-Users and developers can ask questions over email (info@smallstep.com) or
-[twitter](https://twitter.com/smallsteplabs).  Please don't use the GitHub
-issue tracker to ask questions.
-
 ## Reporting Issues
 
 If you believe you have found a defect in `step cli` or its
@@ -27,15 +21,20 @@ tracker](https://github.com/smallstep/cli/issues) to report the
 problem. When reporting the issue, please provide the version of `step
 cli` in use (`step version`) and your operating system.
 
+## Asking Support Questions
+
+Users and developers can ask questions on [Gitter](https://gitter.im/smallstep/community)
+Please don't use the GitHub issue tracker to ask questions.
+
 ## Code Contribution
 
-'step cli` aims to become a fully featured online Certificate
-Authority. We encourage all contributions that meet the following criteria:
+'step cli` aims to become a fully featured toolkit for cryptographic primitives.
+We encourage all contributions that meet the following criteria:
 
-* fit naturally into a Certificate Authority.
+* fit naturally into a toolkit for creating and working with cryptographic
+primitives and higher order resources.
 * strive not to break existing functionality.
-* close or update an open [`step cli`
-issue](https://github.com/smallstep/cli/issues)
+* close or update an open [`step cli` issue](https://github.com/smallstep/cli/issues)
 
 **Bug fixes are, of course, always welcome.**
 

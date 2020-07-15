@@ -1,69 +1,67 @@
 #########################################
 # Building Docker Image
 #
-# Builds a dockerfile for step by building a linux version of the step-cli and
-# then copying the specific binary when building the container.
-#
-# This ensures the container is as small as possible without having to deal
-# with getting access to private repositories inside the container during build
-# time.
+# This uses a multi-stage build file. The first stage is a builder (that might
+# be large in size). After the build has succeeded, the statically linked
+# binary is copied to a new image that is optimized for size.
 #########################################
 
-# XXX We put the output for the build in 'output' so we don't mess with how we
-# do rule overriding from the base Makefile (if you name it 'build' it messes up
-# the wildcarding).
-DOCKER_OUTPUT=$(OUTPUT_ROOT)docker/
+docker-prepare:
+	# Ensure, we can build for ARM architecture
+	[ -f /proc/sys/fs/binfmt_misc/qemu-arm ] || docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
 
-DOCKER_MAKE=V=$V GOOS_OVERRIDE='GOOS=linux GOARCH=amd64' PREFIX=$(1) make $(1)bin/$(2)
-DOCKER_BUILD=$Q docker build -t smallstep/$(1):latest -f docker/$(2) --build-arg BINPATH=$(DOCKER_OUTPUT)bin/step .
+	# Register buildx builder
+	mkdir -p $$HOME/.docker/cli-plugins
 
-docker: docker-make docker/Dockerfile.step-cli
-	$(call DOCKER_BUILD,step-cli,Dockerfile.step-cli)
+	wget -O $$HOME/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
+	chmod +x $$HOME/.docker/cli-plugins/docker-buildx
 
-docker-make:
-	mkdir -p $(DOCKER_OUTPUT)
-	$(call DOCKER_MAKE,$(DOCKER_OUTPUT),step)
+	$$HOME/.docker/cli-plugins/docker-buildx create --name mybuilder --platform amd64 --platform arm || true
+	$$HOME/.docker/cli-plugins/docker-buildx use mybuilder
 
-.PHONY: docker docker-make
+.PHONY: docker-prepare
 
 #################################################
 # Releasing Docker Images
 #
 # Using the docker build infrastructure, this section is responsible for
-# logging into docker hub and pushing the built docker containers up with the
-# appropriate tags.
+# logging into docker hub.
 #################################################
-
-DOCKER_TAG=docker tag smallstep/$(1):latest smallstep/$(1):$(2)
-DOCKER_PUSH=docker push smallstep/$(1):$(2)
-
-docker-tag:
-	$(call DOCKER_TAG,step-cli,$(VERSION))
-
-docker-push-tag: docker-tag
-	$(call DOCKER_PUSH,step-cli,$(VERSION))
-
-docker-push-tag-latest:
-	$(call DOCKER_PUSH,step-cli,latest)
 
 # Rely on DOCKER_USERNAME and DOCKER_PASSWORD being set inside the CI or
 # equivalent environment
 docker-login:
 	$Q docker login -u="$(DOCKER_USERNAME)" -p="$(DOCKER_PASSWORD)"
 
-.PHONY: docker-tag docker-push-tag docker-push-tag-latest docker-login
+.PHONY: docker-login
 
 #################################################
 # Targets for different type of builds
 #################################################
 
-# For all builds we build the docker container
-docker-master: docker
+DOCKER_IMAGE_NAME = smallstep/step-cli
+PLATFORMS = --platform amd64 --platform 386 --platform arm
 
-# For all builds with a release candidate tag
-docker-release-candidate: docker-master docker-login docker-push-tag
+define DOCKER_BUILDX
+	# $(1) -- Image Tag
+	# $(2) -- Push (empty is no push | --push will push to dockerhub)
+	$$HOME/.docker/cli-plugins/docker-buildx build . --progress plain -t $(DOCKER_IMAGE_NAME):$(1) -f docker/Dockerfile $(PLATFORMS) $(2)
+endef
 
-# For all builds of a release tag
-docker-release: docker-release-candidate docker-push-tag-latest
+# For non-master builds don't build the docker containers.
+docker-branch:
 
-.PHONY: docker-master docker-release-candidate docker-release
+# For master builds create the docker containers but don't push them.
+docker-master: docker-prepare
+	$(call DOCKER_BUILDX,latest,)
+
+# For all builds with a release candidate tag build and push the containers.
+docker-release-candidate: docker-prepare docker-login
+	$(call DOCKER_BUILDX,$(VERSION),--push)
+
+# For all builds with a release tag build and push the containers.
+docker-release: docker-prepare docker-login
+	$(call DOCKER_BUILDX,latest,--push)
+	$(call DOCKER_BUILDX,$(VERSION),--push)
+
+.PHONY: docker-branch docker-master docker-release-candidate docker-release

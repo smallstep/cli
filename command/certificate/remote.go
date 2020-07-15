@@ -3,6 +3,8 @@ package certificate
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"net"
+	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -17,11 +19,12 @@ var urlPrefixes = []string{"https://", "tcp://", "tls://"}
 // If the address does not contain a port then default to port 443.
 //
 // Params
-//   *addr*:     e.g. smallstep.com
-//   *roots*:    a file, a directory, or a comma-separated list of files.
-//   *insecure*: do not verify that the server's certificate has been signed by
-//               a trusted root
-func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate, error) {
+//   *addr*:       can be a host (e.g. smallstep.com) or an IP (e.g. 127.0.0.1)
+//   *serverName*: use a specific Server Name Indication (e.g. smallstep.com)
+//   *roots*:      a file, a directory, or a comma-separated list of files.
+//   *insecure*:   do not verify that the server's certificate has been signed by
+//                 a trusted root
+func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509.Certificate, error) {
 	var (
 		err     error
 		rootCAs *x509.CertPool
@@ -32,12 +35,15 @@ func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate
 			return nil, errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
 		}
 	}
-	if !strings.Contains(addr, ":") {
-		addr += ":443"
+	if _, _, err := net.SplitHostPort(addr); err != nil {
+		addr = net.JoinHostPort(addr, "443")
 	}
 	tlsConfig := &tls.Config{RootCAs: rootCAs}
 	if insecure {
 		tlsConfig.InsecureSkipVerify = true
+	}
+	if serverName != "" {
+		tlsConfig.ServerName = serverName
 	}
 	conn, err := tls.Dial("tcp", addr, tlsConfig)
 	if err != nil {
@@ -47,19 +53,25 @@ func getPeerCertificates(addr, roots string, insecure bool) ([]*x509.Certificate
 	return conn.ConnectionState().PeerCertificates, nil
 }
 
-// trimURLPrefix returns the url split into prefix and suffix and a bool which
-// tells if the input string had a recognizable URL prefix.
+// trimURL returns the host[:port] if the input is a URL, otherwise returns an
+// empty string (and 'isURL:false').
 //
 // Examples:
-// trimURLPrefix("https://smallstep.com") -> "https://", "smallstep.com", true
-// trimURLPrefix("./certs/root_ca.crt") -> "", "", false
-// trimURLPrefix("hTtPs://sMaLlStEp.cOm") -> "hTtPs://", "sMaLlStEp.cOm", true
-func trimURLPrefix(url string) (string, string, bool) {
-	tmp := strings.ToLower(url)
+// trimURL("https://smallstep.com/onbaording") -> "smallstep.com", true, nil
+// trimURL("https://ca.smallSTEP.com:8080") -> "ca.smallSTEP.com:8080", true, nil
+// trimURL("./certs/root_ca.crt") -> "", false, nil
+// trimURL("hTtPs://sMaLlStEp.cOm") -> "sMaLlStEp.cOm", true, nil
+// trimURL("hTtPs://sMaLlStEp.cOm hello") -> "", false, err{"invalid url"}
+func trimURL(ref string) (string, bool, error) {
+	tmp := strings.ToLower(ref)
 	for _, prefix := range urlPrefixes {
 		if strings.HasPrefix(tmp, prefix) {
-			return url[:len(prefix)], url[len(prefix):], true
+			u, err := url.Parse(ref)
+			if err != nil {
+				return "", false, errors.Wrapf(err, "error parsing URL '%s'", ref)
+			}
+			return u.Host, true, nil
 		}
 	}
-	return "", "", false
+	return "", false, nil
 }

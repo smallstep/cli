@@ -147,6 +147,8 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 generating key.`,
 	}
 
+	// ProvisionerPasswordFileWithAlias is a cli.Flag that allows multiple
+	// alias flag names for the ProvisionerPasswordFile.
 	ProvisionerPasswordFileWithAlias = cli.StringFlag{
 		Name: "provisioner-password-file,password-file",
 		Usage: `The path to the <file> containing the password to decrypt the one-time token
@@ -195,6 +197,21 @@ $STEPPATH/config/ca.json`,
 be stored in the 'x5c' header.`,
 	}
 
+	// X5tCert is a cli.Flag used to pass the x5t header certificate thumbprint
+	// for a JWS or JWT.
+	X5tCert = cli.StringFlag{
+		Name:  "x5t-cert",
+		Usage: "Certificate <path> in PEM format to use for the 'x5t' header of a JWS or JWT",
+	}
+
+	// X5tKey is a cli.Flag used to pass the private key (corresponding to the x5t-cert)
+	// that is used to sign the token.
+	X5tKey = cli.StringFlag{
+		Name: "x5t-key",
+		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate used for
+the 'x5t' header.`,
+	}
+
 	// SSHPOPCert is a cli.Flag used to pass the sshpop header certificate for a JWT.
 	SSHPOPCert = cli.StringFlag{
 		Name:  "sshpop-cert",
@@ -209,14 +226,30 @@ be stored in the 'x5c' header.`,
 be stored in the 'sshpop' header.`,
 	}
 
+	// Team is a cli.Flag used to pass the team name.
 	Team = cli.StringFlag{
 		Name:  "team",
 		Usage: "The team <name> used to bootstrap the environment.",
 	}
 
+	// TeamURL is a cli.Flag used to pass the team URL.
+	TeamURL = cli.StringFlag{
+		Name: "team-url",
+		Usage: `The <url> step queries to retrieve initial team configuration. Only used with
+the --team option. If the url contains "\<\>" placeholders, they are replaced with the team name.`,
+	}
+
+	// RedirectURL is a cli.Flag used to pass the OAuth redirect URL.
 	RedirectURL = cli.StringFlag{
 		Name:  "redirect-url",
 		Usage: "Terminal OAuth redirect <url>.",
+	}
+
+	// ServerName is a cli.Flag used to set the TLS Server Name Indication in
+	// request to a server.
+	ServerName = cli.StringFlag{
+		Name:  "servername",
+		Usage: `TLS Server Name Indication that should be sent to request a specific certificate from the server.`,
 	}
 )
 

@@ -1,16 +1,9 @@
 package sshutil
 
 import (
-	"crypto/dsa"
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/rsa"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -94,24 +87,11 @@ func (c *CertificateInspect) Validity() string {
 }
 
 func inspectPublicKey(key ssh.PublicKey) (string, string, error) {
-	pub, err := PublicKey(key)
+	fp := ssh.FingerprintSHA256(key)
+	typ, _, err := publicKeyTypeAndSize(key)
 	if err != nil {
 		return "", "", err
 	}
 
-	sum := sha256.Sum256(key.Marshal())
-	fp := "SHA256:" + base64.RawStdEncoding.EncodeToString(sum[:])
-
-	switch k := pub.(type) {
-	case *dsa.PublicKey:
-		return "DSA", fp, nil
-	case *rsa.PublicKey:
-		return "RSA", fp, nil
-	case *ecdsa.PublicKey:
-		return "ECDSA", fp, nil
-	case ed25519.PublicKey:
-		return "ED25519", fp, nil
-	default:
-		return "", "", errors.Errorf("unsupported public key %T", k)
-	}
+	return typ, fp, nil
 }

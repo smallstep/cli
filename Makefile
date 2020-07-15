@@ -2,14 +2,41 @@ all: build lint test
 
 .PHONY: all
 
-# Version flags to embed in the binaries
+#################################################
+# Determine the type of `push` and `version`
+#################################################
+
+# If TRAVIS_TAG is set then we know this ref has been tagged.
+ifdef TRAVIS_TAG
+VERSION := $(TRAVIS_TAG)
+NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
+	ifeq ($(NOT_RC),)
+PUSHTYPE := release-candidate
+	else
+PUSHTYPE := release
+	endif
+else
 VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
 # If we are not in an active git dir then try reading the version from .VERSION.
 # .VERSION contains a slug populated by `git archive`.
 VERSION := $(or $(VERSION),$(shell ./.version.sh .VERSION))
+	ifeq ($(TRAVIS_BRANCH),master)
+PUSHTYPE := master
+	else
+PUSHTYPE := branch
+	endif
+endif
 
--include make/common.mk
--include make/docker.mk
+VERSION := $(shell echo $(VERSION) | sed 's/^v//')
+
+ifdef V
+$(info    TRAVIS_TAG is $(TRAVIS_TAG))
+$(info    VERSION is $(VERSION))
+$(info    PUSHTYPE is $(PUSHTYPE))
+endif
+
+include make/common.mk
+include make/docker.mk
 
 #########################################
 # Debian
@@ -37,41 +64,45 @@ distclean: clean
 #################################################
 
 BINARY_OUTPUT=$(OUTPUT_ROOT)binary/
-BUNDLE_MAKE=v=$v GOOS_OVERRIDE='GOOS=$(1) GOARCH=$(2)' PREFIX=$(3) make $(3)bin/step
 RELEASE=./.travis-releases
 
-binary-linux:
-	$(call BUNDLE_MAKE,linux,amd64,$(BINARY_OUTPUT)linux/)
-
-binary-darwin:
-	$(call BUNDLE_MAKE,darwin,amd64,$(BINARY_OUTPUT)darwin/)
-
-binary-windows:
-	$(call BUNDLE_MAKE,windows,amd64,$(BINARY_OUTPUT)windows/)
-
-define BUNDLE
-	$(q)set -e; BUNDLE_DIR=$(BINARY_OUTPUT)$(1)/bundle; \
-	stepName=step_$(2); \
- 	mkdir -p $$BUNDLE_DIR $(RELEASE); \
-	TMP=$$(mktemp -d $$BUNDLE_DIR/tmp.XXXX); \
-	trap "rm -rf $$TMP" EXIT INT QUIT TERM; \
-	newdir=$$TMP/$$stepName; \
-	mkdir -p $$newdir/bin; \
-	cp $(BINARY_OUTPUT)$(1)/bin/step $$newdir/bin/$(4); \
-	cp README.md $$newdir/; \
-	NEW_BUNDLE=$(RELEASE)/step_$(2)_$(1)_$(3).tar.gz; \
-	rm -f $$NEW_BUNDLE; \
-    tar -zcvf $$NEW_BUNDLE -C $$TMP $$stepName;
+define BUNDLE_MAKE
+	$(q) GOOS_OVERRIDE='GOOS=$(1) GOARCH=$(2) GOARM=$(3)' PREFIX=$(4) make $(4)bin/step
 endef
 
-bundle-linux: binary-linux
-	$(call BUNDLE,linux,$(VERSION),amd64,step)
+binary-linux:
+	$(call BUNDLE_MAKE,linux,amd64,,$(BINARY_OUTPUT)linux/)
+
+binary-linux-arm64:
+	$(call BUNDLE_MAKE,linux,arm64,,$(BINARY_OUTPUT)linux.arm64/)
+
+binary-linux-armv7:
+	$(call BUNDLE_MAKE,linux,arm,7,$(BINARY_OUTPUT)linux.armv7/)
+
+binary-darwin:
+	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin/)
+
+binary-windows:
+	$(call BUNDLE_MAKE,windows,amd64,,$(BINARY_OUTPUT)windows/)
+
+define BUNDLE
+	# $(1) -- Binary Output Dir Name
+	# $(2) -- Step Platform Name
+	# $(3) -- Step Binary Architecture
+	# $(4) -- Step Binary Name (For Windows Comaptibility)
+	$(q) ./make/bundle.sh "$(BINARY_OUTPUT)$(1)" "$(RELEASE)" "$(VERSION)" "$(2)" "$(3)" "$(4)"
+endef
+
+bundle-linux: binary-linux binary-linux-arm64 binary-linux-armv7
+	$(call BUNDLE,linux,linux,amd64,step)
+	$(call BUNDLE,linux.arm64,linux,arm64,step)
+	$(call BUNDLE,linux.armv7,linux,armv7,step)
 
 bundle-darwin: binary-darwin
-	$(call BUNDLE,darwin,$(VERSION),amd64,step)
+	$(call BUNDLE,darwin,darwin,amd64,step)
 
 bundle-windows: binary-windows
-	$(call BUNDLE,windows,$(VERSION),amd64,step.exe)
+	$(call BUNDLE,windows,windows,amd64,step.exe)
 
 .PHONY: binary-linux binary-darwin binary-windows bundle-linux bundle-darwin bundle-windows
 
@@ -96,14 +127,18 @@ artifacts-tag: artifacts-linux-tag artifacts-darwin-tag artifacts-windows-tag ar
 #################################################
 # Targets for creating step artifacts
 #################################################
+#
+# For all builds that are not tagged and not on the master branch.
+artifacts-branch:
 
-# For all builds that are not tagged
+# For all builds on the master branch (or PRs targeting the master branch) that
+# are not tagged.
 artifacts-master:
 
-# For all builds with a release candidate tag
+# For all builds with a release candidate tag.
 artifacts-release-candidate: artifacts-tag
 
-# For all builds with a release tag
+# For all builds with a release tag.
 artifacts-release: artifacts-tag
 
 # This command is called by travis directly *after* a successful build

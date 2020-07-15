@@ -14,6 +14,7 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/certificates/ca/identity"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -283,9 +284,14 @@ func certificateAction(ctx *cli.Context) error {
 			var u = uuid.Nil
 			switch hostID {
 			case "":
-				u, err = uuid.NewRandom()
+				// If there is an old identity cert lying around, by default use the host ID so that running
+				// this command twice doesn't clobber your old host ID.
+				u, err = readExistingUUID()
 				if err != nil {
-					return errs.Wrap(err, "Unable to generate a host-id.")
+					u, err = uuid.NewRandom()
+					if err != nil {
+						return errs.Wrap(err, "Unable to generate a host-id.")
+					}
 				}
 			case "machine":
 				u, err = deriveMachineID()
@@ -303,15 +309,14 @@ func certificateAction(ctx *cli.Context) error {
 				return errs.Wrap(err, "failed parsing uuid urn")
 			}
 
-			// Hack to add the URI.
-			// TODO: the proper solution would be to add support in
-			// x509util.SplitSANs.
 			template := &x509.CertificateRequest{
 				Subject:        csr.Subject,
 				DNSNames:       csr.DNSNames,
 				IPAddresses:    csr.IPAddresses,
 				EmailAddresses: csr.EmailAddresses,
-				URIs:           []*url.URL{uri},
+				// Prepend the generated uri. There is code that expects the
+				// uuid URI to be the first one.
+				URIs: append([]*url.URL{uri}, csr.URIs...),
 			}
 			csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, key)
 			if err != nil {
@@ -440,7 +445,7 @@ func certificateAction(ctx *cli.Context) error {
 	}
 
 	// Write Add User keys and certs
-	if isAddUser {
+	if isAddUser && resp.AddUserCertificate != nil {
 		id := provisioner.SanitizeSSHUserPrincipal(subject) + "-provisioner"
 		if _, err := pemutil.Serialize(auPriv, pemutil.WithOpenSSH(true), pemutil.ToFile(baseName+"-provisioner", 0600)); err != nil {
 			return err
@@ -480,10 +485,10 @@ func certificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	if isAddUser {
-		ui.PrintSelected("Provisioner Private Key", baseName+"-provisioner")
-		ui.PrintSelected("Provisioner Public Key", baseName+"-provisioner.pub")
-		ui.PrintSelected("Provisioner Certificate", baseName+"-provisioner-cert.pub")
+	if isAddUser && resp.AddUserCertificate != nil {
+		ui.PrintSelected("Add User Private Key", baseName+"-provisioner")
+		ui.PrintSelected("Add User Public Key", baseName+"-provisioner.pub")
+		ui.PrintSelected("Add User Certificate", baseName+"-provisioner-cert.pub")
 	}
 
 	return nil
@@ -524,5 +529,31 @@ func deriveMachineID() (uuid.UUID, error) {
 	u[6] = (u[6] & 0x0f) | 0x40 // Version 4
 	u[8] = (u[8] & 0x3f) | 0x80 // Variant is 10
 
+	return u, nil
+}
+
+func readExistingUUID() (uuid.UUID, error) {
+	id, err := identity.LoadDefaultIdentity()
+	if err != nil {
+		return uuid.Nil, errs.Wrap(err, "error loading default identity")
+	}
+	if err := id.Validate(); err != nil {
+		return uuid.Nil, errs.Wrap(err, "error validating identity file")
+	}
+	certs, err := pemutil.ReadCertificateBundle(id.Certificate)
+	if err != nil {
+		return uuid.Nil, errs.Wrap(err, "error parsing default identity")
+	}
+	leaf := certs[0]
+	if len(leaf.URIs) < 1 {
+		return uuid.Nil, errors.New("incompatible certificate: missing host uuid")
+	}
+	uri := leaf.URIs[0]
+	// TODO: add a smallstep namespace at some point
+	//       so we can actually find our host id
+	u, err := uuid.Parse(uri.String())
+	if err != nil {
+		return uuid.Nil, errs.Wrap(err, "error parsing host-id")
+	}
 	return u, nil
 }

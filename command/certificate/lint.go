@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/smallstep/zlint"
 	"github.com/urfave/cli"
@@ -15,10 +16,11 @@ import (
 
 func lintCommand() cli.Command {
 	return cli.Command{
-		Name:      "lint",
-		Action:    cli.ActionFunc(lintAction),
-		Usage:     `lint certificate details`,
-		UsageText: `**step certificate lint** <crt_file> [**--roots**=<root-bundle>]`,
+		Name:   "lint",
+		Action: cli.ActionFunc(lintAction),
+		Usage:  `lint certificate details`,
+		UsageText: `**step certificate lint** <crt_file> [**--roots**=<root-bundle>]
+[**--servername**=<servername>]`,
 		Description: `**step certificate lint** checks a certificate for common
 errors and outputs the result in JSON format.
 
@@ -84,6 +86,7 @@ authenticity of the remote server.
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
+			flags.ServerName,
 		},
 	}
 }
@@ -94,13 +97,16 @@ func lintAction(ctx *cli.Context) error {
 	}
 
 	var (
-		crtFile  = ctx.Args().Get(0)
-		roots    = ctx.String("roots")
-		insecure = ctx.Bool("insecure")
-		block    *pem.Block
+		crtFile    = ctx.Args().Get(0)
+		roots      = ctx.String("roots")
+		serverName = ctx.String("servername")
+		insecure   = ctx.Bool("insecure")
+		block      *pem.Block
 	)
-	if _, addr, isURL := trimURLPrefix(crtFile); isURL {
-		peerCertificates, err := getPeerCertificates(addr, roots, insecure)
+	if addr, isURL, err := trimURL(crtFile); err != nil {
+		return err
+	} else if isURL {
+		peerCertificates, err := getPeerCertificates(addr, serverName, roots, insecure)
 		if err != nil {
 			return err
 		}

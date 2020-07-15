@@ -51,9 +51,9 @@ func PublicKey(key ssh.PublicKey) (crypto.PublicKey, error) {
 	switch key.Type() {
 	case ssh.KeyAlgoRSA:
 		return parseRSA(in)
-	case ssh.KeyAlgoECDSA256, ssh.KeyAlgoECDSA384, ssh.KeyAlgoECDSA521:
+	case ssh.KeyAlgoECDSA256, ssh.KeyAlgoECDSA384, ssh.KeyAlgoECDSA521, ssh.KeyAlgoSKECDSA256:
 		return parseECDSA(in)
-	case ssh.KeyAlgoED25519:
+	case ssh.KeyAlgoED25519, ssh.KeyAlgoSKED25519:
 		return parseED25519(in)
 	case ssh.KeyAlgoDSA:
 		return parseDSA(in)
@@ -73,6 +73,16 @@ func Fingerprint(in []byte) (string, error) {
 		comment = "no comment"
 	}
 
+	// set typ, size
+	typ, size, err := publicKeyTypeAndSize(key)
+	if err != nil {
+		return "", errors.Wrap(err, "error determining key type and size")
+	}
+
+	return fmt.Sprintf("%d %s %s (%s)", size, ssh.FingerprintSHA256(key), comment, typ), nil
+}
+
+func publicKeyTypeAndSize(key ssh.PublicKey) (string, int, error) {
 	var isCert bool
 	if cert, ok := key.(*ssh.Certificate); ok {
 		key = cert.Key
@@ -88,39 +98,43 @@ func Fingerprint(in []byte) (string, error) {
 		typ, size = "ECDSA", 384
 	case ssh.KeyAlgoECDSA521:
 		typ, size = "ECDSA", 521
+	case ssh.KeyAlgoSKECDSA256:
+		typ, size = "SK-ECDSA", 256
 	case ssh.KeyAlgoED25519:
 		typ, size = "ED25519", 256
+	case ssh.KeyAlgoSKED25519:
+		typ, size = "SK-ED25519", 256
 	case ssh.KeyAlgoRSA:
 		typ = "RSA"
 		_, in, ok := parseString(key.Marshal())
 		if !ok {
-			return "", errors.New("public key is invalid")
+			return "", 0, errors.New("public key is invalid")
 		}
 		k, err := parseRSA(in)
 		if err != nil {
-			return "", err
+			return "", 0, err
 		}
 		size = 8 * k.Size()
 	case ssh.KeyAlgoDSA:
 		typ = "DSA"
 		_, in, ok := parseString(key.Marshal())
 		if !ok {
-			return "", errors.New("public key is invalid")
+			return "", 0, errors.New("public key is invalid")
 		}
 		k, err := parseDSA(in)
 		if err != nil {
-			return "", err
+			return "", 0, err
 		}
 		size = k.Parameters.P.BitLen()
 	default:
-		return "", errors.Errorf("public key %s is not supported", key.Type())
+		return "", 0, errors.Errorf("public key %s is not supported", key.Type())
 	}
 
 	if isCert {
 		typ = typ + "-CERT"
 	}
 
-	return fmt.Sprintf("%d %s %s (%s)", size, ssh.FingerprintSHA256(key), comment, typ), nil
+	return typ, size, nil
 }
 
 func parseString(in []byte) (out, rest []byte, ok bool) {

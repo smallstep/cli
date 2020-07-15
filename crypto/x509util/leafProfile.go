@@ -55,8 +55,7 @@ func NewLeafProfileWithCSR(csr *x509.CertificateRequest, iss *x509.Certificate, 
 	}
 
 	sub := defaultLeafTemplate(csr.Subject, iss.Subject)
-	sub.Extensions = csr.Extensions
-	sub.ExtraExtensions = csr.ExtraExtensions
+	sub.ExtraExtensions = csr.Extensions
 	sub.DNSNames = csr.DNSNames
 	sub.EmailAddresses = csr.EmailAddresses
 	sub.IPAddresses = csr.IPAddresses
@@ -72,7 +71,10 @@ func defaultLeafTemplate(sub pkix.Name, iss pkix.Name) *x509.Certificate {
 		IsCA:      false,
 		NotBefore: notBefore,
 		NotAfter:  notBefore.Add(DefaultCertValidity),
-		KeyUsage:  x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		// KeyEncipherment MUST only be used for RSA keys. At signing time we
+		// will check the type of the key and remove the KeyEncipherment if
+		// necessary.
+		KeyUsage: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage: []x509.ExtKeyUsage{
 			x509.ExtKeyUsageServerAuth,
 			x509.ExtKeyUsageClientAuth,
