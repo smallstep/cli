@@ -332,12 +332,11 @@ func newProfile(p Profile, sub, iss *x509.Certificate, issPriv crypto.PrivateKey
 	}
 
 	if sub.SubjectKeyId == nil {
-		pubBytes, err := x509.MarshalPKIXPublicKey(p.SubjectPublicKey())
+		id, err := generateSubjectKeyID(p.SubjectPublicKey())
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal public key to bytes")
+			return nil, err
 		}
-		hash := sha1.Sum(pubBytes)
-		sub.SubjectKeyId = hash[:] // takes slice over the whole array
+		sub.SubjectKeyId = id
 	}
 
 	if sub.SerialNumber == nil {
@@ -497,4 +496,29 @@ func (b *base) CreateWriteCertificate(crtOut, keyOut, pass string) ([]byte, erro
 		return nil, errors.WithStack(err)
 	}
 	return crtBytes, nil
+}
+
+// subjectPublicKeyInfo is a PKIX public key structure defined in RFC 5280.
+type subjectPublicKeyInfo struct {
+	Algorithm        pkix.AlgorithmIdentifier
+	SubjectPublicKey asn1.BitString
+}
+
+// generateSubjectKeyID generates the key identifier according the the RFC 5280
+// section 4.2.1.2.
+//
+// The keyIdentifier is composed of the 160-bit SHA-1 hash of the value of the
+// BIT STRING subjectPublicKey (excluding the tag, length, and number of unused
+// bits).
+func generateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
+	b, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshaling public key")
+	}
+	var info subjectPublicKeyInfo
+	if _, err = asn1.Unmarshal(b, &info); err != nil {
+		return nil, errors.Wrap(err, "error unmarshaling public key")
+	}
+	hash := sha1.Sum(info.SubjectPublicKey.Bytes)
+	return hash[:], nil
 }
