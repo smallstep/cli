@@ -59,3 +59,24 @@ func TestCryptoJWTVerifyWithPrivate(t *testing.T) {
 	assert.FatalError(t, json.Unmarshal(out, &m))
 	assert.Equals(t, "TestIssuer", m["payload"].(map[string]interface{})["iss"])
 }
+
+func TestCertificateFingerprint(t *testing.T) {
+	tests := []struct {
+		name string
+		crt  string
+		flag string
+		want string
+	}{
+		{"default", "test_files/intermediate_ca.crt", "", "626dca961bfde13341b32e7711c7127612988dbc5d0082fb220efd8ab4087b4b"},
+		{"hex", "test_files/intermediate_ca.crt", " --format=hex", "626dca961bfde13341b32e7711c7127612988dbc5d0082fb220efd8ab4087b4b"},
+		{"base64", "test_files/intermediate_ca.crt", " --format=base64", "Ym3Klhv94TNBsy53EccSdhKYjbxdAIL7Ig79irQIe0s="},
+		{"base64url", "test_files/intermediate_ca.crt", " --format=base64-url", "Ym3Klhv94TNBsy53EccSdhKYjbxdAIL7Ig79irQIe0s="},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := Output(fmt.Sprintf("step certificate fingerprint %s%s", tt.crt, tt.flag))
+			assert.FatalError(t, err)
+			assert.True(t, strings.HasPrefix(string(out), tt.want))
+		})
+	}
+}

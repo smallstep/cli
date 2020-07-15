@@ -29,6 +29,27 @@ func TestFingerprint(t *testing.T) {
 	}
 }
 
+func TestEncodedFingerprint(t *testing.T) {
+	tests := []struct {
+		name     string
+		fn       string
+		encoding FingerprintEncoding
+		want     string
+	}{
+		{"hex", "test_files/ca.crt", HexFingerprint, "6908751f68290d4573ae0be39a98c8b9b7b7d4e8b2a6694b7509946626adfe98"},
+		{"base64", "test_files/ca.crt", Base64Fingerprint, "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat/pg="},
+		{"base64url", "test_files/ca.crt", Base64UrlFingerprint, "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat_pg="},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cert := mustParseCertificate(t, tt.fn)
+			if got := EncodedFingerprint(cert, tt.encoding); got != tt.want {
+				t.Errorf("EncodedFingerprint() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func mustParseCertificate(t *testing.T, filename string) *x509.Certificate {
 	pemData, err := ioutil.ReadFile(filename)
 	if err != nil {

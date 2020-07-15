@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -26,8 +27,8 @@ func signCommand() cli.Command {
 [**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
 [**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>]
 [**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]
-[**--password-file**=<path>] [**--x5c-cert**=<path>] [**--x5c-key**=<path>]
-[**--x5t-cert**=<path>] [**--x5t-key**=<path>]`,
+[**--header=<key=value>**] [**--password-file**=<path>]
+[**--x5c-cert**=<path>] [**--x5c-key**=<path>] [**--x5t-cert**=<path>] [**--x5t-key**=<path>]`,
 		Description: `**step crypto jwt sign** command generates a signed JSON Web Token (JWT) by
 computing a digital signature or message authentication code for a JSON
 payload. By default, the payload to sign is read from STDIN and the JWT will
@@ -166,6 +167,11 @@ prevent a JWT from being replayed (i.e., recipient(s) can use <jti> to make a
 JWT one-time-use). The <jti> argument is a case-sensitive string. If the
 **--jti** flag is used without an argument a <jti> will be generated randomly
 with sufficient entropy to satisfy the collision-resistance criteria.`,
+			},
+			cli.StringSliceFlag{
+				Name: "header",
+				Usage: `The <key=value> used as a header in the JWT token. Use the flag multiple
+times to set multiple headers.`,
 			},
 			cli.StringFlag{
 				Name: "key, x5c-key, x5t-key",
@@ -347,6 +353,8 @@ func signAction(ctx *cli.Context) error {
 		}
 	}
 
+	headers := ctx.StringSlice("header")
+
 	// Add claims
 	c := &jose.Claims{
 		Issuer:    ctx.String("iss"),
@@ -357,6 +365,7 @@ func signAction(ctx *cli.Context) error {
 		IssuedAt:  jose.UnixNumericDate(ctx.Int64("iat")),
 		ID:        jti,
 	}
+
 	now := time.Now()
 	if c.NotBefore == nil {
 		c.NotBefore = jose.NewNumericDate(now)
@@ -391,6 +400,16 @@ func signAction(ctx *cli.Context) error {
 	so.WithType("JWT")
 	if !ctx.Bool("no-kid") && jwk.KeyID != "" {
 		so.WithHeader("kid", jwk.KeyID)
+	}
+
+	if len(headers) > 0 {
+		for _, s := range headers {
+			i := strings.Index(s, "=")
+			if i == -1 {
+				return errs.InvalidFlagValue(ctx, "set", s, "")
+			}
+			so.WithHeader(jose.HeaderKey(s[:i]), s[i+1:])
+		}
 	}
 
 	if isX5C {
