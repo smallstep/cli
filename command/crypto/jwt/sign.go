@@ -168,6 +168,11 @@ JWT one-time-use). The <jti> argument is a case-sensitive string. If the
 **--jti** flag is used without an argument a <jti> will be generated randomly
 with sufficient entropy to satisfy the collision-resistance criteria.`,
 			},
+			cli.StringSliceFlag{
+				Name: "header",
+				Usage: `The <key=value> used as a header in the JWT token. Use the flag multiple
+times to set multiple headers.`,
+			},
 			cli.StringFlag{
 				Name: "key, x5c-key, x5t-key",
 				Usage: `The <path> to the key with which to sign the JWT.
@@ -202,12 +207,7 @@ the **"kid"** member of one of the JWKs in the JWK Set.`,
 				Hidden: true,
 			},
 			flags.X5cCert,
-      flags.X5tCert,
-			cli.StringSliceFlag{
-				Name: "header",
-				Usage: `The <key=value> used as a header in the JWT token. Use the flag multiple 
-times to set multiple headers.`,
-			},
+			flags.X5tCert,
 		},
 	}
 }

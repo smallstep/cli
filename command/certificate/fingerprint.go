@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-  "github.com/pkg/errors"
+	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
@@ -79,10 +79,10 @@ authenticity of the remote server.
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
-      flags.ServerName,
+			flags.ServerName,
 			cli.StringFlag{
 				Name:  "format",
-				Usage: `Allows fingerprint to be returned as "hex", "base64" or "base64-url" <format>.`,
+				Usage: `The <format> of the fingerprint, it must be "hex", "base64" or "base64-url".`,
 			},
 		},
 	}
@@ -145,6 +145,5 @@ func getFingerprintFormat(format string) (x509util.FingerprintEncoding, error) {
 	case "base64url", "base64-url":
 		return x509util.Base64UrlFingerprint, nil
 	}
-	return x509util.HexFingerprint, errors.Errorf("error parsing fingerprint format: format '%s' is not a valid certificate fingerprint format", format)
-
+	return x509util.HexFingerprint, errors.Errorf("error parsing fingerprint format: '%s' is not a valid certificate fingerprint format", format)
 }
