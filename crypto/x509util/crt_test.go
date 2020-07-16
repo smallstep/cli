@@ -73,6 +73,8 @@ func TestSplitSANs(t *testing.T) {
 	assert.FatalError(t, err)
 	u3, err := url.Parse("urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959")
 	assert.FatalError(t, err)
+	u4, err := url.Parse("mailto:john@doe.com")
+	assert.FatalError(t, err)
 	tests := []struct {
 		name              string
 		sans, dns, emails []string
@@ -90,9 +92,9 @@ func TestSplitSANs(t *testing.T) {
 		},
 		{
 			name:   "all-ip",
-			sans:   []string{"0.0.0.0", "127.0.0.1"},
+			sans:   []string{"0.0.0.0", "127.0.0.1", "::1", "2001:0db8:0000:0000:0000:8a2e:0370:7334", "2001:db8::8a2e:370:7334"},
 			dns:    []string{},
-			ips:    []net.IP{net.ParseIP("0.0.0.0"), net.ParseIP("127.0.0.1")},
+			ips:    []net.IP{net.ParseIP("0.0.0.0"), net.ParseIP("127.0.0.1"), net.ParseIP("::1"), net.ParseIP("2001:0db8:0000:0000:0000:8a2e:0370:7334"), net.ParseIP("2001:db8::8a2e:370:7334")},
 			emails: []string{},
 			uris:   []*url.URL{},
 		},
@@ -106,19 +108,19 @@ func TestSplitSANs(t *testing.T) {
 		},
 		{
 			name:   "all-uri",
-			sans:   []string{"https://ca.smallstep.com", "urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959", "https://google.com/index.html"},
+			sans:   []string{"https://ca.smallstep.com", "https://google.com/index.html", "urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959", "mailto:john@doe.com"},
 			dns:    []string{},
 			ips:    []net.IP{},
 			emails: []string{},
-			uris:   []*url.URL{u1, u3, u2},
+			uris:   []*url.URL{u1, u2, u3, u4},
 		},
 		{
 			name:   "mix",
-			sans:   []string{"foo.internal", "https://ca.smallstep.com", "max@smallstep.com", "urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959", "mariano@smallstep.com", "1.1.1.1", "bar.internal", "https://google.com/index.html"},
+			sans:   []string{"foo.internal", "https://ca.smallstep.com", "max@smallstep.com", "urn:uuid:ddfe62ba-7e99-4bc1-83b3-8f57fe3e9959", "mariano@smallstep.com", "1.1.1.1", "bar.internal", "https://google.com/index.html", "mailto:john@doe.com", "2102:446:c001:d65e:ab1a:bf20:4b26:31f7"},
 			dns:    []string{"foo.internal", "bar.internal"},
-			ips:    []net.IP{net.ParseIP("1.1.1.1")},
+			ips:    []net.IP{net.ParseIP("1.1.1.1"), net.ParseIP("2102:446:c001:d65e:ab1a:bf20:4b26:31f7")},
 			emails: []string{"max@smallstep.com", "mariano@smallstep.com"},
-			uris:   []*url.URL{u1, u3, u2},
+			uris:   []*url.URL{u1, u3, u2, u4},
 		},
 	}
 	for _, tt := range tests {
