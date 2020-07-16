@@ -21,8 +21,8 @@ func generateCommand() cli.Command {
 		Action: command.ActionFunc(generateAction),
 		Usage:  "generate a one-time password",
 		UsageText: `**step crypto otp generate** [**--issuer**=<name>]
-[**account**=<user-name>] [**--period**=<seconds>] [**--length**=<size>]
-[**--alg**=<alg>] [*--time**=<time|duration>] [**--url**] [**--qr**]`,
+[**--account**=<user-name>] [**--period**=<seconds>] [**--length**=<size>]
+[**--alg**=<alg>] [**--url**] [**--qr**]`,
 		Description: `**step crypto otp generate** does TOTP and HTOP`,
 		Flags: []cli.Flag{
 			cli.StringFlag{

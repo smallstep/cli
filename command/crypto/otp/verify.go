@@ -23,9 +23,9 @@ func verifyCommand() cli.Command {
 		Name:   "verify",
 		Action: cli.ActionFunc(verifyAction),
 		Usage:  "verify a one-time password",
-		UsageText: `**step crypto otp verify** **--secret**=<path>
+		UsageText: `**step crypto otp verify** [**--secret**=<path>]
 [**--period**=<seconds>] [**--skew**=<num>] [**--length**=<size>]
-[**--alg**=<alg>] [*--time**=<time|duration>] [**-url**]`,
+[**--alg**=<alg>] [*--time**=<time|duration>]`,
 		Description: `**step crypto otp verify** does TOTP and HTOP`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -82,6 +82,13 @@ func verifyAction(ctx *cli.Context) error {
 	)
 
 	secretFile := ctx.String("secret")
+	if len(secretFile) == 0 {
+		args := ctx.Args()
+		if len(args) == 0 {
+			return errs.RequiredFlag(ctx, "secret")
+		}
+		secretFile = args[0]
+	}
 	b, err := ioutil.ReadFile(secretFile)
 	if err != nil {
 		return errs.FileError(err, secretFile)
@@ -90,7 +97,7 @@ func verifyAction(ctx *cli.Context) error {
 	if strings.HasPrefix(secret, "otpauth://") {
 		otpKey, err := otp.NewKeyFromURL(secret)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error parsing TOTP key from URL")
 		}
 
 		u, err := url.Parse(strings.TrimSpace(secret))
