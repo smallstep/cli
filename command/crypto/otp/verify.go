@@ -3,7 +3,9 @@ package otp
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,11 +23,15 @@ func verifyCommand() cli.Command {
 		Name:   "verify",
 		Action: cli.ActionFunc(verifyAction),
 		Usage:  "verify a one-time password",
-		UsageText: `**step crypto otp verify** <secret-file>
+		UsageText: `**step crypto otp verify** **--secret**=<path>
 [**--period**=<seconds>] [**--skew**=<num>] [**--length**=<size>]
-[**--alg**=<alg>] [*--time**=<time|duration>]`,
+[**--alg**=<alg>] [*--time**=<time|duration>] [**-url**]`,
 		Description: `**step crypto otp verify** does TOTP and HTOP`,
 		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "secret",
+				Usage: `Path to file containing TOTP secret.`,
+			},
 			cli.UintFlag{
 				Name: "period",
 				Usage: `Number of seconds a TOTP hash is valid. Defaults to 30
@@ -67,23 +73,73 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 }
 
 func verifyAction(ctx *cli.Context) error {
-	args := ctx.Args()
-	secretFile := args.Get(0)
+	var (
+		secret, algStr string
+		period         uint
+		digits         int
+	)
 
+	secretFile := ctx.String("secret")
 	b, err := ioutil.ReadFile(secretFile)
 	if err != nil {
 		return errs.FileError(err, secretFile)
 	}
-	secret := string(b)
+	secret = string(b)
 	if strings.HasPrefix(secret, "otpauth://") {
-		url, err := otp.NewKeyFromURL(secret)
+		otpKey, err := otp.NewKeyFromURL(secret)
 		if err != nil {
 			return err
 		}
-		secret = url.Secret()
+
+		u, err := url.Parse(strings.TrimSpace(secret))
+		if err != nil {
+			return errors.Wrap(err, "error parsing TOTP Key URI in secret file")
+		}
+		q := u.Query()
+
+		secret = otpKey.Secret()
+
+		// period query param
+		periods := q["period"]
+		if len(periods) > 0 {
+			period64, err := strconv.ParseUint(periods[0], 10, 32)
+			if err != nil {
+				return errors.Wrap(err, "error parsing period from url")
+			}
+			period = uint(period64)
+		} else {
+			period = 0
+		}
+		// digits query param
+		digitVals := q["digits"]
+		if len(digitVals) > 0 {
+			digits64, err := strconv.ParseInt(digitVals[0], 10, 32)
+			if err != nil {
+				return errors.Wrap(err, "error parsing period from url")
+			}
+			digits = int(digits64)
+		} else {
+			digits = 0
+		}
+		// algorithm query param
+		algs := q["algorithm"]
+		if len(algs) > 0 {
+			algStr = algs[0]
+		} else {
+			algStr = ""
+		}
 	}
 
-	alg, err := algFromString(ctx, ctx.String("alg"))
+	if period == 0 || ctx.IsSet("period") {
+		period = ctx.Uint("period")
+	}
+	if digits == 0 || ctx.IsSet("period") {
+		digits = ctx.Int("digits")
+	}
+	if algStr == "" || ctx.IsSet("alg") {
+		algStr = ctx.String("alg")
+	}
+	alg, err := algFromString(ctx, algStr)
 	if err != nil {
 		return err
 	}
@@ -111,9 +167,9 @@ func verifyAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error reading passcode")
 	}
 	valid, err := totp.ValidateCustom(string(passcode), secret, selectTime, totp.ValidateOpts{
-		Period:    ctx.Uint("period"),
+		Period:    period,
 		Skew:      skew,
-		Digits:    otp.Digits(ctx.Int("length")),
+		Digits:    otp.Digits(digits),
 		Algorithm: alg,
 	})
 
