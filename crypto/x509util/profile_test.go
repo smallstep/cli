@@ -1,6 +1,7 @@
 package x509util
 
 import (
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -13,6 +14,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/url"
+	"reflect"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -35,6 +37,23 @@ func mustParseRSAKey(t *testing.T, filename string) *rsa.PrivateKey {
 		t.Fatal(err)
 	}
 	return key
+}
+
+func decodeCertificateFile(t *testing.T, filename string) *x509.Certificate {
+	t.Helper()
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	block, _ := pem.Decode(b)
+	if block == nil {
+		t.Fatal("error decoding pem")
+	}
+	crt, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return crt
 }
 
 type basicConstraints struct {
@@ -392,6 +411,39 @@ func Test_base_CreateCertificate_KeyEncipherment(t *testing.T) {
 				case !tt.wantKeyEncipherment && ku != 0:
 					t.Errorf("base.CreateCertificate() keyUsage = %x, want %x", cert.KeyUsage, x509.KeyUsageDigitalSignature)
 				}
+			}
+		})
+	}
+}
+
+func Test_generateSubjectKeyID(t *testing.T) {
+	ecdsaCrt := decodeCertificateFile(t, "test_files/google.crt")
+	rsaCrt := decodeCertificateFile(t, "test_files/smallstep.crt")
+	ed25519Crt := decodeCertificateFile(t, "test_files/ed25519.crt")
+
+	type args struct {
+		pub crypto.PublicKey
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []byte
+		wantErr bool
+	}{
+		{"ecdsa", args{ecdsaCrt.PublicKey}, ecdsaCrt.SubjectKeyId, false},
+		{"rsa", args{rsaCrt.PublicKey}, rsaCrt.SubjectKeyId, false},
+		{"ed25519", args{ed25519Crt.PublicKey}, ed25519Crt.SubjectKeyId, false},
+		{"fail", args{[]byte("fail")}, nil, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := generateSubjectKeyID(tt.args.pub)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("generateSubjectKeyID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("generateSubjectKeyID() = %v, want %v", got, tt.want)
 			}
 		})
 	}
