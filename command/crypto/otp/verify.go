@@ -74,9 +74,11 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 
 func verifyAction(ctx *cli.Context) error {
 	var (
-		secret, algStr string
-		period         uint
-		digits         int
+		secret string
+		// defaults
+		period = uint(30)
+		digits = 6
+		algStr = "SHA1"
 	)
 
 	secretFile := ctx.String("secret")
@@ -98,45 +100,36 @@ func verifyAction(ctx *cli.Context) error {
 		q := u.Query()
 
 		secret = otpKey.Secret()
-
 		// period query param
-		periods := q["period"]
-		if len(periods) > 0 {
-			period64, err := strconv.ParseUint(periods[0], 10, 32)
+		if periodStr := q.Get("period"); len(periodStr) > 0 {
+			period64, err := strconv.ParseUint(periodStr, 10, 64)
 			if err != nil {
 				return errors.Wrap(err, "error parsing period from url")
 			}
 			period = uint(period64)
-		} else {
-			period = 0
 		}
 		// digits query param
-		digitVals := q["digits"]
-		if len(digitVals) > 0 {
-			digits64, err := strconv.ParseInt(digitVals[0], 10, 32)
+		if digitStr := q.Get("digits"); len(digitStr) > 0 {
+			digits64, err := strconv.ParseInt(digitStr, 10, 64)
 			if err != nil {
 				return errors.Wrap(err, "error parsing period from url")
 			}
 			digits = int(digits64)
-		} else {
-			digits = 0
 		}
 		// algorithm query param
-		algs := q["algorithm"]
-		if len(algs) > 0 {
-			algStr = algs[0]
-		} else {
-			algStr = ""
+		algFromQuery := q.Get("algorithm")
+		if len(algFromQuery) > 0 {
+			algStr = algFromQuery
 		}
 	}
 
-	if period == 0 || ctx.IsSet("period") {
+	if ctx.IsSet("period") {
 		period = ctx.Uint("period")
 	}
-	if digits == 0 || ctx.IsSet("period") {
+	if ctx.IsSet("digits") {
 		digits = ctx.Int("digits")
 	}
-	if algStr == "" || ctx.IsSet("alg") {
+	if ctx.IsSet("alg") {
 		algStr = ctx.String("alg")
 	}
 	alg, err := algFromString(ctx, algStr)
