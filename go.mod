@@ -18,7 +18,7 @@ require (
 	github.com/smallstep/assert v0.0.0-20200103212524-b99dc1097b15
 	github.com/smallstep/certificates v0.14.5
 	github.com/smallstep/certinfo v1.3.0
-	github.com/smallstep/truststore v0.9.3
+	github.com/smallstep/truststore v0.9.6
 	github.com/smallstep/zcrypto v0.0.0-20200203191936-fbc32cf76bce
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
 	github.com/stretchr/testify v1.5.1
