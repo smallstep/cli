@@ -109,7 +109,7 @@ func verifyAction(ctx *cli.Context) error {
 		secret = otpKey.Secret()
 		// period query param
 		if periodStr := q.Get("period"); len(periodStr) > 0 {
-			period64, err := strconv.ParseUint(periodStr, 10, 64)
+			period64, err := strconv.ParseUint(periodStr, 10, 0)
 			if err != nil {
 				return errors.Wrap(err, "error parsing period from url")
 			}
@@ -117,7 +117,7 @@ func verifyAction(ctx *cli.Context) error {
 		}
 		// digits query param
 		if digitStr := q.Get("digits"); len(digitStr) > 0 {
-			digits64, err := strconv.ParseInt(digitStr, 10, 64)
+			digits64, err := strconv.ParseInt(digitStr, 10, 0)
 			if err != nil {
 				return errors.Wrap(err, "error parsing period from url")
 			}
