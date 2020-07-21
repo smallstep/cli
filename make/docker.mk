@@ -40,7 +40,7 @@ docker-login:
 #################################################
 
 DOCKER_IMAGE_NAME = smallstep/step-cli
-PLATFORMS = --platform amd64 --platform 386 --platform arm
+PLATFORMS = --platform amd64 --platform 386 --platform arm --platform arm64
 
 define DOCKER_BUILDX
 	# $(1) -- Image Tag
