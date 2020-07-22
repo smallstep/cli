@@ -10,7 +10,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/smallstep/cli.svg?style=social)](https://github.com/smallstep/cli/stargazers)
 [![Twitter followers](https://img.shields.io/twitter/follow/smallsteplabs.svg?label=Follow&style=social)](https://twitter.com/intent/follow?screen_name=smallsteplabs)
 
-`step` is a toolkit for working with your *public key infrastructure* (PKI). It's the client counterpart to the [`step-ca`](https://github.com/smallstep/certificates) online Certificate Authority (CA).
+`step` is a toolkit for working with your *public key infrastructure* (PKI). It's also the client counterpart to the [`step-ca`](https://github.com/smallstep/certificates) online Certificate Authority (CA).
+
+Here's a quick example, combining `step oauth` and `step crypto` to get and verify the signature of a Google OAuth OIDC token:
 
 ![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
 
