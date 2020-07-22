@@ -37,7 +37,8 @@ Step CLI's command groups illustrate some of its uses:
   - [Inspect](https://smallstep.com/docs/cli/certificate/inspect/) and [lint](https://smallstep.com/docs/cli/certificate/lint/) certificates on disk or in use by a remote server
   - [Install root certificates](https://smallstep.com/docs/cli/certificate/install/) so your CA is trusted by default (issue development certificates **that [work in browsers](https://smallstep.com/blog/step-v0-8-6-valid-HTTPS-certificates-for-dev-pre-prod.html)**)
 
-- [`step ca`](https://smallstep.com/docs/cli/ca/): Make requests of any ACMEv2 ([RFC8555](https://tools.ietf.org/html/rfc8555)) CA, including [`step-ca`](https://github.com/smallstep/certificates). ACME is the protocol used by Let's Encrypt to automate the issuance of HTTPS certificates.
+- [`step ca`](https://smallstep.com/docs/cli/ca/): Set up your own CA, or make requests of any ACMEv2 ([RFC8555](https://tools.ietf.org/html/rfc8555)) CA, including [`step-ca`](https://github.com/smallstep/certificates). ACME is the protocol used by Let's Encrypt to automate the issuance of HTTPS certificates.
+  - Initialize an X.509 and/or SSH CA in one command
   - [Authenticate and obtain a certificate](https://smallstep.com/docs/cli/ca/certificate/) using any enrollment mechanism supported by [`step-ca`](https://github.com/smallstep/certificates)
   - Securely [distribute root certificates](https://smallstep.com/docs/cli/ca/root/) and [bootstrap](https://smallstep.com/docs/cli/ca/bootstrap/) PKI relying parties
   - [Renew](https://smallstep.com/docs/cli/ca/renew/) and [revoke](https://smallstep.com/docs/cli/ca/revoke/) certificates issued by [`step-ca`](https://github.com/smallstep/certificates)
@@ -55,6 +56,7 @@ Step CLI's command groups illustrate some of its uses:
   - [Apply key derivation functions](https://smallstep.com/docs/cli/crypto/kdf/) (KDFs) and [verify passwords](https://smallstep.com/docs/cli/crypto/kdf/compare/) using `scrypt`, `bcrypt`, and `argo2`
   - Generate and check [file hashes](https://smallstep.com/docs/cli/crypto/hash/)
 - [`step oauth`](https://smallstep.com/docs/cli/oauth/): Add an OAuth 2.0 single sign-on flow to any CLI application.
+  - Supports OAuth authorization code, out-of-band (OOB), JWT bearer, and refresh token flows
   - Get OAuth access tokens and OIDC identity tokens at the command line from any provider.
   - Verify OIDC identity tokens (`step crypto jwt verify`)
 - [`step ssh`](https://smallstep.com/docs/cli/oauth/): Create and manage SSH certificates (requires an online or offline [`step-ca`](https://github.com/smallstep/certificates) instance)
