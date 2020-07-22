@@ -97,7 +97,7 @@ You can use [pacman](https://www.archlinux.org/pacman/) to install the packages.
 
 ### Linux (other)
 
-We have `amd64`, `arm64`, and `armv7` releases available to download from our [latest release](https://github.com/smallstep/cli/releases/latest)
+We have `amd64`, `arm64`, and `armv7` releases available to download from our [latest release](https://github.com/smallstep/cli/releases/latest).
 
 ## Testing your installation
 
