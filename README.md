@@ -336,7 +336,7 @@ https://accounts.google.com/o/oauth2/v2/auth?client_id=[...]
 
 ### OAuth 2.0 API calls
 
-Here's another flow. Let's use `step` to get a Google bearer token using the OAuth 2.0 authorization code flow, make an HTTP `Authorization:` header from it, and use `curl` to make a request to Google's APIs:
+Here's another flow. Let's use `step` to get a Google bearer token using OAuth 2.0, make an HTTP `Authorization:` header from it, and use `curl` to make a request to Google's APIs:
 
 <pre><code><b>$ curl -H"$(step oauth --header)" https://www.googleapis.com/oauth2/v3/userinfo</b>
 Your default web browser has been opened to visit:
