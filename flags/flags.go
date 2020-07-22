@@ -258,7 +258,7 @@ the --team option. If the url contains "\<\>" placeholders, they are replaced wi
 		Usage: "The <key=value> pair with template data variables to send to the CA. Use the '--set' flag multiple times to add multiple variables.",
 	}
 
-	// TemplateSet is a cli.Flag used to send a JSON file to the CA.
+	// TemplateSetFile is a cli.Flag used to send a JSON file to the CA.
 	TemplateSetFile = cli.StringFlag{
 		Name:  "set-file",
 		Usage: "The <path> of a JSON file with the template data to send to the CA.",
