@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"net"
@@ -193,11 +194,18 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 		return err
 	}
 
+	// parse template data
+	templateData, err := parseTemplateData(ctx)
+	if err != nil {
+		return err
+	}
+
 	req := &api.SignRequest{
-		CsrPEM:    csr,
-		OTT:       token,
-		NotBefore: notBefore,
-		NotAfter:  notAfter,
+		CsrPEM:       csr,
+		OTT:          token,
+		NotBefore:    notBefore,
+		NotAfter:     notAfter,
+		TemplateData: templateData,
 	}
 
 	resp, err := client.Sign(req)
@@ -336,4 +344,41 @@ func parseTimeDuration(ctx *cli.Context) (notBefore api.TimeDuration, notAfter a
 		return zero, zero, errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 	return
+}
+
+func parseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
+	data := make(map[string]interface{})
+	if path := ctx.String("set-file"); path != "" {
+		b, err := utils.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(b, &data); err != nil {
+			return nil, errors.Wrapf(err, "error unmarshaling %s", path)
+		}
+	}
+
+	keyValues := ctx.StringSlice("set")
+	for _, s := range keyValues {
+		i := strings.Index(s, "=")
+		if i == -1 {
+			return nil, errs.InvalidFlagValue(ctx, "set", s, "")
+		}
+		key, value := s[:i], s[i+1:]
+
+		// If the value is not json, use the raw string.
+		var v interface{}
+		if err := json.Unmarshal([]byte(value), &v); err == nil {
+			data[key] = v
+		} else {
+			fmt.Println(err, value)
+			data[key] = value
+		}
+	}
+
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	return json.Marshal(data)
 }

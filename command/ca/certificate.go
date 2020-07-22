@@ -151,6 +151,8 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			acmeContactFlag,
 			acmeHTTPListenFlag,
 			flags.K8sSATokenPathFlag,
+			flags.TemplateSet,
+			flags.TemplateSetFile,
 		},
 	}
 }
