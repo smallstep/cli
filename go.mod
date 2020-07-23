@@ -14,7 +14,7 @@ require (
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200103212524-b99dc1097b15
-	github.com/smallstep/certificates v0.15.0-rc.1.0.20200721213455-978ad7e2b6e3
+	github.com/smallstep/certificates v0.15.0-rc.1.0.20200723012445-6c64fb3ed293
 	github.com/smallstep/certinfo v1.3.0
 	github.com/smallstep/truststore v0.9.6
 	github.com/smallstep/zcrypto v0.0.0-20200203191936-fbc32cf76bce
