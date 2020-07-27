@@ -226,17 +226,17 @@ the 'x5t' header.`,
 be stored in the 'sshpop' header.`,
 	}
 
-	// Team is a cli.Flag used to pass the team name.
+	// Team is a cli.Flag used to pass the team ID.
 	Team = cli.StringFlag{
 		Name:  "team",
-		Usage: "The team <name> used to bootstrap the environment.",
+		Usage: "The team <ID> used to bootstrap the environment.",
 	}
 
 	// TeamURL is a cli.Flag used to pass the team URL.
 	TeamURL = cli.StringFlag{
 		Name: "team-url",
 		Usage: `The <url> step queries to retrieve initial team configuration. Only used with
-the --team option. If the url contains "\<\>" placeholders, they are replaced with the team name.`,
+the --team option. If the url contains "\<\>" placeholders, they are replaced with the team ID.`,
 	}
 
 	// RedirectURL is a cli.Flag used to pass the OAuth redirect URL.
