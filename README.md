@@ -20,7 +20,7 @@ Here's a quick example, combining `step oauth` and `step crypto` to get and veri
 
 [Website](https://smallstep.com) |
 [Documentation](https://smallstep.com/docs/cli) |
-[Installation Guide](#installation-guide) |
+[Installation Guide](#installation) |
 [Examples](#examples) |
 [FAQs](docs/questions.md) |
 [Contribution Guide](./docs/CONTRIBUTING.md)
