@@ -90,7 +90,7 @@ type bootstrapConfig struct {
 }
 
 func bootstrapAction(ctx *cli.Context) error {
-	caURL, err := cautils.CtxCAURL(ctx, true)
+	caURL, err := flags.ParseCaURL(ctx)
 	if err != nil {
 		return err
 	}

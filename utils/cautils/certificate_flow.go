@@ -22,6 +22,7 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
@@ -70,7 +71,7 @@ func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.
 
 	// Create online client
 	root := ctx.String("root")
-	caURL, err := CtxCAURL(ctx, false)
+	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return nil, err
 	}

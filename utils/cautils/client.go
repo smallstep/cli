@@ -9,6 +9,7 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
@@ -43,7 +44,7 @@ func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
 		return NewOfflineCA(caConfig)
 	}
 
-	caURL, err := CtxCAURL(ctx, true)
+	caURL, err := flags.ParseCaURL(ctx)
 	if err != nil {
 		return nil, err
 	}

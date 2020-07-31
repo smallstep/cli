@@ -12,7 +12,6 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
-	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -64,7 +63,7 @@ func rootAction(ctx *cli.Context) error {
 		return err
 	}
 
-	caURL, err := cautils.CtxCAURL(ctx, true)
+	caURL, err := flags.ParseCaURL(ctx)
 	if err != nil {
 		return err
 	}

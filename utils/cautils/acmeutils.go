@@ -21,6 +21,7 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
@@ -346,7 +347,7 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 
 	af.acmeDir = ctx.String("acme")
 	if len(af.acmeDir) == 0 {
-		caURL, err := CtxCAURL(ctx, true)
+		caURL, err := flags.ParseCaURL(ctx)
 		if err != nil {
 			return nil, err
 		}

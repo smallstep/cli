@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/utils/cautils"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
@@ -46,7 +46,7 @@ func listAction(ctx *cli.Context) error {
 	}
 
 	root := ctx.String("root")
-	caURL, err := cautils.CtxCAURL(ctx, true)
+	caURL, err := flags.ParseCaURL(ctx)
 	if err != nil {
 		return err
 	}

@@ -204,7 +204,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 		rootFile = pki.GetRootCAPath()
 	}
 
-	caURL, err := cautils.CtxCAURL(ctx, true)
+	caURL, err := flags.ParseCaURL(ctx)
 	if err != nil {
 		return err
 	}

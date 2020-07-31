@@ -1,7 +1,10 @@
 package flags
 
 import (
+	"fmt"
+	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/smallstep/certificates/api"
@@ -283,4 +286,44 @@ func ParseTimeDuration(ctx *cli.Context) (notBefore api.TimeDuration, notAfter a
 		return zero, zero, errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 	return
+}
+
+// ParseCaURL gets and parses the ca-url from the command context.
+//  - Require non-empty value.
+//  - Prepend an 'https' scheme if the URL does not have a scheme.
+//  - Error if the URL scheme is not implicitly or explicitly 'https'.
+func ParseCaURL(ctx *cli.Context) (string, error) {
+	caURL := ctx.String("ca-url")
+	if len(caURL) == 0 {
+		return "", errs.RequiredFlag(ctx, "ca-url")
+	}
+
+	return parseCaURL(ctx, caURL)
+}
+
+// ParseCaURLIfExists gets and parses the ca-url from the command context, if
+// one is present.
+//  - Allow empty value.
+//  - Prepend an 'https' scheme if the URL does not have a scheme.
+//  - Error if the URL scheme is not implicitly or explicitly 'https'.
+func ParseCaURLIfExists(ctx *cli.Context) (string, error) {
+	caURL := ctx.String("ca-url")
+	if len(caURL) == 0 {
+		return "", nil
+	}
+	return parseCaURL(ctx, caURL)
+}
+
+func parseCaURL(ctx *cli.Context, caURL string) (string, error) {
+	if !strings.Contains(caURL, "://") {
+		caURL += "https://"
+	}
+	u, err := url.Parse(caURL)
+	if err != nil {
+		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "invalid URL")
+	}
+	if u.Scheme != "https" {
+		return "", errs.InvalidFlagValueMsg(ctx, "ca-url", caURL, "must have https scheme")
+	}
+	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
 }

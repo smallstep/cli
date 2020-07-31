@@ -306,7 +306,7 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.
 	}
 
 	// Create online client
-	caURL, err := cautils.CtxCAURL(ctx, false)
+	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -334,6 +334,11 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.
 			options = append(options, ca.WithRootSHA256(claims.SHA))
 			ui.PrintSelected("CA", caURL)
 			return ca.NewClient(caURL, options...)
+		}
+	} else {
+		// If there is no token then caURL is required.
+		if len(caURL) == 0 {
+			return nil, errs.RequiredFlag(ctx, "ca-url")
 		}
 	}
 

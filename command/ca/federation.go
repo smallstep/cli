@@ -14,7 +14,6 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
-	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -111,7 +110,7 @@ func rootsAndFederationFlow(ctx *cli.Context, typ flowType) error {
 		return err
 	}
 
-	caURL, err := cautils.CtxCAURL(ctx, true)
+	caURL, err := flags.ParseCaURL(ctx)
 	if err != nil {
 		return err
 	}
