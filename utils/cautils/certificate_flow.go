@@ -70,7 +70,10 @@ func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.
 
 	// Create online client
 	root := ctx.String("root")
-	caURL := ctx.String("ca-url")
+	caURL, err := CtxCAURL(ctx, false)
+	if err != nil {
+		return nil, err
+	}
 
 	jwt, err := token.ParseInsecure(tok)
 	if err != nil {

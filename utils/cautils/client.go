@@ -43,9 +43,9 @@ func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
 		return NewOfflineCA(caConfig)
 	}
 
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return nil, errs.RequiredFlag(ctx, "ca-url")
+	caURL, err := CtxCAURL(ctx, true)
+	if err != nil {
+		return nil, err
 	}
 	root := ctx.String("root")
 	if len(root) == 0 {

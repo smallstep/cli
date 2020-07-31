@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -45,9 +46,9 @@ func listAction(ctx *cli.Context) error {
 	}
 
 	root := ctx.String("root")
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
+	caURL, err := cautils.CtxCAURL(ctx, true)
+	if err != nil {
+		return err
 	}
 
 	provisioners, err := pki.GetProvisioners(caURL, root)

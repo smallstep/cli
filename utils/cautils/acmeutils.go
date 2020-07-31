@@ -346,9 +346,9 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 
 	af.acmeDir = ctx.String("acme")
 	if len(af.acmeDir) == 0 {
-		caURL := ctx.String("ca-url")
-		if len(caURL) == 0 {
-			return nil, errs.RequiredFlag(ctx, "ca-url")
+		caURL, err := CtxCAURL(ctx, true)
+		if err != nil {
+			return nil, err
 		}
 		if len(af.provisionerName) == 0 {
 			return nil, errors.New("acme flow expected provisioner ID")

@@ -31,11 +31,36 @@ const (
 	SSHRekeyType
 )
 
-// parseAudience creates the ca audience url from the ca-url
-func parseAudience(ctx *cli.Context, tokType int) (string, error) {
+// CtxCAURL gets the ca-url from the command context. Prepend an 'https' scheme
+// if the URL does not have a scheme. Error if the URL scheme is not implicitly
+// 'https'.
+func CtxCAURL(ctx *cli.Context, isRequired bool) (string, error) {
 	caURL := ctx.String("ca-url")
 	if len(caURL) == 0 {
-		return "", errs.RequiredFlag(ctx, "ca-url")
+		if isRequired {
+			return "", errs.RequiredFlag(ctx, "ca-url")
+		}
+		return "", nil
+	}
+
+	if !strings.Contains(caURL, "://") {
+		caURL += "https://"
+	}
+	u, err := url.Parse(caURL)
+	if err != nil {
+		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "invalid URL")
+	}
+	if u.Scheme != "https" {
+		return "", errs.InvalidFlagValueMsg(ctx, "ca-url", caURL, "must have https scheme")
+	}
+	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
+}
+
+// parseAudience creates the ca audience url from the ca-url
+func parseAudience(ctx *cli.Context, tokType int) (string, error) {
+	caURL, err := CtxCAURL(ctx, true)
+	if err != nil {
+		return "", err
 	}
 
 	audience, err := url.Parse(caURL)

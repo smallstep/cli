@@ -12,6 +12,7 @@ import (
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -63,14 +64,14 @@ func rootAction(ctx *cli.Context) error {
 		return err
 	}
 
-	caURL := ctx.String("ca-url")
+	caURL, err := cautils.CtxCAURL(ctx, true)
+	if err != nil {
+		return err
+	}
 	fingerprint := ctx.String("fingerprint")
 	rootFile := ctx.Args().Get(0)
 
-	switch {
-	case len(caURL) == 0:
-		return errs.RequiredFlag(ctx, "ca-url")
-	case len(fingerprint) == 0:
+	if len(fingerprint) == 0 {
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}
 
