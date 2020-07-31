@@ -104,6 +104,7 @@ func (t *TokenGenerator) RevokeToken(sub string, opts ...token.Options) (string,
 func (t *TokenGenerator) SignSSHToken(sub, certType string, principals []string, notBefore, notAfter provisioner.TimeDuration, opts ...token.Options) (string, error) {
 	opts = append([]token.Options{token.WithSSH(provisioner.SignSSHOptions{
 		CertType:    certType,
+		KeyID:       sub,
 		Principals:  principals,
 		ValidAfter:  notBefore,
 		ValidBefore: notAfter,

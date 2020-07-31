@@ -21,6 +21,7 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
@@ -418,7 +419,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		}
 		clientOps = append(clientOps, ca.WithRootFile(root))
 		// parse times or durations
-		nbf, naf, err := parseTimeDuration(af.ctx)
+		nbf, naf, err := flags.ParseTimeDuration(af.ctx)
 		if err != nil {
 			return nil, err
 		}

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"net"
@@ -23,6 +22,7 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
@@ -189,13 +189,13 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 	}
 
 	// parse times or durations
-	notBefore, notAfter, err := parseTimeDuration(ctx)
+	notBefore, notAfter, err := flags.ParseTimeDuration(ctx)
 	if err != nil {
 		return err
 	}
 
 	// parse template data
-	templateData, err := parseTemplateData(ctx)
+	templateData, err := flags.ParseTemplateData(ctx)
 	if err != nil {
 		return err
 	}
@@ -330,55 +330,4 @@ func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email
 		}
 	}
 	return x509util.SplitSANs(unique)
-}
-
-// parseTimeDuration parses the not-before and not-after flags as a timeDuration
-func parseTimeDuration(ctx *cli.Context) (notBefore api.TimeDuration, notAfter api.TimeDuration, err error) {
-	var zero api.TimeDuration
-	notBefore, err = api.ParseTimeDuration(ctx.String("not-before"))
-	if err != nil {
-		return zero, zero, errs.InvalidFlagValue(ctx, "not-before", ctx.String("not-before"), "")
-	}
-	notAfter, err = api.ParseTimeDuration(ctx.String("not-after"))
-	if err != nil {
-		return zero, zero, errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
-	}
-	return
-}
-
-func parseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
-	data := make(map[string]interface{})
-	if path := ctx.String("set-file"); path != "" {
-		b, err := utils.ReadFile(path)
-		if err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal(b, &data); err != nil {
-			return nil, errors.Wrapf(err, "error unmarshaling %s", path)
-		}
-	}
-
-	keyValues := ctx.StringSlice("set")
-	for _, s := range keyValues {
-		i := strings.Index(s, "=")
-		if i == -1 {
-			return nil, errs.InvalidFlagValue(ctx, "set", s, "")
-		}
-		key, value := s[:i], s[i+1:]
-
-		// If the value is not json, use the raw string.
-		var v interface{}
-		if err := json.Unmarshal([]byte(value), &v); err == nil {
-			data[key] = v
-		} else {
-			fmt.Println(err, value)
-			data[key] = value
-		}
-	}
-
-	if len(data) == 0 {
-		return nil, nil
-	}
-
-	return json.Marshal(data)
 }

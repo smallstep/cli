@@ -1,12 +1,16 @@
 package flags
 
 import (
+	"encoding/json"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 )
 
@@ -295,4 +299,42 @@ func ParseTimeDuration(ctx *cli.Context) (notBefore api.TimeDuration, notAfter a
 		return zero, zero, errs.InvalidFlagValue(ctx, "not-after", ctx.String("not-after"), "")
 	}
 	return
+}
+
+// ParseTemplateData parses the set and and set-file flags and returns a json
+// message to be used in certificate templates.
+func ParseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
+	data := make(map[string]interface{})
+	if path := ctx.String("set-file"); path != "" {
+		b, err := utils.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(b, &data); err != nil {
+			return nil, errors.Wrapf(err, "error unmarshaling %s", path)
+		}
+	}
+
+	keyValues := ctx.StringSlice("set")
+	for _, s := range keyValues {
+		i := strings.Index(s, "=")
+		if i == -1 {
+			return nil, errs.InvalidFlagValue(ctx, "set", s, "")
+		}
+		key, value := s[:i], s[i+1:]
+
+		// If the value is not json, use the raw string.
+		var v interface{}
+		if err := json.Unmarshal([]byte(value), &v); err == nil {
+			data[key] = v
+		} else {
+			data[key] = value
+		}
+	}
+
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	return json.Marshal(data)
 }

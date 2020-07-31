@@ -157,6 +157,8 @@ $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 			flags.Offline,
 			flags.Provisioner,
 			flags.Token,
+			flags.TemplateSet,
+			flags.TemplateSetFile,
 			sshAddUserFlag,
 			sshHostFlag,
 			sshHostIDFlag,
@@ -198,6 +200,10 @@ func certificateAction(ctx *cli.Context) error {
 	insecure := ctx.Bool("insecure")
 	sshPrivKeyFile := ctx.String("private-key")
 	validAfter, validBefore, err := flags.ParseTimeDuration(ctx)
+	if err != nil {
+		return err
+	}
+	templateData, err := flags.ParseTemplateData(ctx)
 	if err != nil {
 		return err
 	}
@@ -410,6 +416,7 @@ func certificateAction(ctx *cli.Context) error {
 		ValidBefore:      validBefore,
 		AddUserPublicKey: sshAuPubBytes,
 		IdentityCSR:      identityCSR,
+		TemplateData:     templateData,
 	})
 	if err != nil {
 		return err
