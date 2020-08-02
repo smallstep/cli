@@ -63,14 +63,14 @@ func rootAction(ctx *cli.Context) error {
 		return err
 	}
 
-	caURL := ctx.String("ca-url")
+	caURL, err := flags.ParseCaURL(ctx)
+	if err != nil {
+		return err
+	}
 	fingerprint := ctx.String("fingerprint")
 	rootFile := ctx.Args().Get(0)
 
-	switch {
-	case len(caURL) == 0:
-		return errs.RequiredFlag(ctx, "ca-url")
-	case len(fingerprint) == 0:
+	if len(fingerprint) == 0 {
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}
 

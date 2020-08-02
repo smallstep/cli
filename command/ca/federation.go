@@ -110,9 +110,9 @@ func rootsAndFederationFlow(ctx *cli.Context, typ flowType) error {
 		return err
 	}
 
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
+	caURL, err := flags.ParseCaURL(ctx)
+	if err != nil {
+		return err
 	}
 
 	root := ctx.String("root")

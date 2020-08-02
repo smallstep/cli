@@ -90,7 +90,10 @@ type bootstrapConfig struct {
 }
 
 func bootstrapAction(ctx *cli.Context) error {
-	caURL := ctx.String("ca-url")
+	caURL, err := flags.ParseCaURL(ctx)
+	if err != nil {
+		return err
+	}
 	fingerprint := ctx.String("fingerprint")
 	team := ctx.String("team")
 	rootFile := pki.GetRootCAPath()
@@ -100,8 +103,6 @@ func bootstrapAction(ctx *cli.Context) error {
 	switch {
 	case team != "":
 		return cautils.BootstrapTeam(ctx, team)
-	case len(caURL) == 0:
-		return errs.RequiredFlag(ctx, "ca-url")
 	case len(fingerprint) == 0:
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}

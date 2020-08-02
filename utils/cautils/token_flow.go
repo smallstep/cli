@@ -10,6 +10,7 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -33,9 +34,9 @@ const (
 
 // parseAudience creates the ca audience url from the ca-url
 func parseAudience(ctx *cli.Context, tokType int) (string, error) {
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return "", errs.RequiredFlag(ctx, "ca-url")
+	caURL, err := flags.ParseCaURL(ctx)
+	if err != nil {
+		return "", err
 	}
 
 	audience, err := url.Parse(caURL)

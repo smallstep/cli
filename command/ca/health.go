@@ -54,20 +54,21 @@ func healthAction(ctx *cli.Context) error {
 		return err
 	}
 
-	caURL := ctx.String("ca-url")
-	root := ctx.String("root")
-
-	// Prepare client for bootstrap or provisioning tokens
-	var options []ca.ClientOption
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
+	caURL, err := flags.ParseCaURL(ctx)
+	if err != nil {
+		return err
 	}
+
+	root := ctx.String("root")
+	// Prepare client for bootstrap or provisioning tokens
 	if len(root) == 0 {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return errs.RequiredFlag(ctx, "root")
 		}
 	}
+
+	var options []ca.ClientOption
 	options = append(options, ca.WithRootFile(root))
 
 	client, err := ca.NewClient(caURL, options...)

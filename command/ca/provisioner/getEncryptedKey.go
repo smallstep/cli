@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
@@ -46,9 +47,9 @@ func getEncryptedKeyAction(ctx *cli.Context) error {
 
 	kid := ctx.Args().Get(0)
 	root := ctx.String("root")
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
+	caURL, err := flags.ParseCaURL(ctx)
+	if err != nil {
+		return err
 	}
 
 	key, err := pki.GetProvisionerKey(caURL, root, kid)
