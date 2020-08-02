@@ -58,6 +58,7 @@ docker-master: docker-prepare
 # For all builds with a release candidate tag build and push the containers.
 docker-release-candidate: docker-prepare docker-login
 	$(call DOCKER_BUILDX,$(VERSION),--push)
+	$(call DOCKER_BUILDX,latest,--push)
 
 # For all builds with a release tag build and push the containers.
 docker-release: docker-prepare docker-login
