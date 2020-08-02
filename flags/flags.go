@@ -316,11 +316,11 @@ func ParseCaURLIfExists(ctx *cli.Context) (string, error) {
 
 func parseCaURL(ctx *cli.Context, caURL string) (string, error) {
 	if !strings.Contains(caURL, "://") {
-		caURL += "https://"
+		caURL = "https://" + caURL
 	}
 	u, err := url.Parse(caURL)
 	if err != nil {
-		return "", errs.InvalidFlagValue(ctx, "ca-url", caURL, "invalid URL")
+		return "", errs.InvalidFlagValueMsg(ctx, "ca-url", caURL, "invalid URL")
 	}
 	if u.Scheme != "https" {
 		return "", errs.InvalidFlagValueMsg(ctx, "ca-url", caURL, "must have https scheme")

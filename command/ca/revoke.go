@@ -361,8 +361,10 @@ func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, e
 	}
 
 	// Use online CA to get the provisioners and generate the token
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
+	caURL, err := flags.ParseCaURLIfExists(ctx)
+	if err != nil {
+		return "", err
+	} else if len(caURL) == 0 {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
 	}
 
@@ -374,7 +376,6 @@ func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, e
 		}
 	}
 
-	var err error
 	if *subject == "" {
 		*subject, err = ui.Prompt("What is the Serial Number of the certificate you would like to revoke? (`step certificate inspect foo.cert`)", ui.WithValidateNotEmpty())
 		if err != nil {
