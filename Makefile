@@ -92,23 +92,25 @@ binary-windows:
 	$(call BUNDLE_MAKE,windows,amd64,,$(BINARY_OUTPUT)windows/)
 
 define BUNDLE
-	# $(1) -- Binary Output Dir Name
-	# $(2) -- Step Platform Name
-	# $(3) -- Step Binary Architecture
-	# $(4) -- Step Binary Name (For Windows Comaptibility)
-	$(q) ./make/bundle.sh "$(BINARY_OUTPUT)$(1)" "$(RELEASE)" "$(VERSION)" "$(2)" "$(3)" "$(4)"
+    # $(1) -- Format output as .ZIP archive, rather than .tar.gzip (for older windows architecture)
+	# $(2) -- Binary Output Dir Name
+	# $(3) -- Step Platform Name
+	# $(4) -- Step Binary Architecture
+	# $(5) -- Step Binary Name (For Windows Comaptibility)
+	$(q) ./make/bundle.sh $(1) "$(BINARY_OUTPUT)$(2)" "$(RELEASE)" "$(VERSION)" "$(3)" "$(4)" "$(5)"
 endef
 
 bundle-linux: binary-linux binary-linux-arm64 binary-linux-armv7
-	$(call BUNDLE,linux,linux,amd64,step)
-	$(call BUNDLE,linux.arm64,linux,arm64,step)
-	$(call BUNDLE,linux.armv7,linux,armv7,step)
+	$(call BUNDLE,,linux,linux,amd64,step)
+	$(call BUNDLE,,linux.arm64,linux,arm64,step)
+	$(call BUNDLE,,linux.armv7,linux,armv7,step)
 
 bundle-darwin: binary-darwin
-	$(call BUNDLE,darwin,darwin,amd64,step)
+	$(call BUNDLE,,darwin,darwin,amd64,step)
 
 bundle-windows: binary-windows
-	$(call BUNDLE,windows,windows,amd64,step.exe)
+	$(call BUNDLE,,windows,windows,amd64,step.exe)
+	$(call BUNDLE,--zip,windows,windows,amd64,step.exe)
 
 .PHONY: binary-linux binary-darwin binary-windows bundle-linux bundle-darwin bundle-windows
 
