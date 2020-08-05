@@ -64,9 +64,9 @@ Print the fingerprint of the public key using the SSH marshaling:
 $ step crypto key fingerprint --ssh pub.pem
 '''
 
-Print the fingerprint of the key embeded in a certificate:
+Print the fingerprint of the key embeded in a certificate using the SHA-1 hash:
 '''
-$ step crypto key fingerprint cert.pem
+$ step crypto key fingerprint --sha1 cert.pem
 '''
 
 Print the same fingerprint for a public key, a private key and a
@@ -88,8 +88,8 @@ $ step crypto key fingerprint --password-file pass.txt priv.pem
 '''`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
-				Name:  "x509",
-				Usage: "Use the X509 marshaling but use the Subject Key Identifier format using hexadecimal SHA-1 hash.",
+				Name:  "sha1",
+				Usage: "Use the SHA-1 hash with hexadecimal format. The result will be equivalent to the Subject Key Identifier in a X.509 certificate.",
 			},
 			cli.BoolFlag{
 				Name:  "ssh",
@@ -166,7 +166,7 @@ func fingerprintAction(ctx *cli.Context) error {
 	switch {
 	case ctx.Bool("raw"):
 		os.Stdout.Write(b)
-	case ctx.Bool("x509"):
+	case ctx.Bool("sha1"):
 		sum := sha1.Sum(b)
 		fmt.Printf("SHA-1:%x\n", sum[:])
 	default:
