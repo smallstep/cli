@@ -27,6 +27,7 @@ func loginCommand() cli.Command {
 		UsageText: `**step ssh login** <identity>
 		[**--token**=<token>] [**--provisioner**=<name>] [**--provisioner-password-file**=<file>]
 		[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+		[**--set**=<key=value>] [**--set-file**=<path>]
 		[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh login** generates a new SSH key pair and send a request to [step
@@ -61,6 +62,8 @@ $ step ssh login --not-after 1h joe@smallstep.com
 			flags.ProvisionerPasswordFileWithAlias,
 			flags.NotBefore,
 			flags.NotAfter,
+			flags.TemplateSet,
+			flags.TemplateSetFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Offline,
@@ -85,6 +88,10 @@ func loginAction(ctx *cli.Context) error {
 	isAddUser := ctx.Bool("add-user")
 	force := ctx.Bool("force")
 	validAfter, validBefore, err := flags.ParseTimeDuration(ctx)
+	if err != nil {
+		return err
+	}
+	templateData, err := flags.ParseTemplateData(ctx)
 	if err != nil {
 		return err
 	}
@@ -203,6 +210,7 @@ func loginAction(ctx *cli.Context) error {
 		ValidBefore:      validBefore,
 		AddUserPublicKey: sshAuPubBytes,
 		IdentityCSR:      identityCSR,
+		TemplateData:     templateData,
 	})
 	if err != nil {
 		return err
