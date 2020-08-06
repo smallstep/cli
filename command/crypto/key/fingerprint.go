@@ -38,7 +38,7 @@ Using the flag **--ssh** the fingerprint would be based on the SSH encoding of
 the public key.
 
 Note that for certificates and certificate request, the fingerprint would be
-based only on the public key embeded in the certificate. To get the certificate
+based only on the public key embedded in the certificate. To get the certificate
 fingerprint use the appropriate commands:
 
 '''
@@ -64,7 +64,7 @@ Print the fingerprint of the public key using the SSH marshaling:
 $ step crypto key fingerprint --ssh pub.pem
 '''
 
-Print the fingerprint of the key embeded in a certificate using the SHA-1 hash:
+Print the fingerprint of the key embedded in a certificate using the SHA-1 hash:
 '''
 $ step crypto key fingerprint --sha1 cert.pem
 '''
