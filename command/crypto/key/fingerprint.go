@@ -168,7 +168,7 @@ func fingerprintAction(ctx *cli.Context) error {
 		os.Stdout.Write(b)
 	case ctx.Bool("sha1"):
 		sum := sha1.Sum(b)
-		fmt.Printf("SHA-1:%x\n", sum[:])
+		fmt.Printf("SHA1:%x\n", sum[:])
 	default:
 		sum := sha256.Sum256(b)
 		fmt.Println("SHA256:" + base64.RawStdEncoding.EncodeToString(sum[:]))
