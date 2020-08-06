@@ -71,7 +71,7 @@ Step CLI's command groups illustrate some of its uses:
 
 These instructions will install the `step` binary on your local machine. To build from source, see [getting started with development](docs/local-development.md).
 
-### Mac OS
+### macOS
 
 Install `step` via [Homebrew](https://brew.sh/):
 
