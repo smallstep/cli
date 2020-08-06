@@ -25,6 +25,7 @@ $ step crypto key format foo-key.pem
 			formatCommand(),
 			publicCommand(),
 			inspectCommand(),
+			fingerprintCommand(),
 		},
 	}
 }
