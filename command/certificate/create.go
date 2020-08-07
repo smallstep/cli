@@ -290,6 +290,7 @@ func createAction(ctx *cli.Context) error {
 	sans := ctx.StringSlice("san")
 	profile := ctx.String("profile")
 	bundle := ctx.Bool("bundle")
+	subtle := ctx.Bool("subtle")
 
 	// Create certificate request
 	if ctx.Bool("csr") {
@@ -333,6 +334,11 @@ func createAction(ctx *cli.Context) error {
 	// Bundle is only valid for leaf certificates
 	if bundle && profile != profileLeaf {
 		return errs.IncompatibleFlagValue(ctx, "bundle", "profile", profile)
+	}
+
+	// Subtle is required on self-signed certificates
+	if !subtle && profile == profileSelfSigned {
+		return errs.RequiredWithFlagValue(ctx, "profile", "self-signed", "subtle")
 	}
 
 	// Use subject as default san for leaf or self-signed certificates
