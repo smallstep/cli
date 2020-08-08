@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"time"
 
@@ -32,6 +33,7 @@ const (
 	defaultSelfSignedValidity   = 24 * time.Hour
 	defaultIntermediateValidity = time.Hour * 24 * 365 * 10
 	defaultRootValidity         = time.Hour * 24 * 365 * 10
+	defaultTemplatevalidity     = 24 * time.Hour
 )
 
 func createCommand() cli.Command {
@@ -39,10 +41,12 @@ func createCommand() cli.Command {
 		Name:   "create",
 		Action: command.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
-		UsageText: `**step certificate create** <subject> <crt_file> <key_file>
-[**ca**=<issuer-cert>] [**ca-key**=<issuer-key>] [**--csr**]
-[**no-password**] [**--profile**=<profile>] [**--san**=<SAN>] [**--bundle**]
-[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]`,
+		UsageText: `**step certificate create** <subject> <crt-file> <key-file>
+[**--csr**] [**--profile**=<profile>] [**--template**=<path>]
+[**--ca**=<issuer-cert>] [**--ca-key**=<issuer-key>]
+[**--san**=<SAN>] [**--bundle**] [**--key**=<path>]
+[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
+[**--no-password**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing requests (CSR) that can be signed later using 'step
 certificates sign' (or some other tool) to produce a certificate.
@@ -58,7 +62,7 @@ This command creates x.509 certificates for use with TLS.
 : File to write CRT or CSR to (PEM format)
 
 <key_file>
-: File to write private key to (PEM format)
+: File to write private key to (PEM format). This argument is optional if **--key** is passed.
 
 ## EXIT CODES
 
@@ -163,31 +167,9 @@ $ step certificate create foo foo.csr foo.key --csr --kty OKP --curve Ed25519
 '''
 `,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "ca",
-				Usage: `The certificate authority used to issue the new certificate (PEM file).`,
-			},
-			cli.StringFlag{
-				Name:  "ca-key",
-				Usage: `The certificate authority private key used to sign the new certificate (PEM file).`,
-			},
 			cli.BoolFlag{
 				Name:  "csr",
 				Usage: `Generate a certificate signing request (CSR) instead of a certificate.`,
-			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
-			},
-			cli.BoolFlag{
-				Name: "no-password",
-				Usage: `Do not ask for a password to encrypt the private key.
-Sensitive key material will be written to disk unencrypted. This is not
-recommended. Requires **--insecure** flag.`,
-			},
-			cli.StringFlag{
-				Name:  "template",
-				Usage: "The certificate template <path>.",
 			},
 			cli.StringFlag{
 				Name:  "profile",
@@ -211,6 +193,28 @@ recommended. Requires **--insecure** flag.`,
     :  Generate a new self-signed leaf certificate suitable for use with TLS.
 	This profile requires the **--subtle** flag because the use of self-signed leaf
 	certificates is discouraged unless absolutely necessary.`,
+			},
+			cli.StringFlag{
+				Name:  "template",
+				Usage: `The certificate template <path>, a JSON representation of the certificate to create.`,
+			},
+			cli.StringFlag{
+				Name:  "ca",
+				Usage: `The certificate authority used to issue the new certificate (PEM file).`,
+			},
+			cli.StringFlag{
+				Name:  "ca-key",
+				Usage: `The certificate authority private key used to sign the new certificate (PEM file).`,
+			},
+			cli.StringFlag{
+				Name:  "key",
+				Usage: "The <path> of the private key to use instead of creating a new one (PEM file).",
+			},
+			cli.BoolFlag{
+				Name: "no-password",
+				Usage: `Do not ask for a password to encrypt the private key.
+Sensitive key material will be written to disk unencrypted. This is not
+recommended. Requires **--insecure** flag.`,
 			},
 			cli.StringFlag{
 				Name: "not-before",
@@ -243,12 +247,20 @@ the **--ca** flag.`,
 			flags.Curve,
 			flags.Force,
 			flags.Subtle,
+			cli.BoolFlag{
+				Name:   "insecure",
+				Hidden: true,
+			},
 		},
 	}
 }
 
 func createAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 3); err != nil {
+	minArg := 2
+	if key := ctx.String("key"); key == "" {
+		minArg = 3
+	}
+	if err := errs.MinMaxNumberOfArguments(ctx, minArg, 3); err != nil {
 		return err
 	}
 
@@ -262,7 +274,7 @@ func createAction(ctx *cli.Context) error {
 	crtFile := ctx.Args().Get(1)
 	keyFile := ctx.Args().Get(2)
 	if crtFile == keyFile {
-		return errs.EqualArguments(ctx, "CRT_FILE", "KEY_FILE")
+		return errs.EqualArguments(ctx, "<crt-file>", "<key-file>")
 	}
 
 	notBefore, ok := flags.ParseTimeOrDuration(ctx.String("not-before"))
@@ -277,20 +289,23 @@ func createAction(ctx *cli.Context) error {
 		return errs.IncompatibleFlagValues(ctx, "not-before", ctx.String("not-before"), "not-after", ctx.String("not-after"))
 	}
 
-	// Generate key pair
-	kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty", "curve", "size")
-	if err != nil {
-		return err
-	}
-	pub, priv, err := keys.GenerateKeyPair(kty, crv, size)
-	if err != nil {
-		return err
+	var (
+		sans         = ctx.StringSlice("san")
+		profile      = ctx.String("profile")
+		templateFile = ctx.String("template")
+		bundle       = ctx.Bool("bundle")
+		subtle       = ctx.Bool("subtle")
+	)
+
+	if ctx.IsSet("profile") && templateFile != "" {
+		return errs.IncompatibleFlagWithFlag(ctx, "profile", "template")
 	}
 
-	sans := ctx.StringSlice("san")
-	profile := ctx.String("profile")
-	bundle := ctx.Bool("bundle")
-	subtle := ctx.Bool("subtle")
+	// Read or generate key pair
+	pub, priv, err := parseOrCreateKey(ctx)
+	if err != nil {
+		return err
+	}
 
 	// Create certificate request
 	if ctx.Bool("csr") {
@@ -308,7 +323,7 @@ func createAction(ctx *cli.Context) error {
 		}
 
 		// Create certificate request
-		cr, err := createCertificateRequest(subject, sans, priv)
+		cr, err := x509util.CreateCertificateRequest(subject, sans, priv)
 		if err != nil {
 			return err
 		}
@@ -318,15 +333,20 @@ func createAction(ctx *cli.Context) error {
 		}
 
 		// Save key and certificate request
-		if err := savePrivateKey(keyFile, priv, noPass); err != nil {
-			return err
+		if keyFile != "" {
+			if err := savePrivateKey(keyFile, priv, noPass); err != nil {
+				return err
+			}
 		}
+
 		if err = utils.WriteFile(crtFile, pem.EncodeToMemory(block), 0600); err != nil {
 			return errs.FileError(err, crtFile)
 		}
 
 		ui.Printf("Your certificate signing request has been saved in %s.\n", crtFile)
-		ui.Printf("Your private key has been saved in %s.\n", keyFile)
+		if keyFile != "" {
+			ui.Printf("Your private key has been saved in %s.\n", keyFile)
+		}
 
 		return nil
 	}
@@ -341,49 +361,47 @@ func createAction(ctx *cli.Context) error {
 		return errs.RequiredWithFlagValue(ctx, "profile", "self-signed", "subtle")
 	}
 
-	// Use subject as default san for leaf or self-signed certificates
-	if len(sans) == 0 && (profile == profileLeaf || profile == profileSelfSigned) {
-		sans = append(sans, subject)
+	// Parse --ca and --ca-key flags and check when those flags are required.
+	parent, signer, err := parseSigner(ctx, priv)
+	if err != nil {
+		return err
 	}
 
-	var (
-		template        string
-		parent          *x509.Certificate
-		signer          crypto.Signer
-		defaultValidity time.Duration
-	)
+	var template string
+	var defaultValidity time.Duration
+	if templateFile != "" {
+		b, err := utils.ReadFile(templateFile)
+		if err != nil {
+			return err
+		}
+		template = string(b)
+		defaultValidity = defaultTemplatevalidity
+	} else {
+		// Use subject as default san for leaf or self-signed certificates
+		if len(sans) == 0 && (profile == profileLeaf || profile == profileSelfSigned) {
+			sans = append(sans, subject)
+		}
 
-	switch profile {
-	case profileLeaf:
-		parent, signer, err = requireSigner(ctx)
-		if err != nil {
-			return err
+		switch profile {
+		case profileLeaf:
+			template = x509util.DefaultLeafTemplate
+			defaultValidity = defaultLeafValidity
+		case profileIntermediateCA:
+			template = x509util.DefaultIntermediateTemplate
+			defaultValidity = defaultIntermediateValidity
+		case profileRootCA:
+			template = x509util.DefaultRootTemplate
+			defaultValidity = defaultRootValidity
+		case profileSelfSigned:
+			template = x509util.DefaultLeafTemplate
+			defaultValidity = defaultSelfSignedValidity
+		default:
+			return errs.InvalidFlagValue(ctx, "profile", profile, "leaf, intermediate-ca, root-ca, self-signed")
 		}
-		template = x509util.DefaultLeafTemplate
-		defaultValidity = defaultLeafValidity
-	case profileIntermediateCA:
-		parent, signer, err = requireSigner(ctx)
-		if err != nil {
-			return err
-		}
-		template = x509util.DefaultIntermediateTemplate
-		defaultValidity = defaultIntermediateValidity
-	case profileRootCA:
-		parent = nil // self-signed
-		signer = priv.(crypto.Signer)
-		template = x509util.DefaultRootTemplate
-		defaultValidity = defaultRootValidity
-	case profileSelfSigned:
-		parent = nil // self-signed
-		signer = priv.(crypto.Signer)
-		template = x509util.DefaultLeafTemplate
-		defaultValidity = defaultSelfSignedValidity
-	default:
-		return errs.InvalidFlagValue(ctx, "profile", profile, "leaf, intermediate-ca, root-ca, self-signed")
 	}
 
 	// Create X.509 certificate used as base for the certificate
-	cr, err := createCertificateRequest(subject, sans, priv)
+	cr, err := x509util.CreateCertificateRequest(subject, sans, signer)
 	if err != nil {
 		return err
 	}
@@ -434,8 +452,10 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	// Save key and certificate request
-	if err := savePrivateKey(keyFile, priv, noPass); err != nil {
-		return err
+	if keyFile != "" {
+		if err := savePrivateKey(keyFile, signer, noPass); err != nil {
+			return err
+		}
 	}
 
 	if err = utils.WriteFile(crtFile, pubBytes, 0600); err != nil {
@@ -443,14 +463,152 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	ui.Printf("Your certificate request has been saved in %s.\n", crtFile)
-	ui.Printf("Your private key has been saved in %s.\n", keyFile)
+	if keyFile != "" {
+		ui.Printf("Your private key has been saved in %s.\n", keyFile)
+	}
 
 	return nil
 }
 
+func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error) {
+	keyFile := ctx.String("key")
+
+	// Validate key parameters and generate key pair
+	if keyFile == "" {
+		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, ctx.Bool("insecure"), "kty", "curve", "size")
+		if err != nil {
+			return nil, nil, err
+		}
+		pub, priv, err := keys.GenerateKeyPair(kty, crv, size)
+		if err != nil {
+			return nil, nil, err
+		}
+		signer, ok := priv.(crypto.Signer)
+		if !ok {
+			return nil, nil, errors.Errorf("private key of type %T is not a crypto.Signer", priv)
+		}
+		return pub, signer, nil
+	}
+
+	// Validate incompatible flags and read a key file
+	switch {
+	case ctx.IsSet("kty"):
+		return nil, nil, errs.IncompatibleFlag(ctx, "key", "kty")
+	case ctx.IsSet("crv"):
+		return nil, nil, errs.IncompatibleFlag(ctx, "key", "crv")
+	case ctx.IsSet("size"):
+		return nil, nil, errs.IncompatibleFlag(ctx, "key", "size")
+	}
+
+	v, err := pemutil.Read(keyFile)
+	if err != nil {
+		return nil, nil, err
+	}
+	signer, ok := v.(crypto.Signer)
+	if !ok {
+		return nil, nil, errors.Errorf("file %s does not contain a valid private key", keyFile)
+	}
+	return signer.Public(), signer, nil
+}
+
+func parseTemplate(ctx *cli.Context) (string, *x509.Certificate, crypto.Signer, error) {
+	fail := func(err error) (string, *x509.Certificate, crypto.Signer, error) {
+		return "", nil, nil, err
+	}
+
+	b, err := utils.ReadFile(ctx.String("template"))
+	if err != nil {
+		return fail(err)
+	}
+
+	// Just make sure the template is a valid json file.
+	var cert x509util.Certificate
+	if err := json.Unmarshal(b, &cert); err != nil {
+		return fail(errors.Wrap(err, "error unmarshaling template"))
+	}
+
+	// Check for parent
+	caCert := ctx.String("ca")
+	caKey := ctx.String("ca-key")
+	switch {
+	case caCert == "" && caKey == "":
+		// Use a certificate that will be self-signed
+		return string(b), nil, nil, nil
+	case caCert != "" && caKey == "":
+		return fail(errs.RequiredWithFlag(ctx, "ca", "ca-key"))
+	default:
+		return fail(errs.RequiredWithFlag(ctx, "ca", "ca-key"))
+	}
+}
+
+// parseSigner returns the parent certificate and key for leaf and intermediate
+// certificates. When a template is used, it will return the key only if the
+// flags --ca and --ca-key are passed.
+func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certificate, crypto.Signer, error) {
+	var (
+		caCert   = ctx.String("ca")
+		caKey    = ctx.String("ca-key")
+		profile  = ctx.String("profile")
+		template = ctx.String("template")
+	)
+
+	// Check required flags when profile is used.
+	if template == "" {
+		switch profile {
+		case profileLeaf, profileIntermediateCA:
+			if caCert == "" {
+				return nil, nil, errs.RequiredWithFlagValue(ctx, "profile", profile, "ca")
+			}
+			if caKey == "" {
+				return nil, nil, errs.RequiredWithFlagValue(ctx, "profile", profile, "ca-key")
+			}
+		case profileRootCA, profileSelfSigned:
+			if caCert != "" {
+				return nil, nil, errs.IncompatibleFlagValue(ctx, "ca", "profile", profile)
+			}
+			if caKey != "" {
+				return nil, nil, errs.IncompatibleFlagValue(ctx, "ca-key", "profile", profile)
+			}
+		default:
+			return nil, nil, errs.InvalidFlagValue(ctx, "profile", profile, "leaf, intermediate-ca, root-ca, self-signed")
+		}
+	}
+
+	// Root, self-signed, or template with no parent.
+	if caCert == "" && caKey == "" {
+		return nil, defaultSigner, nil
+	}
+
+	// Leaf, intermediate or template with
+	switch {
+	case caCert != "" && caKey == "":
+		return nil, nil, errs.RequiredWithFlag(ctx, "ca", "ca-key")
+	case caCert == "" && caKey != "":
+		return nil, nil, errs.RequiredWithFlag(ctx, "ca-key", "ca")
+	}
+
+	// Parse --ca as a certificate.
+	cert, err := pemutil.ReadCertificate(caCert)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Parse --ca-key as a crypto.Signer.
+	key, err := pemutil.Read(caKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	signer, ok := key.(crypto.Signer)
+	if !ok {
+		return nil, nil, errors.Errorf("invalid value '%s' for flag '--ca-key': file is not a valid private key", caKey)
+	}
+
+	return cert, signer, nil
+}
+
 // createCertificateRequest creates a certificate request, with the given common
 // name, sans, and key.
-func createCertificateRequest(commonName string, sans []string, priv interface{}) (*x509.CertificateRequest, error) {
+func createCertificateRequest(commonName string, sans []string, signer crypto.Signer) (*x509.CertificateRequest, error) {
 	dnsNames, ips, emails, uris := x509util.SplitSANs(sans)
 	asn1Data, err := x509.CreateCertificateRequest(rand.Reader, &x509.CertificateRequest{
 		Subject: pkix.Name{
@@ -460,7 +618,7 @@ func createCertificateRequest(commonName string, sans []string, priv interface{}
 		IPAddresses:    ips,
 		EmailAddresses: emails,
 		URIs:           uris,
-	}, priv)
+	}, signer)
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating certificate request")
 	}
@@ -488,34 +646,4 @@ func savePrivateKey(filename string, priv interface{}, insecure bool) error {
 
 	_, err = pemutil.Serialize(priv, pemutil.WithPassword(pass), pemutil.ToFile(filename, 0600))
 	return err
-}
-
-// requireSigner returns a certificate and a key from the flags --ca and --ca-key.
-func requireSigner(ctx *cli.Context) (*x509.Certificate, crypto.Signer, error) {
-	profile := ctx.String("profile")
-	caCert := ctx.String("ca")
-	if caCert == "" {
-		return nil, nil, errs.RequiredWithFlagValue(ctx, "profile", profile, "ca")
-	}
-	caKey := ctx.String("ca-key")
-	if caKey == "" {
-		return nil, nil, errs.RequiredWithFlagValue(ctx, "profile", profile, "ca-key")
-	}
-
-	cert, err := pemutil.ReadCertificate(caCert)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	key, err := pemutil.Read(caKey)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	signer, ok := key.(crypto.Signer)
-	if !ok {
-		return nil, nil, errors.Errorf("invalid value '%s' for flag '--ca-key': file is not a valid private key", caKey)
-	}
-
-	return cert, signer, nil
 }
