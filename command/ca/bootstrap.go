@@ -52,19 +52,20 @@ $ step ca bootstrap --ca-url https://ca.example.org \
   --install
 '''
 
-Bootstrap using a team name:
+Bootstrap with a smallstep.com CA using a team ID:
 '''
 $ step ca bootstrap --team superteam
 '''
 
-Bootstrap using a team in your environment, this requires an HTTP(S) server
-serving a JSON file like:
+To use team IDs in your own environment, you'll need an HTTP(S) server
+serving a JSON file:
 '''
 {"url":"https://ca.example.org","fingerprint":"d9d0978692f1c7cc791f5c343ce98771900721405e834cd27b9502cc719f5097"}
 '''
 
+Then, this command will look for the file at https://config.example.org/superteam:
 '''
-$ step ca bootstrap --team superteam --team-url https://config.example.org/superteam
+$ step ca bootstrap --team superteam --team-url https://config.example.org/<>
 '''`,
 		Flags: []cli.Flag{
 			flags.CaURL,
@@ -89,7 +90,10 @@ type bootstrapConfig struct {
 }
 
 func bootstrapAction(ctx *cli.Context) error {
-	caURL := ctx.String("ca-url")
+	caURL, err := flags.ParseCaURL(ctx)
+	if err != nil {
+		return err
+	}
 	fingerprint := ctx.String("fingerprint")
 	team := ctx.String("team")
 	rootFile := pki.GetRootCAPath()
@@ -99,8 +103,6 @@ func bootstrapAction(ctx *cli.Context) error {
 	switch {
 	case team != "":
 		return cautils.BootstrapTeam(ctx, team)
-	case len(caURL) == 0:
-		return errs.RequiredFlag(ctx, "ca-url")
 	case len(fingerprint) == 0:
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}

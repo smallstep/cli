@@ -71,7 +71,10 @@ func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.
 
 	// Create online client
 	root := ctx.String("root")
-	caURL := ctx.String("ca-url")
+	caURL, err := flags.ParseCaURLIfExists(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	jwt, err := token.ParseInsecure(tok)
 	if err != nil {
@@ -109,8 +112,10 @@ func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 	}
 
 	// Use online CA to get the provisioners and generate the token
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
+	caURL, err := flags.ParseCaURLIfExists(ctx)
+	if err != nil {
+		return "", err
+	} else if len(caURL) == 0 {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
 	}
 
@@ -122,7 +127,6 @@ func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 		}
 	}
 
-	var err error
 	if subject == "" {
 		subject, err = ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
 		if err != nil {
@@ -141,8 +145,10 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, typ
 	}
 
 	// Use online CA to get the provisioners and generate the token
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
+	caURL, err := flags.ParseCaURLIfExists(ctx)
+	if err != nil {
+		return "", err
+	} else if len(caURL) == 0 {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
 	}
 
@@ -154,7 +160,6 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, typ
 		}
 	}
 
-	var err error
 	if subject == "" {
 		subject, err = ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
 		if err != nil {
@@ -167,9 +172,9 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, typ
 
 // GenerateIdentityToken generates a token using only an OIDC provisioner.
 func (f *CertificateFlow) GenerateIdentityToken(ctx *cli.Context) (string, error) {
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
-		return "", errs.RequiredFlag(ctx, "ca-url")
+	caURL, err := flags.ParseCaURL(ctx)
+	if err != nil {
+		return "", err
 	}
 	root := ctx.String("root")
 	if len(root) == 0 {

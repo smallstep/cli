@@ -21,20 +21,20 @@ type bootstrapAPIResponse struct {
 }
 
 // BootstrapTeam does a request to api.smallstep.com to bootstrap the
-// configuration of the given team name.
-func BootstrapTeam(ctx *cli.Context, name string) error {
+// configuration of the given team ID (slug).
+func BootstrapTeam(ctx *cli.Context, teamID string) error {
 	apiEndpoint := ctx.String("team-url")
 	if apiEndpoint == "" {
 		// Use the default endpoint..
 		u := url.URL{
 			Scheme: "https",
 			Host:   "api.smallstep.com",
-			Path:   "/v1/teams/" + name + "/authorities/ssh",
+			Path:   "/v1/teams/" + teamID + "/authorities/ssh",
 		}
 		apiEndpoint = u.String()
 	} else {
 		// The user specified a custom endpoint..
-		apiEndpoint = strings.ReplaceAll(apiEndpoint, "<>", name)
+		apiEndpoint = strings.ReplaceAll(apiEndpoint, "<>", teamID)
 		u, err := url.Parse(apiEndpoint)
 		if err != nil {
 			return errors.Wrapf(err, "error parsing %s", apiEndpoint)

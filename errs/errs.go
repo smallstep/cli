@@ -139,6 +139,24 @@ func InvalidFlagValue(ctx *cli.Context, flag string, value string, options strin
 	return errors.New(format + "; options are " + options)
 }
 
+// InvalidFlagValueMsg returns an error with the given value being missing or
+// invalid for the given flag. Optionally it returns an error message to aid
+// in debugging.
+func InvalidFlagValueMsg(ctx *cli.Context, flag string, value string, msg string) error {
+	var format string
+	if len(value) == 0 {
+		format = fmt.Sprintf("missing value for flag '--%s'", flag)
+	} else {
+		format = fmt.Sprintf("invalid value '%s' for flag '--%s'", value, flag)
+	}
+
+	if len(msg) == 0 {
+		return errors.New(format)
+	}
+
+	return errors.New(format + "; " + msg)
+}
+
 // IncompatibleFlag returns an error with the flag being incompatible with the
 // given value.
 func IncompatibleFlag(ctx *cli.Context, flag string, value string) error {

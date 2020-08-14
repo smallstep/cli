@@ -241,7 +241,7 @@ func Parse(b []byte, opts ...Options) (interface{}, error) {
 	case block == nil:
 		return nil, errors.Errorf("error decoding %s: not a valid PEM encoded block", ctx.filename)
 	case len(rest) > 0 && !ctx.firstBlock:
-		return nil, errors.Errorf("error decoding %s: contains more than one PEM endoded block", ctx.filename)
+		return nil, errors.Errorf("error decoding %s: contains more than one PEM encoded block", ctx.filename)
 	}
 
 	// PEM is encrypted: ask for password

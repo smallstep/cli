@@ -2,6 +2,8 @@ package flags
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -230,17 +232,17 @@ the 'x5t' header.`,
 be stored in the 'sshpop' header.`,
 	}
 
-	// Team is a cli.Flag used to pass the team name.
+	// Team is a cli.Flag used to pass the team ID.
 	Team = cli.StringFlag{
 		Name:  "team",
-		Usage: "The team <name> used to bootstrap the environment.",
+		Usage: "The team <ID> used to bootstrap the environment.",
 	}
 
 	// TeamURL is a cli.Flag used to pass the team URL.
 	TeamURL = cli.StringFlag{
 		Name: "team-url",
 		Usage: `The <url> step queries to retrieve initial team configuration. Only used with
-the --team option. If the url contains "\<\>" placeholders, they are replaced with the team name.`,
+the --team option. If the url contains "\<\>" placeholders, they are replaced with the team ID.`,
 	}
 
 	// RedirectURL is a cli.Flag used to pass the OAuth redirect URL.
@@ -337,4 +339,44 @@ func ParseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
 	}
 
 	return json.Marshal(data)
+}
+
+// ParseCaURL gets and parses the ca-url from the command context.
+//  - Require non-empty value.
+//  - Prepend an 'https' scheme if the URL does not have a scheme.
+//  - Error if the URL scheme is not implicitly or explicitly 'https'.
+func ParseCaURL(ctx *cli.Context) (string, error) {
+	caURL := ctx.String("ca-url")
+	if len(caURL) == 0 {
+		return "", errs.RequiredFlag(ctx, "ca-url")
+	}
+
+	return parseCaURL(ctx, caURL)
+}
+
+// ParseCaURLIfExists gets and parses the ca-url from the command context, if
+// one is present.
+//  - Allow empty value.
+//  - Prepend an 'https' scheme if the URL does not have a scheme.
+//  - Error if the URL scheme is not implicitly or explicitly 'https'.
+func ParseCaURLIfExists(ctx *cli.Context) (string, error) {
+	caURL := ctx.String("ca-url")
+	if len(caURL) == 0 {
+		return "", nil
+	}
+	return parseCaURL(ctx, caURL)
+}
+
+func parseCaURL(ctx *cli.Context, caURL string) (string, error) {
+	if !strings.Contains(caURL, "://") {
+		caURL = "https://" + caURL
+	}
+	u, err := url.Parse(caURL)
+	if err != nil {
+		return "", errs.InvalidFlagValueMsg(ctx, "ca-url", caURL, "invalid URL")
+	}
+	if u.Scheme != "https" {
+		return "", errs.InvalidFlagValueMsg(ctx, "ca-url", caURL, "must have https scheme")
+	}
+	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
 }

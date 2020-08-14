@@ -306,8 +306,11 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.
 	}
 
 	// Create online client
+	caURL, err := flags.ParseCaURLIfExists(ctx)
+	if err != nil {
+		return nil, err
+	}
 	rootFile := ctx.String("root")
-	caURL := ctx.String("ca-url")
 	var options []ca.ClientOption
 
 	if len(token) > 0 {
@@ -332,11 +335,13 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.
 			ui.PrintSelected("CA", caURL)
 			return ca.NewClient(caURL, options...)
 		}
+	} else {
+		// If there is no token then caURL is required.
+		if len(caURL) == 0 {
+			return nil, errs.RequiredFlag(ctx, "ca-url")
+		}
 	}
 
-	if len(caURL) == 0 {
-		return nil, errs.RequiredFlag(ctx, "ca-url")
-	}
 	if len(rootFile) == 0 {
 		rootFile = pki.GetRootCAPath()
 		if _, err := os.Stat(rootFile); err != nil {
@@ -356,8 +361,10 @@ func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, e
 	}
 
 	// Use online CA to get the provisioners and generate the token
-	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
+	caURL, err := flags.ParseCaURLIfExists(ctx)
+	if err != nil {
+		return "", err
+	} else if len(caURL) == 0 {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
 	}
 
@@ -369,7 +376,6 @@ func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, e
 		}
 	}
 
-	var err error
 	if *subject == "" {
 		*subject, err = ui.Prompt("What is the Serial Number of the certificate you would like to revoke? (`step certificate inspect foo.cert`)", ui.WithValidateNotEmpty())
 		if err != nil {

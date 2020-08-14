@@ -38,19 +38,21 @@ For a JWT to be verified successfully:
     present) and must match the **"kid"** in the JWK or the **"kid"** of one of the
     JWKs in JWKS
   * The JWT signature must be successfully verified
+  * The JWT must not be expired
 
 For examples, see **step help crypto jwt**.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "iss, issuer",
 				Usage: `The issuer of this JWT. The <issuer> must match the value of the **"iss"** claim in
-the JWT. <issuer> is a case-sensitive string.`,
+the JWT. <issuer> is a case-sensitive string. Required unless disabled with the **--subtle** flag.`,
 			},
 			cli.StringFlag{
 				Name: "aud, audience",
 				Usage: `The identity of the principal running this command. The <audience> specified
 must match one of the values in the **"aud"** claim, indicating the intended
-recipient(s) of the JWT. <audience> is a case-sensitive string.`,
+recipient(s) of the JWT. <audience> is a case-sensitive string. Required unless disabled with the
+**--subtle** flag.`,
 			},
 			cli.StringFlag{
 				Name: "alg, algorithm",
