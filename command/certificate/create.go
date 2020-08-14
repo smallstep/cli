@@ -164,7 +164,7 @@ $ step certificate create foo foo.csr foo.key --csr --kty OKP --curve Ed25519
 '''
 
 Create a root certificate using a custom template. The root certificate will
-have a path length constrain that allows at least 2 intermediates:
+have a path length constraint that allows at least 2 intermediates:
 '''
 $ cat root.tpl
 {
@@ -211,7 +211,8 @@ $ step certificate create --profile intermediate-ca \
   "Coyote Corporation" coyote_ca.crt coyote_ca_key
 '''
 
-Create now a leaf certificate and bundle it with the two intermediate certificates and validate it:
+Create a leaf certificate, that is the default profile and bundle it with
+the two intermediate certificates and validate it:
 '''
 $ step certificate create --ca coyote_ca.crt --ca-key coyote_ca_key \
   "coyote@acme.corp" leaf.crt coyote.key
@@ -479,7 +480,7 @@ func createAction(ctx *cli.Context) error {
 	if certTemplate.NotAfter.IsZero() {
 		certTemplate.NotAfter = certTemplate.NotBefore.Add(defaultValidity)
 	}
-	// Check that is not expired
+	// Check that the certificate is not already expired
 	if certTemplate.NotBefore.After(certTemplate.NotAfter) {
 		return errors.Errorf("invalid value '%s' for flag '--not-after': certificate is already expired", ctx.String("not-after"))
 	}
