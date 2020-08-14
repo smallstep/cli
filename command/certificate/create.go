@@ -2,10 +2,7 @@ package certificate
 
 import (
 	"crypto"
-	"crypto/rand"
 	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/json"
 	"encoding/pem"
 	"time"
 
@@ -511,36 +508,6 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 	return signer.Public(), signer, nil
 }
 
-func parseTemplate(ctx *cli.Context) (string, *x509.Certificate, crypto.Signer, error) {
-	fail := func(err error) (string, *x509.Certificate, crypto.Signer, error) {
-		return "", nil, nil, err
-	}
-
-	b, err := utils.ReadFile(ctx.String("template"))
-	if err != nil {
-		return fail(err)
-	}
-
-	// Just make sure the template is a valid json file.
-	var cert x509util.Certificate
-	if err := json.Unmarshal(b, &cert); err != nil {
-		return fail(errors.Wrap(err, "error unmarshaling template"))
-	}
-
-	// Check for parent
-	caCert := ctx.String("ca")
-	caKey := ctx.String("ca-key")
-	switch {
-	case caCert == "" && caKey == "":
-		// Use a certificate that will be self-signed
-		return string(b), nil, nil, nil
-	case caCert != "" && caKey == "":
-		return fail(errs.RequiredWithFlag(ctx, "ca", "ca-key"))
-	default:
-		return fail(errs.RequiredWithFlag(ctx, "ca", "ca-key"))
-	}
-}
-
 // parseSigner returns the parent certificate and key for leaf and intermediate
 // certificates. When a template is used, it will return the key only if the
 // flags --ca and --ca-key are passed.
@@ -604,31 +571,6 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	}
 
 	return cert, signer, nil
-}
-
-// createCertificateRequest creates a certificate request, with the given common
-// name, sans, and key.
-func createCertificateRequest(commonName string, sans []string, signer crypto.Signer) (*x509.CertificateRequest, error) {
-	dnsNames, ips, emails, uris := x509util.SplitSANs(sans)
-	asn1Data, err := x509.CreateCertificateRequest(rand.Reader, &x509.CertificateRequest{
-		Subject: pkix.Name{
-			CommonName: commonName,
-		},
-		DNSNames:       dnsNames,
-		IPAddresses:    ips,
-		EmailAddresses: emails,
-		URIs:           uris,
-	}, signer)
-	if err != nil {
-		return nil, errors.Wrap(err, "error creating certificate request")
-	}
-
-	cr, err := x509.ParseCertificateRequest(asn1Data)
-	if err != nil {
-		return nil, errors.Wrap(err, "error parsing certificate request")
-	}
-
-	return cr, nil
 }
 
 // savePrivateKey saves the given key, asking the password if necessary.
