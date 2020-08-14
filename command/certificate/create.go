@@ -162,7 +162,62 @@ Create a CSR and key with underlying OKP Ed25519:
 '''
 $ step certificate create foo foo.csr foo.key --csr --kty OKP --curve Ed25519
 '''
-`,
+
+Create a root certificate using a custom template. The root certificate will
+have a path length constrain that allows at least 2 intermediates:
+'''
+$ cat root.tpl
+{
+	"subject": {
+		"commonName": "Acme Corporation Root CA"
+	},
+	"issuer": {
+		"commonName": "Acme Corporation Root CA"
+	},
+	"keyUsage": ["certSign", "crlSign"],
+	"basicConstraints": {
+		"isCA": true,
+		"maxPathLen": 2
+	}
+}
+$ step certificate create --template root.tpl \
+  "Acme Corporation Root CA" root_ca.crt root_ca_key
+'''
+
+Create an intermediate certificate using the previoius root. This intemediate
+will be able to sign also new intermediate certificates:
+'''
+$ cat intermediate.tpl
+{
+	"subject": {
+		"commonName": "Acme Corporation Intermediate CA"
+	},
+	"keyUsage": ["certSign", "crlSign"],
+	"basicConstraints": {
+		"isCA": true,
+		"maxPathLen": 1
+	}
+}
+$ step certificate create --template intermediate.tpl \
+  --ca root_ca.crt --ca-key root_ca_key \
+  "Acme Corporation Intermediate CA" intermediate_ca.crt intermediate_ca_key
+'''
+
+Sign a new intermediate using the previous intermediate, now with path
+length 0 using the **--profile** flag:
+'''
+$ step certificate create --profile intermediate-ca \
+  --ca intermediate_ca.crt --ca-key intermediate_ca_key \
+  "Coyote Corporation" coyote_ca.crt coyote_ca_key
+'''
+
+Create now a leaf certificate and bundle it with the two intermediate certificates and validate it:
+'''
+$ step certificate create --ca coyote_ca.crt --ca-key coyote_ca_key \
+  "coyote@acme.corp" leaf.crt coyote.key
+$ cat leaf.crt coyote_ca.crt intermediate_ca.crt > coyote.crt
+$ step certificate verify --roots root_ca.crt coyote.crt
+'''`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "csr",
@@ -450,7 +505,7 @@ func createAction(ctx *cli.Context) error {
 
 	// Save key and certificate request
 	if keyFile != "" {
-		if err := savePrivateKey(keyFile, signer, noPass); err != nil {
+		if err := savePrivateKey(keyFile, priv, noPass); err != nil {
 			return err
 		}
 	}
