@@ -32,7 +32,7 @@ func proxycommandCommand() cli.Command {
 		Action: command.ActionFunc(proxycommandAction),
 		Usage:  "proxy ssh connections according to the host registry",
 		UsageText: `**step ssh proxycommand** <user> <host> <port>
-		[**--provisioner**=<name>] [**--set**=<key=value>] [**--set-file**=<path>] 
+		[**--provisioner**=<name>]
 		[**--ca-url**=<uri>] [**--root**=<file>] [**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh proxycommand** looks into the host registry
 and proxies the ssh connection according to its configuration. This command
@@ -52,8 +52,6 @@ This command will add the user to the ssh-agent if necessary.
 :  The port to connect to.`,
 		Flags: []cli.Flag{
 			flags.Provisioner,
-			flags.TemplateSet,
-			flags.TemplateSetFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Offline,
@@ -93,11 +91,6 @@ func proxycommandAction(ctx *cli.Context) error {
 // doLoginIfNeeded check if the user is logged in looking at the ssh agent, if
 // it's not it will do the login flow.
 func doLoginIfNeeded(ctx *cli.Context, subject string) error {
-	templateData, err := flags.ParseTemplateData(ctx)
-	if err != nil {
-		return err
-	}
-
 	agent, err := sshutil.DialAgent()
 	if err != nil {
 		return err
@@ -185,14 +178,13 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 
 	// Sign certificate in the CA
 	resp, err := caClient.SSHSign(&api.SSHSignRequest{
-		PublicKey:    sshPub.Marshal(),
-		OTT:          token,
-		Principals:   principals,
-		CertType:     provisioner.SSHUserCert,
-		ValidAfter:   validAfter,
-		ValidBefore:  validBefore,
-		IdentityCSR:  identityCSR,
-		TemplateData: templateData,
+		PublicKey:   sshPub.Marshal(),
+		OTT:         token,
+		Principals:  principals,
+		CertType:    provisioner.SSHUserCert,
+		ValidAfter:  validAfter,
+		ValidBefore: validBefore,
+		IdentityCSR: identityCSR,
 	})
 	if err != nil {
 		return err
