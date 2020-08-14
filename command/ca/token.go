@@ -27,6 +27,7 @@ func tokenCommand() cli.Command {
 		Usage:  "generate an OTT granting access to the CA",
 		UsageText: `**step ca token** <subject>
 [--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<path>]
+[**--cert-not-before**=<time|duration>] [**--cert-not-after**=<time|duration>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--password-file**=<path>] [**--output-file**=<path>] [**--key**=<path>]
 [**--san**=<SAN>] [**--offline**] [**--revoke**]
