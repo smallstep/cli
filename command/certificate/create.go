@@ -515,7 +515,7 @@ func createAction(ctx *cli.Context) error {
 		return errs.FileError(err, crtFile)
 	}
 
-	ui.Printf("Your certificate request has been saved in %s.\n", crtFile)
+	ui.Printf("Your certificate has been saved in %s.\n", crtFile)
 	if keyFile != "" {
 		ui.Printf("Your private key has been saved in %s.\n", keyFile)
 	}
