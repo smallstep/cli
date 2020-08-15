@@ -419,7 +419,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		}
 		clientOps = append(clientOps, ca.WithRootFile(root))
 		// parse times or durations
-		nbf, naf, err := parseTimeDuration(af.ctx)
+		nbf, naf, err := flags.ParseTimeDuration(af.ctx)
 		if err != nil {
 			return nil, err
 		}

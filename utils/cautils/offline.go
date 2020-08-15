@@ -169,7 +169,7 @@ func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	signOpts := provisioner.Options{
+	signOpts := provisioner.SignOptions{
 		NotBefore: req.NotBefore,
 		NotAfter:  req.NotAfter,
 	}
@@ -268,7 +268,7 @@ func (c *OfflineCA) SSHSign(req *api.SSHSignRequest) (*api.SSHSignResponse, erro
 	if err != nil {
 		return nil, err
 	}
-	signOpts := provisioner.SSHOptions{
+	signOpts := provisioner.SignSSHOptions{
 		CertType:    req.CertType,
 		Principals:  req.Principals,
 		ValidAfter:  req.ValidAfter,
