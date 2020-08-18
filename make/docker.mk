@@ -63,9 +63,8 @@ endef
 # For non-master builds don't build the docker containers.
 docker-branch:
 
-# For master builds create the docker containers but don't push them.
-docker-master: docker-prepare
-	$(call DOCKER_BUILDX,latest,)
+# For master builds don't build the docker containers. Only build for releases.
+docker-master:
 
 # For all builds with a release candidate tag build and push the containers.
 docker-release-candidate: docker-prepare docker-login
