@@ -58,7 +58,8 @@ define DOCKER_BUILDX
 endef
 
 # For non-master builds don't build the docker containers.
-docker-branch:
+docker-branch: docker-prepare
+	$(call DOCKER_BUILDX,$(VERSION),)
 
 # For master builds don't build the docker containers. Only build for releases.
 docker-master:
