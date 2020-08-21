@@ -20,7 +20,7 @@ func inspectCommand() cli.Command {
 	return cli.Command{
 		Name:      "inspect",
 		Action:    command.ActionFunc(inspectAction),
-		Usage:     `print key deatails in human readable format`,
+		Usage:     `print key details in human readable format`,
 		UsageText: `**step crypto key inspect** <key-file>`,
 		Description: `**step crypto key inspect** prints details of a public or a private key in a
 human readable format the public key corresponding to the given <key-file>.
