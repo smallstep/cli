@@ -522,6 +522,8 @@ github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
 github.com/smallstep/certificates v0.15.0 h1:riIt3fBWuenlvHoqkVuUOxQbhtxFQMO1ziSr7usb1J0=
 github.com/smallstep/certificates v0.15.0/go.mod h1:awyVXYIVn4J9ANSSnDuA3FjKia7+QixaqorGW8CKGq8=
+github.com/smallstep/certificates v0.15.1 h1:Es2IGgU4D0RE4OKys/VB1KvAuGuZwkxR7D9A0DeM/Ow=
+github.com/smallstep/certificates v0.15.1/go.mod h1:hDmNejfuVTDDe1NBIKrhL9xjELRJb2ZFM+bDXwSW9xI=
 github.com/smallstep/certinfo v1.3.0 h1:DAW0OxOdVIdAgsF/JN5Ro4ZApnTVfYqfaNYK7u5/obg=
 github.com/smallstep/certinfo v1.3.0/go.mod h1:1gQJekdPwPvUwFWGTi7bZELmQT09cxC9wJ0VBkBNiwU=
 github.com/smallstep/cli v0.15.0/go.mod h1:trYpP49s+XF4fROcNgmPi4yO1EIKfqsc/eEck6SosO4=
@@ -636,6 +638,7 @@ go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=
 go.step.sm/crypto v0.0.0-20200805202904-ec18b6df3cf0/go.mod h1:8VYxmvSKt5yOTBx3MGsD2Gk4F1Es/3FIxrjnfeYWE8U=
 go.step.sm/crypto v0.1.1 h1:xg3kUS30hEnwgbxtKwq9a4MJaeiU616HSug60LU9B2E=
 go.step.sm/crypto v0.1.1/go.mod h1:cIoSWTfTQ5xqvwTeZH9ZXZzi6jdMepjK4A/TDWMUvw8=
+go.step.sm/crypto v0.2.0/go.mod h1:YNLnHj4JgABFoRkUq8brkscIB9THdiJUFoDxLQw1tww=
 go.step.sm/crypto v0.4.0 h1:QAFQ5mLKzTKkNcfW3XfJkCnjgYFziXcGJjWNi7R9e4Y=
 go.step.sm/crypto v0.4.0/go.mod h1:AKS4yMZVZD4EGjpSkY4eibuMenrvKCscb+BpWMet8c0=
 go.uber.org/atomic v1.4.0 h1:cxzIVoETapQEqDhQu3QfnvXAV4AlzcvUCxkVUFw3+EU=
