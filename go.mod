@@ -26,11 +26,11 @@ require (
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
 	github.com/stretchr/testify v1.5.1
 	github.com/urfave/cli v1.22.2
-	go.step.sm/crypto v0.1.1
-	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+	go.step.sm/crypto v0.4.0
+	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e
-	gopkg.in/square/go-jose.v2 v2.4.0
+	gopkg.in/square/go-jose.v2 v2.5.1
 )
 
 // replace github.com/smallstep/certificates => ../certificates
