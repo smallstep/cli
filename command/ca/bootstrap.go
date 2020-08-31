@@ -90,7 +90,7 @@ type bootstrapConfig struct {
 }
 
 func bootstrapAction(ctx *cli.Context) error {
-	caURL, err := flags.ParseCaURL(ctx)
+	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return err
 	}
@@ -103,6 +103,8 @@ func bootstrapAction(ctx *cli.Context) error {
 	switch {
 	case team != "":
 		return cautils.BootstrapTeam(ctx, team)
+	case len(caURL) == 0:
+		return errs.RequiredFlag(ctx, "ca-url")
 	case len(fingerprint) == 0:
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}
