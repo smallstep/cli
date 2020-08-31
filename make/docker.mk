@@ -9,7 +9,7 @@
 ifeq (, $(shell which docker))
 	DOCKER_CLIENT_OS := linux
 else
-	DOCKER_CLIENT_OS := $(strip $(shell docker version -f '{{.Client.Os}}'))
+	DOCKER_CLIENT_OS := $(strip $(shell docker version -f '{{.Client.Os}}' 2>/dev/null))
 endif
 
 DOCKER_PLATFORMS = linux/amd64,linux/386,linux/arm,linux/arm64
@@ -58,7 +58,7 @@ define DOCKER_BUILDX
 endef
 
 # For non-master builds don't build the docker containers.
-docker-branch: 
+docker-branch:
 
 # For master builds don't build the docker containers. Only build for releases.
 docker-master:
