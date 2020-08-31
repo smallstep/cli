@@ -49,7 +49,7 @@ certificate signing request (CSR) that can be signed later using 'step
 certificate sign' (or some other tool) to produce a certificate.
 
 By default this command creates x.509 certificates or CSRs for use with TLS. If
-you need soething else, you can customize the output using templates. See **TEMPLATES** below.
+you need something else, you can customize the output using templates. See **TEMPLATES** below.
 
 ## POSITIONAL ARGUMENTS
 
