@@ -45,59 +45,11 @@ func createCommand() cli.Command {
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
 [**--no-password**]`,
 		Description: `**step certificate create** generates a certificate or a
-certificate signing requests (CSR) that can be signed later using 'step
-certificates sign' (or some other tool) to produce a certificate.
+certificate signing request (CSR) that can be signed later using 'step
+certificate sign' (or some other tool) to produce a certificate.
 
-By default this command creates x.509 certificates for use with TLS, but custom
-templates can be used to either customize your certificate or create a x.509
-certificate for other purposes, e.g. OpenVPN certificates.
-
-Templates are JSON files representing a certificate [1] or a certificate request
-[2], in those templates, you can customize your **subject**, **dnsNames**,
-**emailAddresses**, **ipAddresses**, and **uris**, you can also add custom
-**extensions** or set the **signatureAlgorithm**. For certificate templates,
-some extensions are represented as JSON fields, **keyUsage**, **extKeyUsage**,
-and **basicConstraints** are the most common ones.
-
-The templates can be just plain JSON files, but they can also be templatized
-using Golang's <text/template> package [3] and <Sprig> functions [4]. Two
-variables are available on those templates, **.Subject** with the <subject>
-argument, and **.SANs** with the SANs provided with the **--san** flag. Both
-.Subject and .SANs are objects, and they must be converted to JSON to be used in
-the template, you can do this using Sprig's **toJson** function. On the .Subject
-object you can access the common name string using the template variable
-**.Subject.CommonName**. In the example section there's an example on how those
-variables are used in a certificate request.
-
-This is the template used for a leaf certificate:
-'''
-{
-	"subject": {{ toJson .Subject }},
-	"sans": {{ toJson .SANs }},
-{{- if typeIs "*rsa.PublicKey" .Insecure.CR.PublicKey }}
-	"keyUsage": ["keyEncipherment", "digitalSignature"],
-{{- else }}
-	"keyUsage": ["digitalSignature"],
-{{- end }}
-	"extKeyUsage": ["serverAuth", "clientAuth"]
-}
-'''
-
-And this is the one used for a certificate request:
-'''
-{
-	"subject": {{ toJson .Subject }},
-	"sans": {{ toJson .SANs }}
-}
-'''
-
-For more information on the template properties and functions see:
-'''
-[1] https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#Certificate
-[2] https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#CertificateRequest
-[3] https://golang.org/pkg/text/template/
-[4] https://masterminds.github.io/sprig/
-'''
+By default this command creates x.509 certificates or CSRs for use with TLS. If
+you need soething else, you can customize the output using templates. See **TEMPLATES** below.
 
 ## POSITIONAL ARGUMENTS
 
@@ -113,6 +65,59 @@ For more information on the template properties and functions see:
 ## EXIT CODES
 
 This command returns 0 on success and \>0 if any error occurs.
+
+## TEMPLATES
+
+With templates, you can customize the generated certificate or CSR.
+Templates are JSON files representing a certificate [1] or a certificate request
+[2]. They use Golang's <text/template> package [3] and <Sprig> functions [4]. 
+
+Here's the default template used for generating a leaf certificate:
+'''
+{
+	"subject": {{ toJson .Subject }},
+	"sans": {{ toJson .SANs }},
+{{- if typeIs "*rsa.PublicKey" .Insecure.CR.PublicKey }}
+	"keyUsage": ["keyEncipherment", "digitalSignature"],
+{{- else }}
+	"keyUsage": ["digitalSignature"],
+{{- end }}
+	"extKeyUsage": ["serverAuth", "clientAuth"]
+}
+'''
+
+And this is the default template for a CSR:
+'''
+{
+	"subject": {{ toJson .Subject }},
+	"sans": {{ toJson .SANs }}
+}
+'''
+
+In a custom template, you can change the **subject**, **dnsNames**,
+**emailAddresses**, **ipAddresses**, and **uris**, and you can add custom
+x.509 **extensions** or set the **signatureAlgorithm**.
+
+For certificate templates, the common extensions **keyUsage**, **extKeyUsage**, and
+**basicConstraints** are also represented as JSON fields.
+
+Two variables are available in templates: **.Subject** contains the <subject> argument,
+and **.SANs** contains the SANs provided with the **--san** flag.
+
+Both .Subject and .SANs are objects, and they must be converted to JSON to be used in
+the template, you can do this using Sprig's **toJson** function. On the .Subject
+object you can access the common name string using the template variable
+**.Subject.CommonName**. In **EXAMPLES** below, you can see how these
+variables are used in a certificate request.
+
+For more information on the template properties and functions see:
+'''
+[1] https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#Certificate
+[2] https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#CertificateRequest
+[3] https://golang.org/pkg/text/template/
+[4] https://masterminds.github.io/sprig/
+'''
+
 
 ## EXAMPLES
 
