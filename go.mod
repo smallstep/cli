@@ -18,13 +18,13 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.15.1
-	github.com/smallstep/certinfo v1.3.0
+	github.com/smallstep/certinfo v1.4.0
 	github.com/smallstep/truststore v0.9.6
 	github.com/smallstep/zcrypto v0.0.0-20200203191936-fbc32cf76bce
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
 	github.com/stretchr/testify v1.5.1
 	github.com/urfave/cli v1.22.2
-	go.step.sm/crypto v0.4.0
+	go.step.sm/crypto v0.5.0
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e

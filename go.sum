@@ -526,6 +526,8 @@ github.com/smallstep/certificates v0.15.1 h1:Es2IGgU4D0RE4OKys/VB1KvAuGuZwkxR7D9
 github.com/smallstep/certificates v0.15.1/go.mod h1:hDmNejfuVTDDe1NBIKrhL9xjELRJb2ZFM+bDXwSW9xI=
 github.com/smallstep/certinfo v1.3.0 h1:DAW0OxOdVIdAgsF/JN5Ro4ZApnTVfYqfaNYK7u5/obg=
 github.com/smallstep/certinfo v1.3.0/go.mod h1:1gQJekdPwPvUwFWGTi7bZELmQT09cxC9wJ0VBkBNiwU=
+github.com/smallstep/certinfo v1.4.0 h1:NhR0qJ8jvfqBUI0NmOn1KF9Hka7I1dcRHgqW4/t2FRY=
+github.com/smallstep/certinfo v1.4.0/go.mod h1:1gQJekdPwPvUwFWGTi7bZELmQT09cxC9wJ0VBkBNiwU=
 github.com/smallstep/cli v0.15.0/go.mod h1:trYpP49s+XF4fROcNgmPi4yO1EIKfqsc/eEck6SosO4=
 github.com/smallstep/nosql v0.3.0 h1:V1X5vfDsDt89499h3jZFUlR4VnnsYYs5tXaQZ0w8z5U=
 github.com/smallstep/nosql v0.3.0/go.mod h1:QG7gNOpidifn99MjZaiNbm7HPesIyBd97F/OfacNz8Q=
@@ -639,8 +641,8 @@ go.step.sm/crypto v0.0.0-20200805202904-ec18b6df3cf0/go.mod h1:8VYxmvSKt5yOTBx3M
 go.step.sm/crypto v0.1.1 h1:xg3kUS30hEnwgbxtKwq9a4MJaeiU616HSug60LU9B2E=
 go.step.sm/crypto v0.1.1/go.mod h1:cIoSWTfTQ5xqvwTeZH9ZXZzi6jdMepjK4A/TDWMUvw8=
 go.step.sm/crypto v0.2.0/go.mod h1:YNLnHj4JgABFoRkUq8brkscIB9THdiJUFoDxLQw1tww=
-go.step.sm/crypto v0.4.0 h1:QAFQ5mLKzTKkNcfW3XfJkCnjgYFziXcGJjWNi7R9e4Y=
-go.step.sm/crypto v0.4.0/go.mod h1:AKS4yMZVZD4EGjpSkY4eibuMenrvKCscb+BpWMet8c0=
+go.step.sm/crypto v0.5.0 h1:bubafLtMXhlL+Nd0sTNARFArIAzo70+66N9IbA+V0Yc=
+go.step.sm/crypto v0.5.0/go.mod h1:AKS4yMZVZD4EGjpSkY4eibuMenrvKCscb+BpWMet8c0=
 go.uber.org/atomic v1.4.0 h1:cxzIVoETapQEqDhQu3QfnvXAV4AlzcvUCxkVUFw3+EU=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.5.0/go.mod h1:sABNBOSYdrvTF6hTgEIbc7YasKWGhgEQZyfxyTvoXHQ=
