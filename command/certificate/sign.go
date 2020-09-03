@@ -369,12 +369,8 @@ func validateIssuer(crt *x509.Certificate, profile string, maxPathLen int) error
 // intermediate certificates.
 func createTemplateData(cr *x509.CertificateRequest, maxPathLen int) x509util.TemplateData {
 	var sans []string
-	for _, v := range cr.DNSNames {
-		sans = append(sans, v)
-	}
-	for _, v := range cr.EmailAddresses {
-		sans = append(sans, v)
-	}
+	sans = append(sans, cr.DNSNames...)
+	sans = append(sans, cr.EmailAddresses...)
 	for _, v := range cr.IPAddresses {
 		sans = append(sans, v.String())
 	}
