@@ -45,10 +45,11 @@ func createCommand() cli.Command {
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
 [**--no-password**]`,
 		Description: `**step certificate create** generates a certificate or a
-certificate signing requests (CSR) that can be signed later using 'step
-certificates sign' (or some other tool) to produce a certificate.
+certificate signing request (CSR) that can be signed later using 'step
+certificate sign' (or some other tool) to produce a certificate.
 
-This command creates x.509 certificates for use with TLS.
+By default this command creates x.509 certificates or CSRs for use with TLS. If
+you need something else, you can customize the output using templates. See **TEMPLATES** below.
 
 ## POSITIONAL ARGUMENTS
 
@@ -64,6 +65,59 @@ This command creates x.509 certificates for use with TLS.
 ## EXIT CODES
 
 This command returns 0 on success and \>0 if any error occurs.
+
+## TEMPLATES
+
+With templates, you can customize the generated certificate or CSR.
+Templates are JSON files representing a certificate [1] or a certificate request
+[2]. They use Golang's <text/template> package [3] and <Sprig> functions [4]. 
+
+Here's the default template used for generating a leaf certificate:
+'''
+{
+	"subject": {{ toJson .Subject }},
+	"sans": {{ toJson .SANs }},
+{{- if typeIs "*rsa.PublicKey" .Insecure.CR.PublicKey }}
+	"keyUsage": ["keyEncipherment", "digitalSignature"],
+{{- else }}
+	"keyUsage": ["digitalSignature"],
+{{- end }}
+	"extKeyUsage": ["serverAuth", "clientAuth"]
+}
+'''
+
+And this is the default template for a CSR:
+'''
+{
+	"subject": {{ toJson .Subject }},
+	"sans": {{ toJson .SANs }}
+}
+'''
+
+In a custom template, you can change the **subject**, **dnsNames**,
+**emailAddresses**, **ipAddresses**, and **uris**, and you can add custom
+x.509 **extensions** or set the **signatureAlgorithm**.
+
+For certificate templates, the common extensions **keyUsage**, **extKeyUsage**, and
+**basicConstraints** are also represented as JSON fields.
+
+Two variables are available in templates: **.Subject** contains the <subject> argument,
+and **.SANs** contains the SANs provided with the **--san** flag.
+
+Both .Subject and .SANs are objects, and they must be converted to JSON to be used in
+the template, you can do this using Sprig's **toJson** function. On the .Subject
+object you can access the common name string using the template variable
+**.Subject.CommonName**. In **EXAMPLES** below, you can see how these
+variables are used in a certificate request.
+
+For more information on the template properties and functions see:
+'''
+[1] https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#Certificate
+[2] https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#CertificateRequest
+[3] https://golang.org/pkg/text/template/
+[4] https://masterminds.github.io/sprig/
+'''
+
 
 ## EXAMPLES
 
@@ -143,7 +197,7 @@ $ step certificate create root-ca root-ca.crt root-ca.key --profile root-ca \
   --kty OKP --curve Ed25519
 '''
 
-Create an intermeidate certificate and key with underlying EC P-256 key pair:
+Create an intermediate certificate and key with underlying EC P-256 key pair:
 
 '''
 $ step certificate create intermediate-ca intermediate-ca.crt intermediate-ca.key \
@@ -184,7 +238,7 @@ $ step certificate create --template root.tpl \
   "Acme Corporation Root CA" root_ca.crt root_ca_key
 '''
 
-Create an intermediate certificate using the previoius root. This intemediate
+Create an intermediate certificate using the previous root. This intermediate
 will be able to sign also new intermediate certificates:
 '''
 $ cat intermediate.tpl
@@ -218,6 +272,21 @@ $ step certificate create --ca coyote_ca.crt --ca-key coyote_ca_key \
   "coyote@acme.corp" leaf.crt coyote.key
 $ cat leaf.crt coyote_ca.crt intermediate_ca.crt > coyote.crt
 $ step certificate verify --roots root_ca.crt coyote.crt
+'''
+
+Create a certificate request using a template:
+'''
+$ cat csr.tpl
+{
+    "subject": {
+        "country": "US",
+        "organization": "Coyote Corporation",
+        "commonName": "{{ .Subject.CommonName }}"
+    },
+	"sans": {{ toJson .SANs }}
+}
+$ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
+  "Wile E. Coyote" coyote.csr coyote.key
 '''`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
@@ -354,6 +423,16 @@ func createAction(ctx *cli.Context) error {
 		return errs.IncompatibleFlagWithFlag(ctx, "profile", "template")
 	}
 
+	// Read template if passed
+	var template string
+	if templateFile != "" {
+		b, err := utils.ReadFile(templateFile)
+		if err != nil {
+			return err
+		}
+		template = string(b)
+	}
+
 	// Read or generate key pair
 	pub, priv, err := parseOrCreateKey(ctx)
 	if err != nil {
@@ -362,7 +441,6 @@ func createAction(ctx *cli.Context) error {
 
 	// Create certificate request
 	if ctx.Bool("csr") {
-		// Fixme: allow to create a csr for an intermediate.
 		if bundle {
 			return errs.IncompatibleFlagWithFlag(ctx, "bundle", "csr")
 		}
@@ -375,11 +453,22 @@ func createAction(ctx *cli.Context) error {
 			sans = append(sans, subject)
 		}
 
+		// Use default template if empty
+		if template == "" {
+			template = x509util.DefaultCertificateRequestTemplate
+		}
+
 		// Create certificate request
-		cr, err := x509util.CreateCertificateRequest(subject, sans, priv)
+		data := x509util.CreateTemplateData(subject, sans)
+		csr, err := x509util.NewCertificateRequest(priv, x509util.WithTemplate(template, data))
 		if err != nil {
 			return err
 		}
+		cr, err := csr.GetCertificateRequest()
+		if err != nil {
+			return err
+		}
+
 		block, err := pemutil.Serialize(cr)
 		if err != nil {
 			return err
@@ -420,21 +509,13 @@ func createAction(ctx *cli.Context) error {
 		return err
 	}
 
-	var template string
-	var defaultValidity time.Duration
-	if templateFile != "" {
-		b, err := utils.ReadFile(templateFile)
-		if err != nil {
-			return err
-		}
-		template = string(b)
-		defaultValidity = defaultTemplatevalidity
-	} else {
-		// Use subject as default san for leaf or self-signed certificates
-		if len(sans) == 0 && (profile == profileLeaf || profile == profileSelfSigned) {
-			sans = append(sans, subject)
-		}
+	// Use subject as default SAN when using a template or for leaf and self-signed certificates.
+	if len(sans) == 0 && (template != "" || profile == profileLeaf || profile == profileSelfSigned) {
+		sans = append(sans, subject)
+	}
 
+	var defaultValidity time.Duration
+	if template == "" {
 		switch profile {
 		case profileLeaf:
 			template = x509util.DefaultLeafTemplate
@@ -451,6 +532,8 @@ func createAction(ctx *cli.Context) error {
 		default:
 			return errs.InvalidFlagValue(ctx, "profile", profile, "leaf, intermediate-ca, root-ca, self-signed")
 		}
+	} else {
+		defaultValidity = defaultTemplatevalidity
 	}
 
 	// Create X.509 certificate used as base for the certificate

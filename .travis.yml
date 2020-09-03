@@ -1,29 +1,33 @@
 language: go
+os: linux
+dist: focal
+services:
+  - docker
 go:
-- 1.14.x
+  - 1.14.x
 addons:
   apt:
     packages:
-    - debhelper
-    - fakeroot
-    - bash-completion
+      - debhelper
+      - fakeroot
+      - bash-completion
 env:
   global:
-  - V=1
+    - V=1
 before_script:
-- make bootstrap
+  - make bootstrap
 script:
-- make
-- make artifacts
+  - make
+  - make artifacts
 after_success:
-- bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
+  - bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
 notifications:
   email: false
 stage: Github Release
 deploy:
   provider: releases
   skip_cleanup: true
-  api_key:
+  token:
     secure: MKpeFlxcZVzAoLabK841JAcnWpMvpGV76qQMPOw6+Vi7DNnuzvebKHmUQ4Kubqx14FU7zUMrebMe1eSvYgiVGG731wihKi1/iypWyDtcumTRHNOk0KSw7BxBfPruHG/1uesymovTAcXzSQb/LBQP/ZfNVTaSoXTeWuXjf1BsznpJLvNMy4DXup62B+o5vYScxJuLBOwuQI33PMeryVtrwffuRu4ybr6b6B8cXB5xfzPwNJzhoKo9f3guqjPZu4enkLZf+REjOugCYA+e1l0rt4wFO9DJ4WAFi0gagCTC0PjXwAgbhJzCD0KriKuaCo4k4ZPYayZZkfas2KZ6koP1nXM7BpdBj5khEZwQBoFWGN3oY+9PmbK1k1HnThIKQFOUJVbOKwC5vFPqyq28ZU3lyXuB02+4XeY8jXJKwCqLkicKi5PE0UCV1KHo1Wf+2kJ3l5tzS3FJLcJYSbDzRpJ3uBHEN3Ksup2/P6g9m+2t1u5+lKt11hSucEsSuJa8bbuuCVlP9PaKvAkKk88XXFWCmieqQOOLJyTt8qXwJp1X8H/S4fiNuMP875J9LFUf66JVUH+gnSYkvA/XaoppRFevj30tCbLfy912ZksycnmZYMJOpxYOIvLtnG6ZFQQC48jJ10Tu+AkaDC37cv0mesEMcq4E2Krt/BfHEQSgO6ontG4=
   file_glob: true
   file: .travis-releases/*
