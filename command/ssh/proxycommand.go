@@ -146,7 +146,6 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 	// provisioner is responsible for setting default principals by using an
 	// identity function.
 	if email, ok := tokenHasEmail(token); ok {
-		principals = []string{}
 		subject = email
 	}
 
@@ -189,6 +188,7 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 		OTT:          token,
 		Principals:   principals,
 		CertType:     provisioner.SSHUserCert,
+		KeyID:        subject,
 		ValidAfter:   validAfter,
 		ValidBefore:  validBefore,
 		IdentityCSR:  identityCSR,

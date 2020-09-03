@@ -207,6 +207,7 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 			PublicKey:    sshPub.Marshal(),
 			OTT:          tok,
 			CertType:     provisioner.SSHUserCert,
+			KeyID:        jwt.Payload.Email,
 			IdentityCSR:  *identityCSR,
 			TemplateData: templateData,
 		})
