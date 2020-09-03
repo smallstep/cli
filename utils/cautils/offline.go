@@ -29,8 +29,17 @@ type OfflineCA struct {
 	configFile string
 }
 
+// offlineInstance is a singleton used for OfflineCA. The use of a singleton is
+// necessary to avoid double initialization. Double initializations are
+// sometimes not possible due to locks likek the on in badgerDb.
+var offlineInstance *OfflineCA
+
 // NewOfflineCA initializes an offlineCA.
 func NewOfflineCA(configFile string) (*OfflineCA, error) {
+	if offlineInstance != nil {
+		return offlineInstance, nil
+	}
+
 	b, err := utils.ReadFile(configFile)
 	if err != nil {
 		return nil, err
@@ -50,11 +59,12 @@ func NewOfflineCA(configFile string) (*OfflineCA, error) {
 		return nil, err
 	}
 
-	return &OfflineCA{
+	offlineInstance = &OfflineCA{
 		authority:  auth,
 		config:     config,
 		configFile: configFile,
-	}, nil
+	}
+	return offlineInstance, nil
 }
 
 // GetRootCAs return the cert pool for the ca, as it's an offline ca, a pool is
@@ -269,10 +279,12 @@ func (c *OfflineCA) SSHSign(req *api.SSHSignRequest) (*api.SSHSignResponse, erro
 		return nil, err
 	}
 	signOpts := provisioner.SignSSHOptions{
-		CertType:    req.CertType,
-		Principals:  req.Principals,
-		ValidAfter:  req.ValidAfter,
-		ValidBefore: req.ValidBefore,
+		CertType:     req.CertType,
+		KeyID:        req.KeyID,
+		Principals:   req.Principals,
+		ValidAfter:   req.ValidAfter,
+		ValidBefore:  req.ValidBefore,
+		TemplateData: req.TemplateData,
 	}
 	cert, err := c.authority.SignSSH(context.Background(), publicKey, signOpts, opts...)
 	if err != nil {
