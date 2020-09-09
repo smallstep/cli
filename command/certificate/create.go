@@ -24,6 +24,7 @@ const (
 	profileSelfSigned     = "self-signed"
 	profileIntermediateCA = "intermediate-ca"
 	profileRootCA         = "root-ca"
+	profileCSR            = "csr" // Used only on sign
 
 	// Default durations
 	defaultLeafValidity         = 24 * time.Hour
