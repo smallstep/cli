@@ -82,8 +82,8 @@ Sign an intermediate ca:
 $ step certificate sign --profile intermediate-ca intermediate.csr issuer.crt issuer.key
 '''
 
-Sign an intermediate ca that can sign other intermediates, in this example the
-issuer must the pathLenConstraint set at least to 2 or without a limit:
+Sign an intermediate ca that can sign other intermediates; in this example, the
+issuer must set the pathLenConstraint at least to 2 or without a limit:
 '''
 $ step certificate sign --profile intermediate-ca --path-len 1 intermediate.csr issuer.crt issuer.key
 '''
@@ -91,7 +91,7 @@ $ step certificate sign --profile intermediate-ca --path-len 1 intermediate.csr 
 Sign a CSR but only use information present in it, it doesn't add any key or
 extended key usages if they are not in the CSR.
 '''
-$ step certificate sign --profile direct direct.csr issuer.crt issuer.key
+$ step certificate sign --profile csr test.csr issuer.crt issuer.key
 '''
 
 Sign a CSR with only clientAuth as key usage using a template:
@@ -126,7 +126,7 @@ $ step certificate sign --template coyote.tpl coyote.csr issuer.crt issuer.key
     **intermediate-ca**
     :  Signs a certificate that can be used to sign additional leaf certificates.
 
-    **direct**
+    **csr**
     :  Signs a x.509 certificate without modifying the CSR.`,
 			},
 			cli.StringFlag{
@@ -196,7 +196,7 @@ func signAction(ctx *cli.Context) error {
 	}
 	signer, ok := key.(crypto.Signer)
 	if !ok {
-		return errors.Errorf("key in %s does not satisfies the crypto.Signer interface", keyFile)
+		return errors.Errorf("key in %s does not satisfy the crypto.Signer interface", keyFile)
 	}
 	if err := validateIssuerKey(issuers[0], signer); err != nil {
 		return err
@@ -204,8 +204,8 @@ func signAction(ctx *cli.Context) error {
 
 	// Profile flag
 	profile := ctx.String("profile")
-	if profile != profileLeaf && profile != profileIntermediateCA && profile != profileDirect {
-		return errs.InvalidFlagValue(ctx, "profile", profile, "leaf, intermediate-ca, direct")
+	if profile != profileLeaf && profile != profileIntermediateCA && profile != profileCSR {
+		return errs.InvalidFlagValue(ctx, "profile", profile, "leaf, intermediate-ca, csr")
 	}
 
 	// Template flag
@@ -228,7 +228,7 @@ func signAction(ctx *cli.Context) error {
 			template = x509util.DefaultLeafTemplate
 		case profileIntermediateCA:
 			template = customIntermediateTemplate
-		case profileDirect:
+		case profileCSR:
 			template = x509util.CertificateRequestTemplate
 		default:
 			return errors.Errorf("unknown profile %s: this is not expected", profile)
