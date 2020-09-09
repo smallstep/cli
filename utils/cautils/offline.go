@@ -31,7 +31,7 @@ type OfflineCA struct {
 
 // offlineInstance is a singleton used for OfflineCA. The use of a singleton is
 // necessary to avoid double initialization. Double initializations are
-// sometimes not possible due to locks likek the on in badgerDb.
+// sometimes not possible due to locks - as seen in badgerDB
 var offlineInstance *OfflineCA
 
 // NewOfflineCA initializes an offlineCA.
