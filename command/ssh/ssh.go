@@ -11,6 +11,7 @@ import (
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/sshutil"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
@@ -148,6 +149,11 @@ private key so that the pair can be added to an SSH Agent.`,
 )
 
 func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
+	templateData, err := flags.ParseTemplateData(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	flow, err := cautils.NewCertificateFlow(ctx)
 	if err != nil {
 		return nil, err
@@ -198,10 +204,12 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 		}
 
 		resp, err := client.SSHSign(&api.SSHSignRequest{
-			PublicKey:   sshPub.Marshal(),
-			OTT:         tok,
-			CertType:    provisioner.SSHUserCert,
-			IdentityCSR: *identityCSR,
+			PublicKey:    sshPub.Marshal(),
+			OTT:          tok,
+			CertType:     provisioner.SSHUserCert,
+			KeyID:        jwt.Payload.Email,
+			IdentityCSR:  *identityCSR,
+			TemplateData: templateData,
 		})
 		if err != nil {
 			return fail(err)
