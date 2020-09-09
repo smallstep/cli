@@ -69,7 +69,7 @@ func (p Payload) Type() Type {
 		return AWS
 	case p.Azure != nil:
 		return Azure
-	case len(p.K8sSANamespace) > 0:
+	case p.Issuer == "kubernetes/serviceaccount":
 		return K8sSA
 	case len(p.SHA) > 0 || len(p.SANs) > 0:
 		return JWK
