@@ -190,7 +190,7 @@ debugging invalid certificates remotely.`,
 }
 
 func inspectAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
 		return err
 	}
 
@@ -203,6 +203,11 @@ func inspectAction(ctx *cli.Context) error {
 		short      = ctx.Bool("short")
 		insecure   = ctx.Bool("insecure")
 	)
+
+	// Use stdin if no argument is used.
+	if crtFile == "" {
+		crtFile = "-"
+	}
 
 	if format != "text" && format != "json" && format != "pem" {
 		return errs.InvalidFlagValue(ctx, "format", format, "text, json, pem")
