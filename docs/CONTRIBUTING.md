@@ -23,8 +23,7 @@ cli` in use (`step version`) and your operating system.
 
 ## Asking Support Questions
 
-Users and developers can ask questions on [Gitter](https://gitter.im/smallstep/community)
-Please don't use the GitHub issue tracker to ask questions.
+Users and developers can ask questions on [GitHub Discussions](https://github.com/smallstep/certificates/discussions).
 
 ## Code Contribution
 

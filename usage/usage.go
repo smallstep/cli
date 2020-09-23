@@ -126,7 +126,7 @@ This documentation is available online at https://smallstep.com/docs/cli
 
 The **step** utility is not instrumented for usage statistics. It does not phone home.
 But your feedback is extremely valuable. Any information you can provide regarding how you’re using **step** helps.
-Please send us a sentence or two, good or bad: **feedback@smallstep.com** or join https://gitter.im/smallstep/community.
+Please send us a sentence or two, good or bad: **feedback@smallstep.com** or ask in [GitHub Discussions](https://github.com/smallstep/certificates/discussions).
 {{end}}
 `
 
