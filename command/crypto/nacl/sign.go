@@ -24,9 +24,6 @@ func signCommand() cli.Command {
 		Description: `**step crypto nacl sign** command group uses public-key cryptography to sign and
 verify messages. The implementation is based on NaCl's crypto_sign function.
 
-NaCl crypto_sign function is designed to meet the standard notion of
-unforgeability for a public-key signature scheme under chosen-message attacks.
-
 NaCl crypto_sign is crypto_sign_edwards25519sha512batch, a particular
 combination of Curve25519 in Edwards form and SHA-512 into a signature scheme
 suitable for high-speed batch verification. This function is conjectured to meet
@@ -36,7 +33,7 @@ These commands are interoperable with NaCl: https://nacl.cr.yp.to/sign.html
 
 ## EXAMPLES
 
-Create a keypair for verifying amd signing messages:
+Create a keypair for verifying and signing messages:
 '''
 $ step crypto nacl sign keypair nacl.sign.pub nacl.sign.priv
 '''

@@ -16,7 +16,7 @@ Here's a quick example, combining `step oauth` and `step crypto` to get and veri
 
 ![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
 
-**Questions? Find us [on gitter](https://gitter.im/smallstep/community).**
+**Questions? Ask us on [GitHub Discussions](https://github.com/smallstep/certificates/discussions).**
 
 [Website](https://smallstep.com) |
 [Documentation](https://smallstep.com/docs/cli) |
@@ -370,7 +370,7 @@ software and use it to verify the TOTP token:
 
 ## Community
 
-* [Connect with `step` users on Gitter](https://gitter.im/smallstep)
+* [Connect with `step` users on GitHub Discussions](https://github.com/smallstep/certificates/discussions)
 * [Open an issue](https://github.com/smallstep/cli/issues/new/choose) and tell us what features you'd like to see
 * [Follow Smallstep on Twitter](https://twitter.com/smallsteplabs)
 
