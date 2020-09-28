@@ -7,12 +7,14 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"unicode"
 
 	md "github.com/smallstep/cli/pkg/blackfriday"
 	"github.com/urfave/cli"
 )
 
 var sectionRe = regexp.MustCompile(`(?m:^##)`)
+var sectionNameRe = regexp.MustCompile(`(?m:^## [^\n]+)`)
 
 //var sectionRe = regexp.MustCompile(`^## [^\n]*$`)
 
@@ -71,7 +73,8 @@ func helpPreprocessor(w io.Writer, templ string, data interface{}) []byte {
 	buf := new(bytes.Buffer)
 	cli.HelpPrinterCustom(buf, templ, data, nil)
 	//w.Write(buf.Bytes())
-	s := string(markdownify(buf.Bytes()))
+	// s := string(markdownify(buf.Bytes()))
+	s := markdownify(buf)
 	// Move the OPTIONS section to the right place. urfave puts them at the end
 	// of the file, we want them to be after POSITIONAL ARGUMENTS, DESCRIPTION,
 	// USAGE, or NAME (in that order, depending on which sections exist).
@@ -83,7 +86,7 @@ func helpPreprocessor(w io.Writer, templ string, data interface{}) []byte {
 			s = s[:optLoc] + s[optEnd:]
 			if newLoc := findSectionEnd("POSITIONAL ARGUMENTS", s); newLoc != -1 {
 				s = s[:newLoc] + options + s[newLoc:]
-			} else if newLoc := findSectionEnd("DESCRIPTION", s); newLoc != -1 {
+			} else if newLoc := findSectionEnd("Description", s); newLoc != -1 {
 				s = s[:newLoc] + options + s[newLoc:]
 			} else if newLoc := findSectionEnd("USAGE", s); newLoc != -1 {
 				s = s[:newLoc] + options + s[newLoc:]
@@ -95,6 +98,11 @@ func helpPreprocessor(w io.Writer, templ string, data interface{}) []byte {
 			}
 		}
 	}
+
+	// Keep capitalized only the first letter in arguments names.
+	s = sectionNameRe.ReplaceAllStringFunc(s, func(s string) string {
+		return s[0:4] + strings.ToLower(s[4:])
+	})
 
 	return []byte(s)
 }
@@ -115,29 +123,67 @@ func findSectionEnd(h, s string) int {
 //  backticks and raw strings don't mix:
 // - "<foo>" to "`foo`"
 // - "'''" to "```"
-func markdownify(b []byte) []byte {
-	for i := 0; i < len(b); i++ {
-		switch b[i] {
+func markdownify(r *bytes.Buffer) string {
+	const escapeByte = byte('\\')
+	var last byte
+	var inCode bool
+
+	w := new(bytes.Buffer)
+	for {
+		b, err := r.ReadByte()
+		if err != nil {
+			return w.String()
+		}
+
+		switch b {
 		case '<':
-			if b[i-1] != '\\' {
-				b[i] = '`'
+			if last != escapeByte && !inCode {
+				w.WriteByte('`')
 			} else {
-				copy(b[i-1:], b[i:])
+				w.WriteByte(b)
 			}
 		case '>':
-			if b[i-1] != '\\' {
-				b[i] = '`'
+			if last != escapeByte && !inCode {
+				w.WriteByte('`')
 			} else {
-				copy(b[i-1:], b[i:])
+				w.WriteByte(b)
 			}
 		case '\'':
-			if len(b) >= i+3 && string(b[i:i+3]) == "'''" {
-				b[i] = '`'
-				b[i+1] = '`'
-				b[i+2] = '`'
-				i += 2
+			b1, _ := r.ReadByte()
+			b2, _ := r.ReadByte()
+			if b1 == b && b2 == b {
+				w.WriteString("```")
+				if !inCode {
+					if n, _, err := r.ReadRune(); err == nil {
+						if unicode.IsSpace(n) {
+							w.WriteString("shell")
+						}
+						r.UnreadRune()
+					}
+				}
+				inCode = !inCode
+			} else {
+				w.WriteByte(b)
+				r.UnreadByte()
+				r.UnreadByte()
 			}
+		case '*':
+			if inCode {
+				if b1, _ := r.ReadByte(); b1 != '*' {
+					w.WriteByte(b)
+					w.UnreadByte()
+				}
+			} else {
+				w.WriteByte(b)
+			}
+		case escapeByte:
+			if last == escapeByte {
+				w.WriteByte(escapeByte)
+				b = 0
+			}
+		default:
+			w.WriteByte(b)
 		}
+		last = b
 	}
-	return b
 }

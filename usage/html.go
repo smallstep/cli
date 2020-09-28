@@ -33,7 +33,7 @@ func markdownHelpAction(ctx *cli.Context) error {
 	isHugo := ctx.Bool("hugo")
 
 	// app index
-	index := path.Join(dir, "step.md")
+	index := path.Join(dir, "index.md")
 	w, err := os.Create(index)
 	if err != nil {
 		return errs.FileError(err, index)
@@ -257,7 +257,10 @@ var mdAppHelpTemplate = `## NAME
 
 ## USAGE
 
-{{if .UsageText}}{{.UsageText}}{{else}}**{{.HelpName}}**{{if .Commands}} <command>{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}_[arguments]_{{end}}{{end}}{{if .Description}}
+'''raw
+{{if .UsageText}}{{.UsageText}}{{else}}**{{.HelpName}}**{{if .Commands}} <command>{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments]{{end}}{{end}}
+'''
+{{- if .Description}}
 
 ## DESCRIPTION
 {{.Description}}{{end}}{{if .VisibleCommands}}
@@ -308,7 +311,10 @@ var mdSubcommandHelpTemplate = `## NAME
 
 ## USAGE
 
-{{if .UsageText}}{{.UsageText}}{{else}}**{{.HelpName}}** <command>{{if .VisibleFlags}} _[options]_{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}_[arguments]_{{end}}{{end}}{{if .Description}}
+'''raw
+{{if .UsageText}}{{.UsageText}}{{else}}**{{.HelpName}}** <command>{{if .VisibleFlags}} [options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments]{{end}}{{end}}
+'''
+{{- if .Description}}
 
 ## DESCRIPTION
 
@@ -335,7 +341,10 @@ var mdCommandHelpTemplate = `## NAME
 
 ## USAGE
 
-{{if .UsageText}}{{.UsageText}}{{else}}**{{.HelpName}}**{{if .VisibleFlags}} _[options]_{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}_[arguments]_{{end}}{{end}}{{if .Category}}
+'''raw
+{{if .UsageText}}{{.UsageText}}{{else}}**{{.HelpName}}**{{if .VisibleFlags}} [options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments]{{end}}{{end}}
+'''
+{{- if .Category}}
 
 ## CATEGORY
 
