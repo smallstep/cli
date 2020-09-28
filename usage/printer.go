@@ -25,12 +25,12 @@ type frontmatterData struct {
 
 // HelpPrinter overwrites cli.HelpPrinter and prints the formatted help to the terminal.
 func HelpPrinter(w io.Writer, templ string, data interface{}) {
-	b := helpPreprocessor(w, templ, data)
+	b := helpPreprocessor(w, templ, data, false)
 	w.Write(Render(b))
 }
 
 func htmlHelpPrinter(w io.Writer, templ string, data interface{}) []byte {
-	b := helpPreprocessor(w, templ, data)
+	b := helpPreprocessor(w, templ, data, true)
 	w.Write([]byte(`<html><head><title>step command line documentation</title>`))
 	w.Write([]byte(`<link href="/style.css" rel="stylesheet" type="text/css">`))
 	w.Write([]byte(`</head><body><div class="wrapper markdown-body command">`))
@@ -42,7 +42,7 @@ func htmlHelpPrinter(w io.Writer, templ string, data interface{}) []byte {
 }
 
 func markdownHelpPrinter(w io.Writer, templ string, parent string, data interface{}) {
-	b := helpPreprocessor(w, templ, data)
+	b := helpPreprocessor(w, templ, data, true)
 
 	frontmatter := frontmatterData{
 		Data:   data,
@@ -69,7 +69,7 @@ title: {{.Data.HelpName}}
 	w.Write(b)
 }
 
-func helpPreprocessor(w io.Writer, templ string, data interface{}) []byte {
+func helpPreprocessor(w io.Writer, templ string, data interface{}, capOnlyFirst bool) []byte {
 	buf := new(bytes.Buffer)
 	cli.HelpPrinterCustom(buf, templ, data, nil)
 	//w.Write(buf.Bytes())
@@ -100,9 +100,11 @@ func helpPreprocessor(w io.Writer, templ string, data interface{}) []byte {
 	}
 
 	// Keep capitalized only the first letter in arguments names.
-	s = sectionNameRe.ReplaceAllStringFunc(s, func(s string) string {
-		return s[0:4] + strings.ToLower(s[4:])
-	})
+	if capOnlyFirst {
+		s = sectionNameRe.ReplaceAllStringFunc(s, func(s string) string {
+			return s[0:4] + strings.ToLower(s[4:])
+		})
+	}
 
 	return []byte(s)
 }
