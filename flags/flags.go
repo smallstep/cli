@@ -242,7 +242,7 @@ be stored in the 'sshpop' header.`,
 	TeamURL = cli.StringFlag{
 		Name: "team-url",
 		Usage: `The <url> step queries to retrieve initial team configuration. Only used with
-the --team option. If the url contains "\<\>" placeholders, they are replaced with the team ID.`,
+the --team option. If the url contains <\<\>> placeholders, they are replaced with the team ID.`,
 	}
 
 	// RedirectURL is a cli.Flag used to pass the OAuth redirect URL.

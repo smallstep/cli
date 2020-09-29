@@ -28,7 +28,7 @@ func configCommand() cli.Command {
 		Action: command.ActionFunc(configAction),
 		Usage:  "configures ssh to be used with certificates",
 		UsageText: `**step ssh config**
-		[**--team**=name] [**--host**] [**--set**=<key=value>] [**--set-file**=<path>]
+		[**--team**=<name>] [**--host**] [**--set**=<key=value>] [**--set-file**=<path>]
 		[**--dry-run**] [**--roots**] [**--federation**]
 		[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
 		[**--offline**] [**--ca-config**=<path>] [**--team-url**=<url>]`,
