@@ -15,6 +15,7 @@ import (
 
 var sectionRe = regexp.MustCompile(`(?m:^##)`)
 var sectionNameRe = regexp.MustCompile(`(?m:^## [^\n]+)`)
+var indentRe = regexp.MustCompile(`(?m:^\s*:\s+[^\n]+)`)
 
 //var sectionRe = regexp.MustCompile(`^## [^\n]*$`)
 
@@ -84,7 +85,7 @@ menu:
 	w.Write(b)
 }
 
-func helpPreprocessor(w io.Writer, templ string, data interface{}, capOnlyFirst bool) []byte {
+func helpPreprocessor(w io.Writer, templ string, data interface{}, applyRx bool) []byte {
 	buf := new(bytes.Buffer)
 	cli.HelpPrinterCustom(buf, templ, data, nil)
 	//w.Write(buf.Bytes())
@@ -101,7 +102,7 @@ func helpPreprocessor(w io.Writer, templ string, data interface{}, capOnlyFirst 
 			s = s[:optLoc] + s[optEnd:]
 			if newLoc := findSectionEnd("POSITIONAL ARGUMENTS", s); newLoc != -1 {
 				s = s[:newLoc] + options + s[newLoc:]
-			} else if newLoc := findSectionEnd("Description", s); newLoc != -1 {
+			} else if newLoc := findSectionEnd("DESCRIPTION", s); newLoc != -1 {
 				s = s[:newLoc] + options + s[newLoc:]
 			} else if newLoc := findSectionEnd("USAGE", s); newLoc != -1 {
 				s = s[:newLoc] + options + s[newLoc:]
@@ -114,10 +115,15 @@ func helpPreprocessor(w io.Writer, templ string, data interface{}, capOnlyFirst 
 		}
 	}
 
-	// Keep capitalized only the first letter in arguments names.
-	if capOnlyFirst {
+	if applyRx {
+		// Keep capitalized only the first letter in arguments names.
 		s = sectionNameRe.ReplaceAllStringFunc(s, func(s string) string {
 			return s[0:4] + strings.ToLower(s[4:])
+		})
+		// Remove `:` at the start of a line.
+		s = indentRe.ReplaceAllStringFunc(s, func(s string) string {
+			i := strings.Index(s, ":")
+			return s[:i] + strings.TrimSpace(s[i+1:])
 		})
 	}
 
