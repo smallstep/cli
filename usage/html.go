@@ -268,7 +268,7 @@ var mdAppHelpTemplate = `## NAME
 ## COMMANDS
 
 {{range .VisibleCategories}}{{if .Name}}{{.Name}}:{{end}}
-|||
+| Name | Usage |
 |---|---|{{range .VisibleCommands}}
 | **[{{join .Names ", "}}]({{.Name}}/)** | {{.Usage}} |{{end}}
 {{end}}{{if .VisibleFlags}}{{end}}
@@ -323,7 +323,7 @@ var mdSubcommandHelpTemplate = `## NAME
 ## COMMANDS
 
 {{range .VisibleCategories}}{{if .Name}}{{.Name}}:{{end}}
-|||
+| Name | Usage |
 |---|---|{{range .VisibleCommands}}
 | **[{{join .Names ", "}}]({{.Name}}/)** | {{.Usage}} |{{end}}
 {{end}}{{if .VisibleFlags}}
