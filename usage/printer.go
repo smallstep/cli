@@ -19,8 +19,9 @@ var sectionNameRe = regexp.MustCompile(`(?m:^## [^\n]+)`)
 //var sectionRe = regexp.MustCompile(`^## [^\n]*$`)
 
 type frontmatterData struct {
-	Data   interface{}
-	Parent string
+	Data     interface{}
+	Parent   string
+	Children []string
 }
 
 // HelpPrinter overwrites cli.HelpPrinter and prints the formatted help to the terminal.
@@ -49,12 +50,26 @@ func markdownHelpPrinter(w io.Writer, templ string, parent string, data interfac
 		Parent: parent,
 	}
 
+	if app, ok := data.(*cli.App); ok {
+		for _, cmd := range app.Commands {
+			frontmatter.Children = append(frontmatter.Children, cmd.Name)
+		}
+	}
+
 	var frontMatterTemplate = `---
 layout: auto-doc
 title: {{.Data.HelpName}}
-{{if .Parent}}menu:
+menu:
   docs:
-    parent: {{.Parent}}{{else}}private: true{{end}}
+{{- if .Parent}}
+    parent: {{.Parent}}
+{{- end }}
+{{- if .Children }}
+    children:
+{{- range .Children }}
+      - {{.}}
+{{- end }}
+{{- end }}
 ---
 
 `
