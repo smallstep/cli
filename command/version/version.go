@@ -11,9 +11,10 @@ import (
 
 func init() {
 	cmd := cli.Command{
-		Name:   "version",
-		Usage:  "display the current version of the cli",
-		Action: Command,
+		Name:      "version",
+		Usage:     "display the current version of the cli",
+		UsageText: "**step version**",
+		Action:    Command,
 	}
 
 	command.Register(cmd)
