@@ -284,16 +284,6 @@ var mdAppHelpTemplate = `## NAME
 {{range $index, $author := .Authors}}{{if $index}}
 {{end}}{{$author}}{{end}}{{end}}{{if .Version}}{{if not .HideVersion}}
 
-## ONLINE
-
-This documentation is available online at https://smallstep.com/docs/cli
-
-## PRINTING
-
-This documentation can be typeset for printing by running ...
-
-A version of this document typeset for printing is available online at ...pdf
-
 ## VERSION
 
 {{.Version}}{{end}}{{end}}
