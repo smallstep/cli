@@ -167,7 +167,7 @@ func markdownify(r *bytes.Buffer) string {
 		if err != nil {
 			return w.String()
 		}
-
+	loop:
 		switch b {
 		case '<':
 			if last != escapeByte && !inCode {
@@ -196,9 +196,12 @@ func markdownify(r *bytes.Buffer) string {
 				}
 				inCode = !inCode
 			} else {
+				// We can only unread the last one (b2)
 				w.WriteByte(b)
 				r.UnreadByte()
-				r.UnreadByte()
+				b = b1
+				last = b
+				goto loop
 			}
 		case '*':
 			if inCode {
@@ -213,7 +216,15 @@ func markdownify(r *bytes.Buffer) string {
 			if last == escapeByte {
 				w.WriteByte(escapeByte)
 				b = 0
+			} else {
+				if n, _, err := r.ReadRune(); err == nil {
+					if unicode.IsSpace(n) {
+						w.WriteByte(escapeByte)
+					}
+					r.UnreadRune()
+				}
 			}
+		case 0: // probably because io.EOF
 		default:
 			w.WriteByte(b)
 		}
