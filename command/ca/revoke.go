@@ -130,7 +130,6 @@ $ step ca revoke --offline --cert foo.crt --key foo.key
 				Usage: `The <reasonCode> specifies the reason for revocation - chose from a list of
 common revocation reasons. If unset, the default is Unspecified.
 
-
 : <reasonCode> can be a number from 0-9 or a case insensitive string matching
 one of the following options:
 
