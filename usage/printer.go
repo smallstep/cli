@@ -15,7 +15,8 @@ import (
 
 var sectionRe = regexp.MustCompile(`(?m:^##)`)
 var sectionNameRe = regexp.MustCompile(`(?m:^## [^\n]+)`)
-var indentRe = regexp.MustCompile(`(?m:^\s*:\s+[^\n]+)`)
+var indentRe = regexp.MustCompile(`(?m:^:[^\n]+)`)
+var definitionListRe = regexp.MustCompile(`(?m:^[\t ]+\*\*[^\*]+\*\*\s+:[^\n]+)`)
 
 //var sectionRe = regexp.MustCompile(`^## [^\n]*$`)
 
@@ -122,8 +123,17 @@ func helpPreprocessor(w io.Writer, templ string, data interface{}, applyRx bool)
 		})
 		// Remove `:` at the start of a line.
 		s = indentRe.ReplaceAllStringFunc(s, func(s string) string {
-			i := strings.Index(s, ":")
-			return s[:i] + strings.TrimSpace(s[i+1:])
+			return strings.TrimSpace(s[1:])
+		})
+		// Convert lines like:
+		//   **Foo**
+		//   : Bar zar ...
+		// To:
+		//   - **Foo**: Bar zar ...
+		s = definitionListRe.ReplaceAllStringFunc(s, func(s string) string {
+			i := strings.Index(s, "\n")
+			j := strings.Index(s, ":")
+			return "- " + strings.TrimSpace(s[:i]) + ": " + strings.TrimSpace(s[j+1:])
 		})
 	}
 
