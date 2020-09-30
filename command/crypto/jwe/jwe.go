@@ -25,22 +25,22 @@ be encrypted to multiple parties (using multiple keys).
 A typical JWE in compact serialization is a dot-separated string with five
 parts:
 
-    * Header: metadata describing how the plaintext payload was processed to
-      produce ciphertext (e.g., which algorithms were used to encrypt the
-      content encryption key and the plaintext payload)
+* Header: metadata describing how the plaintext payload was processed to
+  produce ciphertext (e.g., which algorithms were used to encrypt the
+  content encryption key and the plaintext payload)
 
-    * Encrypted Key: the "content encryption key" that was used to encrypt the
-      plaintext payload, encrypted for the JWE recipient(s) (see: "what's with
-      the encrypted key" below)
+* Encrypted Key: the "content encryption key" that was used to encrypt the
+  plaintext payload, encrypted for the JWE recipient(s) (see: "what's with
+  the encrypted key" below)
 
-    * Initialization Vector: an initialization vector for use with the specified
-      encryption algorithm, if applicable
+* Initialization Vector: an initialization vector for use with the specified
+  encryption algorithm, if applicable
 
-    * Ciphertext: the ciphertext value resulting produced from authenticated
-      encryption of the plaintext with additional authenticated data
+* Ciphertext: the ciphertext value resulting produced from authenticated
+  encryption of the plaintext with additional authenticated data
 
-    * Authentication Tag: value resulting fromthe authenticated encryption of
-      the plaintext with additional authenticated data
+* Authentication Tag: value resulting fromthe authenticated encryption of
+  the plaintext with additional authenticated data
 
 ## What's with encrypted key?
 

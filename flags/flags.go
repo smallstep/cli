@@ -178,7 +178,7 @@ generating key.`,
 		Name: "offline",
 		Usage: `Creates a certificate without contacting the certificate authority. Offline mode
 uses the configuration, certificates, and keys created with **step ca init**,
-but can accept a different configuration file using '--ca-config>' flag.`,
+but can accept a different configuration file using **--ca-config** flag.`,
 	}
 
 	// CaConfig is a cli.Flag used to pass the CA configuration file.
@@ -242,7 +242,7 @@ be stored in the 'sshpop' header.`,
 	TeamURL = cli.StringFlag{
 		Name: "team-url",
 		Usage: `The <url> step queries to retrieve initial team configuration. Only used with
-the --team option. If the url contains <\<\>> placeholders, they are replaced with the team ID.`,
+the **--team** option. If the url contains <\<\>> placeholders, they are replaced with the team ID.`,
 	}
 
 	// RedirectURL is a cli.Flag used to pass the OAuth redirect URL.
@@ -261,7 +261,7 @@ the --team option. If the url contains <\<\>> placeholders, they are replaced wi
 	// TemplateSet is a cli.Flag used to send key-value pairs to the ca.
 	TemplateSet = cli.StringSliceFlag{
 		Name:  "set",
-		Usage: "The <key=value> pair with template data variables to send to the CA. Use the '--set' flag multiple times to add multiple variables.",
+		Usage: "The <key=value> pair with template data variables to send to the CA. Use the **--set** flag multiple times to add multiple variables.",
 	}
 
 	// TemplateSetFile is a cli.Flag used to send a JSON file to the CA.

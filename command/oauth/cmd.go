@@ -65,8 +65,7 @@ func init() {
 	cmd := cli.Command{
 		Name:  "oauth",
 		Usage: "authorization and single sign-on using OAuth & OIDC",
-		UsageText: `
-**step oauth** [**--provider**=<provider>] [**--client-id**=<client-id> **--client-secret**=<client-secret>]
+		UsageText: `**step oauth** [**--provider**=<provider>] [**--client-id**=<client-id> **--client-secret**=<client-secret>]
   [**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
 
 **step oauth** **--authorization-endpoint**=<authorization-endpoint> **--token-endpoint**=<token-endpoint>
@@ -121,7 +120,7 @@ $ step oauth --oidc --bare
 '''
 
 Use a custom OAuth2.0 server:
-''''
+'''
 $ step oauth --client-id my-client-id --client-secret my-client-secret \
   --provider https://example.org
 '''`,

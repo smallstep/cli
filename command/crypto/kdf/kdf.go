@@ -137,17 +137,18 @@ appear in places you might not expect. If omitted input is read from STDIN.`,
 
 :  <algorithm> must be one of:
 
-    **scrypt**
-    :  A password-based KDF designed to use exponential time and memory.
+		**scrypt**
+		:  A password-based KDF designed to use exponential time and memory.
 
-    **bcrypt**
-    :  A password-based KDF designed to use exponential time.
+		**bcrypt**
+		:  A password-based KDF designed to use exponential time.
 
-    **argon2i**
-    : A password-based KDF optimized to resist side-channel attacks.
+		**argon2i**
+		: A password-based KDF optimized to resist side-channel attacks.
 
-    **argon2id**
-    : A password-based KDF optimized to resist GPU and side-channel attacks.`,
+		**argon2id**
+		: A password-based KDF optimized to resist GPU and side-channel attacks.
+`,
 			},
 			cli.BoolFlag{
 				Name:   "insecure",
