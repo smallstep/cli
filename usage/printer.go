@@ -16,7 +16,7 @@ import (
 var sectionRe = regexp.MustCompile(`(?m:^##)`)
 var sectionNameRe = regexp.MustCompile(`(?m:^## [^\n]+)`)
 var indentRe = regexp.MustCompile(`(?m:^:[^\n]+)`)
-var definitionListRe = regexp.MustCompile(`(?m:^[\t ]+\*\*[^\*]+\*\*\s+:[^\n]+)`)
+var definitionListRe = regexp.MustCompile(`(?m:^[\t ]+\*\*[^\*]+\*\*[^\n]*\s+:[^\n]+)`)
 
 //var sectionRe = regexp.MustCompile(`^## [^\n]*$`)
 
