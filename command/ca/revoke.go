@@ -125,6 +125,10 @@ $ step ca revoke --offline --cert foo.crt --key foo.key
 				Usage: `The <path> to the key corresponding to the cert that should be revoked.`,
 			},
 			cli.StringFlag{
+				Name:  "reason",
+				Usage: `The <string> representing the reason for which the cert is being revoked.`,
+			},
+			cli.StringFlag{
 				Name:  "reasonCode",
 				Value: "",
 				Usage: `The <reasonCode> specifies the reason for revocation - chose from a list of
@@ -177,10 +181,6 @@ Note: This is specific to the CertificateHold reason and is only used in DeltaCR
     :   It is known or suspected that aspects of the AA validated in the
 attribute certificate have been compromised (reasonCode=10).
 `,
-			},
-			cli.StringFlag{
-				Name:  "reason",
-				Usage: `The <string> representing the reason for which the cert is being revoked.`,
 			},
 			flags.CaConfig,
 			flags.CaURL,
