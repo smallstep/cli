@@ -53,8 +53,10 @@ func addCommand() cli.Command {
 			cli.StringFlag{
 				Name:  "type",
 				Value: provisioner.TypeJWK.String(),
-				Usage: `The <type> of provisioner to create. Type is a case-insensitive string
-and must be one of:
+				Usage: `The <type> of provisioner to create. 
+				
+: <type> is a case-insensitive string and must be one of:
+
     **JWK**
     : Uses an JWK key pair to sign provisioning tokens. (default)
 

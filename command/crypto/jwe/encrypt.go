@@ -18,8 +18,8 @@ func encryptCommand() cli.Command {
 		Action: cli.ActionFunc(encryptAction),
 		Usage:  "encrypt a payload using JSON Web Encryption (JWE)",
 		UsageText: `**step crypto jwe encrypt**
-		[**--alg**=<key-enc-algorithm>] [**--enc**=<content-enc-algorithm>]
-  		[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+[**--alg**=<key-enc-algorithm>] [**--enc**=<content-enc-algorithm>]
+[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jwe encrypt** encrypts a payload using JSON Web Encryption
 (JWE). By default, the payload to encrypt is read from STDIN and the JWE data
 structure will be written to STDOUT.

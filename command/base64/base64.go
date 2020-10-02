@@ -15,10 +15,11 @@ import (
 
 func init() {
 	cmd := cli.Command{
-		Name:      "base64",
-		Action:    command.ActionFunc(base64Action),
-		Usage:     "encodes and decodes using base64 representation",
-		UsageText: `**step base64** [**-d**|**--decode**] [**-r**|**--raw**] [**-u**|**--url**]`,
+		Name:   "base64",
+		Action: command.ActionFunc(base64Action),
+		Usage:  "encodes and decodes using base64 representation",
+		UsageText: `**step base64**
+[**-d**|**--decode**] [**-r**|**--raw**] [**-u**|**--url**]`,
 		Description: `**step base64** implements base64 encoding as specified by RFC 4648.
 
 ## Examples

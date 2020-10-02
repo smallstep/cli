@@ -16,8 +16,8 @@ func listCommand() cli.Command {
 		Name:   "list",
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list provisioners configured in the CA",
-		UsageText: `**step ca provisioner list** [**--ca-url**=<uri>]
-[**--root**=<file>]`,
+		UsageText: `**step ca provisioner list** 
+[**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "ca-url",

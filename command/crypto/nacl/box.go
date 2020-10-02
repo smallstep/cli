@@ -135,7 +135,7 @@ func boxOpenCommand() cli.Command {
 		Action: cli.ActionFunc(boxOpenAction),
 		Usage:  "authenticate and decrypt a box produced by seal",
 		UsageText: `**step crypto nacl box open** <nonce> <sender-pub-key> <priv-key>
-		[--raw]`,
+[--raw]`,
 		Description: `Authenticate and decrypt a box produced by seal using the specified KEY. If
 PRIV_KEY is encrypted you will be prompted for the password. The sealed box is
 read from STDIN and the decrypted plaintext is written to STDOUT.
@@ -172,7 +172,7 @@ func boxSealCommand() cli.Command {
 		Action: cli.ActionFunc(boxSealAction),
 		Usage:  "produce an authenticated and encrypted ciphertext",
 		UsageText: `**step crypto nacl box seal** <nonce> <recipient-pub-key> <priv-key>
-		[--raw]`,
+[--raw]`,
 		Description: `Reads plaintext from STDIN and writes an encrypted and authenticated
 ciphertext to STDOUT. The "box" can be open by the a recipient who has access
 to the private key corresponding to <recipient-pub-key>.

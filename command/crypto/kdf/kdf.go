@@ -99,7 +99,7 @@ func hashCommand() cli.Command {
 		Action: cli.ActionFunc(hashAction),
 		Usage:  "derive a secret key from a secret value (e.g., a password)",
 		UsageText: `**step crypto kdf hash** [<input>]
-		[--alg ALGORITHM]`,
+[--alg ALGORITHM]`,
 		Description: `**step crypto kdf hash** uses a key derivation function (KDF) to produce a
 pseudorandom secret key based on some (presumably secret) input value. This is
 useful for password verification approaches based on password hashing. Key

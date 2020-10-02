@@ -82,7 +82,7 @@ func digestCommand() cli.Command {
 		Action: cli.ActionFunc(digestAction),
 		Usage:  "generate a hash digest of a file or directory",
 		UsageText: `**step crypto hash digest** <file-or-directory>...
-		[**--alg**=<algorithm>]`,
+[**--alg**=<algorithm>]`,
 		Description: `**step crypto hash digest** generates a hash digest for a given file or
 directory. For a file, the output is the same as tools like 'shasum'. For
 directories, the tool computes a hash tree and outputs a single hash digest.
@@ -140,7 +140,7 @@ func compareCommand() cli.Command {
 		Action: cli.ActionFunc(compareAction),
 		Usage:  "verify the hash digest for a file or directory matches an expected value",
 		UsageText: `**step crypto hash compare** <hash> <file-or-directory>
-		[--alg ALGORITHM]`,
+[--alg ALGORITHM]`,
 		Description: `**step crypto hash compare** verifies that the expected hash value matches the
 computed hash value for a file or directory.
 

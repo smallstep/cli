@@ -13,10 +13,11 @@ import (
 
 func healthCommand() cli.Command {
 	return cli.Command{
-		Name:      "health",
-		Action:    healthAction,
-		Usage:     "get the status of the CA",
-		UsageText: `**step ca health** [**--ca-url**=<URI>] [**--root**=<file>]`,
+		Name:   "health",
+		Action: healthAction,
+		Usage:  "get the status of the CA",
+		UsageText: `**step ca health** 
+[**--ca-url**=<URI>] [**--root**=<file>]`,
 		Description: `**step ca health** makes an API request to the /health
 endpoint of the Step CA to check if it is running. If the CA is healthy, the
 response will be 'ok'.

@@ -25,9 +25,9 @@ func renewCommand() cli.Command {
 		Action: command.ActionFunc(renewAction),
 		Usage:  "renew a SSH certificate using the SSH CA",
 		UsageText: `**step ssh renew** <ssh-cert> <ssh-key>
-		[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<path>]
-		[**--force**] [**--ca-url**=<uri>] [**--root**=<path>]
-		[**--offline**] [**--ca-config**=<path>]`,
+[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<path>]
+[**--force**] [**--ca-url**=<uri>] [**--root**=<path>]
+[**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh renew** command renews an SSH Cerfificate
 using [step certificates](https://github.com/smallstep/certificates). 
 It writes the new certificate to disk - either overwriting <ssh-cert> or

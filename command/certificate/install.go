@@ -19,8 +19,8 @@ func installCommand() cli.Command {
 		Action: command.ActionFunc(installAction),
 		Usage:  "install a root certificate in the system truststore",
 		UsageText: `**step certificate install** <crt-file>
-		[**--prefix**=<name>] [**--all**]
-		[**--java**] [**--firefox**] [**--no-system**]`,
+[**--prefix**=<name>] [**--all**]
+[**--java**] [**--firefox**] [**--no-system**]`,
 		Description: `**step certificate install** installs a root certificate in the system
 truststore.
 
@@ -89,8 +89,8 @@ func uninstallCommand() cli.Command {
 		Action: command.ActionFunc(uninstallAction),
 		Usage:  "uninstall a root certificate from the system truststore",
 		UsageText: `**step certificate uninstall** <crt-file>
-		[**--prefix**=<name>] [**--all**]
-		[**--java**] [**--firefox**] [**--no-system**]`,
+[**--prefix**=<name>] [**--all**]
+[**--java**] [**--firefox**] [**--no-system**]`,
 		Description: `**step certificate install** uninstalls a root certificate from the system
 truststore.
 
