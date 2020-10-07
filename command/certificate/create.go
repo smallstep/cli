@@ -70,8 +70,10 @@ This command returns 0 on success and \>0 if any error occurs.
 ## TEMPLATES
 
 With templates, you can customize the generated certificate or CSR.
-Templates are JSON files representing a certificate [1] or a certificate request
-[2]. They use Golang's <text/template> package [3] and <Sprig> functions [4]. 
+Templates are JSON files representing a [certificate](https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#Certificate) [1]
+or a [certificate request](https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#CertificateRequest) [2].
+They use Golang's [<text/template>](https://golang.org/pkg/text/template/) package [3] and
+[<Sprig>](https://masterminds.github.io/sprig/) functions [4].
 
 Here's the default template used for generating a leaf certificate:
 '''
@@ -118,7 +120,6 @@ For more information on the template properties and functions see:
 [3] https://golang.org/pkg/text/template/
 [4] https://masterminds.github.io/sprig/
 '''
-
 
 ## EXAMPLES
 
