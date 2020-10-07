@@ -114,7 +114,7 @@ object you can access the common name string using the template variable
 variables are used in a certificate request.
 
 For more information on the template properties and functions see:
-'''
+'''raw
 [1] https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#Certificate
 [2] https://pkg.go.dev/go.step.sm/crypto/x509util?tab=doc#CertificateRequest
 [3] https://golang.org/pkg/text/template/
