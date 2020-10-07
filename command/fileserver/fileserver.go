@@ -21,7 +21,7 @@ func init() {
 		Action: command.ActionFunc(fileServerAction),
 		Usage:  "start an HTTP(S) server serving the contents of a path",
 		UsageText: `step fileserver <dir>
-		[--address=<address>] [--cert=<path>] [--key=<path>]`,
+[--address=<address>] [--cert=<path>] [--key=<path>]`,
 		Description: `**step fileserver** command starts an HTTP(S) server serving the contents of a file
 system.
 

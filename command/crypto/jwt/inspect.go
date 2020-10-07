@@ -20,7 +20,7 @@ func inspectCommand() cli.Command {
 		Action: cli.ActionFunc(inspectAction),
 		Usage:  `return the decoded JWT without verification`,
 		UsageText: `**step crypto jwt inspect**
-		**--insecure**`,
+**--insecure**`,
 		Description: `**step crypto jwt inspect** reads a JWT data structure from STDIN, decodes it,
 and outputs the header and payload on STDERR. Since this command does not
 verify the JWT you must pass **--insecure** as a misuse prevention mechanism.

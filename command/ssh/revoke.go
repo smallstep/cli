@@ -24,10 +24,12 @@ func revokeCommand() cli.Command {
 		Action: command.ActionFunc(revokeAction),
 		Usage:  "revoke a SSH certificate using the SSH CA",
 		UsageText: `**step ssh revoke** <serial-number>
-[**--token**=<token>]  [**--issuer**=<name>] 
-[**--set**=<key=value>] [**--set-file**=<path>] [**--ca-url**=<uri>] [**--root**=<path>]
-[**--ca-config**=<path>] [**--password-file**=<path>] [**--offline**] [**--reason**=<string>]
-[**--reasonCode**=<code>] [**--sshpop-cert**=<path>] [**--sshpop-key**=<key>]`,
+[**--token**=<token>]  [**--issuer**=<name>]
+[**--set**=<key=value>] [**--set-file**=<path>]
+[**--ca-url**=<uri>] [**--root**=<path>]
+[**--ca-config**=<path>] [**--password-file**=<path>] [**--offline**]
+[**--reason**=<string>] [**--reasonCode**=<code>]
+[**--sshpop-cert**=<path>] [**--sshpop-key**=<key>]`,
 		Description: `**step ssh revoke** command revokes an SSH Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 
@@ -55,11 +57,14 @@ $ step ssh revoke 3997477584487736496
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
 			cli.StringFlag{
+				Name:  "reason",
+				Usage: `The <string> representing the reason for which the cert is being revoked.`,
+			},
+			cli.StringFlag{
 				Name:  "reasonCode",
 				Value: "",
 				Usage: `The <reasonCode> specifies the reason for revocation - chose from a list of
 common revocation reasons. If unset, the default is Unspecified.
-
 
 : <reasonCode> can be a number from 0-9 or a case insensitive string matching
 one of the following options:
@@ -108,10 +113,6 @@ Note: This is specific to the CertificateHold reason and is only used in DeltaCR
     :   It is known or suspected that aspects of the AA validated in the
 attribute certificate have been compromised (reasonCode=10).
 `,
-			},
-			cli.StringFlag{
-				Name:  "reason",
-				Usage: `The <string> representing the reason for which the cert is being revoked.`,
 			},
 		},
 	}

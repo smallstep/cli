@@ -31,9 +31,9 @@ func createCommand() cli.Command {
 		Action: command.ActionFunc(createAction),
 		Usage:  "create a JWK (JSON Web Key)",
 		UsageText: `**step crypto jwk create** <public-jwk-file> <private-jwk-file>
-    [**--kty**=<type>] [**--alg**=<algorithm>] [**--use**=<use>]
-    [**--size**=<size>] [**--crv**=<curve>] [**--kid**=<kid>]
-    [**--from-pem**=<pem-file>] [**--password-file**=<file>]`,
+[**--kty**=<type>] [**--alg**=<algorithm>] [**--use**=<use>]
+[**--size**=<size>] [**--crv**=<curve>] [**--kid**=<kid>]
+[**--from-pem**=<pem-file>] [**--password-file**=<file>]`,
 		Description: `**step crypto jwk create** generates a new JWK (JSON Web Key) or constructs a
 JWK from an existing key. The generated JWK conforms to RFC7517 and can be used
 to sign and encrypt data using JWT, JWS, and JWE.

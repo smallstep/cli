@@ -65,17 +65,23 @@ func init() {
 	cmd := cli.Command{
 		Name:  "oauth",
 		Usage: "authorization and single sign-on using OAuth & OIDC",
-		UsageText: `
-**step oauth** [**--provider**=<provider>] [**--client-id**=<client-id> **--client-secret**=<client-secret>]
-  [**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
+		UsageText: `**step oauth**
+[**--provider**=<provider>] [**--client-id**=<client-id> **--client-secret**=<client-secret>]
+[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
 
-**step oauth** **--authorization-endpoint**=<authorization-endpoint> **--token-endpoint**=<token-endpoint>
-  **--client-id**=<client-id> **--client-secret**=<client-secret> [**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
+**step oauth** 
+**--authorization-endpoint**=<authorization-endpoint> 
+**--token-endpoint**=<token-endpoint>
+**--client-id**=<client-id> **--client-secret**=<client-secret>
+[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
 
-**step oauth** [**--account**=<account>] [**--authorization-endpoint**=<authorization-endpoint> **--token-endpoint**=<token-endpoint>]
-  [**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
+**step oauth** [**--account**=<account>] 
+[**--authorization-endpoint**=<authorization-endpoint>] 
+[**--token-endpoint**=<token-endpoint>]
+[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
 
-**step oauth** **--account**=<account> **--jwt** [**--scope**=<scope> ...] [**--header**] [**-bare**]`,
+**step oauth** **--account**=<account> **--jwt** 
+[**--scope**=<scope> ...] [**--header**] [**-bare**]`,
 		Description: `**step oauth** command implements the OAuth 2.0 authorization flow.
 
 OAuth is an open standard for access delegation, commonly used as a way for
@@ -121,7 +127,7 @@ $ step oauth --oidc --bare
 '''
 
 Use a custom OAuth2.0 server:
-''''
+'''
 $ step oauth --client-id my-client-id --client-secret my-client-secret \
   --provider https://example.org
 '''`,

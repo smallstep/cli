@@ -38,8 +38,8 @@ func renewCertificateCommand() cli.Command {
 		Action: command.ActionFunc(renewCertificateAction),
 		Usage:  "renew a valid certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
-		[**--ca-url**=<uri>] [**--root**=<file>]
-		[**--out**=<file>] [**--expires-in**=<duration>] [**--force**]`,
+[**--ca-url**=<uri>] [**--root**=<file>]
+[**--out**=<file>] [**--expires-in**=<duration>] [**--force**]`,
 		Description: `
 **step ca renew** command renews the given certificate (with a request to the
 certificate authority) and writes the new certificate to disk - either overwriting

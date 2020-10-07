@@ -20,7 +20,7 @@ func inspectCommand() cli.Command {
 		Action: cli.ActionFunc(inspectAction),
 		Usage:  `return the decoded JWS without verification`,
 		UsageText: `**step crypto jws inspect**
-		**--insecure**`,
+**--insecure** [**--json**]`,
 		Description: `**step crypto jws inspect** reads a JWS data structure from STDIN, decodes it,
 and outputs the payload on STDERR. Since this command does not verify the JWS
 you must pass **--insecure** as a misuse prevention mechanism.

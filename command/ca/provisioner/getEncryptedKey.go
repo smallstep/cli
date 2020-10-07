@@ -15,8 +15,8 @@ func getEncryptedKeyCommand() cli.Command {
 		Name:   "jwe-key",
 		Action: cli.ActionFunc(getEncryptedKeyAction),
 		Usage:  "retrieve and print a provisioning key in the CA",
-		UsageText: `**step ca provisioner jwe-key** <kid> [**--ca-url**=<uri>]
-[**--root**=<file>]`,
+		UsageText: `**step ca provisioner jwe-key** <kid> 
+[**--ca-url**=<uri>] [**--root**=<file>]`,
 		Description: `**step ca provisioner jwe-key** returns the encrypted
 private jwk for the given key-id.
 

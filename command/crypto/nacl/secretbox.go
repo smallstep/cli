@@ -82,7 +82,7 @@ func secretboxOpenCommand() cli.Command {
 		Action: cli.ActionFunc(secretboxOpenAction),
 		Usage:  "authenticate and decrypt a box produced by seal",
 		UsageText: `**step crypto nacl secretbox open** <nonce> <key-file>
-		[--raw]`,
+[--raw]`,
 		Description: `**step crypto nacl secretbox open** verifies and decrypts a ciphertext using a
 secret key and a nonce.
 
@@ -115,7 +115,7 @@ func secretboxSealCommand() cli.Command {
 		Action: cli.ActionFunc(secretboxSealAction),
 		Usage:  "produce an encrypted ciphertext",
 		UsageText: `**step crypto nacl secretbox seal** <nonce> <key-file>
-		[--raw]`,
+[--raw]`,
 		Description: `**step crypto nacl secretbox seal** encrypts and authenticates a message using
 a secret key and a nonce.
 

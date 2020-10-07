@@ -19,7 +19,7 @@ func decryptCommand() cli.Command {
 		Action: cli.ActionFunc(decryptAction),
 		Usage:  "verify a JWE and decrypt ciphertext",
 		UsageText: `**step crypto jwe decrypt**
-		[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jwe decrypt** verifies a JWE read from STDIN and decrypts the
 ciphertext printing it to STDOUT. If verification fails a non-zero failure
 code is returned. If verification succeeds the command returns 0.

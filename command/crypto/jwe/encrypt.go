@@ -18,8 +18,8 @@ func encryptCommand() cli.Command {
 		Action: cli.ActionFunc(encryptAction),
 		Usage:  "encrypt a payload using JSON Web Encryption (JWE)",
 		UsageText: `**step crypto jwe encrypt**
-		[**--alg**=<key-enc-algorithm>] [**--enc**=<content-enc-algorithm>]
-  		[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+[**--alg**=<key-enc-algorithm>] [**--enc**=<content-enc-algorithm>]
+[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jwe encrypt** encrypts a payload using JSON Web Encryption
 (JWE). By default, the payload to encrypt is read from STDIN and the JWE data
 structure will be written to STDOUT.
@@ -87,7 +87,7 @@ options must match unless the **--subtle** flag is also passed.
     :  PBES2 with HMAC SHA-256 and "A192KW" wrapping
 
     **PBES2-HS512+A256KW**
-    :  PBES2 with HMAC SHA-256 and "A256KW" wrapping`,
+	:  PBES2 with HMAC SHA-256 and "A256KW" wrapping`,
 			},
 			cli.StringFlag{
 				Name:  "enc, encryption-algorithm",
@@ -114,7 +114,7 @@ the authentication tag.
     :  AES GCM using 192-bit key
 
     **A256GCM** (default)
-    :  AES GCM using 256-bit key`,
+	:  AES GCM using 256-bit key`,
 			},
 			cli.StringFlag{
 				Name: "key",

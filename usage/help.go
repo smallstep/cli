@@ -22,8 +22,21 @@ func HelpCommand() cli.Command {
 		Name:      "help",
 		Aliases:   []string{"h"},
 		Usage:     "display help for the specified command or command group",
-		ArgsUsage: "[command]",
-		Action:    HelpCommandAction,
+		UsageText: "**step help** <command>",
+		Description: `**step help** command displays help for a command or command group.
+
+## EXAMPLES
+
+Display help for **step ca certificate**:
+'''
+$ step help ca certificate
+'''
+
+Display help for **step ssh**:
+'''
+$ step help ssh
+'''`,
+		Action: HelpCommandAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "http",

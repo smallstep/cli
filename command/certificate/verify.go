@@ -63,7 +63,7 @@ $ step certificate verify ./certificate.crt \
 Verify a certificate using a custom directory of root certificates for path validation:
 
 '''
-$ step certificate verify ./certificate.crt --roots "./path/to/root-certificates/"
+$ step certificate verify ./certificate.crt --roots ./root-certificates/
 '''
 `,
 		Flags: []cli.Flag{

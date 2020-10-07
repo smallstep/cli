@@ -19,8 +19,8 @@ func verifyCommand() cli.Command {
 		Action: cli.ActionFunc(verifyAction),
 		Usage:  "verify a signed JWT data structure and return the payload",
 		UsageText: `**step crypto jwt verify**
-		[**--aud**=<audience>] [**--iss**=<issuer>] [**--alg**=<algorithm>]
-		[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+[**--aud**=<audience>] [**--iss**=<issuer>] [**--alg**=<algorithm>]
+[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jwt verify** reads a JWT data structure from STDIN; checks that
 the audience, issuer, and algorithm are in agreement with expectations;
 verifies the digital signature or message authentication code as appropriate;
