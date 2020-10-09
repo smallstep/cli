@@ -3,6 +3,8 @@ package ca
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -404,11 +406,22 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 	if len(token) == 0 {
 		certFile, keyFile := ctx.String("cert"), ctx.String("key")
 
-		// If there is no token then we must be doing a Revoke over mTLS.
-		var cert tls.Certificate
-		cert, err = tls.LoadX509KeyPair(certFile, keyFile)
+		certPEMBytes, err := ioutil.ReadFile(certFile)
 		if err != nil {
-			return errors.Wrap(err, "error loading certificates")
+			return errors.Wrap(err, "error reading certificate")
+		}
+		key, err := pemutil.Read(keyFile)
+		if err != nil {
+			return errors.Wrap(err, "error parsing key")
+		}
+		keyBlock, err := pemutil.Serialize(key)
+		if err != nil {
+			return errors.Wrap(err, "error serializing key")
+		}
+
+		cert, err := tls.X509KeyPair(certPEMBytes, pem.EncodeToMemory(keyBlock))
+		if err != nil {
+			return errors.Wrap(err, "error loading certificate key pair")
 		}
 		if len(cert.Certificate) == 0 {
 			return errors.New("error loading certificate: certificate chain is empty")
