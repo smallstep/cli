@@ -409,7 +409,7 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 
 		certPEMBytes, err := ioutil.ReadFile(certFile)
 		if err != nil {
-			return errors.Wrap(err, "error reading cert")
+			return errors.Wrap(err, "error reading certificate")
 		}
 		key, err := pemutil.Read(keyFile)
 		if err != nil {
