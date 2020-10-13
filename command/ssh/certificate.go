@@ -251,7 +251,7 @@ func certificateAction(ctx *cli.Context) error {
 		if isHost {
 			principals = append(principals, subject)
 		} else {
-			principals = append(principals, provisioner.SanitizeSSHUserPrincipal(subject))
+			principals = createPrincipalsFromSubject(subject)
 		}
 	}
 
