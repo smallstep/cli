@@ -45,7 +45,8 @@ func addCommand() cli.Command {
 [**--ca-config**=<file>] [**--aws-account**=<id>]
 [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
-[**--instance-age**=<duration>] [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
+[**--instance-age**=<duration>] [**--iid-roots**=<path>]
+[**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 
 **step ca provisioner add** <name> **--type**=ACME **--ca-config**=<file>`,
 		Flags: []cli.Flag{
@@ -156,6 +157,11 @@ A <duration> is sequence of decimal numbers, each with optional fraction and a
 unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
+			cli.StringFlag{
+				Name: "iid-roots",
+				Usage: `The <path> to the file containing the certificates used to validate the
+instance identity documents in AWS.`,
+			},
 			cli.BoolFlag{
 				Name: "disable-custom-sans",
 				Usage: `On cloud provisioners, if anabled only the internal DNS and IP will be added as a SAN.
@@ -238,7 +244,7 @@ $ step ca provisioner add Google --type oidc --ca-config ca.json \
   --domain smallstep.com
 '''
 
-Add an AWS provisioner on one account with a one hour of intance age:
+Add an AWS provisioner on one account with a one hour of instance age:
 '''
 $ step ca provisioner add Amazon --type AWS --ca-config ca.json \
   --aws-account 123456789 --instance-age 1h
@@ -270,6 +276,13 @@ document and will allow multiple certificates from the same instance:
 '''
 $ step ca provisioner add Amazon --type AWS --ca-config ca.json \
   --aws-account 123456789 --disable-custom-sans --disable-trust-on-first-use
+'''
+
+Add an AWS provisioner that will use a custom certificate to validate the instance
+identity documents:
+'''
+$ step ca provisioner add Amazon --type AWS --ca-config ca.json \
+  --aws-account 123456789 --iid-roots $(step path)/certs/aws.crt
 '''
 
 Add an ACME provisioner.
@@ -509,6 +522,7 @@ func addAWSProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
 		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
 		InstanceAge:            d,
+		IIDRoots:               ctx.String("iid-roots"),
 		Claims:                 getClaims(ctx),
 	}
 
