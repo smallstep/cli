@@ -129,6 +129,7 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 		return err
 	}
 
+	// There's not need to sanitize the principal, it should come from ssh.
 	principals := []string{subject}
 
 	// Make sure the validAfter is in the past. It avoids `Certificate

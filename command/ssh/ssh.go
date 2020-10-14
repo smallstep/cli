@@ -2,6 +2,7 @@ package ssh
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
@@ -258,4 +259,20 @@ func debugErr(err error) error {
 		Err: err,
 		Msg: "An error occurred in the step process. Please contact an administrator.",
 	}
+}
+
+// createPrincipalsFromSubject create default principals names for a subject. By
+// default it would be the sanitized version of the subject, but if the subject
+// is an email it will add the local part if it's different and the email
+// address.
+func createPrincipalsFromSubject(subject string) []string {
+	name := provisioner.SanitizeSSHUserPrincipal(subject)
+	principals := []string{name}
+	if i := strings.LastIndex(subject, "@"); i >= 0 {
+		if local := subject[:i]; !strings.EqualFold(local, name) {
+			principals = append(principals, local)
+		}
+		principals = append(principals, subject)
+	}
+	return principals
 }
