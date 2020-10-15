@@ -29,6 +29,7 @@ require (
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e
 	gopkg.in/square/go-jose.v2 v2.5.1
+	software.sslmate.com/src/go-pkcs12 v0.0.0-20200830195227-52f69702a001
 )
 
 // replace github.com/smallstep/certificates => ../certificates
