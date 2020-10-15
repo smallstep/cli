@@ -58,6 +58,7 @@ $ step ssh login --not-after 1h joe@smallstep.com
 		Flags: []cli.Flag{
 			flags.Token,
 			sshAddUserFlag,
+			flags.Identity,
 			flags.Provisioner,
 			flags.ProvisionerPasswordFileWithAlias,
 			flags.NotBefore,
@@ -74,12 +75,17 @@ $ step ssh login --not-after 1h joe@smallstep.com
 }
 
 func loginAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
 		return err
 	}
 
 	// Arguments
 	subject := ctx.Args().First()
+	if subject == "" {
+		if subject = ctx.String("identity"); subject == "" {
+			return errs.TooFewArguments(ctx)
+		}
+	}
 	principals := createPrincipalsFromSubject(subject)
 
 	// Flags

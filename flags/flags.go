@@ -269,6 +269,14 @@ the **--team** option. If the url contains <\<\>> placeholders, they are replace
 		Name:  "set-file",
 		Usage: "The <path> of a JSON file with the template data to send to the CA.",
 	}
+
+	// Identity is a cli.Flag used to be able to define the identity argument in
+	// defaults.json.
+	Identity = cli.StringFlag{
+		Name: "identity",
+		Usage: `The certificate identity. It is usually passed as a positional argument, but a
+flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
+	}
 )
 
 // ParseTimeOrDuration is a helper that returns the time or the current time
