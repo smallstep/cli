@@ -57,6 +57,7 @@ $ step ssh logout --all
 				Name:  "all",
 				Usage: "Removes all the keys stored in the SSH agent.",
 			},
+			flags.Identity,
 			flags.CaURL,
 			flags.Root,
 			flags.Offline,
@@ -70,11 +71,13 @@ func logoutAction(ctx *cli.Context) error {
 		return err
 	}
 
-	subject := ctx.Args().First()
-
 	all := ctx.Bool("all")
-	if ctx.NArg() == 0 && !all {
-		return errs.TooFewArguments(ctx)
+	subject := ctx.Args().First()
+	if subject == "" {
+		subject = ctx.String("identity")
+		if subject == "" && !all {
+			return errs.TooFewArguments(ctx)
+		}
 	}
 
 	agent, err := sshutil.DialAgent()
