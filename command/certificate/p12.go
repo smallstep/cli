@@ -18,13 +18,14 @@ import (
 
 func p12Command() cli.Command {
 	return cli.Command{
-		Name:      "p12",
-		Action:    command.ActionFunc(p12Action),
-		Usage:     `package a certificate and keys into a .p12 file`,
-		UsageText: `step certificate p12 <p12_path> [<crt_path>] [<key_path>] [**--ca**=<ca_crt_path>] [**--password**=<password>]`,
+		Name:   "p12",
+		Action: command.ActionFunc(p12Action),
+		Usage:  `package a certificate and keys into a .p12 file`,
+		UsageText: `step certificate p12 <p12-path> [<crt-path>] [<key-path>]
+[**--ca**=<file>] [**--password-file**=<file>]`,
 		Description: `**step certificate p12** creates a .p12 (PFX / PKCS12)
-		file containing certificates and keys. This can then be used to import
-		into Windows / Firefox / Java applications.
+file containing certificates and keys. This can then be used to import
+into Windows / Firefox / Java applications.
 
 ## EXIT CODES
 
@@ -44,21 +45,21 @@ Package a certificate and private key together, and include an intermediate cert
 $ step certificate p12 foo.p12 foo.crt foo.key --ca intermediate.crt
 '''
 
-Package a CA certificate into a "trust store" for Java applications
+Package a CA certificate into a "trust store" for Java applications:
 
 '''
 $ step certificate p12 trust.p12 --ca ca.crt
-'''
-`,
+'''`,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name: "ca",
-				Usage: `Add a CA or intermediate certificate to the .p12 file. Use the '--ca'
-flag multiple times to add multiple CAs or intermediates.`,
+				Usage: `The path to the <file> containing a CA or intermediate certificate to
+add to the .p12 file. Use the '--ca' flag multiple times to add
+multiple CAs or intermediates.`,
 			},
 			cli.StringFlag{
 				Name:  "password-file",
-				Usage: `The path to the <file> containing the password to encrypt the .p12 file`,
+				Usage: `The path to the <file> containing the password to encrypt the .p12 file.`,
 			},
 			flags.Force,
 		},
