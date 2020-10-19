@@ -57,8 +57,8 @@ $ step certificate p12 trust.p12 --ca ca.crt
 flag multiple times to add multiple CAs or intermediates.`,
 			},
 			cli.StringFlag{
-				Name:  "password",
-				Usage: `Set the password to encrypt the .p12 file.`,
+				Name:  "password-file",
+				Usage: `The path to the <file> containing the password to encrypt the .p12 file`,
 			},
 			flags.Force,
 		},
@@ -74,7 +74,6 @@ func p12Action(ctx *cli.Context) error {
 	crtFile := ctx.Args().Get(1)
 	keyFile := ctx.Args().Get(2)
 	caFiles := ctx.StringSlice("ca")
-	password := ctx.String("password")
 	hasKeyAndCert := crtFile != "" && keyFile != ""
 
 	//If either key or cert are provided, both must be provided
@@ -89,11 +88,21 @@ func p12Action(ctx *cli.Context) error {
 
 	x509CAs := []*x509.Certificate{}
 	for _, caFile := range caFiles {
-		x509CA, err := pemutil.ReadCertificate(caFile)
+		x509Bundle, err := pemutil.ReadCertificateBundle(caFile)
 		if err != nil {
 			return errors.Wrap(err, "error reading CA certificate")
 		}
-		x509CAs = append(x509CAs, x509CA)
+		x509CAs = append(x509CAs, x509Bundle...)
+	}
+
+	var password string
+	var err error
+
+	if passwordFile := ctx.String("password-file"); passwordFile != "" {
+		password, err = utils.ReadStringPasswordFromFile(passwordFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	if password == "" {
@@ -105,11 +114,10 @@ func p12Action(ctx *cli.Context) error {
 	}
 
 	var pkcs12Data []byte
-	var err error
 
 	if hasKeyAndCert {
 		//If we have a key and certificate, we're making an identity store
-		x509Cert, err := pemutil.ReadCertificate(crtFile)
+		x509CertBundle, err := pemutil.ReadCertificateBundle(crtFile)
 		if err != nil {
 			return errors.Wrap(err, "error reading certificate")
 		}
@@ -118,6 +126,11 @@ func p12Action(ctx *cli.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "error reading key")
 		}
+
+		//The first certificate in the bundle will be our server cert
+		x509Cert := x509CertBundle[0]
+		//Any remaning certs will be intermediates for the server
+		x509CAs = append(x509CAs, x509CertBundle[1:]...)
 
 		pkcs12Data, err = pkcs12.Encode(rand.Reader, key, x509Cert, x509CAs, password)
 		if err != nil {
