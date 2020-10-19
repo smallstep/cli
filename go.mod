@@ -30,6 +30,7 @@ require (
 	golang.org/x/sys v0.0.0-20200828194041-157a740278f4
 	google.golang.org/grpc/examples v0.0.0-20201013205100-7745e521ff61 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1
+	software.sslmate.com/src/go-pkcs12 v0.0.0-20200830195227-52f69702a001
 )
 
 // replace github.com/smallstep/certificates => ../certificates
