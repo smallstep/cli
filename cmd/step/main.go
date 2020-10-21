@@ -29,6 +29,10 @@ import (
 	_ "github.com/smallstep/cli/command/path"
 	_ "github.com/smallstep/cli/command/ssh"
 
+	// Enabled cas interfaces.
+	_ "github.com/smallstep/certificates/cas/cloudcas"
+	_ "github.com/smallstep/certificates/cas/softcas"
+
 	// Profiling and debugging
 	_ "net/http/pprof"
 )

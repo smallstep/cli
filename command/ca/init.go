@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -75,6 +76,27 @@ func initCommand() cli.Command {
 				Name:  "with-ca-url",
 				Usage: `<URI> of the Step Certificate Authority to write in defaults.json`,
 			},
+			cli.StringFlag{
+				Name:  "ra",
+				Usage: `The registration authority <name> to use. Currently only "CloudCAS" is supported.`,
+			},
+			cli.StringFlag{
+				Name: "issuer",
+				Usage: `The registration authority issuer <name> to use.
+
+: If CloudCAS is used, this flag should be the resource name of the
+intermediate certificate to use. This has the format
+'projects/\\*/locations/\\*/certificateAuthorities/\\*'.`,
+			},
+			cli.StringFlag{
+				Name: "credentials-file",
+				Usage: `The registration authority credentials <file> to use.
+
+: If CloudCAS is used, this flag should be the path to a service account key.
+It can also be set using the 'GOOGLE_APPLICATION_CREDENTIALS=path'
+environment variable or the default service account in an instance in Google
+Cloud.`,
+			},
 			cli.BoolFlag{
 				Name:  "no-db",
 				Usage: `Generate a CA configuration without the DB stanza. No persistence layer.`,
@@ -94,6 +116,7 @@ func initAction(ctx *cli.Context) (err error) {
 	caURL := ctx.String("with-ca-url")
 	root := ctx.String("root")
 	key := ctx.String("key")
+	ra := strings.ToLower(ctx.String("ra"))
 	switch {
 	case len(root) > 0 && len(key) == 0:
 		return errs.RequiredWithFlag(ctx, "root", "key")
@@ -106,6 +129,8 @@ func initAction(ctx *cli.Context) (err error) {
 		if rootKey, err = pemutil.Read(key); err != nil {
 			return err
 		}
+	case ra != "" && ra != apiv1.CloudCAS:
+		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "CloudCAS")
 	}
 
 	configure := !ctx.Bool("pki")
@@ -137,10 +162,24 @@ func initAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	name, err := ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)",
-		ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
-	if err != nil {
-		return err
+	var name string
+	if ra == "" {
+		name, err = ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)",
+			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
+		if err != nil {
+			return err
+		}
+	} else {
+		iss, err := ui.Prompt("What certificate authority would you like to use? (e.g. projects/ca/locations/us-west1/certificateAuthorities/intermediate-ca)",
+			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("issuer")))
+		if err != nil {
+			return err
+		}
+		p.SetAuthorityOptions(&apiv1.Options{
+			Type:                 ctx.String("ra"),
+			CredentialsFile:      ctx.String("credentials-file"),
+			CertificateAuthority: iss,
+		})
 	}
 
 	if configure {
@@ -199,32 +238,40 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	// Generate root certificate if not set.
-	if rootCrt == nil && rootKey == nil {
-		fmt.Println()
-		fmt.Print("Generating root certificate... \n")
+	if ra == "" {
+		// Generate root certificate if not set.
+		if rootCrt == nil && rootKey == nil {
+			fmt.Println()
+			fmt.Print("Generating root certificate... \n")
 
-		rootCrt, rootKey, err = p.GenerateRootCertificate(name+" Root CA", pass)
+			rootCrt, rootKey, err = p.GenerateRootCertificate(name+" Root CA", pass)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("all done!")
+		} else {
+			fmt.Println()
+			fmt.Print("Copying root certificate... \n")
+			// Do not copy key in STEPPATH
+			if err = p.WriteRootCertificate(rootCrt, nil, nil); err != nil {
+				return err
+			}
+			fmt.Println("all done!")
+		}
+
+		fmt.Println()
+		fmt.Print("Generating intermediate certificate... \n")
+
+		err = p.GenerateIntermediateCertificate(name+" Intermediate CA", rootCrt, rootKey, pass)
 		if err != nil {
 			return err
 		}
-
-		fmt.Println("all done!")
 	} else {
-		fmt.Println()
-		fmt.Print("Copying root certificate... \n")
-		if err = p.WriteRootCertificate(rootCrt, rootKey, pass); err != nil {
+		// Attempt to get the root certificate from RA.
+		if err := p.GetCertificateAuthority(); err != nil {
 			return err
 		}
-		fmt.Println("all done!")
-	}
-
-	fmt.Println()
-	fmt.Print("Generating intermediate certificate... \n")
-
-	err = p.GenerateIntermediateCertificate(name+" Intermediate CA", rootCrt, rootKey, pass)
-	if err != nil {
-		return err
 	}
 
 	if ctx.Bool("ssh") {
