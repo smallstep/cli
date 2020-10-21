@@ -175,17 +175,9 @@ func initAction(ctx *cli.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		file := ctx.String("credentials-file")
-		if !ctx.IsSet("credentials-file") {
-			file, err = ui.Prompt("What credentials file would you like to use? [leave empty if using a service account]",
-				ui.WithValue(ctx.String("credentials-file")))
-			if err != nil {
-				return err
-			}
-		}
 		p.SetAuthorityOptions(&apiv1.Options{
 			Type:                 ctx.String("ra"),
-			CredentialsFile:      file,
+			CredentialsFile:      ctx.String("credentials-file"),
 			CertificateAuthority: iss,
 		})
 	}
