@@ -113,6 +113,8 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 	}
 
 	switch p := p.(type) {
+	case *provisioner.JWK: // Get the step standard JWT.
+		return generateJWKToken(ctx, p, tokType, tokAttrs)
 	case *provisioner.OIDC: // Run step oauth.
 		return generateOIDCToken(ctx, p)
 	case *provisioner.X5C: // Get a JWT with an X5C header and signature.
@@ -132,12 +134,8 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 		return p.GetIdentityToken(subject, caURL)
 	case *provisioner.ACME: // Return an error with the provisioner ID.
 		return "", &ErrACMEToken{p.GetName()}
-	default: // Default is assumed to be a standard JWT.
-		jwkP, ok := p.(*provisioner.JWK)
-		if !ok {
-			return "", errors.Errorf("unknown provisioner type %T", p)
-		}
-		return generateJWKToken(ctx, jwkP, tokType, tokAttrs)
+	default:
+		return "", errors.Errorf("unknown provisioner type %T", p)
 	}
 }
 
