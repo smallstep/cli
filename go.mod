@@ -19,14 +19,14 @@ require (
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.16.0-rc.1.0.20201021053511-711aafc1d552
-	github.com/smallstep/certinfo v1.4.0
+	github.com/smallstep/certificates v0.16.0-rc.2.0.20201028014549-57494d5bef93
+	github.com/smallstep/certinfo v1.5.0
 	github.com/smallstep/truststore v0.9.6
 	github.com/smallstep/zcrypto v0.0.0-20200203191936-fbc32cf76bce
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
 	github.com/stretchr/testify v1.6.1
 	github.com/urfave/cli v1.22.4
-	go.step.sm/crypto v0.6.1
+	go.step.sm/crypto v0.7.0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974
 	golang.org/x/sys v0.0.0-20201022201747-fb209a7c41cd
@@ -35,8 +35,6 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20200830195227-52f69702a001
 )
 
-replace github.com/smallstep/certificates => ../certificates
-
-replace github.com/smallstep/certinfo => ../certinfo
-
+// replace github.com/smallstep/certificates => ../certificates
+// replace github.com/smallstep/certinfo => ../certinfo
 // replace go.step.sm/crypto => ../crypto
