@@ -306,6 +306,7 @@ func initAction(ctx *cli.Context) (err error) {
 			if err = p.WriteRootCertificate(rootCrt, nil, nil); err != nil {
 				return err
 			}
+			root = p.CreateCertificateAuthorityResponse(rootCrt, rootKey)
 			fmt.Println("all done!")
 		}
 
