@@ -149,12 +149,6 @@ challenge validation requests.`,
 		Usage: "The provisioner <kid> to use.",
 	}
 
-	passwordFileFlag = cli.StringFlag{
-		Name: "password-file",
-		Usage: `The path to the <file> containing the password to decrypt the one-time token
-generating key.`,
-	}
-
 	sshHostFlag = cli.BoolFlag{
 		Name:  "host",
 		Usage: `Create a host certificate instead of a user certificate.`,
