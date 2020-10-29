@@ -141,7 +141,6 @@ $ step ca token my-remote.hostname remote_ecdsa --ssh --host
 		Flags: []cli.Flag{
 			certNotAfterFlag,
 			certNotBeforeFlag,
-			passwordFileFlag,
 			provisionerKidFlag,
 			cli.StringSliceFlag{
 				Name: "san",
@@ -166,6 +165,7 @@ multiple principals.`,
 			flags.Offline,
 			flags.Root,
 			flags.Provisioner,
+			flags.ProvisionerPasswordFileWithAlias,
 			flags.X5cCert,
 			flags.X5cKey,
 			flags.SSHPOPCert,

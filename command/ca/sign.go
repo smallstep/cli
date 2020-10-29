@@ -22,8 +22,9 @@ func signCertificateCommand() cli.Command {
 		Action: command.ActionFunc(signCertificateAction),
 		Usage:  "generate a new certificate signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
-[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<path>]
+[**--token**=<token>] [**--issuer**=<name>] [**--provisioner-password-file=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+[**--ca-url**=<uri>] [**--root**=<path>]
 [**--set**=<key=value>] [**--set-file**=<path>]
 [**--acme**=<uri>] [**--standalone**] [**--webroot**=<path>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
@@ -112,6 +113,7 @@ $ step ca sign foo.csr foo.crt \
 			flags.Root,
 			flags.Token,
 			flags.Provisioner,
+			flags.ProvisionerPasswordFile,
 			flags.NotBefore,
 			flags.NotAfter,
 			flags.TemplateSet,
