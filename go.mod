@@ -13,13 +13,13 @@ require (
 	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
-	github.com/manifoldco/promptui v0.3.1
+	github.com/manifoldco/promptui v0.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.0.0
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.16.0-rc.2.0.20201028023329-463352238665
+	github.com/smallstep/certificates v0.16.0-rc.2.0.20201104002850-98a5aa5916d6
 	github.com/smallstep/certinfo v1.5.0
 	github.com/smallstep/truststore v0.9.6
 	github.com/smallstep/zcrypto v0.0.0-20200203191936-fbc32cf76bce
