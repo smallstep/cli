@@ -157,29 +157,77 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	p, err := pki.New()
-	if err != nil {
-		return err
-	}
+	var name, org, resource string
+	var casOptions apiv1.Options
+	switch ra {
+	case apiv1.CloudCAS:
+		var create bool
+		var project, location string
 
-	var name string
-	if ra == "" {
+		iss := ctx.String("issuer")
+		if iss == "" {
+			create, err = ui.PromptYesNo("Would you like to create a new PKI (y) or use an existing one (n)?")
+			if err != nil {
+				return err
+			}
+			if create {
+				name, err = ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)",
+					ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
+				if err != nil {
+					return err
+				}
+				org, err = ui.Prompt("What is the name of your your organization? (e.g. Smallstep)",
+					ui.WithValidateNotEmpty())
+				if err != nil {
+					return err
+				}
+				resource, err = ui.Prompt("What resource id do you want to use? [we will append -Root-CA or -Intermediate-CA] (e.g. Smallstep)",
+					ui.WithValidateRegexp("^[a-zA-Z0-9-_]+$"))
+				if err != nil {
+					return err
+				}
+				project, err = ui.Prompt("What is the id of your project on Google's Cloud Platform? (e.g. smallstep-ca)",
+					ui.WithValidateRegexp("^[a-z][a-z0-9-]{4,28}[a-z0-9]$"))
+				if err != nil {
+					return err
+				}
+				location, err = ui.Prompt("What region or location do you want to use? (e.g. us-west1)",
+					ui.WithValidateRegexp("^[a-z0-9-]+$"))
+				if err != nil {
+					return err
+				}
+			} else {
+				iss, err = ui.Prompt("What certificate authority would you like to use? (e.g. projects/smallstep-ca/locations/us-west1/certificateAuthorities/intermediate-ca)",
+					ui.WithValidateRegexp("^projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/locations/[a-z0-9-]+/certificateAuthorities/[a-zA-Z0-9-_]+$"))
+				if err != nil {
+					return err
+				}
+			}
+		}
+		casOptions = apiv1.Options{
+			Type:                 apiv1.CloudCAS,
+			CredentialsFile:      ctx.String("credentials-file"),
+			CertificateAuthority: iss,
+			IsCreator:            create,
+			Project:              project,
+			Location:             location,
+		}
+	default:
 		name, err = ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)",
 			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
 		if err != nil {
 			return err
 		}
-	} else {
-		iss, err := ui.Prompt("What certificate authority would you like to use? (e.g. projects/ca/locations/us-west1/certificateAuthorities/intermediate-ca)",
-			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("issuer")))
-		if err != nil {
-			return err
+		org = name
+		casOptions = apiv1.Options{
+			Type:      apiv1.SoftCAS,
+			IsCreator: true,
 		}
-		p.SetAuthorityOptions(&apiv1.Options{
-			Type:                 ctx.String("ra"),
-			CredentialsFile:      ctx.String("credentials-file"),
-			CertificateAuthority: iss,
-		})
+	}
+
+	p, err := pki.New(casOptions)
+	if err != nil {
+		return err
 	}
 
 	if configure {
@@ -238,13 +286,14 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	if ra == "" {
+	if casOptions.IsCreator {
+		var root *apiv1.CreateCertificateAuthorityResponse
 		// Generate root certificate if not set.
 		if rootCrt == nil && rootKey == nil {
 			fmt.Println()
 			fmt.Print("Generating root certificate... \n")
 
-			rootCrt, rootKey, err = p.GenerateRootCertificate(name+" Root CA", pass)
+			root, err = p.GenerateRootCertificate(name, org, resource, pass)
 			if err != nil {
 				return err
 			}
@@ -257,13 +306,14 @@ func initAction(ctx *cli.Context) (err error) {
 			if err = p.WriteRootCertificate(rootCrt, nil, nil); err != nil {
 				return err
 			}
+			root = p.CreateCertificateAuthorityResponse(rootCrt, rootKey)
 			fmt.Println("all done!")
 		}
 
 		fmt.Println()
 		fmt.Print("Generating intermediate certificate... \n")
 
-		err = p.GenerateIntermediateCertificate(name+" Intermediate CA", rootCrt, rootKey, pass)
+		err = p.GenerateIntermediateCertificate(name, org, resource, root, pass)
 		if err != nil {
 			return err
 		}

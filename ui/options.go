@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/manifoldco/promptui"
 )
 
@@ -125,4 +128,16 @@ func WithRichPrompt() Option {
 // WithSimplePrompt add the template option with simple templates.
 func WithSimplePrompt() Option {
 	return WithPromptTemplates(SimplePromptTemplates())
+}
+
+// WithValidateRegexp checks a prompt answer with a regular expression. If the
+// regular expression is not a valid one, the option will panic.
+func WithValidateRegexp(re string) Option {
+	rx := regexp.MustCompile(re)
+	return WithValidateFunc(func(s string) error {
+		if rx.MatchString(s) {
+			return nil
+		}
+		return fmt.Errorf("%s does not match the regular expresion %s", s, re)
+	})
 }
