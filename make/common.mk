@@ -6,6 +6,7 @@ Q=$(if $V,,@)
 PREFIX?=
 SRC=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GOOS_OVERRIDE ?=
+CGO_OVERRIDE ?= CGO_ENABLED=0
 OUTPUT_ROOT=output/
 
 .PHONY: all
@@ -26,7 +27,6 @@ bootstra%:
 
 DATE    := $(shell date -u '+%Y-%m-%d %H:%M UTC')
 LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
-GOFLAGS := CGO_ENABLED=0
 
 download:
 	$Q go mod download
@@ -36,13 +36,7 @@ build: $(PREFIX)bin/$(BINNAME)
 
 $(PREFIX)bin/$(BINNAME): download $(call rwildcard,*.go)
 	$Q mkdir -p $(@D)
-	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o $@ $(LDFLAGS) $(PKG)
-
-# Target to force a build of step without running tests
-simple:
-	$Q mkdir -p bin/
-	$Q $(GOOS_OVERRIDE) $(GOFLAGS) go build -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
-	@echo "Build Complete!"
+	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) go build -v -o $@ $(LDFLAGS) $(PKG)
 
 .PHONY: build simple
 
@@ -59,14 +53,14 @@ generate:
 # Test
 #########################################
 test:
-	$Q $(GOFLAGS) go test -short -coverprofile=coverage.out ./...
+	$Q $(CGO_OVERRIDE) go test -short -coverprofile=coverage.out ./...
 
 .PHONY: test
 
 integrate: integration
 
 integration: bin/$(BINNAME)
-	$Q $(GOFLAGS) go test -tags=integration ./integration/...
+	$Q $(CGO_OVERRIDE) go test -tags=integration ./integration/...
 
 .PHONY: integrate integration
 
