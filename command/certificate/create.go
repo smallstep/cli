@@ -155,14 +155,6 @@ $ step certificate create intermediate-ca intermediate-ca.crt intermediate-ca.ke
   --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key
 '''
 
-Create an intermediate certificate and key with custom Subject Alternative Names:
-
-'''
-$ step certificate create intermediate-ca intermediate-ca.crt intermediate-ca.key \
-  --profile intermediate-ca --ca ./root-ca.crt --ca-key ./root-ca.key \
-  --san inter.smallstep.com --san 1.1.1.1 --san ca.smallstep.com
-'''
-
 Create a leaf certificate and key:
 
 '''
