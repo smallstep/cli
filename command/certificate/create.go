@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/pem"
+	"io/ioutil"
 	"time"
 
 	"github.com/pkg/errors"
@@ -41,10 +42,9 @@ func createCommand() cli.Command {
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt-file> <key-file>
 [**--csr**] [**--profile**=<profile>] [**--template**=<path>]
-[**--ca**=<issuer-cert>] [**--ca-key**=<issuer-key>]
-[**--san**=<SAN>] [**--bundle**] [**--key**=<path>]
-[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
-[**--no-password**]`,
+[**--ca**=<issuer-cert>] [**--ca-key**=<issuer-key>] [**--password-file**=<path>]
+[**--san**=<SAN>] [**--bundle**] [**--key**=<path>] [**--key-password-file**=<path>]
+[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--no-password**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing request (CSR) that can be signed later using 'step
 certificate sign' (or some other tool) to produce a certificate.
@@ -127,6 +127,18 @@ Create a CSR and key:
 
 '''
 $ step certificate create foo foo.csr foo.key --csr
+'''
+
+Create a CSR using an existing private key:
+
+'''
+$ step certificate create --csr --key key.priv foo foo.csr
+'''
+
+Create a CSR using an existing encrypted private key:
+
+'''
+$ step certificate create --csr --key key.priv --password-file key.pass foo foo.csr
 '''
 
 Create a CSR and key with custom Subject Alternative Names:
@@ -314,6 +326,7 @@ $ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
 				Name:  "template",
 				Usage: `The certificate template <path>, a JSON representation of the certificate to create.`,
 			},
+			flags.PasswordFile,
 			cli.StringFlag{
 				Name:  "ca",
 				Usage: `The certificate authority used to issue the new certificate (PEM file).`,
@@ -325,6 +338,11 @@ $ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
 			cli.StringFlag{
 				Name:  "key",
 				Usage: "The <path> of the private key to use instead of creating a new one (PEM file).",
+			},
+			cli.StringFlag{
+				Name: "key-password-file",
+				Usage: `The <path> to the file containing the password to
+encrypt the new private key or decrypt the user submitted private key.`,
 			},
 			cli.BoolFlag{
 				Name: "no-password",
@@ -441,6 +459,15 @@ func createAction(ctx *cli.Context) error {
 		if profile != "" && profile != profileLeaf {
 			return errs.IncompatibleFlagWithFlag(ctx, "profile", "csr")
 		}
+		if ctx.IsSet("ca") {
+			return errs.IncompatibleFlagWithFlag(ctx, "ca", "csr")
+		}
+		if ctx.IsSet("ca-key") {
+			return errs.IncompatibleFlagWithFlag(ctx, "ca-key", "csr")
+		}
+		if ctx.IsSet("password-file") {
+			return errs.IncompatibleFlagWithFlag(ctx, "password-file", "csr")
+		}
 
 		// Use subject as default san
 		if len(sans) == 0 {
@@ -470,7 +497,7 @@ func createAction(ctx *cli.Context) error {
 
 		// Save key and certificate request
 		if keyFile != "" {
-			if err := savePrivateKey(keyFile, priv, noPass); err != nil {
+			if err := savePrivateKey(ctx, keyFile, priv, noPass); err != nil {
 				return err
 			}
 		}
@@ -583,7 +610,7 @@ func createAction(ctx *cli.Context) error {
 
 	// Save key and certificate request
 	if keyFile != "" {
-		if err := savePrivateKey(keyFile, priv, noPass); err != nil {
+		if err := savePrivateKey(ctx, keyFile, priv, noPass); err != nil {
 			return err
 		}
 	}
@@ -630,7 +657,12 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 		return nil, nil, errs.IncompatibleFlag(ctx, "key", "size")
 	}
 
-	v, err := pemutil.Read(keyFile)
+	ops := []pemutil.Options{}
+	passFile := ctx.String("key-password-file")
+	if len(passFile) != 0 {
+		ops = append(ops, pemutil.WithPasswordFile(passFile))
+	}
+	v, err := pemutil.Read(keyFile, ops...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -694,7 +726,12 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	}
 
 	// Parse --ca-key as a crypto.Signer.
-	key, err := pemutil.Read(caKey)
+	passFile := ctx.String("password-file")
+	ops := []pemutil.Options{}
+	if len(passFile) != 0 {
+		ops = append(ops, pemutil.WithPasswordFile(passFile))
+	}
+	key, err := pemutil.Read(caKey, ops...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -707,17 +744,25 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 }
 
 // savePrivateKey saves the given key, asking the password if necessary.
-func savePrivateKey(filename string, priv interface{}, insecure bool) error {
+func savePrivateKey(ctx *cli.Context, filename string, priv interface{}, insecure bool) error {
+	var err error
 	if insecure {
-		_, err := pemutil.Serialize(priv, pemutil.ToFile(filename, 0600))
+		_, err = pemutil.Serialize(priv, pemutil.ToFile(filename, 0600))
 		return err
 	}
 
 	var pass []byte
-	pass, err := ui.PromptPassword("Please enter the password to encrypt the private key",
-		ui.WithValidateNotEmpty())
-	if err != nil {
-		return errors.Wrap(err, "error reading password")
+	if ctx.IsSet("key-password-file") {
+		pass, err = ioutil.ReadFile(ctx.String("key-password-file"))
+		if err != nil {
+			return errors.Wrap(err, "error reading encryptiong password from file")
+		}
+	} else {
+		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key",
+			ui.WithValidateNotEmpty())
+		if err != nil {
+			return errors.Wrap(err, "error reading password")
+		}
 	}
 
 	_, err = pemutil.Serialize(priv, pemutil.WithPassword(pass), pemutil.ToFile(filename, 0600))
