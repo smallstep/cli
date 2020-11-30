@@ -42,8 +42,9 @@ func createCommand() cli.Command {
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt-file> <key-file>
 [**--csr**] [**--profile**=<profile>] [**--template**=<path>]
-[**--ca**=<issuer-cert>] [**--ca-key**=<issuer-key>] [**--password-file**=<path>]
-[**--san**=<SAN>] [**--bundle**] [**--key**=<path>] [**--key-password-file**=<path>]
+[**--password-file**=<path>] [**--ca**=<issuer-cert>]
+[**--ca-key**=<issuer-key>] [**--ca-password-file**=<path>]
+[**--san**=<SAN>] [**--bundle**] [**--key**=<path>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--no-password**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing request (CSR) that can be signed later using 'step
@@ -172,6 +173,21 @@ Create a leaf certificate and key:
 '''
 $ step certificate create foo foo.crt foo.key --profile leaf \
   --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
+'''
+
+Create a leaf certificate and encrypt the private key:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile leaf \
+   --password-file ./leaf.pass \
+   --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key
+'''
+
+Create a leaf certificate and decrypt the CA private key:
+
+'''
+$ step certificate create foo foo.crt foo.key --profile leaf \
+   --ca ./intermediate-ca.crt --ca-key ./intermediate-ca.key --ca-password-file ./intermediate.pass
 '''
 
 Create a leaf certificate and key with custom Subject Alternative Names:
@@ -326,7 +342,11 @@ $ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
 				Name:  "template",
 				Usage: `The certificate template <path>, a JSON representation of the certificate to create.`,
 			},
-			flags.PasswordFile,
+			cli.StringFlag{
+				Name: "password-file",
+				Usage: `The <path> to the file containing the password to
+encrypt the new private key or decrypt the user submitted private key.`,
+			},
 			cli.StringFlag{
 				Name:  "ca",
 				Usage: `The certificate authority used to issue the new certificate (PEM file).`,
@@ -336,13 +356,13 @@ $ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
 				Usage: `The certificate authority private key used to sign the new certificate (PEM file).`,
 			},
 			cli.StringFlag{
-				Name:  "key",
-				Usage: "The <path> of the private key to use instead of creating a new one (PEM file).",
+				Name: "ca-password-file",
+				Usage: `The <path> to the file containing the password to
+decrypt the CA private key.`,
 			},
 			cli.StringFlag{
-				Name: "key-password-file",
-				Usage: `The <path> to the file containing the password to
-encrypt the new private key or decrypt the user submitted private key.`,
+				Name:  "key",
+				Usage: "The <path> of the private key to use instead of creating a new one (PEM file).",
 			},
 			cli.BoolFlag{
 				Name: "no-password",
@@ -465,8 +485,8 @@ func createAction(ctx *cli.Context) error {
 		if ctx.IsSet("ca-key") {
 			return errs.IncompatibleFlagWithFlag(ctx, "ca-key", "csr")
 		}
-		if ctx.IsSet("password-file") {
-			return errs.IncompatibleFlagWithFlag(ctx, "password-file", "csr")
+		if ctx.IsSet("ca-password-file") {
+			return errs.IncompatibleFlagWithFlag(ctx, "ca-password-file", "csr")
 		}
 
 		// Use subject as default san
@@ -658,7 +678,7 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 	}
 
 	ops := []pemutil.Options{}
-	passFile := ctx.String("key-password-file")
+	passFile := ctx.String("password-file")
 	if len(passFile) != 0 {
 		ops = append(ops, pemutil.WithPasswordFile(passFile))
 	}
@@ -726,7 +746,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	}
 
 	// Parse --ca-key as a crypto.Signer.
-	passFile := ctx.String("password-file")
+	passFile := ctx.String("ca-password-file")
 	ops := []pemutil.Options{}
 	if len(passFile) != 0 {
 		ops = append(ops, pemutil.WithPasswordFile(passFile))
@@ -752,8 +772,8 @@ func savePrivateKey(ctx *cli.Context, filename string, priv interface{}, insecur
 	}
 
 	var pass []byte
-	if ctx.IsSet("key-password-file") {
-		pass, err = ioutil.ReadFile(ctx.String("key-password-file"))
+	if ctx.IsSet("password-file") {
+		pass, err = ioutil.ReadFile(ctx.String("password-file"))
 		if err != nil {
 			return errors.Wrap(err, "error reading encryptiong password from file")
 		}
