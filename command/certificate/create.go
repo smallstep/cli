@@ -714,7 +714,8 @@ func savePrivateKey(filename string, priv interface{}, insecure bool) error {
 	}
 
 	var pass []byte
-	pass, err := ui.PromptPassword("Please enter the password to encrypt the private key")
+	pass, err := ui.PromptPassword("Please enter the password to encrypt the private key",
+		ui.WithValidateNotEmpty())
 	if err != nil {
 		return errors.Wrap(err, "error reading password")
 	}
