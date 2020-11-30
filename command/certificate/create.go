@@ -772,8 +772,8 @@ func savePrivateKey(ctx *cli.Context, filename string, priv interface{}, insecur
 	}
 
 	var pass []byte
-	if ctx.IsSet("password-file") {
-		pass, err = ioutil.ReadFile(ctx.String("password-file"))
+	if passFile := ctx.String("password-file"); passFile != "" {
+		pass, err = ioutil.ReadFile(passFile)
 		if err != nil {
 			return errors.Wrap(err, "error reading encryptiong password from file")
 		}
