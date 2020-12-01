@@ -33,7 +33,7 @@ require (
 )
 
 // This is a temporal workaround to fix a dependency problem between etcd and
-// gRPC. The gRPC v1.29.1 supports old a new interfaces, so it can be used by
+// gRPC. The gRPC v1.29.1 supports old and new interfaces, so it can be used by
 // packages using the old (go.etcd.io/etcd) and new (cloud.google.com)
 // interfaces.
 //
