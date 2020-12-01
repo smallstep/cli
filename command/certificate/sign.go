@@ -37,7 +37,8 @@ func signCommand() cli.Command {
 		Action: cli.ActionFunc(signAction),
 		Usage:  "sign a certificate signing request (CSR)",
 		UsageText: `**step certificate sign** <csr_file> <crt_file> <key_file>
-[**--profile**=<profile>] [**--template**=<path>] [**--path-len**=<maximum>]
+[**--profile**=<profile>] [**--template**=<path>]
+[**--password-file**=<path>] [**--path-len**=<maximum>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--bundle**]`,
 		Description: `**step certificate sign** generates a signed
@@ -133,6 +134,7 @@ $ step certificate sign --template coyote.tpl coyote.csr issuer.crt issuer.key
 				Name:  "template",
 				Usage: `The certificate template <path>, a JSON representation of the certificate to create.`,
 			},
+			flags.PasswordFile,
 			cli.StringFlag{
 				Name: "not-before",
 				Usage: `The <time|duration> set in the NotBefore property of the certificate. If a
@@ -186,11 +188,18 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	key, err := pemutil.Read(keyFile, pemutil.WithPasswordPrompt(
-		fmt.Sprintf("Please enter the password to decrypt %s", keyFile),
-		func(s string) ([]byte, error) {
-			return ui.PromptPassword(s)
-		}))
+	ops := []pemutil.Options{}
+	passFile := ctx.String("password-file")
+	if len(passFile) == 0 {
+		ops = append(ops, pemutil.WithPasswordPrompt(
+			fmt.Sprintf("Please enter the password to decrypt %s", keyFile),
+			func(s string) ([]byte, error) {
+				return ui.PromptPassword(s)
+			}))
+	} else {
+		ops = append(ops, pemutil.WithPasswordFile(passFile))
+	}
+	key, err := pemutil.Read(keyFile, ops...)
 	if err != nil {
 		return err
 	}
