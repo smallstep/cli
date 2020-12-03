@@ -191,7 +191,7 @@ func signCertificateAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error parsing flag '--token'")
 	}
 	switch jwt.Payload.Type() {
-	case token.AWS, token.GCP, token.Azure:
+	case token.AWS, token.GCP, token.Azure, token.K8sSA:
 		// Common name will be validated on the server side, it depends on
 		// server configuration.
 	default:
