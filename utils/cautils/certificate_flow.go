@@ -290,6 +290,10 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			emails = append(emails, jwt.Payload.Email)
 		}
 		subject = jwt.Payload.Subject
+	case token.K8sSA:
+		// Use subject from command line. K8sSA tokens are multi-use so the
+		// subject of the token is not necessarily related to the requested
+		// resource.
 	default: // Use common name in the token
 		subject = jwt.Payload.Subject
 	}
