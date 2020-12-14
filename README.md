@@ -61,7 +61,7 @@ Step CLI's command groups illustrate some of its uses:
   - Supports OAuth authorization code, out-of-band (OOB), JWT bearer, and refresh token flows
   - Get OAuth access tokens and OIDC identity tokens at the command line from any provider.
   - Verify OIDC identity tokens (`step crypto jwt verify`)
-- [`step ssh`](https://smallstep.com/docs/step-cli/reference/oauth/): Create and manage SSH certificates (requires an online or offline [`step-ca`](https://github.com/smallstep/certificates) instance)
+- [`step ssh`](https://smallstep.com/docs/step-cli/reference/ssh/): Create and manage SSH certificates (requires an online or offline [`step-ca`](https://github.com/smallstep/certificates) instance)
   - Generate SSH user and host key pairs and short-lived certificates
   - Add and remove certificates to the SSH agent
   - Inspect SSH certificates
