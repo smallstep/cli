@@ -42,6 +42,7 @@ func createCommand() cli.Command {
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt-file> <key-file>
 [**--csr**] [**--profile**=<profile>] [**--template**=<path>]
+[**--not-before**=<duration>] [**--not-after**=<duration>]
 [**--password-file**=<path>] [**--ca**=<issuer-cert>]
 [**--ca-key**=<issuer-key>] [**--ca-password-file**=<path>]
 [**--san**=<SAN>] [**--bundle**] [**--key**=<path>]
@@ -487,6 +488,12 @@ func createAction(ctx *cli.Context) error {
 		}
 		if ctx.IsSet("ca-password-file") {
 			return errs.IncompatibleFlagWithFlag(ctx, "ca-password-file", "csr")
+		}
+		if ctx.IsSet("not-before") {
+			return errs.IncompatibleFlagWithFlag(ctx, "not-before", "csr")
+		}
+		if ctx.IsSet("not-after") {
+			return errs.IncompatibleFlagWithFlag(ctx, "not-after", "csr")
 		}
 
 		// Use subject as default san
