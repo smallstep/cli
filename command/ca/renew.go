@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -38,8 +39,11 @@ func renewCertificateCommand() cli.Command {
 		Action: command.ActionFunc(renewCertificateAction),
 		Usage:  "renew a valid certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
-[**--ca-url**=<uri>] [**--root**=<file>]
-[**--out**=<file>] [**--expires-in**=<duration>] [**--force**]`,
+[**--ca-url**=<uri>] [**--root**=<path>] [**--password-file**=<path>]
+[**--out**=<path>] [**--expires-in**=<duration>] [**--force**]
+[**--expires-in**=<duration>] [**--pid**=<int>] [**--pid-file**=<path>]
+[**--signal**=<int>] [**--exec**=<string>] [**--daemon**]
+[**--renew-period**=<duration>]`,
 		Description: `
 **step ca renew** command renews the given certificate (with a request to the
 certificate authority) and writes the new certificate to disk - either overwriting
@@ -153,6 +157,12 @@ Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},
+			cli.StringFlag{
+				Name: "pid-file",
+				Usage: `The <path> from which to read the process id that will be signaled after the certificate
+has been renewed. By default the the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
+flag.`,
+			},
 			cli.IntFlag{
 				Name: "signal",
 				Usage: `The signal <number> to send to the selected PID, so it can reload the
@@ -227,9 +237,27 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errs.RequiredWithFlag(ctx, "renew-period", "daemon")
 	}
 
+	if ctx.IsSet("pid") && ctx.IsSet("pid-file") {
+		return errs.MutuallyExclusiveFlags(ctx, "pid", "pid-file")
+	}
 	pid := ctx.Int("pid")
 	if ctx.IsSet("pid") && pid <= 0 {
 		return errs.InvalidFlagValue(ctx, "pid", strconv.Itoa(pid), "")
+	}
+
+	pidFile := ctx.String("pid-file")
+	if len(pidFile) > 0 {
+		pidB, err := ioutil.ReadFile(pidFile)
+		if err != nil {
+			return errs.FileError(err, pidFile)
+		}
+		pid, err = strconv.Atoi(strings.TrimSpace(string(pidB)))
+		if err != nil {
+			return errs.Wrap(err, "error converting %s to integer process id", pidB)
+		}
+		if pid <= 0 {
+			return errs.InvalidFlagValue(ctx, "pid-file", strconv.Itoa(pid), "")
+		}
 	}
 
 	signum := ctx.Int("signal")
