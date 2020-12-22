@@ -41,8 +41,9 @@ func renewCertificateCommand() cli.Command {
 		UsageText: `**step ca renew** <crt-file> <key-file>
 [**--ca-url**=<uri>] [**--root**=<path>] [**--password-file**=<path>]
 [**--out**=<path>] [**--expires-in**=<duration>] [**--force**]
-[**--expires-in**=<duration>] [**--pid**=<int>] [**--signal**=<int>]
-[**--exec**=<string>] [**--daemon**] [**--renew-period**=<duration>]`,
+[**--expires-in**=<duration>] [**--pid**=<int>] [**--pid-file**=<path>]
+[**--signal**=<int>] [**--exec**=<string>] [**--daemon**]
+[**--renew-period**=<duration>]`,
 		Description: `
 **step ca renew** command renews the given certificate (with a request to the
 certificate authority) and writes the new certificate to disk - either overwriting
@@ -239,8 +240,8 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if ctx.IsSet("pid") && ctx.IsSet("pid-file") {
 		return errs.MutuallyExclusiveFlags(ctx, "pid", "pid-file")
 	}
-	var pid int
-	if pid = ctx.Int("pid"); ctx.IsSet("pid") && pid <= 0 {
+	pid := ctx.Int("pid")
+	if ctx.IsSet("pid") && pid <= 0 {
 		return errs.InvalidFlagValue(ctx, "pid", strconv.Itoa(pid), "")
 	}
 
@@ -255,7 +256,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 			return errs.Wrap(err, "error converting %s to integer process id", pidB)
 		}
 		if pid <= 0 {
-			return errs.InvalidFlagValue(ctx, "pidFile", strconv.Itoa(pid), "")
+			return errs.InvalidFlagValue(ctx, "pid-file", strconv.Itoa(pid), "")
 		}
 	}
 
