@@ -122,38 +122,23 @@ bundle-windows: binary-windows
 # Targets for creating OS specific artifacts and archives
 #################################################
 
-artifacts-linux-tag: bundle-linux debian
+linux-artifacts: bundle-linux debian
 
-artifacts-darwin-tag: bundle-darwin
+darwin-artifacts: bundle-darwin
 
-artifacts-windows-tag: bundle-windows
+windows-artifacts: bundle-windows
 
-artifacts-archive-tag:
+archive:
 	$Q mkdir -p $(RELEASE)
 	$Q git archive v$(VERSION) | gzip > $(RELEASE)/step-cli_$(VERSION).tar.gz
 
-artifacts-tag: artifacts-linux-tag artifacts-darwin-tag artifacts-windows-tag artifacts-archive-tag
-
-.PHONY: artifacts-linux-tag artifacts-darwin-tag artifacts-windows-tag artifacts-archive-tag artifacts-tag
+.PHONY: linux-artifacts darwin-artifacts windows-artifacts archive
 
 #################################################
 # Targets for creating step artifacts
 #################################################
 #
-# For all builds that are not tagged and not on the master branch.
-artifacts-branch:
-
-# For all builds on the master branch (or PRs targeting the master branch) that
-# are not tagged.
-artifacts-master:
-
-# For all builds with a release candidate tag.
-artifacts-release-candidate: artifacts-tag
-
-# For all builds with a release tag.
-artifacts-release: artifacts-tag
-
 # This command is called by travis directly *after* a successful build
-artifacts: artifacts-$(PUSHTYPE) docker-$(PUSHTYPE)
+docker-artifacts: docker-$(PUSHTYPE)
 
-.PHONY: artifacts-master artifacts-release-candidate artifacts-release artifacts
+.PHONY: docker-artifacts

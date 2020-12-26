@@ -55,7 +55,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Build
         id: build
-        run: make artifacts-archive-tag
+        run: make archive
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
@@ -83,17 +83,14 @@ jobs:
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          make bundle-darwin
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
+          make darwin-artifacts
+      - name: Upload Release Assets
+        id: upload-release-assets
+        run: |
+          tag_name="${GITHUB_REF##*/}"
+          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.createRelease.outputs.upload_url }}
-          asset_path: ./.releases/step_darwin_${{ needs.createRelease.outputs.version }}_amd64.tar.gz
-          asset_name: step_darwin_${{ needs.createRelease.outputs.version }}_amd64.tar.gz
-          asset_content_type: application/gzip
 
   build_upload_linux_assets:
     name: Build & Upload Linux Assets
@@ -114,7 +111,7 @@ jobs:
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          make -j1 bundle-linux debian
+          make linux-artifacts
       - name: Upload Release Assets
         id: upload-release-assets
         run: |
@@ -139,7 +136,7 @@ jobs:
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          make bundle-windows
+          make windows-artifacts
       - name: Upload Release Assets
         id: upload-release-assets
         run: |
@@ -147,3 +144,23 @@ jobs:
           hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_upload_docker:
+    name: Build & Upload Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      # comment a thing
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.15.6'
+      - name: Build
+        id: build
+        run: |
+          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          make docker-artifacts
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
