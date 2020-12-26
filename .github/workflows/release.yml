@@ -1,0 +1,181 @@
+name: Create Release & Upload Assets
+
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+    - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+jobs:
+  lintTestBuild:
+    name: Lint, Test, Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.15.6'
+      - name: Lint, Test, Build
+        id: lintTestBuild
+        run: V=1 make -j1 bootstrap all
+
+  createRelease:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: lintTestBuild
+    outputs:
+      version: ${{ steps.extract-tag.outputs.VERSION }}
+      deb_version: ${{ steps.extract-tag.outputs.DEB_VERSION }}
+      gh_deb_version: ${{ steps.extract-tag.outputs.GH_DEB_VERSION }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Extract Tag Names
+        id: extract-tag
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          DEB_VERSION=$(echo ${VERSION} | sed 's/-/~/')
+          GH_DEB_VERSION=$(echo ${VERSION} | sed 's/-/./')
+          echo "::set-output name=VERSION::${VERSION}"
+          echo "::set-output name=DEB_VERSION::${DEB_VERSION}"
+          echo "::set-output name=GH_DEB_VERSION::${GH_DEB_VERSION}"
+      - name: Is Pre-release
+        id: is_prerelease
+        run: |
+          echo ${{ github.ref }} | grep "\-rc.*"
+          OUT=$?
+          if [ $OUT -eq 0 ]; then IS_PRERELEASE=true; else IS_PRERELEASE=false; fi
+          echo "::set-output name=IS_PRERELEASE::${IS_PRERELEASE}"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
+
+  upload_git_archive:
+    name: Upload Git Archive
+    runs-on: ubuntu-latest
+    needs: createRelease
+    steps:
+      # comment a thing
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        id: build
+        run: make archive
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.createRelease.outputs.upload_url }}
+          asset_path: ./.releases/step-cli_${{ needs.createRelease.outputs.version }}.tar.gz
+          asset_name: step-cli_${{ needs.createRelease.outputs.version }}.tar.gz
+          asset_content_type: application/gzip
+
+  build_upload_darwin_assets:
+    name: Build & Upload Mac OS Darwin Assets
+    runs-on: ubuntu-latest
+    needs: createRelease
+    steps:
+      # comment a thing
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.15.6'
+      - name: Build
+        id: build
+        run: |
+          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          make darwin-artifacts
+      - name: Upload Release Assets
+        id: upload-release-assets
+        run: |
+          tag_name="${GITHUB_REF##*/}"
+          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_upload_linux_assets:
+    name: Build & Upload Linux Assets
+    runs-on: ubuntu-latest
+    needs: createRelease
+    steps:
+      # comment a thing
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.15.6'
+      - name: APT Install
+        id: aptInstall
+        run: sudo apt-get -y install build-essential libpam-dev debhelper devscripts fakeroot
+      - name: Build
+        id: build
+        run: |
+          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          make linux-artifacts
+      - name: Upload Release Assets
+        id: upload-release-assets
+        run: |
+          tag_name="${GITHUB_REF##*/}"
+          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_upload_windows_assets:
+    name: Build & Upload Windows Assets
+    runs-on: ubuntu-latest
+    needs: createRelease
+    steps:
+      # comment a thing
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.15.6'
+      - name: Build
+        id: build
+        run: |
+          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          make windows-artifacts
+      - name: Upload Release Assets
+        id: upload-release-assets
+        run: |
+          tag_name="${GITHUB_REF##*/}"
+          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_upload_docker:
+    name: Build & Upload Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      # comment a thing
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.15.6'
+      - name: Build
+        id: build
+        run: |
+          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          make docker-artifacts
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
