@@ -15,9 +15,15 @@ PUSHTYPE := release-candidate
 	else
 PUSHTYPE := release
 	endif
-	# GITHUB Actions
+# GITHUB Actions
 else ifdef GITHUB_REF
 VERSION := $(shell echo $(GITHUB_REF) | sed 's/^refs\/tags\///')
+NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
+	ifeq ($(NOT_RC),)
+PUSHTYPE := release-candidate
+	else
+PUSHTYPE := release
+	endif
 else
 VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
 # If we are not in an active git dir then try reading the version from .VERSION.
