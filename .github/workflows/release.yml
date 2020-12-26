@@ -116,7 +116,7 @@ jobs:
         id: upload-release-assets
         run: |
           tag_name="${GITHUB_REF##*/}"
-          hub release edit $(find ./.releases) -m "" "$tag_name"
+          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -141,6 +141,6 @@ jobs:
         id: upload-release-assets
         run: |
           tag_name="${GITHUB_REF##*/}"
-          hub release edit $(find ./.releases) -m "" "$tag_name"
+          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
