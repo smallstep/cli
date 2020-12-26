@@ -70,7 +70,7 @@ distclean: clean
 #################################################
 
 BINARY_OUTPUT=$(OUTPUT_ROOT)binary/
-RELEASE=./.travis-releases
+RELEASE=./.releases
 
 define BUNDLE_MAKE
 	# $(1) -- Go Operating System (e.g. linux, darwin, windows, etc.)
