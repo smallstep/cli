@@ -229,8 +229,8 @@ jobs:
           command: cp
           source: s3://${{ secrets.AWS_S3_BUCKET }}/install-step.ps1
           destination: /tmp/install-step.ps1
-          aws_access_key_id: ${{ secret.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secret.AWS_SECRET_ACCESS_KEY }}
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - name: Modify Installer
         id: modify
         run: sed -i '' -e 's~step-windows-.*.exe~step-windows-'${{ needs.createRelease.outputs.version }}'.exe~g' /tmp/install-step.ps1
@@ -241,5 +241,5 @@ jobs:
           command: cp
           source: /tmp/install-step.ps1
           destination: s3://${{ secrets.AWS_S3_BUCKET }}/install-step-test.ps1
-          aws_access_key_id: ${{ secret.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secret.AWS_SECRET_ACCESS_KEY }}
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
