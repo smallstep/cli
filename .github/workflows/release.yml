@@ -229,7 +229,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: 'us-east-1' # optional: defaults to us-east-1
-          SOURCE: 's3://public-test-files.step-sm/install-step.ps1'
+          SOURCE: 's3://public-test-files.step.sm/install-step.ps1'
           DEST: '/tmp/install-step.ps1'
       - name: Modify Installer
         id: modify
@@ -241,5 +241,5 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: 'us-east-1' # optional: defaults to us-east-1
-          DEST: 's3://public-test-files.step-sm/install-step-test.ps1'
+          DEST: 's3://public-test-files.step.sm/install-step-test.ps1'
           SOURCE: '/tmp/install-step.ps1'
