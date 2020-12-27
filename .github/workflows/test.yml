@@ -3,7 +3,8 @@ name: Lint, Test, Build
 on:
   push:
     tags-ignore:
-    - "v*"
+    - 'v*'
+    - 'test*'
     branches:
     - "**"
   pull_request:
