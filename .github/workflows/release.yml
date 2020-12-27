@@ -224,22 +224,22 @@ jobs:
         uses: actions/checkout@v2
       - name: Download Existing Installer
         id: download
-        uses: keithweaver/aws-s3-github-action@master
-        with:
-          command: cp
-          source: s3://${{ secrets.AWS_S3_BUCKET }}/install-step.ps1
-          destination: /tmp/install-step.ps1
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        uses: prewk/s3-cp-action@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-east-1' # optional: defaults to us-east-1
+          SOURCE: 's3://public-test-files.step-sm/install-step.ps1'
+          DEST: '/tmp/install-step.ps1'
       - name: Modify Installer
         id: modify
         run: sed -i '' -e 's~step-windows-.*.exe~step-windows-'${{ needs.createRelease.outputs.version }}'.exe~g' /tmp/install-step.ps1
       - name: Upload and Overwrite
         id: upload
-        uses: keithweaver/aws-s3-github-action@master
+        uses: prewk/s3-cp-action@master
         with:
-          command: cp
-          source: /tmp/install-step.ps1
-          destination: s3://${{ secrets.AWS_S3_BUCKET }}/install-step-test.ps1
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-east-1' # optional: defaults to us-east-1
+          DEST: 's3://public-test-files.step-sm/install-step-test.ps1'
+          SOURCE: '/tmp/install-step.ps1'
