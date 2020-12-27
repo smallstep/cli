@@ -7,19 +7,19 @@ on:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
-  #lintTestBuild:
-  #  name: Lint, Test, Build
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - name: Checkout
-  #      uses: actions/checkout@v2
-  #    - name: Setup Go
-  #      uses: actions/setup-go@v2
-  #      with:
-  #        go-version: '^1.15.6'
-  #    - name: Lint, Test, Build
-  #      id: lintTestBuild
-  #      run: V=1 make -j1 bootstrap all
+  #  lintTestBuild:
+  #    name: Lint, Test, Build
+  #    runs-on: ubuntu-latest
+  #    steps:
+  #      - name: Checkout
+  #        uses: actions/checkout@v2
+  #      - name: Setup Go
+  #        uses: actions/setup-go@v2
+  #        with:
+  #          go-version: '^1.15.6'
+  #      - name: Lint, Test, Build
+  #        id: lintTestBuild
+  #        run: V=1 make -j1 bootstrap all
 
   createRelease:
     name: Create Release
@@ -61,158 +61,185 @@ jobs:
           draft: false
           prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
-          #upload_git_archive:
-          #  name: Upload Git Archive
-          #  runs-on: ubuntu-latest
-          #  needs: createRelease
-          #  steps:
-          #    # comment a thing
-          #    - name: Checkout
-          #      uses: actions/checkout@v2
-          #    - name: Build
-          #      id: build
-          #      run: make archive
-          #    - name: Upload Release Asset
-          #      id: upload-release-asset
-          #      uses: actions/upload-release-asset@v1
-          #      env:
-          #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          #      with:
-          #        upload_url: ${{ needs.createRelease.outputs.upload_url }}
-          #        asset_path: ./.releases/step-cli_${{ needs.createRelease.outputs.version }}.tar.gz
-          #        asset_name: step-cli_${{ needs.createRelease.outputs.version }}.tar.gz
-          #        asset_content_type: application/gzip
+          #  upload_git_archive:
+          #    name: Upload Git Archive
+          #    runs-on: ubuntu-latest
+          #    needs: createRelease
+          #    steps:
+          #      # comment a thing
+          #      - name: Checkout
+          #        uses: actions/checkout@v2
+          #      - name: Build
+          #        id: build
+          #        run: make archive
+          #      - name: Upload Release Asset
+          #        id: upload-release-asset
+          #        uses: actions/upload-release-asset@v1
+          #        env:
+          #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #        with:
+          #          upload_url: ${{ needs.createRelease.outputs.upload_url }}
+          #          asset_path: ./.releases/step-cli_${{ needs.createRelease.outputs.version }}.tar.gz
+          #          asset_name: step-cli_${{ needs.createRelease.outputs.version }}.tar.gz
+          #          asset_content_type: application/gzip
+          #
+          #  build_upload_darwin_assets:
+          #    name: Build & Upload Mac OS Darwin Assets
+          #    runs-on: ubuntu-latest
+          #    needs: createRelease
+          #    steps:
+          #      # comment a thing
+          #      - name: Checkout
+          #        uses: actions/checkout@v2
+          #      - name: Setup Go
+          #        uses: actions/setup-go@v2
+          #        with:
+          #          go-version: '^1.15.6'
+          #      - name: Build
+          #        id: build
+          #        run: |
+          #          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          #          make darwin-artifacts
+          #      - name: Upload Release Assets
+          #        id: upload-release-assets
+          #        run: |
+          #          tag_name="${GITHUB_REF##*/}"
+          #          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
+          #        env:
+          #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #
+          #  build_upload_linux_assets:
+          #    name: Build & Upload Linux Assets
+          #    runs-on: ubuntu-latest
+          #    needs: createRelease
+          #    steps:
+          #      # comment a thing
+          #      - name: Checkout
+          #        uses: actions/checkout@v2
+          #      - name: Setup Go
+          #        uses: actions/setup-go@v2
+          #        with:
+          #          go-version: '^1.15.6'
+          #      - name: APT Install
+          #        id: aptInstall
+          #        run: sudo apt-get -y install build-essential libpam-dev debhelper devscripts fakeroot
+          #      - name: Build
+          #        id: build
+          #        run: |
+          #          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          #          make linux-artifacts
+          #      - name: Upload Release Assets
+          #        id: upload-release-assets
+          #        run: |
+          #          tag_name="${GITHUB_REF##*/}"
+          #          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
+          #        env:
+          #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #
+          #  build_upload_windows_assets:
+          #    name: Build & Upload Windows Assets
+          #    runs-on: ubuntu-latest
+          #    needs: createRelease
+          #    steps:
+          #      # comment a thing
+          #      - name: Checkout
+          #        uses: actions/checkout@v2
+          #      - name: Setup Go
+          #        uses: actions/setup-go@v2
+          #        with:
+          #          go-version: '^1.15.6'
+          #      - name: Build
+          #        id: build
+          #        run: |
+          #          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          #          make windows-artifacts
+          #      - name: Upload Release Assets
+          #        id: upload-release-assets
+          #        run: |
+          #          tag_name="${GITHUB_REF##*/}"
+          #          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
+          #        env:
+          #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #
+          #  build_upload_docker:
+          #    name: Build & Upload Docker Images
+          #    runs-on: ubuntu-latest
+          #    steps:
+          #      - name: Checkout
+          #        uses: actions/checkout@v2
+          #      - name: Setup Go
+          #        uses: actions/setup-go@v2
+          #        with:
+          #          go-version: '^1.15.6'
+          #      - name: Build
+          #        id: build
+          #        run: |
+          #          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          #          make docker-artifacts
+          #        env:
+          #          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          #          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          #
+          #  build_upload_aws_s3_binaries:
+          #    name: Build & Upload AWS S3 Binaries
+          #    runs-on: ubuntu-latest
+          #    needs: createRelease
+          #    if: !${{ needs.createRelease.outputs.is_prerelease }}
+          #    steps:
+          #      - name: Checkout
+          #        uses: actions/checkout@v2
+          #      - name: Setup Go
+          #        uses: actions/setup-go@v2
+          #        with:
+          #          go-version: '^1.15.6'
+          #      - name: Build
+          #        id: build
+          #        run: |
+          #          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          #          make -j1 binary-linux binary-darwin binary-windows
+          #          mkdir -p ./.releases
+          #          cp ./output/binary/linux/bin/step ./.releases/step-linux-${{ needs.createRelease.outputs.version }}
+          #          cp ./output/binary/linux/bin/step ./.releases/step-linux-latest-integration
+          #          cp ./output/binary/darwin/bin/step ./.releases/step-darwin-${{ needs.createRelease.outputs.version }}
+          #          cp ./output/binary/windows/bin/step ./.releases/step-windows-${{ needs.createRelease.outputs.version }}.exe
+          #      - name: Upload s3
+          #        id: upload-s3
+          #        uses: jakejarvis/s3-sync-action@master
+          #        with:
+          #          args: --acl public-read --follow-symlinks
+          #        env:
+          #          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          #          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          #          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          #          AWS_REGION: 'us-east-1'   # optional: defaults to us-east-1
+          #          SOURCE_DIR: './.releases'      # optional: defaults to entire repository
 
-          #build_upload_darwin_assets:
-          #  name: Build & Upload Mac OS Darwin Assets
-          #  runs-on: ubuntu-latest
-          #  needs: createRelease
-          #  steps:
-          #    # comment a thing
-          #    - name: Checkout
-          #      uses: actions/checkout@v2
-          #    - name: Setup Go
-          #      uses: actions/setup-go@v2
-          #      with:
-          #        go-version: '^1.15.6'
-          #    - name: Build
-          #      id: build
-          #      run: |
-          #        PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          #        make darwin-artifacts
-          #    - name: Upload Release Assets
-          #      id: upload-release-assets
-          #      run: |
-          #        tag_name="${GITHUB_REF##*/}"
-          #        hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
-          #      env:
-          #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-          #build_upload_linux_assets:
-          #  name: Build & Upload Linux Assets
-          #  runs-on: ubuntu-latest
-          #  needs: createRelease
-          #  steps:
-          #    # comment a thing
-          #    - name: Checkout
-          #      uses: actions/checkout@v2
-          #    - name: Setup Go
-          #      uses: actions/setup-go@v2
-          #      with:
-          #        go-version: '^1.15.6'
-          #    - name: APT Install
-          #      id: aptInstall
-          #      run: sudo apt-get -y install build-essential libpam-dev debhelper devscripts fakeroot
-          #    - name: Build
-          #      id: build
-          #      run: |
-          #        PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          #        make linux-artifacts
-          #    - name: Upload Release Assets
-          #      id: upload-release-assets
-          #      run: |
-          #        tag_name="${GITHUB_REF##*/}"
-          #        hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
-          #      env:
-          #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-          #build_upload_windows_assets:
-          #  name: Build & Upload Windows Assets
-          #  runs-on: ubuntu-latest
-          #  needs: createRelease
-          #  steps:
-          #    # comment a thing
-          #    - name: Checkout
-          #      uses: actions/checkout@v2
-          #    - name: Setup Go
-          #      uses: actions/setup-go@v2
-          #      with:
-          #        go-version: '^1.15.6'
-          #    - name: Build
-          #      id: build
-          #      run: |
-          #        PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          #        make windows-artifacts
-          #    - name: Upload Release Assets
-          #      id: upload-release-assets
-          #      run: |
-          #        tag_name="${GITHUB_REF##*/}"
-          #        hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
-          #      env:
-          #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-          #build_upload_docker:
-          #  name: Build & Upload Docker Images
-          #  runs-on: ubuntu-latest
-          #  steps:
-          #    # comment a thing
-          #    - name: Checkout
-          #      uses: actions/checkout@v2
-          #    - name: Setup Go
-          #      uses: actions/setup-go@v2
-          #      with:
-          #        go-version: '^1.15.6'
-          #    - name: Build
-          #      id: build
-          #      run: |
-          #        PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          #        make docker-artifacts
-          #      env:
-          #        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          #        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-  build_upload_aws_s3_binaries:
-    name: Build & Upload AWS S3 Binaries
+  upload_windows_installer:
+    name: Upload Windows Installer
     runs-on: ubuntu-latest
     needs: createRelease
-    #if: !${{ needs.createRelease.outputs.is_prerelease }}
+    if: ${{ needs.createRelease.outputs.is_prerelease }}
     steps:
-      # comment a thing
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Setup Go
-        uses: actions/setup-go@v2
+      - name: Download Existing Installer
+        id: download
+        uses: keithweaver/aws-s3-github-action@master
         with:
-          go-version: '^1.15.6'
-      - name: Build
-        id: build
-        run: |
-          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          make -j1 binary-linux binary-darwin binary-windows
-          mkdir -p ./.releases
-          cp ./output/binary/linux/bin/step ./.releases/step-linux-${{ needs.createRelease.outputs.version }}
-          cp ./output/binary/linux/bin/step ./.releases/step-linux-latest-integration
-          cp ./output/binary/darwin/bin/step ./.releases/step-darwin-${{ needs.createRelease.outputs.version }}
-          cp ./output/binary/windows/bin/step ./.releases/step-windows-${{ needs.createRelease.outputs.version }}.exe
-      - name: Upload s3
-        id: upload-s3
-        uses: jakejarvis/s3-sync-action@master
+          command: cp
+          source: s3://${{ secrets.AWS_S3_BUCKET }}/install-step.ps1
+          destination: /tmp/install-step.ps1
+          aws_access_key_id: ${{ secret.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secret.AWS_SECRET_ACCESS_KEY }}
+      - name: Modify Installer
+        id: modify
+        run: sed -i '' -e 's~step-windows-.*.exe~step-windows-'${{ needs.createRelease.outputs.version }}'.exe~g' /tmp/install-step.ps1
+      - name: Upload and Overwrite
+        id: upload
+        uses: keithweaver/aws-s3-github-action@master
         with:
-          args: --acl public-read --follow-symlinks
-        env:
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-west-1'   # optional: defaults to us-east-1
-          SOURCE_DIR: './.releases'      # optional: defaults to entire repository
-
+          command: cp
+          source: /tmp/install-step.ps1
+          destination: s3://${{ secrets.AWS_S3_BUCKET }}/install-step-test.ps1
+          aws_access_key_id: ${{ secret.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secret.AWS_SECRET_ACCESS_KEY }}
