@@ -233,7 +233,10 @@ jobs:
           DEST: './install-step.ps1'
       - name: Modify Installer
         id: modify
-        run: sed -i '' -e 's~step-windows-.*.exe~step-windows-'${{ needs.createRelease.outputs.version }}'.exe~g' ./install-step.ps1
+        run: |
+          ls
+          pwd
+          sed -i '' -e 's~step-windows-.*.exe~step-windows-'"${{ needs.createRelease.outputs.version }}"'.exe~g' ./install-step.ps1
       - name: Upload and Overwrite
         id: upload
         uses: prewk/s3-cp-action@master
