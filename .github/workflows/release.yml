@@ -230,10 +230,10 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: 'us-east-1' # optional: defaults to us-east-1
           SOURCE: 's3://public-test-files.step.sm/install-step.ps1'
-          DEST: '/tmp/install-step.ps1'
+          DEST: './install-step.ps1'
       - name: Modify Installer
         id: modify
-        run: sed -i '' -e 's~step-windows-.*.exe~step-windows-'${{ needs.createRelease.outputs.version }}'.exe~g' /tmp/install-step.ps1
+        run: sed -i '' -e 's~step-windows-.*.exe~step-windows-'${{ needs.createRelease.outputs.version }}'.exe~g' ./install-step.ps1
       - name: Upload and Overwrite
         id: upload
         uses: prewk/s3-cp-action@master
@@ -242,4 +242,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: 'us-east-1' # optional: defaults to us-east-1
           DEST: 's3://public-test-files.step.sm/install-step-test.ps1'
-          SOURCE: '/tmp/install-step.ps1'
+          SOURCE: './install-step.ps1'
