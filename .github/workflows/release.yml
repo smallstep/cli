@@ -212,8 +212,8 @@ jobs:
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-east-1'
-          SOURCE_DIR: './.releases'
+          AWS_REGION: us-east-1
+          SOURCE_DIR: ./.releases
 
   upload_windows_installer:
     name: Upload Windows Installer
@@ -229,9 +229,9 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-east-1'
-          SOURCE: 's3://public-test-files.step.sm/install-step.ps1'
-          DEST: './install-step.ps1'
+          AWS_REGION: us-east-1
+          SOURCE: s3://${{ secrets.AWS_s3_BUCKET }}/install-step.ps1
+          DEST: ./install-step.ps1
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
       - name: Modify Installer
@@ -241,11 +241,13 @@ jobs:
         id: upload
         uses: prewk/s3-cp-action@master
         with:
+          args: --acl public-read --follow-symlinks
+        env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-east-1'
-          DEST: 's3://public-test-files.step.sm/install-step.ps1'
-          SOURCE: './install-step.ps1'
+          AWS_REGION: us-east-1
+          DEST: s3://${{ secrets.AWS_s3_BUCKET }}/install-step.ps1
+          SOURCE: ./install-step.ps1
 
   update_arch:
     name: Update Arch Linux Packager
