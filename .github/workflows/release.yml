@@ -290,3 +290,35 @@ jobs:
           git add "./PKGBUILD" "./.SRCINFO"
           git commit -m "Update to ${{ needs.create_release.outputs.vversion }}"
           ssh-agent bash -c 'ssh-add /tmp/ssh_arch_key; GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git push origin HEAD:master'
+
+  update_reference_docs:
+    name: Update Reference Docs
+    runs-on: ubuntu-latest
+    needs: create_release
+    if: ${{ needs.create_release.outputs.is_prerelease }} == 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.15.6'
+      - name: Build
+        id: build
+        run: make build
+      - name: Checkout Docs
+        uses: actions/checkout@master
+        with:
+          repository: smallstep/docs
+          token: ${{ secrets.PAT }}
+          path: './docs'
+      - name: Update Reference
+        id: update_refrence
+        run: ./bin/step help --markdown ./docs/step-cli/reference
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.PAT }}
+          branch: 'master'
+          directory: './docs'
+          repository: 'smallstep/docs'
