@@ -29,8 +29,6 @@ jobs:
     outputs:
       version: ${{ steps.extract-tag.outputs.VERSION }}
       vversion: ${{ steps.extract-tag.outputs.VVERSION }}
-      deb_version: ${{ steps.extract-tag.outputs.DEB_VERSION }}
-      gh_deb_version: ${{ steps.extract-tag.outputs.GH_DEB_VERSION }}
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       is_prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
     steps:
@@ -65,29 +63,8 @@ jobs:
           draft: false
           prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
-  upload_git_archive:
-    name: Upload Git Archive
-    runs-on: ubuntu-latest
-    needs: create_release
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build
-        id: build
-        run: make archive
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ./.releases/step-cli_${{ needs.create_release.outputs.version }}.tar.gz
-          asset_name: step-cli_${{ needs.create_release.outputs.version }}.tar.gz
-          asset_content_type: application/gzip
-
-  build_upload_darwin_assets:
-    name: Build & Upload Mac OS Darwin Assets
+  build_upload_darwin_assets_github:
+    name: Build & Upload Mac OS Darwin Assets To Github Release
     runs-on: ubuntu-latest
     needs: create_release
     steps:
@@ -110,8 +87,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build_upload_linux_assets:
-    name: Build & Upload Linux Assets
+  build_upload_linux_assets_github:
+    name: Build & Upload Linux Assets To Github Release
     runs-on: ubuntu-latest
     needs: create_release
     steps:
@@ -137,8 +114,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build_upload_windows_assets:
-    name: Build & Upload Windows Assets
+  build_upload_windows_assets_github:
+    name: Build & Upload Windows Assets To Github Release
     runs-on: ubuntu-latest
     needs: create_release
     steps:
@@ -161,10 +138,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+# All jobs below this are for full releases (non release candidates e.g. *-rc.*)
+
   build_upload_docker:
     name: Build & Upload Docker Images
     runs-on: ubuntu-latest
     needs: create_release
+    if: ${{ needs.create_release.outputs.is_prerelease }} == 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -232,8 +212,6 @@ jobs:
           AWS_REGION: us-east-1
           SOURCE: s3://${{ secrets.AWS_s3_BUCKET }}/install-step.ps1
           DEST: ./install-step.ps1
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - name: Modify Installer
         id: modify
         run: sed -i -e "s~step-windows-.*.exe~step-windows-foo.exe~g" ./install-step.ps1
@@ -324,3 +302,25 @@ jobs:
           branch: 'master'
           directory: './docs'
           repository: 'smallstep/docs'
+
+  upload_git_archive:
+    name: Upload Git Archive
+    runs-on: ubuntu-latest
+    needs: create_release
+    if: ${{ needs.create_release.outputs.is_prerelease }} == 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        id: build
+        run: make archive
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./.releases/step-cli_${{ needs.create_release.outputs.version }}.tar.gz
+          asset_name: step-cli_${{ needs.create_release.outputs.version }}.tar.gz
+          asset_content_type: application/gzip
