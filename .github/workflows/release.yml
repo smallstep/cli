@@ -63,7 +63,7 @@ jobs:
           draft: false
           prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
-  build_upload_darwin_assets_github:
+  build_upload_github_assets:
     name: Build & Upload Mac OS Darwin Assets To Github Release
     runs-on: ubuntu-latest
     needs: create_release
@@ -78,58 +78,7 @@ jobs:
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          make darwin-artifacts
-      - name: Upload Release Assets
-        id: upload-release-assets
-        run: |
-          tag_name="${GITHUB_REF##*/}"
-          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build_upload_linux_assets_github:
-    name: Build & Upload Linux Assets To Github Release
-    runs-on: ubuntu-latest
-    needs: create_release
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: '^1.15.6'
-      - name: APT Install
-        id: aptInstall
-        run: sudo apt-get -y install build-essential libpam-dev debhelper devscripts fakeroot
-      - name: Build
-        id: build
-        run: |
-          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          make linux-artifacts
-      - name: Upload Release Assets
-        id: upload-release-assets
-        run: |
-          tag_name="${GITHUB_REF##*/}"
-          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build_upload_windows_assets_github:
-    name: Build & Upload Windows Assets To Github Release
-    runs-on: ubuntu-latest
-    needs: create_release
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: '^1.15.6'
-      - name: Build
-        id: build
-        run: |
-          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          make windows-artifacts
+          make -j1 darwin-artifacts linux-artifacts windows-artifacts
       - name: Upload Release Assets
         id: upload-release-assets
         run: |
