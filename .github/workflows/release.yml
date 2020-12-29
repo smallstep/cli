@@ -39,12 +39,8 @@ jobs:
         run: |
           VVERSION=${GITHUB_REF#refs/tags/}
           VERSION=${GITHUB_REF#refs/tags/v}
-          DEB_VERSION=$(echo ${VERSION} | sed 's/-/~/')
-          GH_DEB_VERSION=$(echo ${VERSION} | sed 's/-/./')
           echo "::set-output name=VVERSION::${VVERSION}"
           echo "::set-output name=VERSION::${VERSION}"
-          echo "::set-output name=DEB_VERSION::${DEB_VERSION}"
-          echo "::set-output name=GH_DEB_VERSION::${GH_DEB_VERSION}"
       - name: Is Pre-release
         id: is_prerelease
         run: |
