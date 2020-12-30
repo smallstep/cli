@@ -42,7 +42,7 @@ endif
 # Rely on DOCKER_USERNAME and DOCKER_PASSWORD being set inside the CI or
 # equivalent environment
 docker-login:
-	$Q docker login -u="$(DOCKER_USERNAME)" -p="$(DOCKER_PASSWORD)"
+	$Q echo "$(DOCKER_PASSWORD)" | docker login -u="$(DOCKER_USERNAME)" --password-stdin
 
 .PHONY: docker-login
 
