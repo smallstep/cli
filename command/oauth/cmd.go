@@ -201,7 +201,7 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 			},
 			cli.StringFlag{
 				Name:   "browser",
-				Usage:  "Path to browser that to use for OAuth flow (macOS only).",
+				Usage:  "Path to browser for OAuth flow (macOS only).",
 				Hidden: true,
 			},
 			flags.RedirectURL,
