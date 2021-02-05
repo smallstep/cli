@@ -131,12 +131,12 @@ $ step ca token --offline --revoke 146103349666685108195655980390445292315
 
 Get a new token for an SSH user certificate:
 '''
-$ step ca token max@smallstep.com max_ecdsa --ssh
+$ step ca token max@smallstep.com --ssh
 '''
 
 Get a new token for an SSH host certificate:
 '''
-$ step ca token my-remote.hostname remote_ecdsa --ssh --host
+$ step ca token my-remote.hostname --ssh --host
 '''`,
 		Flags: []cli.Flag{
 			certNotAfterFlag,
