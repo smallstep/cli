@@ -66,6 +66,6 @@ if [ ${ZIP} -eq 0 ]; then
 else
     NEW_BUNDLE="${RELEASE_DIR}/step_${STEP_PLATFORM}_${STEP_VERSION}_${STEP_ARCH}.zip"
 
-    rm -f "$NEW_BUNDLE"
-    zip -r "$NEW_BUNDLE" "$TMP"
+    rm -f "${NEW_BUNDLE}"
+    zip -jr "${NEW_BUNDLE}" "${TMP}"
 fi
