@@ -59,7 +59,7 @@ jobs:
           prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
   build_upload_github_assets:
-    name: Build & Upload Mac OS Darwin Assets To Github Release
+    name: Build & Upload Mac OS | Linux | Windows Assets To Github Release
     runs-on: ubuntu-latest
     needs: create_release
     steps:
