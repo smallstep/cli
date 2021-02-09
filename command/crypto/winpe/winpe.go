@@ -5,20 +5,21 @@ import (
 	"encoding/asn1"
 	"encoding/binary"
 	"encoding/pem"
+	"io"
+	"os"
+	"path"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 	"go.mozilla.org/pkcs7"
-	"io"
-	"os"
-	"path"
 )
 
 // Command returns the winpe subcommand.
 func Command() cli.Command {
 	return cli.Command{
 		Name:      "winpe",
-		Usage:     "Extract certificates and verify Windows Portable Executable files",
+		Usage:     "extract certificates and verify Windows Portable Executable files",
 		UsageText: "step crypto winpe <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crypto winpe** command group provides facilities to extract certificates and
 verify Windows Portable Executable files.
@@ -41,8 +42,8 @@ func extractCommand() cli.Command {
 	return cli.Command{
 		Name:      "extract",
 		Action:    cli.ActionFunc(extractPEAction),
-		Usage:     "Extract certificates from Windows Portable Executable files",
-		UsageText: `**step crypto winpe extract <file>`,
+		Usage:     "extract certificates from Windows Portable Executable files",
+		UsageText: `**step crypto winpe extract** <file>`,
 		Description: `**step crypto winpe extract** extract certificate from a Windows Portable Executable file in PEM format.
 
 For examples, see **step help crypto winpe**.
