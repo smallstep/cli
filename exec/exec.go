@@ -100,11 +100,15 @@ func RunWithPid(pidFile, name string, arg ...string) {
 }
 
 // OpenInBrowser opens the given url on a web browser
-func OpenInBrowser(url string) error {
+func OpenInBrowser(url string, browser string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
-		cmd = exec.Command("open", url)
+		if browser == "" {
+			cmd = exec.Command("open", url)
+		} else {
+			cmd = exec.Command("open", "-a", browser, url)
+		}
 	case "linux":
 		if IsWSL() {
 			cmd = exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url)
