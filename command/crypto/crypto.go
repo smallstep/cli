@@ -12,6 +12,7 @@ import (
 	"github.com/smallstep/cli/command/crypto/key"
 	"github.com/smallstep/cli/command/crypto/nacl"
 	"github.com/smallstep/cli/command/crypto/otp"
+	"github.com/smallstep/cli/command/crypto/winpe"
 	"github.com/urfave/cli"
 )
 
@@ -166,6 +167,7 @@ risks. That said, many of these factors are beyond the scope of this tool.
 			key.Command(),
 			nacl.Command(),
 			otp.Command(),
+			winpe.Command(),
 		},
 	}
 
