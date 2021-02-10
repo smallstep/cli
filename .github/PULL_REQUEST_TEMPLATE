@@ -1,12 +1,3 @@
----
-name: Pull Request
-about: Create a pull request to help us improve
-title: ''
-labels: needs triage
-assignees: ''
-
----
-
 ### Description
 Please describe your pull request.
 
