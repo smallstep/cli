@@ -24,7 +24,8 @@ func changePassCommand() cli.Command {
 		Action: command.ActionFunc(changePassAction),
 		Usage:  "change password of an encrypted private key (PEM or JWK format)",
 		UsageText: `**step crypto change-pass** <key-file>
-[**--out**=<file>] [**--insecure**] [**--no-password**]`,
+[**--out**=<path>] [**--password-file**=<path>] [**--new-password-file**=<path>]
+[**--insecure**] [**--no-password**]`,
 		Description: `**step crypto change-pass** extracts and decrypts
 the private key from a file and encrypts and serializes the key to disk using a
 new password.
@@ -67,17 +68,20 @@ $ step crypto change-pass key.jwk --out new-key.jwk
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
+				Name:  "password-file",
+				Usage: `The path to the <file> containing the password to decrypt the private key.`,
+			},
+			cli.StringFlag{
+				Name:  "new-password-file",
+				Usage: `The path to the <file> containing the password to decrypt the private key.`,
+			},
+			cli.StringFlag{
 				Name:  "out,output-file",
 				Usage: "The <file> new encrypted key path. Default to overwriting the <key> positional argument",
 			},
 			flags.Force,
 			flags.Insecure,
-			cli.BoolFlag{
-				Name: "no-password",
-				Usage: `Do not ask for a password to encrypt the private key.
-Sensitive key material will be written to disk unencrypted. This is not
-recommended. Requires **--insecure** flag.`,
-			},
+			flags.NoPassword,
 		},
 	}
 }
@@ -93,6 +97,8 @@ func changePassAction(ctx *cli.Context) error {
 
 	insecure := ctx.Bool("insecure")
 	noPass := ctx.Bool("no-password")
+	decryptPassFile := ctx.String("password-file")
+	encryptPassFile := ctx.String("new-password-file")
 	if noPass && !insecure {
 		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
 	}
@@ -109,24 +115,36 @@ func changePassAction(ctx *cli.Context) error {
 	}
 
 	if bytes.HasPrefix(b, []byte("-----BEGIN ")) {
-		key, err := pemutil.Parse(b, pemutil.WithFilename(keyPath))
+		opts := []pemutil.Options{pemutil.WithFilename(keyPath)}
+		if len(decryptPassFile) > 0 {
+			opts = append(opts, pemutil.WithPasswordFile(decryptPassFile))
+		}
+		key, err := pemutil.Parse(b, opts...)
 		if err != nil {
 			return err
 		}
-		var opts []pemutil.Options
+		opts = []pemutil.Options{}
 		if !noPass {
-			pass, err := ui.PromptPassword(fmt.Sprintf("Please enter the password to encrypt %s", newKeyPath))
-			if err != nil {
-				return errors.Wrap(err, "error reading password")
+			if len(encryptPassFile) > 0 {
+				opts = append(opts, pemutil.WithPasswordFile(encryptPassFile))
+			} else {
+				pass, err := ui.PromptPassword(fmt.Sprintf("Please enter the password to encrypt %s", newKeyPath))
+				if err != nil {
+					return errors.Wrap(err, "error reading password")
+				}
+				opts = append(opts, pemutil.WithPassword(pass))
 			}
-			opts = append(opts, pemutil.WithPassword(pass))
 		}
 		opts = append(opts, pemutil.ToFile(newKeyPath, 0644))
 		if _, err := pemutil.Serialize(key, opts...); err != nil {
 			return err
 		}
 	} else {
-		jwk, err := jose.ParseKey(keyPath)
+		opts := []jose.Option{}
+		if len(decryptPassFile) > 0 {
+			opts = append(opts, jose.WithPasswordFile(decryptPassFile))
+		}
+		jwk, err := jose.ParseKey(keyPath, opts...)
 		if err != nil {
 			return err
 		}
@@ -137,7 +155,11 @@ func changePassAction(ctx *cli.Context) error {
 				return err
 			}
 		} else {
-			jwe, err := jose.EncryptJWK(jwk)
+			opts = []jose.Option{}
+			if len(encryptPassFile) > 0 {
+				opts = append(opts, jose.WithPasswordFile(encryptPassFile))
+			}
+			jwe, err := jose.EncryptJWK(jwk, opts...)
 			if err != nil {
 				return err
 			}
