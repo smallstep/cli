@@ -28,7 +28,7 @@ builds:
     main: ./cmd/step/main.go
     binary: bin/step
     ldflags:
-      - -w -X main.build={{.Version}} -X main.BuildTime={{.Date}}
+      - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
 archives:
   - 
     # Can be used to change the archive formats for specific GOOSs.
