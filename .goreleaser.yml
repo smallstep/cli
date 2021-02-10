@@ -42,6 +42,9 @@ archives:
     files:
       - README.md
       - LICENSE
+source:
+  enabled: true
+  name_template: '{{ .ProjectName }}_{{ .Version }}'
 checksum:
   name_template: 'checksums.txt'
 snapshot:
