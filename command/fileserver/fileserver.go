@@ -1,6 +1,8 @@
 package fileserver
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"net/http"
@@ -9,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
 
 	"github.com/smallstep/cli/command"
 	"github.com/urfave/cli"
@@ -21,7 +24,7 @@ func init() {
 		Action: command.ActionFunc(fileServerAction),
 		Usage:  "start an HTTP(S) server serving the contents of a path",
 		UsageText: `step fileserver <dir>
-[--address=<address>] [--cert=<path>] [--key=<path>]`,
+[**--address**=<address>] [**--cert**=<path>] [**--key**=<path>] [**--roots**=<path>]`,
 		Description: `**step fileserver** command starts an HTTP(S) server serving the contents of a file
 system.
 
@@ -45,6 +48,12 @@ $ step ca certificate 127.0.0.1 localhost.crt localhost.key
 ...
 $ step fileserver --address 127.0.0.1:8443 \
   --cert localhost.crt --key localhost.key /path/to/root
+'''
+
+Start an HTTPS file server on a random port and require client certificates.
+'''
+$ step fileserver --cert localhost.crt --key localhost.key \ 
+  --roots $(step path)/certs/root_ca.crt /path/to/root
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -59,6 +68,10 @@ $ step fileserver --address 127.0.0.1:8443 \
 			cli.StringFlag{
 				Name:  "key",
 				Usage: `The <path> to the key corresponding to the certificate.`,
+			},
+			cli.StringFlag{
+				Name:  "roots",
+				Usage: "The <path> of the root certificates that will be used to verify the client certificates.",
 			},
 		},
 	}
@@ -82,14 +95,33 @@ func fileServerAction(ctx *cli.Context) error {
 	address := ctx.String("address")
 	cert := ctx.String("cert")
 	key := ctx.String("key")
+	roots := ctx.String("roots")
 
 	switch {
 	case address == "":
 		return errs.RequiredFlag(ctx, "address")
+	case roots != "" && cert == "":
+		return errs.RequiredWithFlag(ctx, "roots", "cert")
+	case roots != "" && key == "":
+		return errs.RequiredWithFlag(ctx, "roots", "key")
 	case cert != "" && key == "":
 		return errs.RequiredWithFlag(ctx, "cert", "key")
 	case key != "" && cert == "":
 		return errs.RequiredWithFlag(ctx, "key", "cert")
+	}
+
+	var tlsConfig *tls.Config
+	if roots != "" {
+		b, err := utils.ReadFile(roots)
+		if err != nil {
+			return err
+		}
+		pool := x509.NewCertPool()
+		pool.AppendCertsFromPEM(b)
+		tlsConfig = &tls.Config{
+			ClientCAs:  pool,
+			ClientAuth: tls.RequireAndVerifyClientCert,
+		}
 	}
 
 	l, err := net.Listen("tcp", address)
@@ -97,13 +129,16 @@ func fileServerAction(ctx *cli.Context) error {
 		return errors.Wrapf(err, "failed to listen on at %s", address)
 	}
 
-	handler := http.FileServer(http.Dir(root))
+	srv := &http.Server{
+		Handler:   http.FileServer(http.Dir(root)),
+		TLSConfig: tlsConfig,
+	}
 	if cert != "" && key != "" {
 		fmt.Printf("Serving HTTPS at %s ...\n", l.Addr().String())
-		err = http.ServeTLS(l, handler, cert, key)
+		err = srv.ServeTLS(l, cert, key)
 	} else {
 		fmt.Printf("Serving HTTP at %s...\n", l.Addr().String())
-		err = http.Serve(l, handler)
+		err = srv.Serve(l)
 	}
 	if err != nil && err != http.ErrServerClosed {
 		return errors.Wrap(err, "file server failed")
