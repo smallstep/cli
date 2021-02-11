@@ -23,10 +23,20 @@ func Thumbprint(jwk *JSONWebKey) (string, error) {
 
 // EncryptJWK returns the given JWK encrypted with the default encryption
 // algorithm (PBES2-HS256+A128KW).
-func EncryptJWK(jwk *JSONWebKey) (*JSONWebEncryption, error) {
-	key, err := ui.PromptPassword("Please enter the password to encrypt the private JWK")
+func EncryptJWK(jwk *JSONWebKey, opts ...Option) (*JSONWebEncryption, error) {
+	ctx, err := new(context).apply(opts...)
 	if err != nil {
-		return nil, errors.Wrap(err, "error reading password")
+		return nil, err
+	}
+
+	var key []byte
+	if len(ctx.password) > 0 {
+		key = ctx.password
+	} else {
+		key, err = ui.PromptPassword("Please enter the password to encrypt the private JWK")
+		if err != nil {
+			return nil, errors.Wrap(err, "error reading password")
+		}
 	}
 
 	salt, err := randutil.Salt(PBKDF2SaltSize)
@@ -47,10 +57,10 @@ func EncryptJWK(jwk *JSONWebKey) (*JSONWebEncryption, error) {
 		PBES2Salt:  salt,
 	}
 
-	opts := new(EncrypterOptions)
-	opts.WithContentType(ContentType("jwk+json"))
+	encOpts := new(EncrypterOptions)
+	encOpts.WithContentType(ContentType("jwk+json"))
 
-	encrypter, err := NewEncrypter(DefaultEncAlgorithm, recipient, opts)
+	encrypter, err := NewEncrypter(DefaultEncAlgorithm, recipient, encOpts)
 	if err != nil {
 		return nil, errs.Wrap(err, "error creating cipher")
 	}
