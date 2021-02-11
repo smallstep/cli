@@ -39,7 +39,7 @@ This command is experimental and only intended for test purposes.
 
 Start an HTTP file server on port 8080.
 '''
-$ step fileserver --address :8080 /path/to/root
+$ step fileserver --address :8080 /path/to/web-root
 '''
 
 Start an HTTPS file server on 127.0.0.1:8443.
@@ -47,13 +47,13 @@ Start an HTTPS file server on 127.0.0.1:8443.
 $ step ca certificate 127.0.0.1 localhost.crt localhost.key
 ...
 $ step fileserver --address 127.0.0.1:8443 \
-  --cert localhost.crt --key localhost.key /path/to/root
+  --cert localhost.crt --key localhost.key /path/to/web-root
 '''
 
 Start an HTTPS file server on a random port and require client certificates.
 '''
 $ step fileserver --cert localhost.crt --key localhost.key \ 
-  --roots $(step path)/certs/root_ca.crt /path/to/root
+  --roots $(step path)/certs/root_ca.crt /path/to/web-root
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
