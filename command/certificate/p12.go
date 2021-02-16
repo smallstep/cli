@@ -51,7 +51,7 @@ Package a CA certificate into a "trust store" for Java applications:
 $ step certificate p12 trust.p12 --ca ca.crt
 '''
 
-Package a certificate and private key with a blank password:
+Package a certificate and private key with an empty password:
 
 '''
 $ step certificate p12 --no-password --insecure foo.p12 foo.crt foo.key
