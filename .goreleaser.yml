@@ -24,7 +24,7 @@ builds:
       - goos: windows
         goarch: 386
     flags:
-      - -v
+      - -trimpath
     main: ./cmd/step/main.go
     binary: bin/step
     ldflags:
