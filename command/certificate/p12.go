@@ -49,6 +49,12 @@ Package a CA certificate into a "trust store" for Java applications:
 
 '''
 $ step certificate p12 trust.p12 --ca ca.crt
+'''
+
+Package a certificate and private key with an empty password:
+
+'''
+$ step certificate p12 --no-password --insecure foo.p12 foo.crt foo.key
 '''`,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
@@ -61,7 +67,9 @@ multiple CAs or intermediates.`,
 				Name:  "password-file",
 				Usage: `The path to the <file> containing the password to encrypt the .p12 file.`,
 			},
+			flags.NoPassword,
 			flags.Force,
+			flags.Insecure,
 		},
 	}
 }
@@ -87,6 +95,14 @@ func p12Action(ctx *cli.Context) error {
 		return errors.Errorf("flag '--%s' must be provided when no <crt_path> and <key_path> are present", "ca")
 	}
 
+	// Validate flags
+	switch {
+	case ctx.String("password-file") != "" && ctx.Bool("no-password"):
+		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "password-file")
+	case ctx.Bool("no-password") && !ctx.Bool("insecure"):
+		return errs.RequiredInsecureFlag(ctx, "no-password")
+	}
+
 	x509CAs := []*x509.Certificate{}
 	for _, caFile := range caFiles {
 		x509Bundle, err := pemutil.ReadCertificateBundle(caFile)
@@ -96,26 +112,26 @@ func p12Action(ctx *cli.Context) error {
 		x509CAs = append(x509CAs, x509Bundle...)
 	}
 
-	var password string
 	var err error
-
-	if passwordFile := ctx.String("password-file"); passwordFile != "" {
-		password, err = utils.ReadStringPasswordFromFile(passwordFile)
-		if err != nil {
-			return err
+	var password string
+	if !ctx.Bool("no-password") {
+		if passwordFile := ctx.String("password-file"); passwordFile != "" {
+			password, err = utils.ReadStringPasswordFromFile(passwordFile)
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	if password == "" {
-		pass, err := ui.PromptPassword("Please enter a password to encrypt the .p12 file")
-		if err != nil {
-			return errors.Wrap(err, "error reading password")
+		if password == "" {
+			pass, err := ui.PromptPassword("Please enter a password to encrypt the .p12 file")
+			if err != nil {
+				return errors.Wrap(err, "error reading password")
+			}
+			password = string(pass)
 		}
-		password = string(pass)
 	}
 
 	var pkcs12Data []byte
-
 	if hasKeyAndCert {
 		//If we have a key and certificate, we're making an identity store
 		x509CertBundle, err := pemutil.ReadCertificateBundle(crtFile)

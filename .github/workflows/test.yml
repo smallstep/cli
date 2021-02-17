@@ -23,7 +23,7 @@ jobs:
         id: lintTestBuild
         run: V=1 make -j1 bootstrap all
       - name: Codecov
-        uses: codecov/codecov-action@1fc7722 # v1.1.1
+        uses: codecov/codecov-action@v1.2.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
           file: ./coverage.out # optional
