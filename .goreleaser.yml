@@ -53,9 +53,9 @@ release:
   # Repo in which the release will be created.
   # Default is extracted from the origin remote URL or empty if its private hosted.
   # Note: it can only be one: either github, gitlab or gitea
-  #github:
-  #  owner: user
-  #  name: repo
+  github:
+    owner: smallstep
+    name: cli
 
   # IDs of the archives to use.
   # Defaults to all.
@@ -89,45 +89,6 @@ release:
   #  - glob: ./path/to/file.txt
   #  - glob: ./glob/**/to/**/file/**/*
   #  - glob: ./glob/foo/to/bar/file/foobar/override_from_previous
-
-dockers:
-  - dockerfile: docker/Dockerfile
-    goos: linux
-    goarch: amd64
-    use_buildx: true
-    image_templates:
-    - "smallstep/step-cli:latest"
-    - "smallstep/step-cli:{{ .Tag }}"
-    build_flag_templates:
-    - "--platform=linux/amd64"
-  - dockerfile: docker/Dockerfile
-    goos: linux
-    goarch: 386
-    use_buildx: true
-    image_templates:
-    - "smallstep/step-cli:latest"
-    - "smallstep/step-cli:{{ .Tag }}"
-    build_flag_templates:
-    - "--platform=linux/386"
-  - dockerfile: docker/Dockerfile
-    goos: linux
-    goarch: arm
-    goarm: 7
-    use_buildx: true
-    image_templates:
-    - "smallstep/step-cli:latest"
-    - "smallstep/step-cli:{{ .Tag }}"
-    build_flag_templates:
-    - "--platform=linux/arm/v7"
-  - dockerfile: docker/Dockerfile
-    goos: linux
-    goarch: arm64
-    use_buildx: true
-    image_templates:
-    - "smallstep/step-cli:latest"
-    - "smallstep/step-cli:{{ .Tag }}"
-    build_flag_templates:
-    - "--platform=linux/arm64/v8"
 scoop:
   # Template for the url which is determined by the given Token (github or gitlab)
   # Default for github is "https://github.com/<repo_owner>/<repo_name>/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
@@ -160,3 +121,41 @@ scoop:
   # Your app's license
   # Default is empty.
   license: "Apache-2.0"
+# dockers:
+#   - dockerfile: docker/Dockerfile
+#     goos: linux
+#     goarch: amd64
+#     use_buildx: true
+#     image_templates:
+#     - "smallstep/step-cli:latest"
+#     - "smallstep/step-cli:{{ .Tag }}"
+#     build_flag_templates:
+#     - "--platform=linux/amd64"
+#   - dockerfile: docker/Dockerfile
+#     goos: linux
+#     goarch: 386
+#     use_buildx: true
+#     image_templates:
+#     - "smallstep/step-cli:latest"
+#     - "smallstep/step-cli:{{ .Tag }}"
+#     build_flag_templates:
+#     - "--platform=linux/386"
+#   - dockerfile: docker/Dockerfile
+#     goos: linux
+#     goarch: arm
+#     goarm: 7
+#     use_buildx: true
+#     image_templates:
+#     - "smallstep/step-cli:latest"
+#     - "smallstep/step-cli:{{ .Tag }}"
+#     build_flag_templates:
+#     - "--platform=linux/arm/v7"
+#   - dockerfile: docker/Dockerfile
+#     goos: linux
+#     goarch: arm64
+#     use_buildx: true
+#     image_templates:
+#     - "smallstep/step-cli:latest"
+#     - "smallstep/step-cli:{{ .Tag }}"
+#     build_flag_templates:
+#     - "--platform=linux/arm64/v8"
