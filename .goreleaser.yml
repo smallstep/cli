@@ -30,7 +30,7 @@ builds:
     ldflags:
       - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
 archives:
-  - 
+  -
     # Can be used to change the archive formats for specific GOOSs.
     # Most common use case is to archive as zip on Windows.
     # Default is empty.
@@ -114,6 +114,9 @@ scoop:
   # Default is empty.
   homepage: "https://smallstep.com/"
 
+  # Skip uploads for prerelease.
+  skip_upload: auto
+
   # Your app's description.
   # Default is empty.
   description: "Crypto toolkit for working with X.509, OAuth, JWT, OATH OTP, etc."
@@ -121,41 +124,42 @@ scoop:
   # Your app's license
   # Default is empty.
   license: "Apache-2.0"
-# dockers:
-#   - dockerfile: docker/Dockerfile
-#     goos: linux
-#     goarch: amd64
-#     use_buildx: true
-#     image_templates:
-#     - "smallstep/step-cli:latest"
-#     - "smallstep/step-cli:{{ .Tag }}"
-#     build_flag_templates:
-#     - "--platform=linux/amd64"
-#   - dockerfile: docker/Dockerfile
-#     goos: linux
-#     goarch: 386
-#     use_buildx: true
-#     image_templates:
-#     - "smallstep/step-cli:latest"
-#     - "smallstep/step-cli:{{ .Tag }}"
-#     build_flag_templates:
-#     - "--platform=linux/386"
-#   - dockerfile: docker/Dockerfile
-#     goos: linux
-#     goarch: arm
-#     goarm: 7
-#     use_buildx: true
-#     image_templates:
-#     - "smallstep/step-cli:latest"
-#     - "smallstep/step-cli:{{ .Tag }}"
-#     build_flag_templates:
-#     - "--platform=linux/arm/v7"
-#   - dockerfile: docker/Dockerfile
-#     goos: linux
-#     goarch: arm64
-#     use_buildx: true
-#     image_templates:
-#     - "smallstep/step-cli:latest"
-#     - "smallstep/step-cli:{{ .Tag }}"
-#     build_flag_templates:
-#     - "--platform=linux/arm64/v8"
+
+  #dockers:
+  #  - dockerfile: docker/Dockerfile
+  #    goos: linux
+  #    goarch: amd64
+  #    use_buildx: true
+  #    image_templates:
+  #    - "smallstep/step-cli:latest"
+  #    - "smallstep/step-cli:{{ .Tag }}"
+  #    build_flag_templates:
+  #    - "--platform=linux/amd64"
+  #  - dockerfile: docker/Dockerfile
+  #    goos: linux
+  #    goarch: 386
+  #    use_buildx: true
+  #    image_templates:
+  #    - "smallstep/step-cli:latest"
+  #    - "smallstep/step-cli:{{ .Tag }}"
+  #    build_flag_templates:
+  #    - "--platform=linux/386"
+  #  - dockerfile: docker/Dockerfile
+  #    goos: linux
+  #    goarch: arm
+  #    goarm: 7
+  #    use_buildx: true
+  #    image_templates:
+  #    - "smallstep/step-cli:latest"
+  #    - "smallstep/step-cli:{{ .Tag }}"
+  #    build_flag_templates:
+  #    - "--platform=linux/arm/v7"
+  #  - dockerfile: docker/Dockerfile
+  #    goos: linux
+  #    goarch: arm64
+  #    use_buildx: true
+  #    image_templates:
+  #    - "smallstep/step-cli:latest"
+  #    - "smallstep/step-cli:{{ .Tag }}"
+  #    build_flag_templates:
+  #    - "--platform=linux/arm64/v8"
