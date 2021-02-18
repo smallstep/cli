@@ -1,13 +1,3 @@
-FROM golang:alpine AS builder
-
-RUN mkdir /src
-ADD . /src
-
-RUN apk add --no-cache make git curl && \
-	cd /src && \
-	mkdir -p output/bin && \
-	make V=1 bin/step
-
 FROM alpine
 
 ENV STEP="/home/step"
@@ -20,7 +10,7 @@ RUN apk add --no-cache bash curl \
         && adduser -D -u ${STEPUID} -G step step \
         && chown step:step /home/step
 
-COPY --from=builder /src/bin/step "/usr/local/bin/step"
+COPY step "/usr/local/bin/step"
 
 USER step
 WORKDIR /home/step
