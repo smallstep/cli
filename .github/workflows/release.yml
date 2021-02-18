@@ -74,6 +74,12 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
+      - name: Sanity Check
+        id: sanity-check
+        run: |
+          set -x
+          echo ${{ needs.create_release.outputs.is_prerelease }}
+          if [ ${{ needs.create_release.outputs.is_prerelease }} == true ]; then echo 'wut'; fi
       -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@56f5b77f7fa4a8fe068bf22b732ec036cc9bc13f # v2.4.1
