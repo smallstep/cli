@@ -46,7 +46,7 @@ jobs:
         id: is_prerelease
         run: |
           set +e
-          echo ${{ github.ref }} | grep "\-bc.*"
+          echo ${{ github.ref }} | grep "\-rc.*"
           OUT=$?
           if [ $OUT -eq 0 ]; then IS_PRERELEASE=true; else IS_PRERELEASE=false; fi
           echo "::set-output name=IS_PRERELEASE::${IS_PRERELEASE}"
@@ -60,14 +60,6 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
-
-  debug:
-    needs: create_release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Debug output
-        run: |
-          echo "${{ toJson(needs.create_release) }}"
 
   build_upload_github_assets:
     name: Build & Upload Mac OS | Linux | Windows Assets To Github Release
