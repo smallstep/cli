@@ -89,7 +89,7 @@ jobs:
     name: Build & Upload Docker Images
     runs-on: ubuntu-latest
     needs: create_release
-    if: needs.create_release.outputs.is_prerelease == false
+    if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -110,7 +110,7 @@ jobs:
     name: Build & Upload AWS S3 Binaries
     runs-on: ubuntu-latest
     needs: create_release
-    if: needs.create_release.outputs.is_prerelease == false
+    if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -144,7 +144,7 @@ jobs:
     name: Upload Windows Installer
     runs-on: ubuntu-latest
     needs: create_release
-    if: needs.create_release.outputs.is_prerelease == false
+    if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -176,7 +176,7 @@ jobs:
     name: Update Arch Linux Packager
     runs-on: ubuntu-latest
     needs: [create_release, build_upload_github_assets]
-    if: needs.create_release.outputs.is_prerelease == false
+    if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -220,7 +220,7 @@ jobs:
     name: Update Reference Docs
     runs-on: ubuntu-latest
     needs: create_release
-    if: needs.create_release.outputs.is_prerelease == false
+    if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -252,7 +252,7 @@ jobs:
     name: Upload Git Archive
     runs-on: ubuntu-latest
     needs: create_release
-    if: needs.create_release.outputs.is_prerelease == false
+    if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
