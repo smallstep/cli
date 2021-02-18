@@ -247,25 +247,3 @@ jobs:
           branch: 'master'
           directory: './docs'
           repository: 'smallstep/docs'
-
-  upload_git_archive:
-    name: Upload Git Archive
-    runs-on: ubuntu-latest
-    needs: create_release
-    if: needs.create_release.outputs.is_prerelease == 'false'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build
-        id: build
-        run: make archive
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ./.releases/step-cli_${{ needs.create_release.outputs.version }}.tar.gz
-          asset_name: step-cli_${{ needs.create_release.outputs.version }}.tar.gz
-          asset_content_type: application/gzip
