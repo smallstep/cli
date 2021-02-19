@@ -67,21 +67,21 @@ func init() {
 		Usage: "authorization and single sign-on using OAuth & OIDC",
 		UsageText: `**step oauth**
 [**--provider**=<provider>] [**--client-id**=<client-id> **--client-secret**=<client-secret>]
-[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
+[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]] [**--prompt**=<prompt>]
 
-**step oauth** 
-**--authorization-endpoint**=<authorization-endpoint> 
+**step oauth**
+**--authorization-endpoint**=<authorization-endpoint>
 **--token-endpoint**=<token-endpoint>
 **--client-id**=<client-id> **--client-secret**=<client-secret>
-[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
+[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]] [**--prompt**=<prompt>]
 
-**step oauth** [**--account**=<account>] 
-[**--authorization-endpoint**=<authorization-endpoint>] 
+**step oauth** [**--account**=<account>]
+[**--authorization-endpoint**=<authorization-endpoint>]
 [**--token-endpoint**=<token-endpoint>]
-[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
+[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]] [**--prompt**=<prompt>]
 
-**step oauth** **--account**=<account> **--jwt** 
-[**--scope**=<scope> ...] [**--header**] [**-bare**]`,
+**step oauth** **--account**=<account> **--jwt**
+[**--scope**=<scope> ...] [**--header**] [**-bare**] [**--prompt**=<prompt>]`,
 		Description: `**step oauth** command implements the OAuth 2.0 authorization flow.
 
 OAuth is an open standard for access delegation, commonly used as a way for
@@ -180,6 +180,32 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 			cli.StringSliceFlag{
 				Name:  "scope",
 				Usage: "OAuth scopes",
+			},
+			cli.StringFlag{
+				Name: "prompt",
+				Usage: `Whether the Authorization Server prompts the End-User for reauthentication and consent.
+OpenID standard defines the following values, but your provider may support some or none of them:
+
+    **none**
+    :   The Authorization Server MUST NOT display any authentication or consent user interface pages.
+        An error is returned if an End-User is not already authenticated or the Client does not have
+        pre-configured consent for the requested Claims or does not fulfill other conditions for
+        processing the request.
+
+    **login**
+    :   The Authorization Server SHOULD prompt the End-User for reauthentication. If it cannot
+        reauthenticate the End-User, it MUST return an error, typically login_required.
+
+    **consent**
+    :   The Authorization Server SHOULD prompt the End-User for consent before returning information
+        to the Client. If it cannot obtain consent, it MUST return an error, typically consent_required.
+
+    **select_account**
+    :   The Authorization Server SHOULD prompt the End-User to select a user account. This enables an
+        End-User who has multiple accounts at the Authorization Server to select amongst the multiple
+        accounts that they might have current sessions for. If it cannot obtain an account selection
+        choice made by the End-User, it MUST return an error, typically account_selection_required.
+`,
 			},
 			cli.BoolFlag{
 				Name:  "jwt",
@@ -294,8 +320,12 @@ func oauthCmd(c *cli.Context) error {
 	if c.IsSet("scope") {
 		scope = strings.Join(c.StringSlice("scope"), " ")
 	}
+	prompt := ""
+	if c.IsSet("prompt") {
+		prompt = c.String("prompt")
+	}
 
-	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, opts)
+	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt, opts)
 	if err != nil {
 		return err
 	}
@@ -370,6 +400,7 @@ type oauth struct {
 	clientID         string
 	clientSecret     string
 	scope            string
+	prompt           string
 	loginHint        string
 	redirectURI      string
 	tokenEndpoint    string
@@ -386,7 +417,7 @@ type oauth struct {
 	tokCh            chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, opts *options) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, prompt string, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -409,6 +440,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			clientID:         clientID,
 			clientSecret:     clientSecret,
 			scope:            scope,
+			prompt:           prompt,
 			authzEndpoint:    "https://accounts.google.com/o/oauth2/v2/auth",
 			tokenEndpoint:    "https://www.googleapis.com/oauth2/v4/token",
 			userInfoEndpoint: "https://www.googleapis.com/oauth2/v3/userinfo",
@@ -446,6 +478,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			clientID:         clientID,
 			clientSecret:     clientSecret,
 			scope:            scope,
+			prompt:           prompt,
 			authzEndpoint:    authzEp,
 			tokenEndpoint:    tokenEp,
 			userInfoEndpoint: userinfoEp,
@@ -827,6 +860,9 @@ func (o *oauth) Auth() (string, error) {
 		q.Add("code_challenge", base64.RawURLEncoding.EncodeToString(s256[:]))
 	}
 	q.Add("scope", o.scope)
+	if o.prompt != "" {
+		q.Add("prompt", o.prompt)
+	}
 	q.Add("state", o.state)
 	q.Add("nonce", o.nonce)
 	if o.loginHint != "" {
