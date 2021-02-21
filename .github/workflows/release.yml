@@ -68,6 +68,24 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
+      -
+        name: APT Install
+        id: aptInstall
+        run: sudo apt-get -y install build-essential debhelper fakeroot
+      -
+        name: Build Debian package
+        id: build
+        run: |
+          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          make debian
+      -
+        name: Upload Release Assets
+        id: upload-release-assets
+        run: |
+          tag_name="${GITHUB_REF##*/}"
+          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 # All jobs below this are for full releases (non release candidates e.g. *-rc.*)
 
