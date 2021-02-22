@@ -70,7 +70,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT }}
       -
         name: Set up Go
-        id: go1.15
+        id: go_1_15
         uses: actions/setup-go@v2
         with:
           go-version: '^1.15.8'
