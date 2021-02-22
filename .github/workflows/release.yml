@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: Lint, Test, Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     outputs:
       version: ${{ steps.extract-tag.outputs.VERSION }}
       vversion: ${{ steps.extract-tag.outputs.VVERSION }}
@@ -47,7 +47,7 @@ jobs:
 
   release:
     name: Create Release & Upload Assets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: test
     steps:
       -
@@ -117,7 +117,7 @@ jobs:
 
   build_upload_aws_s3_binaries:
     name: Build & Upload AWS S3 Binaries
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: test
     if: needs.test.outputs.is_prerelease == 'false'
     steps:
@@ -151,7 +151,7 @@ jobs:
 
   upload_windows_installer:
     name: Upload Windows Installer
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: test
     if: needs.test.outputs.is_prerelease == 'false'
     steps:
@@ -183,7 +183,7 @@ jobs:
 
   update_arch:
     name: Update Arch Linux Packager
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [test, release]
     if: needs.test.outputs.is_prerelease == 'false'
     steps:
@@ -227,7 +227,7 @@ jobs:
 
   update_reference_docs:
     name: Update Reference Docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: test
     if: needs.test.outputs.is_prerelease == 'false'
     steps:
