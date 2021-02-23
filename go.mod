@@ -8,6 +8,7 @@ require (
 	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/corpix/uarand v0.1.1 // indirect
+	github.com/golangci/golangci-lint v1.24.0 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect

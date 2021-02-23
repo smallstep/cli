@@ -125,22 +125,6 @@ bundle-windows: binary-windows
 .PHONY: binary-linux binary-darwin binary-windows bundle-linux bundle-darwin bundle-windows
 
 #################################################
-# Targets for creating OS specific artifacts and archives
-#################################################
-
-linux-artifacts: bundle-linux debian
-
-darwin-artifacts: bundle-darwin
-
-windows-artifacts: bundle-windows
-
-archive:
-	$Q mkdir -p $(RELEASE)
-	$Q git archive v$(VERSION) | gzip > $(RELEASE)/step-cli_$(VERSION).tar.gz
-
-.PHONY: linux-artifacts darwin-artifacts windows-artifacts archive
-
-#################################################
 # Targets for creating step artifacts
 #################################################
 #
