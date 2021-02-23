@@ -4,7 +4,6 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"time"
 
 	"github.com/pkg/errors"
@@ -780,9 +779,9 @@ func savePrivateKey(ctx *cli.Context, filename string, priv interface{}, insecur
 
 	var pass []byte
 	if passFile := ctx.String("password-file"); passFile != "" {
-		pass, err = ioutil.ReadFile(passFile)
+		pass, err = utils.ReadPasswordFromFile(passFile)
 		if err != nil {
-			return errors.Wrap(err, "error reading encryptiong password from file")
+			return errors.Wrap(err, "error reading encrypting password from file")
 		}
 	} else {
 		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key",
@@ -791,7 +790,6 @@ func savePrivateKey(ctx *cli.Context, filename string, priv interface{}, insecur
 			return errors.Wrap(err, "error reading password")
 		}
 	}
-
 	_, err = pemutil.Serialize(priv, pemutil.WithPassword(pass), pemutil.ToFile(filename, 0600))
 	return err
 }
