@@ -127,8 +127,7 @@ bundle-windows: binary-windows
 #################################################
 # Targets for creating step artifacts
 #################################################
-#
-# This command is called by travis directly *after* a successful build
+
 docker-artifacts: docker-$(PUSHTYPE)
 
 .PHONY: docker-artifacts
