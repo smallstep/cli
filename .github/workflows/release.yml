@@ -50,9 +50,20 @@ jobs:
           OUT=$?
           if [ $OUT -eq 0 ]; then IS_PRERELEASE=true; else IS_PRERELEASE=false; fi
           echo "::set-output name=IS_PRERELEASE::${IS_PRERELEASE}"
+      -
+        name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
   goreleaser:
-    name: Create Release & Upload Assets
+    name: Upload Assets to Github w/ goreleaser
     runs-on: ubuntu-20.04
     needs: create_release
     steps:
@@ -109,8 +120,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-# All jobs below this are for full releases (non release candidates e.g. *-rc.*)
-
   build_upload_docker:
     name: Build & Upload Docker Images
     runs-on: ubuntu-latest
@@ -130,6 +139,8 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+# All jobs below this are for full releases (non release candidates e.g. *-rc.*)
 
   build_upload_aws_s3_binaries:
     name: Build & Upload AWS S3 Binaries
