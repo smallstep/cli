@@ -73,7 +73,7 @@ $ step crypto change-pass key.jwk --out new-key.jwk
 			},
 			cli.StringFlag{
 				Name:  "new-password-file",
-				Usage: `The path to the <file> containing the password to decrypt the private key.`,
+				Usage: `The path to the <file> containing the password to encrypt the private key.`,
 			},
 			cli.StringFlag{
 				Name:  "out,output-file",
