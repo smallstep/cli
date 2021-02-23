@@ -10,10 +10,6 @@ jobs:
   test:
     name: Lint, Test, Build
     runs-on: ubuntu-20.04
-    outputs:
-      version: ${{ steps.extract-tag.outputs.VERSION }}
-      vversion: ${{ steps.extract-tag.outputs.VVERSION }}
-      is_prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
     steps:
       -
         name: Checkout
@@ -22,11 +18,21 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '^1.15.6'
+          go-version: '^1.15.8'
       -
         name: Lint, Test, Build
         id: lintTestBuild
         run: V=1 make -j1 bootstrap all
+
+  create_release:
+    name: Create Release
+    needs: test
+    runs-on: ubuntu-20.04
+    outputs:
+      version: ${{ steps.extract-tag.outputs.VERSION }}
+      vversion: ${{ steps.extract-tag.outputs.VVERSION }}
+      is_prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
+    steps:
       -
         name: Extract Tag Names
         id: extract-tag
@@ -45,10 +51,10 @@ jobs:
           if [ $OUT -eq 0 ]; then IS_PRERELEASE=true; else IS_PRERELEASE=false; fi
           echo "::set-output name=IS_PRERELEASE::${IS_PRERELEASE}"
 
-  release:
+  goreleaser:
     name: Create Release & Upload Assets
     runs-on: ubuntu-20.04
-    needs: test
+    needs: create_release
     steps:
       -
         name: Checkout
@@ -72,7 +78,7 @@ jobs:
   release_deb:
     name: Build & Release Debian package
     runs-on: ubuntu-20.04
-    needs: test
+    needs: create_release
     steps:
       -
         name: Checkout
@@ -115,7 +121,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '^1.15.6'
+          go-version: '^1.15.8'
       - name: Build
         id: build
         run: |
@@ -136,7 +142,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '^1.15.6'
+          go-version: '^1.15.8'
       - name: Build
         id: build
         run: |
@@ -194,7 +200,7 @@ jobs:
   update_arch:
     name: Update Arch Linux Packager
     runs-on: ubuntu-20.04
-    needs: [test, release]
+    needs: goreleaser
     if: needs.test.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
@@ -246,7 +252,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '^1.15.6'
+          go-version: '^1.15.8'
       - name: Build
         id: build
         run: make build
