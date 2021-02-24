@@ -2,6 +2,7 @@ package ca
 
 import (
 	"encoding/pem"
+	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
@@ -29,7 +30,7 @@ func rootsCommand() cli.Command {
 		Name:   "roots",
 		Action: command.ActionFunc(rootsAction),
 		Usage:  "download all the root certificates",
-		UsageText: `**step ca roots** <roots-file>
+		UsageText: `**step ca roots** [<roots-file>]
 [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Description: `**step ca roots** downloads a certificate bundle with all the root
 certificates.
@@ -51,6 +52,11 @@ Download the roots with custom flags:
 $ step ca roots roots.pem \
     --ca-url https://ca.example.com \
     --root /path/to/root_ca.crt
+'''
+
+Print the roots using flags set by <step ca bootstrap>:
+'''
+$ step ca roots
 '''`,
 		Flags: []cli.Flag{
 			flags.CaURL,
@@ -65,7 +71,7 @@ func federationCommand() cli.Command {
 		Name:   "federation",
 		Action: command.ActionFunc(federationAction),
 		Usage:  "download all the federated certificates",
-		UsageText: `**step ca federation** <federation-file>
+		UsageText: `**step ca federation** [<federation-file>]
 [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Description: `**step ca federation** downloads a certificate bundle with all the root
 certificates in the federation.
@@ -88,7 +94,11 @@ $ step ca federation federation.pem \
     --ca-url https://ca.example.com \
     --root /path/to/root_ca.crt
 '''
-`,
+
+Print the federated roots using flags set by <step ca bootstrap>:
+'''
+$ step ca federation
+'''`,
 		Flags: []cli.Flag{
 			flags.CaURL,
 			flags.Force,
@@ -106,7 +116,7 @@ func federationAction(ctx *cli.Context) error {
 }
 
 func rootsAndFederationFlow(ctx *cli.Context, typ flowType) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
 		return err
 	}
 
@@ -155,19 +165,21 @@ func rootsAndFederationFlow(ctx *cli.Context, typ flowType) error {
 		data = append(data, pem.EncodeToMemory(block)...)
 	}
 
-	outFile := ctx.Args().Get(0)
-	if err := utils.WriteFile(outFile, data, 0600); err != nil {
-		return err
-	}
+	if outFile := ctx.Args().Get(0); outFile != "" {
+		if err := utils.WriteFile(outFile, data, 0600); err != nil {
+			return err
+		}
 
-	switch typ {
-	case rootsFlow:
-		ui.Printf("The root certificate bundle has been saved in %s.\n", outFile)
-	case federationFlow:
-		ui.Printf("The federation certificate bundle has been saved in %s.\n", outFile)
-	default:
-		return errors.New("unknown flow type: this should not happen")
+		switch typ {
+		case rootsFlow:
+			ui.Printf("The root certificate bundle has been saved in %s.\n", outFile)
+		case federationFlow:
+			ui.Printf("The federation certificate bundle has been saved in %s.\n", outFile)
+		default:
+			return errors.New("unknown flow type: this should not happen")
+		}
+	} else {
+		fmt.Print(string(data))
 	}
-
 	return nil
 }
