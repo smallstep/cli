@@ -184,18 +184,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Download Existing Installer
-        id: download
-        uses: prewk/s3-cp-action@v0.1.1
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1
-          SOURCE: s3://${{ secrets.AWS_s3_BUCKET }}/install-step.ps1
-          DEST: ./install-step.ps1
       - name: Modify Installer
         id: modify
-        run: sed -i -e "s~step-windows-.*.exe~step-windows-${{ needs.create_release.outputs.version }}.exe~g" ./install-step.ps1
+        run: sed -e "s~${CLI_VERSION}~${{ needs.create_release.outputs.version }}~g" ./upload/install-step.psq.tpl > ./install-step.ps1
       - name: Upload and Overwrite
         id: upload
         uses: prewk/s3-cp-action@v0.1.1
