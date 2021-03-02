@@ -55,7 +55,7 @@ include make/docker.mk
 #########################################
 
 changelog:
-	$Q echo "step-cli ($(DEB_VERSION)) unstable; urgency=medium" > debian/changelog
+	$Q echo "step ($(DEB_VERSION)) unstable; urgency=medium" > debian/changelog
 	$Q echo >> debian/changelog
 	$Q echo "  * See https://github.com/smallstep/cli/releases" >> debian/changelog
 	$Q echo >> debian/changelog
@@ -63,7 +63,7 @@ changelog:
 
 debian: changelog
 	$Q set -e; mkdir -p $(RELEASE); \
-	OUTPUT=../step-cli_*.deb; \
+	OUTPUT=../step_*.deb; \
 	rm -f $$OUTPUT; \
 	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
