@@ -34,7 +34,7 @@ func IsWSL() bool {
 	if err != nil {
 		return false
 	}
-	return strings.Contains(string(b), "Microsoft") || strings.Contains(string(b), "WSL")
+	return strings.Contains(strings.ToLower(string(b)), "microsoft") || strings.Contains(strings.ToLower(string(b)), "wsl")
 }
 
 // Exec is wrapper over syscall.Exec, invokes the execve(2) system call. On
