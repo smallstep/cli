@@ -122,7 +122,7 @@ jobs:
 
   build_upload_docker:
     name: Build & Upload Docker Images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: test
     steps:
       - name: Checkout
@@ -145,7 +145,7 @@ jobs:
   build_upload_aws_s3_binaries:
     name: Build & Upload AWS S3 Binaries
     runs-on: ubuntu-20.04
-    needs: test
+    needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
@@ -179,7 +179,8 @@ jobs:
   upload_windows_installer:
     name: Upload Windows Installer
     runs-on: ubuntu-20.04
-    needs: test
+    needs: create_release
+    if: needs.create_release.outputs.is_prerelease == 'false'
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
@@ -211,7 +212,7 @@ jobs:
         id: calculate-shas
         run: |
           PKG=step-cli-bin
-          VVER=${{ needs.test.outputs.vversion }}
+          VVER=${{ needs.create_release.outputs.vversion }}
           VER=${{ needs.create_release.outputs.version }}
           ARM64_URL="https://github.com/smallstep/cli/releases/download/${VVER}/step_linux_${VER}_arm64.tar.gz"
           AMD64_URL="https://github.com/smallstep/cli/releases/download/${VVER}/step_linux_${VER}_amd64.tar.gz"
@@ -240,13 +241,13 @@ jobs:
           # Git commit and push
           cd ./step-cli-bin
           git add "./PKGBUILD" "./.SRCINFO"
-          git commit -m "Update to ${{ needs.test.outputs.vversion }}"
+          git commit -m "Update to ${{ needs.create_release.outputs.vversion }}"
           ssh-agent bash -c 'ssh-add /tmp/ssh_arch_key; GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git push origin HEAD:master'
 
   update_reference_docs:
     name: Update Reference Docs
     runs-on: ubuntu-20.04
-    needs: test
+    needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
