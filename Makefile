@@ -95,6 +95,9 @@ binary-linux-arm64:
 binary-linux-armv7:
 	$(call BUNDLE_MAKE,linux,arm,7,$(BINARY_OUTPUT)linux.armv7/)
 
+binary-linux-mips:
+	$(call BUNDLE_MAKE,linux,mips,,$(BINARY_OUTPUT)linux.mips/)
+
 binary-darwin:
 	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin/)
 
@@ -110,10 +113,11 @@ define BUNDLE
 	$(q) ./make/bundle.sh $(1) "$(BINARY_OUTPUT)$(2)" "$(RELEASE)" "$(VERSION)" "$(3)" "$(4)" "$(5)"
 endef
 
-bundle-linux: binary-linux binary-linux-arm64 binary-linux-armv7
+bundle-linux: binary-linux binary-linux-arm64 binary-linux-armv7 binary-linux-mips
 	$(call BUNDLE,,linux,linux,amd64,step)
 	$(call BUNDLE,,linux.arm64,linux,arm64,step)
 	$(call BUNDLE,,linux.armv7,linux,armv7,step)
+	$(call BUNDLE,,linux.mips,linux,mips,step)
 
 bundle-darwin: binary-darwin
 	$(call BUNDLE,,darwin,darwin,amd64,step)

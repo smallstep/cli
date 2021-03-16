@@ -27,7 +27,7 @@ Users and developers can ask questions on [GitHub Discussions](https://github.co
 
 ## Code Contribution
 
-'step cli` aims to become a fully featured toolkit for cryptographic primitives.
+`step cli` aims to become a fully featured toolkit for cryptographic primitives.
 We encourage all contributions that meet the following criteria:
 
 * fit naturally into a toolkit for creating and working with cryptographic

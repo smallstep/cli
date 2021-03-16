@@ -18,6 +18,7 @@ builds:
       - arm
       - arm64
       - 386
+      - mips
     goarm:
       - 7
     ignore:
