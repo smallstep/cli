@@ -24,7 +24,7 @@ builds:
       - 7
     gomips:
       - hardfloat
-      - softloat
+      - softfloat
     ignore:
       - goos: darwin
         goarch: arm
