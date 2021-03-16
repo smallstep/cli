@@ -25,9 +25,6 @@ builds:
     gomips:
       - hardfloat
       - softloat
-    gomips64:
-      - hardfloat
-      - softloat
     ignore:
       - goos: darwin
         goarch: arm
