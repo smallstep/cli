@@ -19,11 +19,35 @@ builds:
       - arm64
       - 386
       - mips
+      - mips64
     goarm:
       - 7
+    gomips:
+      - hardfloat
+      - softloat
+    gomips64:
+      - hardfloat
+      - softloat
     ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: darwin
+        goarch: 386
+      - goos: darwin
+        goarch: mips
+      - goos: darwin
+        goarch: mips64
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
       - goos: windows
         goarch: 386
+      - goos: windows
+        goarch: mips
+      - goos: windows
+        goarch: mips64
+
     flags:
       - -trimpath
     main: ./cmd/step/main.go
