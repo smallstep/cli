@@ -199,50 +199,6 @@ jobs:
           DEST: s3://${{ secrets.AWS_s3_BUCKET }}/install-step.ps1
           SOURCE: ./install-step.ps1
 
-  update_arch:
-    name: Update Arch Linux Packager
-    runs-on: ubuntu-20.04
-    needs: goreleaser
-    if: needs.create_release.outputs.is_prerelease == 'false'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Calculate New SHAs
-        id: calculate-shas
-        run: |
-          PKG=step-cli-bin
-          VVER=${{ needs.create_release.outputs.vversion }}
-          VER=${{ needs.create_release.outputs.version }}
-          ARM64_URL="https://github.com/smallstep/cli/releases/download/${VVER}/step_linux_${VER}_arm64.tar.gz"
-          AMD64_URL="https://github.com/smallstep/cli/releases/download/${VVER}/step_linux_${VER}_amd64.tar.gz"
-          # Get arm64 SHA for step-cli
-          curl -o "${PKG}-arm64.tar.gz" -J -L -s --show-error -f "${ARM64_URL}"
-          ARM64_SHA="$(shasum -a 256 "${PKG}-arm64.tar.gz" | awk '{printf $1}')"
-          # Get amd64 SHA for step-cli
-          curl -o "${PKG}-amd64.tar.gz" -J -L -s --show-error -f "${AMD64_URL}"
-          AMD64_SHA="$(shasum -a 256 "${PKG}-amd64.tar.gz" | awk '{printf $1}')"
-          # Clone arch linux step-cli-bin repo
-          echo "${{ secrets.ARCH_SSH_KEY }}" > /tmp/ssh_arch_key && chmod 0400 /tmp/ssh_arch_key
-          ssh-agent bash -c 'ssh-add /tmp/ssh_arch_key; GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone ssh://aur@aur.archlinux.org/step-cli-bin.git'
-          cd step-cli-bin
-          # Modify values in files
-          sed -i -e "s/^pkgver=.*/pkgver=${VER}/" "./PKGBUILD"
-          sed -i -e "s/^sha256sums_aarch64=.*/sha256sums_aarch64=(\"${ARM64_SHA}\")/" "./PKGBUILD"
-          sed -i -e "s/^sha256sums_x86_64=.*/sha256sums_x86_64=(\"${AMD64_SHA}\")/" "./PKGBUILD"
-      - name: Makepkg Build and Check
-        id: makepkg
-        uses: smallstep/pkgbuild-action@v1.0.2
-        with:
-          pkgdir: ./step-cli-bin
-      - name: Update ARCH Repo
-        id: update
-        run: |
-          # Git commit and push
-          cd ./step-cli-bin
-          git add "./PKGBUILD" "./.SRCINFO"
-          git commit -m "Update to ${{ needs.create_release.outputs.vversion }}"
-          ssh-agent bash -c 'ssh-add /tmp/ssh_arch_key; GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git push origin HEAD:master'
-
   update_reference_docs:
     name: Update Reference Docs
     runs-on: ubuntu-20.04
