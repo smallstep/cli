@@ -35,8 +35,41 @@ func init() {
 	readline.Stdout = &stderr{}
 }
 
+// Print uses templates to print the arguments formated to os.Stderr.
+func Print(args ...interface{}) error {
+	var o options
+	opts, args := extractOptions(args)
+	o.apply(opts)
+
+	// Return with a default value. This is useful when we split the question
+	// and the response in two lines.
+	if o.value != "" && o.valid() {
+		return nil
+	}
+
+	text := fmt.Sprint(args...)
+	t, err := template.New("Print").Funcs(promptui.FuncMap).Parse(text)
+	if err != nil {
+		return errors.Wrap(err, "error parsing template")
+	}
+	if err := t.Execute(os.Stderr, nil); err != nil {
+		return errors.Wrap(err, "error executing template")
+	}
+	return nil
+}
+
 // Printf uses templates to print the string formated to os.Stderr.
 func Printf(format string, args ...interface{}) error {
+	var o options
+	opts, args := extractOptions(args)
+	o.apply(opts)
+
+	// Return with a default value. This is useful when we split the question
+	// and the response in two lines.
+	if o.value != "" && o.valid() {
+		return nil
+	}
+
 	text := fmt.Sprintf(format, args...)
 	t, err := template.New("Printf").Funcs(promptui.FuncMap).Parse(text)
 	if err != nil {
@@ -50,6 +83,16 @@ func Printf(format string, args ...interface{}) error {
 
 // Println uses templates to print the given arguments to os.Stderr
 func Println(args ...interface{}) error {
+	var o options
+	opts, args := extractOptions(args)
+	o.apply(opts)
+
+	// Return with a default value. This is useful when we split the question
+	// and the response in two lines.
+	if o.value != "" && o.valid() {
+		return nil
+	}
+
 	text := fmt.Sprintln(args...)
 	t, err := template.New("Println").Funcs(promptui.FuncMap).Parse(text)
 	if err != nil {
