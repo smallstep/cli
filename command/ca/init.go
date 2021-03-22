@@ -171,7 +171,7 @@ func initAction(ctx *cli.Context) (err error) {
 				return err
 			}
 			if create {
-				ui.PrintlnIfEmpty("What would you like to name your new PKI?", ctx.String("name"))
+				printlnIfEmpty("What would you like to name your new PKI?", ctx.String("name"))
 				name, err = ui.Prompt("(e.g. Smallstep)",
 					ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
 				if err != nil {
@@ -219,7 +219,7 @@ func initAction(ctx *cli.Context) (err error) {
 			Location:             location,
 		}
 	default:
-		ui.PrintlnIfEmpty("What would you like to name your new PKI?", ctx.String("name"))
+		printlnIfEmpty("What would you like to name your new PKI?", ctx.String("name"))
 		name, err = ui.Prompt("(e.g. Smallstep)",
 			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
 		if err != nil {
@@ -239,7 +239,7 @@ func initAction(ctx *cli.Context) (err error) {
 
 	if configure {
 		var names string
-		ui.PrintlnIfEmpty("What DNS names or IP addresses would you like to add to your new CA?", ctx.String("dns"))
+		printlnIfEmpty("What DNS names or IP addresses would you like to add to your new CA?", ctx.String("dns"))
 		names, err = ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
 			ui.WithValidateFunc(ui.DNS()), ui.WithValue(ctx.String("dns")))
 		if err != nil {
@@ -256,7 +256,7 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 
 		var address string
-		ui.PrintlnIfEmpty("What IP and port will your new CA bind to?", ctx.String("address"))
+		printlnIfEmpty("What IP and port will your new CA bind to?", ctx.String("address"))
 		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:4343)",
 			ui.WithValidateFunc(ui.Address()), ui.WithValue(ctx.String("address")))
 		if err != nil {
@@ -264,7 +264,7 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 
 		var provisioner string
-		ui.PrintlnIfEmpty("What would you like to name the CA's first provisioner?", ctx.String("provisioner"))
+		printlnIfEmpty("What would you like to name the CA's first provisioner?", ctx.String("provisioner"))
 		provisioner, err = ui.Prompt("(e.g. you@smallstep.com)",
 			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("provisioner")))
 		if err != nil {
@@ -277,7 +277,7 @@ func initAction(ctx *cli.Context) (err error) {
 		p.SetCAURL(caURL)
 	}
 
-	ui.PrintlnIfEmpty("Choose a password for your CA keys and first provisioner.", password)
+	printlnIfEmpty("Choose a password for your CA keys and first provisioner.", password)
 	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]",
 		ui.WithRichPrompt(), ui.WithValue(password))
 	if err != nil {
@@ -365,4 +365,11 @@ func assertCryptoRand() error {
 		return errs.NewError("crypto/rand is unavailable: Read() failed with %#v", err)
 	}
 	return nil
+}
+
+// printlnIfEmpty prints s if value (eg. a specific flag value) is empty
+func printlnIfEmpty(s, value string) {
+	if value == "" {
+		ui.Println(s)
+	}
 }
