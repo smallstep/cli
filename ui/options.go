@@ -26,6 +26,14 @@ func (o *options) apply(opts []Option) *options {
 	return o
 }
 
+// valid returns true if the validate function passes on the value.
+func (o *options) valid() bool {
+	if o.validateFunc == nil {
+		return true
+	}
+	return o.validateFunc(o.value) == nil
+}
+
 // getValue validates the value and returns it.
 func (o *options) getValue() (string, error) {
 	if o.validateFunc == nil {
@@ -50,6 +58,18 @@ func (o *options) getValueBytes() ([]byte, error) {
 
 // Option is the type of the functions that modify the prompt options.
 type Option func(*options)
+
+func extractOptions(args []interface{}) (opts []Option, rest []interface{}) {
+	rest = args[:0]
+	for _, arg := range args {
+		if o, ok := arg.(Option); ok {
+			opts = append(opts, o)
+		} else {
+			rest = append(rest, arg)
+		}
+	}
+	return
+}
 
 // WithMask adds a mask to a prompt.
 func WithMask(r rune) Option {
