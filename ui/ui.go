@@ -85,6 +85,13 @@ func PrintSelected(name, value string, opts ...Option) error {
 	return nil
 }
 
+// Print if the value (eg. a specific flag value) is empty
+func PrintlnIfEmpty(s, value string) {
+   if value == "" {
+       Println(s)
+   }
+}
+
 // Prompt creates and runs a promptui.Prompt with the given label.
 func Prompt(label string, opts ...Option) (string, error) {
 	o := &options{
