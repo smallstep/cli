@@ -171,33 +171,39 @@ func initAction(ctx *cli.Context) (err error) {
 				return err
 			}
 			if create {
-				name, err = ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)",
+				ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
+				name, err = ui.Prompt("(e.g. Smallstep)",
 					ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
 				if err != nil {
 					return err
 				}
-				org, err = ui.Prompt("What is the name of your your organization? (e.g. Smallstep)",
+				ui.Println("What is the name of your organization?")
+				org, err = ui.Prompt("(e.g. Smallstep)",
 					ui.WithValidateNotEmpty())
 				if err != nil {
 					return err
 				}
-				resource, err = ui.Prompt("What resource id do you want to use? [we will append -Root-CA or -Intermediate-CA] (e.g. Smallstep)",
+				ui.Println("What resource id do you want to use? [we will append -Root-CA or -Intermediate-CA]")
+				resource, err = ui.Prompt("(e.g. Smallstep)",
 					ui.WithValidateRegexp("^[a-zA-Z0-9-_]+$"))
 				if err != nil {
 					return err
 				}
-				project, err = ui.Prompt("What is the id of your project on Google's Cloud Platform? (e.g. smallstep-ca)",
+				ui.Println("What is the id of your project on Google's Cloud Platform?")
+				project, err = ui.Prompt("(e.g. smallstep-ca)",
 					ui.WithValidateRegexp("^[a-z][a-z0-9-]{4,28}[a-z0-9]$"))
 				if err != nil {
 					return err
 				}
-				location, err = ui.Prompt("What region or location do you want to use? (e.g. us-west1)",
+				ui.Println("What region or location do you want to use?")
+				location, err = ui.Prompt("(e.g. us-west1)",
 					ui.WithValidateRegexp("^[a-z0-9-]+$"))
 				if err != nil {
 					return err
 				}
 			} else {
-				iss, err = ui.Prompt("What certificate authority would you like to use? (e.g. projects/smallstep-ca/locations/us-west1/certificateAuthorities/intermediate-ca)",
+				ui.Println("What certificate authority would you like to use?")
+				iss, err = ui.Prompt("(e.g. projects/smallstep-ca/locations/us-west1/certificateAuthorities/intermediate-ca)",
 					ui.WithValidateRegexp("^projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/locations/[a-z0-9-]+/certificateAuthorities/[a-zA-Z0-9-_]+$"))
 				if err != nil {
 					return err
@@ -213,7 +219,8 @@ func initAction(ctx *cli.Context) (err error) {
 			Location:             location,
 		}
 	default:
-		name, err = ui.Prompt("What would you like to name your new PKI? (e.g. Smallstep)",
+		ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
+		name, err = ui.Prompt("(e.g. Smallstep)",
 			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
 		if err != nil {
 			return err
@@ -232,7 +239,8 @@ func initAction(ctx *cli.Context) (err error) {
 
 	if configure {
 		var names string
-		names, err = ui.Prompt("What DNS names or IP addresses would you like to add to your new CA? (e.g. ca.smallstep.com[,1.1.1.1,etc.])",
+		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithValue(ctx.String("dns")))
+		names, err = ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
 			ui.WithValidateFunc(ui.DNS()), ui.WithValue(ctx.String("dns")))
 		if err != nil {
 			return err
@@ -248,14 +256,16 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 
 		var address string
-		address, err = ui.Prompt("What address will your new CA listen at? (e.g. :443)",
+		ui.Println("What IP and port will your new CA bind to?", ui.WithValue(ctx.String("address")))
+		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:4343)",
 			ui.WithValidateFunc(ui.Address()), ui.WithValue(ctx.String("address")))
 		if err != nil {
 			return err
 		}
 
 		var provisioner string
-		provisioner, err = ui.Prompt("What would you like to name the first provisioner for your new CA? (e.g. you@smallstep.com)",
+		ui.Println("What would you like to name the CA's first provisioner?", ui.WithValue(ctx.String("provisioner")))
+		provisioner, err = ui.Prompt("(e.g. you@smallstep.com)",
 			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("provisioner")))
 		if err != nil {
 			return err
@@ -267,7 +277,8 @@ func initAction(ctx *cli.Context) (err error) {
 		p.SetCAURL(caURL)
 	}
 
-	pass, err := ui.PromptPasswordGenerate("What do you want your password to be? [leave empty and we'll generate one]",
+	ui.Println("Choose a password for your CA keys and first provisioner.", ui.WithValue(password))
+	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]",
 		ui.WithRichPrompt(), ui.WithValue(password))
 	if err != nil {
 		return err
