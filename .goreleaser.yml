@@ -64,6 +64,7 @@ archives:
     files:
       - README.md
       - LICENSE
+      - autocomplete/*
 source:
   enabled: true
   name_template: '{{ .ProjectName }}_{{ .Version }}'
