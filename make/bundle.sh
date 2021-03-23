@@ -49,7 +49,7 @@ BUNDLE_DIR=${OUTPUT_DIR}/bundle
 
 mkdir -p "$BUNDLE_DIR" "$RELEASE_DIR"
 TMP=$(mktemp -d "$BUNDLE_DIR/tmp.XXXX")
-trap "rm -rf $TMP" EXIT INT QUIT TERM
+trap 'rm -rf "$TMP"; exit' EXIT INT QUIT TERM
 
 stepName=step_${STEP_VERSION}
 newdir="$TMP/${stepName}"
@@ -57,6 +57,7 @@ mkdir -p "$newdir/bin"
 
 cp "$OUTPUT_DIR/bin/step" "$newdir/bin/${STEP_EXEC_NAME}"
 cp README.md "$newdir"
+cp -a autocomplete "$newdir"
 
 if [ ${ZIP} -eq 0 ]; then
     NEW_BUNDLE="${RELEASE_DIR}/step_${STEP_PLATFORM}_${STEP_VERSION}_${STEP_ARCH}.tar.gz"
