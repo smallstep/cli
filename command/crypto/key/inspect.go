@@ -89,6 +89,10 @@ func inspectAction(ctx *cli.Context) error {
 		if key, err = pemutil.ParseSSH(b); err != nil {
 			return err
 		}
+	case isJWK(b):
+		if key, err = parseJWK(ctx, b); err != nil {
+			return err
+		}
 	default: // assume DER format
 		if key, err = pemutil.ParseDER(b); err != nil {
 			return err

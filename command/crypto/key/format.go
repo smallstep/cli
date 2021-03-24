@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"os"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -43,10 +45,10 @@ And DER encoded keys will be converted to PEM with the following rules:
  * RSA private keys will use the PEM-encoded PKCS#1 format.
  * Ed25519 private keys will use the PEM-encoded PKCS#8 format.
 
-The flags **--pkcs8**, **--pem**, **--der**, and **--ssh** can be use to change
-the previous defaults. For example we can use **--pkcs8** to save a PKCS#1 RSA
-key to the PKCS#8 form. Or we can combine **--pem** and **--pkcs8** to convert
-to PKCS#8 a PEM file.
+The flags **--pkcs8**, **--pem**, **--der**, **--ssh**, and **--jwk** can be use
+to change the previous defaults. For example we can use **--pkcs8** to save a
+PKCS#1 RSA key to the PKCS#8 form. Or we can combine **--pem** and **--pkcs8**
+to convert to PKCS#8 a PEM file.
 
 ## POSITIONAL ARGUMENTS
 
@@ -73,6 +75,11 @@ $ step crypto key format key.der
 Convert a PEM file to OpenSSH:
 '''
 $ step crypto key format --ssh key.pem
+'''
+
+Convert a PEM file to JWK:
+'''
+$ step crypto key format --jwk key.pem
 '''
 
 Convert PEM file to DER and write to disk:
@@ -107,16 +114,20 @@ $ step crypto key format --der --pkcs8 key.der --out key-pkcs8.der
 			cli.BoolFlag{
 				Name: "pem",
 				Usage: `Uses PEM as the result encoding format. If neither **--pem** nor **--der** nor
-**--ssh** are set it will always switch to the DER format.`,
+**--ssh** nor **--jwk** are set it will always switch to the DER format.`,
 			},
 			cli.BoolFlag{
 				Name: "der",
 				Usage: `Uses DER as the result enconfig format. If neither **--pem** nor **--der** nor
-**--ssh** are set it will always switch to the PEM format.`,
+**--ssh** nor **--jwk** are set it will always switch to the PEM format.`,
 			},
 			cli.BoolFlag{
 				Name:  "ssh",
 				Usage: `Uses OpenSSH as the result encoding format.`,
+			},
+			cli.BoolFlag{
+				Name:  "jwk",
+				Usage: `Uses JSON Web Key as the result encoding format.`,
 			},
 			cli.StringFlag{
 				Name:  "out",
@@ -158,15 +169,26 @@ func formatAction(ctx *cli.Context) error {
 		toPEM      = ctx.Bool("pem")
 		toDER      = ctx.Bool("der")
 		toSSH      = ctx.Bool("ssh")
+		toJWK      = ctx.Bool("jwk")
 		noPassword = ctx.Bool("no-password")
 		insecure   = ctx.Bool("insecure")
 		key        interface{}
 		ob         []byte
 	)
 
-	// --pem and --der cannot be used at the same time
-	if toPEM && toDER {
+	switch {
+	case toPEM && toDER:
 		return errs.IncompatibleFlagWithFlag(ctx, "pem", "der")
+	case toPEM && toSSH:
+		return errs.IncompatibleFlagWithFlag(ctx, "pem", "ssh")
+	case toPEM && toJWK:
+		return errs.IncompatibleFlagWithFlag(ctx, "pem", "jwk")
+	case toDER && toSSH:
+		return errs.IncompatibleFlagWithFlag(ctx, "der", "ssh")
+	case toDER && toJWK:
+		return errs.IncompatibleFlagWithFlag(ctx, "der", "jwk")
+	case toSSH && toJWK:
+		return errs.IncompatibleFlagWithFlag(ctx, "ssh", "jwk")
 	}
 
 	// --no-password requires --insecure
@@ -189,7 +211,7 @@ func formatAction(ctx *cli.Context) error {
 			return err
 		}
 		// convert to DER if not specified
-		if !toPEM && !toDER && !toSSH {
+		if !toPEM && !toDER && !toSSH && !toJWK {
 			toDER = true
 		}
 	case isSSHPublicKey(b):
@@ -197,7 +219,15 @@ func formatAction(ctx *cli.Context) error {
 			return err
 		}
 		// convert to PEM if not specified
-		if !toPEM && !toDER && !toSSH {
+		if !toPEM && !toDER && !toSSH && !toJWK {
+			toPEM = true
+		}
+	case isJWK(b):
+		if key, err = parseJWK(ctx, b); err != nil {
+			return err
+		}
+		// convert to PEM if not specified
+		if !toPEM && !toDER && !toSSH && !toJWK {
 			toPEM = true
 		}
 	default: // assuming DER format
@@ -205,7 +235,7 @@ func formatAction(ctx *cli.Context) error {
 			return err
 		}
 		// convert to PEM if not specified
-		if !toPEM && !toDER && !toSSH {
+		if !toPEM && !toDER && !toSSH && !toJWK {
 			toPEM = true
 		}
 	}
@@ -226,6 +256,10 @@ func formatAction(ctx *cli.Context) error {
 		}
 	case toSSH:
 		if ob, err = convertToSSH(ctx, key); err != nil {
+			return err
+		}
+	case toJWK:
+		if ob, err = convertToJWK(ctx, key); err != nil {
 			return err
 		}
 	default:
@@ -260,6 +294,41 @@ func isSSHPublicKey(in []byte) bool {
 	default:
 		return false
 	}
+}
+
+func isJWK(in []byte) bool {
+	if bytes.HasPrefix(in, []byte("{")) {
+		return true
+	}
+	if _, err := jose.ParseEncrypted(string(in)); err == nil {
+		return true
+	}
+	return false
+}
+
+func parseJWK(ctx *cli.Context, b []byte) (interface{}, error) {
+	// Decrypt key if encrypted.
+	if _, err := jose.ParseEncrypted(string(b)); err == nil {
+		var opts []jose.Option
+		if passFile := ctx.String("password-file"); passFile != "" {
+			opts = append(opts, jose.WithPasswordFile(passFile))
+		}
+		b, err = jose.Decrypt("Please enter the password to decrypt the key", b, opts...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Parse decrypted key
+	var jwk jose.JSONWebKey
+	if err := json.Unmarshal(b, &jwk); err != nil {
+		return nil, errors.Wrap(err, "error unmarshalling key")
+	}
+	if jwk.Key == nil {
+		return nil, errors.New("error parsing key: not found")
+	}
+
+	return jwk.Key, nil
 }
 
 func convertToPEM(ctx *cli.Context, key interface{}) (b []byte, err error) {
@@ -336,6 +405,29 @@ func convertToSSH(ctx *cli.Context, key interface{}) ([]byte, error) {
 			return nil, err
 		}
 		return pem.EncodeToMemory(block), nil
+	default:
+		return nil, errors.Errorf("unsupported key type %T", key)
+	}
+}
+
+func convertToJWK(ctx *cli.Context, key interface{}) ([]byte, error) {
+	jwk := &jose.JSONWebKey{Key: key}
+	switch key.(type) {
+	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey:
+		return json.Marshal(jwk)
+	case *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
+		if !ctx.Bool("no-password") {
+			var opts []jose.Option
+			if passFile := ctx.String("password-file"); passFile != "" {
+				opts = append(opts, jose.WithPasswordFile(passFile))
+			}
+			jwe, err := jose.EncryptJWK(jwk, opts...)
+			if err != nil {
+				return nil, err
+			}
+			return []byte(jwe.FullSerialize()), nil
+		}
+		return json.Marshal(jwk)
 	default:
 		return nil, errors.Errorf("unsupported key type %T", key)
 	}
