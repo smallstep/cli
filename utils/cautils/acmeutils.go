@@ -187,7 +187,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 }
 
 func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
-	for _, azURL := range o.Authorizations {
+	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
 		if err != nil {
 			return errors.Wrapf(err, "error retrieving ACME Authz at %s", azURL)
@@ -242,7 +242,7 @@ func finalizeOrder(ac *ca.ACMEClient, o *acme.Order, csr *x509.CertificateReques
 	}
 
 	ui.Printf("Finalizing Order .")
-	if err = ac.FinalizeOrder(o.Finalize, csr); err != nil {
+	if err = ac.FinalizeOrder(o.FinalizeURL, csr); err != nil {
 		return nil, errors.Wrapf(err, "error finalizing order")
 	}
 
@@ -482,7 +482,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		return nil, err
 	}
 
-	leaf, chain, err := ac.GetCertificate(fo.Certificate)
+	leaf, chain, err := ac.GetCertificate(fo.CertificateURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting certificate")
 	}

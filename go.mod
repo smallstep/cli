@@ -42,6 +42,7 @@ require (
 // For more information see https://github.com/etcd-io/etcd/issues/12124
 replace google.golang.org/grpc => google.golang.org/grpc v1.29.1
 
-// replace github.com/smallstep/certificates => ../certificates
+replace github.com/smallstep/certificates => ../certificates
+
 // replace github.com/smallstep/certinfo => ../certinfo
 // replace go.step.sm/crypto => ../crypto
