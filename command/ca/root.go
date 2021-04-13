@@ -10,11 +10,11 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/pemutil"
 )
 
 func rootComand() cli.Command {

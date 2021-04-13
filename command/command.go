@@ -11,8 +11,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/config"
+	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/usage"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 )
 
 // IgnoreEnvVar is a value added to a flag EnvVar to avoid the use of
@@ -26,6 +29,14 @@ func init() {
 	os.Unsetenv(IgnoreEnvVar)
 	cmds = []cli.Command{
 		usage.HelpCommand(),
+	}
+
+	// Define default prompters for go.step.sm
+	pemutil.PromptPassword = func(msg string) ([]byte, error) {
+		return ui.PromptPassword(msg)
+	}
+	jose.PromptPassword = func(msg string) ([]byte, error) {
+		return ui.PromptPassword(msg)
 	}
 }
 

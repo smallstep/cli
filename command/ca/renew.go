@@ -22,8 +22,6 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
@@ -31,6 +29,8 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/smallstep/cli/utils/sysutils"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 )
 
 func renewCertificateCommand() cli.Command {

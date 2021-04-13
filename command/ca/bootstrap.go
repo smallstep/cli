@@ -2,6 +2,7 @@ package ca
 
 import (
 	"encoding/json"
+	"encoding/pem"
 	"os"
 	"path/filepath"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/config"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
@@ -18,6 +18,7 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/pemutil"
 )
 
 func bootstrapCommand() cli.Command {
@@ -131,11 +132,14 @@ func bootstrapAction(ctx *cli.Context) error {
 	}
 
 	// Serialize root
-	_, err = pemutil.Serialize(resp.RootPEM.Certificate, pemutil.ToFile(rootFile, 0600))
+	block, err := pemutil.Serialize(resp.RootPEM.Certificate)
 	if err != nil {
 		return err
 	}
-	ui.Printf("The root certificate has been saved in %s.\n", rootFile)
+	if err := utils.WriteFile(rootFile, pem.EncodeToMemory(block), 0600); err != nil {
+		return err
+	}
+	ui.Printf("The root certificate has been saved in %s\n", rootFile)
 
 	// make sure to store the url with https
 	caURL, err = completeURL(caURL)
@@ -153,12 +157,12 @@ func bootstrapAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "error marshaling defaults.json")
 	}
-
+	b = append(b, []byte("\n")...)
 	if err := utils.WriteFile(configFile, b, 0644); err != nil {
 		return err
 	}
 
-	ui.Printf("Your configuration has been saved in %s.\n", configFile)
+	ui.Printf("Your configuration has been saved in %s\n", configFile)
 
 	if ctx.Bool("install") {
 		ui.Printf("Installing the root certificate in the system truststore... ")
