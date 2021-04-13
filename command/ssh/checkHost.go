@@ -25,11 +25,11 @@ func checkHostCommand() cli.Command {
 		Usage:  "checks if a certificate has been issued for a host",
 		UsageText: `**step ssh check-host** <hostname>
 [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<path>]`,
+[**--offline**] [**--ca-config**=<path>] [**--quiet**]`,
 		Description: `**step ssh check-host** checks if a certificate has been issued for a host.
 
-This command returns a zero exit status then the server exists, it will return 1
-otherwise.
+This command prints "true" and returns a zero exit status if the host has a certificate.
+Otherwise, it prints "false" and returns 1.
 
 ## POSITIONAL ARGUMENTS
 
@@ -47,11 +47,17 @@ $ step ssh check-host internal.smallstep.com
 			flags.Root,
 			flags.Offline,
 			flags.CaConfig,
+			cli.BoolFlag{
+				Name:  "quiet",
+				Usage: `Silently return an exit code.`,
+			},
 		},
 	}
 }
 
 func checkHostAction(ctx *cli.Context) error {
+	isQuiet := ctx.Bool("quiet")
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
@@ -96,7 +102,9 @@ func checkHostAction(ctx *cli.Context) error {
 			"error checking ssh host eligibility")
 	}
 
-	fmt.Println(resp.Exists)
+	if !isQuiet {
+		fmt.Println(resp.Exists)
+	}
 	if !resp.Exists {
 		os.Exit(1)
 	}
