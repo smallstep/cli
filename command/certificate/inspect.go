@@ -28,7 +28,7 @@ func inspectCommand() cli.Command {
 [**--servername**=<servername>]`,
 		Description: `**step certificate inspect** prints the details of a certificate
 or CSR in a human readable format. Output from the inspect command is printed to
-STDERR instead of STDOUT unless. This is an intentional barrier to accidental
+STDERR instead of STDOUT. This is an intentional barrier to accidental
 misuse: scripts should never rely on the contents of an unvalidated certificate.
 For scripting purposes, use **step certificate verify**.
 
