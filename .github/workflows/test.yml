@@ -83,13 +83,10 @@ jobs:
       - name: Update Reference
         id: update_refrence
         run: ./bin/step help --markdown ./docs/step-cli/reference
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        #- name: Push changes
-        #  uses: ad-m/github-push-action@v0.6.0
-        #  with:
-        #    github_token: ${{ secrets.PAT }}
-        #    branch: 'master'
-        #    directory: './docs'
-        #    repository: 'smallstep/docs'
-
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.PAT }}
+          branch: 'max/test'
+          directory: './docs'
+          repository: 'smallstep/docs'
