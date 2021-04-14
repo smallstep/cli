@@ -152,13 +152,16 @@ jobs:
     runs-on: ubuntu-20.04
     needs: test
     steps:
-      - name: Checkout
+      -
+        name: Checkout
         uses: actions/checkout@v2
-      - name: Setup Go
+      -
+        name: Setup Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
-      - name: Build
+      -
+        name: Build
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
@@ -175,13 +178,16 @@ jobs:
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
-      - name: Checkout
+      -
+        name: Checkout
         uses: actions/checkout@v2
-      - name: Setup Go
+      -
+        name: Setup Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
-      - name: Build
+      -
+        name: Build
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
@@ -191,7 +197,8 @@ jobs:
           cp ./output/binary/linux/bin/step ./.releases/step-linux-latest-integration
           cp ./output/binary/darwin/bin/step ./.releases/step-darwin-${{ needs.create_release.outputs.version }}
           cp ./output/binary/windows/bin/step ./.releases/step-windows-${{ needs.create_release.outputs.version }}.exe
-      - name: Upload s3
+      -
+        name: Upload s3
         id: upload-s3
         uses: jakejarvis/s3-sync-action@v0.5.1
         with:
@@ -209,12 +216,15 @@ jobs:
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
-      - name: Checkout
+      -
+        name: Checkout
         uses: actions/checkout@v2
-      - name: Modify Installer
+      -
+        name: Modify Installer
         id: modify
         run: sed -e "s~${CLI_VERSION}~${{ needs.create_release.outputs.version }}~g" ./upload/install-step.ps1.tpl > ./install-step.ps1
-      - name: Upload and Overwrite
+      -
+        name: Upload and Overwrite
         id: upload
         uses: prewk/s3-cp-action@v0.1.1
         with:
@@ -226,34 +236,46 @@ jobs:
           DEST: s3://${{ secrets.AWS_s3_BUCKET }}/install-step.ps1
           SOURCE: ./install-step.ps1
 
+
   update_reference_docs:
     name: Update Reference Docs
     runs-on: ubuntu-20.04
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
-      - name: Checkout
+      -
+        name: Checkout
         uses: actions/checkout@v2
-      - name: Setup Go
+      -
+        name: Setup Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
-      - name: Build
+      -
+        name: Build
         id: build
         run: V=1 make build
-      - name: Checkout Docs
+      -
+        name: Checkout Docs
         uses: actions/checkout@master
         with:
           repository: smallstep/docs
           token: ${{ secrets.PAT }}
           path: './docs'
-      - name: Update Reference
+      -
+        name: Update Reference
         id: update_refrence
-        run: ./bin/step help --markdown ./docs/step-cli/reference
-      - name: Push changes
+        run: |
+          ./bin/step help --markdown ./docs/step-cli/reference
+          cd ./docs
+          git config user.email "eng@smallstep.com"
+          git config user.name "Github Action CI"
+          git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
+      -
+        name: Push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.PAT }}
-          branch: 'master'
+          branch: 'max/test'
           directory: './docs'
           repository: 'smallstep/docs'
