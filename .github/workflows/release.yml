@@ -240,7 +240,7 @@ jobs:
           go-version: 1.16
       - name: Build
         id: build
-        run: make build
+        run: V=1 make build
       - name: Checkout Docs
         uses: actions/checkout@master
         with:
