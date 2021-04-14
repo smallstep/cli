@@ -92,7 +92,10 @@ jobs:
         id: update_refrence
         run: |
           ./bin/step help --markdown ./docs/step-cli/reference
-          cd ./docs && git commit -a -m "step-cli reference update vtest"
+          cd ./docs
+          git config user.email "eng@smallstep.com"
+          git config user.name "Github Action CI"
+          git commit -a -m "step-cli reference update vtest"
       -
         name: Push changes
         uses: ad-m/github-push-action@v0.6.0
