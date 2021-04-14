@@ -6,8 +6,10 @@ override_dh_install-arch:
 	mv debian/step-cli/usr/bin/step debian/step-cli/usr/bin/step-cli
 
 build:
-	make bootstrap
 	dh build
+
+override_dh_auto_build:
+	dh_auto_build -- ci
 
 %:
 	dh $@ --with bash-completion
