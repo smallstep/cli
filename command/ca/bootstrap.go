@@ -157,11 +157,9 @@ func bootstrapAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "error marshaling defaults.json")
 	}
-	b = append(b, []byte("\n")...)
 	if err := utils.WriteFile(configFile, b, 0644); err != nil {
 		return err
 	}
-
 	ui.Printf("Your configuration has been saved in %s\n", configFile)
 
 	if ctx.Bool("install") {
