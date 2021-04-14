@@ -473,20 +473,24 @@ func TestSerialize(t *testing.T) {
 				switch k := in.(type) {
 				case *rsa.PrivateKey:
 					if test.pass == "" {
+						//nolint
 						assert.False(t, x509.IsEncryptedPEMBlock(p))
 						assert.Equals(t, p.Type, "RSA PRIVATE KEY")
 						assert.Equals(t, p.Bytes, x509.MarshalPKCS1PrivateKey(k))
 					} else {
+						//nolint
 						assert.True(t, x509.IsEncryptedPEMBlock(p))
 						assert.Equals(t, p.Type, "RSA PRIVATE KEY")
 						assert.Equals(t, p.Headers["Proc-Type"], "4,ENCRYPTED")
 
 						var der []byte
+						//nolint
 						der, err = x509.DecryptPEMBlock(p, []byte(test.pass))
 						assert.FatalError(t, err)
 						assert.Equals(t, der, x509.MarshalPKCS1PrivateKey(k))
 					}
 				case *rsa.PublicKey, *ecdsa.PublicKey:
+					//nolint
 					assert.False(t, x509.IsEncryptedPEMBlock(p))
 					assert.Equals(t, p.Type, "PUBLIC KEY")
 
@@ -498,12 +502,15 @@ func TestSerialize(t *testing.T) {
 					assert.Equals(t, p.Type, "EC PRIVATE KEY")
 					var actualBytes []byte
 					if test.pass == "" {
+						//nolint
 						assert.False(t, x509.IsEncryptedPEMBlock(p))
 						actualBytes = p.Bytes
 					} else {
+						//nolint
 						assert.True(t, x509.IsEncryptedPEMBlock(p))
 						assert.Equals(t, p.Headers["Proc-Type"], "4,ENCRYPTED")
 
+						//nolint
 						actualBytes, err = x509.DecryptPEMBlock(p, []byte(test.pass))
 						assert.FatalError(t, err)
 					}
@@ -524,8 +531,10 @@ func TestSerialize(t *testing.T) {
 						assert.FatalError(t, err)
 						pemKey, _ := pem.Decode(keyFileBytes)
 						assert.Equals(t, pemKey.Type, "EC PRIVATE KEY")
+						//nolint
 						if x509.IsEncryptedPEMBlock(pemKey) {
 							assert.Equals(t, pemKey.Headers["Proc-Type"], "4,ENCRYPTED")
+							//nolint
 							actualBytes, err = x509.DecryptPEMBlock(pemKey, []byte(test.pass))
 							assert.FatalError(t, err)
 						} else {
@@ -537,12 +546,15 @@ func TestSerialize(t *testing.T) {
 					assert.Equals(t, p.Type, "PRIVATE KEY")
 					var actualBytes []byte
 					if test.pass == "" {
+						//nolint
 						assert.False(t, x509.IsEncryptedPEMBlock(p))
 						actualBytes = p.Bytes
 					} else {
+						//nolint
 						assert.True(t, x509.IsEncryptedPEMBlock(p))
 						assert.Equals(t, p.Headers["Proc-Type"], "4,ENCRYPTED")
 
+						//nolint
 						actualBytes, err = x509.DecryptPEMBlock(p, []byte(test.pass))
 						assert.FatalError(t, err)
 					}
@@ -559,6 +571,7 @@ func TestSerialize(t *testing.T) {
 					assert.Equals(t, priv.PrivateKey[2:ed25519.SeedSize+2], k.Seed())
 				case ed25519.PublicKey:
 					assert.Equals(t, p.Type, "PUBLIC KEY")
+					//nolint
 					assert.False(t, x509.IsEncryptedPEMBlock(p))
 
 					var pub publicKeyInfo

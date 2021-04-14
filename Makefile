@@ -1,6 +1,8 @@
 all: lint test build
 
-.PHONY: all
+ci: test build
+
+.PHONY: all ci
 
 #################################################
 # Determine the type of `push` and `version`

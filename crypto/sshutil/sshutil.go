@@ -2,6 +2,7 @@ package sshutil
 
 import (
 	"crypto"
+	//nolint
 	"crypto/dsa"
 	"crypto/ecdsa"
 	"crypto/ed25519"

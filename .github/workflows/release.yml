@@ -10,6 +10,9 @@ jobs:
   test:
     name: Lint, Test, Build
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: [ '1.15', '1.16' ]
     steps:
       -
         name: Checkout
@@ -18,11 +21,35 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.15.8'
+          go-version: ${{ matrix.go }}
       -
-        name: Lint, Test, Build
+        name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+          version: 'latest'
+
+          # Optional: working directory, useful for monorepos
+          # working-directory: somedir
+
+          # Optional: golangci-lint command line arguments.
+          args: --timeout=30m
+
+          # Optional: show only new issues if it's a pull request. The default value is `false`.
+          # only-new-issues: true
+
+          # Optional: if set to true then the action will use pre-installed Go.
+          # skip-go-installation: true
+
+          # Optional: if set to true then the action don't cache or restore ~/go/pkg.
+          # skip-pkg-cache: true
+
+          # Optional: if set to true then the action don't cache or restore ~/.cache/go-build.
+          # skip-build-cache: true
+      -
+        name: Test, Build
         id: lintTestBuild
-        run: V=1 make -j1 bootstrap all
+        run: V=1 make ci
 
   create_release:
     name: Create Release
@@ -100,7 +127,7 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.15.8'
+          go-version: 1.16
       -
         name: APT Install
         id: aptInstall
@@ -125,13 +152,16 @@ jobs:
     runs-on: ubuntu-20.04
     needs: test
     steps:
-      - name: Checkout
+      -
+        name: Checkout
         uses: actions/checkout@v2
-      - name: Setup Go
+      -
+        name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.15.8'
-      - name: Build
+          go-version: 1.16
+      -
+        name: Build
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
@@ -148,13 +178,16 @@ jobs:
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
-      - name: Checkout
+      -
+        name: Checkout
         uses: actions/checkout@v2
-      - name: Setup Go
+      -
+        name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.15.8'
-      - name: Build
+          go-version: 1.16
+      -
+        name: Build
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
@@ -164,7 +197,8 @@ jobs:
           cp ./output/binary/linux/bin/step ./.releases/step-linux-latest-integration
           cp ./output/binary/darwin/bin/step ./.releases/step-darwin-${{ needs.create_release.outputs.version }}
           cp ./output/binary/windows/bin/step ./.releases/step-windows-${{ needs.create_release.outputs.version }}.exe
-      - name: Upload s3
+      -
+        name: Upload s3
         id: upload-s3
         uses: jakejarvis/s3-sync-action@v0.5.1
         with:
@@ -182,12 +216,15 @@ jobs:
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
-      - name: Checkout
+      -
+        name: Checkout
         uses: actions/checkout@v2
-      - name: Modify Installer
+      -
+        name: Modify Installer
         id: modify
         run: sed -e "s~${CLI_VERSION}~${{ needs.create_release.outputs.version }}~g" ./upload/install-step.ps1.tpl > ./install-step.ps1
-      - name: Upload and Overwrite
+      -
+        name: Upload and Overwrite
         id: upload
         uses: prewk/s3-cp-action@v0.1.1
         with:
@@ -205,25 +242,36 @@ jobs:
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
-      - name: Checkout
+      -
+        name: Checkout
         uses: actions/checkout@v2
-      - name: Setup Go
+      -
+        name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.15.8'
-      - name: Build
+          go-version: 1.16
+      -
+        name: Build
         id: build
-        run: make build
-      - name: Checkout Docs
+        run: V=1 make build
+      -
+        name: Checkout Docs
         uses: actions/checkout@master
         with:
           repository: smallstep/docs
           token: ${{ secrets.PAT }}
           path: './docs'
-      - name: Update Reference
+      -
+        name: Update Reference
         id: update_refrence
-        run: ./bin/step help --markdown ./docs/step-cli/reference
-      - name: Push changes
+        run: |
+          ./bin/step help --markdown ./docs/step-cli/reference
+          cd ./docs
+          git config user.email "eng@smallstep.com"
+          git config user.name "Github Action CI"
+          git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
+      -
+        name: Push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.PAT }}
