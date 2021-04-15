@@ -43,11 +43,21 @@ func TestTrimURL(t *testing.T) {
 func TestGetPeerCertificateServerName(t *testing.T) {
 	host := "smallstep.com"
 	serverName := host
-	addrs, err := net.LookupIP(host)
+	ips, err := net.LookupIP(host)
 	if err != nil {
 		t.Fatalf("unknown host %s: %s", host, err)
 	}
-	addr := addrs[0].String()
+	var addr string
+	for i, ip := range ips {
+		if ip.To4() != nil {
+			addr = ips[i].String()
+			break
+		}
+	}
+	if len(addr) == 0 {
+		assert.FatalError(t, errors.New("could not find ipv4 address for smallstep.com"))
+		return
+	}
 
 	type newTest struct {
 		addr, serverName string
