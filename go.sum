@@ -580,8 +580,8 @@ github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6Mwd
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1/1fApl1A+9VcBk+9dcqGfnePY87LY=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
-github.com/smallstep/certificates v0.15.12 h1:8jVwXJD3GRUqNggN3P9CGkaR0y7H94ApZHXztdMSe2o=
-github.com/smallstep/certificates v0.15.12/go.mod h1:1L10hpdBHF2U88GVrA77qAJG7wjnacIr+sgBfIDdzDE=
+github.com/smallstep/certificates v0.15.13 h1:ZFD+L+5f0nmc0G7v9Zk7ZC+lhX54qMTnOOhnBTxYbuw=
+github.com/smallstep/certificates v0.15.13/go.mod h1:1L10hpdBHF2U88GVrA77qAJG7wjnacIr+sgBfIDdzDE=
 github.com/smallstep/certinfo v1.5.0 h1:hxJPQgy9eyjSDVmcWXR/17ucjqZ9zgQHyGyD7AOEidM=
 github.com/smallstep/certinfo v1.5.0/go.mod h1:UWVjfGJeUc8O9PDR6VqI2CgWrQbF1HNMld1BSarYV2Q=
 github.com/smallstep/nosql v0.3.6 h1:cq6a3NwjFJxkVlWU1T4qGskcfEXr0fO1WqQrraDO1Po=
