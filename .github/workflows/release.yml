@@ -213,7 +213,7 @@ jobs:
   upload_windows_installer:
     name: Upload Windows Installer
     runs-on: ubuntu-20.04
-    needs: create_release
+    needs: goreleaser
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       -
