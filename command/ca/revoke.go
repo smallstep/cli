@@ -439,6 +439,7 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 			return err
 		}
 		tr = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
 			TLSClientConfig: &tls.Config{
 				RootCAs:                  rootCAs,
 				PreferServerCipherSuites: true,

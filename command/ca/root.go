@@ -109,6 +109,7 @@ func rootAction(ctx *cli.Context) error {
 
 func getInsecureTransport() *http.Transport {
 	return &http.Transport{
+		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 }
