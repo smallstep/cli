@@ -383,6 +383,7 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 	}
 
 	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
 			Certificates:             []tls.Certificate{cert},
 			RootCAs:                  rootCAs,
