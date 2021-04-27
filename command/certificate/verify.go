@@ -171,7 +171,7 @@ func verifyAction(ctx *cli.Context) error {
 		// Support verification of any type of cert.
 		//
 		// TODO: add something like --purpose client,server,... and configure
-		// this property according.
+		// this property accordingly.
 		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
 	}
 
