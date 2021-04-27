@@ -168,6 +168,11 @@ func verifyAction(ctx *cli.Context) error {
 		DNSName:       host,
 		Roots:         rootPool,
 		Intermediates: intermediatePool,
+		// Support verification of any type of cert.
+		//
+		// TODO: add something like --purpose client,server,... and configure
+		// this property accordingly.
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
 	}
 
 	if _, err := cert.Verify(opts); err != nil {
