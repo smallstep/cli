@@ -202,6 +202,7 @@ func loginAction(ctx *cli.Context) error {
 	// provisioner is responsible for setting default principals by using an
 	// identity function.
 	if email, ok := tokenHasEmail(token); ok {
+		principals = []string{}
 		subject = email
 	}
 
