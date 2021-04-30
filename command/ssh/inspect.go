@@ -1,7 +1,9 @@
 package ssh
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
@@ -32,6 +34,21 @@ Prints the contents of id_ecdsa-cert.pub:
 '''
 $ step ssh inspect id_ecdsa-cert.pub
 '''`,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "format",
+				Value: "text",
+				Usage: `The output format for printing the introspection details.
+
+: <format> is a string and must be one of:
+
+    **text**
+    :  Print output in unstructured text suitable for a human to read.
+
+    **json**
+    :  Print output in JSON format.`,
+			},
+		},
 	}
 }
 
@@ -48,6 +65,14 @@ func inspectAction(ctx *cli.Context) error {
 		name = ctx.Args().First()
 	default:
 		return errs.TooManyArguments(ctx)
+	}
+
+	var (
+		format     = ctx.String("format")
+	)
+
+	if format != "text" && format != "json" {
+		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
 	}
 
 	b, err := utils.ReadFile(name)
@@ -68,40 +93,52 @@ func inspectAction(ctx *cli.Context) error {
 		return err
 	}
 
-	space := ""
-	fmt.Println(name + ":")
-	fmt.Printf("%8sType: %s %s certificate\n", space, inspect.KeyName, inspect.Type)
-	fmt.Printf("%8sPublic key: %s-CERT %s\n", space, inspect.KeyAlgo, inspect.KeyFingerprint)
-	fmt.Printf("%8sSigning CA: %s %s\n", space, inspect.SigningKeyAlgo, inspect.SigningKeyFingerprint)
-	fmt.Printf("%8sKey ID: \"%s\"\n", space, inspect.KeyID)
-	fmt.Printf("%8sSerial: %d\n", space, inspect.Serial)
-	fmt.Printf("%8sValid: %s\n", space, inspect.Validity())
-	fmt.Printf("%8sPrincipals: ", space)
-	if len(inspect.Principals) == 0 {
-		fmt.Println("(none)")
-	} else {
-		fmt.Println()
-		for _, p := range inspect.Principals {
-			fmt.Printf("%16s%s\n", space, p)
+	switch format {
+	case "text":
+		space := ""
+		fmt.Println(name + ":")
+		fmt.Printf("%8sType: %s %s certificate\n", space, inspect.KeyName, inspect.Type)
+		fmt.Printf("%8sPublic key: %s-CERT %s\n", space, inspect.KeyAlgo, inspect.KeyFingerprint)
+		fmt.Printf("%8sSigning CA: %s %s\n", space, inspect.SigningKeyAlgo, inspect.SigningKeyFingerprint)
+		fmt.Printf("%8sKey ID: \"%s\"\n", space, inspect.KeyID)
+		fmt.Printf("%8sSerial: %d\n", space, inspect.Serial)
+		fmt.Printf("%8sValid: %s\n", space, inspect.Validity())
+		fmt.Printf("%8sPrincipals: ", space)
+		if len(inspect.Principals) == 0 {
+			fmt.Println("(none)")
+		} else {
+			fmt.Println()
+			for _, p := range inspect.Principals {
+				fmt.Printf("%16s%s\n", space, p)
+			}
 		}
-	}
-	fmt.Printf("%8sCritical Options: ", space)
-	if len(inspect.CriticalOptions) == 0 {
-		fmt.Println("(none)")
-	} else {
-		fmt.Println()
-		for k, v := range inspect.CriticalOptions {
-			fmt.Printf("%16s%s %v\n", space, k, v)
+		fmt.Printf("%8sCritical Options: ", space)
+		if len(inspect.CriticalOptions) == 0 {
+			fmt.Println("(none)")
+		} else {
+			fmt.Println()
+			for k, v := range inspect.CriticalOptions {
+				fmt.Printf("%16s%s %v\n", space, k, v)
+			}
 		}
-	}
-	fmt.Printf("%8sExtensions: ", space)
-	if len(inspect.Extensions) == 0 {
-		fmt.Println("(none)")
-	} else {
-		fmt.Println()
-		for k, v := range inspect.Extensions {
-			fmt.Printf("%16s%s %v\n", space, k, v)
+		fmt.Printf("%8sExtensions: ", space)
+		if len(inspect.Extensions) == 0 {
+			fmt.Println("(none)")
+		} else {
+			fmt.Println()
+			for k, v := range inspect.Extensions {
+				fmt.Printf("%16s%s %v\n", space, k, v)
+			}
 		}
+	case "json":
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		err := enc.Encode(inspect)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	default:
+		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
 	}
 
 	return nil
