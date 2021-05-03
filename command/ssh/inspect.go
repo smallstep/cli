@@ -68,7 +68,7 @@ func inspectAction(ctx *cli.Context) error {
 	}
 
 	var (
-		format     = ctx.String("format")
+		format = ctx.String("format")
 	)
 
 	if format != "text" && format != "json" {
