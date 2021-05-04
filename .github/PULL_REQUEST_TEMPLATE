@@ -1,3 +1,12 @@
+---
+name: Pull Request
+about: New feature or documentation update
+title: ''
+labels: needs triage
+assignees: ''
+
+---
+
 ### Description
 Please describe your pull request.
 
