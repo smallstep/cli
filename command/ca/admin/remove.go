@@ -1,10 +1,11 @@
-package provisioner
+package admin
 
+/*
 import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/authority/config"
+	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
@@ -122,13 +123,13 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	name := ctx.Args().Get(0)
-	caCfg := ctx.String("ca-config")
+	config := ctx.String("ca-config")
 	all := ctx.Bool("all")
 	kid := ctx.String("kid")
 	clientID := ctx.String("client-id")
 	typ := ctx.String("type")
 
-	if len(caCfg) == 0 {
+	if len(config) == 0 {
 		return errs.RequiredFlag(ctx, "ca-config")
 	}
 
@@ -149,7 +150,7 @@ func removeAction(ctx *cli.Context) error {
 		}
 	}
 
-	c, err := config.LoadConfiguration(caCfg)
+	c, err := authority.LoadConfiguration(config)
 	if err != nil {
 		return errors.Wrapf(err, "error loading configuration")
 	}
@@ -197,7 +198,7 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	c.AuthorityConfig.Provisioners = provisioners
-	if err = c.Save(caCfg); err != nil {
+	if err = c.Save(config); err != nil {
 		return err
 	}
 
@@ -211,3 +212,4 @@ func removeAction(ctx *cli.Context) error {
 func isProvisionerType(p provisioner.Interface, typ string) bool {
 	return typ == "" || strings.EqualFold(typ, p.GetType().String())
 }
+*/

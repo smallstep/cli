@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
@@ -26,7 +26,7 @@ func addCommand() cli.Command {
 	return cli.Command{
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
-		Usage:  "add one or more provisioners the CA configuration",
+		Usage:  "add one or more provisioners to the CA configuration",
 		UsageText: `**step ca provisioner add** <name> <jwk-file> [<jwk-file> ...]
 **--ca-config**=<file> [**--type**=JWK]  [**--create**] [**--password-file**=<file>]
 
@@ -315,12 +315,12 @@ func addAction(ctx *cli.Context) (err error) {
 	args := ctx.Args()
 	name := args[0]
 
-	config := ctx.String("ca-config")
-	if len(config) == 0 {
+	caCfg := ctx.String("ca-config")
+	if len(caCfg) == 0 {
 		return errs.RequiredFlag(ctx, "ca-config")
 	}
 
-	c, err := authority.LoadConfiguration(config)
+	c, err := config.LoadConfiguration(caCfg)
 	if err != nil {
 		return errors.Wrapf(err, "error loading configuration")
 	}
@@ -364,7 +364,7 @@ func addAction(ctx *cli.Context) (err error) {
 	}
 
 	c.AuthorityConfig.Provisioners = append(c.AuthorityConfig.Provisioners, list...)
-	if err = c.Save(config); err != nil {
+	if err = c.Save(caCfg); err != nil {
 		return err
 	}
 

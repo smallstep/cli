@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
+	"github.com/smallstep/cli/command/ca/admin"
 	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/urfave/cli"
 )
@@ -73,6 +74,7 @@ $ step ca renew internal.crt internal.key \
 			renewCertificateCommand(),
 			revokeCertificateCommand(),
 			provisioner.Command(),
+			admin.Command(),
 			signCertificateCommand(),
 			rootComand(),
 			rootsCommand(),
