@@ -38,7 +38,7 @@ func TestEncodedFingerprint(t *testing.T) {
 	}{
 		{"hex", "test_files/ca.crt", HexFingerprint, "6908751f68290d4573ae0be39a98c8b9b7b7d4e8b2a6694b7509946626adfe98"},
 		{"base64", "test_files/ca.crt", Base64Fingerprint, "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat/pg="},
-		{"base64url", "test_files/ca.crt", Base64UrlFingerprint, "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat_pg="},
+		{"base64url", "test_files/ca.crt", Base64URLFingerprint, "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat_pg="},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

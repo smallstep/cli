@@ -175,7 +175,7 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 		return "", err
 	}
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
-		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetID()), tokAttrs.root,
+		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetIDForToken()), tokAttrs.root,
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
 	switch tokType {
 	case SignType:
@@ -213,7 +213,7 @@ func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, t
 		return "", err
 	}
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
-		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetID()), tokAttrs.root,
+		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetIDForToken()), tokAttrs.root,
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
 	switch tokType {
 	case SSHRevokeType:
