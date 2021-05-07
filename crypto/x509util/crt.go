@@ -22,12 +22,16 @@ func Fingerprint(cert *x509.Certificate) string {
 	return EncodedFingerprint(cert, HexFingerprint)
 }
 
+// FingerprintEncoding represents the fingerprint encoding type.
 type FingerprintEncoding int
 
 const (
+	// HexFingerprint represents hex encoding of fingerprint.
 	HexFingerprint FingerprintEncoding = iota
+	// Base64Fingerprint represents base64 encoding of fingerprint.
 	Base64Fingerprint
-	Base64UrlFingerprint
+	// Base64URLFingerprint represents base64URL encoding of fingerprint.
+	Base64URLFingerprint
 )
 
 // EncodedFingerprint returns an encoded the SHA-256 fingerprint of the certificate. Defaults to hex encoding
@@ -43,7 +47,7 @@ func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding) st
 	switch encoding {
 	case Base64Fingerprint:
 		return base64.StdEncoding.EncodeToString(src)
-	case Base64UrlFingerprint:
+	case Base64URLFingerprint:
 		return base64.URLEncoding.EncodeToString(src)
 	}
 	// should not get here

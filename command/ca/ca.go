@@ -6,7 +6,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
+	"github.com/smallstep/cli/command/ca/admin"
 	"github.com/smallstep/cli/command/ca/provisioner"
+	"github.com/smallstep/cli/command/ca/provisionerbeta"
 	"github.com/urfave/cli"
 )
 
@@ -191,4 +193,18 @@ func completeURL(rawurl string) (string, error) {
 	// scheme:opaque[?query][#fragment]
 	// rawurl looks like ca.smallstep.com:443 or ca.smallstep.com:443/1.0/sign
 	return completeURL("https://" + rawurl)
+}
+
+// BetaCommand enables access to beta APIs.
+func BetaCommand() cli.Command {
+	return cli.Command{
+		Name:        "ca",
+		Usage:       "commads that are made available for testing new features and APIs",
+		UsageText:   "step beta ca <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step beta ca** enables access to beta APIs..`,
+		Subcommands: cli.Commands{
+			admin.Command(),
+			provisionerbeta.Command(),
+		},
+	}
 }

@@ -95,10 +95,7 @@ func (e *apiError) Error() string {
 
 func readJSON(r io.ReadCloser, v interface{}) error {
 	defer r.Close()
-	if err := json.NewDecoder(r).Decode(v); err != nil {
-		return err
-	}
-	return nil
+	return json.NewDecoder(r).Decode(v)
 }
 
 func readError(r io.ReadCloser) error {

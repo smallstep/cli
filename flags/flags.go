@@ -145,6 +145,19 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 		Usage: "The provisioner <name> to use.",
 	}
 
+	// AdminProvisioner is a cli.Flag used to pass the CA Admin provisioner to use.
+	AdminProvisioner = cli.StringFlag{
+		Name:  "admin-provisioner,admin-issuer",
+		Usage: "The provisioner <name> to use for generating admin credentials.",
+	}
+
+	// AdminSubject is a cli.Flag used to pass the admin subject to use when generating
+	// admin credentials.
+	AdminSubject = cli.StringFlag{
+		Name:  "admin-subject,admin-name",
+		Usage: "The admin <subject> to use for generating admin credentials.",
+	}
+
 	// ProvisionerPasswordFile is a cli.Flag used to pass the password file to
 	// decrypt the generating key.
 	ProvisionerPasswordFile = cli.StringFlag{
@@ -187,6 +200,20 @@ but can accept a different configuration file using **--ca-config** flag.`,
 		Usage: `The <path> to the certificate authority configuration file. Defaults to
 $STEPPATH/config/ca.json`,
 		Value: filepath.Join(config.StepPath(), "config", "ca.json"),
+	}
+
+	// AdminCert is a cli.Flag used to pass the x5c header certificate for a JWT.
+	AdminCert = cli.StringFlag{
+		Name:  "admin-cert",
+		Usage: "Admin certificate (<chain>) in PEM format to store in the 'x5c' header of a JWT.",
+	}
+
+	// AdminKey is a cli.Flag used to pass the private key (corresponding to the x5c-cert)
+	// that is used to sign the token.
+	AdminKey = cli.StringFlag{
+		Name: "admin-key",
+		Usage: `Private key <path>, used to sign a JWT, corresponding to the admin certificate that will
+be stored in the 'x5c' header.`,
 	}
 
 	// X5cCert is a cli.Flag used to pass the x5c header certificate for a JWT.

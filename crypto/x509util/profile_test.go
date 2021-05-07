@@ -257,7 +257,7 @@ func Test_base_CreateCertificate(t *testing.T) {
 			extKeyUsageExt.Id = asn1.ObjectIdentifier{2, 5, 29, 37}
 			extKeyUsageExt.Critical = false
 			var oids []asn1.ObjectIdentifier
-			var eku []x509.ExtKeyUsage = []x509.ExtKeyUsage{
+			var eku = []x509.ExtKeyUsage{
 				x509.ExtKeyUsageServerAuth,
 				x509.ExtKeyUsageClientAuth,
 				x509.ExtKeyUsageMicrosoftKernelCodeSigning,
