@@ -21,6 +21,7 @@ builds:
       - mips
       - mips64
     goarm:
+      - 6
       - 7
     gomips:
       - hardfloat
