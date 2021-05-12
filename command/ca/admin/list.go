@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/certificates/authority/mgmt"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
@@ -45,6 +46,61 @@ $ step ca admin --super list
 	}
 }
 
+// Admin is a abbreviated admin type for use in the cli interface.
+type Admin struct {
+	ID           string       `json:"id"`
+	Name         string       `json:"name"`
+	Status       string       `json:"status"`
+	IsSuperAdmin bool         `json:"isSuperAdmin"`
+	Provisioner  *Provisioner `json:"provisioner"`
+}
+
+// Provisioner is a abbreviated provisioner type for consumption
+// through the cli interface.
+type Provisioner struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+func ToCLI(client *ca.MgmtClient, admins []*mgmt.Admin) ([]*Admin, error) {
+	provs, err := client.GetProvisioners()
+	if err != nil {
+		return nil, err
+	}
+
+	var provMap = map[string]*mgmt.Provisioner{}
+	for _, p := range provs {
+		provMap[p.ID] = p
+	}
+
+	var cliAdmins = make([]*Admin, len(admins))
+	for i, adm := range admins {
+		cliAdm := &Admin{
+			ID:           adm.ID,
+			Name:         adm.Name,
+			Status:       adm.Status.String(),
+			IsSuperAdmin: adm.IsSuperAdmin,
+		}
+		p, ok := provMap[adm.ProvisionerID]
+		if ok {
+			cliAdm.Provisioner = &Provisioner{
+				ID:   p.ID,
+				Name: p.Name,
+				Type: p.Type,
+			}
+		} else {
+			cliAdm.Provisioner = &Provisioner{
+				ID:   "NaN",
+				Name: "NaN",
+				Type: "NaN",
+			}
+		}
+		cliAdmins[i] = cliAdm
+	}
+	return cliAdmins, nil
+}
+
 func listAction(ctx *cli.Context) (err error) {
 	if err := errs.NumberOfArguments(ctx, 0); err != nil {
 		return err
@@ -77,10 +133,14 @@ func listAction(ctx *cli.Context) (err error) {
 	if err != nil {
 		return err
 	}
-
-	b, err := json.MarshalIndent(admins, "", "   ")
+	cliAdmins, err := ToCLI(client, admins)
 	if err != nil {
-		return errors.Wrap(err, "error marshaling provisioners")
+		return err
+	}
+
+	b, err := json.MarshalIndent(cliAdmins, "", "   ")
+	if err != nil {
+		return errors.Wrap(err, "error marshaling admins")
 	}
 
 	fmt.Println(string(b))

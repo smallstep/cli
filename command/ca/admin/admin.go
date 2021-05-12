@@ -12,7 +12,8 @@ func Command() cli.Command {
 			listCommand(),
 			//getCommand(),
 			addCommand(),
-			//removeCommand(),
+			removeCommand(),
+			updateCommand(),
 		},
 		Description: `The **step ca admin** command group provides facilities for managing the
 certificate authority admins.
