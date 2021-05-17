@@ -45,7 +45,8 @@ func createCommand() cli.Command {
 [**--password-file**=<path>] [**--ca**=<issuer-cert>]
 [**--ca-key**=<issuer-key>] [**--ca-password-file**=<path>]
 [**--san**=<SAN>] [**--bundle**] [**--key**=<path>]
-[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--no-password**]`,
+[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
+[**--no-password**] [**--insecure**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing request (CSR) that can be signed later using 'step
 certificate sign' (or some other tool) to produce a certificate.
@@ -421,7 +422,7 @@ func createAction(ctx *cli.Context) error {
 	insecure := ctx.Bool("insecure")
 	noPass := ctx.Bool("no-password")
 	if noPass && !insecure {
-		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
+		return errs.RequiredWithFlag(ctx, "no-password", "insecure")
 	}
 
 	subject := ctx.Args().Get(0)

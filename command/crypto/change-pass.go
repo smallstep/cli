@@ -100,7 +100,7 @@ func changePassAction(ctx *cli.Context) error {
 	decryptPassFile := ctx.String("password-file")
 	encryptPassFile := ctx.String("new-password-file")
 	if noPass && !insecure {
-		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
+		return errs.RequiredWithFlag(ctx, "no-password", "insecure")
 	}
 
 	keyPath := ctx.Args().Get(0)

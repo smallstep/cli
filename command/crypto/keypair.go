@@ -20,7 +20,7 @@ func createKeyPairCommand() cli.Command {
 		Usage:  "generate a public / private keypair in PEM format",
 		UsageText: `**step crypto keypair** <pub_file> <priv_file>
 [**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>]
-[**--password-file**=<file>] [**--no-password**]`,
+[**--password-file**=<file>] [**--no-password**] [**--insecure**]`,
 		Description: `**step crypto keypair** generates a raw public /
 private keypair in PEM format. These keys can be used by other operations
 to sign and encrypt data, and the public key can be bound to an identity
@@ -110,7 +110,7 @@ func createAction(ctx *cli.Context) (err error) {
 		return errs.IncompatibleFlag(ctx, "no-password", "password-file")
 	}
 	if noPass && !insecure {
-		return errs.RequiredWithFlag(ctx, "insecure", "no-password")
+		return errs.RequiredWithFlag(ctx, "no-password", "insecure")
 	}
 
 	// Read password if necessary
