@@ -1,12 +1,9 @@
 package admin
 
 import (
-	"os"
-
-	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -14,16 +11,18 @@ func removeCommand() cli.Command {
 	return cli.Command{
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
-		Usage:  "remove an admin",
-		UsageText: `**step ca admin remove** <id> [**--ca-url**=<uri>]
-[**--root**=<file>] [**--ca-config**=<file>]`,
+		Usage:  "remove an admin from the CA configuration",
+		UsageText: `**step ca admin remove** <id> [**--provisioner**=<id>] [**--ca-url**=<uri>]
+[**--root**=<file>]`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
+			cli.StringFlag{
+				Name:  "provisioner",
+				Usage: `Update the admin name.`,
+			},
 			flags.CaURL,
 			flags.Root,
 		},
-		Description: `**step ca admin remove** removes an admin.
-from the configuration and writes the new configuration back to the CA config.
+		Description: `**step ca admin remove** removes an admin from the CA configuration.
 
 ## POSITIONAL ARGUMENTS
 
@@ -34,7 +33,12 @@ from the configuration and writes the new configuration back to the CA config.
 
 Remove an admin:
 '''
-$ step ca admin remove RuDAMlHpn9LMyzSSCDmVSJNYQOXhnrdE
+$ step ca admin remove max@smallstep.com
+'''
+
+Remove an admin with additional filtering by provisioner:
+'''
+$ step ca admin remove max@smallstep.com --provisioner admin-jwk
 '''
 `,
 	}
@@ -45,33 +49,21 @@ func removeAction(ctx *cli.Context) error {
 		return err
 	}
 
-	args := ctx.Args()
-	id := args.Get(0)
-
-	caURL, err := flags.ParseCaURLIfExists(ctx)
-	if err != nil {
-		return err
-	}
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
-		rootFile = pki.GetRootCAPath()
-		if _, err := os.Stat(rootFile); err != nil {
-			return errs.RequiredFlag(ctx, "root")
-		}
-	}
-
-	// Create online client
-	var options []ca.ClientOption
-	options = append(options, ca.WithRootFile(rootFile))
-	client, err := ca.NewMgmtClient(caURL, options...)
+	client, err := cautils.NewMgmtClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err := client.RemoveAdmin(id); err != nil {
+	admins, err := client.GetAdmins()
+	if err != nil {
+		return err
+	}
+	adm, err := adminPrompt(ctx, admins)
+	if err != nil {
+		return err
+	}
+
+	if err := client.RemoveAdmin(adm.ID); err != nil {
 		return err
 	}
 

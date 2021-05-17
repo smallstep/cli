@@ -1,17 +1,15 @@
 package admin
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
-	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/mgmt"
 	mgmtAPI "github.com/smallstep/certificates/authority/mgmt/api"
-	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -20,9 +18,8 @@ func updateCommand() cli.Command {
 		Name:   "update",
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update an admin",
-		UsageText: `**step ca admin update** <id> [**--super**] [**--not-super**] [**--name=<string>**]
-[**--provisioner-id=<string>**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--ca-config**=<file>]`,
+		UsageText: `**step ca admin update** <subject> [**--super**]
+[**--not-super**] [**--provisioner**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "super",
@@ -33,14 +30,9 @@ func updateCommand() cli.Command {
 				Usage: `Update the admin to remove super-admin privileges.`,
 			},
 			cli.StringFlag{
-				Name:  "name",
+				Name:  "provisioner",
 				Usage: `Update the admin name.`,
 			},
-			cli.StringFlag{
-				Name:  "provisioner-id",
-				Usage: `Update the admin provisioner ID.`,
-			},
-			flags.CaConfig,
 			flags.CaURL,
 			flags.Root,
 		},
@@ -49,28 +41,23 @@ func updateCommand() cli.Command {
 ## POSITIONAL ARGUMENTS
 
 <id>
-: The id of the admin to update.
+: The name of the admin to update.
 
 ## EXAMPLES
 
 Add super-admin privileges to an admin:
 '''
-$ step ca admin update RuDAMlHpn9LMyzSSCDmVSJNYQOXhnrdE --super
+$ step ca admin update max@smallstep.com --super
 '''
 
-Update name and add super-admin privileges to an admin:
+Specify admin by provisioner:
 '''
-$ step ca admin update RuDAMlHpn9LMyzSSCDmVSJNYQOXhnrdE --super --name mariano@smallstep.com
-'''
-
-Update provisioner associated with an admin:
-'''
-$ step ca admin update RuDAMlHpn9LMyzSSCDmVSJNYQOXhnrdE --provisioner-id isxSMDpOvoSMT5fFMzkynofhuHKe9uRt
+$ step ca admin update max@smallstep.com --super --provisioner devops-jwk
 '''
 
 Remove super-admin privileges from an admin:
 '''
-$ step ca admin update RuDAMlHpn9LMyzSSCDmVSJNYQOXhnrdE --not-super
+$ step ca admin update max@smallstep.com --not-super
 '''
 `,
 	}
@@ -81,64 +68,51 @@ func updateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	args := ctx.Args()
-	id := args.Get(0)
-	name := ctx.String("name")
-	provisionerID := ctx.String("provisioner-id")
 	isSuperAdmin := ctx.IsSet("super")
 	isNotSuperAdmin := ctx.IsSet("not-super")
 
 	if isSuperAdmin && isNotSuperAdmin {
 		return errs.IncompatibleFlag(ctx, "super", "not-super")
 	}
-
-	caURL, err := flags.ParseCaURLIfExists(ctx)
-	if err != nil {
-		return err
-	}
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
-		rootFile = pki.GetRootCAPath()
-		if _, err := os.Stat(rootFile); err != nil {
-			return errs.RequiredFlag(ctx, "root")
-		}
+	if !isSuperAdmin && !isNotSuperAdmin {
+		return errs.RequiredOrFlag(ctx, "super", "not-super")
 	}
 
-	// Create online client
-	var options []ca.ClientOption
-	options = append(options, ca.WithRootFile(rootFile))
-	client, err := ca.NewMgmtClient(caURL, options...)
+	client, err := cautils.NewMgmtClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	uar := &mgmtAPI.UpdateAdminRequest{
-		Name:          name,
-		ProvisionerID: provisionerID,
-	}
-	if isSuperAdmin {
-		uar.IsSuperAdmin = "true"
-	} else if isNotSuperAdmin {
-		uar.IsSuperAdmin = "false"
-	}
-
-	adm, err := client.UpdateAdmin(id, uar)
+	admins, err := client.GetAdmins()
 	if err != nil {
 		return err
 	}
-	cliAdmins, err := ToCLI(client, []*mgmt.Admin{adm})
+	adm, err := adminPrompt(ctx, admins)
 	if err != nil {
 		return err
 	}
 
-	b, err := json.MarshalIndent(cliAdmins[0], "", "   ")
+	var typ mgmt.AdminType
+	if ctx.IsSet("super") {
+		typ = mgmt.AdminTypeSuper
+	}
+	if ctx.IsSet("not-super") {
+		typ = mgmt.AdminTypeRegular
+	}
+	adm, err = client.UpdateAdmin(adm.ID, &mgmtAPI.UpdateAdminRequest{
+		Type: typ,
+	})
 	if err != nil {
-		return errors.Wrap(err, "error marshaling admin")
+		return err
 	}
 
-	fmt.Println(string(b))
+	w := new(tabwriter.Writer)
+	// Format in tab-separated columns with a tab stop of 8.
+	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
+
+	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE\tSTATUS")
+	fmt.Fprintf(w, "%s\t%s(%s)\t%s\t%s\n", adm.Subject, adm.ProvisionerName, adm.ProvisionerType, string(adm.Type), adm.Status)
+	w.Flush()
+
 	return nil
 }

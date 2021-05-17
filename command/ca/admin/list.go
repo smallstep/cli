@@ -1,35 +1,41 @@
 package admin
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
-	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/mgmt"
-	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
 func listCommand() cli.Command {
 	return cli.Command{
-		Name:      "list",
-		Action:    cli.ActionFunc(listAction),
-		Usage:     "list all admins in the CA configuration",
-		UsageText: `**step ca admin list** [**--super**] [**--ca-url**=<uri>] [**--root**=<file>]`,
+		Name:   "list",
+		Action: cli.ActionFunc(listAction),
+		Usage:  "list all admins in the CA configuration",
+		UsageText: `**step ca admin list** [**--super**] ]**--not-super**] [**--provisioner**=<string>]
+[**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
 			flags.CaURL,
 			flags.Root,
 			cli.BoolFlag{
 				Name:  "super",
 				Usage: `Only return super-admins.`,
 			},
+			cli.BoolFlag{
+				Name:  "not-super",
+				Usage: `Only return admins without 'super' privileges.`,
+			},
+			cli.StringFlag{
+				Name:  "provisioner",
+				Usage: `Only return admins linked to this provisioner.`,
+			},
 		},
-		Description: `**step ca admin list** lists all admins.
+		Description: `**step ca admin list** lists all admins in the CA configuration.
 
 ## EXAMPLES
 
@@ -40,65 +46,25 @@ $ step ca admin list
 
 List only super-admins:
 '''
-$ step ca admin --super list
+$ step ca admin list --super
+'''
+
+List only admins without super-admin privileges:
+'''
+$ step ca admin list --not-super
+'''
+
+List all admins associated with a given provisioner:
+'''
+$ step ca admin list --provisioner admin-jwk
+'''
+
+List only super-admins associated with a given provisioner:
+'''
+$ step ca admin list --super --provisioner admin-jwk
 '''
 `,
 	}
-}
-
-// Admin is a abbreviated admin type for use in the cli interface.
-type Admin struct {
-	ID           string       `json:"id"`
-	Name         string       `json:"name"`
-	Status       string       `json:"status"`
-	IsSuperAdmin bool         `json:"isSuperAdmin"`
-	Provisioner  *Provisioner `json:"provisioner"`
-}
-
-// Provisioner is a abbreviated provisioner type for consumption
-// through the cli interface.
-type Provisioner struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Type string `json:"type"`
-}
-
-func ToCLI(client *ca.MgmtClient, admins []*mgmt.Admin) ([]*Admin, error) {
-	provs, err := client.GetProvisioners()
-	if err != nil {
-		return nil, err
-	}
-
-	var provMap = map[string]*mgmt.Provisioner{}
-	for _, p := range provs {
-		provMap[p.ID] = p
-	}
-
-	var cliAdmins = make([]*Admin, len(admins))
-	for i, adm := range admins {
-		cliAdm := &Admin{
-			ID:           adm.ID,
-			Name:         adm.Name,
-			Status:       adm.Status.String(),
-			IsSuperAdmin: adm.IsSuperAdmin,
-		}
-		p, ok := provMap[adm.ProvisionerID]
-		if ok {
-			cliAdm.Provisioner = &Provisioner{
-				ID:   p.ID,
-				Name: p.Name,
-				Type: p.Type,
-			}
-		} else {
-			cliAdm.Provisioner = &Provisioner{
-				ID:   "NaN",
-				Name: "NaN",
-				Type: "NaN",
-			}
-		}
-		cliAdmins[i] = cliAdm
-	}
-	return cliAdmins, nil
 }
 
 func listAction(ctx *cli.Context) (err error) {
@@ -106,25 +72,14 @@ func listAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	caURL, err := flags.ParseCaURLIfExists(ctx)
-	if err != nil {
-		return err
-	}
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
-		rootFile = pki.GetRootCAPath()
-		if _, err := os.Stat(rootFile); err != nil {
-			return errs.RequiredFlag(ctx, "root")
-		}
+	isSuperAdmin := ctx.IsSet("super")
+	isNotSuperAdmin := ctx.IsSet("not-super")
+
+	if isSuperAdmin && isNotSuperAdmin {
+		return errs.IncompatibleFlag(ctx, "super", "not-super")
 	}
 
-	// Create online client
-	var options []ca.ClientOption
-	options = append(options, ca.WithRootFile(rootFile))
-	client, err := ca.NewMgmtClient(caURL, options...)
+	client, err := cautils.NewMgmtClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -133,16 +88,32 @@ func listAction(ctx *cli.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	cliAdmins, err := ToCLI(client, admins)
-	if err != nil {
-		return err
+	if len(admins) == 0 {
+		fmt.Println("authority no admins configured")
+		return nil
 	}
+	provName := ctx.String("provisioner")
+	admins = adminFilter(admins, func(adm *mgmt.Admin) bool {
+		if isSuperAdmin && adm.Type != mgmt.AdminTypeSuper {
+			return false
+		}
+		if isNotSuperAdmin && adm.Type == mgmt.AdminTypeSuper {
+			return false
+		}
+		if len(provName) > 0 && adm.ProvisionerName != provName {
+			return false
+		}
+		return true
+	})
 
-	b, err := json.MarshalIndent(cliAdmins, "", "   ")
-	if err != nil {
-		return errors.Wrap(err, "error marshaling admins")
+	w := new(tabwriter.Writer)
+	// Format in tab-separated columns with a tab stop of 8.
+	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
+
+	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE\tSTATUS")
+	for _, adm := range admins {
+		fmt.Fprintf(w, "%s\t%s(%s)\t%s\t%s\n", adm.Subject, adm.ProvisionerName, adm.ProvisionerType, string(adm.Type), adm.Status)
 	}
-
-	fmt.Println(string(b))
+	w.Flush()
 	return nil
 }

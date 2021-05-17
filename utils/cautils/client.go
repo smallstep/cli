@@ -58,3 +58,25 @@ func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
 	opts = append([]ca.ClientOption{ca.WithRootFile(root)}, opts...)
 	return ca.NewClient(caURL, opts...)
 }
+
+// NewMgmtClient returns a client for the mgmt API of the online CA.
+func NewMgmtClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.MgmtClient, error) {
+	caURL, err := flags.ParseCaURLIfExists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(caURL) == 0 {
+		return nil, errs.RequiredFlag(ctx, "ca-url")
+	}
+	root := ctx.String("root")
+	if len(root) == 0 {
+		root = pki.GetRootCAPath()
+		if _, err := os.Stat(root); err != nil {
+			return nil, errs.RequiredFlag(ctx, "root")
+		}
+	}
+
+	// Create online client
+	opts = append([]ca.ClientOption{ca.WithRootFile(root)}, opts...)
+	return ca.NewMgmtClient(caURL, opts...)
+}

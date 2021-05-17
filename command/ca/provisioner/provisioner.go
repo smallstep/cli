@@ -13,6 +13,11 @@ func Command() cli.Command {
 			getEncryptedKeyCommand(),
 			addCommand(),
 			removeCommand(),
+			list2Command(),
+			get2Command(),
+			add2Command(),
+			remove2Command(),
+			update2Command(),
 		},
 		Description: `The **step ca provisioner** command group provides facilities for managing the
 certificate authority provisioners.

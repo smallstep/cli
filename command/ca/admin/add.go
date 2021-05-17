@@ -1,17 +1,15 @@
 package admin
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
-	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/mgmt"
 	mgmtAPI "github.com/smallstep/certificates/authority/mgmt/api"
-	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -20,9 +18,8 @@ func addCommand() cli.Command {
 		Name:      "add",
 		Action:    cli.ActionFunc(addAction),
 		Usage:     "add an admin to the CA configuration",
-		UsageText: `**step ca admin add** <name> <provisioner> [**--super**]`,
+		UsageText: `**step ca admin add** <provisioner> <subject> [**--super**]`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
 			flags.CaURL,
 			flags.Root,
 			cli.BoolFlag{
@@ -30,26 +27,26 @@ func addCommand() cli.Command {
 				Usage: `Give administrator SuperAdmin privileges.`,
 			},
 		},
-		Description: `**step ca admin add** adds an admin.
+		Description: `**step ca admin add** adds an admin to the CA configuration.
 
 ## POSITIONAL ARGUMENTS
 
-<name>
-: The name of the admin. This name must appear in the admin's identity certificate SANs.
-
 <provisioner>
 : The name of the provisioner
+
+<subject>
+: The subject name that must appear in the identifying credential of the admin.
 
 ## EXAMPLES
 
 Add regular Admin:
 '''
-$ step ca admin add max@smallstep.com admin-jwk
+$ step ca admin add admin-jwk max@smallstep.com admin-jwk
 '''
 
 Add SuperAdmin:
 '''
-$ step ca admin add max@smallstep.com admin-jwk --super
+$ step ca admin add admin-jwk max@smallstep.com --super
 '''
 `,
 	}
@@ -61,50 +58,34 @@ func addAction(ctx *cli.Context) (err error) {
 	}
 
 	args := ctx.Args()
-	name := args.Get(0)
-	provisionerID := args.Get(1)
+	provName := args.Get(0)
+	subject := args.Get(1)
 
-	caURL, err := flags.ParseCaURLIfExists(ctx)
-	if err != nil {
-		return err
-	}
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
-		rootFile = pki.GetRootCAPath()
-		if _, err := os.Stat(rootFile); err != nil {
-			return errs.RequiredFlag(ctx, "root")
-		}
+	typ := mgmt.AdminTypeRegular
+	if ctx.IsSet("super") {
+		typ = mgmt.AdminTypeSuper
 	}
 
-	// Create online client
-	var options []ca.ClientOption
-	options = append(options, ca.WithRootFile(rootFile))
-	client, err := ca.NewMgmtClient(caURL, options...)
+	client, err := cautils.NewMgmtClient(ctx)
 	if err != nil {
 		return err
 	}
 
 	adm, err := client.CreateAdmin(&mgmtAPI.CreateAdminRequest{
-		Name:          name,
-		ProvisionerID: provisionerID,
-		IsSuperAdmin:  ctx.Bool("super"),
+		Subject:     subject,
+		Provisioner: provName,
+		Type:        typ,
 	})
 	if err != nil {
 		return err
 	}
-	cliAdmins, err := ToCLI(client, []*mgmt.Admin{adm})
-	if err != nil {
-		return err
-	}
 
-	b, err := json.MarshalIndent(cliAdmins[0], "", "   ")
-	if err != nil {
-		return errors.Wrap(err, "error marshaling admin")
-	}
+	w := new(tabwriter.Writer)
+	// Format in tab-separated columns with a tab stop of 8.
+	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
-	fmt.Println(string(b))
+	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE\tSTATUS")
+	fmt.Fprintf(w, "%s\t%s(%s)\t%s\t%s\n", adm.Subject, adm.ProvisionerName, adm.ProvisionerType, string(adm.Type), adm.Status)
+	w.Flush()
 	return nil
 }
