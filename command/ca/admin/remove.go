@@ -54,7 +54,7 @@ func removeAction(ctx *cli.Context) error {
 		return err
 	}
 
-	admins, err := client.GetAdmins()
+	admins, err := getAdmins(client)
 	if err != nil {
 		return err
 	}

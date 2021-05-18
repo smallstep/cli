@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/smallstep/certificates/authority/mgmt"
+	"github.com/smallstep/certificates/authority/admin"
 	mgmtAPI "github.com/smallstep/certificates/authority/mgmt/api"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -83,7 +83,7 @@ func updateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	admins, err := client.GetAdmins()
+	admins, err := getAdmins(client)
 	if err != nil {
 		return err
 	}
@@ -92,12 +92,12 @@ func updateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	var typ mgmt.AdminType
+	var typ admin.Type
 	if ctx.IsSet("super") {
-		typ = mgmt.AdminTypeSuper
+		typ = admin.TypeSuper
 	}
 	if ctx.IsSet("not-super") {
-		typ = mgmt.AdminTypeRegular
+		typ = admin.TypeRegular
 	}
 	adm, err = client.UpdateAdmin(adm.ID, &mgmtAPI.UpdateAdminRequest{
 		Type: typ,

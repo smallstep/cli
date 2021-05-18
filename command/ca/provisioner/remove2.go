@@ -1,12 +1,9 @@
 package provisioner
 
 import (
-	"os"
-
-	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -15,7 +12,7 @@ func remove2Command() cli.Command {
 		Name:      "remove2",
 		Action:    cli.ActionFunc(remove2Action),
 		Usage:     "remove a provisioner from the CA configuration",
-		UsageText: `**step ca provisioner remove** <id> [**--ca-url**=<uri>] [**--root**=<file>]`,
+		UsageText: `**step ca provisioner remove** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.CaURL,
 			flags.Root,
@@ -26,7 +23,7 @@ func remove2Command() cli.Command {
 
 Remove provisioner by id:
 '''
-$ step ca provisioner remove isxSMDpOvoSMT5fFMzkynofhuHKe9uRt
+$ step ca provisioner remove admin-jwk
 '''
 `,
 	}
@@ -38,32 +35,14 @@ func remove2Action(ctx *cli.Context) (err error) {
 	}
 
 	args := ctx.Args()
-	id := args.Get(0)
+	name := args.Get(0)
 
-	caURL, err := flags.ParseCaURLIfExists(ctx)
-	if err != nil {
-		return err
-	}
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
-		rootFile = pki.GetRootCAPath()
-		if _, err := os.Stat(rootFile); err != nil {
-			return errs.RequiredFlag(ctx, "root")
-		}
-	}
-
-	// Create online client
-	var options []ca.ClientOption
-	options = append(options, ca.WithRootFile(rootFile))
-	client, err := ca.NewMgmtClient(caURL, options...)
+	client, err := cautils.NewMgmtClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err := client.RemoveProvisioner(id); err != nil {
+	if err := client.RemoveProvisioner(name); err != nil {
 		return err
 	}
 

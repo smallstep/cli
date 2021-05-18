@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/smallstep/certificates/authority/mgmt"
+	"github.com/smallstep/certificates/authority/admin"
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
@@ -54,10 +55,10 @@ $ step ca admin remove max@smallstep.com my-jwk-provisioner
 
 type adminSelect struct {
 	Name  string
-	Admin *mgmt.Admin
+	Admin *admin.Admin
 }
 
-func adminPrompt(ctx *cli.Context, admins []*mgmt.Admin) (*mgmt.Admin, error) {
+func adminPrompt(ctx *cli.Context, admins []*admin.Admin) (*admin.Admin, error) {
 	if len(admins) == 0 {
 		return nil, errors.New("no admins to update")
 	}
@@ -65,7 +66,7 @@ func adminPrompt(ctx *cli.Context, admins []*mgmt.Admin) (*mgmt.Admin, error) {
 	subject := args[0]
 
 	// Filter by subject
-	admins = adminFilter(admins, func(adm *mgmt.Admin) bool {
+	admins = adminFilter(admins, func(adm *admin.Admin) bool {
 		return adm.Subject == subject
 	})
 	if len(admins) == 0 {
@@ -74,7 +75,7 @@ func adminPrompt(ctx *cli.Context, admins []*mgmt.Admin) (*mgmt.Admin, error) {
 
 	// Filter by provisionerName
 	if provName := ctx.String("provisioner"); len(provName) != 0 {
-		admins = adminFilter(admins, func(a *mgmt.Admin) bool {
+		admins = adminFilter(admins, func(a *admin.Admin) bool {
 			return a.ProvisionerName == provName
 		})
 		if len(admins) == 0 {
@@ -108,12 +109,30 @@ func adminPrompt(ctx *cli.Context, admins []*mgmt.Admin) (*mgmt.Admin, error) {
 }
 
 // adminFilter returns a slice of admins that pass the given filter.
-func adminFilter(admins []*mgmt.Admin, f func(*mgmt.Admin) bool) []*mgmt.Admin {
-	var result []*mgmt.Admin
+func adminFilter(admins []*admin.Admin, f func(*admin.Admin) bool) []*admin.Admin {
+	var result []*admin.Admin
 	for _, a := range admins {
 		if f(a) {
 			result = append(result, a)
 		}
 	}
 	return result
+}
+
+func getAdmins(client *ca.MgmtClient) ([]*admin.Admin, error) {
+	var (
+		cursor = ""
+		admins = []*admin.Admin{}
+	)
+	for {
+		resp, err := client.GetAdmins(ca.WithAdminCursor(cursor), ca.WithAdminLimit(100))
+		if err != nil {
+			return nil, err
+		}
+		admins = append(admins, resp.Admins...)
+		if resp.NextCursor == "" {
+			return admins, nil
+		}
+		cursor = resp.NextCursor
+	}
 }

@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/smallstep/certificates/authority/mgmt"
+	"github.com/smallstep/certificates/authority/admin"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
@@ -84,20 +84,20 @@ func listAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	admins, err := client.GetAdmins()
+	admins, err := getAdmins(client)
 	if err != nil {
 		return err
 	}
 	if len(admins) == 0 {
-		fmt.Println("authority no admins configured")
+		fmt.Println("authority has no admins configured")
 		return nil
 	}
 	provName := ctx.String("provisioner")
-	admins = adminFilter(admins, func(adm *mgmt.Admin) bool {
-		if isSuperAdmin && adm.Type != mgmt.AdminTypeSuper {
+	admins = adminFilter(admins, func(adm *admin.Admin) bool {
+		if isSuperAdmin && adm.Type != admin.TypeSuper {
 			return false
 		}
-		if isNotSuperAdmin && adm.Type == mgmt.AdminTypeSuper {
+		if isNotSuperAdmin && adm.Type == admin.TypeSuper {
 			return false
 		}
 		if len(provName) > 0 && adm.ProvisionerName != provName {
