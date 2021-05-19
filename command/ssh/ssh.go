@@ -272,6 +272,9 @@ func createPrincipalsFromSubject(subject string) []string {
 		if local := subject[:i]; !strings.EqualFold(local, name) {
 			principals = append(principals, local)
 		}
+	}
+	// Append the original subject if different.
+	if subject != name {
 		principals = append(principals, subject)
 	}
 	return principals
