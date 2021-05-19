@@ -198,9 +198,9 @@ func loginAction(ctx *cli.Context) error {
 		identityKey = key
 	}
 
-	// NOTE: For OIDC tokens the subject should be always the email. The
-	// provisioner is responsible to setting the principals by using an identity
-	// function.
+	// NOTE: For OIDC tokens the subject should always be the email. The
+	// provisioner is responsible for loading and setting the principals with
+	// the application of an Identity function.
 	if email, ok := tokenHasEmail(token); ok {
 		subject = email
 	}
