@@ -13,7 +13,7 @@ import (
 	"github.com/smallstep/cli/config"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 // ProxyCommand replaces %%, %h, %p, and %r in the given command.
@@ -249,15 +249,15 @@ func (s *Shell) RemoteShell() error {
 	defer session.Close()
 
 	var fallback bool
-	if fd := int(os.Stdin.Fd()); terminal.IsTerminal(fd) {
+	if fd := int(os.Stdin.Fd()); term.IsTerminal(fd) {
 		// Put terminal in raw mode
-		if originalState, err := terminal.MakeRaw(fd); err != nil {
+		if originalState, err := term.MakeRaw(fd); err != nil {
 			fallback = true
 		} else {
-			defer terminal.Restore(fd, originalState)
+			defer term.Restore(fd, originalState)
 
 			// Get terminal size
-			w, h, err := terminal.GetSize(fd)
+			w, h, err := term.GetSize(fd)
 			if err != nil {
 				w, h = 80, 40
 			}
