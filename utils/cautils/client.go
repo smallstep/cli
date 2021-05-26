@@ -59,8 +59,8 @@ func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
 	return ca.NewClient(caURL, opts...)
 }
 
-// NewMgmtClient returns a client for the mgmt API of the online CA.
-func NewMgmtClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.MgmtClient, error) {
+// NewAdminClient returns a client for the mgmt API of the online CA.
+func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient, error) {
 	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return nil, err
@@ -78,5 +78,5 @@ func NewMgmtClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.MgmtClient, e
 
 	// Create online client
 	opts = append([]ca.ClientOption{ca.WithRootFile(root)}, opts...)
-	return ca.NewMgmtClient(caURL, opts...)
+	return ca.NewAdminClient(caURL, opts...)
 }

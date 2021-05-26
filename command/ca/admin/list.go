@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/smallstep/certificates/authority/admin"
+	"github.com/smallstep/certificates/linkedca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
@@ -79,28 +79,28 @@ func listAction(ctx *cli.Context) (err error) {
 		return errs.IncompatibleFlag(ctx, "super", "not-super")
 	}
 
-	client, err := cautils.NewMgmtClient(ctx)
+	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	admins, err := getAdmins(client)
+	admins, err := client.GetAdmins()
 	if err != nil {
 		return err
 	}
-	if len(admins) == 0 {
-		fmt.Println("authority has no admins configured")
-		return nil
+	cliAdmins, err := listToCLI(ctx, client, admins)
+	if err != nil {
+		return err
 	}
 	provName := ctx.String("provisioner")
-	admins = adminFilter(admins, func(adm *admin.Admin) bool {
-		if isSuperAdmin && adm.Type != admin.TypeSuper {
+	cliAdmins = adminFilter(cliAdmins, func(a *cliAdmin) bool {
+		if isSuperAdmin && a.Type != linkedca.Admin_SUPER_ADMIN {
 			return false
 		}
-		if isNotSuperAdmin && adm.Type == admin.TypeSuper {
+		if isNotSuperAdmin && a.Type == linkedca.Admin_SUPER_ADMIN {
 			return false
 		}
-		if len(provName) > 0 && adm.ProvisionerName != provName {
+		if len(provName) > 0 && a.ProvisionerName != provName {
 			return false
 		}
 		return true
@@ -110,9 +110,9 @@ func listAction(ctx *cli.Context) (err error) {
 	// Format in tab-separated columns with a tab stop of 8.
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
-	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE\tSTATUS")
-	for _, adm := range admins {
-		fmt.Fprintf(w, "%s\t%s(%s)\t%s\t%s\n", adm.Subject, adm.ProvisionerName, adm.ProvisionerType, string(adm.Type), adm.Status)
+	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE")
+	for _, cliAdm := range cliAdmins {
+		fmt.Fprintf(w, "%s\t%s(%s)\t%s\n", cliAdm.Subject, cliAdm.ProvisionerName, cliAdm.ProvisionerType, cliAdm.Type)
 	}
 	w.Flush()
 	return nil

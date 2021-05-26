@@ -37,7 +37,7 @@ func remove2Action(ctx *cli.Context) (err error) {
 	args := ctx.Args()
 	name := args.Get(0)
 
-	client, err := cautils.NewMgmtClient(ctx)
+	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}

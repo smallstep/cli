@@ -107,7 +107,7 @@ func list2Action(ctx *cli.Context) (err error) {
 	// Create online client
 	var options []ca.ClientOption
 	options = append(options, ca.WithRootFile(rootFile))
-	client, err := ca.NewMgmtClient(caURL, options...)
+	client, err := ca.NewAdminClient(caURL, options...)
 	if err != nil {
 		return err
 	}
@@ -119,9 +119,9 @@ func list2Action(ctx *cli.Context) (err error) {
 	listProvs := []*listProvisioner{}
 	for _, prov := range provs {
 		listProvs = append(listProvs, &listProvisioner{
-			ID:   prov.ID,
-			Type: prov.Type,
-			Name: prov.Name,
+			ID:   prov.GetID(),
+			Type: prov.GetType().String(),
+			Name: prov.GetName(),
 		})
 	}
 

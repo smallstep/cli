@@ -5,8 +5,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/smallstep/certificates/authority/admin"
 	mgmtAPI "github.com/smallstep/certificates/authority/mgmt/api"
+	"github.com/smallstep/certificates/linkedca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
@@ -78,28 +78,28 @@ func updateAction(ctx *cli.Context) error {
 		return errs.RequiredOrFlag(ctx, "super", "not-super")
 	}
 
-	client, err := cautils.NewMgmtClient(ctx)
+	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	admins, err := getAdmins(client)
+	admins, err := client.GetAdmins()
 	if err != nil {
 		return err
 	}
-	adm, err := adminPrompt(ctx, admins)
+	cliAdm, err := adminPrompt(ctx, client, admins)
 	if err != nil {
 		return err
 	}
 
-	var typ admin.Type
+	var typ linkedca.Admin_Type
 	if ctx.IsSet("super") {
-		typ = admin.TypeSuper
+		typ = linkedca.Admin_SUPER_ADMIN
 	}
 	if ctx.IsSet("not-super") {
-		typ = admin.TypeRegular
+		typ = linkedca.Admin_ADMIN
 	}
-	adm, err = client.UpdateAdmin(adm.ID, &mgmtAPI.UpdateAdminRequest{
+	adm, err := client.UpdateAdmin(cliAdm.Id, &mgmtAPI.UpdateAdminRequest{
 		Type: typ,
 	})
 	if err != nil {
@@ -110,8 +110,8 @@ func updateAction(ctx *cli.Context) error {
 	// Format in tab-separated columns with a tab stop of 8.
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
-	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE\tSTATUS")
-	fmt.Fprintf(w, "%s\t%s(%s)\t%s\t%s\n", adm.Subject, adm.ProvisionerName, adm.ProvisionerType, string(adm.Type), adm.Status)
+	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE")
+	fmt.Fprintf(w, "%s\t%s(%s)\t%s\n", adm.Subject, cliAdm.ProvisionerName, cliAdm.ProvisionerType, adm.Type.String())
 	w.Flush()
 
 	return nil

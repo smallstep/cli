@@ -49,21 +49,21 @@ func removeAction(ctx *cli.Context) error {
 		return err
 	}
 
-	client, err := cautils.NewMgmtClient(ctx)
+	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	admins, err := getAdmins(client)
+	admins, err := client.GetAdmins()
 	if err != nil {
 		return err
 	}
-	adm, err := adminPrompt(ctx, admins)
+	adm, err := adminPrompt(ctx, client, admins)
 	if err != nil {
 		return err
 	}
 
-	if err := client.RemoveAdmin(adm.ID); err != nil {
+	if err := client.RemoveAdmin(adm.Id); err != nil {
 		return err
 	}
 

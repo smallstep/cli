@@ -1,21 +1,26 @@
 package provisioner
 
 import (
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
-	"os"
+	"io/ioutil"
+	"net/url"
 	"regexp"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/authority/mgmt"
-	mgmtAPI "github.com/smallstep/certificates/authority/mgmt/api"
-	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
+	"github.com/smallstep/certificates/linkedca"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -24,7 +29,7 @@ func add2Command() cli.Command {
 		Name:   "add2",
 		Action: cli.ActionFunc(add2Action),
 		Usage:  "add a provisioner to the CA configuration",
-		UsageText: `**step ca provisioner add** <type> <name> [**--create**] [**--private-key**=<file>]
+		UsageText: `**step ca provisioner add** <name> <type> [**--create**] [**--private-key**=<file>]
 [**--password-file**=<file>] [**--ssh**] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
@@ -87,6 +92,9 @@ keys and x509 Certificates.`,
 
 ## POSITIONAL ARGUMENTS
 
+<name>
+: The name of the provisioner.
+
 <type>
 : The <type> of provisioner to create.
 
@@ -118,9 +126,6 @@ keys and x509 Certificates.`,
 
     **SSHPOP**
     : Uses an SSH Certificate / private key pair to sign provisioning tokens.
-
-<name>
-: The name of the provisioner.
 
 ## EXAMPLES
 
@@ -185,56 +190,47 @@ func add2Action(ctx *cli.Context) (err error) {
 	}
 
 	args := ctx.Args()
-	typ := args.Get(0)
-	name := args.Get(1)
 
-	caURL, err := flags.ParseCaURLIfExists(ctx)
-	if err != nil {
-		return err
-	}
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
-		rootFile = pki.GetRootCAPath()
-		if _, err := os.Stat(rootFile); err != nil {
-			return errs.RequiredFlag(ctx, "root")
-		}
+	p := &linkedca.Provisioner{
+		Name: args.Get(0),
 	}
 
-	// Create online client
-	var options []ca.ClientOption
-	options = append(options, ca.WithRootFile(rootFile))
-	client, err := ca.NewMgmtClient(caURL, options...)
+	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	var prov *mgmt.Provisioner
-	switch mgmt.ProvisionerType(typ) {
-	case mgmt.ProvisionerTypeJWK:
-		prov, err = add2JWKProvisioner(ctx, client, name)
-		/*
-			case mgmt.ProvisionerTypeOIDC:
-				return add2OIDCProvisioner(ctx, client, name)
-			case mgmt.ProvisionerTypeX5C:
-				return add2X5CProvisioner(ctx, client, name)
-			case mgmt.ProvisionerTypeSSHPOP:
-				return add2SSHPOPProvisioner(ctx, client, name)
-			case mgmt.ProvisionerTypeK8SSA:
-				return add2SSHPOPProvisioner(ctx, client, name)
-			case mgmt.ProvisionerTypeACME:
-				return add2ACMEProvisioner(ctx, client, name)
-		*/
+	switch args.Get(1) {
+	case linkedca.Provisioner_JWK.String():
+		p.Type = linkedca.Provisioner_JWK
+		p.Details, err = createJWKDetails(ctx)
+	case linkedca.Provisioner_ACME.String():
+		p.Type = linkedca.Provisioner_ACME
+		p.Details, err = createACMEDetails(ctx)
+	case linkedca.Provisioner_SSHPOP.String():
+		p.Type = linkedca.Provisioner_SSHPOP
+		p.Details, err = createSSHPOPDetails(ctx)
+	case linkedca.Provisioner_X5C.String():
+		p.Type = linkedca.Provisioner_X5C
+		p.Details, err = createX5CDetails(ctx)
+	case linkedca.Provisioner_K8SSA.String():
+		p.Type = linkedca.Provisioner_K8SSA
+		p.Details, err = createK8SSADetails(ctx)
+	case linkedca.Provisioner_OIDC.String():
+		p.Type = linkedca.Provisioner_OIDC
+		p.Details, err = createOIDCDetails(ctx)
 	default:
-		return fmt.Errorf("unsupported provisioner type %s", typ)
+		return fmt.Errorf("unsupported provisioner type %s", args.Get(1))
 	}
 	if err != nil {
 		return err
 	}
 
-	b, err := json.MarshalIndent(prov, "", "   ")
+	if p, err = client.CreateProvisioner(p); err != nil {
+		return err
+	}
+
+	b, err := json.MarshalIndent(p, "", "   ")
 	if err != nil {
 		return errors.Wrap(err, "error marshaling provisioner")
 	}
@@ -243,7 +239,7 @@ func add2Action(ctx *cli.Context) (err error) {
 	return nil
 }
 
-func add2JWKProvisioner(ctx *cli.Context, client *ca.MgmtClient, name string) (*mgmt.Provisioner, error) {
+func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	var (
 		err      error
 		password string
@@ -301,19 +297,150 @@ func add2JWKProvisioner(ctx *cli.Context, client *ca.MgmtClient, name string) (*
 			return nil, err
 		}
 	}
-
-	details, err := mgmt.NewProvisionerDetails("JWK", mgmt.NewProvisionerCtx(mgmt.WithJWK(jwk, jwe)))
+	jwkPubBytes, err := jwk.MarshalJSON()
 	if err != nil {
-		return nil, errors.Wrap(err, "error generating JWK provisioner details")
+		return nil, errors.Wrap(err, "error marshaling JWK")
 	}
-	detailBytes, err := json.Marshal(details)
+	jwePrivStr, err := jwe.CompactSerialize()
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling provisioner details")
+		return nil, errors.Wrap(err, "error serializing JWE")
 	}
 
-	return client.CreateProvisioner(&mgmtAPI.CreateProvisionerRequest{
-		Type:    "JWK",
-		Name:    name,
-		Details: detailBytes,
-	})
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_JWK{
+			JWK: &linkedca.JWKProvisioner{
+				PublicKey:           jwkPubBytes,
+				EncryptedPrivateKey: []byte(jwePrivStr),
+			},
+		},
+	}, nil
+}
+
+func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_ACME{
+			ACME: &linkedca.ACMEProvisioner{
+				ForceCn: ctx.IsSet("forceCN"),
+			},
+		},
+	}, nil
+}
+
+func createSSHPOPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_SSHPOP{
+			SSHPOP: &linkedca.SSHPOPProvisioner{},
+		},
+	}, nil
+}
+
+func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	x5cRootFile := ctx.String("x5c-root")
+	if len(x5cRootFile) == 0 {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", "x5c", "x5c-root")
+	}
+
+	roots, err := pemutil.ReadCertificateBundle(x5cRootFile)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error loading X5C Root certificates from %s", x5cRootFile)
+	}
+	var rootBytes [][]byte
+	for _, r := range roots {
+		if r.KeyUsage&x509.KeyUsageCertSign == 0 {
+			return nil, errors.Errorf("error: certificate with common name '%s' cannot be "+
+				"used as an X5C root certificate.\n\n"+
+				"X5C provisioner root certificates must have the 'Certificate Sign' key "+
+				"usage extension.", r.Subject.CommonName)
+		}
+		rootBytes = append(rootBytes, pem.EncodeToMemory(&pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: r.Raw,
+		}))
+	}
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_X5C{
+			X5C: &linkedca.X5CProvisioner{
+				Roots: rootBytes,
+			},
+		},
+	}, nil
+}
+
+func createK8SSADetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	pemKeysF := ctx.String("pem-keys")
+	if len(pemKeysF) == 0 {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "pem-keys")
+	}
+
+	pemKeysB, err := ioutil.ReadFile(pemKeysF)
+	if err != nil {
+		return nil, errors.Wrap(err, "error reading pem keys")
+	}
+
+	var (
+		block   *pem.Block
+		rest    = pemKeysB
+		pemKeys = []interface{}{}
+	)
+	for rest != nil {
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
+		key, err := pemutil.ParseKey(pem.EncodeToMemory(block))
+		if err != nil {
+			return nil, errors.Wrapf(err, "error parsing public key from %s", pemKeysF)
+		}
+		switch q := key.(type) {
+		case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey:
+		default:
+			return nil, errors.Errorf("Unexpected public key type %T in %s", q, pemKeysF)
+		}
+		pemKeys = append(pemKeys, key)
+	}
+
+	var pubKeyBytes [][]byte
+	for _, k := range pemKeys {
+		blk, err := pemutil.Serialize(k)
+		if err != nil {
+			return nil, errors.Wrap(err, "error serializing pem key")
+		}
+		pubKeyBytes = append(pubKeyBytes, pem.EncodeToMemory(blk))
+	}
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_K8SSA{
+			K8SSA: &linkedca.K8SSAProvisioner{
+				PublicKeys: pubKeyBytes,
+			},
+		},
+	}, nil
+}
+
+func createOIDCDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	clientID := ctx.String("client-id")
+	if len(clientID) == 0 {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "client-id")
+	}
+
+	confURL := ctx.String("configuration-endpoint")
+	if len(confURL) == 0 {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "configuration-endpoint")
+	}
+	u, err := url.Parse(confURL)
+	if err != nil || (u.Scheme != "https" && u.Scheme != "http") {
+		return nil, errs.InvalidFlagValue(ctx, "configuration-endpoint", confURL, "")
+	}
+
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_OIDC{
+			OIDC: &linkedca.OIDCProvisioner{
+				ClientId:              clientID,
+				ClientSecret:          ctx.String("client-secret"),
+				ConfigurationEndpoint: confURL,
+				Admins:                ctx.StringSlice("admin"),
+				Domains:               ctx.StringSlice("domain"),
+				ListenAddress:         ctx.String("listen-address"),
+			},
+		},
+	}, nil
 }

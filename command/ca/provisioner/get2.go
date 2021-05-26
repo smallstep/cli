@@ -18,7 +18,7 @@ func get2Command() cli.Command {
 		Name:      "get2",
 		Action:    cli.ActionFunc(get2Action),
 		Usage:     "get a provisioner from the CA configuration",
-		UsageText: `**step ca provisioner get** <id> [**--ca-url**=<uri>] [**--root**=<file>]`,
+		UsageText: `**step ca provisioner get** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.CaURL,
 			flags.Root,
@@ -27,9 +27,9 @@ func get2Command() cli.Command {
 
 ## EXAMPLES
 
-Get a provisioner by id:
+Get a provisioner by name:
 '''
-$ step ca provisioner get isxSMDpOvoSMT5fFMzkynofhuHKe9uRt
+$ step ca provisioner get admin-jwk
 '''
 `,
 	}
@@ -41,7 +41,7 @@ func get2Action(ctx *cli.Context) (err error) {
 	}
 
 	args := ctx.Args()
-	id := args.Get(0)
+	name := args.Get(0)
 
 	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
@@ -61,12 +61,12 @@ func get2Action(ctx *cli.Context) (err error) {
 	// Create online client
 	var options []ca.ClientOption
 	options = append(options, ca.WithRootFile(rootFile))
-	client, err := ca.NewMgmtClient(caURL, options...)
+	client, err := ca.NewAdminClient(caURL, options...)
 	if err != nil {
 		return err
 	}
 
-	prov, err := client.GetProvisioner(id)
+	prov, err := client.GetProvisionerByName(name)
 	if err != nil {
 		return err
 	}

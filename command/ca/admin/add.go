@@ -5,8 +5,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/smallstep/certificates/authority/mgmt"
 	mgmtAPI "github.com/smallstep/certificates/authority/mgmt/api"
+	"github.com/smallstep/certificates/linkedca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
@@ -61,12 +61,12 @@ func addAction(ctx *cli.Context) (err error) {
 	provName := args.Get(0)
 	subject := args.Get(1)
 
-	typ := mgmt.AdminTypeRegular
+	typ := linkedca.Admin_ADMIN
 	if ctx.IsSet("super") {
-		typ = mgmt.AdminTypeSuper
+		typ = linkedca.Admin_SUPER_ADMIN
 	}
 
-	client, err := cautils.NewMgmtClient(ctx)
+	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -80,12 +80,17 @@ func addAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
+	prov, err := client.GetProvisionerByName(provName)
+	if err != nil {
+		return err
+	}
+
 	w := new(tabwriter.Writer)
 	// Format in tab-separated columns with a tab stop of 8.
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
-	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE\tSTATUS")
-	fmt.Fprintf(w, "%s\t%s(%s)\t%s\t%s\n", adm.Subject, adm.ProvisionerName, adm.ProvisionerType, string(adm.Type), adm.Status)
+	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE")
+	fmt.Fprintf(w, "%s\t%s(%s)\t%s\t%s\n", adm.Subject, prov.Name, prov.Type, adm.Type.String())
 	w.Flush()
 	return nil
 }

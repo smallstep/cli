@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/smallstep/certificates/authority/admin"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/certificates/linkedca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
@@ -54,42 +55,83 @@ $ step ca admin remove max@smallstep.com my-jwk-provisioner
 }
 
 type adminSelect struct {
-	Name  string
-	Admin *admin.Admin
+	Name     string
+	CLIAdmin *cliAdmin
 }
 
-func adminPrompt(ctx *cli.Context, admins []*admin.Admin) (*admin.Admin, error) {
+type cliAdmin struct {
+	*linkedca.Admin
+	ProvisionerName string
+	ProvisionerType string
+}
+
+func toCLI(ctx *cli.Context, client *ca.AdminClient, adm *linkedca.Admin) (*cliAdmin, error) {
+	// FIXME
+	p, err := client.GetProvisionerByName("foo")
+	if err != nil {
+		return nil, err
+	}
+	return &cliAdmin{Admin: adm, ProvisionerName: p.GetName(), ProvisionerType: p.GetType().String()}, nil
+}
+
+func listToCLI(ctx *cli.Context, client *ca.AdminClient, admins []*linkedca.Admin) ([]*cliAdmin, error) {
+	provs, err := client.GetProvisioners()
+	if err != nil {
+		return nil, err
+	}
+
+	var provMapByID = map[string]provisioner.Interface{}
+	for _, p := range provs {
+		provMapByID[p.GetID()] = p
+	}
+	var cliAdmins = make([]*cliAdmin, len(admins))
+	for _, adm := range admins {
+		p, ok := provMapByID[adm.ProvisionerId]
+		if !ok {
+			return nil, fmt.Errorf("provisioner %s not found for admin %s", adm.ProvisionerId, adm.Id)
+		}
+		cliAdmins = append(cliAdmins, &cliAdmin{Admin: adm, ProvisionerName: p.GetName(), ProvisionerType: p.GetType().String()})
+	}
+	return cliAdmins, nil
+}
+
+func adminPrompt(ctx *cli.Context, client *ca.AdminClient, admins []*linkedca.Admin) (*cliAdmin, error) {
 	if len(admins) == 0 {
 		return nil, errors.New("no admins to update")
 	}
 	args := ctx.Args()
 	subject := args[0]
 
+	cliAdmins, err := listToCLI(ctx, client, admins)
+	if err != nil {
+		return nil, err
+	}
+
 	// Filter by subject
-	admins = adminFilter(admins, func(adm *admin.Admin) bool {
+	cliAdmins = adminFilter(cliAdmins, func(adm *cliAdmin) bool {
 		return adm.Subject == subject
 	})
-	if len(admins) == 0 {
+	if len(cliAdmins) == 0 {
 		return nil, fmt.Errorf("no admins with subject %s", subject)
 	}
 
 	// Filter by provisionerName
 	if provName := ctx.String("provisioner"); len(provName) != 0 {
-		admins = adminFilter(admins, func(a *admin.Admin) bool {
+		cliAdmins = adminFilter(cliAdmins, func(a *cliAdmin) bool {
 			return a.ProvisionerName == provName
 		})
-		if len(admins) == 0 {
+		if len(cliAdmins) == 0 {
 			return nil, errs.InvalidFlagValue(ctx, "provisioner", provName, "")
 		}
 	}
 
 	// Select admin
 	var items []*adminSelect
-	for _, adm := range admins {
+	for _, adm := range cliAdmins {
 		items = append(items, &adminSelect{
 			Name: fmt.Sprintf("subject: %s, provisioner: %s(%s), type: %s", adm.Subject,
 				adm.ProvisionerName, adm.ProvisionerType, adm.Type),
-			Admin: adm,
+			CLIAdmin: adm,
 		})
 	}
 
@@ -97,7 +139,7 @@ func adminPrompt(ctx *cli.Context, admins []*admin.Admin) (*admin.Admin, error) 
 		if err := ui.PrintSelected("Admin", items[0].Name); err != nil {
 			return nil, err
 		}
-		return items[0].Admin, nil
+		return items[0].CLIAdmin, nil
 	}
 
 	i, _, err := ui.Select("Select an admin:", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Admin")))
@@ -105,34 +147,16 @@ func adminPrompt(ctx *cli.Context, admins []*admin.Admin) (*admin.Admin, error) 
 		return nil, err
 	}
 
-	return items[i].Admin, nil
+	return items[i].CLIAdmin, nil
 }
 
 // adminFilter returns a slice of admins that pass the given filter.
-func adminFilter(admins []*admin.Admin, f func(*admin.Admin) bool) []*admin.Admin {
-	var result []*admin.Admin
-	for _, a := range admins {
+func adminFilter(cliAdmins []*cliAdmin, f func(*cliAdmin) bool) []*cliAdmin {
+	var result []*cliAdmin
+	for _, a := range cliAdmins {
 		if f(a) {
 			result = append(result, a)
 		}
 	}
 	return result
-}
-
-func getAdmins(client *ca.MgmtClient) ([]*admin.Admin, error) {
-	var (
-		cursor = ""
-		admins = []*admin.Admin{}
-	)
-	for {
-		resp, err := client.GetAdmins(ca.WithAdminCursor(cursor), ca.WithAdminLimit(100))
-		if err != nil {
-			return nil, err
-		}
-		admins = append(admins, resp.Admins...)
-		if resp.NextCursor == "" {
-			return admins, nil
-		}
-		cursor = resp.NextCursor
-	}
 }
