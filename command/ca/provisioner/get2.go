@@ -66,7 +66,7 @@ func get2Action(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	prov, err := client.GetProvisionerByName(name)
+	prov, err := client.GetProvisioner(ca.WithProvisionerName(name))
 	if err != nil {
 		return err
 	}

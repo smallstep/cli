@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/linkedca"
 	"github.com/smallstep/cli/errs"
@@ -66,8 +65,7 @@ type cliAdmin struct {
 }
 
 func toCLI(ctx *cli.Context, client *ca.AdminClient, adm *linkedca.Admin) (*cliAdmin, error) {
-	// FIXME
-	p, err := client.GetProvisionerByName("foo")
+	p, err := client.GetProvisioner(ca.WithProvisionerID(adm.ProvisionerId))
 	if err != nil {
 		return nil, err
 	}
@@ -75,22 +73,15 @@ func toCLI(ctx *cli.Context, client *ca.AdminClient, adm *linkedca.Admin) (*cliA
 }
 
 func listToCLI(ctx *cli.Context, client *ca.AdminClient, admins []*linkedca.Admin) ([]*cliAdmin, error) {
-	provs, err := client.GetProvisioners()
-	if err != nil {
-		return nil, err
-	}
-
-	var provMapByID = map[string]provisioner.Interface{}
-	for _, p := range provs {
-		provMapByID[p.GetID()] = p
-	}
-	var cliAdmins = make([]*cliAdmin, len(admins))
-	for _, adm := range admins {
-		p, ok := provMapByID[adm.ProvisionerId]
-		if !ok {
-			return nil, fmt.Errorf("provisioner %s not found for admin %s", adm.ProvisionerId, adm.Id)
+	var (
+		err       error
+		cliAdmins = make([]*cliAdmin, len(admins))
+	)
+	for i, adm := range admins {
+		cliAdmins[i], err = toCLI(ctx, client, adm)
+		if err != nil {
+			return nil, err
 		}
-		cliAdmins = append(cliAdmins, &cliAdmin{Admin: adm, ProvisionerName: p.GetName(), ProvisionerType: p.GetType().String()})
 	}
 	return cliAdmins, nil
 }

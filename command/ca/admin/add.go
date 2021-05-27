@@ -80,7 +80,7 @@ func addAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	prov, err := client.GetProvisionerByName(provName)
+	cliAdm, err := toCLI(ctx, client, adm)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func addAction(ctx *cli.Context) (err error) {
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
 	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE")
-	fmt.Fprintf(w, "%s\t%s(%s)\t%s\t%s\n", adm.Subject, prov.Name, prov.Type, adm.Type.String())
+	fmt.Fprintf(w, "%s\t%s(%s)\t%s\n", cliAdm.Subject, cliAdm.ProvisionerName, cliAdm.ProvisionerType, adm.Type.String())
 	w.Flush()
 	return nil
 }
