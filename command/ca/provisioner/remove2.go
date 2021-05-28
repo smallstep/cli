@@ -1,6 +1,7 @@
 package provisioner
 
 import (
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
@@ -21,7 +22,7 @@ func remove2Command() cli.Command {
 
 ## EXAMPLES
 
-Remove provisioner by id:
+Remove provisioner by name:
 '''
 $ step ca provisioner remove admin-jwk
 '''
@@ -42,7 +43,7 @@ func remove2Action(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	if err := client.RemoveProvisioner(name); err != nil {
+	if err := client.RemoveProvisioner(ca.WithProvisionerName(name)); err != nil {
 		return err
 	}
 

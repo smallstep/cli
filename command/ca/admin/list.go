@@ -5,6 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/linkedca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -26,6 +27,9 @@ func listCommand() cli.Command {
 				Name:  "super",
 				Usage: `Only return super-admins.`,
 			},
+			flags.X5cCert,
+			flags.X5cKey,
+			flags.PasswordFile,
 			cli.BoolFlag{
 				Name:  "not-super",
 				Usage: `Only return admins without 'super' privileges.`,
@@ -79,7 +83,17 @@ func listAction(ctx *cli.Context) (err error) {
 		return errs.IncompatibleFlag(ctx, "super", "not-super")
 	}
 
-	client, err := cautils.NewAdminClient(ctx)
+	x5cCertFile := ctx.String("x5c-cert")
+	x5cKeyFile := ctx.String("x5c-key")
+	if len(x5cCertFile) == 0 {
+		return errs.RequiredFlag(ctx, "x5c-cert")
+	}
+	if len(x5cKeyFile) == 0 {
+		return errs.RequiredFlag(ctx, "x5c-key")
+	}
+
+	client, err := cautils.NewAdminClient(ctx,
+		ca.WithAdminX5C(x5cCertFile, x5cKeyFile, ctx.String("password-file")))
 	if err != nil {
 		return err
 	}

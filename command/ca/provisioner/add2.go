@@ -30,13 +30,22 @@ func add2Command() cli.Command {
 		Action: cli.ActionFunc(add2Action),
 		Usage:  "add a provisioner to the CA configuration",
 		UsageText: `**step ca provisioner add** <name> <type> [**--create**] [**--private-key**=<file>]
-[**--password-file**=<file>] [**--ssh**] [**--ca-url**=<uri>] [**--root**=<file>]`,
+[**--password-file**=<file>] [**--x509-template**=<file>] [**--ssh-template**=<file>]
+[**--ssh**] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "ssh",
 				Usage: `Enable SSH on the new provisioners.`,
 			},
 			flags.PasswordFile,
+			cli.StringFlag{
+				Name:  "x509-template",
+				Usage: `The x509 certificate template <file>, a JSON representation of the certificate to create.`,
+			},
+			cli.StringFlag{
+				Name:  "ssh-template",
+				Usage: `The x509 certificate template <file>, a JSON representation of the certificate to create.`,
+			},
 
 			// JWK provisioner flags
 			cli.BoolFlag{
@@ -189,10 +198,29 @@ func add2Action(ctx *cli.Context) (err error) {
 		return err
 	}
 
+	x509TemplateFile := ctx.String("x509-template")
+	sshTemplateFile := ctx.String("ssh-template")
+
 	args := ctx.Args()
 
 	p := &linkedca.Provisioner{
 		Name: args.Get(0),
+	}
+
+	// Read x509 template if passed
+	if x509TemplateFile != "" {
+		b, err := utils.ReadFile(x509TemplateFile)
+		if err != nil {
+			return err
+		}
+		p.X509Template = b
+	}
+	if sshTemplateFile != "" {
+		b, err := utils.ReadFile(sshTemplateFile)
+		if err != nil {
+			return err
+		}
+		p.SshTemplate = b
 	}
 
 	client, err := cautils.NewAdminClient(ctx)
