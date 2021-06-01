@@ -12,12 +12,12 @@ func removeCommand() cli.Command {
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove an admin from the CA configuration",
-		UsageText: `**step ca admin remove** <id> [**--provisioner**=<id>] [**--ca-url**=<uri>]
+		UsageText: `**step ca admin remove** <subject> [**--provisioner**=<id>] [**--ca-url**=<uri>]
 [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "provisioner",
-				Usage: `Update the admin name.`,
+				Usage: `Filter admins by provisioner name.`,
 			},
 			flags.X5cCert,
 			flags.X5cKey,

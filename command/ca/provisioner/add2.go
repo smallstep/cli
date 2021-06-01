@@ -37,7 +37,6 @@ func add2Command() cli.Command {
 				Name:  "ssh",
 				Usage: `Enable SSH on the new provisioners.`,
 			},
-			flags.PasswordFile,
 			cli.StringFlag{
 				Name:  "x509-template",
 				Usage: `The x509 certificate template <file>, a JSON representation of the certificate to create.`,
