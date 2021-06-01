@@ -15,6 +15,9 @@ func remove2Command() cli.Command {
 		Usage:     "remove a provisioner from the CA configuration",
 		UsageText: `**step ca provisioner remove** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
+			flags.X5cCert,
+			flags.X5cKey,
+			flags.PasswordFile,
 			flags.CaURL,
 			flags.Root,
 		},

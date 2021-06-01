@@ -76,7 +76,18 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		}
 	}
 
+	x5cCertFile := ctx.String("x5c-cert")
+	x5cKeyFile := ctx.String("x5c-key")
+	if len(x5cCertFile) == 0 {
+		return nil, errs.RequiredFlag(ctx, "x5c-cert")
+	}
+	if len(x5cKeyFile) == 0 {
+		return nil, errs.RequiredFlag(ctx, "x5c-key")
+	}
+
 	// Create online client
-	opts = append([]ca.ClientOption{ca.WithRootFile(root)}, opts...)
+	opts = append([]ca.ClientOption{ca.WithRootFile(root),
+		ca.WithAdminX5C(x5cCertFile, x5cKeyFile, ctx.String("password-file"))},
+		opts...)
 	return ca.NewAdminClient(caURL, opts...)
 }

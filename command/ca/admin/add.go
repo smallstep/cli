@@ -20,12 +20,15 @@ func addCommand() cli.Command {
 		Usage:     "add an admin to the CA configuration",
 		UsageText: `**step ca admin add** <provisioner> <subject> [**--super**]`,
 		Flags: []cli.Flag{
-			flags.CaURL,
-			flags.Root,
 			cli.BoolFlag{
 				Name:  "super",
 				Usage: `Give administrator SuperAdmin privileges.`,
 			},
+			flags.X5cCert,
+			flags.X5cKey,
+			flags.PasswordFile,
+			flags.CaURL,
+			flags.Root,
 		},
 		Description: `**step ca admin add** adds an admin to the CA configuration.
 
