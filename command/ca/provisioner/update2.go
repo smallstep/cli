@@ -30,7 +30,7 @@ $ step ca provisioner update
 }
 
 func update2Action(ctx *cli.Context) (err error) {
-	fmt.Println("not implemented\n")
+	fmt.Println("not implemented")
 	/*
 		if err := errs.NumberOfArguments(ctx, 0); err != nil {
 			return err

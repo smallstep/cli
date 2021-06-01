@@ -2,7 +2,6 @@ package cautils
 
 import (
 	"crypto"
-	"encoding/asn1"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -192,18 +191,6 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 	default:
 		return tokenGen.Token(tokAttrs.subject, token.WithX5CFile(x5cCertFile, jwk.Key))
 	}
-}
-
-var (
-	stepOIDRoot        = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 37476, 9000, 64}
-	stepOIDProvisioner = append(asn1.ObjectIdentifier(nil), append(stepOIDRoot, 1)...)
-)
-
-type stepProvisionerASN1 struct {
-	Type          int
-	Name          []byte
-	CredentialID  []byte
-	KeyValuePairs []string `asn1:"optional,omitempty"`
 }
 
 func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, tokAttrs tokenAttrs) (string, error) {

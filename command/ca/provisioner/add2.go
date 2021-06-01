@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
-	"regexp"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/linkedca"
@@ -174,25 +173,6 @@ step ca provisioner add SSHPOP sshpop
 '''
 `,
 	}
-}
-
-var uuidRegexp = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
-// stringSlice is a flag.Value that allows to set multiple values.
-type stringSlice struct {
-	Values []string
-}
-
-func (s *stringSlice) String() string {
-	if s != nil {
-		return fmt.Sprint(s.Values)
-	}
-	return ""
-}
-
-func (s *stringSlice) Set(value string) error {
-	s.Values = append(s.Values, value)
-	return nil
 }
 
 func add2Action(ctx *cli.Context) (err error) {
