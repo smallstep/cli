@@ -126,7 +126,7 @@ func listAction(ctx *cli.Context) (err error) {
 
 	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE")
 	for _, cliAdm := range cliAdmins {
-		fmt.Fprintf(w, "%s\t%s(%s)\t%s\n", cliAdm.Subject, cliAdm.ProvisionerName, cliAdm.ProvisionerType, cliAdm.Type)
+		fmt.Fprintf(w, "%s\t%s (%s)\t%s\n", cliAdm.Subject, cliAdm.ProvisionerName, cliAdm.ProvisionerType, cliAdm.Type)
 	}
 	w.Flush()
 	return nil

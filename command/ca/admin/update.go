@@ -111,7 +111,7 @@ func updateAction(ctx *cli.Context) error {
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
 	fmt.Fprintln(w, "SUBJECT\tPROVISIONER\tTYPE")
-	fmt.Fprintf(w, "%s\t%s(%s)\t%s\n", adm.Subject, cliAdm.ProvisionerName, cliAdm.ProvisionerType, adm.Type.String())
+	fmt.Fprintf(w, "%s\t%s (%s)\t%s\n", adm.Subject, cliAdm.ProvisionerName, cliAdm.ProvisionerType, adm.Type.String())
 	w.Flush()
 
 	return nil
