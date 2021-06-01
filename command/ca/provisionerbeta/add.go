@@ -250,7 +250,7 @@ func addAction(ctx *cli.Context) (err error) {
 	if err := json.Indent(&buf, b, "", "  "); err != nil {
 		return err
 	}
-	fmt.Println(string(buf.Bytes()))
+	fmt.Println(buf.String())
 
 	return nil
 }
