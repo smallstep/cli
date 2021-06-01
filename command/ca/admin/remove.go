@@ -29,8 +29,8 @@ func removeCommand() cli.Command {
 
 ## POSITIONAL ARGUMENTS
 
-<id>
-: The id of the admin to be removed.
+<name>
+: The name of the admin to be removed.
 
 ## EXAMPLES
 

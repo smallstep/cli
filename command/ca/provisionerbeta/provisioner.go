@@ -1,4 +1,4 @@
-package provisioner
+package provisionerbeta
 
 import "github.com/urfave/cli"
 
@@ -7,14 +7,15 @@ func Command() cli.Command {
 	return cli.Command{
 		Name:      "provisioner",
 		Usage:     "create and manage the certificate authority provisioners",
-		UsageText: "step ca provisioner <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "step beta ca provisioner <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			listCommand(),
-			getEncryptedKeyCommand(),
 			addCommand(),
 			removeCommand(),
+			getCommand(),
+			updateCommand(),
 		},
-		Description: `The **step ca provisioner** command group provides facilities for managing the
+		Description: `The **step beta ca provisioner** command group provides facilities for managing the
 certificate authority provisioners.
 
 A provisioner is an entity that controls provisioning credentials, which are

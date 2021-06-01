@@ -1,4 +1,4 @@
-package provisioner
+package provisionerbeta
 
 import (
 	"github.com/smallstep/certificates/ca"
@@ -8,9 +8,9 @@ import (
 	"github.com/urfave/cli"
 )
 
-func remove2Command() cli.Command {
+func removeCommand() cli.Command {
 	return cli.Command{
-		Name:      "remove2",
+		Name:      "remove",
 		Action:    cli.ActionFunc(remove2Action),
 		Usage:     "remove a provisioner from the CA configuration",
 		UsageText: `**step ca provisioner remove** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,

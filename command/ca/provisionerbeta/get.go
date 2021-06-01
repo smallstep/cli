@@ -1,4 +1,4 @@
-package provisioner
+package provisionerbeta
 
 import (
 	"encoding/json"
@@ -13,10 +13,10 @@ import (
 	"github.com/urfave/cli"
 )
 
-func get2Command() cli.Command {
+func getCommand() cli.Command {
 	return cli.Command{
-		Name:      "get2",
-		Action:    cli.ActionFunc(get2Action),
+		Name:      "get",
+		Action:    cli.ActionFunc(getAction),
 		Usage:     "get a provisioner from the CA configuration",
 		UsageText: `**step ca provisioner get** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
@@ -35,7 +35,7 @@ $ step ca provisioner get admin-jwk
 	}
 }
 
-func get2Action(ctx *cli.Context) (err error) {
+func getAction(ctx *cli.Context) (err error) {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package provisioner
+package provisionerbeta
 
 import (
 	"fmt"
@@ -7,10 +7,10 @@ import (
 	"github.com/urfave/cli"
 )
 
-func update2Command() cli.Command {
+func updateCommand() cli.Command {
 	return cli.Command{
-		Name:      "update2",
-		Action:    cli.ActionFunc(update2Action),
+		Name:      "update",
+		Action:    cli.ActionFunc(updateAction),
 		Usage:     "update a provisioner in the CA configuration",
 		UsageText: `**step ca provisioner update** [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
@@ -29,7 +29,7 @@ $ step ca provisioner update
 	}
 }
 
-func update2Action(ctx *cli.Context) (err error) {
+func updateAction(ctx *cli.Context) (err error) {
 	fmt.Println("not implemented")
 	/*
 		if err := errs.NumberOfArguments(ctx, 0); err != nil {

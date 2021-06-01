@@ -1,4 +1,4 @@
-package provisioner
+package provisionerbeta
 
 import (
 	"crypto/ecdsa"
@@ -23,10 +23,10 @@ import (
 	"github.com/urfave/cli"
 )
 
-func add2Command() cli.Command {
+func addCommand() cli.Command {
 	return cli.Command{
-		Name:   "add2",
-		Action: cli.ActionFunc(add2Action),
+		Name:   "add",
+		Action: cli.ActionFunc(addAction),
 		Usage:  "add a provisioner to the CA configuration",
 		UsageText: `**step ca provisioner add** <name> <type> [**--create**] [**--private-key**=<file>]
 [**--password-file**=<file>] [**--x509-template**=<file>] [**--ssh-template**=<file>]
@@ -175,7 +175,7 @@ step ca provisioner add SSHPOP sshpop
 	}
 }
 
-func add2Action(ctx *cli.Context) (err error) {
+func addAction(ctx *cli.Context) (err error) {
 	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
