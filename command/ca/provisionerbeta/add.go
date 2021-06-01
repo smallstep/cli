@@ -1,6 +1,7 @@
 package provisionerbeta
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
@@ -21,6 +22,7 @@ import (
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func addCommand() cli.Command {
@@ -240,12 +242,16 @@ func addAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	b, err := json.MarshalIndent(p, "", "   ")
+	var buf bytes.Buffer
+	b, err := protojson.Marshal(p)
 	if err != nil {
-		return errors.Wrap(err, "error marshaling provisioner")
+		return err
 	}
+	if err := json.Indent(&buf, b, "", "  "); err != nil {
+		return err
+	}
+	fmt.Println(string(buf.Bytes()))
 
-	fmt.Println(string(b))
 	return nil
 }
 
