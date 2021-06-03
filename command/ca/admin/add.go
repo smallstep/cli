@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	mgmtAPI "github.com/smallstep/certificates/authority/mgmt/api"
+	adminAPI "github.com/smallstep/certificates/authority/admin/api"
 	"github.com/smallstep/certificates/linkedca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -18,7 +18,7 @@ func addCommand() cli.Command {
 		Name:      "add",
 		Action:    cli.ActionFunc(addAction),
 		Usage:     "add an admin to the CA configuration",
-		UsageText: `**step ca admin add** <provisioner> <subject> [**--super**]`,
+		UsageText: `**step beta ca admin add** <subject> <provisioner> [**--super**]`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "super",
@@ -30,26 +30,26 @@ func addCommand() cli.Command {
 			flags.CaURL,
 			flags.Root,
 		},
-		Description: `**step ca admin add** adds an admin to the CA configuration.
+		Description: `**step beta ca admin add** adds an admin to the CA configuration.
 
 ## POSITIONAL ARGUMENTS
 
-<provisioner>
-: The name of the provisioner
-
 <subject>
 : The subject name that must appear in the identifying credential of the admin.
+
+<provisioner>
+: The name of the provisioner
 
 ## EXAMPLES
 
 Add regular Admin:
 '''
-$ step ca admin add admin-jwk max@smallstep.com admin-jwk
+$ step beta ca admin add max@smallstep.com google
 '''
 
 Add SuperAdmin:
 '''
-$ step ca admin add admin-jwk max@smallstep.com --super
+$ step beta ca admin add max@smallstep.com google --super
 '''
 `,
 	}
@@ -61,11 +61,11 @@ func addAction(ctx *cli.Context) (err error) {
 	}
 
 	args := ctx.Args()
-	provName := args.Get(0)
-	subject := args.Get(1)
+	subject := args.Get(0)
+	provName := args.Get(1)
 
 	typ := linkedca.Admin_ADMIN
-	if ctx.IsSet("super") {
+	if ctx.Bool("super") {
 		typ = linkedca.Admin_SUPER_ADMIN
 	}
 
@@ -74,7 +74,7 @@ func addAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	adm, err := client.CreateAdmin(&mgmtAPI.CreateAdminRequest{
+	adm, err := client.CreateAdmin(&adminAPI.CreateAdminRequest{
 		Subject:     subject,
 		Provisioner: provName,
 		Type:        typ,

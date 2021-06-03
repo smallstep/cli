@@ -11,6 +11,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// nolint
 func listCommand() cli.Command {
 	return cli.Command{
 		Name:   "list",
@@ -40,6 +41,7 @@ $ step ca provisioner list
 	}
 }
 
+// nolint
 func listAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 0); err != nil {
 		return err

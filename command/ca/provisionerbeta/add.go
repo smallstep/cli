@@ -13,6 +13,7 @@ import (
 	"net/url"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/linkedca"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
@@ -30,10 +31,61 @@ func addCommand() cli.Command {
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add a provisioner to the CA configuration",
-		UsageText: `**step ca provisioner add** <name> <type> [**--create**] [**--private-key**=<file>]
-[**--password-file**=<file>] [**--x509-template**=<file>] [**--ssh-template**=<file>]
-[**--ssh**] [**--ca-url**=<uri>] [**--root**=<file>]`,
+		UsageText: `**step beta ca provisioner add** <name> **--type**=JWK [**--jwk-file**=<file>]
+[**--create**] [**--password-file**=<file>]
+
+**step beta ca provisioner add** <name> **--type**=OIDC
+[**--client-id**=<id>] [**--client-secret**=<secret>]
+[**--configuration-endpoint**=<url>] [**--domain**=<domain>]
+[**--admin**=<email>]...
+
+**step beta ca provisioner add** <name> **--type**=X5C **--x5c-root**=<file> ...
+
+**step beta ca provisioner add** <name> **--type**=SSHPOP **--x5c-root**=<file> ...
+
+**step beta ca provisioner add** <name> **--type**=K8SSA [**--pem-keys=<file>**] ...
+
+**step beta ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
+[**--aws-account**=<id>] [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
+[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
+[**--instance-age**=<duration>] [**--iid-roots**=<path>]
+[**--disable-custom-sans**] [**--disable-trust-on-first-use**]
+
+**step beta ca provisioner add** <name> **--type**=ACME **--ca-config**=<file>`,
 		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "type",
+				Value: provisioner.TypeJWK.String(),
+				Usage: `The <type> of provisioner to create.
+
+: <type> is a case-insensitive string and must be one of:
+
+    **JWK**
+    : Uses an JWK key pair to sign provisioning tokens. (default)
+
+    **OIDC**
+    : Uses an OpenID Connect provider to sign provisioning tokens.
+
+    **AWS**
+    : Uses Amazon AWS instance identity documents.
+
+    **GCP**
+    : Use Google instance identity tokens.
+
+    **Azure**
+    : Uses Microsoft Azure identity tokens.
+
+    **ACME**
+    : Uses the ACME protocol to create certificates.
+
+    **X5C**
+    : Uses an X509 Certificate / private key pair to sign provisioning tokens.
+
+    **K8SSA**
+    : Uses Kubernetes Service Account tokens.
+
+    **SSHPOP**
+    : Uses an SSH Certificate / private key pair to sign provisioning tokens.`},
 			cli.BoolFlag{
 				Name:  "ssh",
 				Usage: `Enable SSH on the new provisioners.`,
@@ -53,7 +105,7 @@ func addCommand() cli.Command {
 				Usage: `Create the JWK key pair for the provisioner.`,
 			},
 			cli.StringFlag{
-				Name:  "private-key",
+				Name:  "jwk-file",
 				Usage: `The <file> containing the JWK private key.`,
 			},
 
@@ -107,48 +159,16 @@ keys and x509 Certificates.`,
 <name>
 : The name of the provisioner.
 
-<type>
-: The <type> of provisioner to create.
-
-	<type> is a case-insensitive string and must be one of:
-
-    **JWK**
-    : Uses an JWK key pair to sign provisioning tokens. (default)
-
-    **OIDC**
-    : Uses an OpenID Connect provider to sign provisioning tokens.
-
-    **AWS**
-    : Uses Amazon AWS instance identity documents.
-
-    **GCP**
-    : Use Google instance identity tokens.
-
-    **Azure**
-    : Uses Microsoft Azure identity tokens.
-
-    **ACME**
-    : Uses the ACME protocol to create certificates.
-
-    **X5C**
-    : Uses an X509 Certificate / private key pair to sign provisioning tokens.
-
-    **K8sSA**
-    : Uses Kubernetes Service Account tokens.
-
-    **SSHPOP**
-    : Uses an SSH Certificate / private key pair to sign provisioning tokens.
-
 ## EXAMPLES
 
-Create a JWK provisioner:
+Create a JWK provisioner enabled for SSH certificates:
 '''
-step ca provisioner add jane@doe.com --type JWK --ssh --public-key jwk.pub --private-key jwk.priv
+step beta ca provisioner add jane@doe.com --type JWK --ssh --jwk-file jwk.priv
 '''
 
-Create an OIDC provisioner:
+Create an OIDC provisioner enabled for SSH certificates:
 '''
-step ca provisioner add OIDC Google ---ssh \
+step beta ca provisioner add Google --type OIDC --ssh \
 	--client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
 	--client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
 	--configuration-endpoint https://accounts.google.com/.well-known/openid-configuration
@@ -156,24 +176,23 @@ step ca provisioner add OIDC Google ---ssh \
 
 Create an X5C provisioner:
 '''
-step ca provisioner add X5C x5c --x5c-root x5c_ca.crt
+step beta ca provisioner add x5c --type X5C --x5c-root x5c_ca.crt
 '''
 
 Create an ACME provisioner
 '''
-step ca provisioner add ACME acme
+step beta ca provisioner add acme --type ACME
 '''
 
 Create an K8SSA provisioner:
 '''
-step ca provisioner add K8SSA kube --ssh --public-key key.pub
+step beta ca provisioner add kube --type K8SSA --ssh --public-key key.pub
 '''
 
 Create an SSHPOP provisioner for renewing SSH host certificates:")
 '''
-step ca provisioner add SSHPOP sshpop
-'''
-`,
+step beta ca provisioner add sshpop --type SSHPOP
+'''`,
 	}
 }
 
@@ -187,8 +206,10 @@ func addAction(ctx *cli.Context) (err error) {
 
 	args := ctx.Args()
 
+	typ := ctx.String("type")
+
 	p := &linkedca.Provisioner{
-		Name: args.Get(0),
+		Name: args.Get(1),
 	}
 
 	// Read x509 template if passed
@@ -212,7 +233,7 @@ func addAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	switch args.Get(1) {
+	switch typ {
 	case linkedca.Provisioner_JWK.String():
 		p.Type = linkedca.Provisioner_JWK
 		p.Details, err = createJWKDetails(ctx)
@@ -231,8 +252,9 @@ func addAction(ctx *cli.Context) (err error) {
 	case linkedca.Provisioner_OIDC.String():
 		p.Type = linkedca.Provisioner_OIDC
 		p.Details, err = createOIDCDetails(ctx)
+	// TODO add GCP, Azure, AWS, and SCEP provisioner support.
 	default:
-		return fmt.Errorf("unsupported provisioner type %s", args.Get(1))
+		return fmt.Errorf("unsupported provisioner type %s", typ)
 	}
 	if err != nil {
 		return err

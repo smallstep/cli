@@ -1,12 +1,12 @@
 package provisionerbeta
 
 import (
-	"fmt"
-
+	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 )
 
+// nolint
 func updateCommand() cli.Command {
 	return cli.Command{
 		Name:      "update",
@@ -29,8 +29,9 @@ $ step ca provisioner update
 	}
 }
 
+// nolint
 func updateAction(ctx *cli.Context) (err error) {
-	fmt.Println("not implemented")
+	return errors.New("not implemented")
 	/*
 		if err := errs.NumberOfArguments(ctx, 0); err != nil {
 			return err
@@ -71,5 +72,4 @@ func updateAction(ctx *cli.Context) (err error) {
 
 		fmt.Println(string(b))
 	*/
-	return nil
 }

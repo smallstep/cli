@@ -18,18 +18,18 @@ func getCommand() cli.Command {
 		Name:      "get",
 		Action:    cli.ActionFunc(getAction),
 		Usage:     "get a provisioner from the CA configuration",
-		UsageText: `**step ca provisioner get** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
+		UsageText: `**step beta ca provisioner get** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.CaURL,
 			flags.Root,
 		},
-		Description: `**step ca provisioner get** gets a provisioner from the CA configuration.
+		Description: `**step beta ca provisioner get** gets a provisioner from the CA configuration.
 
 ## EXAMPLES
 
 Get a provisioner by name:
 '''
-$ step ca provisioner get admin-jwk
+$ step beta ca provisioner get admin-jwk
 '''
 `,
 	}

@@ -19,7 +19,6 @@ func Command() cli.Command {
 		UsageText: "step ca admin <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			listCommand(),
-			//getCommand(),
 			addCommand(),
 			removeCommand(),
 			updateCommand(),
@@ -48,7 +47,7 @@ $ step ca admin add max@smallstep.com my-jwk-provisioner
 
 Remove an admin:
 '''
-$ step ca admin remove max@smallstep.com my-jwk-provisioner
+$ step ca admin remove max@smallstep.com
 '''`,
 	}
 }

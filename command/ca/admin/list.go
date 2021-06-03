@@ -17,7 +17,7 @@ func listCommand() cli.Command {
 		Name:   "list",
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all admins in the CA configuration",
-		UsageText: `**step ca admin list** [**--super**] ]**--not-super**] [**--provisioner**=<string>]
+		UsageText: `**step beta ca admin list** [**--super**] [**--provisioner**=<string>]
 [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.CaURL,
@@ -26,45 +26,41 @@ func listCommand() cli.Command {
 				Name:  "super",
 				Usage: `Only return super-admins.`,
 			},
-			flags.X5cCert,
-			flags.X5cKey,
-			flags.PasswordFile,
-			cli.BoolFlag{
-				Name:  "not-super",
-				Usage: `Only return admins without 'super' privileges.`,
-			},
 			cli.StringFlag{
 				Name:  "provisioner",
 				Usage: `Only return admins linked to this provisioner.`,
 			},
+			flags.X5cCert,
+			flags.X5cKey,
+			flags.PasswordFile,
 		},
-		Description: `**step ca admin list** lists all admins in the CA configuration.
+		Description: `**step beta ca admin list** lists all admins in the CA configuration.
 
 ## EXAMPLES
 
 List all admins:
 '''
-$ step ca admin list
+$ step beta ca admin list
 '''
 
 List only super-admins:
 '''
-$ step ca admin list --super
+$ step beta ca admin list --super
 '''
 
 List only admins without super-admin privileges:
 '''
-$ step ca admin list --not-super
+$ step beta ca admin list --super=false
 '''
 
 List all admins associated with a given provisioner:
 '''
-$ step ca admin list --provisioner admin-jwk
+$ step beta ca admin list --provisioner admin-jwk
 '''
 
 List only super-admins associated with a given provisioner:
 '''
-$ step ca admin list --super --provisioner admin-jwk
+$ step beta ca admin list --super --provisioner admin-jwk
 '''
 `,
 	}
@@ -75,12 +71,8 @@ func listAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	isSuperAdmin := ctx.IsSet("super")
-	isNotSuperAdmin := ctx.IsSet("not-super")
-
-	if isSuperAdmin && isNotSuperAdmin {
-		return errs.IncompatibleFlag(ctx, "super", "not-super")
-	}
+	isSuperAdmin := ctx.IsSet("super") && ctx.Bool("super")
+	isNotSuperAdmin := ctx.IsSet("super") && !ctx.Bool("super")
 
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {

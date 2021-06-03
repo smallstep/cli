@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	mgmtAPI "github.com/smallstep/certificates/authority/mgmt/api"
+	adminAPI "github.com/smallstep/certificates/authority/admin/api"
 	"github.com/smallstep/certificates/linkedca"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -18,16 +18,12 @@ func updateCommand() cli.Command {
 		Name:   "update",
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update an admin",
-		UsageText: `**step ca admin update** <subject> [**--super**]
-[**--not-super**] [**--provisioner**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]`,
+		UsageText: `**step beta ca admin update** <subject> [**--super**] [**--provisioner**=<name>]
+[**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "super",
 				Usage: `Update the admin with super-admin privileges.`,
-			},
-			cli.BoolFlag{
-				Name:  "not-super",
-				Usage: `Update the admin to remove super-admin privileges.`,
 			},
 			cli.StringFlag{
 				Name:  "provisioner",
@@ -39,7 +35,7 @@ func updateCommand() cli.Command {
 			flags.CaURL,
 			flags.Root,
 		},
-		Description: `**step ca admin update** updates an admin.
+		Description: `**step beta ca admin update** updates an admin.
 
 ## POSITIONAL ARGUMENTS
 
@@ -50,17 +46,17 @@ func updateCommand() cli.Command {
 
 Add super-admin privileges to an admin:
 '''
-$ step ca admin update max@smallstep.com --super
+$ step beta ca admin update max@smallstep.com --super
 '''
 
 Specify admin by provisioner:
 '''
-$ step ca admin update max@smallstep.com --super --provisioner devops-jwk
+$ step beta ca admin update max@smallstep.com --super --provisioner devops-jwk
 '''
 
 Remove super-admin privileges from an admin:
 '''
-$ step ca admin update max@smallstep.com --not-super
+$ step beta ca admin update max@smallstep.com --super=false
 '''
 `,
 	}
@@ -71,14 +67,11 @@ func updateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	isSuperAdmin := ctx.IsSet("super")
-	isNotSuperAdmin := ctx.IsSet("not-super")
+	setSuperAdmin := ctx.IsSet("super") && ctx.Bool("super")
+	setNotSuperAdmin := ctx.IsSet("super") && !ctx.Bool("super")
 
-	if isSuperAdmin && isNotSuperAdmin {
-		return errs.IncompatibleFlag(ctx, "super", "not-super")
-	}
-	if !isSuperAdmin && !isNotSuperAdmin {
-		return errs.RequiredOrFlag(ctx, "super", "not-super")
+	if !setSuperAdmin && !setNotSuperAdmin {
+		return errs.RequiredFlag(ctx, "super")
 	}
 
 	client, err := cautils.NewAdminClient(ctx)
@@ -96,13 +89,13 @@ func updateAction(ctx *cli.Context) error {
 	}
 
 	var typ linkedca.Admin_Type
-	if ctx.IsSet("super") {
+	if setSuperAdmin {
 		typ = linkedca.Admin_SUPER_ADMIN
 	}
-	if ctx.IsSet("not-super") {
+	if setNotSuperAdmin {
 		typ = linkedca.Admin_ADMIN
 	}
-	adm, err := client.UpdateAdmin(cliAdm.Id, &mgmtAPI.UpdateAdminRequest{
+	adm, err := client.UpdateAdmin(cliAdm.Id, &adminAPI.UpdateAdminRequest{
 		Type: typ,
 	})
 	if err != nil {

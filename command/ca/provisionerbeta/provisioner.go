@@ -9,11 +9,11 @@ func Command() cli.Command {
 		Usage:     "create and manage the certificate authority provisioners",
 		UsageText: "step beta ca provisioner <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
-			listCommand(),
+			//listCommand(),
 			addCommand(),
 			removeCommand(),
 			getCommand(),
-			updateCommand(),
+			//updateCommand(),
 		},
 		Description: `The **step beta ca provisioner** command group provides facilities for managing the
 certificate authority provisioners.
@@ -57,19 +57,14 @@ List the active provisioners:
 $ step ca provisioner list
 '''
 
-Retrieve the encrypted private jwk for the given kid:
-'''
-$ step ca provisioner jwe-key 1234 --ca-url https://127.0.0.1 --root ./root.crt
-'''
-
 Add a single provisioner:
 '''
-$ step ca provisioner add max@smallstep.com max-laptop.jwk --ca-config ca.json
+$ step ca provisioner add max@smallstep.com --type JWK --create
 '''
 
-Remove the provisioner matching a given issuer and kid:
+Remove a provisioner:
 '''
-$ step ca provisioner remove max@smallstep.com --kid 1234 --ca-config ca.json
+$ step ca provisioner remove max@smallstep.com
 '''`,
 	}
 }

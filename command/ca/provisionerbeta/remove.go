@@ -11,9 +11,9 @@ import (
 func removeCommand() cli.Command {
 	return cli.Command{
 		Name:      "remove",
-		Action:    cli.ActionFunc(remove2Action),
+		Action:    cli.ActionFunc(removeAction),
 		Usage:     "remove a provisioner from the CA configuration",
-		UsageText: `**step ca provisioner remove** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
+		UsageText: `**step beta ca provisioner remove** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.X5cCert,
 			flags.X5cKey,
@@ -21,19 +21,19 @@ func removeCommand() cli.Command {
 			flags.CaURL,
 			flags.Root,
 		},
-		Description: `**step ca provisioner remove** removes a provisioner from the CA configuration.
+		Description: `**step beta ca provisioner remove** removes a provisioner from the CA configuration.
 
 ## EXAMPLES
 
 Remove provisioner by name:
 '''
-$ step ca provisioner remove admin-jwk
+$ step beta ca provisioner remove admin-jwk
 '''
 `,
 	}
 }
 
-func remove2Action(ctx *cli.Context) (err error) {
+func removeAction(ctx *cli.Context) (err error) {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
