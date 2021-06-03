@@ -197,7 +197,7 @@ step beta ca provisioner add sshpop --type SSHPOP
 }
 
 func addAction(ctx *cli.Context) (err error) {
-	if err := errs.NumberOfArguments(ctx, 2); err != nil {
+	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
 
@@ -209,7 +209,7 @@ func addAction(ctx *cli.Context) (err error) {
 	typ := ctx.String("type")
 
 	p := &linkedca.Provisioner{
-		Name: args.Get(1),
+		Name: args.Get(0),
 	}
 
 	// Read x509 template if passed
