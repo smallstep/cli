@@ -52,19 +52,14 @@ with the following properties:
 
 ## EXAMPLES
 
-List the active provisioners:
-'''
-$ step ca provisioner list
-'''
-
 Add a single provisioner:
 '''
-$ step ca provisioner add max@smallstep.com --type JWK --create
+$ step beta ca provisioner add max@smallstep.com --type JWK --create
 '''
 
 Remove a provisioner:
 '''
-$ step ca provisioner remove max@smallstep.com
+$ step beta ca provisioner remove max@smallstep.com
 '''`,
 	}
 }

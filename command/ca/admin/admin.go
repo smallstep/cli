@@ -37,17 +37,17 @@ authority. Admins manage
 
 List the active admins:
 '''
-$ step ca admin list
+$ step beta ca admin list
 '''
 
 Add an admin:
 '''
-$ step ca admin add max@smallstep.com my-jwk-provisioner
+$ step beta ca admin add max@smallstep.com my-jwk-provisioner
 '''
 
 Remove an admin:
 '''
-$ step ca admin remove max@smallstep.com
+$ step beta ca admin remove max@smallstep.com
 '''`,
 	}
 }

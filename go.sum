@@ -791,6 +791,8 @@ github.com/smallstep/certificates v0.16.0-rc.2.0.20210603183601-a994938ba644 h1:
 github.com/smallstep/certificates v0.16.0-rc.2.0.20210603183601-a994938ba644/go.mod h1:4iL+2ef1GoVaDYCiKNE6jvzOzy/dXSU+x5N2K4c/ZRU=
 github.com/smallstep/certificates v0.16.0-rc.2.0.20210603223204-2c0a74ee9a7a h1:NoEgcb0CLJlPtKwAcKlieYNrMdrw74IUNAi8vJFhB9o=
 github.com/smallstep/certificates v0.16.0-rc.2.0.20210603223204-2c0a74ee9a7a/go.mod h1:4iL+2ef1GoVaDYCiKNE6jvzOzy/dXSU+x5N2K4c/ZRU=
+github.com/smallstep/certificates v0.16.0-rc.2.0.20210603231215-a365e5fa544b h1:jKPw4bb21Sg8lmujYwrJl/cdXcd9K2AUAWEp81I6HJw=
+github.com/smallstep/certificates v0.16.0-rc.2.0.20210603231215-a365e5fa544b/go.mod h1:4iL+2ef1GoVaDYCiKNE6jvzOzy/dXSU+x5N2K4c/ZRU=
 github.com/smallstep/certinfo v1.5.0 h1:hxJPQgy9eyjSDVmcWXR/17ucjqZ9zgQHyGyD7AOEidM=
 github.com/smallstep/certinfo v1.5.0/go.mod h1:UWVjfGJeUc8O9PDR6VqI2CgWrQbF1HNMld1BSarYV2Q=
 github.com/smallstep/nosql v0.3.6 h1:cq6a3NwjFJxkVlWU1T4qGskcfEXr0fO1WqQrraDO1Po=

@@ -1,16 +1,16 @@
 package provisionerbeta
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 
-	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func getCommand() cli.Command {
@@ -20,6 +20,8 @@ func getCommand() cli.Command {
 		Usage:     "get a provisioner from the CA configuration",
 		UsageText: `**step beta ca provisioner get** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
+			flags.X5cCert,
+			flags.X5cKey,
 			flags.CaURL,
 			flags.Root,
 		},
@@ -43,39 +45,26 @@ func getAction(ctx *cli.Context) (err error) {
 	args := ctx.Args()
 	name := args.Get(0)
 
-	caURL, err := flags.ParseCaURLIfExists(ctx)
-	if err != nil {
-		return err
-	}
-	if len(caURL) == 0 {
-		return errs.RequiredFlag(ctx, "ca-url")
-	}
-	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
-		rootFile = pki.GetRootCAPath()
-		if _, err := os.Stat(rootFile); err != nil {
-			return errs.RequiredFlag(ctx, "root")
-		}
-	}
-
 	// Create online client
-	var options []ca.ClientOption
-	options = append(options, ca.WithRootFile(rootFile))
-	client, err := ca.NewAdminClient(caURL, options...)
+	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	prov, err := client.GetProvisioner(ca.WithProvisionerName(name))
+	p, err := client.GetProvisioner(ca.WithProvisionerName(name))
 	if err != nil {
 		return err
 	}
 
-	b, err := json.MarshalIndent(prov, "", "   ")
+	var buf bytes.Buffer
+	b, err := protojson.Marshal(p)
 	if err != nil {
-		return errors.Wrap(err, "error marshaling provisioner")
+		return err
 	}
+	if err := json.Indent(&buf, b, "", "  "); err != nil {
+		return err
+	}
+	fmt.Println(buf.String())
 
-	fmt.Println(string(b))
 	return nil
 }
