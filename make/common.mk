@@ -26,7 +26,13 @@ bootstra%:
 #########################################
 
 DATE    := $(shell date -u '+%Y-%m-%d %H:%M UTC')
-LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
+ifdef DEBUG
+	LDFLAGS := -ldflags='-X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
+	GCFLAGS := -gcflags "all=-N -l"
+else
+	LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
+	GCFLAGS :=
+endif
 
 download:
 	$Q go mod download
@@ -36,7 +42,7 @@ build: $(PREFIX)bin/$(BINNAME)
 
 $(PREFIX)bin/$(BINNAME): download $(call rwildcard,*.go)
 	$Q mkdir -p $(@D)
-	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) go build -v -o $@ $(LDFLAGS) $(PKG)
+	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) go build -v -o $@ $(GCFLAGS) $(LDFLAGS) $(PKG)
 
 .PHONY: build simple
 
