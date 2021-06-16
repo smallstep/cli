@@ -476,6 +476,11 @@ func readPayload(filename string) (interface{}, error) {
 
 	v := make(map[string]interface{})
 	if err := json.NewDecoder(r).Decode(&v); err != nil {
+		// Some CI platforms will feed an empty pipe as STDIN.
+		// In that case we should treat it as a valid empty JSON.
+		if filename == "" && errors.Is(err, io.EOF) {
+			return v, nil
+		}
 		if filename == "" || filename == "-" {
 			return nil, errors.Wrap(err, "error decoding JSON from STDIN")
 		}
