@@ -17,7 +17,7 @@ Here's a quick example, combining `step oauth` and `step crypto` to get and veri
 
 ![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
 
-**Questions? Ask us on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/stepdiscord).**
+**Questions? Ask us on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/step-discord).**
 
 [Website](https://smallstep.com) |
 [Documentation](https://smallstep.com/docs/step-cli) |
@@ -73,7 +73,7 @@ See our installation docs [here](https://smallstep.com/docs/step-cli/installatio
 
 ## Community
 
-* Connect with `step` users on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/stepdiscord)
+* Connect with `step` users on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/step-discord)
 * [Open an issue](https://github.com/smallstep/cli/issues/new/choose) and tell us what features you'd like to see
 * [Follow Smallstep on Twitter](https://twitter.com/smallsteplabs)
 
