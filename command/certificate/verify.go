@@ -176,30 +176,31 @@ func verifyAction(ctx *cli.Context) error {
 			errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
 		}
 	}
-	
-	if expire {
 
-		NowTillEndOfCert := time.Until(cert.NotAfter)
-		totalLifeTimeOfCert := cert.NotAfter.Sub(cert.NotBefore)
+        if expire {
 
-		percentIntoLifeTime  := ((totalLifeTimeOfCert.Hours() - NowTillEndOfCert.Hours()) / totalLifeTimeOfCert.Hours()) * 100
+                NowTillEndOfCert := time.Until(cert.NotAfter)
+                totalLifeTimeOfCert := cert.NotAfter.Sub(cert.NotBefore)
 
-		if percentIntoLifeTime >= 100 {
-			fmt.Println("\033[31m", "This certificate has already expired.", "\033[0m") //"\033[__m" are color codes
-		} else if percentIntoLifeTime > 90 {
-			fmt.Println("\033[31m","Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
-		} else if percentIntoLifeTime > 66 && percentIntoLifeTime < 90 {
-			fmt.Println("\033[33m","Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
-		} else if percentIntoLifeTime < 66 && percentIntoLifeTime > 1 {
-			fmt.Println("\033[32m","Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
-		} else if percentIntoLifeTime < 1{
-			fmt.Println("\033[32m","Leaf is less than 1% through its lifetime.", "\033[0m")
-		} else {
-			fmt.Println("Error")
-		}
+                percentIntoLifeTime := ((totalLifeTimeOfCert.Hours() - NowTillEndOfCert.Hours()) / totalLifeTimeOfCert.Hours()) * 100
 
-		return nil
-	}
+                if percentIntoLifeTime >= 100 {
+                        fmt.Println("\033[31m", "This certificate has already expired.", "\033[0m") //"\033[__m" are color codes
+                } else if percentIntoLifeTime > 90 {
+                        fmt.Println("\033[31m", "Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
+                } else if percentIntoLifeTime > 66 && percentIntoLifeTime < 90 {
+                        fmt.Println("\033[33m", "Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
+                } else if percentIntoLifeTime < 66 && percentIntoLifeTime > 1 {
+                        fmt.Println("\033[32m", "Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
+                } else if percentIntoLifeTime < 1 {
+                        fmt.Println("\033[32m", "Leaf is less than 1% through its lifetime.", "\033[0m")
+                } else {
+                        fmt.Println("Error")
+                }
+
+                return nil
+        }
+
 
 	opts := x509.VerifyOptions{
 		DNSName:       host,
