@@ -69,7 +69,7 @@ Verify a certificate using a custom directory of root certificates for path vali
 $ step certificate verify ./certificate.crt --roots ./root-certificates/
 '''
 
-Verify the expiration time left of a certificate using a custom root certificate and host for path validation:
+Verify the remaining validity of a certificate using a custom root certificate and host for path validation:
 
 '''
 $ step certificate verify ./certificate.crt --host smallstep.com --expire
@@ -81,8 +81,8 @@ $ step certificate verify ./certificate.crt --host smallstep.com --expire
 				Usage: `Check whether the certificate is for the specified host.`,
 			},
 			cli.BoolFlag{
-				Name:  "expire",
-				Usage: `Checks the certificate time till expiration`,
+				Name:  "validity",
+				Usage: `Check the remaining certificate validity until expiration`,
 			},
 			cli.StringFlag{
 				Name: "roots",
@@ -113,7 +113,7 @@ func verifyAction(ctx *cli.Context) error {
 	var (
 		crtFile          = ctx.Args().Get(0)
 		host             = ctx.String("host")
-		expire           = ctx.Bool("expire")
+		validity         = ctx.Bool("validity")
 		serverName       = ctx.String("servername")
 		roots            = ctx.String("roots")
 		intermediatePool = x509.NewCertPool()
@@ -178,28 +178,28 @@ func verifyAction(ctx *cli.Context) error {
 		}
 	}
 
-	if expire {
+	if validity {
 
-		NowTillEndOfCert := time.Until(cert.NotAfter)
-		totalLifeTimeOfCert := cert.NotAfter.Sub(cert.NotBefore)
+		remainingValidiy := time.Until(cert.NotAfter)
+		totalValidity := cert.NotAfter.Sub(cert.NotBefore)
 
-		percentIntoLifeTime := ((totalLifeTimeOfCert.Hours() - NowTillEndOfCert.Hours()) / totalLifeTimeOfCert.Hours()) * 100
+		percentUsed := ((totalValidity.Hours() - remainingValidity.Hours()) / totalValidity.Hours()) * 100
 
-		colorRed := "\033[31m"
-		colorGreen := "\033[32m"
-		colorYellow := "\033[33m"
-		colorReset := "\033[0m"
+		red := "\033[31m"
+		green := "\033[32m"
+		yellow := "\033[33m"
+		reset := "\033[0m"
 		
-		if percentIntoLifeTime >= 100 {
-			fmt.Println(colorRed, "This certificate has already expired.", colorReset)
-		} else if percentIntoLifeTime > 90 {
-			fmt.Printf(colorRed,"Leaf is", int(percentIntoLifeTime), "% through its lifetime.", colorReset)
-		} else if percentIntoLifeTime > 66 && percentIntoLifeTime < 90 {
-			fmt.Printf(colorYellow,"Leaf is", int(percentIntoLifeTime), "% through its lifetime.", colorReset)
-		} else if percentIntoLifeTime < 66 && percentIntoLifeTime > 1 {
-			fmt.Printf(colorGreen,"Leaf is", int(percentIntoLifeTime), "% through its lifetime.", colorReset)
-		} else if percentIntoLifeTime < 1{
-			fmt.Printf(colorGreen,"Leaf is less than 1% through its lifetime.", colorReset)
+		if percentUsed >= 100 {
+			fmt.Println(red, "This certificate has already expired.", reset)
+		} else if percentUsed > 90 {
+			fmt.Printf(red,"Leaf is", int(percentUsed), "% through its lifetime.", reset)
+		} else if percentUsed > 66 && percent < 90 {
+			fmt.Printf(yellow,"Leaf is", int(percentUsed), "% through its lifetime.", reset)
+		} else if percentUsed < 66 && percent > 1 {
+			fmt.Printf(green,"Leaf is", int(percentUsed), "% through its lifetime.", reset)
+		} else if percentUsed < 1{
+			fmt.Printf(green,"Leaf is less than 1% through its lifetime.", reset)
 		} else {
 			return errors.Errorf("failure to determine expiration time for certificate")
 		}
