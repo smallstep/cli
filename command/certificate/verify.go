@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
+	"time"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/x509util"
@@ -65,11 +67,21 @@ Verify a certificate using a custom directory of root certificates for path vali
 '''
 $ step certificate verify ./certificate.crt --roots ./root-certificates/
 '''
+
+Verify the expiration time left of a certificate using a custom root certificate and host for path validation:
+
+'''
+$ step certificate verify ./certificate.crt --host smallstep.com --expire
+'''
 `,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "host",
 				Usage: `Check whether the certificate is for the specified host.`,
+			},
+			cli.BoolFlag{
+				Name: "expire",
+				Usage: `Checks the certificate time till expiration`,
 			},
 			cli.StringFlag{
 				Name: "roots",
@@ -100,6 +112,7 @@ func verifyAction(ctx *cli.Context) error {
 	var (
 		crtFile          = ctx.Args().Get(0)
 		host             = ctx.String("host")
+		expire           = ctx.Bool("expire")
 		serverName       = ctx.String("servername")
 		roots            = ctx.String("roots")
 		intermediatePool = x509.NewCertPool()
@@ -162,6 +175,30 @@ func verifyAction(ctx *cli.Context) error {
 		if err != nil {
 			errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
 		}
+	}
+	
+	if expire {
+
+		NowTillEndOfCert := time.Until(cert.NotAfter)
+		totalLifeTimeOfCert := cert.NotAfter.Sub(cert.NotBefore)
+
+		percentIntoLifeTime  := ((totalLifeTimeOfCert.Hours() - NowTillEndOfCert.Hours()) / totalLifeTimeOfCert.Hours()) * 100
+
+		if percentIntoLifeTime >= 100 {
+			fmt.Println("\033[31m", "This certificate has already expired.", "\033[0m") //"\033[__m" are color codes
+		} else if percentIntoLifeTime > 90 {
+			fmt.Println("\033[31m","Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
+		} else if percentIntoLifeTime > 66 && percentIntoLifeTime < 90 {
+			fmt.Println("\033[33m","Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
+		} else if percentIntoLifeTime < 66 && percentIntoLifeTime > 1 {
+			fmt.Println("\033[32m","Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
+		} else if percentIntoLifeTime < 1{
+			fmt.Println("\033[32m","Leaf is less than 1% through its lifetime.", "\033[0m")
+		} else {
+			fmt.Println("Error")
+		}
+
+		return nil
 	}
 
 	opts := x509.VerifyOptions{
