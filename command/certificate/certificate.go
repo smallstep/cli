@@ -14,7 +14,7 @@ func init() {
 		Description: `**step certificate** command group provides facilities for creating
 certificate signing requests (CSRs), creating self-signed certificates
 (e.g., for use as a root certificate authority), generating leaf or
-intermediate CA certificate by signing a CSR, validating certificates,
+intermediate CA certificate by signing a CSR, validating certificates, check expiration of certificate,
 renewing certificates, generating certificate bundles, and key-wrapping
 of private keys.
 
