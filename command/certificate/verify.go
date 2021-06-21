@@ -185,16 +185,21 @@ func verifyAction(ctx *cli.Context) error {
 
 		percentIntoLifeTime := ((totalLifeTimeOfCert.Hours() - NowTillEndOfCert.Hours()) / totalLifeTimeOfCert.Hours()) * 100
 
+		colorRed := "\033[31m"
+		colorGreen := "\033[32m"
+		colorYellow := "\033[33m"
+		colorReset := "\033[0m"
+		
 		if percentIntoLifeTime >= 100 {
-			fmt.Println("\033[31m", "This certificate has already expired.", "\033[0m") //"\033[__m" are color codes
+			fmt.Println(colorRed, "This certificate has already expired.", colorReset)
 		} else if percentIntoLifeTime > 90 {
-			fmt.Println("\033[31m", "Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
+			fmt.Printf(colorRed,"Leaf is", int(percentIntoLifeTime), "% through its lifetime.", colorReset)
 		} else if percentIntoLifeTime > 66 && percentIntoLifeTime < 90 {
-			fmt.Println("\033[33m", "Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
+			fmt.Printf(colorYellow,"Leaf is", int(percentIntoLifeTime), "% through its lifetime.", colorReset)
 		} else if percentIntoLifeTime < 66 && percentIntoLifeTime > 1 {
-			fmt.Println("\033[32m", "Leaf is", int(percentIntoLifeTime), "% through its lifetime.", "\033[0m")
-		} else if percentIntoLifeTime < 1 {
-			fmt.Println("\033[32m", "Leaf is less than 1% through its lifetime.", "\033[0m")
+			fmt.Printf(colorGreen,"Leaf is", int(percentIntoLifeTime), "% through its lifetime.", colorReset)
+		} else if percentIntoLifeTime < 1{
+			fmt.Printf(colorGreen,"Leaf is less than 1% through its lifetime.", colorReset)
 		} else {
 			return errors.Errorf("failure to determine expiration time for certificate")
 		}
