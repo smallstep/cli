@@ -25,6 +25,7 @@ func verifyCommand() cli.Command {
 validation algorithm for x.509 certificates defined in RFC 5280. If the
 certificate is valid this command will return '0'. If validation fails, or if
 an error occurs, this command will produce a non-zero return value.
+		
 
 ## POSITIONAL ARGUMENTS
 
@@ -195,7 +196,7 @@ func verifyAction(ctx *cli.Context) error {
 		} else if percentIntoLifeTime < 1 {
 			fmt.Println("\033[32m", "Leaf is less than 1% through its lifetime.", "\033[0m")
 		} else {
-			fmt.Println("Error")
+			return errors.Errorf("failure to determine expiration time for certificate")
 		}
 
 		return nil
