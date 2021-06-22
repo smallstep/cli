@@ -113,7 +113,7 @@ func verifyAction(ctx *cli.Context) error {
 	var (
 		crtFile          = ctx.Args().Get(0)
 		host             = ctx.String("host")
-		expire         = ctx.Bool("expire")
+		expire           = ctx.Bool("expire")
 		serverName       = ctx.String("servername")
 		roots            = ctx.String("roots")
 		intermediatePool = x509.NewCertPool()
@@ -189,7 +189,7 @@ func verifyAction(ctx *cli.Context) error {
 		green := "\033[32m"
 		yellow := "\033[33m"
 		reset := "\033[0m"
-		
+
 		if percentUsed >= 100 {
 			fmt.Printf("%s 3 %s\n", red, reset) //should be brown
 		} else if percentUsed > 90 {
