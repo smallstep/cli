@@ -81,7 +81,7 @@ $ step certificate verify ./certificate.crt --host smallstep.com --expire
 				Usage: `Check whether the certificate is for the specified host.`,
 			},
 			cli.BoolFlag{
-				Name:  "validity",
+				Name:  "expire",
 				Usage: `Check the remaining certificate validity until expiration`,
 			},
 			cli.StringFlag{
@@ -113,7 +113,7 @@ func verifyAction(ctx *cli.Context) error {
 	var (
 		crtFile          = ctx.Args().Get(0)
 		host             = ctx.String("host")
-		validity         = ctx.Bool("validity")
+		expire         = ctx.Bool("expire")
 		serverName       = ctx.String("servername")
 		roots            = ctx.String("roots")
 		intermediatePool = x509.NewCertPool()
@@ -178,7 +178,7 @@ func verifyAction(ctx *cli.Context) error {
 		}
 	}
 
-	if validity {
+	if expire {
 
 		remainingValidiy := time.Until(cert.NotAfter)
 		totalValidity := cert.NotAfter.Sub(cert.NotBefore)
@@ -191,18 +191,32 @@ func verifyAction(ctx *cli.Context) error {
 		reset := "\033[0m"
 		
 		if percentUsed >= 100 {
-			fmt.Println(red, "This certificate has already expired.", reset)
+			fmt.Printf("%s 3 %s\n", red, reset) //should be brown
 		} else if percentUsed > 90 {
-			fmt.Printf(red,"Leaf is", int(percentUsed), "% through its lifetime.", reset)
-		} else if percentUsed > 66 && percent < 90 {
-			fmt.Printf(yellow,"Leaf is", int(percentUsed), "% through its lifetime.", reset)
-		} else if percentUsed < 66 && percent > 1 {
-			fmt.Printf(green,"Leaf is", int(percentUsed), "% through its lifetime.", reset)
-		} else if percentUsed < 1{
-			fmt.Printf(green,"Leaf is less than 1% through its lifetime.", reset)
+			fmt.Printf("%s 2 %s\n", red, reset)
+		} else if percentUsed > 66 && percentUsed < 90 {
+			fmt.Printf("%s 1 %s\n", yellow, reset)
+		} else if percentUsed < 66 && percentUsed > 1 {
+			fmt.Printf("%s 0 %s\n", green, reset)
+		} else if percentUsed < 1 {
+			fmt.Printf("%s 0 %s\n", green, reset)
 		} else {
-			return errors.Errorf("failure to determine expiration time for certificate")
+			return errors.Errorf("Failure to determine expiration time for certificate")
 		}
+
+		/*if percentUsed >= 100 {
+			fmt.Println("This certificate has already expired.")
+		} else if percentUsed > 90 {
+			fmt.Printf("%sCertificate is %d percent through its lifetime.%s\n", red, percentUsed, reset)
+		} else if percentUsed > 66 && percentUsed < 90 {
+			fmt.Printf("%sCertificate is %d percent through its lifetime.%s\n", yellow, percentUsed, reset)
+		} else if percentUsed < 66 && percentUsed > 1 {
+			fmt.Printf("%sCertificate is %d percent through its lifetime.%s\n", green, percentUsed, reset)
+		} else if percentUsed < 1 {
+			fmt.Printf("%sCertificate is %d percent through its lifetime.%s\n", green, percentUsed, reset)
+		} else {
+			return errors.Errorf("Failure to determine expiration time for certificate")
+		}*/
 
 		return nil
 	}
