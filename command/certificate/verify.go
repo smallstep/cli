@@ -72,7 +72,7 @@ $ step certificate verify ./certificate.crt --roots ./root-certificates/
 Verify the remaining validity of a certificate using a custom root certificate and host for path validation:
 
 '''
-$ step certificate verify ./certificate.crt --host smallstep.com --expire
+$ step certificate verify ./certificate.crt --host smallstep.com --verdancy
 '''
 `,
 		Flags: []cli.Flag{
@@ -81,7 +81,7 @@ $ step certificate verify ./certificate.crt --host smallstep.com --expire
 				Usage: `Check whether the certificate is for the specified host.`,
 			},
 			cli.BoolFlag{
-				Name:  "expire",
+				Name:  "verdancy",
 				Usage: `Check the remaining certificate validity until expiration`,
 			},
 			cli.StringFlag{
@@ -113,7 +113,7 @@ func verifyAction(ctx *cli.Context) error {
 	var (
 		crtFile          = ctx.Args().Get(0)
 		host             = ctx.String("host")
-		expire           = ctx.Bool("expire")
+		verdancy         = ctx.Bool("verdancy")
 		serverName       = ctx.String("servername")
 		roots            = ctx.String("roots")
 		intermediatePool = x509.NewCertPool()
@@ -178,7 +178,7 @@ func verifyAction(ctx *cli.Context) error {
 		}
 	}
 
-	if expire {
+	if verdancy {
 
 		var remainingValidity = time.Until(cert.NotAfter).Hours()
 		var totalValidity = cert.NotAfter.Sub(cert.NotBefore).Hours()
@@ -201,7 +201,7 @@ func verifyAction(ctx *cli.Context) error {
 		} else if percentUsed < 1 {
 			fmt.Printf("%s 0 %s\n", green, reset)
 		} else {
-			return errors.Errorf("Failure to determine expiration time for certificate")
+			return errors.Errorf("Failure to determine verdancy for certificate")
 		}
 
 		/*if percentUsed >= 100 {
