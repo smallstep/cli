@@ -180,10 +180,10 @@ func verifyAction(ctx *cli.Context) error {
 
 	if expire {
 
-		remainingValidiy := time.Until(cert.NotAfter)
-		totalValidity := cert.NotAfter.Sub(cert.NotBefore)
+		var remainingValidity = time.Until(cert.NotAfter).Hours()
+		var totalValidity = cert.NotAfter.Sub(cert.NotBefore).Hours()
 
-		percentUsed := ((totalValidity.Hours() - remainingValidity.Hours()) / totalValidity.Hours()) * 100
+		var percentUsed = int((1 - remainingValidity/totalValidity) * 100)
 
 		red := "\033[31m"
 		green := "\033[32m"
