@@ -18,18 +18,18 @@ require (
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.16.0-rc.2.0.20210609010254-16e0cffd8b67
+	github.com/smallstep/certificates v0.15.16-rc4
 	github.com/smallstep/certinfo v1.5.0
 	github.com/smallstep/truststore v0.9.6
 	github.com/smallstep/zcrypto v0.0.0-20200203191936-fbc32cf76bce
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.4
 	go.mozilla.org/pkcs7 v0.0.0-20200128120323-432b2356ecb1
 	go.step.sm/crypto v0.8.3
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
-	golang.org/x/sys v0.0.0-20210608053332-aa57babbf139
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	gopkg.in/square/go-jose.v2 v2.5.1
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20201103104416-57fc603b7f52
