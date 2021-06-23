@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/pki"
@@ -162,7 +163,12 @@ func initAction(ctx *cli.Context) (err error) {
 	switch ra {
 	case apiv1.CloudCAS:
 		var create bool
-		var project, location string
+		var project, location, caPool, caPoolTier, gcsBucket string
+
+		caPoolTiers := []struct {
+			Name  string
+			Value string
+		}{{"DevOps", "DEVOPS"}, {"Enterprise", "ENTERPRISE"}}
 
 		iss := ctx.String("issuer")
 		if iss == "" {
@@ -201,10 +207,26 @@ func initAction(ctx *cli.Context) (err error) {
 				if err != nil {
 					return err
 				}
+				ui.Println("What CA pool name do you want to use?")
+				caPool, err = ui.Prompt("(e.g. Smallstep)",
+					ui.WithValidateRegexp("^[a-zA-Z0-9_-]{1,63}"))
+				if err != nil {
+					return err
+				}
+				i, _, err := ui.Select("What CA pool tier do you want to use?", caPoolTiers, ui.WithSelectTemplates(ui.NamedSelectTemplates("Tier")))
+				if err != nil {
+					return err
+				}
+				caPoolTier = caPoolTiers[i].Value
+				ui.Println("What GCS bucket do you want to use? Leave it empty to use a managed one.")
+				gcsBucket, err = ui.Prompt("(e.g. my-bucket)", ui.WithValidateRegexp("(^$)|(^[a-z0-9._-]{3,222}$)"))
+				if err != nil {
+					return err
+				}
 			} else {
 				ui.Println("What certificate authority would you like to use?")
-				iss, err = ui.Prompt("(e.g. projects/smallstep-ca/locations/us-west1/certificateAuthorities/intermediate-ca)",
-					ui.WithValidateRegexp("^projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/locations/[a-z0-9-]+/certificateAuthorities/[a-zA-Z0-9-_]+$"))
+				iss, err = ui.Prompt("(e.g. projects/smallstep-ca/locations/us-west1/caPools/smallstep/certificateAuthorities/intermediate-ca)",
+					ui.WithValidateRegexp("^projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/locations/[a-z0-9-]+/caPools/[a-zA-Z0-9-_]+/certificateAuthorities/[a-zA-Z0-9-_]+$"))
 				if err != nil {
 					return err
 				}
@@ -217,6 +239,9 @@ func initAction(ctx *cli.Context) (err error) {
 			IsCreator:            create,
 			Project:              project,
 			Location:             location,
+			CaPool:               caPool,
+			CaPoolTier:           caPoolTier,
+			GCSBucket:            gcsBucket,
 		}
 	default:
 		ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
@@ -323,7 +348,7 @@ func initAction(ctx *cli.Context) (err error) {
 
 		fmt.Println()
 		fmt.Print("Generating intermediate certificate... \n")
-
+		time.Sleep(1 * time.Second)
 		err = p.GenerateIntermediateCertificate(name, org, resource, root, pass)
 		if err != nil {
 			return err
