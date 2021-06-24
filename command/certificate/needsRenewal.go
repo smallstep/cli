@@ -12,10 +12,10 @@ import (
 
 func needsRenewalCommand() cli.Command {
 	return cli.Command{
-		Name:        "needs-renewal",
-		Action:      cli.ActionFunc(needsRenewalAction),
-		Usage:       `Check if a certificate needs to be renewed`,
-		UsageText:   `**step certificate needs-renewal** <crt_file> or <host_name> [**--expires-in <duration>]`,
+		Name:      "needs-renewal",
+		Action:    cli.ActionFunc(needsRenewalAction),
+		Usage:     `Check if a certificate needs to be renewed`,
+		UsageText: `**step certificate needs-renewal** <crt_file> or <host_name> [**--expires-in <duration>]`,
 		Description: `**step certificate needs-renewal** Checks certificate expiration from file or from a host if 
 		the certificate is over 66% of its lifetime. If the certificate needs renewal this command will return '0'.
 		If the certificate is not far enough into its life, it will return '1'. If validation fails, or if an error occurs, 
