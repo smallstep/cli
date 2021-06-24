@@ -87,7 +87,7 @@ func initCommand() cli.Command {
 
 : If CloudCAS is used, this flag should be the resource name of the
 intermediate certificate to use. This has the format
-'projects/\\*/locations/\\*/certificateAuthorities/\\*'.`,
+'projects/\\*/locations/\\*/caPools/\\*/certificateAuthorities/\\*'.`,
 			},
 			cli.StringFlag{
 				Name: "credentials-file",
