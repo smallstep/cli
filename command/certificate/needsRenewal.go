@@ -48,7 +48,7 @@ $ step certificate needs-renewal ./certificate.crt --expires-in 1h15m
 				Usage: `Check if the certificate expires in given time duration`,
 			},
 			cli.StringFlag{
-				Name: "roots", //not sure if this is really needed but getPeerCert doesn't work without it for now
+				Name: "roots",
 				Usage: `Root certificate(s) that will be used to verify the
 				authenticity of the remote server.`},
 		},
@@ -66,7 +66,7 @@ func needsRenewalAction(ctx *cli.Context) error {
 		serverName = ctx.String("servername")
 		cert       *x509.Certificate
 	)
-	//should get cert if it is from URL else read it from file - From Verify.go with some mods
+
 	if addr, isURL, err := trimURL(crtFile); err != nil {
 		return err
 	} else if isURL {
@@ -111,12 +111,10 @@ func needsRenewalAction(ctx *cli.Context) error {
 	var remainingValidity = time.Until(cert.NotAfter)
 	var totalValidity = cert.NotAfter.Sub(cert.NotBefore)
 	var percentUsed = (1 - remainingValidity.Minutes()/totalValidity.Minutes()) * 100
-	//fmt.Println("Percent: ", percentUsed)
-	//fmt.Println("Total Valid", totalValidity.Minutes())
 
 	if expiresIn != "" {
 		duration, err := time.ParseDuration(expiresIn)
-		//fmt.Println("Duration: ", duration)
+
 		if err != nil {
 			os.Exit(255)
 		} else {
