@@ -16,8 +16,10 @@ func needsRenewalCommand() cli.Command {
 		Action:      cli.ActionFunc(needsRenewalAction),
 		Usage:       `Check if a certificate needs to be renewed`,
 		UsageText:   `**step certificate needs-renewal** <crt_file> or <host_name> [**--expires-in <duration>]`,
-		Description: `**step certificate needs-renewal** Checks certificate from file or from a host if the certificate is over 66% of its lifetime.
-Returns 0 if needs renewal. Returns 1 if the certificate does not need renewal. Returns 255 for any errors occurred
+		Description: `**step certificate needs-renewal** Checks certificate expiration from file or from a host if 
+		the certificate is over 66% of its lifetime. If the certificate needs renewal this command will return '0'.
+		If the certificate is not far enough into its life, it will return '1'. If validation fails, or if an error occurs, 
+		this command will produce a non-zero return value.
 ## POSITIONAL ARGUMENTS
 
 <crt_file>
@@ -28,14 +30,17 @@ Returns 0 if needs renewal. Returns 1 if the certificate does not need renewal. 
 
 ## EXIT CODES
 
-Returns 0 if needs renewal. Returns 1 if the certificate does not need renewal. Returns 255 for any errors occurred
+This command returns 0 if needing renewal, or returns 1 if the certificate does not need renewal. It will return 255 if any errors occurred
 
 ## EXAMPLES
 Check certificate for renewal using custom directory 
+'''
 $ step certificate needs-renewal ./certificate.crt 
-
+'''
 Check if certificate will expire within a given time 
+'''
 $ step certificate needs-renewal ./certificate.crt --expires-in 1h15m
+'''
 `,
 		Flags: []cli.Flag{
 			cli.StringFlag{
