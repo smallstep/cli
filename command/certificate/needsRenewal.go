@@ -47,10 +47,6 @@ $ step certificate needs-renewal ./certificate.crt --expires-in 1h15m
 				Name:  "expires-in",
 				Usage: `Check if the certificate expires in given time duration`,
 			},
-			cli.StringFlag{
-				Name: "roots",
-				Usage: `Root certificate(s) that will be used to verify the
-				authenticity of the remote server.`},
 		},
 	}
 }
