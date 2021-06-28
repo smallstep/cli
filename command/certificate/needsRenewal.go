@@ -3,6 +3,7 @@ package certificate
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"github.com/pkg/errors"
 	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 	"io/ioutil"
@@ -87,19 +88,18 @@ func needsRenewalAction(ctx *cli.Context) error {
 	} else {
 		crtBytes, err := ioutil.ReadFile(crtFile)
 		if err != nil {
-			os.Exit(255)
+			return errs.NewExitError(err,255)
 		}
 
-		var (
-			block *pem.Block
-		)
+
+		var block *pem.Block
 		// The first certificate PEM in the file is our leaf Certificate.
 		// Any certificate after the first is added to the list of Intermediate
 		// certificates used for path validation.
 		for len(crtBytes) > 0 {
 			block, crtBytes = pem.Decode(crtBytes)
 			if block == nil {
-				os.Exit(255)
+				return errs.NewExitError(err,255)
 			}
 			if block.Type != "CERTIFICATE" {
 				continue
@@ -107,12 +107,12 @@ func needsRenewalAction(ctx *cli.Context) error {
 			if cert == nil {
 				cert, err = x509.ParseCertificate(block.Bytes)
 				if err != nil {
-					os.Exit(255)
+					return errs.NewExitError(err,255)
 				}
 			}
 		}
 		if cert == nil {
-			os.Exit(255)
+			return errors.Errorf("%s contains no PEM certificate blocks", crtFile)
 		}
 
 	}
@@ -125,11 +125,13 @@ func needsRenewalAction(ctx *cli.Context) error {
 			percentageInput, err := strconv.Atoi(strings.ReplaceAll(expiresIn, "%", ""))
 
 			if err != nil || percentageInput > 100 || percentageInput < 0 {
-				os.Exit(255)
+				return errs.NewExitError(err,255)
+
 			}
 
 			if percentageInput > int(percentUsed) {
-				os.Exit(0)
+				//os.Exit(0)
+				return nil
 			} else {
 				os.Exit(1)
 			}
@@ -137,10 +139,11 @@ func needsRenewalAction(ctx *cli.Context) error {
 			duration, err := time.ParseDuration(expiresIn)
 
 			if err != nil {
-				os.Exit(255)
+				return errs.NewExitError(err,255)
 			} else { //is duration
 				if duration.Minutes() > remainingValidity.Minutes() {
-					os.Exit(0)
+					//os.Exit(0)
+					return nil
 				} else {
 					os.Exit(1)
 				}
@@ -148,11 +151,12 @@ func needsRenewalAction(ctx *cli.Context) error {
 		}
 	} else {
 		if percentUsed >= 66 {
-			os.Exit(0)
+			//os.Exit(0)
+			return nil
 		} else if percentUsed < 66 {
 			os.Exit(1)
 		} else {
-			os.Exit(255)
+			return errors.Errorf("Can not determine remaining lifetime on certificate %s",crtFile) 
 		}
 	}
 
