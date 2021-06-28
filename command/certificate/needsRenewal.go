@@ -139,10 +139,10 @@ func needsRenewalAction(ctx *cli.Context) error {
 			if err != nil {
 				os.Exit(255)
 			} else { //is duration
-				if duration.Minutes() > totalValidity.Minutes() {
-					os.Exit(1)
-				} else {
+				if duration.Minutes() > remainingValidity.Minutes() {
 					os.Exit(0)
+				} else {
+					os.Exit(1)
 				}
 			}
 		}
