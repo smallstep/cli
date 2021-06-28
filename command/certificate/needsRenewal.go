@@ -58,7 +58,11 @@ $ step certificate needs-renewal https://smallstep.com --expires-in 75%
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "expires-in",
-				Usage: `Check if the certificate expires in given time duration`,
+				Usage: `Check if the certificate expires in given time duration
+				using <percent|duration>. For <percent>, must be followed by "%".
+				With <duration>, it is a sequence of decimal numbers, each with optional
+				fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid
+				time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 		},
 	}
