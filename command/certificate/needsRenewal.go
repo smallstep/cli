@@ -7,6 +7,8 @@ import (
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -15,7 +17,7 @@ func needsRenewalCommand() cli.Command {
 		Name:      "needs-renewal",
 		Action:    cli.ActionFunc(needsRenewalAction),
 		Usage:     `Check if a certificate needs to be renewed`,
-		UsageText: `**step certificate needs-renewal** <crt_file> or <host_name> [**--expires-in <duration>]`,
+		UsageText: `**step certificate needs-renewal** <crt_file or host_name> [**--expires-in <duration>]`,
 		Description: `**step certificate needs-renewal** Checks certificate expiration from file or from a host if 
 		the certificate is over 66% of its lifetime. If the certificate needs renewal this command will return '0'.
 		If the certificate is not far enough into its life, it will return '1'. If validation fails, or if an error occurs, 
@@ -37,10 +39,20 @@ Check certificate for renewal using custom directory
 '''
 $ step certificate needs-renewal ./certificate.crt 
 '''
-Check if certificate will expire within a given time 
+Check certificate for renewal using a host
+$ step certificate needs-renewal https://smallstep.com
 '''
+Check if certificate will expire within a given time
 $ step certificate needs-renewal ./certificate.crt --expires-in 1h15m
 '''
+Check if certificate from host will expire within a given time
+$ step certificate needs-renewal https://smallstep.com --expires-in 1h15m
+'''
+Check if certificate has passed a percentage of its lifetime 
+$ step certificate needs-renewal ./certificate.crt --expires-in 75%
+'''
+Check if certificate from a host has passed a percentage of its lifetime
+$ step certificate needs-renewal https://smallstep.com --expires-in 75%
 `,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -109,18 +121,31 @@ func needsRenewalAction(ctx *cli.Context) error {
 	var percentUsed = (1 - remainingValidity.Minutes()/totalValidity.Minutes()) * 100
 
 	if expiresIn != "" {
-		duration, err := time.ParseDuration(expiresIn)
+		if strings.Contains(expiresIn, "%") {
+			percentageInput, err := strconv.Atoi(strings.ReplaceAll(expiresIn, "%", ""))
 
-		if err != nil {
-			os.Exit(255)
-		} else {
-			if duration.Minutes() > totalValidity.Minutes() {
-				os.Exit(1)
-			} else {
+			if err != nil || percentageInput > 100 || percentageInput < 0 {
+				os.Exit(255)
+			}
+
+			if percentageInput > int(percentUsed) {
 				os.Exit(0)
+			} else {
+				os.Exit(1)
+			}
+		} else {
+			duration, err := time.ParseDuration(expiresIn)
+
+			if err != nil {
+				os.Exit(255)
+			} else { //is duration
+				if duration.Minutes() > totalValidity.Minutes() {
+					os.Exit(1)
+				} else {
+					os.Exit(0)
+				}
 			}
 		}
-
 	} else {
 		if percentUsed >= 66 {
 			os.Exit(0)
