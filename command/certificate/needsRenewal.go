@@ -135,7 +135,6 @@ func needsRenewalAction(ctx *cli.Context) error {
 			}
 
 			if percentageInput > int(percentUsed) {
-				//os.Exit(0)
 				return nil
 			} else {
 				os.Exit(1)
