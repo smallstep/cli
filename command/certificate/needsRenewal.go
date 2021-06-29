@@ -135,23 +135,19 @@ func needsRenewalAction(ctx *cli.Context) error {
 			}
 
 			if percentageInput > int(percentUsed) {
-				//os.Exit(0)
 				return nil
-			} else {
-				os.Exit(1)
 			}
+			os.Exit(1)
+
 		} else {
 			duration, err := time.ParseDuration(expiresIn)
 
 			if err != nil {
 				return errs.NewExitError(err, 255)
-			} else {
-				if duration.Minutes() > remainingValidity.Minutes() {
-					return nil
-				} else {
-					os.Exit(1)
-				}
+			} else if duration.Minutes() > remainingValidity.Minutes() {
+				return nil
 			}
+			os.Exit(1)
 		}
 	} else {
 		if percentUsed >= 66 {
