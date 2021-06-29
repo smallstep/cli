@@ -57,7 +57,7 @@ $ step certificate needs-renewal https://smallstep.com --expires-in 75%
 `,
 		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:  "expires-in",
+				Name: "expires-in",
 				Usage: `Check if the certificate expires in given time duration
 				using <percent|duration>. For <percent>, must be followed by "%".
 				With <duration>, it is a sequence of decimal numbers, each with optional
@@ -102,7 +102,7 @@ func needsRenewalAction(ctx *cli.Context) error {
 		for len(crtBytes) > 0 {
 			block, crtBytes = pem.Decode(crtBytes)
 			if block == nil {
-				return errs.NewExitError(errors.Errorf("%s contains an invalid PEM block", crtFile),255)
+				return errs.NewExitError(errors.Errorf("%s contains an invalid PEM block", crtFile), 255)
 			}
 			if block.Type != "CERTIFICATE" {
 				continue
@@ -110,12 +110,12 @@ func needsRenewalAction(ctx *cli.Context) error {
 			if cert == nil {
 				cert, err = x509.ParseCertificate(block.Bytes)
 				if err != nil {
-					return errs.NewExitError(errors.WithStack(err),255)
+					return errs.NewExitError(errors.WithStack(err), 255)
 				}
 			}
 		}
 		if cert == nil {
-			return errs.NewExitError(errors.Errorf("%s contains no PEM certificate blocks", crtFile),255)
+			return errs.NewExitError(errors.Errorf("%s contains no PEM certificate blocks", crtFile), 255)
 		}
 
 	}
@@ -159,7 +159,7 @@ func needsRenewalAction(ctx *cli.Context) error {
 		} else if percentUsed < 66 {
 			os.Exit(1)
 		} else {
-			return errs.NewExitError(errors.Errorf("Can not determine remaining lifetime on certificate %s", crtFile),255)
+			return errs.NewExitError(errors.Errorf("Can not determine remaining lifetime on certificate %s", crtFile), 255)
 		}
 	}
 
