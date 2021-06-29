@@ -85,16 +85,15 @@ func needsRenewalAction(ctx *cli.Context) error {
 	} else if isURL {
 		peerCertificates, err := getPeerCertificates(addr, serverName, roots, false)
 		if err != nil {
-			os.Exit(255)
+			return errs.NewExitError(err, 255)
 		}
 		cert = peerCertificates[0]
 
 	} else {
 		crtBytes, err := ioutil.ReadFile(crtFile)
 		if err != nil {
-			return errs.NewExitError(err,255)
+			return errs.NewExitError(err, 255)
 		}
-
 
 		var block *pem.Block
 		// The first certificate PEM in the file is our leaf Certificate.
@@ -103,7 +102,7 @@ func needsRenewalAction(ctx *cli.Context) error {
 		for len(crtBytes) > 0 {
 			block, crtBytes = pem.Decode(crtBytes)
 			if block == nil {
-				return errs.NewExitError(err,255)
+				return errs.NewExitError(errors.Errorf("%s contains an invalid PEM block", crtFile),255)
 			}
 			if block.Type != "CERTIFICATE" {
 				continue
@@ -111,12 +110,12 @@ func needsRenewalAction(ctx *cli.Context) error {
 			if cert == nil {
 				cert, err = x509.ParseCertificate(block.Bytes)
 				if err != nil {
-					return errs.NewExitError(err,255)
+					return errs.NewExitError(errors.WithStack(err),255)
 				}
 			}
 		}
 		if cert == nil {
-			return errors.Errorf("%s contains no PEM certificate blocks", crtFile)
+			return errs.NewExitError(errors.Errorf("%s contains no PEM certificate blocks", crtFile),255)
 		}
 
 	}
@@ -128,9 +127,11 @@ func needsRenewalAction(ctx *cli.Context) error {
 		if strings.Contains(expiresIn, "%") {
 			percentageInput, err := strconv.Atoi(strings.ReplaceAll(expiresIn, "%", ""))
 
-			if err != nil || percentageInput > 100 || percentageInput < 0 {
-				return errs.NewExitError(err,255)
-
+			if err != nil {
+				return errs.NewExitError(err, 255)
+			}
+			if percentageInput > 100 || percentageInput < 0 {
+				return errs.NewExitError(errors.Errorf("Percentage must be in range 0-100"), 255)
 			}
 
 			if percentageInput > int(percentUsed) {
@@ -143,10 +144,9 @@ func needsRenewalAction(ctx *cli.Context) error {
 			duration, err := time.ParseDuration(expiresIn)
 
 			if err != nil {
-				return errs.NewExitError(err,255)
-			} else { //is duration
+				return errs.NewExitError(err, 255)
+			} else {
 				if duration.Minutes() > remainingValidity.Minutes() {
-					//os.Exit(0)
 					return nil
 				} else {
 					os.Exit(1)
@@ -155,12 +155,11 @@ func needsRenewalAction(ctx *cli.Context) error {
 		}
 	} else {
 		if percentUsed >= 66 {
-			//os.Exit(0)
 			return nil
 		} else if percentUsed < 66 {
 			os.Exit(1)
 		} else {
-			return errors.Errorf("Can not determine remaining lifetime on certificate %s",crtFile) 
+			return errs.NewExitError(errors.Errorf("Can not determine remaining lifetime on certificate %s", crtFile),255)
 		}
 	}
 
