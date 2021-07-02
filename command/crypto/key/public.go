@@ -23,7 +23,7 @@ func publicCommand() cli.Command {
                 Action:    command.ActionFunc(publicAction),
                 Usage:     `print the public key from a private key`,
                 UsageText: `**step crypto key public** <key-file> [**--out**=<path>]`,
-		Description: `**step crypto key public** prints or writes in a PEM format
+                Description: `**step crypto key public** prints or writes in a PEM format
 the public key corresponding to the given <key-file>.
 ## POSITIONAL ARGUMENTS
 <key-file>
@@ -65,8 +65,8 @@ func publicAction(ctx *cli.Context) error {
         default:
                 return errs.TooManyArguments(ctx)
         }
-	
-	b, err := utils.ReadFile(name)
+
+        b, err := utils.ReadFile(name)
         if err != nil {
                 return err
         }
