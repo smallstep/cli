@@ -61,7 +61,7 @@ func publicAction(ctx *cli.Context) error {
 	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
 		return err
 	}
-
+	
 	var name string
 	switch ctx.NArg() {
 	case 0:
@@ -71,7 +71,7 @@ func publicAction(ctx *cli.Context) error {
 	default:
 		return errs.TooManyArguments(ctx)
 	}
-
+	
 	b, err := utils.ReadFile(name)
 	if err != nil {
 		return err
@@ -98,7 +98,6 @@ func publicAction(ctx *cli.Context) error {
 		fmt.Print(string(pem.EncodeToMemory(block)))
 		return nil
 	}
-	
 	if bytes.HasPrefix(crtBytes, []byte("-----BEGIN")) {
 		priv, err := pemutil.Parse(b)
 		if err != nil {
