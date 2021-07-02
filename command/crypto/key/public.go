@@ -1,60 +1,54 @@
 package key
 
 import (
-	"bytes"
-	"crypto"
-	"encoding/pem"
-	"os"
-	"fmt"
+        "bytes"
+        "crypto"
+        "encoding/pem"
+        "fmt"
+        "os"
 
-	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
-	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/ui"
-	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
+        "github.com/pkg/errors"
+        "github.com/smallstep/cli/command"
+        "github.com/smallstep/cli/crypto/pemutil"
+        "github.com/smallstep/cli/errs"
+        "github.com/smallstep/cli/flags"
+        "github.com/smallstep/cli/ui"
+        "github.com/smallstep/cli/utils"
+        "github.com/urfave/cli"
 )
 
 func publicCommand() cli.Command {
-	return cli.Command{
-		Name:      "public",
-		Action:    command.ActionFunc(publicAction),
-		Usage:     `print the public key from a private key`,
-		UsageText: `**step crypto key public** <key-file> [**--out**=<path>]`,
+        return cli.Command{
+                Name:      "public",
+                Action:    command.ActionFunc(publicAction),
+                Usage:     `print the public key from a private key`,
+                UsageText: `**step crypto key public** <key-file> [**--out**=<path>]`,
 		Description: `**step crypto key public** prints or writes in a PEM format
 the public key corresponding to the given <key-file>.
-
 ## POSITIONAL ARGUMENTS
-
 <key-file>
 :  Path to a private key.
-
 ## EXAMPLES
-
 Print the corresponding public key:
 '''
 $ step crypto key public priv.pem
 '''
-
 Print the public key of certificate:
 '''
 $ step crypto key public foo.crt
 '''
-
 Write the corresponding public key to a file:
 '''
 $ step crypto key public --out pub.pem key.pem
 '''`,
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "out",
-				Usage: "Path to write the public key.",
-			},
-			flags.Force,
-		},
-	}
+                Flags: []cli.Flag{
+                        cli.StringFlag{
+                                Name:  "out",
+                                Usage: "Path to write the public key.",
+                        },
+                        flags.Force,
+                },
+        }
 }
 
 func publicAction(ctx *cli.Context) error {
@@ -71,8 +65,8 @@ func publicAction(ctx *cli.Context) error {
         default:
                 return errs.TooManyArguments(ctx)
         }
-
-        b, err := utils.ReadFile(name)
+	
+	b, err := utils.ReadFile(name)
         if err != nil {
                 return err
         }
