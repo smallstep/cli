@@ -3,9 +3,7 @@ package certificate
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"io/ioutil"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/x509util"
@@ -25,7 +23,6 @@ func verifyCommand() cli.Command {
 validation algorithm for x.509 certificates defined in RFC 5280. If the
 certificate is valid this command will return '0'. If validation fails, or if
 an error occurs, this command will produce a non-zero return value.
-		
 
 ## POSITIONAL ARGUMENTS
 
@@ -68,21 +65,11 @@ Verify a certificate using a custom directory of root certificates for path vali
 '''
 $ step certificate verify ./certificate.crt --roots ./root-certificates/
 '''
-
-Verify the remaining validity of a certificate using a custom root certificate and host for path validation:
-
-'''
-$ step certificate verify ./certificate.crt --host smallstep.com --verdancy
-'''
 `,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "host",
 				Usage: `Check whether the certificate is for the specified host.`,
-			},
-			cli.BoolFlag{
-				Name:  "verdancy",
-				Usage: `Check the remaining certificate validity until expiration`,
 			},
 			cli.StringFlag{
 				Name: "roots",
@@ -113,7 +100,6 @@ func verifyAction(ctx *cli.Context) error {
 	var (
 		crtFile          = ctx.Args().Get(0)
 		host             = ctx.String("host")
-		verdancy         = ctx.Bool("verdancy")
 		serverName       = ctx.String("servername")
 		roots            = ctx.String("roots")
 		intermediatePool = x509.NewCertPool()
@@ -176,49 +162,6 @@ func verifyAction(ctx *cli.Context) error {
 		if err != nil {
 			errors.Wrapf(err, "failure to load root certificate pool from input path '%s'", roots)
 		}
-	}
-
-	if verdancy {
-
-		var remainingValidity = time.Until(cert.NotAfter).Hours()
-		var totalValidity = cert.NotAfter.Sub(cert.NotBefore).Hours()
-
-		var percentUsed = int((1 - remainingValidity/totalValidity) * 100)
-
-		red := "\033[31m"
-		green := "\033[32m"
-		yellow := "\033[33m"
-		reset := "\033[0m"
-
-		if percentUsed >= 100 {
-			fmt.Printf("%s 3 %s\n", red, reset) //should be brown
-		} else if percentUsed > 90 {
-			fmt.Printf("%s 2 %s\n", red, reset)
-		} else if percentUsed > 66 && percentUsed < 90 {
-			fmt.Printf("%s 1 %s\n", yellow, reset)
-		} else if percentUsed < 66 && percentUsed > 1 {
-			fmt.Printf("%s 0 %s\n", green, reset)
-		} else if percentUsed < 1 {
-			fmt.Printf("%s 0 %s\n", green, reset)
-		} else {
-			return errors.Errorf("Failure to determine verdancy for certificate")
-		}
-
-		/*if percentUsed >= 100 {
-			fmt.Println("This certificate has already expired.")
-		} else if percentUsed > 90 {
-			fmt.Printf("%sCertificate is %d percent through its lifetime.%s\n", red, percentUsed, reset)
-		} else if percentUsed > 66 && percentUsed < 90 {
-			fmt.Printf("%sCertificate is %d percent through its lifetime.%s\n", yellow, percentUsed, reset)
-		} else if percentUsed < 66 && percentUsed > 1 {
-			fmt.Printf("%sCertificate is %d percent through its lifetime.%s\n", green, percentUsed, reset)
-		} else if percentUsed < 1 {
-			fmt.Printf("%sCertificate is %d percent through its lifetime.%s\n", green, percentUsed, reset)
-		} else {
-			return errors.Errorf("Failure to determine expiration time for certificate")
-		}*/
-
-		return nil
 	}
 
 	opts := x509.VerifyOptions{
