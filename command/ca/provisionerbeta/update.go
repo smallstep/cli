@@ -35,25 +35,37 @@ func updateCommand() cli.Command {
 [**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>]
 
+ACME
+
 **step beta ca provisioner update** <name> [**--force-cn**]
 [**--ca-url**=<uri>] [**--root**=<file>]
 
+OIDC
+
 **step beta ca provisioner update** <name>
 [**--client-id**=<id>] [**--client-secret**=<secret>]
-[**--configuration-endpoint**=<url>] [**--domain**=<domain>]
+[**--configuration-endpoint**=<url>] [**--listen-address=<address>]
+[**--domain**=<domain>] [**--remove-domain**=<domain>]
+[**--group**=<group>] [**--remove-group**=<group>]
 [**--admin**=<email>]... [**--remove-admin**=<email>]...
 [**--ca-url**=<uri>] [**--root**=<file>]
+
+X5C
 
 **step beta ca provisioner update** <name> **--x5c-root**=<file>
 [**--ca-url**=<uri>] [**--root**=<file>]
 
+Kubernetes Service Account
+
 **step beta ca provisioner update** <name> [**--public-key**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>]
+
+IID (AWS/GCP/Azure)
 
 **step beta ca provisioner update** <name>
 [**--aws-account**=<id>]... [**--remove-aws-account**=<id>]...
 [**--gcp-service-account**=<name>]... [**--remove-gcp-service-account**=<name>]...
-[**--gcp-project**=<name>]... [**--remove-gcp-project**=<name]...
+[**--gcp-project**=<name>]... [**--remove-gcp-project**=<name>]...
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
@@ -368,17 +380,19 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 	if ctx.IsSet("disable-renewal") {
 		p.Claims.DisableRenewal = ctx.Bool("disable-renewal")
 	}
-	xc := p.Claims.X509
-	if xc == nil {
-		xc = &linkedca.X509Claims{}
+	claims := p.Claims
+
+	if claims.X509 == nil {
+		claims.X509 = &linkedca.X509Claims{}
 	}
+	xc := claims.X509
 	if ctx.IsSet("x509") {
-		xc.Enabled = ctx.Bool("x509")
+		claims.X509.Enabled = ctx.Bool("x509")
 	}
-	d := xc.Durations
-	if d == nil {
-		d = &linkedca.Durations{}
+	if xc.Durations == nil {
+		xc.Durations = &linkedca.Durations{}
 	}
+	d := claims.X509.Durations
 	if ctx.IsSet("x509-min-dur") {
 		d.Min = ctx.String("x509-min-dur")
 	}
@@ -389,17 +403,17 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 		d.Default = ctx.String("x509-default-dur")
 	}
 
-	sc := p.Claims.Ssh
-	if sc == nil {
-		sc = &linkedca.SSHClaims{}
+	if claims.Ssh == nil {
+		claims.Ssh = &linkedca.SSHClaims{}
 	}
+	sc := claims.Ssh
 	if ctx.IsSet("ssh") {
 		sc.Enabled = ctx.Bool("ssh")
 	}
-	d = sc.UserDurations
-	if d == nil {
-		d = &linkedca.Durations{}
+	if sc.UserDurations == nil {
+		sc.UserDurations = &linkedca.Durations{}
 	}
+	d = sc.UserDurations
 	if ctx.IsSet("ssh-user-min-dur") {
 		d.Min = ctx.String("ssh-user-min-dur")
 	}
@@ -409,10 +423,10 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 	if ctx.IsSet("ssh-user-default-dur") {
 		d.Default = ctx.String("ssh-user-default-dur")
 	}
-	d = sc.HostDurations
-	if d == nil {
-		d = &linkedca.Durations{}
+	if sc.HostDurations == nil {
+		sc.HostDurations = &linkedca.Durations{}
 	}
+	d = sc.HostDurations
 	if ctx.IsSet("ssh-host-min-dur") {
 		d.Min = ctx.String("ssh-host-min-dur")
 	}
@@ -650,11 +664,17 @@ func updateOIDCDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("admin") {
 		details.Admins = append(details.Admins, ctx.StringSlice("admin")...)
 	}
+	if ctx.IsSet("remove-domain") {
+		details.Domains = removeElements(details.Domains, ctx.StringSlice("remove-domain"))
+	}
 	if ctx.IsSet("domain") {
-		details.Domains = ctx.StringSlice("domain")
+		details.Domains = append(details.Domains, ctx.StringSlice("domain")...)
+	}
+	if ctx.IsSet("remove-group") {
+		details.Groups = removeElements(details.Groups, ctx.StringSlice("remove-group"))
 	}
 	if ctx.IsSet("group") {
-		details.Groups = ctx.StringSlice("group")
+		details.Groups = append(details.Groups, ctx.StringSlice("group")...)
 	}
 	if ctx.IsSet("listen-address") {
 		details.ListenAddress = ctx.String("listen-address")
