@@ -3,7 +3,6 @@ module github.com/smallstep/cli
 go 1.13
 
 require (
-	cloud.google.com/go v0.70.0 // indirect
 	github.com/Microsoft/go-winio v0.4.14
 	github.com/ThalesIgnite/crypto11 v1.2.4 // indirect
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
@@ -21,6 +20,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/manifoldco/promptui v0.8.0
+	github.com/micromdm/scep v1.0.0 // indirect
 	github.com/micromdm/scep/v2 v2.0.0 // indirect
 	github.com/newrelic/go-agent v2.15.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1
@@ -29,7 +29,7 @@ require (
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.15.16-rc4
+	github.com/smallstep/certificates v0.15.16-rc7
 	github.com/smallstep/certinfo v1.5.0
 	github.com/smallstep/nosql v0.3.6 // indirect
 	github.com/smallstep/truststore v0.9.6
@@ -42,9 +42,10 @@ require (
 	go.step.sm/crypto v0.9.0
 	go.step.sm/linkedca v0.0.0-20210611183751-27424aae8d25
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
-	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
+	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
+	google.golang.org/genproto v0.0.0-20210608205507-b6d2f5bf0d7d // indirect
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/square/go-jose.v2 v2.5.1
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20201103104416-57fc603b7f52
@@ -58,7 +59,7 @@ require (
 // For more information see https://github.com/etcd-io/etcd/issues/12124
 replace google.golang.org/grpc => google.golang.org/grpc v1.32.0
 
-replace github.com/smallstep/certificates => ../certificates
+//replace github.com/smallstep/certificates => ../certificates
 
 //replace go.step.sm/linkedca => ../linkedca
 
