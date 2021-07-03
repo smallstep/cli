@@ -113,7 +113,8 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		}
 		subject := ctx.String("admin-subject")
 		if subject == "" {
-			subject, err = ui.Prompt("Please enter the name of the admin executing this command", ui.WithValidateNotEmpty())
+			ui.Printf("No admin credentials found. You must login to execute admin commands.\n")
+			subject, err = ui.Prompt("Please enter admin name/subject (e.g., name@example.com)", ui.WithValidateNotEmpty())
 			if err != nil {
 				return nil, err
 			}
