@@ -159,7 +159,7 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 			},
 			cli.StringFlag{
 				Name: "iid-roots",
-				Usage: `The <path> to the file containing the certificates used to validate the
+				Usage: `The <file> containing the certificates used to validate the
 instance identity documents in AWS.`,
 			},
 			cli.BoolFlag{

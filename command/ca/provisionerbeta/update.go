@@ -228,7 +228,6 @@ $ step beta ca provisioner update Google \
 '''
 
 Update an AWS provisioner:
-document and will allow multiple certificates from the same instance:
 '''
 $ step beta ca provisioner update Amazon --disable-custom-sans --disable-trust-on-first-use
 '''`,

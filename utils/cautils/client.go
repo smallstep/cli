@@ -136,7 +136,7 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 			URIs:           uris,
 		}
 
-		adminKey, err = keys.GenerateKey("EC", "P-256", 0)
+		adminKey, err = keys.GenerateDefaultKey()
 		if err != nil {
 			return nil, err
 		}

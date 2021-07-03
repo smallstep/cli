@@ -197,7 +197,7 @@ but can accept a different configuration file using **--ca-config** flag.`,
 	// CaConfig is a cli.Flag used to pass the CA configuration file.
 	CaConfig = cli.StringFlag{
 		Name: "ca-config",
-		Usage: `The <path> to the certificate authority configuration file. Defaults to
+		Usage: `The certificate authority configuration <file>. Defaults to
 $STEPPATH/config/ca.json`,
 		Value: filepath.Join(config.StepPath(), "config", "ca.json"),
 	}
@@ -212,7 +212,7 @@ $STEPPATH/config/ca.json`,
 	// that is used to sign the token.
 	AdminKey = cli.StringFlag{
 		Name: "admin-key",
-		Usage: `Private key <path>, used to sign a JWT, corresponding to the admin certificate that will
+		Usage: `Private key <file>, used to sign a JWT, corresponding to the admin certificate that will
 be stored in the 'x5c' header.`,
 	}
 
@@ -226,7 +226,7 @@ be stored in the 'x5c' header.`,
 	// that is used to sign the token.
 	X5cKey = cli.StringFlag{
 		Name: "x5c-key",
-		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate that will
+		Usage: `Private key <file>, used to sign a JWT, corresponding to the certificate that will
 be stored in the 'x5c' header.`,
 	}
 
@@ -234,14 +234,14 @@ be stored in the 'x5c' header.`,
 	// for a JWS or JWT.
 	X5tCert = cli.StringFlag{
 		Name:  "x5t-cert",
-		Usage: "Certificate <path> in PEM format to use for the 'x5t' header of a JWS or JWT",
+		Usage: "Certificate <file> in PEM format to use for the 'x5t' header of a JWS or JWT",
 	}
 
 	// X5tKey is a cli.Flag used to pass the private key (corresponding to the x5t-cert)
 	// that is used to sign the token.
 	X5tKey = cli.StringFlag{
 		Name: "x5t-key",
-		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate used for
+		Usage: `Private key <file>, used to sign a JWT, corresponding to the certificate used for
 the 'x5t' header.`,
 	}
 
@@ -255,7 +255,7 @@ the 'x5t' header.`,
 	// that is used to sign the token.
 	SSHPOPKey = cli.StringFlag{
 		Name: "sshpop-key",
-		Usage: `Private key <path>, used to sign a JWT, corresponding to the certificate that will
+		Usage: `Private key <file>, used to sign a JWT, corresponding to the certificate that will
 be stored in the 'sshpop' header.`,
 	}
 
@@ -294,7 +294,7 @@ the **--team** option. If the url contains <\<\>> placeholders, they are replace
 	// TemplateSetFile is a cli.Flag used to send a JSON file to the CA.
 	TemplateSetFile = cli.StringFlag{
 		Name:  "set-file",
-		Usage: "The <path> of a JSON file with the template data to send to the CA.",
+		Usage: "The JSON <file> with the template data to send to the CA.",
 	}
 
 	// Identity is a cli.Flag used to be able to define the identity argument in

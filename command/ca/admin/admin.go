@@ -26,12 +26,9 @@ func Command() cli.Command {
 		Description: `The **step ca admin** command group provides facilities for managing the
 certificate authority admins.
 
-A admin is an entity that manages administrative resources within a certificate
-authority. Admins manage
-
-* certificate authority configuration
-* provisioner configuration
-* other admins and admin privileges
+An admin is an entity that manages administrative resources (like authority
+configuration, provisioner configuration, and other admins) within a certificate
+authority.
 
 ## EXAMPLES
 
@@ -42,7 +39,12 @@ $ step beta ca admin list
 
 Add an admin:
 '''
-$ step beta ca admin add max@smallstep.com my-jwk-provisioner
+$ step beta ca admin add max@smallstep.com my-jwk-provisioner --super
+'''
+
+Update an admin:
+'''
+$ step beta ca admin update max@smallstep.com --super=false
 '''
 
 Remove an admin:

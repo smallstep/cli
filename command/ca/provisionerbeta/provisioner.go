@@ -12,7 +12,7 @@ func Command() cli.Command {
 	return cli.Command{
 		Name:      "provisioner",
 		Usage:     "create and manage the certificate authority provisioners",
-		UsageText: "step beta ca provisioner <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "**step beta ca provisioner** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			//listCommand(),
 			addCommand(),
@@ -224,7 +224,7 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 	}
 	iidRootsFlag = cli.StringFlag{
 		Name: "iid-roots",
-		Usage: `The <path> to the file containing the certificates used to validate the
+		Usage: `The <file> containing the certificates used to validate the
 instance identity documents in AWS.`,
 	}
 	disableCustomSANsFlag = cli.BoolFlag{
