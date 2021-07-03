@@ -106,6 +106,7 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 			return nil, errors.Wrap(err, "error reading admin key")
 		}
 	} else {
+		ui.Printf("No admin credentials found. You must login to execute admin commands.\n")
 		// Generate a new admin cert/key in memory.
 		client, err := ca.NewClient(caURL, ca.WithRootFile(root))
 		if err != nil {
@@ -113,7 +114,6 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		}
 		subject := ctx.String("admin-subject")
 		if subject == "" {
-			ui.Printf("No admin credentials found. You must login to execute admin commands.\n")
 			subject, err = ui.Prompt("Please enter admin name/subject (e.g., name@example.com)", ui.WithValidateNotEmpty())
 			if err != nil {
 				return nil, err
