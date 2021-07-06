@@ -14,7 +14,7 @@ func Command() cli.Command {
 			addCommand(),
 			removeCommand(),
 		},
-		Description: `The **step ca provisioner** command group provides facilities for managing the
+		Description: `**step ca provisioner** command group provides facilities for managing the
 certificate authority provisioners.
 
 A provisioner is an entity that controls provisioning credentials, which are

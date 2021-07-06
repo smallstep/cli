@@ -16,14 +16,14 @@ func Command() cli.Command {
 	return cli.Command{
 		Name:      "admin",
 		Usage:     "create and manage the certificate authority admins",
-		UsageText: "step beta ca admin <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "**step beta ca admin** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			listCommand(),
 			addCommand(),
 			removeCommand(),
 			updateCommand(),
 		},
-		Description: `The **step ca admin** command group provides facilities for managing the
+		Description: `**step ca admin** command group provides facilities for managing the
 certificate authority admins.
 
 An admin is an entity that manages administrative resources (like authority

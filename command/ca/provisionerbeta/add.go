@@ -119,8 +119,9 @@ func addCommand() cli.Command {
 				Usage: `The <file> containing the JWK private key.`,
 			},
 			cli.StringFlag{
-				Name:  "public-key",
-				Usage: `The <file> containing the JWK public key.`,
+				Name: "public-key",
+				Usage: `The <file> containing the JWK public key. Or, a <file>
+containing one or more PEM formatted keys, if used with the K8SSA provisioner.`,
 			},
 
 			// OIDC provisioner flags

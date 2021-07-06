@@ -17,7 +17,7 @@ func init() {
 	cmd := cli.Command{
 		Name:      "ca",
 		Usage:     "initialize and manage a certificate authority",
-		UsageText: "step ca <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "**step ca** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step ca** command group provides facilities to initialize a certificate
 authority, retrieve the root of trust, sign and renew certificates, and create
 and manage provisioners.
@@ -200,7 +200,7 @@ func BetaCommand() cli.Command {
 	return cli.Command{
 		Name:      "ca",
 		Usage:     "commands that are made available for testing new features and APIs",
-		UsageText: "step beta ca <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "**step beta ca** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step beta ca** enables beta access to new step-ca APIs. These
 commands may change, disappear, or be promoted to a different subcommand in the future.`,
 		Subcommands: cli.Commands{
