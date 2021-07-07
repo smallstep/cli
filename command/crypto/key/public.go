@@ -1,13 +1,9 @@
 package key
 
 import (
-	"bytes"
-	"crypto"
 	"encoding/pem"
-	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
@@ -15,28 +11,36 @@ import (
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/keyutil"
 )
 
 func publicCommand() cli.Command {
 	return cli.Command{
-		Name:      "public",
-		Action:    command.ActionFunc(publicAction),
-		Usage:     `print the public key from a private key`,
-		UsageText: `**step crypto key public** <key-file> [**--out**=<path>]`,
-		Description: `**step crypto key public** prints or writes in a PEM format
-the public key corresponding to the given <key-file>.
+		Name:   "public",
+		Action: command.ActionFunc(publicAction),
+		Usage:  `print the public key from a private key or certificate`,
+		UsageText: `**step crypto key public** <key-file> [**--out**=<file>]
+[**--password-file**=<file>]`,
+		Description: `**step crypto key public** outputs the public key, in PEM format, corresponding to
+the input <file>.
+
 ## POSITIONAL ARGUMENTS
+
 <key-file>
 :  Path to a private key.
+
 ## EXAMPLES
+
 Print the corresponding public key:
 '''
 $ step crypto key public priv.pem
 '''
-Print the public key of certificate:
+
+Print the public key of an x509 certificate:
 '''
 $ step crypto key public foo.crt
 '''
+
 Write the corresponding public key to a file:
 '''
 $ step crypto key public --out pub.pem key.pem
@@ -44,8 +48,9 @@ $ step crypto key public --out pub.pem key.pem
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "out",
-				Usage: "Path to write the public key.",
+				Usage: "The <file> to write the public key.",
 			},
+			flags.PasswordFile,
 			flags.Force,
 		},
 	}
@@ -68,58 +73,35 @@ func publicAction(ctx *cli.Context) error {
 
 	var b, err = utils.ReadFile(name)
 	if err != nil {
-		return err
+		return errs.FileError(err, name)
 	}
 
-	crtBytes, err := utils.ReadFile(name)
+	opts := []pemutil.Options{pemutil.WithFilename(name), pemutil.WithFirstBlock()}
+	if ctx.IsSet("password-file") {
+		opts = append(opts, pemutil.WithPasswordFile(ctx.String("password-file")))
+	}
+	k, err := pemutil.ParseKey(b, opts...)
 	if err != nil {
 		return err
 	}
-	if bytes.HasPrefix(crtBytes, []byte("-----BEGIN CERTIFICATE-----")) {
-		key, err := pemutil.ParseKey(b, pemutil.WithFirstBlock())
-		if err != nil {
-			return err
-		}
-		block, err := pemutil.Serialize(key)
-		if err != nil {
-			return err
-		}
-		if out := ctx.String("out"); len(out) > 0 {
-			if err := utils.WriteFile(out, pem.EncodeToMemory(block), 0600); err != nil {
-				return err
-			}
-			ui.Printf("The public key has been saved in %s.\n", out)
-			return nil
-		}
 
-		fmt.Print(string(pem.EncodeToMemory(block)))
+	pub, err := keyutil.PublicKey(k)
+	if err != nil {
+		return err
+	}
+
+	block, err := pemutil.Serialize(pub)
+	if err != nil {
+		return err
+	}
+
+	if out := ctx.String("out"); len(out) > 0 {
+		if err := utils.WriteFile(out, pem.EncodeToMemory(block), 0600); err != nil {
+			return err
+		}
+		ui.Printf("The public key has been saved in %s.\n", out)
 		return nil
 	}
-
-	if bytes.HasPrefix(crtBytes, []byte("-----BEGIN")) {
-		priv, err := pemutil.Parse(b)
-		if err != nil {
-			return err
-		}
-
-		pub, ok := priv.(interface{ Public() crypto.PublicKey })
-		if !ok {
-			return errors.Errorf("cannot get a public key from %s", name)
-		}
-
-		if out := ctx.String("out"); out == "" {
-			block, err := pemutil.Serialize(pub.Public())
-			if err != nil {
-				return err
-			}
-			os.Stdout.Write(pem.EncodeToMemory(block))
-		} else {
-			_, err = pemutil.Serialize(pub.Public(), pemutil.ToFile(out, 0600))
-			if err != nil {
-				return err
-			}
-			ui.Printf("Your key has been saved in %s.\n", out)
-		}
-	}
+	os.Stdout.Write(pem.EncodeToMemory(block))
 	return nil
 }
