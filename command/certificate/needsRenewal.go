@@ -21,7 +21,7 @@ func needsRenewalCommand() cli.Command {
 		Usage:     `Check if a certificate needs to be renewed`,
 		UsageText: `**step certificate needs-renewal** <cert_file or host_name> [**--expires-in**=<duration>]`,
 		Description: `**step certificate needs-renewal** returns '0' if the certificate needs to be renewed based on it's remaining lifetime.
-		Returns '1' if the certificate is within it's validity lifetime bounds and does not need to be renewed.
+		Returns '1'  the certificate is within it's validity lifetime bounds and does not need to be renewed.
 		Returns '255' for any other error. By default, a certificate "needs renewal" when it has passed 66% of it's allotted lifetime.
 		This threshold can be adjusted using the '--expires-in' flag.
 
@@ -79,18 +79,16 @@ func needsRenewalAction(ctx *cli.Context) error {
 	}
 
 	var (
-		err        error
-		crtFile    = ctx.Args().Get(0)
-		expiresIn  = ctx.String("expires-in")
-		roots      = ctx.String("roots")
-		serverName = ctx.String("servername")
+		err       error
+		crtFile   = ctx.Args().Get(0)
+		expiresIn = ctx.String("expires-in")
 	)
 
 	var certs []*x509.Certificate
 	if addr, isURL, err := trimURL(crtFile); err != nil {
 		return errs.NewExitError(err, 255)
 	} else if isURL {
-		certs, err = getPeerCertificates(addr, serverName, roots, false)
+		certs, err = getPeerCertificates(addr, "", "", false)
 		if err != nil {
 			return errs.NewExitError(err, 255)
 		}
@@ -108,7 +106,6 @@ func needsRenewalAction(ctx *cli.Context) error {
 	)
 
 	if isPercent {
-		var percentThreshold int
 		if expiresIn == "" {
 			percentThreshold = defaultPercentUsedThreshold
 		} else {
