@@ -25,7 +25,7 @@ func checkHostCommand() cli.Command {
 		Usage:  "checks if a certificate has been issued for a host",
 		UsageText: `**step ssh check-host** <hostname>
 [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<path>] [**--verbose,-v**]`,
+[**--offline**] [**--ca-config**=<file>] [**--verbose,-v**]`,
 		Description: `**step ssh check-host** checks if a certificate has been issued for a host.
 
 This command returns a zero exit status if the host has a certificate.

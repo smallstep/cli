@@ -24,12 +24,12 @@ func signCertificateCommand() cli.Command {
 		UsageText: `**step ca sign** <csr-file> <crt-file>
 [**--token**=<token>] [**--issuer**=<name>] [**--provisioner-password-file=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--ca-url**=<uri>] [**--root**=<path>]
-[**--set**=<key=value>] [**--set-file**=<path>]
-[**--acme**=<uri>] [**--standalone**] [**--webroot**=<path>]
+[**--ca-url**=<uri>] [**--root**=<file>]
+[**--set**=<key=value>] [**--set-file**=<file>]
+[**--acme**=<uri>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
-[**--x5c-cert**=<path>] [**--x5c-key**=<path>]
-[**--k8ssa-token-path**=<path>]`,
+[**--x5c-cert**=<file>] [**--x5c-key**=<file>]
+[**--k8ssa-token-path**=<file>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
