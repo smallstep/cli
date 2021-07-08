@@ -236,7 +236,8 @@ func inspectAction(ctx *cli.Context) error {
 		if err != nil {
 			return errs.FileError(err, crtFile)
 		}
-		if bytes.HasPrefix(crtBytes, []byte("-----BEGIN ")) {
+		crtBytes = bytes.TrimPrefix(crtBytes, []byte("-----"))
+		if crtBytes != nil {
 			for len(crtBytes) > 0 {
 				block, crtBytes = pem.Decode(crtBytes)
 				if block == nil {
