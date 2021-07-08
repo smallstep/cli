@@ -2,10 +2,11 @@ package certificate
 
 import (
 	"crypto/x509"
-	"github.com/smallstep/cli/flags"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/smallstep/cli/flags"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -20,12 +21,14 @@ func needsRenewalCommand() cli.Command {
 		Name:   "needs-renewal",
 		Action: cli.ActionFunc(needsRenewalAction),
 		Usage:  `Check if a certificate needs to be renewed`,
-		UsageText: `**step certificate needs-renewal** <cert_file or host_name> [**--expires-in**=<duration>] [**--roots**=<root-bundle>]
-[**--servername**=<servername>]`,
-		Description: `**step certificate needs-renewal** returns '0' if the certificate needs to be renewed based on it's remaining lifetime.
-		Returns '1'  the certificate is within it's validity lifetime bounds and does not need to be renewed.
-		Returns '255' for any other error. By default, a certificate "needs renewal" when it has passed 66% of it's allotted lifetime.
-		This threshold can be adjusted using the '--expires-in' flag.
+		UsageText: `**step certificate needs-renewal** <cert_file or host_name>
+[**--expires-in**=<duration>] [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
+		Description: `**step certificate needs-renewal** returns '0' if the certificate needs
+to be renewed based on it's remaining lifetime. Returns '1' the certificate is
+within it's validity lifetime bounds and does not need to be renewed. Returns
+'255' for any other error. By default, a certificate "needs renewal" when it has
+passed 66% (default threshold) of it's allotted lifetime. This threshold can be
+adjusted using the '--expires-in' flag.
 
 ## POSITIONAL ARGUMENTS
 
@@ -34,61 +37,53 @@ func needsRenewalCommand() cli.Command {
 
 ## EXIT CODES
 
-This command returns '0' if the certificate needs renewal, '1' if the certificate does not need renewal, and '255' for any error.
+This command returns '0' if the certificate needs renewal, '1' if the
+certificate does not need renewal, and '255' for any error.
 
 ## EXAMPLES
 
 Check certificate for renewal using custom directory:
-
 '''
 $ step certificate needs-renewal ./certificate.crt
 '''
 
 Check certificate for renewal using a hostname:
-
 '''
 $ step certificate needs-renewal https://smallstep.com
 '''
 
-Check if certificate will expire within a given time:
-
+Check if certificate will expire within a given duration:
 '''
 $ step certificate needs-renewal ./certificate.crt --expires-in 1h15m
 '''
 
-Check if certificate from hostname will expire within a given time:
-
+Check if certificate from hostname will expire within a given duration:
 '''
 $ step certificate needs-renewal https://smallstep.com --expires-in 1h15m
 '''
 
 Check if certificate has passed 75 percent of it's lifetime:
-
 '''
 $ step certificate needs-renewal ./certificate.crt --expires-in 75%
 '''
 
 Check if certificate from a hostname has passed 75 percent of it's lifetime:
-
 '''
 $ step certificate needs-renewal https://smallstep.com --expires-in 75%
 '''
 
 Check a remote certificate using a custom root certificate:
-
 '''
 $ step certificate needs-renewal https://smallstep.com --roots ./root-ca.crt
 '''
 
 Check a remote certificate using a custom list of root certificates:
-
 '''
 $ step certificate needs-renewal https://smallstep.com \
 --roots "./root-ca.crt,./root-ca2.crt,/root-ca3.crt"
 '''
 
 Check a remote certificate using a custom directory of root certificates:
-
 '''
 $ step certificate needs-renewal https://smallstep.com \
 --roots "./path/to/root/certificates/"
@@ -164,16 +159,16 @@ func needsRenewalAction(ctx *cli.Context) error {
 		} else {
 			percentThreshold, err = strconv.Atoi(strings.TrimSuffix(expiresIn, "%"))
 			if err != nil {
-				return errs.NewExitError(err, 255)
+				return errs.NewExitError(errs.InvalidFlagValue(ctx, "expires-in", expiresIn, ""), 255)
 			}
 		}
 		if percentThreshold > 100 || percentThreshold < 0 {
-			return errs.NewExitError(errors.Errorf("Percentage must be in range 0-100"), 255)
+			return errs.NewExitError(errs.InvalidFlagValueMsg(ctx, "expires-in", expiresIn, "value must be in range 0-100%"), 255)
 		}
 	} else {
 		duration, err = time.ParseDuration(expiresIn)
 		if err != nil {
-			return errs.NewExitError(err, 255)
+			return errs.NewExitError(errs.InvalidFlagValue(ctx, "expires-in", expiresIn, ""), 255)
 		}
 	}
 

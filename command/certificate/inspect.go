@@ -168,6 +168,7 @@ authenticity of the remote server.
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
+			flags.ServerName,
 			cli.BoolFlag{
 				Name: `bundle`,
 				Usage: `Print all certificates in the order in which they appear in the bundle.
@@ -184,7 +185,6 @@ if the input bundle includes any PEM that does not have type CERTIFICATE.`,
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
-			flags.ServerName,
 		},
 	}
 }
