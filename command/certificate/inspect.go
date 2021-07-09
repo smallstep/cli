@@ -23,7 +23,7 @@ func inspectCommand() cli.Command {
 		Name:   "inspect",
 		Action: cli.ActionFunc(inspectAction),
 		Usage:  `print certificate or CSR details in human readable format`,
-		UsageText: `**step certificate inspect** <crt_file>
+		UsageText: `**step certificate inspect** <cert_file or hostname>
 [**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]
 [**--servername**=<servername>]`,
 		Description: `**step certificate inspect** prints the details of a certificate
@@ -31,71 +31,91 @@ or CSR in a human readable format. Output from the inspect command is printed to
 STDERR instead of STDOUT. This is an intentional barrier to accidental
 misuse: scripts should never rely on the contents of an unvalidated certificate.
 For scripting purposes, use **step certificate verify**.
-If crt_file contains multiple certificates (i.e., it is a certificate "bundle")
+
+If cert_file contains multiple certificates (i.e., it is a certificate "bundle")
 the first certificate in the bundle will be output. Pass the --bundle option to
 print all certificates in the order in which they appear in the bundle.
+
 ## POSITIONAL ARGUMENTS
+
 <crt_file>
 :  Path to a certificate or certificate signing request (CSR) to inspect. A hyphen ("-") indicates STDIN as <crt_file>.
+
 ## EXIT CODES
+
 This command returns 0 on success and \>0 if any error occurs.
+
 ## EXAMPLES
+
 Inspect a local certificate (default to text format):
 '''
 $ step certificate inspect ./certificate.crt
 '''
+
 Inspect a local certificate bundle (default to text format):
 '''
 $ step certificate inspect ./certificate-bundle.crt --bundle
 '''
+
 Inspect a local certificate in json format:
 '''
 $ step certificate inspect ./certificate.crt --format json
 '''
+
 Inspect a local certificate bundle in json format:
 '''
 $ step certificate inspect ./certificate.crt --format json --bundle
 '''
+
 Inspect a remote certificate (using the default root certificate bundle to verify the server):
 '''
 $ step certificate inspect https://smallstep.com
 '''
+
 Inspect an invalid remote certificate:
 '''
 $ step certificate inspect --insecure https://expired.badssl.com
 '''
+
 Inspect a remote certificate chain (using the default root certificate bundle to verify the server):
 '''
 $ step certificate inspect https://google.com --bundle
 '''
+
 Inspect a remote certificate using a custom root certificate to verify the server:
 '''
 $ step certificate inspect https://smallstep.com --roots ./root-ca.crt
 '''
+
 Inspect a remote certificate using a custom list of root certificates to verify the server:
 '''
 $ step certificate inspect https://smallstep.com \
 --roots "./root-ca.crt,./root-ca2.crt,/root-ca3.crt"
 '''
+
 Inspect a remote certificate using a custom directory of root certificates to verify the server:
 '''
 $ step certificate inspect https://smallstep.com \
 --roots "./path/to/root/certificates/"
 '''
+
 Inspect a remote certificate chain in json format using a custom directory of
 root certificates to verify the server:
 '''
 $ step certificate inspect https://google.com --format json \
 --roots "./path/to/root/certificates/" --bundle
 '''
+
 Inspect a remote certificate chain in PEM format:
 '''
 $ step certificate inspect https://smallstep.com --format pem --bundle
 '''
+
 Inspect a local CSR in text format (default):
 '''
 $ step certificate inspect foo.csr
 '''
+
 Inspect a local CSR in json:
 '''
 $ step certificate inspect foo.csr --format json
@@ -106,11 +126,15 @@ $ step certificate inspect foo.csr --format json
 				Name:  "format",
 				Value: "text",
 				Usage: `The output format for printing the introspection details.
+
 : <format> is a string and must be one of:
+
     **text**
     :  Print output in unstructured text suitable for a human to read.
+
     **json**
     :  Print output in JSON format.
+
     **pem**
     :  Print output in PEM format.`,
 			},
@@ -118,11 +142,15 @@ $ step certificate inspect foo.csr --format json
 				Name: "roots",
 				Usage: `Root certificate(s) that will be used to verify the
 authenticity of the remote server.
+
 : <roots> is a case-sensitive string and may be one of:
+
     **file**
 	:  Relative or full path to a file. All certificates in the file will be used for path validation.
+
     **list of files**
 	:  Comma-separated list of relative or full file paths. Every PEM encoded certificate from each file will be used for path validation.
+
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
@@ -194,20 +222,7 @@ func inspectAction(ctx *cli.Context) error {
 		if err != nil {
 			return errs.FileError(err, crtFile)
 		}
-		if bytes.HasPrefix(crtBytes, []byte("-----BEGIN ")) || crtBytes != nil {
-			for len(crtBytes) > 0 {
-				block, crtBytes = pem.Decode(crtBytes)
-				if block == nil {
-					break
-				}
-				if bundle && block.Type != "CERTIFICATE" {
-					return errors.Errorf("certificate bundle %s contains an unexpected PEM block of type %s\n\n  expected type: CERTIFICATE",
-						crtFile, block.Type)
-				}
-				blocks = append(blocks, block)
-			}
-		} else if crtBytes != nil {
-			crtBytes = bytes.TrimPrefix(crtBytes, []byte("-----"))
+		if bytes.Contains(crtBytes, []byte("-----BEGIN ")) {
 			for len(crtBytes) > 0 {
 				block, crtBytes = pem.Decode(crtBytes)
 				if block == nil {
@@ -226,6 +241,7 @@ func inspectAction(ctx *cli.Context) error {
 			blocks = append(blocks, block)
 		}
 	}
+
 	// Keep the first one if !bundle
 	if !bundle {
 		blocks = []*pem.Block{blocks[0]}
