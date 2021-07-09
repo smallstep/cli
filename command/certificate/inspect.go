@@ -206,7 +206,7 @@ func inspectAction(ctx *cli.Context) error {
 				}
 				blocks = append(blocks, block)
 			}
-		}else if crtBytes != nil {
+		} else if crtBytes != nil {
 			crtBytes = bytes.TrimPrefix(crtBytes, []byte("-----"))
 			for len(crtBytes) > 0 {
 				block, crtBytes = pem.Decode(crtBytes)
@@ -219,7 +219,7 @@ func inspectAction(ctx *cli.Context) error {
 				}
 				blocks = append(blocks, block)
 			}
-		}else {
+		} else {
 			if block = derToPemBlock(crtBytes); block == nil {
 				return errors.Errorf("%s contains an invalid PEM block", crtFile)
 			}
