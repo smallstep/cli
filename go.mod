@@ -4,41 +4,28 @@ go 1.13
 
 require (
 	github.com/Microsoft/go-winio v0.4.14
-	github.com/ThalesIgnite/crypto11 v1.2.4 // indirect
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
-	github.com/aws/aws-sdk-go v1.30.29 // indirect
 	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/corpix/uarand v0.1.1 // indirect
-	github.com/go-chi/chi v4.0.2+incompatible // indirect
-	github.com/go-kit/kit v0.10.0 // indirect
-	github.com/go-piv/piv-go v1.7.0 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golangci/golangci-lint v1.24.0 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/manifoldco/promptui v0.8.0
-	github.com/micromdm/scep v1.0.0 // indirect
-	github.com/micromdm/scep/v2 v2.0.0 // indirect
-	github.com/newrelic/go-agent v2.15.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.0.0
-	github.com/rs/xid v1.2.1 // indirect
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.16.0
 	github.com/smallstep/certinfo v1.5.0
-	github.com/smallstep/nosql v0.3.6 // indirect
 	github.com/smallstep/truststore v0.9.6
 	github.com/smallstep/zcrypto v0.0.0-20200203191936-fbc32cf76bce
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.4
 	go.mozilla.org/pkcs7 v0.0.0-20200128120323-432b2356ecb1
-	go.step.sm/cli-utils v0.4.1 // indirect
 	go.step.sm/crypto v0.9.0
 	go.step.sm/linkedca v0.0.0-20210611183751-27424aae8d25
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
@@ -57,7 +44,7 @@ require (
 // interfaces.
 //
 // For more information see https://github.com/etcd-io/etcd/issues/12124
-replace google.golang.org/grpc => google.golang.org/grpc v1.32.0
+replace google.golang.org/grpc => google.golang.org/grpc v1.38.0
 
 //replace github.com/smallstep/certificates => ../certificates
 
