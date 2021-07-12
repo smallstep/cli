@@ -31,7 +31,11 @@ or CSR in a human readable format. Output from the inspect command is printed to
 STDERR instead of STDOUT. This is an intentional barrier to accidental
 misuse: scripts should never rely on the contents of an unvalidated certificate.
 For scripting purposes, use **step certificate verify**.
+<<<<<<< Updated upstream
 If cert_file contains multiple certificates (i.e., it is a certificate "bundle")
+=======
+If crt_file contains multiple certificates (i.e., it is a certificate "bundle")
+>>>>>>> Stashed changes
 the first certificate in the bundle will be output. Pass the --bundle option to
 print all certificates in the order in which they appear in the bundle.
 ## POSITIONAL ARGUMENTS
