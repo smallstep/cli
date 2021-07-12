@@ -23,7 +23,7 @@ func inspectCommand() cli.Command {
 		Name:   "inspect",
 		Action: cli.ActionFunc(inspectAction),
 		Usage:  `print certificate or CSR details in human readable format`,
-		UsageText: `**step certificate inspect** <crt_file>
+		UsageText: `**step certificate inspect** <cert_file or hostname>
 [**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]
 [**--servername**=<servername>]`,
 		Description: `**step certificate inspect** prints the details of a certificate
@@ -31,7 +31,7 @@ or CSR in a human readable format. Output from the inspect command is printed to
 STDERR instead of STDOUT. This is an intentional barrier to accidental
 misuse: scripts should never rely on the contents of an unvalidated certificate.
 For scripting purposes, use **step certificate verify**.
-If crt_file contains multiple certificates (i.e., it is a certificate "bundle")
+If cert_file contains multiple certificates (i.e., it is a certificate "bundle")
 the first certificate in the bundle will be output. Pass the --bundle option to
 print all certificates in the order in which they appear in the bundle.
 ## POSITIONAL ARGUMENTS
@@ -126,6 +126,7 @@ authenticity of the remote server.
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
+			flags.ServerName,
 			cli.BoolFlag{
 				Name: `bundle`,
 				Usage: `Print all certificates in the order in which they appear in the bundle.
@@ -142,7 +143,6 @@ if the input bundle includes any PEM that does not have type CERTIFICATE.`,
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
-			flags.ServerName,
 		},
 	}
 }
@@ -194,20 +194,7 @@ func inspectAction(ctx *cli.Context) error {
 		if err != nil {
 			return errs.FileError(err, crtFile)
 		}
-		if bytes.HasPrefix(crtBytes, []byte("-----BEGIN ")) || crtBytes != nil {
-			for len(crtBytes) > 0 {
-				block, crtBytes = pem.Decode(crtBytes)
-				if block == nil {
-					break
-				}
-				if bundle && block.Type != "CERTIFICATE" {
-					return errors.Errorf("certificate bundle %s contains an unexpected PEM block of type %s\n\n  expected type: CERTIFICATE",
-						crtFile, block.Type)
-				}
-				blocks = append(blocks, block)
-			}
-		} else if crtBytes != nil {
-			crtBytes = bytes.TrimPrefix(crtBytes, []byte("-----"))
+		if bytes.Contains(crtBytes, []byte("-----BEGIN ")) {
 			for len(crtBytes) > 0 {
 				block, crtBytes = pem.Decode(crtBytes)
 				if block == nil {
@@ -226,6 +213,7 @@ func inspectAction(ctx *cli.Context) error {
 			blocks = append(blocks, block)
 		}
 	}
+
 	// Keep the first one if !bundle
 	if !bundle {
 		blocks = []*pem.Block{blocks[0]}
