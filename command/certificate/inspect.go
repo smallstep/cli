@@ -48,62 +48,52 @@ This command returns 0 on success and \>0 if any error occurs.
 ## EXAMPLES
 
 Inspect a local certificate (default to text format):
-
 '''
 $ step certificate inspect ./certificate.crt
 '''
 
 Inspect a local certificate bundle (default to text format):
-
 '''
 $ step certificate inspect ./certificate-bundle.crt --bundle
 '''
 
 Inspect a local certificate in json format:
-
 '''
 $ step certificate inspect ./certificate.crt --format json
 '''
 
 Inspect a local certificate bundle in json format:
-
 '''
 $ step certificate inspect ./certificate.crt --format json --bundle
 '''
 
 Inspect a remote certificate (using the default root certificate bundle to verify the server):
-
 '''
 $ step certificate inspect https://smallstep.com
 '''
 
 Inspect an invalid remote certificate:
-
 '''
 $ step certificate inspect --insecure https://expired.badssl.com
 '''
 
 Inspect a remote certificate chain (using the default root certificate bundle to verify the server):
-
 '''
 $ step certificate inspect https://google.com --bundle
 '''
 
 Inspect a remote certificate using a custom root certificate to verify the server:
-
 '''
 $ step certificate inspect https://smallstep.com --roots ./root-ca.crt
 '''
 
 Inspect a remote certificate using a custom list of root certificates to verify the server:
-
 '''
 $ step certificate inspect https://smallstep.com \
 --roots "./root-ca.crt,./root-ca2.crt,/root-ca3.crt"
 '''
 
 Inspect a remote certificate using a custom directory of root certificates to verify the server:
-
 '''
 $ step certificate inspect https://smallstep.com \
 --roots "./path/to/root/certificates/"
@@ -111,26 +101,22 @@ $ step certificate inspect https://smallstep.com \
 
 Inspect a remote certificate chain in json format using a custom directory of
 root certificates to verify the server:
-
 '''
 $ step certificate inspect https://google.com --format json \
 --roots "./path/to/root/certificates/" --bundle
 '''
 
 Inspect a remote certificate chain in PEM format:
-
 '''
 $ step certificate inspect https://smallstep.com --format pem --bundle
 '''
 
 Inspect a local CSR in text format (default):
-
 '''
 $ step certificate inspect foo.csr
 '''
 
 Inspect a local CSR in json:
-
 '''
 $ step certificate inspect foo.csr --format json
 '''
@@ -236,7 +222,7 @@ func inspectAction(ctx *cli.Context) error {
 		if err != nil {
 			return errs.FileError(err, crtFile)
 		}
-		if bytes.HasPrefix(crtBytes, []byte("-----BEGIN ")) {
+		if bytes.Contains(crtBytes, []byte("-----BEGIN ")) {
 			for len(crtBytes) > 0 {
 				block, crtBytes = pem.Decode(crtBytes)
 				if block == nil {
