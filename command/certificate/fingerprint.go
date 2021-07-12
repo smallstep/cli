@@ -143,7 +143,7 @@ func getFingerprintFormat(format string) (x509util.FingerprintEncoding, error) {
 	case "base64":
 		return x509util.Base64Fingerprint, nil
 	case "base64url", "base64-url":
-		return x509util.Base64UrlFingerprint, nil
+		return x509util.Base64URLFingerprint, nil
 	}
 	return x509util.HexFingerprint, errors.Errorf("error parsing fingerprint format: '%s' is not a valid certificate fingerprint format", format)
 }

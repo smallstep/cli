@@ -22,11 +22,11 @@ func certificateCommand() cli.Command {
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
 [**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--san**=<SAN>] [**--set**=<key=value>] [**--set-file**=<path>]
-[**--acme**=<path>] [**--standalone**] [**--webroot**=<path>]
+[**--san**=<SAN>] [**--set**=<key=value>] [**--set-file**=<file>]
+[**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--bundle**]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
-[**--x5c-cert**=<path>] [**--x5c-key**=<path>] [**--k8ssa-token-path**=<file>`,
+[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS

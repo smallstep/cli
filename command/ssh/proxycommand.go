@@ -32,8 +32,8 @@ func proxycommandCommand() cli.Command {
 		Action: command.ActionFunc(proxycommandAction),
 		Usage:  "proxy ssh connections according to the host registry",
 		UsageText: `**step ssh proxycommand** <user> <host> <port>
-[**--provisioner**=<name>] [**--set**=<key=value>] [**--set-file**=<path>] 
-[**--ca-url**=<uri>] [**--root**=<file>] [**--offline**] [**--ca-config**=<path>]`,
+[**--provisioner**=<name>] [**--set**=<key=value>] [**--set-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--offline**] [**--ca-config**=<file>]`,
 		Description: `**step ssh proxycommand** looks into the host registry
 and proxies the ssh connection according to its configuration. This command
 is used in the ssh client config with <ProxyCommand> keyword.
@@ -207,11 +207,7 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 	}
 
 	// Add certificate and private key to agent
-	if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
-		return err
-	}
-
-	return nil
+	return agent.AddCertificate(subject, resp.Certificate.Certificate, priv)
 }
 
 func getBastion(ctx *cli.Context, user, host string) (*api.SSHBastionResponse, error) {

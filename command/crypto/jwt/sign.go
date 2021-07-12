@@ -26,9 +26,9 @@ func signCommand() cli.Command {
 		UsageText: `**step crypto jwt sign** [- | <filename>]
 [**--alg**=<algorithm>] [**--aud**=<audience>] [**--iss**=<issuer>] [**--sub**=<sub>]
 [**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>]
-[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]
-[**--header=<key=value>**] [**--password-file**=<path>]
-[**--x5c-cert**=<path>] [**--x5c-key**=<path>] [**--x5t-cert**=<path>] [**--x5t-key**=<path>]`,
+[**--key**=<file>] [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]
+[**--header=<key=value>**] [**--password-file**=<file>]
+[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--x5t-cert**=<file>] [**--x5t-key**=<file>]`,
 		Description: `**step crypto jwt sign** command generates a signed JSON Web Token (JWT) by
 computing a digital signature or message authentication code for a JSON
 payload. By default, the payload to sign is read from STDIN and the JWT will
@@ -175,7 +175,7 @@ times to set multiple headers.`,
 			},
 			cli.StringFlag{
 				Name: "key, x5c-key, x5t-key",
-				Usage: `The <path> to the key with which to sign the JWT.
+				Usage: `The <file> containing the key with which to sign the JWT.
 JWTs can be signed using a private JWK (or a JWK encrypted as a JWE payload) or
 a PEM encoded private key (or a private key encrypted using the modes described
 on RFC 1423 or with PBES2+PBKDF2 described in RFC 2898).`,

@@ -26,9 +26,9 @@ func rekeyCommand() cli.Command {
 		Action: command.ActionFunc(rekeyAction),
 		Usage:  "rekey a SSH certificate using the SSH CA",
 		UsageText: `**step ssh rekey** <ssh-cert> <ssh-key>
-[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<path>]
-[**--force**] [**--ca-url**=<uri>] [**--root**=<path>]
-[**--offline**] [**--ca-config**=<path>]`,
+[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<file>]
+[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--offline**] [**--ca-config**=<file>]`,
 		Description: `**step ssh rekey** command generates a new SSH Certificate and key using
 an existing SSH Cerfificate and key pair to authenticate and templatize the
 request. It writes the new certificate to disk - either overwriting
@@ -56,7 +56,7 @@ $ step ssh rekey --out id2_ecdsa id_ecdsa-cert.pub id_ecdsa
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "out",
-				Usage: `The new key <file> path. Defaults to overwriting the <ssh-cert> positional argument.`,
+				Usage: `The new key <file>. Defaults to overwriting the <ssh-key> positional argument.`,
 			},
 			flags.Provisioner,
 			sshProvisionerPasswordFlag,

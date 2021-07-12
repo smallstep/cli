@@ -21,6 +21,7 @@ import (
 
 	// Enabled commands
 	_ "github.com/smallstep/cli/command/base64"
+	_ "github.com/smallstep/cli/command/beta"
 	_ "github.com/smallstep/cli/command/ca"
 	_ "github.com/smallstep/cli/command/certificate"
 	_ "github.com/smallstep/cli/command/crypto"

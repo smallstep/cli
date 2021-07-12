@@ -41,8 +41,8 @@ func revokeCertificateCommand() cli.Command {
 		Action: command.ActionFunc(revokeCertificateAction),
 		Usage:  "revoke a certificate",
 		UsageText: `**step ca revoke** <serial-number>
-[**--cert**=<path>] [**--key**=<path>] [**--token**=<ott>]
-[**--ca-url**=<uri>] [**--root**=<path>] [**--reason**=<string>]
+[**--cert**=<file>] [**--key**=<file>] [**--token**=<ott>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--reason**=<string>]
 [**--reasonCode**=<code>] [**-offline**]`,
 		Description: `
 **step ca revoke** command revokes a certificate with the given serial
@@ -120,11 +120,11 @@ $ step ca revoke --offline --cert foo.crt --key foo.key
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "cert",
-				Usage: `The path to the <cert> that should be revoked.`,
+				Usage: `The <file> containing the cert that should be revoked.`,
 			},
 			cli.StringFlag{
 				Name:  "key",
-				Usage: `The <path> to the key corresponding to the cert that should be revoked.`,
+				Usage: `The <file> containing the key corresponding to the cert that should be revoked.`,
 			},
 			cli.StringFlag{
 				Name:  "reason",

@@ -35,12 +35,12 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "sign a SSH certificate using the the SSH CA",
 		UsageText: `**step ssh certificate** <key-id> <key-file>
-[**--host**] [--**host-id**] [**--sign**] [**--principal**=<string>] [**--password-file**=<path>]
-[**--provisioner-password-file**=<path>] [**--add-user**]
+[**--host**] [--**host-id**] [**--sign**] [**--principal**=<string>] [**--password-file**=<file>]
+[**--provisioner-password-file**=<file>] [**--add-user**]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>]
-[**--root**=<path>] [**--no-password**] [**--insecure**] [**--force**]
-[**--x5c-cert**=<path>] [**--x5c-key**=<path>] [**--k8ssa-token-path=<path>]`,
+[**--root**=<file>] [**--no-password**] [**--insecure**] [**--force**]
+[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path=<file>]`,
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
 

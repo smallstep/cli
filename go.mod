@@ -18,7 +18,7 @@ require (
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.15.16
+	github.com/smallstep/certificates v0.16.0
 	github.com/smallstep/certinfo v1.5.0
 	github.com/smallstep/truststore v0.9.6
 	github.com/smallstep/zcrypto v0.0.0-20200203191936-fbc32cf76bce
@@ -26,11 +26,14 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.4
 	go.mozilla.org/pkcs7 v0.0.0-20200128120323-432b2356ecb1
-	go.step.sm/crypto v0.8.3
+	go.step.sm/crypto v0.9.0
+	go.step.sm/linkedca v0.0.0-20210611183751-27424aae8d25
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
+	google.golang.org/genproto v0.0.0-20210608205507-b6d2f5bf0d7d // indirect
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/square/go-jose.v2 v2.5.1
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20201103104416-57fc603b7f52
 )
@@ -41,8 +44,12 @@ require (
 // interfaces.
 //
 // For more information see https://github.com/etcd-io/etcd/issues/12124
-replace google.golang.org/grpc => google.golang.org/grpc v1.29.1
+replace google.golang.org/grpc => google.golang.org/grpc v1.38.0
 
-// replace github.com/smallstep/certificates => ../certificates
-// replace github.com/smallstep/certinfo => ../certinfo
-// replace go.step.sm/crypto => ../crypto
+//replace github.com/smallstep/certificates => ../certificates
+
+//replace go.step.sm/linkedca => ../linkedca
+
+//replace go.step.sm/cli-utils => ../cli-utils
+
+//replace go.step.sm/crypto => ../crypto

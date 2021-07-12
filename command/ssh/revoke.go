@@ -25,18 +25,18 @@ func revokeCommand() cli.Command {
 		Usage:  "revoke a SSH certificate using the SSH CA",
 		UsageText: `**step ssh revoke** <serial-number>
 [**--token**=<token>]  [**--issuer**=<name>]
-[**--set**=<key=value>] [**--set-file**=<path>]
-[**--ca-url**=<uri>] [**--root**=<path>]
-[**--ca-config**=<path>] [**--password-file**=<path>] [**--offline**]
+[**--set**=<key=value>] [**--set-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>]
+[**--ca-config**=<file>] [**--password-file**=<file>] [**--offline**]
 [**--reason**=<string>] [**--reasonCode**=<code>]
-[**--sshpop-cert**=<path>] [**--sshpop-key**=<key>]`,
+[**--sshpop-cert**=<file>] [**--sshpop-key**=<key>]`,
 		Description: `**step ssh revoke** command revokes an SSH Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 
 ## POSITIONAL ARGUMENTS
 
 <serial-number>
-:  The serial number of the SSH certificate to revoke. 
+:  The serial number of the SSH certificate to revoke.
 
 ## EXAMPLES
 

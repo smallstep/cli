@@ -27,9 +27,9 @@ func loginCommand() cli.Command {
 		UsageText: `**step ssh login** <identity>
 [**--token**=<token>] [**--provisioner**=<name>] [**--provisioner-password-file**=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--set**=<key=value>] [**--set-file**=<path>]
+[**--set**=<key=value>] [**--set-file**=<file>]
 [**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<path>]`,
+[**--offline**] [**--ca-config**=<file>]`,
 		Description: `**step ssh login** generates a new SSH key pair and send a request to [step
 certificates](https://github.com/smallstep/certificates) to sign a user
 certificate. This certificate will be automatically added to the SSH agent.

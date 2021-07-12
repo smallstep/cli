@@ -297,6 +297,16 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		}
 	}
 
+	// Filter by admin-provisioner (provisioner name)
+	if issuer := ctx.String("admin-provisioner"); len(issuer) != 0 {
+		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
+			return p.GetName() == issuer
+		})
+		if len(provisioners) == 0 {
+			return nil, errs.InvalidFlagValue(ctx, "admin-provisioner", issuer, "")
+		}
+	}
+
 	// Select provisioner
 	var items []*provisionersSelect
 	for _, prov := range provisioners {

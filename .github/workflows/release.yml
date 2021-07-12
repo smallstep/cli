@@ -243,7 +243,7 @@ jobs:
           cd ./docs
           git config user.email "eng@smallstep.com"
           git config user.name "Github Action CI"
-          git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
+          git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
       -
         name: Push changes
         uses: ad-m/github-push-action@v0.6.0
