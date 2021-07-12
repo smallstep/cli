@@ -1,9 +1,8 @@
 package certificate
 
 import (
-	"testing"
-
 	"github.com/smallstep/cli/crypto/x509util"
+	"testing"
 )
 
 func TestGetFingerprintFormat(t *testing.T) {
@@ -37,7 +36,7 @@ func TestGetFingerprintFormat(t *testing.T) {
 			args{
 				"base64Url",
 			},
-			x509util.Base64URLFingerprint,
+			x509util.Base64UrlFingerprint,
 			false,
 		},
 		{
@@ -45,7 +44,7 @@ func TestGetFingerprintFormat(t *testing.T) {
 			args{
 				"base64-URL",
 			},
-			x509util.Base64URLFingerprint,
+			x509util.Base64UrlFingerprint,
 			false,
 		},
 		{

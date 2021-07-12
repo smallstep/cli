@@ -6,9 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/command/ca/admin"
 	"github.com/smallstep/cli/command/ca/provisioner"
-	"github.com/smallstep/cli/command/ca/provisionerbeta"
 	"github.com/urfave/cli"
 )
 
@@ -17,7 +15,7 @@ func init() {
 	cmd := cli.Command{
 		Name:      "ca",
 		Usage:     "initialize and manage a certificate authority",
-		UsageText: "**step ca** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "step ca <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step ca** command group provides facilities to initialize a certificate
 authority, retrieve the root of trust, sign and renew certificates, and create
 and manage provisioners.
@@ -130,7 +128,7 @@ mode for serving challenge validation requests.`,
 
 	acmeWebrootFlag = cli.StringFlag{
 		Name: "webroot",
-		Usage: `Specify a <file> to use as a 'web root' for validation in the ACME protocol.
+		Usage: `Specify a <path> to use as a 'web root' for validation in the ACME protocol.
 Webroot is a mode in which the step process will write a challenge file to a
 location being served by an existing fileserver in order to respond to ACME
 challenge validation requests.`,
@@ -193,19 +191,4 @@ func completeURL(rawurl string) (string, error) {
 	// scheme:opaque[?query][#fragment]
 	// rawurl looks like ca.smallstep.com:443 or ca.smallstep.com:443/1.0/sign
 	return completeURL("https://" + rawurl)
-}
-
-// BetaCommand enables access to beta APIs.
-func BetaCommand() cli.Command {
-	return cli.Command{
-		Name:      "ca",
-		Usage:     "commands that are made available for testing new features and APIs",
-		UsageText: "**step beta ca** <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**step beta ca** enables beta access to new step-ca APIs. These
-commands may change, disappear, or be promoted to a different subcommand in the future.`,
-		Subcommands: cli.Commands{
-			admin.Command(),
-			provisionerbeta.Command(),
-		},
-	}
 }

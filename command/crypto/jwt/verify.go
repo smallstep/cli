@@ -20,7 +20,7 @@ func verifyCommand() cli.Command {
 		Usage:  "verify a signed JWT data structure and return the payload",
 		UsageText: `**step crypto jwt verify**
 [**--aud**=<audience>] [**--iss**=<issuer>] [**--alg**=<algorithm>]
-[**--key**=<file>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jwt verify** reads a JWT data structure from STDIN; checks that
 the audience, issuer, and algorithm are in agreement with expectations;
 verifies the digital signature or message authentication code as appropriate;
@@ -65,7 +65,7 @@ algorithm downgrade attacks. To disable this protection you can pass the
 			},
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The <file> containing the key to use to verify the JWT.
+				Usage: `The <path> to the key to use to verify the JWT.
 The contents of the file can be a public or private JWK (or a JWK
 encrypted as a JWE payload) or a public or private PEM (or a private key
 encrypted using the modes described on RFC 1423 or with PBES2+PBKDF2 described

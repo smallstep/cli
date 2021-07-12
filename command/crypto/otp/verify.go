@@ -23,14 +23,14 @@ func verifyCommand() cli.Command {
 		Name:   "verify",
 		Action: cli.ActionFunc(verifyAction),
 		Usage:  "verify a one-time password",
-		UsageText: `**step crypto otp verify** [**--secret**=<file>]
+		UsageText: `**step crypto otp verify** [**--secret**=<path>]
 [**--period**=<seconds>] [**--skew**=<num>] [**--length**=<size>]
 [**--alg**=<alg>] [*--time**=<time|duration>]`,
 		Description: `**step crypto otp verify** does TOTP and HTOP`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "secret",
-				Usage: `The <file> containing TOTP secret.`,
+				Usage: `Path to file containing TOTP secret.`,
 			},
 			cli.UintFlag{
 				Name: "period",

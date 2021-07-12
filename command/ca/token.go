@@ -26,15 +26,15 @@ func tokenCommand() cli.Command {
 		Action: command.ActionFunc(tokenAction),
 		Usage:  "generate an OTT granting access to the CA",
 		UsageText: `**step ca token** <subject>
-[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<path>]
 [**--cert-not-before**=<time|duration>] [**--cert-not-after**=<time|duration>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]
+[**--password-file**=<path>] [**--output-file**=<path>] [**--key**=<path>]
 [**--san**=<SAN>] [**--offline**] [**--revoke**]
-[**--x5c-cert**=<file>] [**--x5c-key**=<file>]
-[**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
+[**--x5c-cert**=<path>] [**--x5c-key**=<path>]
+[**--sshpop-cert**=<path>] [**--sshpop-key**=<path>]
 [**--ssh**] [**--host**] [**--principal**=<string>]
-[**--k8ssa-token-path**=<file>`,
+[**--k8ssa-token-path**=<path>`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
@@ -172,7 +172,7 @@ multiple principals.`,
 			flags.SSHPOPKey,
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The private key <file> used to sign the JWT. This is usually downloaded from
+				Usage: `The private key <path> used to sign the JWT. This is usually downloaded from
 the certificate authority.`,
 			},
 			cli.StringFlag{

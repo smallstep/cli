@@ -19,7 +19,7 @@ func encryptCommand() cli.Command {
 		Usage:  "encrypt a payload using JSON Web Encryption (JWE)",
 		UsageText: `**step crypto jwe encrypt**
 [**--alg**=<key-enc-algorithm>] [**--enc**=<content-enc-algorithm>]
-[**--key**=<file>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+[**--key**=<path>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
 		Description: `**step crypto jwe encrypt** encrypts a payload using JSON Web Encryption
 (JWE). By default, the payload to encrypt is read from STDIN and the JWE data
 structure will be written to STDOUT.
@@ -118,7 +118,7 @@ the authentication tag.
 			},
 			cli.StringFlag{
 				Name: "key",
-				Usage: `The <file> containing the JWE recipient's public key.
+				Usage: `The <path> to the JWE recipient's public key.
 JWEs can be encrypted for a recipient using a public JWK or a PEM encoded public key.`,
 			},
 			cli.StringFlag{

@@ -40,11 +40,11 @@ func createCommand() cli.Command {
 		Action: command.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt-file> <key-file>
-[**--csr**] [**--profile**=<profile>] [**--template**=<file>]
+[**--csr**] [**--profile**=<profile>] [**--template**=<path>]
 [**--not-before**=<duration>] [**--not-after**=<duration>]
-[**--password-file**=<file>] [**--ca**=<issuer-cert>]
-[**--ca-key**=<issuer-key>] [**--ca-password-file**=<file>]
-[**--san**=<SAN>] [**--bundle**] [**--key**=<file>]
+[**--password-file**=<path>] [**--ca**=<issuer-cert>]
+[**--ca-key**=<issuer-key>] [**--ca-password-file**=<path>]
+[**--san**=<SAN>] [**--bundle**] [**--key**=<path>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
 [**--no-password**] [**--insecure**]`,
 		Description: `**step certificate create** generates a certificate or a
@@ -341,11 +341,11 @@ $ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
 			},
 			cli.StringFlag{
 				Name:  "template",
-				Usage: `The certificate template <file>, a JSON representation of the certificate to create.`,
+				Usage: `The certificate template <path>, a JSON representation of the certificate to create.`,
 			},
 			cli.StringFlag{
 				Name: "password-file",
-				Usage: `The <file> to the file containing the password to
+				Usage: `The <path> to the file containing the password to
 encrypt the new private key or decrypt the user submitted private key.`,
 			},
 			cli.StringFlag{
@@ -358,12 +358,12 @@ encrypt the new private key or decrypt the user submitted private key.`,
 			},
 			cli.StringFlag{
 				Name: "ca-password-file",
-				Usage: `The <file> to the file containing the password to
+				Usage: `The <path> to the file containing the password to
 decrypt the CA private key.`,
 			},
 			cli.StringFlag{
 				Name:  "key",
-				Usage: "The <file> of the private key to use instead of creating a new one (PEM file).",
+				Usage: "The <path> of the private key to use instead of creating a new one (PEM file).",
 			},
 			cli.BoolFlag{
 				Name: "no-password",

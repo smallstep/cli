@@ -27,7 +27,7 @@ func formatCommand() cli.Command {
 		Name:      "format",
 		Action:    command.ActionFunc(formatAction),
 		Usage:     `reformat a public or private key`,
-		UsageText: `**step crypto key format** <key-file> [**--out**=<file>]`,
+		UsageText: `**step crypto key format** <key-file> [**--out**=<path>]`,
 		Description: `**step crypto key format** prints or writes the key in
 a different format.
 

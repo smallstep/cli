@@ -24,7 +24,7 @@ func init() {
 		Action: command.ActionFunc(fileServerAction),
 		Usage:  "start an HTTP(S) server serving the contents of a path",
 		UsageText: `step fileserver <dir>
-[**--address**=<address>] [**--cert**=<file>] [**--key**=<file>] [**--roots**=<file>]`,
+[**--address**=<address>] [**--cert**=<path>] [**--key**=<path>] [**--roots**=<path>]`,
 		Description: `**step fileserver** command starts an HTTP(S) server serving the contents of a file
 system.
 
@@ -52,7 +52,7 @@ $ step fileserver --address 127.0.0.1:8443 \
 
 Start an HTTPS file server on a random port and require client certificates.
 '''
-$ step fileserver --cert localhost.crt --key localhost.key \
+$ step fileserver --cert localhost.crt --key localhost.key \ 
   --roots $(step path)/certs/root_ca.crt /path/to/web-root
 '''`,
 		Flags: []cli.Flag{
@@ -63,15 +63,15 @@ $ step fileserver --cert localhost.crt --key localhost.key \
 			},
 			cli.StringFlag{
 				Name:  "cert",
-				Usage: `The <file> containing the TLS certificate to use.`,
+				Usage: `The <path> to the TLS certificate to use.`,
 			},
 			cli.StringFlag{
 				Name:  "key",
-				Usage: `The <file> containing the key corresponding to the certificate.`,
+				Usage: `The <path> to the key corresponding to the certificate.`,
 			},
 			cli.StringFlag{
 				Name:  "roots",
-				Usage: "The <file> containing the root certificate(s) that will be used to verify the client certificates.",
+				Usage: "The <path> of the root certificates that will be used to verify the client certificates.",
 			},
 		},
 	}

@@ -39,9 +39,9 @@ func renewCertificateCommand() cli.Command {
 		Action: command.ActionFunc(renewCertificateAction),
 		Usage:  "renew a valid certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
-[**--ca-url**=<uri>] [**--root**=<file>] [**--password-file**=<file>]
-[**--out**=<file>] [**--expires-in**=<duration>] [**--force**]
-[**--expires-in**=<duration>] [**--pid**=<int>] [**--pid-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<path>] [**--password-file**=<path>]
+[**--out**=<path>] [**--expires-in**=<duration>] [**--force**]
+[**--expires-in**=<duration>] [**--pid**=<int>] [**--pid-file**=<path>]
 [**--signal**=<int>] [**--exec**=<string>] [**--daemon**]
 [**--renew-period**=<duration>]`,
 		Description: `
@@ -159,7 +159,7 @@ flag.`,
 			},
 			cli.StringFlag{
 				Name: "pid-file",
-				Usage: `The <file> from which to read the process id that will be signaled after the certificate
+				Usage: `The <path> from which to read the process id that will be signaled after the certificate
 has been renewed. By default the the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},

@@ -25,11 +25,11 @@ func renewCommand() cli.Command {
 		Action: command.ActionFunc(renewAction),
 		Usage:  "renew a SSH certificate using the SSH CA",
 		UsageText: `**step ssh renew** <ssh-cert> <ssh-key>
-[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<file>]
-[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>]`,
+[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<path>]
+[**--force**] [**--ca-url**=<uri>] [**--root**=<path>]
+[**--offline**] [**--ca-config**=<path>]`,
 		Description: `**step ssh renew** command renews an SSH Cerfificate
-using [step certificates](https://github.com/smallstep/certificates).
+using [step certificates](https://github.com/smallstep/certificates). 
 It writes the new certificate to disk - either overwriting <ssh-cert> or
 using a new file when the **--out**=<file> flag is used.
 
@@ -55,7 +55,7 @@ $ step ssh renew -out new-id_ecdsa-cer.pub id_ecdsa-cert.pub id_ecdsa
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "out,output-file",
-				Usage: "The new certificate <file>. Defaults to overwriting the <ssh-cert> positional argument",
+				Usage: "The new certificate <file> path. Defaults to overwriting the <ssh-cert> positional argument",
 			},
 			flags.Provisioner,
 			sshProvisionerPasswordFlag,

@@ -37,8 +37,8 @@ func signCommand() cli.Command {
 		Action: cli.ActionFunc(signAction),
 		Usage:  "sign a certificate signing request (CSR)",
 		UsageText: `**step certificate sign** <csr_file> <crt_file> <key_file>
-[**--profile**=<profile>] [**--template**=<file>]
-[**--password-file**=<file>] [**--path-len**=<maximum>]
+[**--profile**=<profile>] [**--template**=<path>]
+[**--password-file**=<path>] [**--path-len**=<maximum>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--bundle**]`,
 		Description: `**step certificate sign** generates a signed
@@ -132,7 +132,7 @@ $ step certificate sign --template coyote.tpl coyote.csr issuer.crt issuer.key
 			},
 			cli.StringFlag{
 				Name:  "template",
-				Usage: `The certificate template <file>, a JSON representation of the certificate to create.`,
+				Usage: `The certificate template <path>, a JSON representation of the certificate to create.`,
 			},
 			flags.PasswordFile,
 			cli.StringFlag{

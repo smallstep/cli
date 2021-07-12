@@ -13,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority"
-	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
@@ -26,7 +25,7 @@ import (
 // used to sign certificates without an online CA.
 type OfflineCA struct {
 	authority  *authority.Authority
-	config     config.Config
+	config     authority.Config
 	configFile string
 }
 
@@ -46,23 +45,23 @@ func NewOfflineCA(configFile string) (*OfflineCA, error) {
 		return nil, err
 	}
 
-	var cfg config.Config
-	if err = json.Unmarshal(b, &cfg); err != nil {
+	var config authority.Config
+	if err = json.Unmarshal(b, &config); err != nil {
 		return nil, errors.Wrapf(err, "error reading %s", configFile)
 	}
 
-	if cfg.AuthorityConfig == nil || len(cfg.AuthorityConfig.Provisioners) == 0 {
+	if config.AuthorityConfig == nil || len(config.AuthorityConfig.Provisioners) == 0 {
 		return nil, errors.Errorf("error parsing %s: no provisioners found", configFile)
 	}
 
-	auth, err := authority.New(&cfg)
+	auth, err := authority.New(&config)
 	if err != nil {
 		return nil, err
 	}
 
 	offlineInstance = &OfflineCA{
 		authority:  auth,
-		config:     cfg,
+		config:     config,
 		configFile: configFile,
 	}
 	return offlineInstance, nil
