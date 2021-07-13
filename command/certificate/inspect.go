@@ -196,10 +196,9 @@ func inspectAction(ctx *cli.Context) error {
 	var block *pem.Block
 	var blocks []*pem.Block
 	//check if address is www.example.com
-	if !strings.HasPrefix(crtFile, "https://") && strings.Contains(crtFile, "www.") {
+	if !strings.HasPrefix(crtFile, "https://") && strings.HasSuffix(crtFile, ".com") {
 		crtFile = "https://" + crtFile
 	}
-
 	if addr, isURL, err := trimURL(crtFile); err != nil {
 		return err
 	} else if isURL {
