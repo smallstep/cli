@@ -199,6 +199,7 @@ func inspectAction(ctx *cli.Context) error {
 	if !strings.HasPrefix(crtFile, "https://") && strings.Contains(crtFile, "www.") {
 		crtFile = "https://" + crtFile
 	}
+
 	if addr, isURL, err := trimURL(crtFile); err != nil {
 		return err
 	} else if isURL {
