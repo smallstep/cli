@@ -195,7 +195,6 @@ func inspectAction(ctx *cli.Context) error {
 
 	var block *pem.Block
 	var blocks []*pem.Block
-	//check if address is www.example.com
 	if !strings.HasPrefix(crtFile, "https://") && strings.Contains(crtFile, "www.") {
 		crtFile = "https://" + crtFile
 	}
