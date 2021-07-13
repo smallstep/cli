@@ -6,9 +6,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io"
-	"os"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certinfo"
 	"github.com/smallstep/cli/errs"
@@ -16,6 +13,9 @@ import (
 	"github.com/smallstep/cli/utils"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
+	"io"
+	"os"
+	"strings"
 )
 
 func inspectCommand() cli.Command {
@@ -195,6 +195,11 @@ func inspectAction(ctx *cli.Context) error {
 
 	var block *pem.Block
 	var blocks []*pem.Block
+	//check if address is www.example.com
+	if !strings.HasPrefix(crtFile, "https://") && strings.Contains(crtFile, "www.") {
+		crtFile = "https://" + crtFile
+	}
+
 	if addr, isURL, err := trimURL(crtFile); err != nil {
 		return err
 	} else if isURL {
