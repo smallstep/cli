@@ -72,6 +72,7 @@ $ step ca renew internal.crt internal.key \
 			bootstrapCommand(),
 			tokenCommand(),
 			certificateCommand(),
+			rekeyCertificateCommand(),
 			renewCertificateCommand(),
 			revokeCertificateCommand(),
 			provisioner.Command(),
