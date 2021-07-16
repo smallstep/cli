@@ -1,5 +1,5 @@
 ---
-name: CLI Enhancement
+name: Enhancement
 about: Suggest an enhancement to step cli
 title: ''
 labels: enhancement, needs triage
