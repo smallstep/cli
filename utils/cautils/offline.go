@@ -266,6 +266,31 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 
 	return &api.RevokeResponse{Status: "ok"}, nil
 }
+func (c *OfflineCA) Rekey(req *api.RekeyRequest, rt http.RoundTripper) (*api.SignResponse, error) {
+	// it should not panic as this is always internal code
+	tr := rt.(*http.Transport)
+	asn1Data := tr.TLSClientConfig.Certificates[0].Certificate[0]
+	peer, err := x509.ParseCertificate(asn1Data)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing certificate")
+	}
+	// renew cert using authority
+	certChain, err := c.authority.Rekey(peer,peer.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	certChainPEM := certChainToPEM(certChain)
+	var caPEM api.Certificate
+	if len(certChainPEM) > 1 {
+		caPEM = certChainPEM[1]
+	}
+	return &api.SignResponse{
+		ServerPEM:    certChainPEM[0],
+		CaPEM:        caPEM,
+		CertChainPEM: certChainPEM,
+		TLSOptions:   c.authority.GetTLSOptions(),
+	}, nil
+}
 
 // SSHSign is a wrapper on top of certificate Authorize and SignSSH methods. It
 // returns an api.SSHSignResponse with the signed certificate.
