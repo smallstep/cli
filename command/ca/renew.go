@@ -2,12 +2,14 @@ package ca
 
 import (
 	"crypto"
+	cryptoRand "crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
 	"log"
 	"math/rand"
+	mathRand "math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -299,7 +301,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
-		jitter := rand.Int63n(int64(expiresIn / 20))
+		jitter := mathRand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
 			return nil
@@ -445,6 +447,33 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 		return nil, errs.FileError(err, outFile)
 	}
 
+	return resp, nil
+}
+
+func (r *renewer) Rekey(priv interface{}, outCert, outKey string) (*api.SignResponse, error) {
+	csr, err := x509.CreateCertificateRequest(cryptoRand.Reader, &x509.CertificateRequest{}, priv)
+	newCSR, err := x509.ParseCertificateRequest(csr)
+	resp, err := r.client.Rekey(&api.RekeyRequest{CsrPEM: newCSR}, r.transport)
+	if err != nil {
+		return nil, errors.Wrap(err, "error rekeying certificate")
+	}
+	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
+		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
+	}
+	var data []byte
+	for _, certPEM := range resp.CertChainPEM {
+		pemblk, err := pemutil.Serialize(certPEM.Certificate)
+		if err != nil {
+			return nil, errors.Wrap(err, "error serializing certificate PEM")
+		}
+		data = append(data, pem.EncodeToMemory(pemblk)...)
+	}
+	if err := utils.WriteFile(outCert, data, 0600); err != nil {
+		return nil, errs.FileError(err, outCert)
+	}
+	if err := utils.WriteFile(outKey, data, 0600); err != nil {
+		return nil, errs.FileError(err, outKey)
+	}
 	return resp, nil
 }
 

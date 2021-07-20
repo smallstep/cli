@@ -1,19 +1,18 @@
 package ca
 
 import (
-	"encoding/pem"
 	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
-	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"io/ioutil"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -62,6 +61,9 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	certFile := args.Get(0)
 	keyFile := args.Get(1)
 	passFile := ctx.String("password-file")
+	outKey := ctx.String("key-out")
+	isDaemon := ctx.Bool("daemon")
+	execCmd := ctx.String("exec")
 
 	outFile := ctx.String("out")
 	if len(outFile) == 0 {
@@ -92,6 +94,32 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	if expiresIn > 0 && renewPeriod > 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "expires-in", "renew-period")
 	}
+	if renewPeriod > 0 && !isDaemon {
+		return errs.RequiredWithFlag(ctx, "renew-period", "daemon")
+	}
+
+	if ctx.IsSet("pid") && ctx.IsSet("pid-file") {
+		return errs.MutuallyExclusiveFlags(ctx, "pid", "pid-file")
+	}
+	pid := ctx.Int("pid")
+	if ctx.IsSet("pid") && pid <= 0 {
+		return errs.InvalidFlagValue(ctx, "pid", strconv.Itoa(pid), "")
+	}
+
+	pidFile := ctx.String("pid-file")
+	if len(pidFile) > 0 {
+		pidB, err := ioutil.ReadFile(pidFile)
+		if err != nil {
+			return errs.FileError(err, pidFile)
+		}
+		pid, err = strconv.Atoi(strings.TrimSpace(string(pidB)))
+		if err != nil {
+			return errs.Wrap(err, "error converting %s to integer process id", pidB)
+		}
+		if pid <= 0 {
+			return errs.InvalidFlagValue(ctx, "pid-file", strconv.Itoa(pid), "")
+		}
+	}
 
 	signum := ctx.Int("signal")
 	if ctx.IsSet("signal") && signum <= 0 {
@@ -118,6 +146,13 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 
+	afterRenew := getAfterRenewFunc(pid, signum, execCmd)
+	if isDaemon {
+		// Force is always enabled when daemon mode is used
+		ctx.Set("force", "true")
+		next := nextRenewDuration(leaf, expiresIn, renewPeriod)
+		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew)
+	}
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
@@ -127,37 +162,16 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 			return nil
 		}
 	}
-
-	if _, err := renewer.Rekey(outFile); err != nil {
+	pk, err := pemutil.Read(keyFile)
+	if _, err := renewer.Rekey(pk,outFile,outKey); err != nil {
 		return err
 	}
 
 	ui.Printf("Your certificate has been saved in %s.\n", outFile)
+	return afterRenew()
+
 
 
 
 	return nil
-}
-func (r *renewer) Rekey(outFile string) (*api.SignResponse, error) {
-	resp, err := r.client.Renew(r.transport)
-	if err != nil {
-		return nil, errors.Wrap(err, "error renewing certificate")
-	}
-
-	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
-		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
-	}
-	var data []byte
-	for _, certPEM := range resp.CertChainPEM {
-		pemblk, err := pemutil.Serialize(certPEM.Certificate)
-		if err != nil {
-			return nil, errors.Wrap(err, "error serializing certificate PEM")
-		}
-		data = append(data, pem.EncodeToMemory(pemblk)...)
-	}
-	if err := utils.WriteFile(outFile, data, 0600); err != nil {
-		return nil, errs.FileError(err, outFile)
-	}
-
-	return resp, nil
 }
