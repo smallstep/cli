@@ -272,10 +272,11 @@ be stored in the 'sshpop' header.`,
 the **--team** option. If the url contains <\<\>> placeholders, they are replaced with the team ID.`,
 	}
 
-	// RedirectURL is a cli.Flag used to pass the OAuth redirect URL.
+	// RedirectURL is a cli.Flag used to pass a url to redirect after an OAuth
+	// flow finishes..
 	RedirectURL = cli.StringFlag{
 		Name:  "redirect-url",
-		Usage: "Terminal OAuth redirect <url>.",
+		Usage: "The <url> to open in the system browser when the OAuth flow is successful.",
 	}
 
 	// ServerName is a cli.Flag used to set the TLS Server Name Indication in
