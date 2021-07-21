@@ -185,7 +185,7 @@ each with optional fraction and a unit suffix, such as "300ms", "1.5h", or "2h45
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 			cli.StringFlag{
-				Name:  "out-crt",
+				Name:  "out-cert",
 				Usage: `Write the new rekeyed certificate into a specified new certificate file.`,
 			},
 			cli.StringFlag{
@@ -211,16 +211,15 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	certFile := args.Get(0)
 	keyFile := args.Get(1)
 	passFile := ctx.String("password-file")
-	outKey := ctx.String("key-out")
+	outKey := ctx.String("out-key")
 	isDaemon := ctx.Bool("daemon")
 	execCmd := ctx.String("exec")
-	//crtDest := ctx.String("out-crt")
-	//keyDest := ctx.String("out-key")
-	//givenKey := ctx.String("private-key")
 
-	outFile := ctx.String("out")
-	if len(outFile) == 0 {
-		outFile = certFile
+
+
+	outCrt := ctx.String("out-cert")
+	if len(outCrt) == 0 {
+		outCrt = certFile
 	}
 
 	rootFile := ctx.String("root")
@@ -304,7 +303,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
 		next := nextRenewDuration(leaf, expiresIn, renewPeriod)
-		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew)
+		return renewer.Daemon(outCrt, next, expiresIn, renewPeriod, afterRenew)
 	}
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
@@ -317,11 +316,11 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		}
 	}
 	pk, err := pemutil.Read(keyFile)
-	if _, err := renewer.Rekey(pk, outFile, outKey); err != nil {
-		//if _, err := renewer.Renew(outFile); err != nil {
+	if _, err := renewer.Rekey(pk, outCrt, outKey); err != nil {
+		//if _, err := renewer.Renew(outCrt); err != nil {
 		return err
 	}
 
-	ui.Printf("Your certificate has been saved in %s.\n", outFile)
+	ui.Printf("Your certificate has been saved in %s.\n", outCrt)
 	return afterRenew()
 }
