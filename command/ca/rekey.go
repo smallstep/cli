@@ -1,7 +1,6 @@
 package ca
 
 import (
-	"github.com/smallstep/cli/crypto/pemutil"
 	"go.step.sm/crypto/keyutil"
 	"io/ioutil"
 	"math/rand"
@@ -26,7 +25,7 @@ func rekeyCertificateCommand() cli.Command {
 		Action: command.ActionFunc(rekeyCertificateAction),
 		Usage:  "rekey a valid certificate",
 		UsageText: `**step ca rekey** <crt-file> <key-file>
-[**--out-crt**=<file>] [**--out-key**=<file>] [**--private-key**=<file>]
+[**--out-cert**=<file>] [**--out-key**=<file>] [**--private-key**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--password-file**=<file>]
 [**--out**=<file>] [**--expires-in**=<duration>] [**--force**]
 [**--expires-in**=<duration>] [**--pid**=<int>] [**--pid-file**=<file>]
@@ -203,24 +202,28 @@ if nothing is passed, default goes to generating a random pair.`,
 }
 
 func rekeyCertificateAction(ctx *cli.Context) error {
-	err := errs.NumberOfArguments(ctx, 2)
+	err := errs.MinMaxNumberOfArguments(ctx, 2, 3)
 	if err != nil {
 		return err
 	}
 
 	args := ctx.Args()
 	certFile := args.Get(0)
-	keyFile := ctx.String("private-key")
+	keyFile := args.Get(1)
+	privateKey := args.Get(2)
 	passFile := ctx.String("password-file")
-	outKey := ctx.String("out-key")
 	isDaemon := ctx.Bool("daemon")
 	execCmd := ctx.String("exec")
+	givenPrivate := ctx.String("private-key")
 
+	outCert := ctx.String("out-cert")
+	if len(outCert) == 0 {
+		outCert = certFile
+	}
 
-
-	outCrt := ctx.String("out-cert")
-	if len(outCrt) == 0 {
-		outCrt = certFile
+	outKey := ctx.String("out-key")
+	if len(outKey) == 0 {
+		outKey = keyFile
 	}
 
 	rootFile := ctx.String("root")
@@ -304,7 +307,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
 		next := nextRenewDuration(leaf, expiresIn, renewPeriod)
-		return renewer.Daemon(outCrt, next, expiresIn, renewPeriod, afterRenew)
+		return renewer.Daemon(outCert, next, expiresIn, renewPeriod, afterRenew)
 	}
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
@@ -317,23 +320,21 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	if keyFile == ""{
-		_, priv , err := keyutil.GenerateDefaultKeyPair(); if err != nil{
+	if givenPrivate == "" {
+		_, priv , err := keyutil.GenerateDefaultKeyPair(); if err != nil {
 			return err
 		}
-		if _, err := renewer.Rekey(priv, outCrt, outKey); err != nil {
+		if _, err := renewer.Rekey(priv, outCert, outKey); err != nil {
 			return err
 		}
-	}else{
-		priv, err := pemutil.Read(keyFile); if err != nil{
+		ui.Printf("Your certificate and key has been saved in %s %s .\n", outCert, outKey)
+
+	} else {
+		if _, err := renewer.Rekey(privateKey, outCert, outKey); err != nil {
 			return err
 		}
-		if _, err := renewer.Rekey(priv, outCrt, outKey); err != nil {
-			return err
-		}
+		ui.Printf("Your certificate and key has been saved in %s %s .\n", outCert, outKey)
+
 	}
-
-
-	ui.Printf("Your certificate and key has been saved in %s %s .\n", outCrt, outKey)
 	return afterRenew()
 }
