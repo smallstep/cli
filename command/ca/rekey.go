@@ -313,7 +313,6 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
 		jitter := rand.Int63n(int64(expiresIn / 20))
-		//jitter := mathRand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
 			return nil
@@ -321,7 +320,8 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	}
 
 	if givenPrivate == "" {
-		_, priv , err := keyutil.GenerateDefaultKeyPair(); if err != nil {
+		_, priv, err := keyutil.GenerateDefaultKeyPair()
+		if err != nil {
 			return err
 		}
 		if _, err := renewer.Rekey(priv, outCert, outKey); err != nil {
@@ -330,7 +330,8 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		ui.Printf("Your certificate and key has been saved in %s %s .\n", outCert, outKey)
 
 	} else {
-		priv, err := pemutil.Read(givenPrivate); if err != nil{
+		priv, err := pemutil.Read(givenPrivate)
+		if err != nil {
 			return err
 		}
 		if _, err := renewer.Rekey(priv, outCert, outKey); err != nil {
