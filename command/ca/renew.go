@@ -472,7 +472,8 @@ func (r *renewer) Rekey(priv interface{}, outCert, outKey string) (*api.SignResp
 	if err := utils.WriteFile(outCert, data, 0600); err != nil {
 		return nil, errs.FileError(err, outCert)
 	}
-	if err := utils.WriteFile(outKey, data, 0600); err != nil {
+	newPrivateKey, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err := utils.WriteFile(outKey, newPrivateKey, 0600); err != nil {
 		return nil, errs.FileError(err, outKey)
 	}
 	return resp, nil
