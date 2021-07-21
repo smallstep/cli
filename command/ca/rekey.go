@@ -1,6 +1,7 @@
 package ca
 
 import (
+	"go.step.sm/crypto/keyutil"
 	"io/ioutil"
 	"math/rand"
 	//mathRand "math/rand"
@@ -12,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
@@ -315,12 +315,32 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 			return nil
 		}
 	}
-	pk, err := pemutil.Read(keyFile)
-	if _, err := renewer.Rekey(pk, outCrt, outKey); err != nil {
+
+	//if keyFile == ""{
+	//	_, priv , err := keyutil.GenerateDefaultKeyPair(); if err != nil{
+	//		return err
+	//	}
+	//	if _, err := renewer.Rekey(priv, outCrt, outKey); err != nil {
+	//		//if _, err := renewer.Renew(outCrt); err != nil {
+	//		return err
+	//	}
+	//}else{
+	//	priv, err := pemutil.Read(keyFile); if err != nil{
+	//		return err
+	//	}
+	//	if _, err := renewer.Rekey(priv, outCrt, outKey); err != nil {
+	//		//if _, err := renewer.Renew(outCrt); err != nil {
+	//		return err
+	//	}
+	//}
+	_, priv , err := keyutil.GenerateDefaultKeyPair(); if err != nil{
+		return err
+	}
+	if _, err := renewer.Rekey(priv, outCrt, outKey); err != nil {
 		//if _, err := renewer.Renew(outCrt); err != nil {
 		return err
 	}
 
-	ui.Printf("Your certificate has been saved in %s.\n", outCrt)
+	ui.Printf("Your certificate and key has been saved in %s %s .\n", outCrt, outKey)
 	return afterRenew()
 }
