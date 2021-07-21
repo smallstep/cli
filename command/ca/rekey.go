@@ -1,6 +1,7 @@
 package ca
 
 import (
+	"github.com/smallstep/cli/crypto/pemutil"
 	"go.step.sm/crypto/keyutil"
 	"io/ioutil"
 	"math/rand"
@@ -202,7 +203,7 @@ if nothing is passed, default goes to generating a random pair.`,
 }
 
 func rekeyCertificateAction(ctx *cli.Context) error {
-	err := errs.MinMaxNumberOfArguments(ctx, 2, 3)
+	err := errs.NumberOfArguments(ctx, 2)
 	if err != nil {
 		return err
 	}
@@ -210,7 +211,6 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	certFile := args.Get(0)
 	keyFile := args.Get(1)
-	privateKey := args.Get(2)
 	passFile := ctx.String("password-file")
 	isDaemon := ctx.Bool("daemon")
 	execCmd := ctx.String("exec")
@@ -330,7 +330,10 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		ui.Printf("Your certificate and key has been saved in %s %s .\n", outCert, outKey)
 
 	} else {
-		if _, err := renewer.Rekey(privateKey, outCert, outKey); err != nil {
+		priv, err := pemutil.Read(givenPrivate); if err != nil{
+			return err
+		}
+		if _, err := renewer.Rekey(priv, outCert, outKey); err != nil {
 			return err
 		}
 		ui.Printf("Your certificate and key has been saved in %s %s .\n", outCert, outKey)
