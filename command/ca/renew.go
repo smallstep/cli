@@ -472,7 +472,8 @@ func (r *renewer) Rekey(priv interface{}, outCert, outKey string) (*api.SignResp
 	if err := utils.WriteFile(outCert, data, 0600); err != nil {
 		return nil, errs.FileError(err, outCert)
 	}
-	_, err = pemutil.Serialize(priv, pemutil.ToFile(outKey, 0600)); if err != nil{
+	_, err = pemutil.Serialize(priv, pemutil.ToFile(outKey, 0600))
+	if err != nil {
 		return nil, err
 	}
 
