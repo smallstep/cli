@@ -215,22 +215,23 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	givenPrivate := ctx.String("private-key")
 
 	outCert := ctx.String("out-cert")
+	outKey := ctx.String("out-key")
+	//check both flags are passed
+	if len(outCert) != 0 && len(outKey) == 0{
+		return errs.RequiredWithFlag(ctx, "out-cert", "out-key")
+	}
+	if len(outKey) !=0 && len(outCert) == 0{
+		return errs.RequiredWithFlag(ctx, "out-key", "out-cert")
+	}
+
 	if len(outCert) == 0 {
 		outCert = certFile
 	}
-
-	outKey := ctx.String("out-key")
 	if len(outKey) == 0 {
 		outKey = keyFile
 	}
 
-	//check both flags are passed
-	if len(outCert) != 0 {
-		return errs.RequiredWithFlag(ctx, "out-key", "out-cert")
-	}
-	if len(outKey) != 0 {
-		return errs.RequiredWithFlag(ctx, "out-cert", "out-key")
-	}
+
 
 	rootFile := ctx.String("root")
 	if len(rootFile) == 0 {
