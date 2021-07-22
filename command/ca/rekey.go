@@ -183,7 +183,7 @@ Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 			cli.StringFlag{
 				Name: "out-cert",
-				Usage: `The <file> where the new rekeyed certificate will be saved to.
+				Usage: `The <file> where the new certificate will be saved to.
 Defaults to overwriting the <crt-file> positional argument.`,
 			},
 			cli.StringFlag{
