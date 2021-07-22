@@ -452,9 +452,14 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 
 func (r *renewer) Rekey(priv interface{}, outCert, outKey string) (*api.SignResponse, error) {
 	csrBytes, err := x509.CreateCertificateRequest(cryptoRand.Reader, &x509.CertificateRequest{}, priv)
+	if err != nil {
+		return nil, err
+	}
 	csr, err := x509.ParseCertificateRequest(csrBytes)
-	csrRequest := api.NewCertificateRequest(csr)
-	resp, err := r.client.Rekey(&api.RekeyRequest{CsrPEM: csrRequest}, r.transport)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := r.client.Rekey(&api.RekeyRequest{CsrPEM: api.NewCertificateRequest(csr)}, r.transport)
 	if err != nil {
 		return nil, errors.Wrap(err, "error rekeying certificate")
 	}

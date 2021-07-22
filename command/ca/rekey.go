@@ -217,10 +217,10 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	outCert := ctx.String("out-cert")
 	outKey := ctx.String("out-key")
 	//check both flags are passed
-	if len(outCert) != 0 && len(outKey) == 0{
+	if len(outCert) != 0 && len(outKey) == 0 {
 		return errs.RequiredWithFlag(ctx, "out-cert", "out-key")
 	}
-	if len(outKey) !=0 && len(outCert) == 0{
+	if len(outKey) != 0 && len(outCert) == 0 {
 		return errs.RequiredWithFlag(ctx, "out-key", "out-cert")
 	}
 
@@ -230,8 +230,6 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	if len(outKey) == 0 {
 		outKey = keyFile
 	}
-
-
 
 	rootFile := ctx.String("root")
 	if len(rootFile) == 0 {

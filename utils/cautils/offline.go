@@ -275,7 +275,7 @@ func (c *OfflineCA) Rekey(req *api.RekeyRequest, rt http.RoundTripper) (*api.Sig
 		return nil, errors.Wrap(err, "error parsing certificate")
 	}
 	// renew cert using authority
-	certChain, err := c.authority.Rekey(peer,peer.PublicKey)
+	certChain, err := c.authority.Rekey(peer, peer.PublicKey)
 	if err != nil {
 		return nil, err
 	}
