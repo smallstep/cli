@@ -5,7 +5,6 @@ import (
 	"go.step.sm/crypto/keyutil"
 	"io/ioutil"
 	"math/rand"
-	//mathRand "math/rand"
 	"strconv"
 	"strings"
 	"syscall"
@@ -28,14 +27,14 @@ func rekeyCertificateCommand() cli.Command {
 		UsageText: `**step ca rekey** <crt-file> <key-file>
 [**--out-cert**=<file>] [**--out-key**=<file>] [**--private-key**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--password-file**=<file>]
-[**--out**=<file>] [**--expires-in**=<duration>] [**--force**]
+[**--expires-in**=<duration>] [**--force**] [**--exec**=<string>] [**--daemon**]
 [**--expires-in**=<duration>] [**--pid**=<int>] [**--pid-file**=<file>]
-[**--signal**=<int>] [**--exec**=<string>] [**--daemon**]
-[**--renew-period**=<duration>]`,
+[**--signal**=<int>] [**--exec**=<string>] [**--renew-period**=<duration>]`,
 		Description: `
 **step ca rekey** command rekeys the given certificate (with a request to the
-certificate authority) and writes the new certificate to disk - either overwriting
-<crt-file> or using a new file when the **--out**=<file> flag is used.
+certificate authority) and writes the new certificate and private key 
+to disk - either overwriting <crt-file> <key-file> or using a new file when
+the **--out-cert**=<file> and **--out-key**=<file> flags are used.
 
 With the **--daemon** flag the command will periodically update the given
 certificate. By default, it will renew the certificate before 2/3 of the validity
@@ -61,6 +60,7 @@ Rekey a certificate with the configured CA:
 '''
 $ step ca rekey internal.crt internal.key
 Would you like to overwrite internal.crt [Y/n]: y
+Would you like to overwrite internal.key [Y/n]: y
 '''
 
 Rekey a certificate without overwriting the previous certificate:
@@ -121,12 +121,12 @@ $ step ca rekey --offline internal.crt internal.key
 
 Rekey the certificate and write it to specified files:
 '''
-$ step ca rekey foo.crt foo.key --out-crt internal.crt --out-key internal.key
+$ step ca rekey internal.crt internal.key --out-crt foo.crt --out-key foo.key
 '''
 
 Rekey the certificate using a given private key:
 '''
-$ step ca rekey  internal.crt internal.key --private-key foo.key
+$ step ca rekey internal.crt internal.key --private-key foo.key
 '''`,
 		Flags: []cli.Flag{
 			flags.CaConfig,
@@ -135,10 +135,6 @@ $ step ca rekey  internal.crt internal.key --private-key foo.key
 			flags.Offline,
 			flags.PasswordFile,
 			flags.Root,
-			cli.StringFlag{
-				Name:  "out,output-file",
-				Usage: "The new certificate <file> path. Defaults to overwriting the <crt-file> positional argument",
-			},
 			cli.StringFlag{
 				Name: "expires-in",
 				Usage: `The amount of time remaining before certificate expiration,
@@ -186,17 +182,19 @@ each with optional fraction and a unit suffix, such as "300ms", "1.5h", or "2h45
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 			cli.StringFlag{
-				Name:  "out-cert",
-				Usage: `Write the new rekeyed certificate into a specified new certificate file.`,
+				Name: "out-cert",
+				Usage: `The <file> where the new rekeyed certificate will be saved to.
+Defaults to overwriting the <crt-file> positional argument.`,
 			},
 			cli.StringFlag{
-				Name:  "out-key",
-				Usage: `Write the new rekeyed private key into a specified new private key file.`,
+				Name: "out-key",
+				Usage: `The <file> where the new rekeyed private key will be saved to.
+ Defaults to overwriting the <key-file> positional argument.`,
 			},
 			cli.StringFlag{
 				Name: "private-key",
-				Usage: `Use a given private key to do the rekeying of a certificate and private key pair,
-if nothing is passed, default goes to generating a random pair.`,
+				Usage: `The <file> of the private key to use instead of creating a new key pair,
+if nothing is passed, default will generate a random key pair.`,
 			},
 		},
 	}
@@ -318,7 +316,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		return renewer.Daemon(outCert, next, expiresIn, renewPeriod, afterRenew)
 	}
 
-	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
+	// Do not rekey if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
 		jitter := rand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
@@ -336,7 +334,6 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 			return err
 		}
 
-
 	} else {
 		priv, err := pemutil.Read(givenPrivate)
 		if err != nil {
@@ -346,7 +343,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 			return err
 		}
 	}
-	
+
 	ui.Printf("Your certificate and key has been saved in %s %s .\n", outCert, outKey)
 	return afterRenew()
 }
