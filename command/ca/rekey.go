@@ -188,7 +188,7 @@ Defaults to overwriting the <crt-file> positional argument.`,
 			},
 			cli.StringFlag{
 				Name: "out-key",
-				Usage: `The <file> where the new rekeyed private key will be saved to.
+				Usage: `The <file> where the new private key will be saved to.
  Defaults to overwriting the <key-file> positional argument.`,
 			},
 			cli.StringFlag{
