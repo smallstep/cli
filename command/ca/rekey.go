@@ -226,6 +226,14 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		outKey = keyFile
 	}
 
+	//check both flags are passed
+	if len(outCert) != 0 {
+		return errs.RequiredWithFlag(ctx, "out-key", "out-cert")
+	}
+	if len(outKey) != 0 {
+		return errs.RequiredWithFlag(ctx, "out-cert", "out-key")
+	}
+
 	rootFile := ctx.String("root")
 	if len(rootFile) == 0 {
 		rootFile = pki.GetRootCAPath()
