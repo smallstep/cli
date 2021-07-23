@@ -213,12 +213,12 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	isDaemon := ctx.Bool("daemon")
 	execCmd := ctx.String("exec")
 	givenPrivate := ctx.String("private-key")
-	outCert := ctx.String("out-cert")
-	outKey := ctx.String("out-key")
 
+	outCert := ctx.String("out-cert")
 	if len(outCert) == 0 {
 		outCert = certFile
 	}
+	outKey := ctx.String("out-key")
 	if len(outKey) == 0 {
 		outKey = keyFile
 	}
