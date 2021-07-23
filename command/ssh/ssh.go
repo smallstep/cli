@@ -94,6 +94,7 @@ $ ssh internal.example.com
 			renewCommand(),
 			revokeCommand(),
 			rekeyCommand(),
+			needsRenewalCommand(),
 		},
 	}
 
