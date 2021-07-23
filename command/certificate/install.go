@@ -6,11 +6,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certinfo"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 func installCommand() cli.Command {

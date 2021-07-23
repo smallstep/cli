@@ -13,7 +13,6 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/errs"
@@ -21,6 +20,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 	"golang.org/x/crypto/ssh"
 )
 

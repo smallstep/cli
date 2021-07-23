@@ -9,13 +9,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
 	caErrs "github.com/smallstep/certificates/errs"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 func checkHostCommand() cli.Command {

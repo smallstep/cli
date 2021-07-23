@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
@@ -27,6 +26,7 @@ import (
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 // These are the OAuth2.0 client IDs from the Step CLI. This application is

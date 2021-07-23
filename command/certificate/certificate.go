@@ -1,8 +1,8 @@
 package certificate
 
 import (
-	"github.com/smallstep/cli/command"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 // Command returns the cli.Command for jwt and related subcommands.

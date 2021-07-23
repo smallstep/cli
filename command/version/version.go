@@ -5,8 +5,8 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/config"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/step"
 )
 
 func init() {
@@ -23,7 +23,7 @@ func init() {
 
 // Command prints out the current version of the tool
 func Command(c *cli.Context) error {
-	fmt.Printf("%s\n", config.Version())
-	fmt.Printf("Release Date: %s\n", config.ReleaseDate())
+	fmt.Printf("%s\n", step.Version())
+	fmt.Printf("Release Date: %s\n", step.ReleaseDate())
 	return nil
 }

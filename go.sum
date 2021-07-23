@@ -954,8 +954,11 @@ go.opentelemetry.io/otel/trace v0.20.0 h1:1DL6EXUdcg95gukhuRRvLDO/4X5THh/5dIV52l
 go.opentelemetry.io/otel/trace v0.20.0/go.mod h1:6GjCW8zgDjwGHGa6GkyeB8+/5vjT16gUEi0Nf1iBdgw=
 go.opentelemetry.io/proto/otlp v0.7.0 h1:rwOQPCuKAKmwGKq2aVNnYIibI6wnV7EvzgfTCzcdGg8=
 go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqeYNgFYFoEGnI=
+<<<<<<< HEAD
 go.step.sm/cli-utils v0.6.0 h1:sH4FxBcjmbxyilKXheSyJuKF/QjpojpiW90ERwUWOgQ=
 go.step.sm/cli-utils v0.6.0/go.mod h1:jklBMavFl2PbmGlyxgax08ZnB0uWpadjuOlSKKXz+0U=
+=======
+>>>>>>> 264c0e5 (Initial step path contexts commit)
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
 go.step.sm/crypto v0.11.0 h1:VDpeVgEmqme/FK2w5QINxkOQ1FWOm/Wi2TwQXiacKr8=
 go.step.sm/crypto v0.11.0/go.mod h1:5YzQ85BujYBu6NH18jw7nFjwuRnDch35nLzH0ES5sKg=

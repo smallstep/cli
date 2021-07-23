@@ -11,14 +11,14 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/step"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -177,7 +177,7 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 
 	data := map[string]string{
 		"GOOS":     runtime.GOOS,
-		"StepPath": config.StepPath(),
+		"StepPath": step.Path(),
 	}
 	if len(sets) > 0 {
 		for _, s := range sets {
@@ -256,7 +256,7 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 
 	if ctx.Bool("dry-run") {
 		for _, t := range templates {
-			ui.Printf("{{ \"%s\" | bold }}\n", config.StepAbs(t.Path))
+			ui.Printf("{{ \"%s\" | bold }}\n", step.Abs(t.Path))
 			fmt.Println(string(t.Content))
 		}
 		return nil
@@ -266,7 +266,7 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		if err := t.Write(); err != nil {
 			return err
 		}
-		ui.Printf(`{{ "%s" | green }} {{ "%s" | bold }}`+"\n", ui.IconGood, config.StepAbs(t.Path))
+		ui.Printf(`{{ "%s" | green }} {{ "%s" | bold }}`+"\n", ui.IconGood, step.Abs(t.Path))
 	}
 
 	return nil

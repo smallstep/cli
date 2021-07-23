@@ -7,11 +7,11 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 func keyCommand() cli.Command {
@@ -20,11 +20,11 @@ func keyCommand() cli.Command {
 		Action:    command.ActionFunc(keyAction),
 		Usage:     "print public key embedded in a certificate",
 		UsageText: "**step certificate key** <crt-file> [**--out**=<file>]",
-		Description: `**step certificate key** prints the public key embedded in a certificate or 
+		Description: `**step certificate key** prints the public key embedded in a certificate or
 a certificate signing request. If <crt-file> is a certificate bundle, only the
 first block will be taken into account.
 
-The command will print a public or a decrypted private key if <crt-file> 
+The command will print a public or a decrypted private key if <crt-file>
 contains only a key.
 
 ## POSITIONAL ARGUMENTS

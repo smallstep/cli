@@ -14,7 +14,6 @@ import (
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/kms"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
@@ -23,6 +22,8 @@ import (
 
 	// Enable azurekms
 	_ "github.com/smallstep/certificates/kms/azurekms"
+
+	"go.step.sm/cli-utils/command"
 )
 
 func initCommand() cli.Command {

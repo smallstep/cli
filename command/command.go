@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/usage"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/step"
 )
 
 // IgnoreEnvVar is a value added to a flag EnvVar to avoid the use of
@@ -61,7 +61,7 @@ func IsForce() bool {
 func getConfigVars(ctx *cli.Context) error {
 	configFile := ctx.GlobalString("config")
 	if configFile == "" {
-		configFile = filepath.Join(config.StepPath(), "config", "defaults.json")
+		configFile = filepath.Join(step.Path(), "config", "defaults.json")
 	}
 
 	b, err := ioutil.ReadFile(configFile)

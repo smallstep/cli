@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/ca/admin"
 	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/smallstep/cli/command/ca/provisionerbeta"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 // init creates and registers the ca command

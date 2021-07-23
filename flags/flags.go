@@ -10,10 +10,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
-	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/step"
 )
 
 var (
@@ -199,7 +199,7 @@ but can accept a different configuration file using **--ca-config** flag.`,
 		Name: "ca-config",
 		Usage: `The certificate authority configuration <file>. Defaults to
 $STEPPATH/config/ca.json`,
-		Value: filepath.Join(config.StepPath(), "config", "ca.json"),
+		Value: filepath.Join(step.Path(), "config", "ca.json"),
 	}
 
 	// AdminCert is a cli.Flag used to pass the x5c header certificate for a JWT.

@@ -9,8 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/config"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
@@ -19,6 +17,8 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/step"
 )
 
 func bootstrapCommand() cli.Command {
@@ -99,7 +99,7 @@ func bootstrapAction(ctx *cli.Context) error {
 	fingerprint := strings.TrimSpace(ctx.String("fingerprint"))
 	team := ctx.String("team")
 	rootFile := pki.GetRootCAPath()
-	configFile := filepath.Join(config.StepPath(), "config", "defaults.json")
+	configFile := filepath.Join(step.Path(), "config", "defaults.json")
 	redirectURL := ctx.String("redirect-url")
 
 	switch {
