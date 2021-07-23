@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
+	"github.com/smallstep/cli/command/ca/acme"
 	"github.com/smallstep/cli/command/ca/admin"
-	"github.com/smallstep/cli/command/ca/eak"
 	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/smallstep/cli/command/ca/provisionerbeta"
 	"github.com/urfave/cli"
@@ -207,7 +207,7 @@ commands may change, disappear, or be promoted to a different subcommand in the 
 		Subcommands: cli.Commands{
 			admin.Command(),
 			provisionerbeta.Command(),
-			eak.Command(),
+			acme.Command(),
 		},
 	}
 }

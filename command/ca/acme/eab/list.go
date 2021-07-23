@@ -1,4 +1,4 @@
-package eak
+package eab
 
 import (
 	"github.com/smallstep/cli/errs"
@@ -10,19 +10,19 @@ func listCommand() cli.Command {
 	return cli.Command{
 		Name:      "list",
 		Action:    cli.ActionFunc(listAction),
-		Usage:     "list all ACME External Account Keys",
-		UsageText: `**step beta ca eak list** [**--ca-url**=<uri>] [**--root**=<file>]`,
+		Usage:     "list all ACME External Account Binding Keys",
+		UsageText: `**step beta ca acme eab list** [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.CaURL,
 			flags.Root,
 		},
-		Description: `**step beta ca eak list** lists all ACME External Account Keys.
+		Description: `**step beta ca acme eab list** lists all ACME External Account Binding Keys.
 
 ## EXAMPLES
 
-List all ACME External Account Keys:
+List all ACME External Account Binding Keys:
 '''
-$ step beta ca eak list
+$ step beta ca acme eab list
 '''
 `,
 	}

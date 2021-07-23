@@ -1,4 +1,4 @@
-package eak
+package eab
 
 import (
 	"fmt"
@@ -16,8 +16,8 @@ func addCommand() cli.Command {
 	return cli.Command{
 		Name:      "add",
 		Action:    cli.ActionFunc(addAction),
-		Usage:     "add ACME External Account Key material",
-		UsageText: `**step beta ca eak add** <name>`,
+		Usage:     "add ACME External Account Binding Key",
+		UsageText: `**step beta ca acme eab add** <name_or_reference>`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
@@ -27,18 +27,19 @@ func addCommand() cli.Command {
 			flags.CaURL,
 			flags.Root,
 		},
-		Description: `**step beta ca eak add** adds ACME External Account Key.
+		Description: `**step beta ca acme eab add** adds ACME External Account Binding Key.
 
 ## POSITIONAL ARGUMENTS
 
+<name_or_reference>
+:  Name or (external) reference for the key to be created
+
 ## EXAMPLES
 
-Add an ACME External Account Key:
+Add an ACME External Account Binding Key:
 '''
-$ step beta ca eak add some_name_or_reference
-'''
-
-`,
+$ step beta ca acme eab add my_first_eab_key
+'''`,
 	}
 }
 
@@ -68,6 +69,8 @@ func addAction(ctx *cli.Context) (err error) {
 	if err != nil {
 		return err
 	}
+
+	// TODO: JSON output, so that executing this command can be more easily automated?
 
 	w := new(tabwriter.Writer)
 	// Format in tab-separated columns with a tab stop of 8.

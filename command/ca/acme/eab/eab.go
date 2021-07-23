@@ -1,4 +1,4 @@
-package eak
+package eab
 
 import (
 	"encoding/base64"
@@ -19,31 +19,29 @@ func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *adminAPI.CreateExterna
 	return &cliEAK{id: eak.KeyID, name: eak.Name, key: base64.StdEncoding.EncodeToString(eak.Key)}, nil
 }
 
-// Command returns the jwk subcommand.
+// Command returns the eab subcommand.
 func Command() cli.Command {
 	return cli.Command{
-		Name:      "eak",
-		Usage:     "create and manage ACME External Account Key material",
-		UsageText: "**step beta ca eak** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Name:      "eab",
+		Usage:     "create and manage ACME External Account Binding Keys",
+		UsageText: "**step beta ca acme eab** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			listCommand(),
 			addCommand(),
-			// removeCommand(),
-			// updateCommand(),
 		},
-		Description: `**step beta ca eak** command group provides facilities for managing ACME 
-		External Account Keys.
+		Description: `**step beta ca acme eab** command group provides facilities for managing ACME 
+		External Account Binding Keys.
 
 ## EXAMPLES
 
-List the active ACME External Account Keys:
+List the active ACME External Account Binding Keys:
 '''
-$ step beta ca eak list
+$ step beta ca acme eab list
 '''
 
-Add an ACME External Account Key:
+Add an ACME External Account Binding Key:
 '''
-$ step beta ca eak add some_name_or_reference
+$ step beta ca acme eab add some_name_or_reference
 '''`,
 	}
 }
