@@ -17,7 +17,7 @@ func addCommand() cli.Command {
 		Name:      "add",
 		Action:    cli.ActionFunc(addAction),
 		Usage:     "add ACME External Account Binding Key",
-		UsageText: `**step beta ca acme eab add** <name_or_reference>`,
+		UsageText: `**step beta ca acme eab add** <name_or_reference> [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
@@ -50,8 +50,6 @@ func addAction(ctx *cli.Context) (err error) {
 
 	args := ctx.Args()
 	name := args.Get(0)
-
-	fmt.Println(name)
 
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
