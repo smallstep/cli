@@ -20,7 +20,7 @@ func needsRenewalCommand() cli.Command {
 		Name:      "needs-renewal",
 		Action:    cli.ActionFunc(needsRenewalAction),
 		Usage:     `Check if an SSH certificate needs to be renewed`,
-		UsageText: `**step ssh needs-renewal** <crt-file> [**--expires-in**=<duration>]`,
+		UsageText: `**step ssh needs-renewal** <crt-file or hostname> [**--expires-in**=<percent|duration>]`,
 		Description: `**step ssh needs-renewal** returns '0' if the SSH certificate needs
 to be renewed based on it's remaining lifetime. Returns '1' if the SSH certificate is
 within it's validity lifetime bounds and does not need to be renewed. Returns
@@ -30,7 +30,7 @@ adjusted using the '--expires-in' flag.
 
 ## POSITIONAL ARGUMENTS
 
-<cert_file>
+<cert-file or hostname>
 :  The path to an SSH certificate.
 
 ## EXIT CODES
@@ -97,9 +97,10 @@ func needsRenewalAction(ctx *cli.Context) error {
 	}
 
 	var (
-		percentThreshold int
-		duration         time.Duration
-		isPercent        = expiresIn == "" || strings.HasSuffix(expiresIn, "%")
+		percentThreshold  int
+		duration          time.Duration
+		isPercent         = expiresIn == "" || strings.HasSuffix(expiresIn, "%")
+		remainingValidity = time.Until(inspect.ValidBefore)
 	)
 
 	if isPercent {
@@ -115,15 +116,7 @@ func needsRenewalAction(ctx *cli.Context) error {
 				return errs.NewExitError(errs.InvalidFlagValueMsg(ctx, "expires-in", expiresIn, "value must be in range 0-100%"), 255)
 			}
 		}
-	} else {
-		duration, err = time.ParseDuration(expiresIn)
-		if err != nil {
-			return errs.NewExitError(errs.InvalidFlagValue(ctx, "expires-in", expiresIn, ""), 255)
-		}
-	}
 
-	remainingValidity := time.Until(inspect.ValidBefore)
-	if isPercent {
 		totalValidity := inspect.ValidBefore.Sub(inspect.ValidAfter)
 		percentUsed := (1 - remainingValidity.Minutes()/totalValidity.Minutes()) * 100
 
@@ -131,6 +124,10 @@ func needsRenewalAction(ctx *cli.Context) error {
 			return nil
 		}
 	} else {
+		duration, err = time.ParseDuration(expiresIn)
+		if err != nil {
+			return errs.NewExitError(errs.InvalidFlagValue(ctx, "expires-in", expiresIn, ""), 255)
+		}
 		if duration >= remainingValidity {
 			return nil
 		}

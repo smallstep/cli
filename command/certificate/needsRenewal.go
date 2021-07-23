@@ -21,8 +21,8 @@ func needsRenewalCommand() cli.Command {
 		Name:   "needs-renewal",
 		Action: cli.ActionFunc(needsRenewalAction),
 		Usage:  `Check if a certificate needs to be renewed`,
-		UsageText: `**step certificate needs-renewal** <cert_file or host_name>
-[**--expires-in**=<duration>] [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
+		UsageText: `**step certificate needs-renewal** <cert-file or hostname>
+[**--expires-in**=<percent|duration>] [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
 		Description: `**step certificate needs-renewal** returns '0' if the certificate needs
 to be renewed based on it's remaining lifetime. Returns '1' the certificate is
 within it's validity lifetime bounds and does not need to be renewed. Returns
@@ -32,7 +32,7 @@ adjusted using the '--expires-in' flag.
 
 ## POSITIONAL ARGUMENTS
 
-<cert_file or hostname>
+<cert-file or hostname>
 :  The path to a certificate OR a hostname with protocol prefix.
 
 ## EXIT CODES
