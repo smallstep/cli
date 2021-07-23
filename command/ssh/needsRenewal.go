@@ -1,0 +1,140 @@
+package ssh
+
+import (
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto/sshutil"
+	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/utils"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
+)
+
+const defaultPercentUsedThreshold = 66
+
+func needsRenewalCommand() cli.Command {
+	return cli.Command{
+		Name:      "needs-renewal",
+		Action:    cli.ActionFunc(needsRenewalAction),
+		Usage:     `Check if an SSH certificate needs to be renewed`,
+		UsageText: `**step ssh needs-renewal** <crt-file> [**--expires-in**=<duration>]`,
+		Description: `**step ssh needs-renewal** returns '0' if the SSH certificate needs
+to be renewed based on it's remaining lifetime. Returns '1' if the SSH certificate is
+within it's validity lifetime bounds and does not need to be renewed. Returns
+'255' for any other error. By default, an SSH certificate "needs renewal" when it has
+passed 66% (default threshold) of it's allotted lifetime. This threshold can be
+adjusted using the '--expires-in' flag.
+
+## POSITIONAL ARGUMENTS
+
+<cert_file>
+:  The path to an SSH certificate.
+
+## EXIT CODES
+
+This command returns '0' if the SSH certificate needs renewal, '1' if the
+SSH certificate does not need renewal, and '255' for any error.
+
+## EXAMPLES
+
+Check if an SSH certificate needs renewal using the default threshold (66%):
+'''
+$ step ssh needs-renewal ./ssh_host_ed25519_key.pub
+'''
+
+Check if certificate will expire within a given duration:
+'''
+$ step ssh needs-renewal ./ssh_host_ed25519_key.pub --expires-in 1h15m
+'''
+
+Check if an SSH certificate has passed 75 percent of it's lifetime:
+'''
+$ step certificate needs-renewal ./ssh_host_ed25519_key.pub --expires-in 75%
+'''
+`,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name: "expires-in",
+				Usage: `Check if the certificate expires within the given time window
+using <percent|duration>. If using <percent>, the input must be followed by a "%"
+character. If using <duration>, the input must be a sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
+			},
+		},
+	}
+}
+
+func needsRenewalAction(ctx *cli.Context) error {
+	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		return err
+	}
+
+	var (
+		certFile  = ctx.Args().First()
+		expiresIn = ctx.String("expires-in")
+	)
+
+	b, err := utils.ReadFile(certFile)
+	if err != nil {
+		return err
+	}
+
+	pub, _, _, _, err := ssh.ParseAuthorizedKey(b)
+	if err != nil {
+		return errors.Wrap(err, "error parsing ssh certificate")
+	}
+	cert, ok := pub.(*ssh.Certificate)
+	if !ok {
+		return errors.Errorf("error decoding ssh certificate: %T is not a *ssh.Certificate", pub)
+	}
+	inspect, err := sshutil.InspectCertificate(cert)
+	if err != nil {
+		return err
+	}
+
+	var (
+		percentThreshold int
+		duration         time.Duration
+		isPercent        = expiresIn == "" || strings.HasSuffix(expiresIn, "%")
+	)
+
+	if isPercent {
+		if expiresIn == "" {
+			percentThreshold = defaultPercentUsedThreshold
+		} else {
+			percentThreshold, err = strconv.Atoi(strings.TrimSuffix(expiresIn, "%"))
+			if err != nil {
+				return errs.NewExitError(errs.InvalidFlagValue(ctx, "expires-in", expiresIn, ""), 255)
+			}
+
+			if percentThreshold > 100 || percentThreshold < 0 {
+				return errs.NewExitError(errs.InvalidFlagValueMsg(ctx, "expires-in", expiresIn, "value must be in range 0-100%"), 255)
+			}
+		}
+	} else {
+		duration, err = time.ParseDuration(expiresIn)
+		if err != nil {
+			return errs.NewExitError(errs.InvalidFlagValue(ctx, "expires-in", expiresIn, ""), 255)
+		}
+	}
+
+	remainingValidity := time.Until(inspect.ValidBefore)
+	if isPercent {
+		totalValidity := inspect.ValidBefore.Sub(inspect.ValidAfter)
+		percentUsed := (1 - remainingValidity.Minutes()/totalValidity.Minutes()) * 100
+
+		if int(percentUsed) >= percentThreshold {
+			return nil
+		}
+	} else {
+		if duration >= remainingValidity {
+			return nil
+		}
+	}
+
+	return errs.NewExitError(errors.Errorf("certificate does not need renewal"), 1)
+}
