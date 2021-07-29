@@ -79,15 +79,33 @@ func initCommand() cli.Command {
 			},
 			cli.StringFlag{
 				Name:  "ra",
-				Usage: `The registration authority <name> to use. Currently only "CloudCAS" is supported.`,
+				Usage: `The registration authority <name> to use. Currently "StepCAS" and "CloudCAS" are supported.`,
 			},
 			cli.StringFlag{
 				Name: "issuer",
-				Usage: `The registration authority issuer <name> to use.
+				Usage: `The registration authority issuer <url> to use.
+
+: If StepCAS is used, this flag should be the URL of the CA to connect
+to, e.g https://ca.smallstpe.com:9000
 
 : If CloudCAS is used, this flag should be the resource name of the
 intermediate certificate to use. This has the format
 'projects/\\*/locations/\\*/caPools/\\*/certificateAuthorities/\\*'.`,
+			},
+			cli.StringFlag{
+				Name: "issuer-fingerprint",
+				Usage: `The root certificate <fingerprint> of the issuer CA.
+This flag is supported in "StepCAS", and it should be the result of running:
+'''
+$ step certificate fingerprint root_ca.crt
+4fe5f5ef09e95c803fdcb80b8cf511e2a885eb86f3ce74e3e90e62fa3faf1531
+'''`,
+			},
+			cli.StringFlag{
+				Name: "issuer-provisioner",
+
+				Usage: `The <name> of an existing provisioner in the issuer CA.
+This flag is supported in "StepCAS".`,
 			},
 			cli.StringFlag{
 				Name: "credentials-file",
@@ -130,8 +148,8 @@ func initAction(ctx *cli.Context) (err error) {
 		if rootKey, err = pemutil.Read(key); err != nil {
 			return err
 		}
-	case ra != "" && ra != apiv1.CloudCAS:
-		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "CloudCAS")
+	case ra != "" && ra != apiv1.CloudCAS && ra != apiv1.StepCAS:
+		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "StepCAS or CloudCAS")
 	}
 
 	configure := !ctx.Bool("pki")
@@ -242,6 +260,35 @@ func initAction(ctx *cli.Context) (err error) {
 			CaPool:               caPool,
 			CaPoolTier:           caPoolTier,
 			GCSBucket:            gcsBucket,
+		}
+	case apiv1.StepCAS:
+		ui.Println("What is the url of your CA?", ui.WithValue(ctx.String("issuer")))
+		ca, err := ui.Prompt("(e.g. https://ca.smallstep.com:9000)",
+			ui.WithValidateRegexp("(?i)^https://.+$"), ui.WithValue(ctx.String("issuer")))
+		if err != nil {
+			return err
+		}
+		ui.Println("What is the fingerprint of the CA's root file?", ui.WithValue(ctx.String("issuer-fingerprint")))
+		fingerprint, err := ui.Prompt("(e.g. 4fe5f5ef09e95c803fdcb80b8cf511e2a885eb86f3ce74e3e90e62fa3faf1531)",
+			ui.WithValidateRegexp("^[a-fA-F0-9]{64}$"), ui.WithValue(ctx.String("issuer-fingerprint")))
+		if err != nil {
+			return err
+		}
+		ui.Println("What is the JWK provisioner you want to use?", ui.WithValue(ctx.String("issuer-provisioner")))
+		provisioner, err := ui.Prompt("(e.g. you@smallstep.com)",
+			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("issuer-provisioner")))
+		if err != nil {
+			return err
+		}
+		casOptions = apiv1.Options{
+			Type:                            apiv1.StepCAS,
+			IsCreator:                       false,
+			CertificateAuthority:            ca,
+			CertificateAuthorityFingerprint: fingerprint,
+			CertificateIssuer: &apiv1.CertificateIssuer{
+				Type:        "JWK",
+				Provisioner: provisioner,
+			},
 		}
 	default:
 		ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
