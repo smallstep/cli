@@ -1,14 +1,17 @@
 package ca
 
 import (
-	"github.com/smallstep/cli/crypto/pemutil"
-	"go.step.sm/crypto/keyutil"
+	"crypto"
 	"io/ioutil"
 	"math/rand"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/smallstep/cli/crypto/keys"
+	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/utils"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/pki"
@@ -28,20 +31,22 @@ func rekeyCertificateCommand() cli.Command {
 [**--out-cert**=<file>] [**--out-key**=<file>] [**--private-key**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--password-file**=<file>]
 [**--expires-in**=<duration>] [**--force**] [**--exec**=<string>] [**--daemon**]
+[**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
 [**--expires-in**=<duration>] [**--pid**=<int>] [**--pid-file**=<file>]
-[**--signal**=<int>] [**--exec**=<string>] [**--renew-period**=<duration>]`,
+[**--signal**=<int>] [**--exec**=<string>] [**--rekey-period**=<duration>]`,
 		Description: `
 **step ca rekey** command rekeys the given certificate (with a request to the
-certificate authority) and writes the new certificate and private key 
-to disk - either overwriting <crt-file> and <key-file> or writing to new files when
-the **--out-cert**=<file> and **--out-key**=<file> flags are used.
+certificate authority) and writes the new certificate and private key
+to disk - either overwriting <crt-file> and <key-file> positional arguments
+or using new files when the **--out-cert**=<file> and **--out-key**=<file>
+flags are used.
 
 With the **--daemon** flag the command will periodically update the given
 certificate. By default, it will rekey the certificate before 2/3 of the validity
 period of the certificate has elapsed. A random jitter is used to avoid multiple
-instances running at the same time. The amount of time between renewal and
+instances running at the same time. The amount of time between rekey and
 certificate expiration can be configured using the **--expires-in** flag, or a
-fixed period can be set with the **--renew-period** flag.
+fixed period can be set with the **--rekey-period** flag.
 
 The **--daemon** flag can be combined with **--pid**, **--signal**, or **--exec**
 to provide certificate reloads on your services.
@@ -49,26 +54,25 @@ to provide certificate reloads on your services.
 ## POSITIONAL ARGUMENTS
 
 <crt-file>
-:  The certificate in PEM format that we want to renew.
+:  The certificate in PEM format that we want to rekey.
 
 <key-file>
 :  They key file of the certificate.
 
 ## EXAMPLES
 
-Rekey a certificate with the configured CA:
+Rekey a certificate:
 '''
 $ step ca rekey internal.crt internal.key
-Would you like to overwrite internal.crt [Y/n]: y
-Would you like to overwrite internal.key [Y/n]: y
 '''
 
-Rekey a certificate without overwriting the previous certificate:
+Rekey a certificate without overwriting the existing certificate and key:
 '''
-$ step ca rekey --out renewed.crt internal.crt internal.key
+$ step ca rekey --out-cert out.crt --out-key out.key internal.crt internal.key
 '''
 
-Rekey a certificate forcing the overwrite of the previous certificate:
+Rekey a certificate forcing the overwrite of the previous certificate and key
+(overwrites the existing files without prompting):
 '''
 $ step ca rekey --force internal.crt internal.key
 '''
@@ -80,10 +84,9 @@ $ step ca rekey --ca-url https://ca.smallstep.com:9000 \
 Would you like to overwrite internal.crt [Y/n]: y
 '''
 
-Rekey skipped because it was too early:
+Rekey a certificate only if it expires within the given time frame:
 '''
 $ step ca rekey --expires-in 8h internal.crt internal.key
-certificate not renewed: expires in 10h52m5s
 '''
 
 Rekey the certificate before 2/3 of the validity has passed:
@@ -98,7 +101,7 @@ $ step ca rekey --daemon --expires-in 8h30m internal.crt internal.key
 
 Rekey the certificate every 16h:
 '''
-$ step ca rekey --daemon --renew-period 16h internal.crt internal.key
+$ step ca rekey --daemon --rekey-period 16h internal.crt internal.key
 '''
 
 Rekey the certificate and reload nginx:
@@ -108,7 +111,7 @@ $ step ca rekey --daemon --exec "nginx -s reload" internal.crt internal.key
 
 Rekey the certificate and convert it to DER:
 '''
-$ step ca renew --daemon --renew-period 16h \
+$ step ca rekey --daemon --rekey-period 16h \
   --exec "step certificate format --force --out internal.der internal.crt" \
   internal.crt internal.key
 '''
@@ -129,32 +132,41 @@ Rekey the certificate using a given private key:
 $ step ca rekey internal.crt internal.key --private-key foo.key
 '''`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
-			flags.CaURL,
-			flags.Force,
-			flags.Offline,
-			flags.PasswordFile,
-			flags.Root,
+			cli.StringFlag{
+				Name: "out-cert",
+				Usage: `The <file> where the new certificate will be saved to.
+Defaults to overwriting the <crt-file> positional argument.`,
+			},
+			cli.StringFlag{
+				Name: "out-key",
+				Usage: `The <file> to store the new private key.
+Defaults to overwriting the <key-file> positional argument.`,
+			},
+			cli.StringFlag{
+				Name: "private-key",
+				Usage: `The <file> containing the private key for rekey-ing the certificate.
+By default, a new random key pair will be generated.`,
+			},
 			cli.StringFlag{
 				Name: "expires-in",
 				Usage: `The amount of time remaining before certificate expiration,
-at which point a renewal should be attempted. The certificate renewal will not
+at which point a rekey should be attempted. The certificate rekey will not
 be performed if the time to expiration is greater than the **--expires-in** value.
 A random jitter (duration/20) will be added to avoid multiple services hitting the
-renew endpoint at the same time. The <duration> is a sequence of decimal numbers,
+rekey endpoint at the same time. The <duration> is a sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 			cli.IntFlag{
 				Name: "pid",
-				Usage: `The process id to signal after the certificate has been renewed. By default the
+				Usage: `The process id to signal after the certificate has been rekeyed. By default the
 the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},
 			cli.StringFlag{
 				Name: "pid-file",
 				Usage: `The <file> from which to read the process id that will be signaled after the certificate
-has been renewed. By default the the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
+has been rekeyed. By default the the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},
 			cli.IntFlag{
@@ -165,37 +177,31 @@ configuration and load the new certificate. Default value is SIGHUP (1)`,
 			},
 			cli.StringFlag{
 				Name:  "exec",
-				Usage: "The <command> to run after the certificate has been renewed.",
+				Usage: "The <command> to run after the certificate has been rekeyed.",
 			},
 			cli.BoolFlag{
 				Name: "daemon",
-				Usage: `Run the renew command as a daemon, renewing and overwriting the certificate
-periodically. By default the daemon will renew a certificate before 2/3 of the
+				Usage: `Run the rekey command as a daemon, rekeying and overwriting the certificate
+periodically. By default the daemon will rekey a certificate before 2/3 of the
 time to expiration has elapsed. The period can be configured using the
-**--renew-period** or **--expires-in** flags.`,
+**--rekey-period** or **--expires-in** flags.`,
 			},
 			cli.StringFlag{
-				Name: "renew-period",
-				Usage: `The period with which to schedule renewals of the certificate in daemon mode.
+				Name: "rekey-period",
+				Usage: `The period with which to schedule rekeying of the certificate in daemon mode.
 Requires the **--daemon** flag. The <duration> is a sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "1.5h", or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
-			cli.StringFlag{
-				Name: "out-cert",
-				Usage: `The <file> where the new certificate will be saved to.
-Defaults to overwriting the <crt-file> positional argument.`,
-			},
-			cli.StringFlag{
-				Name: "out-key",
-				Usage: `The <file> where the new private key will be saved to.
- Defaults to overwriting the <key-file> positional argument.`,
-			},
-			cli.StringFlag{
-				Name: "private-key",
-				Usage: `The <file> of the private key to use instead of creating a new key pair,
-if nothing is passed, default will generate a random key pair.`,
-			},
+			flags.KTY,
+			flags.Curve,
+			flags.Size,
+			flags.Force,
+			flags.Offline,
+			flags.PasswordFile,
+			flags.Root,
+			flags.CaURL,
+			flags.CaConfig,
 		},
 	}
 }
@@ -215,11 +221,11 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	givenPrivate := ctx.String("private-key")
 
 	outCert := ctx.String("out-cert")
-	if len(outCert) == 0 {
+	if outCert == "" {
 		outCert = certFile
 	}
 	outKey := ctx.String("out-key")
-	if len(outKey) == 0 {
+	if outKey == "" {
 		outKey = keyFile
 	}
 
@@ -233,22 +239,22 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	var expiresIn, renewPeriod time.Duration
+	var expiresIn, rekeyPeriod time.Duration
 	if s := ctx.String("expires-in"); len(s) > 0 {
 		if expiresIn, err = time.ParseDuration(s); err != nil {
 			return errs.InvalidFlagValue(ctx, "expires-in", s, "")
 		}
 	}
-	if s := ctx.String("renew-period"); len(s) > 0 {
-		if renewPeriod, err = time.ParseDuration(s); err != nil {
-			return errs.InvalidFlagValue(ctx, "renew-period", s, "")
+	if s := ctx.String("rekey-period"); len(s) > 0 {
+		if rekeyPeriod, err = time.ParseDuration(s); err != nil {
+			return errs.InvalidFlagValue(ctx, "rekey-period", s, "")
 		}
 	}
-	if expiresIn > 0 && renewPeriod > 0 {
-		return errs.IncompatibleFlagWithFlag(ctx, "expires-in", "renew-period")
+	if expiresIn > 0 && rekeyPeriod > 0 {
+		return errs.IncompatibleFlagWithFlag(ctx, "expires-in", "rekey-period")
 	}
-	if renewPeriod > 0 && !isDaemon {
-		return errs.RequiredWithFlag(ctx, "renew-period", "daemon")
+	if rekeyPeriod > 0 && !isDaemon {
+		return errs.RequiredWithFlag(ctx, "rekey-period", "daemon")
 	}
 
 	if ctx.IsSet("pid") && ctx.IsSet("pid-file") {
@@ -286,12 +292,12 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	leaf := cert.Leaf
 
 	if leaf.NotAfter.Before(time.Now()) {
-		return errors.New("cannot renew an expired certificate")
+		return errors.New("cannot rekey an expired certificate")
 	}
 	cvp := leaf.NotAfter.Sub(leaf.NotBefore)
-	if renewPeriod > 0 && renewPeriod >= cvp {
-		return errors.Errorf("flag '--renew-period' must be within (lower than) the certificate "+
-			"validity period; renew-period=%v, cert-validity-period=%v", renewPeriod, cvp)
+	if rekeyPeriod > 0 && rekeyPeriod >= cvp {
+		return errors.Errorf("flag '--rekey-period' must be within (lower than) the certificate "+
+			"validity period; rekey-period=%v, cert-validity-period=%v", rekeyPeriod, cvp)
 	}
 
 	renewer, err := newRenewer(ctx, caURL, cert, rootFile)
@@ -299,42 +305,49 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	afterRenew := getAfterRenewFunc(pid, signum, execCmd)
+	afterRekey := getAfterRenewFunc(pid, signum, execCmd)
 	if isDaemon {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
-		next := nextRenewDuration(leaf, expiresIn, renewPeriod)
-		return renewer.Daemon(outCert, next, expiresIn, renewPeriod, afterRenew)
+		next := nextRenewDuration(leaf, expiresIn, rekeyPeriod)
+		return renewer.Daemon(outCert, next, expiresIn, rekeyPeriod, afterRekey)
 	}
 
 	// Do not rekey if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
 		jitter := rand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
-			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
+			ui.Printf("certificate not rekeyed: expires in %s\n", d.Round(time.Second))
 			return nil
 		}
 	}
 
+	var priv crypto.PrivateKey
 	if givenPrivate == "" {
-		_, priv, err := keyutil.GenerateDefaultKeyPair()
+		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, false, "kty", "curve", "size")
 		if err != nil {
 			return err
 		}
-		if _, err := renewer.Rekey(priv, outCert, outKey); err != nil {
+		priv, err = keys.GenerateKey(kty, crv, size)
+		if err != nil {
 			return err
 		}
-
 	} else {
-		priv, err := pemutil.Read(givenPrivate)
-		if err != nil {
-			return err
-		}
-		if _, err := renewer.Rekey(priv, outCert, outKey); err != nil {
-			return err
-		}
+		priv, err = pemutil.Read(givenPrivate)
+	}
+	if err != nil {
+		return err
+	}
+	if _, err := renewer.Rekey(priv, outCert, outKey); err != nil {
+		return err
 	}
 
-	ui.Printf("Your certificate and key has been saved in %s %s .\n", outCert, outKey)
-	return afterRenew()
+	ui.PrintSelected("Certificate", outCert)
+	// The private key will be written out to disk if:
+	// 1) no private key was provided
+	// 2) a private key was provided but an outfile for the private key was specified as well
+	if givenPrivate == "" || ctx.IsSet("out-key") {
+		ui.PrintSelected("Private Key", outKey)
+	}
+	return afterRekey()
 }
