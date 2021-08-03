@@ -33,11 +33,11 @@ func rekeyCertificateCommand() cli.Command {
 		Description: `
 **step ca rekey** command rekeys the given certificate (with a request to the
 certificate authority) and writes the new certificate and private key 
-to disk - either overwriting <crt-file> <key-file> or using a new file when
+to disk - either overwriting <crt-file> and <key-file> or writing to new files when
 the **--out-cert**=<file> and **--out-key**=<file> flags are used.
 
 With the **--daemon** flag the command will periodically update the given
-certificate. By default, it will renew the certificate before 2/3 of the validity
+certificate. By default, it will rekey the certificate before 2/3 of the validity
 period of the certificate has elapsed. A random jitter is used to avoid multiple
 instances running at the same time. The amount of time between renewal and
 certificate expiration can be configured using the **--expires-in** flag, or a
