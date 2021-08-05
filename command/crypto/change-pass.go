@@ -10,12 +10,12 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func changePassCommand() cli.Command {

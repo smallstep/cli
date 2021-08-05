@@ -17,8 +17,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 type hashConstructor func() hash.Hash

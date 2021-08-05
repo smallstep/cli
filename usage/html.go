@@ -8,8 +8,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func httpHelpAction(ctx *cli.Context) error {

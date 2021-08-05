@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

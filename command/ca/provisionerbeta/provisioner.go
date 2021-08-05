@@ -3,8 +3,8 @@ package provisionerbeta
 import (
 	"time"
 
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 // Command returns the jwk subcommand.

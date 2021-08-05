@@ -6,9 +6,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func removeCommand() cli.Command {

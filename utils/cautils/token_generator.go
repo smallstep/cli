@@ -14,13 +14,13 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/randutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 // TokenGenerator is a helper used to generate different types of tokens used in

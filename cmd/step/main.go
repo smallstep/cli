@@ -13,10 +13,10 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command/version"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/usage"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 
 	// Enabled commands

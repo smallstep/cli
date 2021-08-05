@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
-	"github.com/smallstep/cli/errs"
+	"go.step.sm/cli-utils/errs"
 )
 
 const (

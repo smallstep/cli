@@ -10,9 +10,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 )
 

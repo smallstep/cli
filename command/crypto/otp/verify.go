@@ -12,10 +12,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func verifyCommand() cli.Command {

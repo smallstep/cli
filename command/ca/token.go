@@ -6,12 +6,12 @@ import (
 
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func tokenCommand() cli.Command {

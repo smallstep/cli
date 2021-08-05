@@ -1,10 +1,10 @@
 package admin
 
 import (
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func removeCommand() cli.Command {

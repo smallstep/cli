@@ -10,8 +10,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
+	"go.step.sm/cli-utils/errs"
 
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"

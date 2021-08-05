@@ -7,10 +7,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/sshutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 

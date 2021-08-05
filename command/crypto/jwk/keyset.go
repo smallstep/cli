@@ -9,10 +9,10 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils/sysutils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func keysetCommand() cli.Command {

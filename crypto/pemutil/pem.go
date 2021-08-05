@@ -17,9 +17,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 

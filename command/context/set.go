@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/fileutil"
 	"go.step.sm/cli-utils/step"
 )

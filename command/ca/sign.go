@@ -7,13 +7,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func signCertificateCommand() cli.Command {

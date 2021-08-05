@@ -5,10 +5,10 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/linkedca"
 )
 

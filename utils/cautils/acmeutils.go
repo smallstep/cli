@@ -20,12 +20,12 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func startHTTPServer(addr, token, keyAuth string) *http.Server {

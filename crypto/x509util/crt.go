@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
+	"go.step.sm/cli-utils/errs"
 )
 
 // Fingerprint returns the SHA-256 fingerprint of the certificate.

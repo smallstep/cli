@@ -12,13 +12,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 

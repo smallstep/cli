@@ -21,10 +21,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/randutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/pkg/bcrypt_pbkdf"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 

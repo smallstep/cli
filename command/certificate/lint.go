@@ -7,11 +7,11 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/smallstep/zlint"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func lintCommand() cli.Command {
