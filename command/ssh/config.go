@@ -29,9 +29,9 @@ func configCommand() cli.Command {
 		Usage:  "configures ssh to be used with certificates",
 		UsageText: `**step ssh config**
 [**--team**=<name>] [**--host**] [**--set**=<key=value>] [**--set-file**=<file>]
-[**--dry-run**] [**--roots**] [**--federation**]
-[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>] [**--team-url**=<url>]`,
+[**--dry-run**] [**--roots**] [**--federation**] [**--force**]
+[**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
 		Description: `**step ssh config** configures SSH to be used with certificates. It also supports
 flags to inspect the root certificates used to sign the certificates.
 
@@ -87,11 +87,12 @@ times to set multiple variables.`,
 			},
 			flags.TemplateSetFile,
 			flags.DryRun,
+			flags.Force,
+			flags.CaConfig,
 			flags.CaURL,
 			flags.Root,
 			flags.Offline,
-			flags.CaConfig,
-			flags.Force,
+			flags.Context,
 		},
 	}
 }

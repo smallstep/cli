@@ -38,9 +38,10 @@ func certificateCommand() cli.Command {
 [**--host**] [--**host-id**] [**--sign**] [**--principal**=<string>] [**--password-file**=<file>]
 [**--provisioner-password-file**=<file>] [**--add-user**]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--no-password**] [**--insecure**] [**--force**]
-[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path=<file>]`,
+[**--token**=<token>] [**--issuer**=<name>] [**--no-password**] [**--insecure**]
+[**--force**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
+
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
 
@@ -145,11 +146,8 @@ Generate a new key pair and a certificate using a given token:
 $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 '''`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
-			flags.CaURL,
 			flags.Force,
 			flags.Insecure,
-			flags.Root,
 			flags.NoPassword,
 			flags.NotBefore,
 			flags.NotAfter,
@@ -169,6 +167,10 @@ $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 			flags.X5cCert,
 			flags.X5cKey,
 			flags.K8sSATokenPathFlag,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

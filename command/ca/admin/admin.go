@@ -54,6 +54,11 @@ $ step beta ca admin remove max@smallstep.com
 	}
 }
 
+var provisionerFilterFlag = cli.StringFlag{
+	Name:  "provisioner",
+	Usage: `The provisioner <name> by which to filter admins.`,
+}
+
 type adminSelect struct {
 	Name     string
 	CLIAdmin *cliAdmin

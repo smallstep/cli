@@ -17,7 +17,7 @@ func healthCommand() cli.Command {
 		Action: healthAction,
 		Usage:  "get the status of the CA",
 		UsageText: `**step ca health**
-[**--ca-url**=<URI>] [**--root**=<file>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context>]`,
 		Description: `**step ca health** makes an API request to the /health
 endpoint of the Step CA to check if it is running. If the CA is healthy, the
 response will be 'ok'.
@@ -46,6 +46,7 @@ ok
 		Flags: []cli.Flag{
 			flags.CaURL,
 			flags.Root,
+			flags.Context,
 		},
 	}
 }

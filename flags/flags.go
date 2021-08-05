@@ -186,6 +186,12 @@ generating key.`,
 		Usage: "The path to the PEM <file> used as the root certificate authority.",
 	}
 
+	// Context is a cli.Flag used to pass the context to for the given command.
+	Context = cli.StringFlag{
+		Name:  "context",
+		Usage: "The <context> to apply before running the given command.",
+	}
+
 	// Offline is a cli.Flag used to activate the offline flow.
 	Offline = cli.BoolFlag{
 		Name: "offline",

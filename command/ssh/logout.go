@@ -18,9 +18,10 @@ func logoutCommand() cli.Command {
 		Name:   "logout",
 		Action: command.ActionFunc(logoutAction),
 		Usage:  "removes a private key from the ssh-agent",
-		UsageText: `**step ssh logout** <identity>
-		[**--all**] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--offline**] [**--ca-config**=<file>]`,
+		UsageText: `**step ssh logout** <identity> [**--all**]
+[**--identity**=<identity>] [**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
+
 		Description: `**step ssh logout** commands removes a key from the ssh-agent.
 
 By default it only removes certificate keys signed by step-certificates, but the
@@ -58,10 +59,11 @@ $ step ssh logout --all
 				Usage: "Removes all the keys stored in the SSH agent.",
 			},
 			flags.Identity,
-			flags.CaURL,
-			flags.Root,
 			flags.Offline,
 			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

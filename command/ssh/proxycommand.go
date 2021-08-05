@@ -33,7 +33,8 @@ func proxycommandCommand() cli.Command {
 		Usage:  "proxy ssh connections according to the host registry",
 		UsageText: `**step ssh proxycommand** <user> <host> <port>
 [**--provisioner**=<name>] [**--set**=<key=value>] [**--set-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--offline**] [**--ca-config**=<file>]`,
+[**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
 		Description: `**step ssh proxycommand** looks into the host registry
 and proxies the ssh connection according to its configuration. This command
 is used in the ssh client config with <ProxyCommand> keyword.
@@ -54,10 +55,11 @@ This command will add the user to the ssh-agent if necessary.
 			flags.Provisioner,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
-			flags.CaURL,
-			flags.Root,
 			flags.Offline,
 			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

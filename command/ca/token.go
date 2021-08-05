@@ -26,15 +26,15 @@ func tokenCommand() cli.Command {
 		Action: command.ActionFunc(tokenAction),
 		Usage:  "generate an OTT granting access to the CA",
 		UsageText: `**step ca token** <subject>
-[--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
+[--**kid**=<kid>] [--**issuer**=<name>]
 [**--cert-not-before**=<time|duration>] [**--cert-not-after**=<time|duration>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--password-file**=<file>] [**--provisioner-password-file**=<file>]
 [**--output-file**=<file>] [**--key**=<file>] [**--san**=<SAN>] [**--offline**]
 [**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
 [**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
-[**--ssh**] [**--host**] [**--principal**=<string>]
-[**--k8ssa-token-path**=<file>`,
+[**--ssh**] [**--host**] [**--principal**=<string>] [**--k8ssa-token-path**=<file>
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context>]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
@@ -157,13 +157,10 @@ extra names. Use the '--principal' flag multiple times to configure
 multiple principals.`,
 			},
 			sshHostFlag,
-			flags.CaURL,
 			flags.CaConfig,
 			flags.Force,
 			flags.NotAfter,
 			flags.NotBefore,
-			flags.Offline,
-			flags.Root,
 			flags.Provisioner,
 			flags.PasswordFile,
 			flags.ProvisionerPasswordFile,
@@ -200,6 +197,10 @@ be invalid for any other API request.`,
 				Usage: `Create a token for authorizing an SSH certificate signing request.`,
 			},
 			flags.K8sSATokenPathFlag,
+			flags.Offline,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

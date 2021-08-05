@@ -25,10 +25,10 @@ func rekeyCommand() cli.Command {
 		Name:   "rekey",
 		Action: command.ActionFunc(rekeyAction),
 		Usage:  "rekey a SSH certificate using the SSH CA",
-		UsageText: `**step ssh rekey** <ssh-cert> <ssh-key>
-[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<file>]
-[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>]`,
+		UsageText: `**step ssh rekey** <ssh-cert> <ssh-key> [**--out**=<file>]
+[**--issuer**=<name>] [**--password-file**=<file>] [**--force**]
+[**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<context]`,
 		Description: `**step ssh rekey** command generates a new SSH Certificate and key using
 an existing SSH Cerfificate and key pair to authenticate and templatize the
 request. It writes the new certificate to disk - either overwriting
@@ -63,12 +63,13 @@ $ step ssh rekey --out id2_ecdsa id_ecdsa-cert.pub id_ecdsa
 			flags.NoPassword,
 			flags.Insecure,
 			flags.Force,
-			flags.CaURL,
-			flags.Root,
-			flags.Offline,
-			flags.CaConfig,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
+			flags.Offline,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

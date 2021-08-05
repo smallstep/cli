@@ -24,12 +24,12 @@ func signCertificateCommand() cli.Command {
 		UsageText: `**step ca sign** <csr-file> <crt-file>
 [**--token**=<token>] [**--issuer**=<name>] [**--provisioner-password-file=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--ca-url**=<uri>] [**--root**=<file>]
 [**--set**=<key=value>] [**--set-file**=<file>]
 [**--acme**=<uri>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
 [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
-[**--k8ssa-token-path**=<file>]`,
+[**--k8ssa-token-path**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
@@ -108,9 +108,6 @@ $ step ca sign foo.csr foo.crt \
 --acme https://acme-staging-v02.api.letsencrypt.org/directory
 '''`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
-			flags.CaURL,
-			flags.Root,
 			flags.Token,
 			flags.Provisioner,
 			flags.ProvisionerPasswordFile,
@@ -129,6 +126,10 @@ $ step ca sign foo.csr foo.crt \
 			acmeContactFlag,
 			acmeHTTPListenFlag,
 			flags.K8sSATokenPathFlag,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

@@ -24,12 +24,12 @@ func revokeCommand() cli.Command {
 		Action: command.ActionFunc(revokeAction),
 		Usage:  "revoke a SSH certificate using the SSH CA",
 		UsageText: `**step ssh revoke** <serial-number>
-[**--token**=<token>]  [**--issuer**=<name>]
-[**--set**=<key=value>] [**--set-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>]
-[**--ca-config**=<file>] [**--password-file**=<file>] [**--offline**]
-[**--reason**=<string>] [**--reasonCode**=<code>]
-[**--sshpop-cert**=<file>] [**--sshpop-key**=<key>]`,
+[**--token**=<token>]  [**--issuer**=<name>] [**--set**=<key=value>]
+[**--set-file**=<file>] [**--password-file**=<file>] [**--reason**=<string>]
+[**--reasonCode**=<code>] [**--sshpop-cert**=<file>] [**--sshpop-key**=<key>]
+[**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<context]`,
+
 		Description: `**step ssh revoke** command revokes an SSH Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 
@@ -50,10 +50,6 @@ $ step ssh revoke 3997477584487736496
 			flags.Provisioner,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
-			flags.CaURL,
-			flags.Root,
-			flags.Offline,
-			flags.CaConfig,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
 			cli.StringFlag{
@@ -114,6 +110,11 @@ Note: This is specific to the CertificateHold reason and is only used in DeltaCR
 attribute certificate have been compromised (reasonCode=10).
 `,
 			},
+			flags.Offline,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

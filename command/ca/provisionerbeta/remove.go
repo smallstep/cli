@@ -14,9 +14,9 @@ func removeCommand() cli.Command {
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove a provisioner from the CA configuration",
 		UsageText: `**step beta ca provisioner remove** <name>
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<context>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
@@ -25,6 +25,7 @@ func removeCommand() cli.Command {
 			flags.PasswordFile,
 			flags.CaURL,
 			flags.Root,
+			flags.Context,
 		},
 		Description: `**step beta ca provisioner remove** removes a provisioner from the CA configuration.
 

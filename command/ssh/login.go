@@ -27,9 +27,9 @@ func loginCommand() cli.Command {
 		UsageText: `**step ssh login** <identity>
 [**--token**=<token>] [**--provisioner**=<name>] [**--provisioner-password-file**=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--set**=<key=value>] [**--set-file**=<file>]
-[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>]`,
+[**--set**=<key=value>] [**--set-file**=<file>] [**--force**]
+[**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
 		Description: `**step ssh login** generates a new SSH key pair and send a request to [step
 certificates](https://github.com/smallstep/certificates) to sign a user
 certificate. This certificate will be automatically added to the SSH agent.
@@ -65,11 +65,12 @@ $ step ssh login --not-after 1h joe@smallstep.com
 			flags.NotAfter,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
-			flags.CaURL,
-			flags.Root,
+			flags.Force,
 			flags.Offline,
 			flags.CaConfig,
-			flags.Force,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

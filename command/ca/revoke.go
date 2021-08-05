@@ -42,8 +42,8 @@ func revokeCertificateCommand() cli.Command {
 		Usage:  "revoke a certificate",
 		UsageText: `**step ca revoke** <serial-number>
 [**--cert**=<file>] [**--key**=<file>] [**--token**=<ott>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--reason**=<string>]
-[**--reasonCode**=<code>] [**--offline**]`,
+[**--reason**=<string>] [**--reasonCode**=<code>] [**-offline**]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context>]`,
 		Description: `
 **step ca revoke** command revokes a certificate with the given serial
 number.
@@ -184,11 +184,12 @@ Note: This is specific to the CertificateHold reason and is only used in DeltaCR
 attribute certificate have been compromised (reasonCode=10).
 `,
 			},
-			flags.CaConfig,
-			flags.CaURL,
-			flags.Offline,
-			flags.Root,
 			flags.Token,
+			flags.CaConfig,
+			flags.Offline,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

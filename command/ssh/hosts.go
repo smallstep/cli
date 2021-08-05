@@ -18,10 +18,9 @@ func hostsCommand() cli.Command {
 		Name:   "hosts",
 		Action: command.ActionFunc(hostsAction),
 		Usage:  "returns a list of all valid hosts",
-		UsageText: `**step ssh hosts**
-[**--set**=<key=value>] [**--set-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>]`,
+		UsageText: `**step ssh hosts** [**--set**=<key=value>] [**--set-file**=<file>]
+[**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
 		Description: `**step ssh hosts** returns a list of valid hosts for SSH.
 
 This command returns a zero exit status then the server exists, it will return 1
@@ -36,10 +35,11 @@ $ step ssh hosts
 		Flags: []cli.Flag{
 			flags.TemplateSet,
 			flags.TemplateSetFile,
-			flags.CaURL,
-			flags.Root,
 			flags.Offline,
 			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

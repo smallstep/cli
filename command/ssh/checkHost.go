@@ -23,9 +23,9 @@ func checkHostCommand() cli.Command {
 		Name:   "check-host",
 		Action: command.ActionFunc(checkHostAction),
 		Usage:  "checks if a certificate has been issued for a host",
-		UsageText: `**step ssh check-host** <hostname>
-[**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>] [**--verbose,-v**]`,
+		UsageText: `**step ssh check-host** <hostname> [**--verbose,-v**]
+[**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
 		Description: `**step ssh check-host** checks if a certificate has been issued for a host.
 
 This command returns a zero exit status if the host has a certificate.
@@ -43,14 +43,15 @@ Check that internal.example.com exists:
 $ step ssh check-host internal.smallstep.com
 '''`,
 		Flags: []cli.Flag{
-			flags.CaURL,
-			flags.Root,
-			flags.Offline,
-			flags.CaConfig,
 			cli.BoolFlag{
 				Name:  "verbose, v",
 				Usage: `Return "true" or "false" in the terminal.`,
 			},
+			flags.CaConfig,
+			flags.Offline,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

@@ -24,10 +24,10 @@ func renewCommand() cli.Command {
 		Name:   "renew",
 		Action: command.ActionFunc(renewAction),
 		Usage:  "renew a SSH certificate using the SSH CA",
-		UsageText: `**step ssh renew** <ssh-cert> <ssh-key>
-[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<file>]
-[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>]`,
+		UsageText: `**step ssh renew** <ssh-cert> <ssh-key> [**--out**=<file>]
+[**--issuer**=<name>] [**--password-file**=<file>] [**--force**] [**--offline**]
+[**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<context]`,
 		Description: `**step ssh renew** command renews an SSH Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 It writes the new certificate to disk - either overwriting <ssh-cert> or
@@ -59,13 +59,14 @@ $ step ssh renew -out new-id_ecdsa-cer.pub id_ecdsa-cert.pub id_ecdsa
 			},
 			flags.Provisioner,
 			sshProvisionerPasswordFlag,
-			flags.Force,
-			flags.CaURL,
-			flags.Root,
-			flags.Offline,
-			flags.CaConfig,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
+			flags.Force,
+			flags.Offline,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

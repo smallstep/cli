@@ -42,7 +42,7 @@ $ step context set alpha-one
 List the available certificate authority contexts:
 '''
 $ step context list
-alpha-one
+▶ alpha-one
 alpha-two
 beta
 '''`,
