@@ -56,7 +56,7 @@ func addCommand() cli.Command {
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--ca-url**=<uri>] [**--root**=<file>]
 
-**step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**]
+**step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**] [**--require-eab**]
 [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -166,6 +166,7 @@ provisioning tokens.`,
 
 			// ACME provisioner flags
 			forceCNFlag,
+			requireEABFlag,
 
 			// Cloud provisioner flags
 			awsAccountFlag,
@@ -226,6 +227,11 @@ step beta ca provisioner add x5c --type X5C --x5c-root x5c_ca.crt
 Create an ACME provisioner:
 '''
 step beta ca provisioner add acme --type ACME
+'''
+
+Create an ACME provisioner, forcing a CN and requiring EAB:
+'''
+step beta ca provisioner add acme --type ACME --force-cn --require-eab
 '''
 
 Create an K8SSA provisioner:
@@ -518,7 +524,8 @@ func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_ACME{
 			ACME: &linkedca.ACMEProvisioner{
-				ForceCn: ctx.Bool("force-cn"),
+				ForceCn:    ctx.Bool("force-cn"),
+				RequireEab: ctx.Bool("require-eab"),
 			},
 		},
 	}, nil

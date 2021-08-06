@@ -169,6 +169,14 @@ var (
 		Name:  "force-cn",
 		Usage: `Always set the common name in provisioned certificates.`,
 	}
+	requireEABFlag = cli.BoolFlag{
+		Name:  "require-eab",
+		Usage: `Require (and enable) External Account Binding for Account creation.`,
+	}
+	disableEABFlag = cli.BoolFlag{
+		Name:  "disable-eab",
+		Usage: `Disable External Account Binding for Account creation.`,
+	}
 
 	// Cloud provisioner flags
 	awsAccountFlag = cli.StringSliceFlag{
