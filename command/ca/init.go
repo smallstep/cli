@@ -352,7 +352,7 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	var opts []pki.PKIOption
+	var opts []pki.Option
 	if pkiOnly {
 		opts = append(opts, pki.WithPKIOnly())
 	} else {
@@ -394,9 +394,9 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 		}
 
-		opts = []pki.PKIOption{
+		opts = []pki.Option{
 			pki.WithAddress(address),
-			pki.WithCaUrl(caURL),
+			pki.WithCaURL(caURL),
 			pki.WithDNSNames(dnsNames),
 			pki.WithDeploymentType(deploymentType),
 		}
