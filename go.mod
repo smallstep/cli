@@ -26,9 +26,9 @@ require (
 	github.com/urfave/cli v1.22.5
 	go.mozilla.org/pkcs7 v0.0.0-20200128120323-432b2356ecb1
 	go.step.sm/crypto v0.9.0
-	go.step.sm/linkedca v0.0.0-20210611183751-27424aae8d25
+	go.step.sm/linkedca v0.4.1-0.20210805031331-a377303edb9d
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+	golang.org/x/net v0.0.0-20210716203947-853a461950ff
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	google.golang.org/protobuf v1.27.1
@@ -36,8 +36,10 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20201103104416-57fc603b7f52
 )
 
-// replace github.com/smallstep/certificates => ../certificates
-// replace go.step.sm/linkedca => ../linkedca
+replace github.com/smallstep/certificates => ../certificates
+
+replace go.step.sm/linkedca => ../linkedca
+
 // replace go.step.sm/cli-utils => ../cli-utils
 // replace go.step.sm/crypto => ../crypto
 // replace github.com/smallstep/certinfo => ../certinfo
