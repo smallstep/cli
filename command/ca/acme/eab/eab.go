@@ -9,14 +9,15 @@ import (
 )
 
 type cliEAK struct {
-	id   string
-	name string
-	key  string
+	id          string
+	provisioner string
+	name        string
+	key         string
 }
 
 func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *adminAPI.CreateExternalAccountKeyResponse) (*cliEAK, error) {
 	// TODO: more fields for other purposes, like including the createdat/boundat/account for listing?
-	return &cliEAK{id: eak.KeyID, name: eak.Name, key: base64.StdEncoding.EncodeToString(eak.Key)}, nil
+	return &cliEAK{id: eak.KeyID, provisioner: eak.ProvisionerName, name: eak.Name, key: base64.StdEncoding.EncodeToString(eak.Key)}, nil
 }
 
 // Command returns the eab subcommand.
@@ -41,7 +42,7 @@ $ step beta ca acme eab list
 
 Add an ACME External Account Binding Key:
 '''
-$ step beta ca acme eab add some_name_or_reference
+$ step beta ca acme eab add provisioner_name some_name_or_reference
 '''`,
 	}
 }

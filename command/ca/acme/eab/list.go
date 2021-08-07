@@ -1,8 +1,11 @@
 package eab
 
 import (
+	"fmt"
+
 	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 )
 
@@ -13,6 +16,11 @@ func listCommand() cli.Command {
 		Usage:     "list all ACME External Account Binding Keys",
 		UsageText: `**step beta ca acme eab list** [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
+			flags.AdminCert,
+			flags.AdminKey,
+			flags.AdminProvisioner,
+			flags.AdminSubject,
+			flags.PasswordFile,
 			flags.CaURL,
 			flags.Root,
 		},
@@ -33,7 +41,17 @@ func listAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	// TODO: implementation for listing keys
+	client, err := cautils.NewAdminClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	eaks, err := client.GetExternalAccountKeys()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(eaks)
 
 	return nil
 }
