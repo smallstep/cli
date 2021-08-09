@@ -60,7 +60,7 @@ func initCommand() cli.Command {
     :  A standalone CA is the classic configuration where all the options are
     managed between the ca.json and the db.
 
-    **linkedca**
+    **linked**
     :  A linked CA is a deployment type where the keys are managed in **step-ca**
     but the provisioners and admins are managed in the cloud.
 
@@ -421,11 +421,17 @@ func initAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	// Linked CAs will use OIDC as a first provisioner.
-	if pkiOnly || deploymentType != pki.StandaloneDeployment {
-		ui.Println("Choose a password for your CA keys.", ui.WithValue(password))
+	if ra != "" {
+		// RA mode will not have encrypted keys. With the exception of SSH keys,
+		// but this is not common on RA mode.
+		ui.Println("Choose a password for your first provisioner.", ui.WithValue(password))
 	} else {
-		ui.Println("Choose a password for your CA keys and first provisioner.", ui.WithValue(password))
+		// Linked CAs will use OIDC as a first provisioner.
+		if pkiOnly || deploymentType != pki.StandaloneDeployment {
+			ui.Println("Choose a password for your CA keys.", ui.WithValue(password))
+		} else {
+			ui.Println("Choose a password for your CA keys and first provisioner.", ui.WithValue(password))
+		}
 	}
 
 	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]", ui.WithRichPrompt(), ui.WithValue(password))
@@ -496,6 +502,40 @@ func initAction(ctx *cli.Context) (err error) {
 	return p.Save()
 }
 
+func isNonInteractiveInit(ctx *cli.Context) bool {
+	var pkiFlags []string
+	configFlags := []string{
+		"dns", "address", "provisioner",
+	}
+	switch strings.ToLower(ctx.String("ra")) {
+	case apiv1.CloudCAS:
+		pkiFlags = []string{"issuer"}
+		configFlags = append(configFlags, "password-file")
+	case apiv1.StepCAS:
+		pkiFlags = []string{"issuer", "issuer-fingerprint", "issuer-provisioner"}
+		configFlags = append(configFlags, "password-file")
+	default:
+		pkiFlags = []string{"name", "password-file"}
+	}
+
+	for _, s := range pkiFlags {
+		if ctx.String(s) == "" {
+			return false
+		}
+	}
+
+	// If not pki only, then require all config flags.
+	if !ctx.Bool("pki") {
+		for _, s := range configFlags {
+			if ctx.String(s) == "" {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, error) {
 	type deployment struct {
 		Name  string
@@ -503,8 +543,16 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 	}
 
 	var deploymentTypes []deployment
+	deploymentType := strings.ToLower(ctx.String("deployment-type"))
+
+	// Assume standalone for backward compatibility if all required flags are
+	// passed.
+	if deploymentType == "" && isNonInteractiveInit(ctx) {
+		return pki.StandaloneDeployment, nil
+	}
+
 	if isRA {
-		switch v := strings.ToLower(ctx.String("deployment-type")); v {
+		switch deploymentType {
 		case "":
 			deploymentTypes = []deployment{
 				{"Standalone RA", pki.StandaloneDeployment},
@@ -515,10 +563,10 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 		case "linked":
 			return pki.LinkedDeployment, nil
 		default:
-			return 0, errs.InvalidFlagValue(ctx, "deployment-type", v, "standalone or linked")
+			return 0, errs.InvalidFlagValue(ctx, "deployment-type", deploymentType, "standalone or linked")
 		}
 	} else {
-		switch v := strings.ToLower(ctx.String("deployment-type")); v {
+		switch deploymentType {
 		case "":
 			deploymentTypes = []deployment{
 				{"Standalone CA", pki.StandaloneDeployment},
@@ -532,7 +580,7 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 		case "hosted":
 			return pki.HostedDeployment, nil
 		default:
-			return 0, errs.InvalidFlagValue(ctx, "deployment-type", v, "standalone, linked or hosted")
+			return 0, errs.InvalidFlagValue(ctx, "deployment-type", deploymentType, "standalone, linked or hosted")
 		}
 	}
 
