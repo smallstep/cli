@@ -34,9 +34,9 @@ $ cat $(step path --base)/contexts.json
 }
 '''
 
-Set the default certificate authority context:
+Select the default certificate authority context:
 '''
-$ step context set alpha-one
+$ step context select alpha-one
 '''
 
 List the available certificate authority contexts:
@@ -47,8 +47,8 @@ alpha-two
 beta
 '''`,
 		Subcommands: cli.Commands{
-			setCommand(),
 			listCommand(),
+			selectCommand(),
 		},
 	}
 
