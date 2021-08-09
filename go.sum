@@ -738,8 +738,8 @@ github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
 github.com/smallstep/certificates v0.16.0 h1:doWLmjppztuqBUA0Gaih7fnxRf4KfDJ5Ha58kLyiylk=
 github.com/smallstep/certificates v0.16.0/go.mod h1:oht6bnzBapjumPGXTZK/rBJYLO+O8/TTWt5/VlE9Wd4=
-github.com/smallstep/certinfo v1.5.1 h1:u4CFQujP7RhIUzJGl32dG8SotnUQRTLWlmZjGLC52q4=
-github.com/smallstep/certinfo v1.5.1/go.mod h1:gA7HBbue0Wwr3kD60P2UtgTIFfMAOC66D3rzYhI0GZ4=
+github.com/smallstep/certinfo v1.5.2 h1:XO3f9krMkKFDRG4CJFdb3vVoLaXMDAhCn3g0padk9EI=
+github.com/smallstep/certinfo v1.5.2/go.mod h1:gA7HBbue0Wwr3kD60P2UtgTIFfMAOC66D3rzYhI0GZ4=
 github.com/smallstep/nosql v0.3.6 h1:cq6a3NwjFJxkVlWU1T4qGskcfEXr0fO1WqQrraDO1Po=
 github.com/smallstep/nosql v0.3.6/go.mod h1:h1zC/Z54uNHc8euquLED4qJNCrMHd3nytA141ZZh4qQ=
 github.com/smallstep/truststore v0.9.6 h1:vNzEJmaJL0XOZD8uouXLmYu4/aP1UQ/wHUopH3qKeYA=
