@@ -17,7 +17,7 @@ type cliEAK struct {
 
 func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *adminAPI.CreateExternalAccountKeyResponse) (*cliEAK, error) {
 	// TODO: more fields for other purposes, like including the createdat/boundat/account for listing?
-	return &cliEAK{id: eak.KeyID, provisioner: eak.ProvisionerName, name: eak.Name, key: base64.StdEncoding.EncodeToString(eak.Key)}, nil
+	return &cliEAK{id: eak.KeyID, provisioner: eak.ProvisionerName, name: eak.Name, key: base64.RawURLEncoding.Strict().EncodeToString(eak.Key)}, nil
 }
 
 // Command returns the eab subcommand.
