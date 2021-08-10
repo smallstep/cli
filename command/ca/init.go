@@ -344,7 +344,7 @@ func initAction(ctx *cli.Context) (err error) {
 			ui.Println()
 			ui.Println("Sorry, we can't create hosted authorities from the CLI yet. To create a hosted")
 			ui.Println("authority please visit:\n")
-			ui.Println("    https://u.step.sm/hosted\n")
+			ui.Println("    \033[1mhttps://u.step.sm/hosted\033[0m\n")
 			ui.Println("To connect to an existing hosted authority run:\n")
 			ui.Println("    $ step ca bootstrap --team <name> --authority <authority>")
 			ui.Println()
