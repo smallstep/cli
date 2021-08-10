@@ -503,7 +503,7 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 		case sig := <-signals:
 			switch sig {
 			case syscall.SIGHUP:
-				if next, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
+				if next, err = r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
 					Error.Println(err)
 				} else if err := afterRenew(); err != nil {
 					Error.Println(err)
