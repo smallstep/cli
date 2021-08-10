@@ -57,16 +57,24 @@ func initCommand() cli.Command {
 				Name: "deployment-type",
 				Usage: `The <name> of an the deployment type to use. Options are:
     **standalone**
-    :  A standalone CA is the classic configuration where all the options are
-    managed between the ca.json and the db.
+    :  An instance of step-ca that does not connect to any cloud services. You
+    manage authority keys and configuration yourself.
+    Choose standalone if you'd like to run step-ca yourself and do not want
+    cloud services or commercial support.
 
     **linked**
-    :  A linked CA is a deployment type where the keys are managed in **step-ca**
-    but the provisioners and admins are managed in the cloud.
+    :  An instance of step-ca with locally managed keys that connects to your
+    Certificate Manager account for provisioner management, alerting,
+    reporting, revocation, and other managed services.
+    Choose linked if you'd like cloud services and support, but need to
+    control your authority's signing keys.
 
     **hosted**
-    :  A hosted CA is a deployment type where the keys, provisioners, and all
-    components are managed in the cloud.`,
+    :  A highly available, fully-managed instance of step-ca run by smallstep
+    just for you.
+	Choose hosted if you'd like cloud services and support.
+
+: More information and pricing at: https://u.step.sm/cm`,
 			},
 			cli.StringFlag{
 				Name:  "name",
@@ -332,10 +340,11 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 		if deploymentType == pki.HostedDeployment {
 			ui.Println()
-			ui.Println("The initialization of a hosted deployment is not yet supported by this tool.")
-			ui.Println("But you can create one at https://smallstep.com/certificate-manager/\n")
-			ui.Println("After creating it you can bootstrap it running:\n")
-			ui.Println("    $ step ca bootstrap --team <name>")
+			ui.Println("Sorry, we can't create hosted authorities from the CLI yet. To create a hosted")
+			ui.Println("authority please visit:\n")
+			ui.Println("    https://u.step.sm/hosted\n")
+			ui.Println("To connect to an existing hosted authority run:\n")
+			ui.Println("    $ step ca bootstrap --team <name> --authority <authority>")
 			ui.Println()
 			return nil
 		}
