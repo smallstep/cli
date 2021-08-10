@@ -279,6 +279,10 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errors.Errorf("flag '--renew-period' must be within (lower than) the certificate "+
 			"validity period; renew-period=%v, cert-validity-period=%v", renewPeriod, cvp)
 	}
+	if expiresIn > cvp {
+		return errors.Errorf("flag '--expires-in' must be within (lower than) the certificate "+
+			"validity period; expires-in=%v, cert-validity-period=%v", expiresIn, cvp)
+	}
 
 	renewer, err := newRenewer(ctx, caURL, cert, rootFile)
 	if err != nil {
@@ -325,10 +329,14 @@ func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Durat
 	}
 
 	d := time.Until(leaf.NotAfter) - expiresIn
-	n := rand.Int63n(int64(period / 20))
-	d -= time.Duration(n)
-	if d < 0 {
+	switch {
+	case d <= 0:
 		d = 0
+	case d < period/20:
+		d = time.Duration(rand.Int63n(int64(d)))
+	default:
+		n := rand.Int63n(int64(period / 20))
+		d -= time.Duration(n)
 	}
 	return d
 }
@@ -490,6 +498,7 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 	defer signal.Stop(signals)
 
 	Info.Printf("first renewal in %s", next.Round(time.Second))
+	var err error
 	for {
 		select {
 		case sig := <-signals:
@@ -504,7 +513,7 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 				return nil
 			}
 		case <-time.After(next):
-			if _, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
+			if next, err = r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
 				Error.Println(err)
 			} else if err := afterRenew(); err != nil {
 				Error.Println(err)
