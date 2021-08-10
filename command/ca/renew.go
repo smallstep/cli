@@ -328,17 +328,16 @@ func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Durat
 		expiresIn = period / 3
 	}
 
-	d := time.Until(leaf.NotAfter) - expiresIn
-	switch {
+	switch d := time.Until(leaf.NotAfter) - expiresIn; {
 	case d <= 0:
-		d = 0
+		return 0
 	case d < period/20:
-		d = time.Duration(rand.Int63n(int64(d)))
+		return time.Duration(rand.Int63n(int64(d)))
 	default:
 		n := rand.Int63n(int64(period / 20))
 		d -= time.Duration(n)
+		return d
 	}
-	return d
 }
 
 func getAfterRenewFunc(pid, signum int, execCmd string) func() error {
@@ -504,7 +503,7 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 		case sig := <-signals:
 			switch sig {
 			case syscall.SIGHUP:
-				if _, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
+				if next, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
 					Error.Println(err)
 				} else if err := afterRenew(); err != nil {
 					Error.Println(err)
