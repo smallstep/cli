@@ -3,11 +3,13 @@ package ca
 import (
 	"crypto/rand"
 	"crypto/x509"
+	"fmt"
 	"io"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/manifoldco/promptui"
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
@@ -547,8 +549,9 @@ func isNonInteractiveInit(ctx *cli.Context) bool {
 
 func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, error) {
 	type deployment struct {
-		Name  string
-		Value pki.DeploymentType
+		Name        string
+		Description string
+		Value       pki.DeploymentType
 	}
 
 	var deploymentTypes []deployment
@@ -560,13 +563,17 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 		return pki.StandaloneDeployment, nil
 	}
 
+	deploymentTypes = []deployment{
+		{"Standalone", "step-ca instance you run yourself", pki.StandaloneDeployment},
+		{"Linked", "standalone, plus cloud configuration, reporting & alerting", pki.LinkedDeployment},
+		{"Hosted", "fully-managed step-ca cloud instance run for you by smallstep", pki.HostedDeployment},
+	}
+
 	if isRA {
 		switch deploymentType {
 		case "":
-			deploymentTypes = []deployment{
-				{"Standalone RA", pki.StandaloneDeployment},
-				{"Linked RA", pki.LinkedDeployment},
-			}
+			// Deployment type Hosted is not supported for RAs
+			deploymentTypes = deploymentTypes[:2]
 		case "standalone":
 			return pki.StandaloneDeployment, nil
 		case "linked":
@@ -577,11 +584,6 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 	} else {
 		switch deploymentType {
 		case "":
-			deploymentTypes = []deployment{
-				{"Standalone CA", pki.StandaloneDeployment},
-				{"Linked CA", pki.LinkedDeployment},
-				{"Hosted CA", pki.HostedDeployment},
-			}
 		case "standalone":
 			return pki.StandaloneDeployment, nil
 		case "linked":
@@ -594,7 +596,11 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 	}
 
 	i, _, err := ui.Select("What deployment type would you like to configure?", deploymentTypes,
-		ui.WithSelectTemplates(ui.NamedSelectTemplates("Deployment Type")))
+		ui.WithSelectTemplates(&promptui.SelectTemplates{
+			Active:   fmt.Sprintf("%s {{ printf \"%%s - %%s\" .Name .Description | underline }}", ui.IconSelect),
+			Inactive: "  {{ .Name }} - {{ .Description }}",
+			Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Deployment Type:" | bold }} {{ .Name }}`, ui.IconGood),
+		}))
 	if err != nil {
 		return 0, err
 	}
