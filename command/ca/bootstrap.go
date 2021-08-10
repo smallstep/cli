@@ -2,9 +2,6 @@ package ca
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"net"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,7 +28,8 @@ func bootstrapCommand() cli.Command {
 		Usage:  "initialize the environment to use the CA commands",
 		UsageText: `**step ca bootstrap**
 [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**]
-[**--team**=<name>] [**--authority**=<name>] [**--team-url**=<uri>] [**--redirect-url**=<uri>]`,
+[**--team**=<name>] [**--authority**=<name>] [**--team-url**=<uri>] [**--redirect-url**=<uri>]
+[**--context-name**=<string>] [**--context-profile**=<string>]`,
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
 authority and sets up the current environment to use it.
 
@@ -81,12 +79,21 @@ $ step ca bootstrap --team superteam --team-url https://config.example.org/<>
 			},
 			flags.Team,
 			cli.StringFlag{
-				Name:  "authority",
-				Usage: `The <name> of the authority to bootstrap.`,
+				Name: "authority",
+				Usage: `The <sub-domain> of the authority to bootstrap. E.g., for an authority with
+domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
 			},
 			flags.TeamURL,
 			flags.RedirectURL,
 			flags.Force,
+			cli.StringFlag{
+				Name:  "context-name",
+				Usage: `The <string> that will serve as the key for the context.`,
+			},
+			cli.StringFlag{
+				Name:  "context-profile",
+				Usage: `The <string> that will serve as the profile name for the context.`,
+			},
 		},
 	}
 }
@@ -133,38 +140,9 @@ func bootstrapAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error downloading root certificate")
 	}
 
-	if step.IsContextEnabled() {
-		u, err := url.Parse(caURL)
-		if err != nil {
-			return err
-		}
-		host := u.Host
-		if strings.Contains(host, ":") {
-			if host, _, err = net.SplitHostPort(host); err != nil {
-				return err
-			}
-		}
-		stepCtx := &step.Context{
-			Name:      host,
-			Authority: host,
-			Profile:   host,
-		}
-		if err := step.AddContext(stepCtx); err != nil {
-			return err
-		}
-		if err := step.SwitchCurrentContext(stepCtx.Name); err != nil {
-			return err
-		}
-
-		profileDefaultsFile := filepath.Join(step.ProfilePath(), "config", "defaults.json")
-
-		if err := os.MkdirAll(filepath.Dir(profileDefaultsFile), 0700); err != nil {
-			return errs.FileError(err, profileDefaultsFile)
-		}
-		if err := ioutil.WriteFile(profileDefaultsFile, []byte("{}"), 0600); err != nil {
-			return errs.FileError(err, profileDefaultsFile)
-		}
-		ui.Printf("The profile configuration has been saved in %s.\n", profileDefaultsFile)
+	if err := cautils.PrepareContext(ctx, caURL,
+		ctx.String("context-name"), ctx.String("context-profile")); err != nil {
+		return err
 	}
 
 	rootFile := pki.GetRootCAPath()

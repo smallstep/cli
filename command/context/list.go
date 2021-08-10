@@ -19,9 +19,9 @@ func listCommand() cli.Command {
 List all certificate authority contexts:
 '''
 $ step context list
-alpha-one.ca.smallstep.com
-alpha-two.ca.smallstep.com
-beta.ca.smallstep.com
+alpha-one.alpha.ca.smallstep.com
+alpha-two.alpha.ca.smallstep.com
+beta.beta.ca.smallstep.com
 '''`,
 		Action: command.ActionFunc(listAction),
 	}
@@ -36,7 +36,7 @@ func listAction(ctx *cli.Context) error {
 	}
 
 	for k := range cm {
-		if k == def.Name {
+		if def != nil && k == def.Name {
 			continue
 		}
 		ui.Println(k)
