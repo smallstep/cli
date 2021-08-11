@@ -739,6 +739,8 @@ github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1/1fApl1A+9VcBk+9dcqGfnePY87LY=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
+github.com/smallstep/certificates v0.16.1-0.20210811224222-e3ef4a7da973 h1:GCGGiDEkUs/mlRb8ebTD97531IH2vUipCwsOcDLh/Y4=
+github.com/smallstep/certificates v0.16.1-0.20210811224222-e3ef4a7da973/go.mod h1:10lz/VqcAIREVYfdP2zOR30e64FDlqU0QgO1a55wYaM=
 github.com/smallstep/certinfo v1.5.1 h1:u4CFQujP7RhIUzJGl32dG8SotnUQRTLWlmZjGLC52q4=
 github.com/smallstep/certinfo v1.5.1/go.mod h1:gA7HBbue0Wwr3kD60P2UtgTIFfMAOC66D3rzYhI0GZ4=
 github.com/smallstep/nosql v0.3.6 h1:cq6a3NwjFJxkVlWU1T4qGskcfEXr0fO1WqQrraDO1Po=
@@ -915,6 +917,8 @@ go.step.sm/cli-utils v0.4.1 h1:QztRUhGYjOPM1I2Nmi7V6XejQyVtcESmo+sbegxvX7Q=
 go.step.sm/cli-utils v0.4.1/go.mod h1:hWYVOSlw8W9Pd+BwIbs/aftVVMRms3EG7Q2qLRwc0WA=
 go.step.sm/crypto v0.9.0 h1:q2AllTSnVj4NRtyEPkGW2ohArLmbGbe6ZAL/VIOKDzA=
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
+go.step.sm/linkedca v0.5.0 h1:oZVRSpElM7lAL1XN2YkjdHwI/oIZ+1ULOnuqYPM6xjY=
+go.step.sm/linkedca v0.5.0/go.mod h1:5uTRjozEGSPAZal9xJqlaD38cvJcLe3o1VAFVjqcORo=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.5.0/go.mod h1:sABNBOSYdrvTF6hTgEIbc7YasKWGhgEQZyfxyTvoXHQ=
