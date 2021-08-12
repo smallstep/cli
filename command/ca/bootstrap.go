@@ -1,24 +1,13 @@
 package ca
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/ui"
-	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/step"
 )
 
 func bootstrapCommand() cli.Command {
@@ -113,87 +102,19 @@ func bootstrapAction(ctx *cli.Context) error {
 	fingerprint := strings.TrimSpace(ctx.String("fingerprint"))
 	team := ctx.String("team")
 	authority := ctx.String("authority")
-	redirectURL := ctx.String("redirect-url")
 
 	switch {
 	case team != "" && authority != "":
-		return cautils.BootstrapAuthority(ctx, team, authority)
+		return cautils.BootstrapTeamAuthority(ctx, team, authority)
 	case team != "":
-		return cautils.BootstrapTeam(ctx, team)
+		return cautils.BootstrapTeamAuthority(ctx, team, "ssh")
 	case authority != "":
 		return errs.RequiredWithFlag(ctx, "authority", "team")
 	case caURL == "":
 		return errs.RequiredFlag(ctx, "ca-url")
 	case fingerprint == "":
 		return errs.RequiredFlag(ctx, "fingerprint")
+	default:
+		return cautils.BootstrapAuthority(ctx, caURL, fingerprint)
 	}
-
-	tr := getInsecureTransport()
-	client, err := ca.NewClient(caURL, ca.WithTransport(tr))
-	if err != nil {
-		return err
-	}
-
-	// Root already validates the certificate
-	resp, err := client.Root(fingerprint)
-	if err != nil {
-		return errors.Wrap(err, "error downloading root certificate")
-	}
-
-	if err := cautils.PrepareContext(ctx, caURL,
-		ctx.String("context-name"), ctx.String("context-profile")); err != nil {
-		return err
-	}
-
-	rootFile := pki.GetRootCAPath()
-	configFile := filepath.Join(step.Path(), "config", "defaults.json")
-
-	if err = os.MkdirAll(filepath.Dir(rootFile), 0700); err != nil {
-		return errs.FileError(err, rootFile)
-	}
-
-	if err = os.MkdirAll(filepath.Dir(configFile), 0700); err != nil {
-		return errs.FileError(err, configFile)
-	}
-
-	// Serialize root
-	_, err = pemutil.Serialize(resp.RootPEM.Certificate, pemutil.ToFile(rootFile, 0600))
-	if err != nil {
-		return err
-	}
-	ui.Printf("The root certificate has been saved in %s.\n", rootFile)
-
-	// make sure to store the url with https
-	caURL, err = completeURL(caURL)
-	if err != nil {
-		return err
-	}
-
-	// Serialize defaults.json
-	b, err := json.MarshalIndent(bootstrapConfig{
-		CA:          caURL,
-		Fingerprint: fingerprint,
-		Root:        pki.GetRootCAPath(),
-		Redirect:    redirectURL,
-	}, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "error marshaling defaults.json")
-	}
-
-	if err := utils.WriteFile(configFile, b, 0644); err != nil {
-		return err
-	}
-
-	ui.Printf("The authority configuration has been saved in %s.\n", configFile)
-
-	if ctx.Bool("install") {
-		ui.Printf("Installing the root certificate in the system truststore... ")
-		if err := truststore.InstallFile(rootFile); err != nil {
-			ui.Println()
-			return err
-		}
-		ui.Println("done.")
-	}
-
-	return nil
 }

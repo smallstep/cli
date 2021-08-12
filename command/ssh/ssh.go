@@ -82,6 +82,7 @@ $ ssh internal.example.com
 		Subcommands: cli.Commands{
 			certificateCommand(),
 			configCommand(),
+			configHelperCommand(),
 			loginCommand(),
 			logoutCommand(),
 			inspectCommand(),

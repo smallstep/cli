@@ -70,6 +70,7 @@ $ step ca renew internal.crt internal.key \
 			healthCommand(),
 			initCommand(),
 			bootstrapCommand(),
+			bootstrapHelperCommand(),
 			tokenCommand(),
 			certificateCommand(),
 			rekeyCertificateCommand(),
