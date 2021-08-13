@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/smallstep/certificates/kms"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -24,6 +27,7 @@ import (
 
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/step"
 )
 
 func initCommand() cli.Command {
@@ -36,7 +40,8 @@ func initCommand() cli.Command {
 [**--helm**] [**--deployment-type**=<name>] [**--name**=<name>]
 [**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
 [**--provisioner-password-file**=<file>] [**--password-file**=<file>]
-[**--with-ca-url**=<url>] [**--ra**=<type>] [**--kms**=<type>] [**--no-db**]`,
+[**--ra**=<type>] [**--kms**=<type>] [**--with-ca-url**=<url>] [**--no-db**]
+[**--context-name**=<string>] [**--context-profile**=<string>]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
 		Flags: []cli.Flag{
@@ -163,6 +168,8 @@ Cloud.`,
 				Name:  "no-db",
 				Usage: `Generate a CA configuration without the DB stanza. No persistence layer.`,
 			},
+			flags.ContextName,
+			flags.ContextProfile,
 		},
 	}
 }
@@ -438,6 +445,40 @@ func initAction(ctx *cli.Context) (err error) {
 			Type:       apiv1.SoftCAS,
 			IsCreator:  true,
 			KeyManager: keyManager,
+		}
+
+	}
+
+	// Set appropriate context.
+	fi, err := os.Stat(filepath.Join(step.BasePath(), "config"))
+	configDirExists := !os.IsNotExist(err) && fi.IsDir()
+	fi, err = os.Stat(filepath.Join(step.BasePath(), "authorities"))
+	authoritiesDirExists := !os.IsNotExist(err) && fi.IsDir()
+
+	if !configDirExists || authoritiesDirExists {
+		reg, err := regexp.Compile("[^a-zA-Z0-9]+")
+		if err != nil {
+			return err
+		}
+		processedName := strings.ToLower(strings.ReplaceAll(reg.ReplaceAllString(name, ""), " ", "-"))
+
+		contextName := ctx.String("context-name")
+		if contextName == "" {
+			contextName = processedName
+		}
+		contextProfile := ctx.String("context-profile")
+		if contextProfile == "" {
+			contextProfile = processedName
+		}
+		if err := step.AddContext(&step.Context{
+			Name:      contextName,
+			Profile:   contextProfile,
+			Authority: processedName,
+		}); err != nil {
+			return err
+		}
+		if err := step.SwitchCurrentContext(contextName); err != nil {
+			return err
 		}
 	}
 

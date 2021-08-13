@@ -2,7 +2,6 @@ package ssh
 
 import (
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"runtime"
 	"strings"
@@ -171,7 +170,7 @@ func configHelperAction(ctx *cli.Context) (recoverErr error) {
 		}
 
 		for _, key := range keys {
-			fmt.Printf("%s %s\n", key.Type(), base64.StdEncoding.EncodeToString(key.Marshal()))
+			ui.Printf("%s %s\n", key.Type(), base64.StdEncoding.EncodeToString(key.Marshal()))
 		}
 		return nil
 	}
@@ -241,7 +240,7 @@ func configHelperAction(ctx *cli.Context) (recoverErr error) {
 		templates = resp.UserTemplates
 	}
 	if len(templates) == 0 {
-		fmt.Println("No configuration changes were found.")
+		ui.Println("No configuration changes were found.")
 		return nil
 	}
 
@@ -258,7 +257,7 @@ func configHelperAction(ctx *cli.Context) (recoverErr error) {
 	if ctx.Bool("dry-run") {
 		for _, t := range templates {
 			ui.Printf("{{ \"%s\" | bold }}\n", step.Abs(t.Path))
-			fmt.Println(string(t.Content))
+			ui.Println(string(t.Content))
 		}
 		return nil
 	}

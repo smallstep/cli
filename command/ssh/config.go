@@ -22,7 +22,8 @@ func configCommand() cli.Command {
 [**--team**=<name>] [**--host**] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--dry-run**] [**--roots**] [**--federation**] [**--force**]
 [**--offline**] [**--ca-config**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]
+[**--context-name**=<string>] [**--context-profile**=<string>]`,
 		Description: `**step ssh config** configures SSH to be used with certificates. It also supports
 flags to inspect the root certificates used to sign the certificates.
 
@@ -84,14 +85,8 @@ times to set multiple variables.`,
 			flags.Root,
 			flags.Offline,
 			flags.Context,
-			cli.StringFlag{
-				Name:  "context-name",
-				Usage: `The <string> that will serve as the key for the context.`,
-			},
-			cli.StringFlag{
-				Name:  "context-profile",
-				Usage: `The <string> that will serve as the profile name for the context.`,
-			},
+			flags.ContextName,
+			flags.ContextProfile,
 		},
 	}
 }
@@ -107,6 +102,10 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	isFederation := ctx.Bool("federation")
 	sets := ctx.StringSlice("set")
 
+	context := ctx.String("context")
+	contextName := ctx.String("context-name")
+	contextProfile := ctx.String("context-profile")
+
 	switch {
 	case team != "" && isHost:
 		return errs.IncompatibleFlagWithFlag(ctx, "team", "host")
@@ -116,12 +115,18 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return errs.IncompatibleFlagWithFlag(ctx, "team", "federation")
 	case team != "" && len(sets) > 0:
 		return errs.IncompatibleFlagWithFlag(ctx, "team", "set")
+	case team != "" && context != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "context")
 	case isRoots && isFederation:
 		return errs.IncompatibleFlagWithFlag(ctx, "roots", "federation")
 	case isRoots && len(sets) > 0:
 		return errs.IncompatibleFlagWithFlag(ctx, "roots", "set")
 	case isFederation && len(sets) > 0:
 		return errs.IncompatibleFlagWithFlag(ctx, "federation", "set")
+	case context != "" && contextName != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "context", "context-name")
+	case context != "" && contextProfile != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "context", "context-profile")
 	}
 
 	// Bootstrap Authority
@@ -135,15 +140,18 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	args = append(args, os.Args[3:]...)
 
 	if step.IsContextEnabled() {
-		ctxName := ctx.String("context-name")
-		if ctxName == "" {
-			ctxName = "ssh." + team
+		switch {
+		case context != "":
+			args = append(args, "--context", context)
+		case team != "" && contextName != "":
+			args = append(args, "--context", contextName)
+		case team != "":
+			args = append(args, "--context", "ssh."+team)
 		}
-		args = append(args, "--context", ctxName)
 	}
 
 	if _, err := exec.Step(args...); err != nil {
-		return errors.Wrap(err, "error configuring ssh authority")
+		return errors.Wrap(err, "error configuring ssh")
 	}
 	return nil
 }

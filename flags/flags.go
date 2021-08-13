@@ -192,6 +192,18 @@ generating key.`,
 		Usage: "The <context> to apply before running the given command.",
 	}
 
+	// ContextName the name to use as the key for a new Context.
+	ContextName = cli.StringFlag{
+		Name:  "context-name",
+		Usage: `The <string> that will serve as the key for the context.`,
+	}
+
+	// ContextProfile the profile name to use for a new Context.
+	ContextProfile = cli.StringFlag{
+		Name:  "context-profile",
+		Usage: `The <string> that will serve as the profile name for the context.`,
+	}
+
 	// Offline is a cli.Flag used to activate the offline flow.
 	Offline = cli.BoolFlag{
 		Name: "offline",

@@ -75,14 +75,8 @@ domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
 			flags.TeamURL,
 			flags.RedirectURL,
 			flags.Force,
-			cli.StringFlag{
-				Name:  "context-name",
-				Usage: `The <string> that will serve as the key for the context.`,
-			},
-			cli.StringFlag{
-				Name:  "context-profile",
-				Usage: `The <string> that will serve as the profile name for the context.`,
-			},
+			flags.ContextName,
+			flags.ContextProfile,
 		},
 	}
 }
