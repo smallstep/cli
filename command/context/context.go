@@ -48,6 +48,7 @@ beta
 '''`,
 		Subcommands: cli.Commands{
 			listCommand(),
+			removeCommand(),
 			selectCommand(),
 		},
 	}

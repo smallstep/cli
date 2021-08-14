@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/smallstep/certificates/pki"
@@ -71,23 +73,27 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, authority string) error {
 		"--redirect-url", r.RedirectURL,
 	}
 
-	if step.IsContextEnabled() {
-		host, err := getHost(r.CaURL)
-		if err != nil {
-			return err
+	_, err = os.Stat(filepath.Join(step.BasePath(), "config"))
+	if step.IsContextEnabled() || os.IsNotExist(err) || ctx.IsSet("context") || ctx.IsSet("authority") || ctx.IsSet("profile") {
+		contextAuthority := ctx.String("authority")
+		if contextAuthority == "" {
+			contextAuthority, err = getHost(r.CaURL)
+			if err != nil {
+				return err
+			}
 		}
-		name := ctx.String("context-name")
+		name := ctx.String("context")
 		if name == "" {
 			name = authority + "." + team
 		}
-		profile := ctx.String("context-profile")
+		profile := ctx.String("profile")
 		if profile == "" {
 			profile = team
 		}
 		if err := step.AddContext(&step.Context{
 			Name:      name,
 			Profile:   profile,
-			Authority: host,
+			Authority: contextAuthority,
 		}); err != nil {
 			return err
 		}
@@ -119,16 +125,20 @@ func BootstrapAuthority(ctx *cli.Context, caURL, fingerprint string) error {
 		"--fingerprint", fingerprint,
 	}
 
+	var err error
 	if step.IsContextEnabled() {
-		authority, err := getHost(caURL)
-		if err != nil {
-			return err
+		authority := ctx.String("authority")
+		if authority == "" {
+			authority, err = getHost(caURL)
+			if err != nil {
+				return err
+			}
 		}
-		name := ctx.String("context-name")
+		name := ctx.String("context")
 		if name == "" {
 			name = authority
 		}
-		profile := ctx.String("context-profile")
+		profile := ctx.String("profile")
 		if profile == "" {
 			profile = authority
 		}

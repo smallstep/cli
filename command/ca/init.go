@@ -41,7 +41,7 @@ func initCommand() cli.Command {
 [**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
 [**--provisioner-password-file**=<file>] [**--password-file**=<file>]
 [**--ra**=<type>] [**--kms**=<type>] [**--with-ca-url**=<url>] [**--no-db**]
-[**--context-name**=<string>] [**--context-profile**=<string>]`,
+[**--context**=<string>] [**--profile**=<string>] [**--authority**<string>]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
 		Flags: []cli.Flag{
@@ -168,8 +168,9 @@ Cloud.`,
 				Name:  "no-db",
 				Usage: `Generate a CA configuration without the DB stanza. No persistence layer.`,
 			},
-			flags.ContextName,
+			flags.Context,
 			flags.ContextProfile,
+			flags.ContextAuthority,
 		},
 	}
 }
@@ -462,11 +463,11 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 		processedName := strings.ToLower(strings.ReplaceAll(reg.ReplaceAllString(name, ""), " ", "-"))
 
-		contextName := ctx.String("context-name")
+		contextName := ctx.String("context")
 		if contextName == "" {
 			contextName = processedName
 		}
-		contextProfile := ctx.String("context-profile")
+		contextProfile := ctx.String("profile")
 		if contextProfile == "" {
 			contextProfile = processedName
 		}

@@ -31,7 +31,7 @@ func configHelperCommand() cli.Command {
 [**--team**=<name>] [**--host**] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--dry-run**] [**--roots**] [**--federation**] [**--force**]
 [**--offline**] [**--ca-config**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<string>]`,
 		Description: `**step ssh config** configures SSH to be used with certificates. It also supports
 flags to inspect the root certificates used to sign the certificates.
 
@@ -93,14 +93,6 @@ times to set multiple variables.`,
 			flags.Root,
 			flags.Offline,
 			flags.Context,
-			cli.StringFlag{
-				Name:  "context-name",
-				Usage: `The <string> that will serve as the key for the context.`,
-			},
-			cli.StringFlag{
-				Name:  "context-profile",
-				Usage: `The <string> that will serve as the profile name for the context.`,
-			},
 		},
 	}
 }

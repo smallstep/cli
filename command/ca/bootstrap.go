@@ -18,7 +18,7 @@ func bootstrapCommand() cli.Command {
 		UsageText: `**step ca bootstrap**
 [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**]
 [**--team**=<name>] [**--authority**=<name>] [**--team-url**=<uri>] [**--redirect-url**=<uri>]
-[**--context-name**=<string>] [**--context-profile**=<string>]`,
+[**--context**=<string>] [**--profile**=<string>] [**--authority**=<string>]`,
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
 authority and sets up the current environment to use it.
 
@@ -68,15 +68,16 @@ $ step ca bootstrap --team superteam --team-url https://config.example.org/<>
 			},
 			flags.Team,
 			cli.StringFlag{
-				Name: "authority",
+				Name: "authority-subdomain",
 				Usage: `The <sub-domain> of the authority to bootstrap. E.g., for an authority with
 domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
 			},
 			flags.TeamURL,
 			flags.RedirectURL,
 			flags.Force,
-			flags.ContextName,
+			flags.Context,
 			flags.ContextProfile,
+			flags.ContextAuthority,
 		},
 	}
 }
@@ -95,15 +96,15 @@ func bootstrapAction(ctx *cli.Context) error {
 	}
 	fingerprint := strings.TrimSpace(ctx.String("fingerprint"))
 	team := ctx.String("team")
-	authority := ctx.String("authority")
+	authSubdomain := ctx.String("authority-subdomain")
 
 	switch {
-	case team != "" && authority != "":
-		return cautils.BootstrapTeamAuthority(ctx, team, authority)
+	case team != "" && authSubdomain != "":
+		return cautils.BootstrapTeamAuthority(ctx, team, authSubdomain)
 	case team != "":
 		return cautils.BootstrapTeamAuthority(ctx, team, "ssh")
-	case authority != "":
-		return errs.RequiredWithFlag(ctx, "authority", "team")
+	case authSubdomain != "":
+		return errs.RequiredWithFlag(ctx, "authority-subdomain", "team")
 	case caURL == "":
 		return errs.RequiredFlag(ctx, "ca-url")
 	case fingerprint == "":
