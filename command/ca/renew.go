@@ -39,7 +39,7 @@ func renewCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "renew",
 		Action: command.ActionFunc(renewCertificateAction),
-		Usage:  "renew a valid certificate",
+		Usage:  "renew a certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
 [**--ca-url**=<uri>] [**--root**=<file>] [**--password-file**=<file>]
 [**--out**=<file>] [**--expires-in**=<duration>] [**--force**]
@@ -450,7 +450,7 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 	return resp, nil
 }
 
-func (r *renewer) Rekey(priv interface{}, outCert, outKey string) (*api.SignResponse, error) {
+func (r *renewer) Rekey(priv interface{}, outCert, outKey string, writePrivateKey bool) (*api.SignResponse, error) {
 	csrBytes, err := x509.CreateCertificateRequest(cryptoRand.Reader, &x509.CertificateRequest{}, priv)
 	if err != nil {
 		return nil, err
@@ -477,9 +477,11 @@ func (r *renewer) Rekey(priv interface{}, outCert, outKey string) (*api.SignResp
 	if err := utils.WriteFile(outCert, data, 0600); err != nil {
 		return nil, errs.FileError(err, outCert)
 	}
-	_, err = pemutil.Serialize(priv, pemutil.ToFile(outKey, 0600))
-	if err != nil {
-		return nil, err
+	if writePrivateKey {
+		_, err = pemutil.Serialize(priv, pemutil.ToFile(outKey, 0600))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return resp, nil

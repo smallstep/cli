@@ -26,7 +26,7 @@ func rekeyCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "rekey",
 		Action: command.ActionFunc(rekeyCertificateAction),
-		Usage:  "rekey a valid certificate",
+		Usage:  "rekey a certificate",
 		UsageText: `**step ca rekey** <crt-file> <key-file>
 [**--out-cert**=<file>] [**--out-key**=<file>] [**--private-key**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--password-file**=<file>]
@@ -329,16 +329,13 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 			return err
 		}
 		priv, err = keys.GenerateKey(kty, crv, size)
-		if err != nil {
-			return err
-		}
 	} else {
 		priv, err = pemutil.Read(givenPrivate)
 	}
 	if err != nil {
 		return err
 	}
-	if _, err := renewer.Rekey(priv, outCert, outKey); err != nil {
+	if _, err := renewer.Rekey(priv, outCert, outKey, ctx.IsSet("out-key") || givenPrivate == ""); err != nil {
 		return err
 	}
 
