@@ -27,6 +27,7 @@ type CaClient interface {
 	Sign(req *api.SignRequest) (*api.SignResponse, error)
 	Renew(tr http.RoundTripper) (*api.SignResponse, error)
 	Revoke(req *api.RevokeRequest, tr http.RoundTripper) (*api.RevokeResponse, error)
+	Rekey(req *api.RekeyRequest, tr http.RoundTripper) (*api.SignResponse, error)
 	SSHSign(req *api.SSHSignRequest) (*api.SSHSignResponse, error)
 	SSHRenew(req *api.SSHRenewRequest) (*api.SSHRenewResponse, error)
 	SSHRekey(req *api.SSHRekeyRequest) (*api.SSHRekeyResponse, error)

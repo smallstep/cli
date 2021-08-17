@@ -2,12 +2,14 @@ package ca
 
 import (
 	"crypto"
+	cryptoRand "crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
 	"log"
 	"math/rand"
+	mathRand "math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -37,7 +39,7 @@ func renewCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "renew",
 		Action: command.ActionFunc(renewCertificateAction),
-		Usage:  "renew a valid certificate",
+		Usage:  "renew a certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
 [**--ca-url**=<uri>] [**--root**=<file>] [**--password-file**=<file>]
 [**--out**=<file>] [**--expires-in**=<duration>] [**--force**]
@@ -299,7 +301,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
-		jitter := rand.Int63n(int64(expiresIn / 20))
+		jitter := mathRand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
 			return nil
@@ -443,6 +445,43 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 	}
 	if err := utils.WriteFile(outFile, data, 0600); err != nil {
 		return nil, errs.FileError(err, outFile)
+	}
+
+	return resp, nil
+}
+
+func (r *renewer) Rekey(priv interface{}, outCert, outKey string, writePrivateKey bool) (*api.SignResponse, error) {
+	csrBytes, err := x509.CreateCertificateRequest(cryptoRand.Reader, &x509.CertificateRequest{}, priv)
+	if err != nil {
+		return nil, err
+	}
+	csr, err := x509.ParseCertificateRequest(csrBytes)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := r.client.Rekey(&api.RekeyRequest{CsrPEM: api.NewCertificateRequest(csr)}, r.transport)
+	if err != nil {
+		return nil, errors.Wrap(err, "error rekeying certificate")
+	}
+	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
+		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
+	}
+	var data []byte
+	for _, certPEM := range resp.CertChainPEM {
+		pemblk, err := pemutil.Serialize(certPEM.Certificate)
+		if err != nil {
+			return nil, errors.Wrap(err, "error serializing certificate PEM")
+		}
+		data = append(data, pem.EncodeToMemory(pemblk)...)
+	}
+	if err := utils.WriteFile(outCert, data, 0600); err != nil {
+		return nil, errs.FileError(err, outCert)
+	}
+	if writePrivateKey {
+		_, err = pemutil.Serialize(priv, pemutil.ToFile(outKey, 0600))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return resp, nil
