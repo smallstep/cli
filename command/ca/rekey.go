@@ -329,11 +329,14 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 			return err
 		}
 		priv, err = keys.GenerateKey(kty, crv, size)
+		if err != nil {
+			return err
+		}
 	} else {
 		priv, err = pemutil.Read(givenPrivate)
-	}
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 	if _, err := renewer.Rekey(priv, outCert, outKey, ctx.IsSet("out-key") || givenPrivate == ""); err != nil {
 		return err
