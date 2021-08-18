@@ -68,8 +68,8 @@ $ step ca bootstrap --team superteam --team-url https://config.example.org/<>
 			},
 			flags.Team,
 			cli.StringFlag{
-				Name: "authority-subdomain",
-				Usage: `The <sub-domain> of the authority to bootstrap. E.g., for an authority with
+				Name: "ca",
+				Usage: `The <sub-domain> of the certificate authority to bootstrap. E.g., for an authority with
 domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
 			},
 			flags.TeamURL,
@@ -96,7 +96,7 @@ func bootstrapAction(ctx *cli.Context) error {
 	}
 	fingerprint := strings.TrimSpace(ctx.String("fingerprint"))
 	team := ctx.String("team")
-	authSubdomain := ctx.String("authority-subdomain")
+	authSubdomain := ctx.String("ca")
 
 	switch {
 	case team != "" && authSubdomain != "":
@@ -104,8 +104,8 @@ func bootstrapAction(ctx *cli.Context) error {
 	case team != "":
 		return cautils.BootstrapTeamAuthority(ctx, team, "ssh")
 	case authSubdomain != "":
-		return errs.RequiredWithFlag(ctx, "authority-subdomain", "team")
-	case caURL == "":
+		return errs.RequiredWithFlag(ctx, "ca", "team")
+	case len(caURL) == 0:
 		return errs.RequiredFlag(ctx, "ca-url")
 	case fingerprint == "":
 		return errs.RequiredFlag(ctx, "fingerprint")

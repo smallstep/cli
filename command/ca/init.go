@@ -447,7 +447,6 @@ func initAction(ctx *cli.Context) (err error) {
 			IsCreator:  true,
 			KeyManager: keyManager,
 		}
-
 	}
 
 	// Set appropriate context.
@@ -483,11 +482,11 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	if pkiOnly {
-		opts = append(opts, pki.WithPKIOnly())
-	} else {
-		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithSliceValue(ctx.StringSlice("dns")))
-		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])", ui.WithSliceValue(ctx.StringSlice("dns")))
+	if configure {
+		var names string
+		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithValue(ctx.String("dns")))
+		names, err = ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
+			ui.WithValidateFunc(ui.DNS()), ui.WithValue(ctx.String("dns")))
 		if err != nil {
 			return err
 		}
@@ -505,6 +504,41 @@ func initAction(ctx *cli.Context) (err error) {
 				return err
 			}
 			dnsNames = append(dnsNames, strings.TrimSpace(name))
+		}
+
+		// Set appropriate context.
+		_, err = os.Stat(filepath.Join(step.BasePath(), "contexts.json"))
+		contextsMapExists := !os.IsNotExist(err)
+
+		contextName := ctx.String("context")
+		contextProfile := ctx.String("profile")
+		contextAuthority := ctx.String("authority")
+
+		if contextName != "" || contextProfile != "" || contextAuthority != "" || contextsMapExists {
+			if contextName == "" {
+				contextName = dnsNames[0]
+			}
+			if contextProfile == "" {
+				contextProfile = dnsNames[0]
+			}
+			if contextAuthority == "" {
+				contextAuthority = dnsNames[0]
+			}
+			if err := step.AddContext(&step.Context{
+				Name:      contextName,
+				Profile:   contextProfile,
+				Authority: contextAuthority,
+			}); err != nil {
+				return err
+			}
+			if err := step.SwitchCurrentContext(contextName); err != nil {
+				return err
+			}
+		}
+
+		p, err = pki.New(casOptions)
+		if err != nil {
+			return err
 		}
 
 		var address string
