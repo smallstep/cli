@@ -24,7 +24,7 @@ func certificateCommand() cli.Command {
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--san**=<SAN>] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
-[**--contact**=<email>] [**--http-listen**=<address>] [**--bundle**]
+[**--contact**=<email>] [**--http-listen**=<address>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
 [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
