@@ -782,8 +782,14 @@ github.com/smallstep/certificates v0.17.5 h1:1I6T4ts0OnmkcDXA8bIzri82SpJYcaM0hQ/
 github.com/smallstep/certificates v0.17.5/go.mod h1:L/hR8en0O+GrhnwiKg+EIRP5PNkHq3Ci0s/Wu55BrDI=
 github.com/smallstep/certinfo v1.5.2 h1:XO3f9krMkKFDRG4CJFdb3vVoLaXMDAhCn3g0padk9EI=
 github.com/smallstep/certinfo v1.5.2/go.mod h1:gA7HBbue0Wwr3kD60P2UtgTIFfMAOC66D3rzYhI0GZ4=
+<<<<<<< HEAD
 github.com/smallstep/nosql v0.3.8 h1:1/EWUbbEdz9ai0g9Fd09VekVjtxp+5+gIHpV2PdwW3o=
 github.com/smallstep/nosql v0.3.8/go.mod h1:X2qkYpNcW3yjLUvhEHfgGfClpKbFPapewvx7zo4TOFs=
+=======
+github.com/smallstep/nosql v0.3.6 h1:cq6a3NwjFJxkVlWU1T4qGskcfEXr0fO1WqQrraDO1Po=
+github.com/smallstep/nosql v0.3.6/go.mod h1:h1zC/Z54uNHc8euquLED4qJNCrMHd3nytA141ZZh4qQ=
+github.com/smallstep/nosql v0.3.7/go.mod h1:mC+MOhUY1uV5S5vGmAwp1FSPfDB7iImiYn5nJCjzAdA=
+>>>>>>> 06ce0f2 (Bump to updated version of badger)
 github.com/smallstep/truststore v0.9.6 h1:vNzEJmaJL0XOZD8uouXLmYu4/aP1UQ/wHUopH3qKeYA=
 github.com/smallstep/truststore v0.9.6/go.mod h1:HwHKRcBi0RUxxw1LYDpTRhYC4jZUuxPpkHdVonlkoDM=
 github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71 h1:q0IDrQpquiWcU1nJmjwEremPwG+pT2AAGsDatPgg3Kw=
