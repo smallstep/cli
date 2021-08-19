@@ -21,16 +21,15 @@ func formatCommand() cli.Command {
 		Action:    command.ActionFunc(formatAction),
 		Usage:     `reformat certificate`,
 		UsageText: `**step certificate format** <crt_file> [**--out**=<file>]`,
-		Description: `**step certificate format** prints the certificate or certificate signing
-request in a different format.
+		Description: `**step certificate format** prints the certificate or CSR in a different format.
 
 Only 2 formats are currently supported; PEM and ASN.1 DER. This tool will convert
-a certificate or csr in one format to the other.
+a certificate or CSR in one format to the other.
 
 ## POSITIONAL ARGUMENTS
 
 <crt_file>
-:  Path to a certificate or csr file.
+:  Path to a certificate or CSR file.
 
 ## EXIT CODES
 
