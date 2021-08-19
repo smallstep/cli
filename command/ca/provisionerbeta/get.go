@@ -19,8 +19,8 @@ func getCommand() cli.Command {
 		Action: cli.ActionFunc(getAction),
 		Usage:  "get a provisioner from the CA configuration",
 		UsageText: `**step beta ca provisioner get** <name>
-[**--admin-cert=<file>] [**--admin-key=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,

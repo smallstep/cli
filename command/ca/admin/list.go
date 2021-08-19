@@ -18,8 +18,8 @@ func listCommand() cli.Command {
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all admins in the CA configuration",
 		UsageText: `**step beta ca admin list** [**--super**] [**--provisioner**=<string>]
-[**--admin-cert=<file>] [**--admin-key=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{

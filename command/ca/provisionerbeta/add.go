@@ -33,31 +33,31 @@ func addCommand() cli.Command {
 		Usage:  "add a provisioner",
 		UsageText: `**step beta ca provisioner add** <name> **--type**=JWK [**--public-key**=<file>]
 [**--private-key**=<file>] [**--create**]
-[**--admin-cert=<file>] [**--admin-key=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=OIDC
 [**--client-id**=<id>] [**--client-secret**=<secret>]
 [**--configuration-endpoint**=<url>] [**--domain**=<domain>] [**--admin**=<email>]
-[**--admin-cert=<file>] [**--admin-key=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=X5C **--x5c-root**=<file>
-[**--admin-cert=<file>] [**--admin-key=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=SSHPOP
-[**--admin-cert=<file>] [**--admin-key=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=K8SSA [**--public-key**=<file>]
-[**--admin-cert=<file>] [**--admin-key=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
@@ -65,13 +65,13 @@ func addCommand() cli.Command {
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
-[**--admin-cert=<file>] [**--admin-key=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**]
-[**--admin-cert=<file>] [**--admin-key=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
