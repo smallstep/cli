@@ -32,13 +32,17 @@ func updateCommand() cli.Command {
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update a provisioner",
 		UsageText: `**step beta ca provisioner update** <name> [**--public-key**=<file>]
-[**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--private-key**=<file>] [**--create**]
+[**--admin-cert=<file>] [**--admin-key=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 ACME
 
 **step beta ca provisioner update** <name> [**--force-cn**]
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert=<file>] [**--admin-key=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 OIDC
 
@@ -48,17 +52,23 @@ OIDC
 [**--domain**=<domain>] [**--remove-domain**=<domain>]
 [**--group**=<group>] [**--remove-group**=<group>]
 [**--admin**=<email>]... [**--remove-admin**=<email>]...
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert=<file>] [**--admin-key=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 X5C
 
 **step beta ca provisioner update** <name> **--x5c-root**=<file>
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert=<file>] [**--admin-key=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 Kubernetes Service Account
 
 **step beta ca provisioner update** <name> [**--public-key**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert=<file>] [**--admin-key=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 IID (AWS/GCP/Azure)
 
@@ -69,7 +79,9 @@ IID (AWS/GCP/Azure)
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
-[**--ca-url**=<uri>] [**--root**=<file>]`,
+[**--admin-cert=<file>] [**--admin-key=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "name",
