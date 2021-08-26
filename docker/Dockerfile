@@ -15,7 +15,9 @@ ENV STEPPATH="/home/step"
 ARG STEPUID=1000
 ARG STEPGID=1000
 
-RUN apk add --no-cache bash curl tzdata \
+RUN apk update \
+        && apk upgrade \
+        && apk add --no-cache bash curl tzdata \
         && addgroup -g ${STEPGID} step \
         && adduser -D -u ${STEPUID} -G step step \
         && chown step:step /home/step
