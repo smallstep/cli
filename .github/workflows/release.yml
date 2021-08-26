@@ -118,6 +118,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
           COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
 
   release_deb:
     name: Build & Release Debian package
