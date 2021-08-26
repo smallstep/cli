@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
@@ -25,7 +26,7 @@ func bootstrapCommand() cli.Command {
 		Name:   "bootstrap",
 		Action: command.ActionFunc(bootstrapAction),
 		Usage:  "initialize the environment to use the CA commands",
-		UsageText: `**step ca bootstrap** 
+		UsageText: `**step ca bootstrap**
 [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**]
 [**--team**=name] [**--team-url**=url] [**--redirect-url**=<url>]`,
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
@@ -95,7 +96,7 @@ func bootstrapAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	fingerprint := ctx.String("fingerprint")
+	fingerprint := strings.TrimSpace(ctx.String("fingerprint"))
 	team := ctx.String("team")
 	rootFile := pki.GetRootCAPath()
 	configFile := filepath.Join(config.StepPath(), "config", "defaults.json")
