@@ -57,7 +57,7 @@ func initCommand() cli.Command {
 			},
 			cli.StringFlag{
 				Name: "deployment-type",
-				Usage: `The <name> of an the deployment type to use. Options are:
+				Usage: `The <name> of the deployment type to use. Options are:
     **standalone**
     :  An instance of step-ca that does not connect to any cloud services. You
     manage authority keys and configuration yourself.
@@ -74,7 +74,7 @@ func initCommand() cli.Command {
     **hosted**
     :  A highly available, fully-managed instance of step-ca run by smallstep
     just for you.
-	Choose hosted if you'd like cloud services and support.
+    Choose hosted if you'd like cloud services and support.
 
 : More information and pricing at: https://u.step.sm/cm`,
 			},
@@ -115,7 +115,7 @@ func initCommand() cli.Command {
 				Usage: `The registration authority issuer <url> to use.
 
 : If StepCAS is used, this flag should be the URL of the CA to connect
-to, e.g https://ca.smallstpe.com:9000
+to, e.g https://ca.smallstep.com:9000
 
 : If CloudCAS is used, this flag should be the resource name of the
 intermediate certificate to use. This has the format
@@ -132,7 +132,6 @@ $ step certificate fingerprint root_ca.crt
 			},
 			cli.StringFlag{
 				Name: "issuer-provisioner",
-
 				Usage: `The <name> of an existing provisioner in the issuer CA.
 This flag is supported in "StepCAS".`,
 			},
@@ -393,7 +392,7 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 
 		var provisioner string
-		// Only standalone deployments with create an initial provisioner.
+		// Only standalone deployments will create an initial provisioner.
 		// Linked or hosted deployments will use an OIDC token as the first
 		// deployment.
 		if deploymentType == pki.StandaloneDeployment {
