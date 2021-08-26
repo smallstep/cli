@@ -2,12 +2,14 @@ package ca
 
 import (
 	"crypto"
+	cryptoRand "crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
 	"log"
 	"math/rand"
+	mathRand "math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -37,7 +39,7 @@ func renewCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "renew",
 		Action: command.ActionFunc(renewCertificateAction),
-		Usage:  "renew a valid certificate",
+		Usage:  "renew a certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
 [**--ca-url**=<uri>] [**--root**=<file>] [**--password-file**=<file>]
 [**--out**=<file>] [**--expires-in**=<duration>] [**--force**]
@@ -279,6 +281,10 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errors.Errorf("flag '--renew-period' must be within (lower than) the certificate "+
 			"validity period; renew-period=%v, cert-validity-period=%v", renewPeriod, cvp)
 	}
+	if expiresIn > cvp {
+		return errors.Errorf("flag '--expires-in' must be within (lower than) the certificate "+
+			"validity period; expires-in=%v, cert-validity-period=%v", expiresIn, cvp)
+	}
 
 	renewer, err := newRenewer(ctx, caURL, cert, rootFile)
 	if err != nil {
@@ -295,7 +301,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
-		jitter := rand.Int63n(int64(expiresIn / 20))
+		jitter := mathRand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
 			return nil
@@ -324,13 +330,16 @@ func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Durat
 		expiresIn = period / 3
 	}
 
-	d := time.Until(leaf.NotAfter) - expiresIn
-	n := rand.Int63n(int64(period / 20))
-	d -= time.Duration(n)
-	if d < 0 {
-		d = 0
+	switch d := time.Until(leaf.NotAfter) - expiresIn; {
+	case d <= 0:
+		return 0
+	case d < period/20:
+		return time.Duration(rand.Int63n(int64(d)))
+	default:
+		n := rand.Int63n(int64(period / 20))
+		d -= time.Duration(n)
+		return d
 	}
-	return d
 }
 
 func getAfterRenewFunc(pid, signum int, execCmd string) func() error {
@@ -441,6 +450,43 @@ func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
 	return resp, nil
 }
 
+func (r *renewer) Rekey(priv interface{}, outCert, outKey string, writePrivateKey bool) (*api.SignResponse, error) {
+	csrBytes, err := x509.CreateCertificateRequest(cryptoRand.Reader, &x509.CertificateRequest{}, priv)
+	if err != nil {
+		return nil, err
+	}
+	csr, err := x509.ParseCertificateRequest(csrBytes)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := r.client.Rekey(&api.RekeyRequest{CsrPEM: api.NewCertificateRequest(csr)}, r.transport)
+	if err != nil {
+		return nil, errors.Wrap(err, "error rekeying certificate")
+	}
+	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
+		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
+	}
+	var data []byte
+	for _, certPEM := range resp.CertChainPEM {
+		pemblk, err := pemutil.Serialize(certPEM.Certificate)
+		if err != nil {
+			return nil, errors.Wrap(err, "error serializing certificate PEM")
+		}
+		data = append(data, pem.EncodeToMemory(pemblk)...)
+	}
+	if err := utils.WriteFile(outCert, data, 0600); err != nil {
+		return nil, errs.FileError(err, outCert)
+	}
+	if writePrivateKey {
+		_, err = pemutil.Serialize(priv, pemutil.ToFile(outKey, 0600))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return resp, nil
+}
+
 // RenewAndPrepareNext renews the cert and prepares the cert for it's next renewal.
 // NOTE: this function logs each time the certificate is successfully renewed.
 func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod time.Duration) (time.Duration, error) {
@@ -490,12 +536,13 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 	defer signal.Stop(signals)
 
 	Info.Printf("first renewal in %s", next.Round(time.Second))
+	var err error
 	for {
 		select {
 		case sig := <-signals:
 			switch sig {
 			case syscall.SIGHUP:
-				if _, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
+				if next, err = r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
 					Error.Println(err)
 				} else if err := afterRenew(); err != nil {
 					Error.Println(err)
@@ -504,7 +551,7 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 				return nil
 			}
 		case <-time.After(next):
-			if _, err := r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
+			if next, err = r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
 				Error.Println(err)
 			} else if err := afterRenew(); err != nil {
 				Error.Println(err)

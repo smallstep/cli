@@ -15,15 +15,19 @@ import (
 
 func getCommand() cli.Command {
 	return cli.Command{
-		Name:      "get",
-		Action:    cli.ActionFunc(getAction),
-		Usage:     "get a provisioner from the CA configuration",
-		UsageText: `**step beta ca provisioner get** <name> [**--ca-url**=<uri>] [**--root**=<file>]`,
+		Name:   "get",
+		Action: cli.ActionFunc(getAction),
+		Usage:  "get a provisioner from the CA configuration",
+		UsageText: `**step beta ca provisioner get** <name>
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
 			flags.AdminSubject,
+			flags.PasswordFile,
 			flags.CaURL,
 			flags.Root,
 		},
