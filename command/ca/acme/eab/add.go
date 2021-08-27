@@ -77,7 +77,7 @@ func addAction(ctx *cli.Context) (err error) {
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
 	fmt.Fprintln(w, "Key ID\tProvisioner\tName\tKey (base64, raw url encoded)")
-	fmt.Fprintf(w, "%s\t%s \t %s \t%s\n", cliEAK.id, cliEAK.provisioner, cliEAK.name, cliEAK.key)
+	fmt.Fprintf(w, "%s\t%s \t%s \t%s\n", cliEAK.id, cliEAK.provisioner, cliEAK.name, cliEAK.key)
 	w.Flush()
 
 	return nil

@@ -3,9 +3,9 @@ package eab
 import (
 	"encoding/base64"
 
-	adminAPI "github.com/smallstep/certificates/authority/admin/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/urfave/cli"
+	"go.step.sm/linkedca"
 )
 
 type cliEAK struct {
@@ -15,9 +15,9 @@ type cliEAK struct {
 	key         string
 }
 
-func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *adminAPI.CreateExternalAccountKeyResponse) (*cliEAK, error) {
+func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *linkedca.EABKey) (*cliEAK, error) {
 	// TODO: more fields for other purposes, like including the createdat/boundat/account for listing?
-	return &cliEAK{id: eak.KeyID, provisioner: eak.ProvisionerName, name: eak.Name, key: base64.RawURLEncoding.Strict().EncodeToString(eak.Key)}, nil
+	return &cliEAK{id: eak.EabKid, provisioner: eak.ProvisionerName, name: eak.Name, key: base64.RawURLEncoding.Strict().EncodeToString(eak.EabHmacKey)}, nil
 }
 
 // Command returns the eab subcommand.
