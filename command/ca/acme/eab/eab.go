@@ -29,6 +29,7 @@ func Command() cli.Command {
 		Subcommands: cli.Commands{
 			listCommand(),
 			addCommand(),
+			removeCommand(),
 		},
 		Description: `**step beta ca acme eab** command group provides facilities for managing ACME 
 		External Account Binding Keys.
@@ -43,6 +44,12 @@ $ step beta ca acme eab list
 Add an ACME External Account Binding Key:
 '''
 $ step beta ca acme eab add provisioner_name some_name_or_reference
-'''`,
+'''
+
+Remove an ACME External Account Binding Key:
+'''
+$ step beta ca acme eab remove key_id
+'''
+`,
 	}
 }
