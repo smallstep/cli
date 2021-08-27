@@ -31,6 +31,9 @@ func addCommand() cli.Command {
 
 ## POSITIONAL ARGUMENTS
 
+<provisioner_name>
+: Name of the provisioner to add an ACME EAB key to 
+
 <name_or_reference>
 :  Name or (external) reference for the key to be created
 

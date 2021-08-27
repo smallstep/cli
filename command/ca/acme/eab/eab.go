@@ -2,6 +2,7 @@ package eab
 
 import (
 	"encoding/base64"
+	"time"
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/urfave/cli"
@@ -13,11 +14,25 @@ type cliEAK struct {
 	provisioner string
 	name        string
 	key         string
+	createdAt   time.Time
+	boundAt     string
+	account     string
 }
 
 func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *linkedca.EABKey) (*cliEAK, error) {
-	// TODO: more fields for other purposes, like including the createdat/boundat/account for listing?
-	return &cliEAK{id: eak.EabKid, provisioner: eak.ProvisionerName, name: eak.Name, key: base64.RawURLEncoding.Strict().EncodeToString(eak.EabHmacKey)}, nil
+	boundAt := ""
+	if !eak.BoundAt.AsTime().IsZero() {
+		boundAt = eak.BoundAt.AsTime().Format("2006-01-02 15:04:05 -07:00")
+	}
+	return &cliEAK{
+		id:          eak.EabKid,
+		provisioner: eak.ProvisionerName,
+		name:        eak.Name,
+		key:         base64.RawURLEncoding.Strict().EncodeToString(eak.EabHmacKey),
+		createdAt:   eak.CreatedAt.AsTime(),
+		boundAt:     boundAt,
+		account:     eak.Account,
+	}, nil
 }
 
 // Command returns the eab subcommand.
