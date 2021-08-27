@@ -32,32 +32,47 @@ func addCommand() cli.Command {
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add a provisioner",
 		UsageText: `**step beta ca provisioner add** <name> **--type**=JWK [**--public-key**=<file>]
-[**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
+[**--private-key**=<file>] [**--create**]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=OIDC
 [**--client-id**=<id>] [**--client-secret**=<secret>]
-[**--configuration-endpoint**=<url>] [**--domain**=<domain>]
-[**--admin**=<email>]... [**--ca-url**=<uri>] [**--root**=<file>]
+[**--configuration-endpoint**=<url>] [**--domain**=<domain>] [**--admin**=<email>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=X5C **--x5c-root**=<file>
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=SSHPOP
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=K8SSA [**--public-key**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
 [**--aws-account**=<id>] [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 
 **step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**] [**--require-eab**]
-[**--ca-url**=<uri>] [**--root**=<file>]`,
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "type",

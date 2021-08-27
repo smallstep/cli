@@ -15,10 +15,13 @@ import (
 
 func addCommand() cli.Command {
 	return cli.Command{
-		Name:      "add",
-		Action:    cli.ActionFunc(addAction),
-		Usage:     "add an admin to the CA configuration",
-		UsageText: `**step beta ca admin add** <subject> <provisioner> [**--super**]`,
+		Name:   "add",
+		Action: cli.ActionFunc(addAction),
+		Usage:  "add an admin to the CA configuration",
+		UsageText: `**step beta ca admin add** <subject> <provisioner> [**--super**]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "super",

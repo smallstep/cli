@@ -33,6 +33,7 @@ import (
 	// Enabled cas interfaces.
 	_ "github.com/smallstep/certificates/cas/cloudcas"
 	_ "github.com/smallstep/certificates/cas/softcas"
+	_ "github.com/smallstep/certificates/cas/stepcas"
 
 	// Profiling and debugging
 	_ "net/http/pprof"

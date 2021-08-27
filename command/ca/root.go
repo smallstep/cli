@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -75,7 +76,7 @@ func rootAction(ctx *cli.Context) error {
 		return err
 	}
 
-	fingerprint := ctx.String("fingerprint")
+	fingerprint := strings.TrimSpace(ctx.String("fingerprint"))
 	if len(fingerprint) == 0 {
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}

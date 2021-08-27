@@ -5,9 +5,11 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/manifoldco/promptui"
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
@@ -49,6 +51,33 @@ func initCommand() cli.Command {
 				Name:  "ssh",
 				Usage: `Create keys to sign SSH certificates.`,
 			},
+			cli.BoolFlag{
+				Name:  "helm",
+				Usage: `Generates a Helm values YAML to be used with step-certificates chart.`,
+			},
+			cli.StringFlag{
+				Name: "deployment-type",
+				Usage: `The <name> of the deployment type to use. Options are:
+    **standalone**
+    :  An instance of step-ca that does not connect to any cloud services. You
+    manage authority keys and configuration yourself.
+    Choose standalone if you'd like to run step-ca yourself and do not want
+    cloud services or commercial support.
+
+    **linked**
+    :  An instance of step-ca with locally managed keys that connects to your
+    Certificate Manager account for provisioner management, alerting,
+    reporting, revocation, and other managed services.
+    Choose linked if you'd like cloud services and support, but need to
+    control your authority's signing keys.
+
+    **hosted**
+    :  A highly available, fully-managed instance of step-ca run by smallstep
+    just for you.
+    Choose hosted if you'd like cloud services and support.
+
+: More information and pricing at: https://u.step.sm/cm`,
+			},
 			cli.StringFlag{
 				Name:  "name",
 				Usage: "The <name> of the new PKI.",
@@ -79,15 +108,32 @@ func initCommand() cli.Command {
 			},
 			cli.StringFlag{
 				Name:  "ra",
-				Usage: `The registration authority <name> to use. Currently only "CloudCAS" is supported.`,
+				Usage: `The registration authority <name> to use. Currently "StepCAS" and "CloudCAS" are supported.`,
 			},
 			cli.StringFlag{
 				Name: "issuer",
-				Usage: `The registration authority issuer <name> to use.
+				Usage: `The registration authority issuer <url> to use.
+
+: If StepCAS is used, this flag should be the URL of the CA to connect
+to, e.g https://ca.smallstep.com:9000
 
 : If CloudCAS is used, this flag should be the resource name of the
 intermediate certificate to use. This has the format
 'projects/\\*/locations/\\*/caPools/\\*/certificateAuthorities/\\*'.`,
+			},
+			cli.StringFlag{
+				Name: "issuer-fingerprint",
+				Usage: `The root certificate <fingerprint> of the issuer CA.
+This flag is supported in "StepCAS", and it should be the result of running:
+'''
+$ step certificate fingerprint root_ca.crt
+4fe5f5ef09e95c803fdcb80b8cf511e2a885eb86f3ce74e3e90e62fa3faf1531
+'''`,
+			},
+			cli.StringFlag{
+				Name: "issuer-provisioner",
+				Usage: `The <name> of an existing provisioner in the issuer CA.
+This flag is supported in "StepCAS".`,
 			},
 			cli.StringFlag{
 				Name: "credentials-file",
@@ -118,6 +164,10 @@ func initAction(ctx *cli.Context) (err error) {
 	root := ctx.String("root")
 	key := ctx.String("key")
 	ra := strings.ToLower(ctx.String("ra"))
+	pkiOnly := ctx.Bool("pki")
+	noDB := ctx.Bool("no-db")
+	helm := ctx.Bool("helm")
+
 	switch {
 	case len(root) > 0 && len(key) == 0:
 		return errs.RequiredWithFlag(ctx, "root", "key")
@@ -130,14 +180,12 @@ func initAction(ctx *cli.Context) (err error) {
 		if rootKey, err = pemutil.Read(key); err != nil {
 			return err
 		}
-	case ra != "" && ra != apiv1.CloudCAS:
-		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "CloudCAS")
-	}
-
-	configure := !ctx.Bool("pki")
-	noDB := ctx.Bool("no-db")
-	if !configure && noDB {
+	case ra != "" && ra != apiv1.CloudCAS && ra != apiv1.StepCAS:
+		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "StepCAS or CloudCAS")
+	case pkiOnly && noDB:
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "no-db")
+	case pkiOnly && helm:
+		return errs.IncompatibleFlagWithFlag(ctx, "pki", "helm")
 	}
 
 	var password string
@@ -158,8 +206,11 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
+	// Common for both CA and RA
+
 	var name, org, resource string
 	var casOptions apiv1.Options
+	var deploymentType pki.DeploymentType
 	switch ra {
 	case apiv1.CloudCAS:
 		var create bool
@@ -169,6 +220,12 @@ func initAction(ctx *cli.Context) (err error) {
 			Name  string
 			Value string
 		}{{"DevOps", "DEVOPS"}, {"Enterprise", "ENTERPRISE"}}
+
+		// Prompt or get deployment type from flag
+		deploymentType, err = promptDeploymentType(ctx, true)
+		if err != nil {
+			return err
+		}
 
 		iss := ctx.String("issuer")
 		if iss == "" {
@@ -243,10 +300,58 @@ func initAction(ctx *cli.Context) (err error) {
 			CaPoolTier:           caPoolTier,
 			GCSBucket:            gcsBucket,
 		}
+	case apiv1.StepCAS:
+		deploymentType, err = promptDeploymentType(ctx, true)
+		if err != nil {
+			return err
+		}
+		ui.Println("What is the url of your CA?", ui.WithValue(ctx.String("issuer")))
+		ca, err := ui.Prompt("(e.g. https://ca.smallstep.com:9000)",
+			ui.WithValidateRegexp("(?i)^https://.+$"), ui.WithValue(ctx.String("issuer")))
+		if err != nil {
+			return err
+		}
+		ui.Println("What is the fingerprint of the CA's root file?", ui.WithValue(ctx.String("issuer-fingerprint")))
+		fingerprint, err := ui.Prompt("(e.g. 4fe5f5ef09e95c803fdcb80b8cf511e2a885eb86f3ce74e3e90e62fa3faf1531)",
+			ui.WithValidateRegexp("^[a-fA-F0-9]{64}$"), ui.WithValue(ctx.String("issuer-fingerprint")))
+		if err != nil {
+			return err
+		}
+		ui.Println("What is the JWK provisioner you want to use?", ui.WithValue(ctx.String("issuer-provisioner")))
+		provisioner, err := ui.Prompt("(e.g. you@smallstep.com)",
+			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("issuer-provisioner")))
+		if err != nil {
+			return err
+		}
+		casOptions = apiv1.Options{
+			Type:                            apiv1.StepCAS,
+			IsCreator:                       false,
+			IsCAGetter:                      true,
+			CertificateAuthority:            ca,
+			CertificateAuthorityFingerprint: fingerprint,
+			CertificateIssuer: &apiv1.CertificateIssuer{
+				Type:        "JWK",
+				Provisioner: provisioner,
+			},
+		}
 	default:
+		deploymentType, err = promptDeploymentType(ctx, false)
+		if err != nil {
+			return err
+		}
+		if deploymentType == pki.HostedDeployment {
+			ui.Println()
+			ui.Println("Sorry, we can't create hosted authorities from the CLI yet. To create a hosted")
+			ui.Println("authority please visit:\n")
+			ui.Println("    \033[1mhttps://u.step.sm/hosted\033[0m\n")
+			ui.Println("To connect to an existing hosted authority run:\n")
+			ui.Println("    $ step ca bootstrap --team <name> --authority <authority>")
+			ui.Println()
+			return nil
+		}
+
 		ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
-		name, err = ui.Prompt("(e.g. Smallstep)",
-			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
+		name, err = ui.Prompt("(e.g. Smallstep)", ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
 		if err != nil {
 			return err
 		}
@@ -257,12 +362,10 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	p, err := pki.New(casOptions)
-	if err != nil {
-		return err
-	}
-
-	if configure {
+	var opts []pki.Option
+	if pkiOnly {
+		opts = append(opts, pki.WithPKIOnly())
+	} else {
 		var names string
 		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithValue(ctx.String("dns")))
 		names, err = ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
@@ -289,27 +392,64 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 
 		var provisioner string
-		ui.Println("What would you like to name the CA's first provisioner?", ui.WithValue(ctx.String("provisioner")))
-		provisioner, err = ui.Prompt("(e.g. you@smallstep.com)",
-			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("provisioner")))
-		if err != nil {
-			return err
+		// Only standalone deployments will create an initial provisioner.
+		// Linked or hosted deployments will use an OIDC token as the first
+		// deployment.
+		if deploymentType == pki.StandaloneDeployment {
+			ui.Println("What would you like to name the CA's first provisioner?", ui.WithValue(ctx.String("provisioner")))
+			provisioner, err = ui.Prompt("(e.g. you@smallstep.com)",
+				ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("provisioner")))
+			if err != nil {
+				return err
+			}
 		}
 
-		p.SetProvisioner(provisioner)
-		p.SetAddress(address)
-		p.SetDNSNames(dnsNames)
-		p.SetCAURL(caURL)
+		opts = []pki.Option{
+			pki.WithAddress(address),
+			pki.WithCaURL(caURL),
+			pki.WithDNSNames(dnsNames),
+			pki.WithDeploymentType(deploymentType),
+		}
+		if deploymentType == pki.StandaloneDeployment {
+			opts = append(opts, pki.WithProvisioner(provisioner))
+		}
+		if deploymentType == pki.LinkedDeployment {
+			opts = append(opts, pki.WithAdmin())
+		} else if ctx.Bool("ssh") {
+			opts = append(opts, pki.WithSSH())
+		}
+		if noDB {
+			opts = append(opts, pki.WithNoDB())
+		}
+		if helm {
+			opts = append(opts, pki.WithHelm())
+		}
 	}
 
-	ui.Println("Choose a password for your CA keys and first provisioner.", ui.WithValue(password))
-	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]",
-		ui.WithRichPrompt(), ui.WithValue(password))
+	p, err := pki.New(casOptions, opts...)
 	if err != nil {
 		return err
 	}
 
-	if configure {
+	if ra != "" {
+		// RA mode will not have encrypted keys. With the exception of SSH keys,
+		// but this is not common on RA mode.
+		ui.Println("Choose a password for your first provisioner.", ui.WithValue(password))
+	} else {
+		// Linked CAs will use OIDC as a first provisioner.
+		if pkiOnly || deploymentType != pki.StandaloneDeployment {
+			ui.Println("Choose a password for your CA keys.", ui.WithValue(password))
+		} else {
+			ui.Println("Choose a password for your CA keys and first provisioner.", ui.WithValue(password))
+		}
+	}
+
+	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]", ui.WithRichPrompt(), ui.WithValue(password))
+	if err != nil {
+		return err
+	}
+
+	if !pkiOnly && deploymentType == pki.StandaloneDeployment {
 		// Generate provisioner key pairs.
 		if len(provisionerPassword) > 0 {
 			if err = p.GenerateKeyPairs(provisionerPassword); err != nil {
@@ -324,35 +464,33 @@ func initAction(ctx *cli.Context) (err error) {
 
 	if casOptions.IsCreator {
 		var root *apiv1.CreateCertificateAuthorityResponse
+		ui.Println()
 		// Generate root certificate if not set.
 		if rootCrt == nil && rootKey == nil {
-			fmt.Println()
-			fmt.Print("Generating root certificate... \n")
-
+			ui.Print("Generating root certificate... ")
 			root, err = p.GenerateRootCertificate(name, org, resource, pass)
 			if err != nil {
 				return err
 			}
-
-			fmt.Println("all done!")
+			ui.Println("done!")
 		} else {
-			fmt.Println()
-			fmt.Print("Copying root certificate... \n")
+			ui.Printf("Copying root certificate... ")
 			// Do not copy key in STEPPATH
 			if err = p.WriteRootCertificate(rootCrt, nil, nil); err != nil {
 				return err
 			}
 			root = p.CreateCertificateAuthorityResponse(rootCrt, rootKey)
-			fmt.Println("all done!")
+			ui.Println("done!")
 		}
 
-		fmt.Println()
-		fmt.Print("Generating intermediate certificate... \n")
+		// Always generate the intermediate certificate
+		ui.Printf("Generating intermediate certificate... ")
 		time.Sleep(1 * time.Second)
 		err = p.GenerateIntermediateCertificate(name, org, resource, root, pass)
 		if err != nil {
 			return err
 		}
+		ui.Println("done!")
 	} else {
 		// Attempt to get the root certificate from RA.
 		if err := p.GetCertificateAuthority(); err != nil {
@@ -361,24 +499,111 @@ func initAction(ctx *cli.Context) (err error) {
 	}
 
 	if ctx.Bool("ssh") {
-		fmt.Println()
-		fmt.Print("Generating user and host SSH certificate signing keys... \n")
+		ui.Printf("Generating user and host SSH certificate signing keys... ")
 		if err := p.GenerateSSHSigningKeys(pass); err != nil {
 			return err
 		}
+		ui.Println("done!")
 	}
 
-	fmt.Println("all done!")
+	if helm {
+		return p.WriteHelmTemplate(os.Stdout)
+	}
+	return p.Save()
+}
 
-	if !configure {
-		p.TellPKI()
-		return nil
+func isNonInteractiveInit(ctx *cli.Context) bool {
+	var pkiFlags []string
+	configFlags := []string{
+		"dns", "address", "provisioner",
 	}
-	opts := []pki.Option{}
-	if noDB {
-		opts = append(opts, pki.WithoutDB())
+	switch strings.ToLower(ctx.String("ra")) {
+	case apiv1.CloudCAS:
+		pkiFlags = []string{"issuer"}
+		configFlags = append(configFlags, "password-file")
+	case apiv1.StepCAS:
+		pkiFlags = []string{"issuer", "issuer-fingerprint", "issuer-provisioner"}
+		configFlags = append(configFlags, "password-file")
+	default:
+		pkiFlags = []string{"name", "password-file"}
 	}
-	return p.Save(opts...)
+
+	for _, s := range pkiFlags {
+		if ctx.String(s) == "" {
+			return false
+		}
+	}
+
+	// If not pki only, then require all config flags.
+	if !ctx.Bool("pki") {
+		for _, s := range configFlags {
+			if ctx.String(s) == "" {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, error) {
+	type deployment struct {
+		Name        string
+		Description string
+		Value       pki.DeploymentType
+	}
+
+	var deploymentTypes []deployment
+	deploymentType := strings.ToLower(ctx.String("deployment-type"))
+
+	// Assume standalone for backward compatibility if all required flags are
+	// passed.
+	if deploymentType == "" && isNonInteractiveInit(ctx) {
+		return pki.StandaloneDeployment, nil
+	}
+
+	deploymentTypes = []deployment{
+		{"Standalone", "step-ca instance you run yourself", pki.StandaloneDeployment},
+		{"Linked", "standalone, plus cloud configuration, reporting & alerting", pki.LinkedDeployment},
+		{"Hosted", "fully-managed step-ca cloud instance run for you by smallstep", pki.HostedDeployment},
+	}
+
+	if isRA {
+		switch deploymentType {
+		case "":
+			// Deployment type Hosted is not supported for RAs
+			deploymentTypes = deploymentTypes[:2]
+		case "standalone":
+			return pki.StandaloneDeployment, nil
+		case "linked":
+			return pki.LinkedDeployment, nil
+		default:
+			return 0, errs.InvalidFlagValue(ctx, "deployment-type", deploymentType, "standalone or linked")
+		}
+	} else {
+		switch deploymentType {
+		case "":
+		case "standalone":
+			return pki.StandaloneDeployment, nil
+		case "linked":
+			return pki.LinkedDeployment, nil
+		case "hosted":
+			return pki.HostedDeployment, nil
+		default:
+			return 0, errs.InvalidFlagValue(ctx, "deployment-type", deploymentType, "standalone, linked or hosted")
+		}
+	}
+
+	i, _, err := ui.Select("What deployment type would you like to configure?", deploymentTypes,
+		ui.WithSelectTemplates(&promptui.SelectTemplates{
+			Active:   fmt.Sprintf("%s {{ printf \"%%s - %%s\" .Name .Description | underline }}", ui.IconSelect),
+			Inactive: "  {{ .Name }} - {{ .Description }}",
+			Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Deployment Type:" | bold }} {{ .Name }}`, ui.IconGood),
+		}))
+	if err != nil {
+		return 0, err
+	}
+	return deploymentTypes[i].Value, nil
 }
 
 // assertCryptoRand asserts that a cryptographically secure random number
