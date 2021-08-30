@@ -110,6 +110,10 @@ jobs:
         with:
           cosign-release: 'v1.1.0'
       -
+        name: Write cosign key to disk
+        id: write_key
+        run: echo ${{ secrets.COSIGN_KEY }} > "./cosign.key"
+      -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@5a54d7e660bda43b405e8463261b3d25631ffe86 # v2.7.0
         with:
@@ -118,7 +122,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
           COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
-          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
 
   release_deb:
     name: Build & Release Debian package
