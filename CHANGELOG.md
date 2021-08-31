@@ -6,6 +6,17 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased - 0.17.3] - DATE
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [0.17.2] - 08.30.2021
+### Security
+- Sign over goreleaser github artifacts using cosign 
 
 ## [0.0.2]
 ### Added
