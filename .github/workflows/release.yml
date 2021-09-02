@@ -149,6 +149,10 @@ jobs:
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
           make debian
       -
+        name: Write SHA256Sum to File
+        id: sha256sum
+        run: sha256sum ./.releases/* > ./.releases/deb-checksum.txt
+      -
         name: Upload Debian Package
         id: upload_deb
         run: |
