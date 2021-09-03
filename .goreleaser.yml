@@ -78,7 +78,7 @@ source:
 checksum:
   name_template: 'checksums.txt'
   extra_files:
-    - glob: {{ .Env.DEB_PATH }}
+    - glob: '{{ .Env.DEB_PATH }}'
 
 signs:
 - cmd: cosign
@@ -126,7 +126,7 @@ release:
   # another file with the same name exists, the latest one found will be used.
   # Defaults to empty.
   extra_files:
-    - glob: {{ .Env.DEB_PATH }}
+    - glob: '{{ .Env.DEB_PATH }}'
   #  - glob: ./glob/**/to/**/file/**/*
   #  - glob: ./glob/foo/to/bar/file/foobar/override_from_previous
 
