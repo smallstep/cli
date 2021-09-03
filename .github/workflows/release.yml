@@ -110,7 +110,7 @@ jobs:
         run: sudo apt-get -y install build-essential debhelper fakeroot
       -
         name: Build Debian package
-        id: build
+        id: make_debian
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
           make debian
@@ -134,7 +134,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
           COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
-          DEB_PATH: ${{ steps.is_prerelease.outputs.DEB_PATH }}
+          DEB_PATH: ${{ steps.make_debian.outputs.DEB_PATH }}
 
   build_upload_docker:
     name: Build & Upload Docker Images
