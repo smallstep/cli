@@ -105,6 +105,9 @@ jobs:
         with:
           go-version: 1.16
       -
+        name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+      -
         name: Install cosign
         uses: sigstore/cosign-installer@main
         with:
@@ -113,9 +116,6 @@ jobs:
         name: Write cosign key to disk
         id: write_key
         run: echo "${{ secrets.COSIGN_KEY }}" > "/tmp/cosign.key"
-      -
-        name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@5a54d7e660bda43b405e8463261b3d25631ffe86 # v2.7.0
