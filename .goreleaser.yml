@@ -74,7 +74,7 @@ checksum:
 signs:
 - cmd: cosign
   stdin: '{{ .Env.COSIGN_PWD }}'
-  args: ["sign-blob", "-key=/tmp/cosign.key", "-output=${signature}", "${artifact}"]
+  args: ["sign-blob", "-key=/tmp/cosign.key", "-output=signatures/${signature}", "${artifact}"]
   artifacts: all
 snapshot:
   name_template: "{{ .Tag }}-next"
