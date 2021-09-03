@@ -105,6 +105,9 @@ jobs:
         with:
           go-version: 1.16
       -
+        name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+      -
         name: Install cosign
         uses: sigstore/cosign-installer@main
         with:
