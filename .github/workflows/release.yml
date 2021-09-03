@@ -114,6 +114,8 @@ jobs:
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
           make debian
+          # need to restore this file otherwise goreleaser fails due to dirty state
+          git restore debian/changelog
           DEB_PATH=$(find ./.releases -type f)
           echo "::set-output name=DEB_PATH::${DEB_PATH}"
       -
