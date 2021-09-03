@@ -230,7 +230,7 @@ func TestReadCertificate(t *testing.T) {
 		{"testdata/notexists.crt", errors.New("open testdata/notexists.crt failed: no such file or directory")},
 		{"testdata/badca.crt", errors.New("error parsing testdata/badca.crt")},
 		{"testdata/badpem.crt", errors.New("error decoding testdata/badpem.crt: not a valid PEM encoded block")},
-		{"testdata/badder.crt", errors.New("error parsing testdata/badder.crt: x509:")},
+		{"testdata/badder.crt", errors.New("error parsing testdata/badder.crt:")},
 		{"testdata/openssl.p256.pem", errors.New("error decoding PEM: file 'testdata/openssl.p256.pem' does not contain a certificate")},
 	}
 
