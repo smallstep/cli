@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Deprecated
 ### Removed
 ### Fixed
+- Fix `make bootstrap` failing to get GOPATH and install `golangci-lint`.
 ### Security
 - Use cosign to sign and upload signatures for multi-arch Docker container.
 
