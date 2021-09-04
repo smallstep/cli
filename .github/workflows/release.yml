@@ -116,8 +116,6 @@ jobs:
           make debian
           # need to restore this file otherwise goreleaser fails due to dirty state
           git restore debian/changelog
-          DEB_PATH=$(find ./.releases -type f)
-          echo "::set-output name=DEB_PATH::${DEB_PATH}"
       -
         name: Install cosign
         uses: sigstore/cosign-installer@v1.1.0
@@ -192,11 +190,11 @@ jobs:
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
           make -j1 binary-linux binary-darwin binary-windows
-          mkdir -p ./.releases
-          cp ./output/binary/linux/bin/step ./.releases/step-linux-${{ needs.create_release.outputs.version }}
-          cp ./output/binary/linux/bin/step ./.releases/step-linux-latest-integration
-          cp ./output/binary/darwin/bin/step ./.releases/step-darwin-${{ needs.create_release.outputs.version }}
-          cp ./output/binary/windows/bin/step ./.releases/step-windows-${{ needs.create_release.outputs.version }}.exe
+          mkdir -p ./dist
+          cp ./output/binary/linux/bin/step ./dist/step-linux-${{ needs.create_release.outputs.version }}
+          cp ./output/binary/linux/bin/step ./dist/step-linux-latest-integration
+          cp ./output/binary/darwin/bin/step ./dist/step-darwin-${{ needs.create_release.outputs.version }}
+          cp ./output/binary/windows/bin/step ./dist/step-windows-${{ needs.create_release.outputs.version }}.exe
       -
         name: Upload s3
         id: upload-s3
@@ -208,7 +206,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-east-1
-          SOURCE_DIR: ./.releases
+          SOURCE_DIR: ./dist
 
   update_reference_docs:
     name: Update Reference Docs
