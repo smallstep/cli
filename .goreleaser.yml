@@ -7,7 +7,6 @@ before:
     # You may remove this if you don't use go modules.
     - go mod download
     # - go generate ./...
-    #
 
 builds:
   - env:
