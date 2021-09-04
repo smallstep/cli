@@ -15,6 +15,7 @@
 # Others
 *.swp
 .releases
+dist/
 debian/
 coverage.txt
 output
