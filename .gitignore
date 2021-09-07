@@ -15,7 +15,6 @@
 # Others
 *.swp
 .releases
-debian/
 coverage.txt
 output
 vendor
