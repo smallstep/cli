@@ -116,7 +116,10 @@ jobs:
           make debian
           # need to restore the git state otherwise goreleaser fails due to dirty state
           git restore debian/changelog
-          git clean -fd
+          #git clean -fd
+      -
+        name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       -
         name: Install cosign
         uses: sigstore/cosign-installer@v1.1.0
