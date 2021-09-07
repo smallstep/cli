@@ -8,13 +8,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased - 0.17.3] - DATE
 ### Added
+- go 1.17 to github action test matrix
 ### Changed
+- Using go 1.17 to build
 ### Deprecated
 ### Removed
 ### Fixed
 - Fix `make bootstrap` failing to get GOPATH and install `golangci-lint`.
 ### Security
 - Use cosign to sign and upload signatures for multi-arch Docker container.
+- Debian checksum
 
 ## [0.17.2] - 08.30.2021
 ### Security

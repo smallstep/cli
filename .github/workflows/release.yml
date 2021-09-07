@@ -114,7 +114,7 @@ jobs:
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
           make debian
-          # need to restore this file otherwise goreleaser fails due to dirty state
+          # need to restore the git state otherwise goreleaser fails due to dirty state
           git restore debian/changelog
           git clean -fd
       -
