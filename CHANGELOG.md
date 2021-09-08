@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased - 0.17.3] - DATE
 ### Added
+- exit code '2' for file not exists scenarios in 'needs-renewal' commands
 - go 1.17 to github action test matrix
 ### Changed
 - Using go 1.17 to build
