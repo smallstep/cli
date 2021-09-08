@@ -167,8 +167,11 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 
 	// Get private key from given key file
 	var opts []jose.Option
-	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
-		opts = append(opts, jose.WithPasswordFile(passwordFile))
+	switch {
+	case ctx.String("provisioner-password-file") != "":
+		opts = append(opts, jose.WithPasswordFile(ctx.String("provisioner-password-file")))
+	case ctx.String("password-file") != "":
+		opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
 	}
 	jwk, err := jose.ParseKey(x5cKeyFile, opts...)
 	if err != nil {
@@ -205,8 +208,11 @@ func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, t
 
 	// Get private key from given key file
 	var opts []jose.Option
-	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
-		opts = append(opts, jose.WithPasswordFile(passwordFile))
+	switch {
+	case ctx.String("provisioner-password-file") != "":
+		opts = append(opts, jose.WithPasswordFile(ctx.String("provisioner-password-file")))
+	case ctx.String("password-file") != "":
+		opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
 	}
 	jwk, err := jose.ParseKey(sshPOPKeyFile, opts...)
 	if err != nil {

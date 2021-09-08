@@ -68,7 +68,6 @@ func NewOfflineCA(ctx *cli.Context, configFile string) (*OfflineCA, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("stop")
 
 	offlineInstance = &OfflineCA{
 		authority:  auth,
