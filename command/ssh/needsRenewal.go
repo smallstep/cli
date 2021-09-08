@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -36,7 +37,8 @@ adjusted using the '--expires-in' flag.
 ## EXIT CODES
 
 This command returns '0' if the SSH certificate needs renewal, '1' if the
-SSH certificate does not need renewal, and '255' for any error.
+SSH certificate does not need renewal, '2' if the SSH certificate file does not
+exist, and '255' for any other error.
 
 ## EXAMPLES
 
@@ -70,7 +72,7 @@ Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 
 func needsRenewalAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
-		return err
+		return errs.NewExitError(err, 255)
 	}
 
 	var (
@@ -78,22 +80,29 @@ func needsRenewalAction(ctx *cli.Context) error {
 		expiresIn = ctx.String("expires-in")
 	)
 
-	b, err := utils.ReadFile(certFile)
-	if err != nil {
-		return err
+	_, err := os.Stat(certFile)
+	switch {
+	case os.IsNotExist(err):
+		return errs.NewExitError(err, 2)
+	case err != nil:
+		return errs.NewExitError(err, 255)
 	}
 
+	b, err := utils.ReadFile(certFile)
+	if err != nil {
+		return errs.NewExitError(err, 255)
+	}
 	pub, _, _, _, err := ssh.ParseAuthorizedKey(b)
 	if err != nil {
-		return errors.Wrap(err, "error parsing ssh certificate")
+		return errs.NewExitError(errors.Wrap(err, "error parsing ssh certificate"), 255)
 	}
 	cert, ok := pub.(*ssh.Certificate)
 	if !ok {
-		return errors.Errorf("error decoding ssh certificate: %T is not a *ssh.Certificate", pub)
+		return errs.NewExitError(errors.Errorf("error decoding ssh certificate: %T is not a *ssh.Certificate", pub), 255)
 	}
 	inspect, err := sshutil.InspectCertificate(cert)
 	if err != nil {
-		return err
+		return errs.NewExitError(err, 255)
 	}
 
 	var (
