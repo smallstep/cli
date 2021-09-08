@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Use cosign to sign and upload signatures for multi-arch Docker container.
 - Debian checksum
 
-## [0.17.2] - 08.30.2021
+## [0.17.2] - 2021-08-30
 ### Security
 - Sign over goreleaser github artifacts using cosign 
 
@@ -38,6 +38,6 @@ certificate.
 ### Fixed
 ### Security
 
-## [0.0.1] - 08.07.2018
+## [0.0.1] - 2018-08-07
 ### Added
 - Initial version of `step`
