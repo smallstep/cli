@@ -266,6 +266,8 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 
 	return &api.RevokeResponse{Status: "ok"}, nil
 }
+
+// Rekey implements the step-ca client interface Rekey method for an offline client.
 func (c *OfflineCA) Rekey(req *api.RekeyRequest, rt http.RoundTripper) (*api.SignResponse, error) {
 	// it should not panic as this is always internal code
 	tr := rt.(*http.Transport)
