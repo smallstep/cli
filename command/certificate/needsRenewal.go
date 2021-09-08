@@ -2,6 +2,7 @@ package certificate
 
 import (
 	"crypto/x509"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -37,8 +38,9 @@ adjusted using the '--expires-in' flag.
 
 ## EXIT CODES
 
-This command returns '0' if the certificate needs renewal, '1' if the
-certificate does not need renewal, and '255' for any error.
+This command returns '0' if the X509 certificate needs renewal, '1' if the
+X509 certificate does not need renewal, '2' if the X509 certificate file does not
+exist, and '255' for any other error.
 
 ## EXAMPLES
 
@@ -121,19 +123,19 @@ authenticity of the remote server.
 
 func needsRenewalAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
-		return err
+		return errs.NewExitError(err, 255)
 	}
 
 	var (
 		err        error
-		crtFile    = ctx.Args().Get(0)
+		certFile   = ctx.Args().Get(0)
 		expiresIn  = ctx.String("expires-in")
 		roots      = ctx.String("roots")
 		serverName = ctx.String("servername")
 	)
 
 	var certs []*x509.Certificate
-	if addr, isURL, err := trimURL(crtFile); err != nil {
+	if addr, isURL, err := trimURL(certFile); err != nil {
 		return errs.NewExitError(err, 255)
 	} else if isURL {
 		certs, err = getPeerCertificates(addr, serverName, roots, false)
@@ -141,9 +143,17 @@ func needsRenewalAction(ctx *cli.Context) error {
 			return errs.NewExitError(err, 255)
 		}
 	} else {
-		certs, err = pemutil.ReadCertificateBundle(crtFile)
-		if err != nil {
+		_, err = os.Stat(certFile)
+		switch {
+		case os.IsNotExist(err):
+			return errs.NewExitError(err, 2)
+		case err != nil:
 			return errs.NewExitError(err, 255)
+		default:
+			certs, err = pemutil.ReadCertificateBundle(certFile)
+			if err != nil {
+				return errs.NewExitError(err, 255)
+			}
 		}
 	}
 
