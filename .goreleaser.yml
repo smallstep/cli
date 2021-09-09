@@ -116,6 +116,33 @@ release:
   # Default is `{{.Tag}}`
   #name_template: "{{.ProjectName}}-v{{.Version}} {{.Env.USER}}"
 
+  # Header template for the release body.
+  # Defaults to empty.
+  header: |
+    Welcome to this new release!
+
+    ## Signatures
+
+    `step` uses [sigstore/cosign](https://github.com/sigstore/cosign) for signing and verifying release artifacts.
+    Here is an example of how to use `cosign` to verify a release artifact:
+
+    ```
+    cosign verify-blob \
+      -key https://raw.githubusercontent.com/smallstep/cli/master/cosign.pub \
+      -signature ~/Downloads/step_darwin_0.17.2_amd64.tar.gz.sig
+      ~/Downloads/step_darwin_0.17.2_amd64.tar.gz
+    ```
+
+  # Footer template for the release body.
+  # Defaults to empty.
+  footer: |
+    ## Thanks!
+
+    Those were the changes on {{ .Tag }}!
+
+    Come join us on [Discord](https://discord.gg/X2RKGwEbV9) to ask questions,
+    chat about PKI, or get a sneak peak at the freshest PKI memes.
+
   # You can disable this pipe in order to not upload any artifacts.
   # Defaults to false.
   #disable: true
