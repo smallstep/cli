@@ -388,7 +388,6 @@ func initAction(ctx *cli.Context) (err error) {
 			dnsNames = append(dnsNames, strings.TrimSpace(name))
 		}
 
-		fmt.Printf("dnsNames = %+v\n", dnsNames)
 		var address string
 		ui.Println("What IP and port will your new CA bind to?", ui.WithValue(ctx.String("address")))
 		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:4343)",
