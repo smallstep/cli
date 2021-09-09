@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 )
@@ -82,6 +83,14 @@ func WithMask(r rune) Option {
 func WithDefaultValue(s string) Option {
 	return func(o *options) {
 		o.defaultValue = s
+	}
+}
+
+// WithSliceValue sets a custom string as the result of a prompt. If value is set,
+// the prompt won't be displayed.
+func WithSliceValue(values []string) Option {
+	return func(o *options) {
+		o.value = strings.Join(values, ",")
 	}
 }
 

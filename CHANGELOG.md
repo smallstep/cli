@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - non interactive provisioner password file flag in `step ca token --offline` 
 ### Changed
 - Using go 1.17 to build
+- Have `--dns` behave as string slice flag in `step ca init`
 ### Deprecated
 ### Removed
 ### Fixed
 - Fix `make bootstrap` failing to get GOPATH and install `golangci-lint`.
+- ipv6 address error in multi-DNS csv `step ca init`
 ### Security
 - Use cosign to sign and upload signatures for multi-arch Docker container.
 - Debian checksum
