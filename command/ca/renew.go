@@ -407,7 +407,7 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		client, err = cautils.NewOfflineCA(caConfig)
+		client, err = cautils.NewOfflineCA(ctx, caConfig)
 		if err != nil {
 			return nil, err
 		}

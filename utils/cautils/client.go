@@ -50,7 +50,7 @@ func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		return NewOfflineCA(caConfig)
+		return NewOfflineCA(ctx, caConfig)
 	}
 
 	caURL, err := flags.ParseCaURL(ctx)

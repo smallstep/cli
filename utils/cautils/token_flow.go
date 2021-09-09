@@ -173,7 +173,7 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 
 	// Using the offline CA
 	if utils.FileExists(caConfig) {
-		offlineCA, err := NewOfflineCA(caConfig)
+		offlineCA, err := NewOfflineCA(ctx, caConfig)
 		if err != nil {
 			return "", err
 		}

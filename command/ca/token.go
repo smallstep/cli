@@ -29,9 +29,9 @@ func tokenCommand() cli.Command {
 [--**kid**=<kid>] [--**issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--cert-not-before**=<time|duration>] [**--cert-not-after**=<time|duration>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--password-file**=<file>] [**--output-file**=<file>] [**--key**=<file>]
-[**--san**=<SAN>] [**--offline**] [**--revoke**]
-[**--x5c-cert**=<file>] [**--x5c-key**=<file>]
+[**--password-file**=<file>] [**--provisioner-password-file**=<file>]
+[**--output-file**=<file>] [**--key**=<file>] [**--san**=<SAN>] [**--offline**]
+[**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
 [**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
 [**--ssh**] [**--host**] [**--principal**=<string>]
 [**--k8ssa-token-path**=<file>`,
@@ -165,7 +165,8 @@ multiple principals.`,
 			flags.Offline,
 			flags.Root,
 			flags.Provisioner,
-			flags.ProvisionerPasswordFileWithAlias,
+			flags.PasswordFile,
+			flags.ProvisionerPasswordFile,
 			flags.X5cCert,
 			flags.X5cKey,
 			flags.SSHPOPCert,

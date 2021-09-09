@@ -36,7 +36,7 @@ type OfflineCA struct {
 var offlineInstance *OfflineCA
 
 // NewOfflineCA initializes an offlineCA.
-func NewOfflineCA(configFile string) (*OfflineCA, error) {
+func NewOfflineCA(ctx *cli.Context, configFile string) (*OfflineCA, error) {
 	if offlineInstance != nil {
 		return offlineInstance, nil
 	}
@@ -53,6 +53,15 @@ func NewOfflineCA(configFile string) (*OfflineCA, error) {
 
 	if cfg.AuthorityConfig == nil || len(cfg.AuthorityConfig.Provisioners) == 0 {
 		return nil, errors.Errorf("error parsing %s: no provisioners found", configFile)
+	}
+
+	if ctx.IsSet("password-file") {
+		passFile := ctx.String("password-file")
+		pass, err := utils.ReadPasswordFromFile(passFile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading %s", passFile)
+		}
+		cfg.Password = string(pass)
 	}
 
 	auth, err := authority.New(&cfg)

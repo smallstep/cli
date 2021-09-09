@@ -284,7 +284,7 @@ func newRevokeFlow(ctx *cli.Context, certFile, keyFile string) (*revokeFlow, err
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		offlineClient, err = cautils.NewOfflineCA(caConfig)
+		offlineClient, err = cautils.NewOfflineCA(ctx, caConfig)
 		if err != nil {
 			return nil, err
 		}

@@ -51,7 +51,7 @@ func NewCertificateFlow(ctx *cli.Context) (*CertificateFlow, error) {
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		offlineClient, err = NewOfflineCA(caConfig)
+		offlineClient, err = NewOfflineCA(ctx, caConfig)
 		if err != nil {
 			return nil, err
 		}
