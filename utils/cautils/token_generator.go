@@ -167,11 +167,8 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 
 	// Get private key from given key file
 	var opts []jose.Option
-	switch {
-	case ctx.String("provisioner-password-file") != "":
-		opts = append(opts, jose.WithPasswordFile(ctx.String("provisioner-password-file")))
-	case ctx.String("password-file") != "":
-		opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
+	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
+		opts = append(opts, passOpt)
 	}
 	jwk, err := jose.ParseKey(x5cKeyFile, opts...)
 	if err != nil {
@@ -208,11 +205,8 @@ func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, t
 
 	// Get private key from given key file
 	var opts []jose.Option
-	switch {
-	case ctx.String("provisioner-password-file") != "":
-		opts = append(opts, jose.WithPasswordFile(ctx.String("provisioner-password-file")))
-	case ctx.String("password-file") != "":
-		opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
+	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
+		opts = append(opts, passOpt)
 	}
 	jwk, err := jose.ParseKey(sshPOPKeyFile, opts...)
 	if err != nil {
@@ -233,6 +227,17 @@ func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, t
 	}
 }
 
+func getProvisionerPasswordOption(ctx *cli.Context) jose.Option {
+	switch {
+	case ctx.String("provisioner-password-file") != "":
+		return jose.WithPasswordFile(ctx.String("provisioner-password-file"))
+	case ctx.String("password-file") != "":
+		return jose.WithPasswordFile(ctx.String("password-file"))
+	default:
+		return nil
+	}
+}
+
 // loadJWK loads a JWK based on the following system:
 //  1. If a private key is specified on the command line, then load the JWK from
 //     that private key.
@@ -242,11 +247,8 @@ func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, t
 //    b) Online-mode: get the provisioner private key from the CA.
 func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jose.JSONWebKey, kid string, err error) {
 	var opts []jose.Option
-	switch {
-	case ctx.String("provisioner-password-file") != "":
-		opts = append(opts, jose.WithPasswordFile(ctx.String("provisioner-password-file")))
-	case ctx.String("password-file") != "":
-		opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
+	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
+		opts = append(opts, passOpt)
 	}
 
 	if keyFile := ctx.String("key"); len(keyFile) == 0 {
