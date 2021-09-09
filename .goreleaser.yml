@@ -121,7 +121,7 @@ release:
   header: |
     Welcome to this new release!
 
-    ## Signatures
+    ## Signatures and Checksums
 
     `step` uses [sigstore/cosign](https://github.com/sigstore/cosign) for signing and verifying release artifacts.
     Here is an example of how to use `cosign` to verify a release artifact:
@@ -133,6 +133,8 @@ release:
       ~/Downloads/step_darwin_0.17.2_amd64.tar.gz
     ```
 
+    We use the `checksums.txt` file to store checksums for every artifact in the release.
+
   # Footer template for the release body.
   # Defaults to empty.
   footer: |
@@ -140,8 +142,8 @@ release:
 
     Those were the changes on {{ .Tag }}!
 
-    Come join us on [Discord](https://discord.gg/X2RKGwEbV9) to ask questions,
-    chat about PKI, or get a sneak peak at the freshest PKI memes.
+    Come join us on [Discord](https://discord.gg/X2RKGwEbV9) to ask questions, chat about PKI,
+    or get a sneak peak at the freshest PKI memes.
 
   # You can disable this pipe in order to not upload any artifacts.
   # Defaults to false.
