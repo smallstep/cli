@@ -82,9 +82,10 @@ func initCommand() cli.Command {
 				Name:  "name",
 				Usage: "The <name> of the new PKI.",
 			},
-			cli.StringFlag{
-				Name:  "dns",
-				Usage: "The comma separated DNS <names> or IP addresses of the new CA.",
+			cli.StringSliceFlag{
+				Name: "dns",
+				Usage: `The DNS <name> or IP address of the new CA.
+Use the '--dns' flag multiple times to configure multiple DNS names.`,
 			},
 			cli.StringFlag{
 				Name:  "address",
@@ -366,23 +367,28 @@ func initAction(ctx *cli.Context) (err error) {
 	if pkiOnly {
 		opts = append(opts, pki.WithPKIOnly())
 	} else {
-		var names string
-		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithValue(ctx.String("dns")))
-		names, err = ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
-			ui.WithValidateFunc(ui.DNS()), ui.WithValue(ctx.String("dns")))
+		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithSliceValue(ctx.StringSlice("dns")))
+		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])", ui.WithSliceValue(ctx.StringSlice("dns")))
 		if err != nil {
 			return err
 		}
-		names = strings.Replace(names, " ", ",", -1)
-		parts := strings.Split(names, ",")
-		var dnsNames []string
+		var (
+			dnsValidator = ui.DNS()
+			dnsNames     []string
+		)
+		dnsValue = strings.Replace(dnsValue, " ", ",", -1)
+		parts := strings.Split(dnsValue, ",")
 		for _, name := range parts {
 			if len(name) == 0 {
 				continue
 			}
+			if err := dnsValidator(name); err != nil {
+				return err
+			}
 			dnsNames = append(dnsNames, strings.TrimSpace(name))
 		}
 
+		fmt.Printf("dnsNames = %+v\n", dnsNames)
 		var address string
 		ui.Println("What IP and port will your new CA bind to?", ui.WithValue(ctx.String("address")))
 		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:4343)",
