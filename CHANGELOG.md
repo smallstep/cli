@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - exit code '2' for file not exists scenarios in 'needs-renewal' commands
 - go 1.17 to github action test matrix
+- non interactive provisioner password file flag in `step ca token --offline` 
 ### Changed
 - Using go 1.17 to build
 ### Deprecated
