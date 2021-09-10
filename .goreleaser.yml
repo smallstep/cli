@@ -114,32 +114,28 @@ release:
 
   # You can change the name of the release.
   # Default is `{{.Tag}}`
-  #name_template: "{{.ProjectName}}-v{{.Version}} {{.Env.USER}}"
+  name_template: "Step CLI {{ .Tag }} ({{ .Env.RELEASE_DATE }})"
 
   # Header template for the release body.
   # Defaults to empty.
   header: |
-    ## {{ .Date }}
-
-    Welcome to this new release!
-
     ## Official Release Artifacts
-
-    #### OSX Darwin
-
-    - [AMD64 Tarfile](https://dl.step.sm/cli/{{ .Tag }}/step_darwin_{{ .Version }}_amd64.tar.gz)
-    - [ARM64 Tarfile](https://dl.step.sm/cli/{{ .Tag }}/step_darwin_{{ .Version }}_arm64.tar.gz)
 
     #### Linux
 
-    - [AMD64 Debian](https://dl.step.sm/cli/{{ .Tag }}/step-cli_{{ .Env.DEB_VERSION }}_amd64.deb)
-    - [AMD64 Tarfile](https://dl.step.sm/cli/{{ .Tag }}/step_linux_{{ .Version }}_amd64.tar.gz)
+    - 📦 [step_linux_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/cli/{{ .Tag }}/step_linux_{{ .Version }_amd64.tar.gz)
+    - 📦 [step-cli_{{ .Env.DEB_VERSION }}_amd64.deb](https://dl.step.sm/cli/{{ .Tag }}/step-cli{{ .Env.DEB_VERSION}_amd64.deb)
+
+    #### OSX Darwin
+
+    - 📦 [step_darwin_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/cli/{{ .Tag }}/step_darwin_{{ .Version }}_amd64.deb)
+    - 📦 [step_darwin_{{ .Version }}_arm64.tar.gz](https://dl.step.sm/cli/{{ .Tag }}/step_darwin_{{ .Version }}_arm64.tar.gz)
 
     #### Windows
 
-    - [AMD64 Tarfile](https://dl.step.sm/cli/{{ .Tag }}/step_windows_{{ .Version }}_amd64.tar.gz)
+    - 📦 [step_windows_{{ .Version }}_arm64.tar.gz](https://dl.step.sm/cli/{{ .Tag }}/step_windows_{{ .Version }}_amd64.tar.gz)
 
-    For more builds across platforms and architectures see the 'Assets' section below.
+    For more builds across platforms and architectures see the `Assets` section below.
 
     Don't see the artifact you need? Open an issue [here](https://github.com/smallstep/cli/issues/new/choose).
 
