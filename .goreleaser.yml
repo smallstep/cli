@@ -129,11 +129,11 @@ release:
     ```
     cosign verify-blob \
       -key https://raw.githubusercontent.com/smallstep/cli/master/cosign.pub \
-      -signature ~/Downloads/step_darwin_0.17.2_amd64.tar.gz.sig
-      ~/Downloads/step_darwin_0.17.2_amd64.tar.gz
+      -signature ~/Downloads/step_darwin_{{ .Version }}_amd64.tar.gz.sig
+      ~/Downloads/step_darwin_{{ .Version }}_amd64.tar.gz
     ```
 
-    We use the `checksums.txt` file to store checksums for every artifact in the release.
+    The `checksums.txt` file (in the 'Assets' section below) contains a checksum for every artifact in the release.
 
   # Footer template for the release body.
   # Defaults to empty.
@@ -142,8 +142,7 @@ release:
 
     Those were the changes on {{ .Tag }}!
 
-    Come join us on [Discord](https://discord.gg/X2RKGwEbV9) to ask questions, chat about PKI,
-    or get a sneak peak at the freshest PKI memes.
+    Come join us on [Discord](https://discord.gg/X2RKGwEbV9) to ask questions, chat about PKI, or get a sneak peak at the freshest PKI memes.
 
   # You can disable this pipe in order to not upload any artifacts.
   # Defaults to false.
