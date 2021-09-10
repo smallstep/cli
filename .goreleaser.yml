@@ -121,10 +121,31 @@ release:
   header: |
     Welcome to this new release!
 
+    ## Official Releases
+
+    #### OSX Darwin
+
+    - [AMD64 Tarfile](https://dl.step.sm/cli/{{ .Tag }}/step_darwin_{{ .Version }}_amd64.tar.gz)
+    - [ARM64 Tarfile](https://dl.step.sm/cli/{{ .Tag }}/step_darwin_{{ .Version }}_arm64.tar.gz)
+
+    #### Linux
+
+    - [AMD64 Debian](https://dl.step.sm/cli/{{ .Tag }}/step-cli_{{ .Version | replace "-" "." }}_amd64.deb)
+    - [AMD64 Tarfile](https://dl.step.sm/cli/{{ .Tag }}/step_linux_{{ .Version }}_amd64.tar.gz)
+
+    #### Windows
+
+    - [AMD64 Tarfile](https://dl.step.sm/cli/{{ .Tag }}/step_windows_{{ .Version }}_amd64.tar.gz)
+
+    For more builds across platforms and architectures see the 'Assets' section below.
+
+    Don't see the artifact you need? Open an issue [here](https://github.com/smallstep/cli/issues/new/choose).
+
     ## Signatures and Checksums
 
     `step` uses [sigstore/cosign](https://github.com/sigstore/cosign) for signing and verifying release artifacts.
-    Here is an example of how to use `cosign` to verify a release artifact:
+
+    Below is an example using `cosign` to verify a release artifact:
 
     ```
     cosign verify-blob \
