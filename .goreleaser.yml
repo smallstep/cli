@@ -119,9 +119,11 @@ release:
   # Header template for the release body.
   # Defaults to empty.
   header: |
+    ## {{ .Date }}
+
     Welcome to this new release!
 
-    ## Official Releases
+    ## Official Release Artifacts
 
     #### OSX Darwin
 
