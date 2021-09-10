@@ -132,7 +132,7 @@ release:
 
     #### Linux
 
-    - [AMD64 Debian](https://dl.step.sm/cli/{{ .Tag }}/step-cli_{{ .Version | replace "-" "." }}_amd64.deb)
+    - [AMD64 Debian](https://dl.step.sm/cli/{{ .Tag }}/step-cli_{{ .Env.DEB_VERSION }}_amd64.deb)
     - [AMD64 Tarfile](https://dl.step.sm/cli/{{ .Tag }}/step_linux_{{ .Version }}_amd64.tar.gz)
 
     #### Windows
