@@ -124,7 +124,7 @@ release:
     #### Linux
 
     - 📦 [step_linux_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/cli/{{ .Tag }}/step_linux_{{ .Version }_amd64.tar.gz)
-    - 📦 [step-cli_{{ .Env.DEB_VERSION }}_amd64.deb](https://dl.step.sm/cli/{{ .Tag }}/step-cli{{ .Env.DEB_VERSION}_amd64.deb)
+    - 📦 [step-cli_{{ .Env.DEB_VERSION }}_amd64.deb](https://dl.step.sm/cli/{{ .Tag }}/step-cli{{ .Env.DEB_VERSION}}_amd64.deb)
 
     #### OSX Darwin
 
