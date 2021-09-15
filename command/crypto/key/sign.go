@@ -110,11 +110,13 @@ func signAction(ctx *cli.Context) error {
 		default:
 			return errors.Errorf("unsupported elliptic curve %s", k.Params().Name)
 		}
-
+		opts = crypto.Hash(0)
 	case *rsa.PrivateKey:
 		digest = crypto.SHA256.New().Sum(b)
+		opts = crypto.SHA256
 	case ed25519.PrivateKey:
 		digest = b
+		opts = crypto.Hash(0)
 	default:
 		return errors.Errorf("unsupported key type %T", k)
 	}
