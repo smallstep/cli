@@ -136,6 +136,8 @@ release:
     - 📦 [step_windows_{{ .Version }}_arm64.zip](https://dl.step.sm/cli/{{ .Tag }}/step_windows_{{ .Version }}_amd64.zip)
 
     For more builds across platforms and architectures see the `Assets` section below.
+    And for packaged versions (Homebrew, Scoop, etc.), see our [installation docs](https://smallstep.com/docs/step-cli/installation).
+
 
     Don't see the artifact you need? Open an issue [here](https://github.com/smallstep/cli/issues/new/choose).
 
