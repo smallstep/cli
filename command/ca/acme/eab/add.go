@@ -14,10 +14,13 @@ import (
 
 func addCommand() cli.Command {
 	return cli.Command{
-		Name:      "add",
-		Action:    cli.ActionFunc(addAction),
-		Usage:     "add ACME External Account Binding Key",
-		UsageText: `**step beta ca acme eab add** <provisioner_name> <name_or_reference> [**--ca-url**=<uri>] [**--root**=<file>]`,
+		Name:   "add",
+		Action: cli.ActionFunc(addAction),
+		Usage:  "add ACME External Account Binding Key",
+		UsageText: `**step beta ca acme eab add** <provisioner> <reference> 
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
@@ -31,11 +34,11 @@ func addCommand() cli.Command {
 
 ## POSITIONAL ARGUMENTS
 
-<provisioner_name>
+<provisioner>
 : Name of the provisioner to add an ACME EAB key to 
 
-<name_or_reference>
-: Name or (external) reference for the key to be created
+<reference>
+: Reference (from external system) for the key to be created
 
 ## EXAMPLES
 
@@ -52,8 +55,8 @@ func addAction(ctx *cli.Context) (err error) {
 	}
 
 	args := ctx.Args()
-	provisionerName := args.Get(0)
-	credentialName := args.Get(1)
+	provisioner := args.Get(0)
+	reference := args.Get(1)
 
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
@@ -61,8 +64,8 @@ func addAction(ctx *cli.Context) (err error) {
 	}
 
 	eak, err := client.CreateExternalAccountKey(&adminAPI.CreateExternalAccountKeyRequest{
-		ProvisionerName: provisionerName,
-		Name:            credentialName,
+		Provisioner: provisioner,
+		Reference:   reference,
 	})
 	if err != nil {
 		return err
@@ -79,8 +82,8 @@ func addAction(ctx *cli.Context) (err error) {
 	// Format in tab-separated columns with a tab stop of 8.
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
-	fmt.Fprintln(w, "Key ID\tProvisioner\tName\tKey (base64, raw url encoded)")
-	fmt.Fprintf(w, "%s\t%s \t%s \t%s\n", cliEAK.id, cliEAK.provisioner, cliEAK.name, cliEAK.key)
+	fmt.Fprintln(w, "Key ID\tProvisioner\tReference\tKey (base64, raw url encoded)")
+	fmt.Fprintf(w, "%s\t%s \t%s \t%s\n", cliEAK.id, cliEAK.provisioner, cliEAK.reference, cliEAK.key)
 	w.Flush()
 
 	return nil

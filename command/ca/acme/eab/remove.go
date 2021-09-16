@@ -13,8 +13,10 @@ func removeCommand() cli.Command {
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove an ACME EAB Key from the CA",
-		UsageText: `**step beta ca acme eab remove** <key_id> [**--ca-url**=<uri>]
-[**--root**=<file>]`,
+		UsageText: `**step beta ca acme eab remove** <key_id> 
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,

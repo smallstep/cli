@@ -13,10 +13,13 @@ import (
 
 func listCommand() cli.Command {
 	return cli.Command{
-		Name:      "list",
-		Action:    cli.ActionFunc(listAction),
-		Usage:     "list all ACME External Account Binding Keys",
-		UsageText: `**step beta ca acme eab list** <provisioner_name> [**--ca-url**=<uri>] [**--root**=<file>]`,
+		Name:   "list",
+		Action: cli.ActionFunc(listAction),
+		Usage:  "list all ACME External Account Binding Keys",
+		UsageText: `**step beta ca acme eab list** <provisioner> 
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
@@ -30,14 +33,14 @@ func listCommand() cli.Command {
 
 ## POSITIONAL ARGUMENTS
 
-<provisioner_name>
-: Name of the provisioner to add an ACME EAB key to 
+<provisioner>
+: Name of the provisioner to list ACME EAB keys for
 
 ## EXAMPLES
 
 List all ACME External Account Binding Keys:
 '''
-$ step beta ca acme eab list <provisioner_name>
+$ step beta ca acme eab list <provisioner>
 '''
 `,
 	}
@@ -65,14 +68,14 @@ func listAction(ctx *cli.Context) (err error) {
 	// Format in tab-separated columns with a tab stop of 8.
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
-	fmt.Fprintln(w, "Key ID\tProvisioner\tName\tKey (masked)\tCreated At\tBound At\tAccount")
+	fmt.Fprintln(w, "Key ID\tProvisioner\tReference\tKey (masked)\tCreated At\tBound At\tAccount")
 
 	for _, k := range eaks {
 		cliEAK, err := toCLI(ctx, client, k)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(w, "%s\t%s \t%s \t%s \t%s \t%s \t%s\n", cliEAK.id, cliEAK.provisioner, cliEAK.name, "*****", cliEAK.createdAt.Format("2006-01-02 15:04:05 -07:00"), cliEAK.boundAt, cliEAK.account)
+		fmt.Fprintf(w, "%s\t%s \t%s \t%s \t%s \t%s \t%s\n", cliEAK.id, cliEAK.provisioner, cliEAK.reference, "*****", cliEAK.createdAt.Format("2006-01-02 15:04:05 -07:00"), cliEAK.boundAt, cliEAK.account)
 	}
 
 	w.Flush()

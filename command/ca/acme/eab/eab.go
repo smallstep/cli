@@ -12,7 +12,7 @@ import (
 type cliEAK struct {
 	id          string
 	provisioner string
-	name        string
+	reference   string
 	key         string
 	createdAt   time.Time
 	boundAt     string
@@ -26,8 +26,8 @@ func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *linkedca.EABKey) (*cli
 	}
 	return &cliEAK{
 		id:          eak.Id,
-		provisioner: eak.ProvisionerName,
-		name:        eak.Name,
+		provisioner: eak.Provisioner,
+		reference:   eak.Reference,
 		key:         base64.RawURLEncoding.Strict().EncodeToString(eak.HmacKey),
 		createdAt:   eak.CreatedAt.AsTime(),
 		boundAt:     boundAt,
@@ -53,7 +53,7 @@ func Command() cli.Command {
 
 List the active ACME External Account Binding Keys:
 '''
-$ step beta ca acme eab list
+$ step beta ca acme eab list <provisioner>
 '''
 
 Add an ACME External Account Binding Key:
