@@ -25,10 +25,10 @@ func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *linkedca.EABKey) (*cli
 		boundAt = eak.BoundAt.AsTime().Format("2006-01-02 15:04:05 -07:00")
 	}
 	return &cliEAK{
-		id:          eak.EabKid,
+		id:          eak.Id,
 		provisioner: eak.ProvisionerName,
 		name:        eak.Name,
-		key:         base64.RawURLEncoding.Strict().EncodeToString(eak.EabHmacKey),
+		key:         base64.RawURLEncoding.Strict().EncodeToString(eak.HmacKey),
 		createdAt:   eak.CreatedAt.AsTime(),
 		boundAt:     boundAt,
 		account:     eak.Account,

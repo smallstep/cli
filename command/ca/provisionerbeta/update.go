@@ -235,7 +235,7 @@ step beta ca provisioner update x5c --x5c-root x5c_ca.crt
 
 Update an ACME provisioner:
 '''
-step beta ca provisioner update acme --force-cn --require-eab --disable-eab
+step beta ca provisioner update acme --force-cn --require-eab
 '''
 
 Update an K8SSA provisioner:
@@ -580,7 +580,7 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	requireEABSet := ctx.IsSet("require-eab")
 	disableEABSet := ctx.IsSet("disable-eab")
 	if requireEABSet && disableEABSet {
-		return errors.New("cannot provide both --require-eab and --disable-eab")
+		return errs.IncompatibleFlagWithFlag(ctx, "require-eab", "disable-eab")
 	}
 	if requireEABSet {
 		details.RequireEab = ctx.Bool("require-eab")
