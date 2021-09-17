@@ -228,14 +228,7 @@ func certificateAction(ctx *cli.Context) error {
 		if !strings.EqualFold(subject, req.CsrPEM.Subject.CommonName) {
 			return errors.Errorf("token subject '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
-	case token.OIDC: // Validate that the subject matches an email SAN
-		if len(req.CsrPEM.EmailAddresses) == 0 {
-			return errors.New("unexpected token: payload does not contain an email claim")
-		}
-		if email := req.CsrPEM.EmailAddresses[0]; email != subject {
-			return errors.Errorf("token email '%s' and argument '%s' do not match", email, subject)
-		}
-	case token.AWS, token.GCP, token.Azure, token.K8sSA:
+	case token.OIDC, token.AWS, token.GCP, token.Azure, token.K8sSA:
 		// Common name will be validated on the server side, it depends on
 		// server configuration.
 	default:

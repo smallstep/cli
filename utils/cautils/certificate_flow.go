@@ -286,10 +286,21 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			dnsNames, ips, emails, uris = splitSANs(defaultSANs)
 		}
 	case token.OIDC:
-		if jwt.Payload.Email != "" {
-			emails = append(emails, jwt.Payload.Email)
+		// If no sans are given using the --san flag, and the subject argument
+		// matches the email then CN=token.sub SANs=email.
+		//
+		// If no sans are given and the subject argument does not match the
+		// email then CN=subject SANs=splitSANs(subject)
+		//
+		// If sans are provided CN=subject SANs=splitSANs(sans)
+		if len(sans) == 0 {
+			if jwt.Payload.Email != "" && strings.EqualFold(subject, jwt.Payload.Email) {
+				subject = jwt.Payload.Subject
+				emails = append(emails, jwt.Payload.Email)
+			} else {
+				dnsNames, ips, emails, uris = splitSANs([]string{subject})
+			}
 		}
-		subject = jwt.Payload.Subject
 	case token.K8sSA:
 		// Use subject from command line. K8sSA tokens are multi-use so the
 		// subject of the token is not necessarily related to the requested
