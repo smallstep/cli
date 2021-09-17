@@ -13,7 +13,7 @@ func removeCommand() cli.Command {
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove an ACME EAB Key from the CA",
-		UsageText: `**step beta ca acme eab remove** <key_id> 
+		UsageText: `**step beta ca acme eab remove** <provisioner> <key_id>
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
@@ -30,6 +30,9 @@ func removeCommand() cli.Command {
 
 ## POSITIONAL ARGUMENTS
 
+<provisioner>
+: Name of the provisioner to remove an ACME EAB key for
+
 <key_id>
 : The ACME EAB Key ID to remove
 
@@ -44,19 +47,20 @@ $ step beta ca acme eab remove zFGdKC1sHmNf3Wsx3OujY808chxwEdmr
 }
 
 func removeAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
 
 	args := ctx.Args()
-	keyID := args.Get(0)
+	provisioner := args.Get(0)
+	keyID := args.Get(1)
 
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = client.RemoveExternalAccountKey(keyID)
+	err = client.RemoveExternalAccountKey(provisioner, keyID)
 	if err != nil {
 		return err
 	}
