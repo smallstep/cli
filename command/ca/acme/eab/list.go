@@ -16,7 +16,7 @@ func listCommand() cli.Command {
 		Name:   "list",
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all ACME External Account Binding Keys",
-		UsageText: `**step beta ca acme eab list** <provisioner> 
+		UsageText: `**step beta ca acme eab list** <provisioner> <reference>
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
@@ -36,30 +36,44 @@ func listCommand() cli.Command {
 <provisioner>
 : Name of the provisioner to list ACME EAB keys for
 
+<reference>
+: (Optional) Reference (from external system) for the key to be created
+
+
 ## EXAMPLES
 
 List all ACME External Account Binding Keys:
 '''
-$ step beta ca acme eab list <provisioner>
+$ step beta ca acme eab list my_provisioner
+'''
+
+Show ACME External Account Binding Key with specific reference:
+'''
+$ step beta ca acme eab list my_provisioner my_reference
 '''
 `,
 	}
 }
 
 func listAction(ctx *cli.Context) (err error) {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 1, 2); err != nil {
 		return err
 	}
 
 	args := ctx.Args()
 	provisionerName := args.Get(0)
 
+	reference := ""
+	if ctx.NArg() == 2 {
+		reference = args.Get(1)
+	}
+
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	eaks, err := client.GetExternalAccountKeys(provisionerName)
+	eaks, err := client.GetExternalAccountKeys(provisionerName, reference)
 	if err != nil {
 		return err
 	}

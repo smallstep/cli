@@ -17,7 +17,7 @@ func addCommand() cli.Command {
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add ACME External Account Binding Key",
-		UsageText: `**step beta ca acme eab add** <provisioner> <reference> 
+		UsageText: `**step beta ca acme eab add** <provisioner> <reference>
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
@@ -38,11 +38,16 @@ func addCommand() cli.Command {
 : Name of the provisioner to add an ACME EAB key to 
 
 <reference>
-: Reference (from external system) for the key to be created
+: (Optional) reference (from external system) for the key to be created
 
 ## EXAMPLES
 
-Add an ACME External Account Binding Key:
+Add an ACME External Account Binding Key without reference:
+'''
+$ step beta ca acme eab add my_acme_provisioner
+'''
+
+Add an ACME External Account Binding Key with reference:
 '''
 $ step beta ca acme eab add my_acme_provisioner my_first_eab_key
 '''`,
@@ -50,13 +55,17 @@ $ step beta ca acme eab add my_acme_provisioner my_first_eab_key
 }
 
 func addAction(ctx *cli.Context) (err error) {
-	if err := errs.NumberOfArguments(ctx, 2); err != nil {
+	if errs.MinMaxNumberOfArguments(ctx, 1, 2); err != nil {
 		return err
 	}
 
 	args := ctx.Args()
 	provisioner := args.Get(0)
-	reference := args.Get(1)
+
+	reference := ""
+	if ctx.NArg() == 2 {
+		reference = args.Get(1)
+	}
 
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
