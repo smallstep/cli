@@ -287,7 +287,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		}
 	case token.OIDC:
 		// If no sans are given using the --san flag, and the subject argument
-		// matches the email then CN=token.sub SANs=email.
+		// matches the email then CN=token.sub SANs=email, token.iss#token.sub
 		//
 		// If no sans are given and the subject argument does not match the
 		// email then CN=subject SANs=splitSANs(subject)
@@ -297,6 +297,10 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			if jwt.Payload.Email != "" && strings.EqualFold(subject, jwt.Payload.Email) {
 				subject = jwt.Payload.Subject
 				emails = append(emails, jwt.Payload.Email)
+				if iss, err := url.Parse(jwt.Payload.Issuer); err == nil && iss.Scheme != "" {
+					iss.Fragment = jwt.Payload.Subject
+					uris = append(uris, iss)
+				}
 			} else {
 				dnsNames, ips, emails, uris = splitSANs([]string{subject})
 			}
