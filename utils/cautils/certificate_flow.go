@@ -293,7 +293,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		// email then CN=subject SANs=splitSANs(subject)
 		//
 		// If sans are provided CN=subject SANs=splitSANs(sans)
-		if len(sans) == 0 {
+		if len(sans) == 0 && len(jwt.Payload.SANs) == 0 {
 			if jwt.Payload.Email != "" && strings.EqualFold(subject, jwt.Payload.Email) {
 				subject = jwt.Payload.Subject
 				emails = append(emails, jwt.Payload.Email)
@@ -347,7 +347,7 @@ func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email
 	var unique []string
 	for _, sans := range args {
 		for _, san := range sans {
-			if ok := m[san]; !ok {
+			if ok := m[san]; !ok && san != "" {
 				m[san] = true
 				unique = append(unique, san)
 			}
