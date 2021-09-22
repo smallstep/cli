@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Using go 1.17 to build
 - Have `--dns` behave as string slice flag in `step ca init`
+- The way CSR is created on `step ca certificate` with OIDC to better support of admins
 ### Deprecated
 ### Removed
 ### Fixed

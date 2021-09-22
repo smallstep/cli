@@ -286,10 +286,29 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			dnsNames, ips, emails, uris = splitSANs(defaultSANs)
 		}
 	case token.OIDC:
-		if jwt.Payload.Email != "" {
-			emails = append(emails, jwt.Payload.Email)
+		// If no sans are given using the --san flag, and the subject argument
+		// matches the email then CN=token.sub SANs=email, token.iss#token.sub
+		//
+		// If no sans are given and the subject argument does not match the
+		// email then CN=subject SANs=splitSANs(subject)
+		//
+		// If sans are provided CN=subject SANs=splitSANs(sans)
+		//
+		// Note that with the way token types are identified, an OIDC token with
+		// `sans` claim will never reach this code. We will leave the condition
+		// as it is in case we want it to support it later.
+		if len(sans) == 0 && len(jwt.Payload.SANs) == 0 {
+			if jwt.Payload.Email != "" && strings.EqualFold(subject, jwt.Payload.Email) {
+				subject = jwt.Payload.Subject
+				emails = append(emails, jwt.Payload.Email)
+				if iss, err := url.Parse(jwt.Payload.Issuer); err == nil && iss.Scheme != "" {
+					iss.Fragment = jwt.Payload.Subject
+					uris = append(uris, iss)
+				}
+			} else {
+				dnsNames, ips, emails, uris = splitSANs([]string{subject})
+			}
 		}
-		subject = jwt.Payload.Subject
 	case token.K8sSA:
 		// Use subject from command line. K8sSA tokens are multi-use so the
 		// subject of the token is not necessarily related to the requested
@@ -332,7 +351,7 @@ func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email
 	var unique []string
 	for _, sans := range args {
 		for _, san := range sans {
-			if ok := m[san]; !ok {
+			if ok := m[san]; !ok && san != "" {
 				m[san] = true
 				unique = append(unique, san)
 			}
