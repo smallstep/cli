@@ -293,6 +293,10 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		// email then CN=subject SANs=splitSANs(subject)
 		//
 		// If sans are provided CN=subject SANs=splitSANs(sans)
+		//
+		// Note that with the way token types are identified, an OIDC token with
+		// `sans` claim will never reach this code. We will leave the condition
+		// as it is in case we want it to support it later.
 		if len(sans) == 0 && len(jwt.Payload.SANs) == 0 {
 			if jwt.Payload.Email != "" && strings.EqualFold(subject, jwt.Payload.Email) {
 				subject = jwt.Payload.Subject
