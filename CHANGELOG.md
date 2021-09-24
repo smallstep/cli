@@ -6,7 +6,15 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 0.17.3] - DATE
+## [Unreleased - 0.17.4] - DATE
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [0.17.3] - 2021-09-24
 ### Added
 - exit code '2' for file not exists scenarios in 'needs-renewal' commands
 - go 1.17 to github action test matrix
@@ -15,8 +23,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Using go 1.17 to build
 - Have `--dns` behave as string slice flag in `step ca init`
 - The way CSR is created on `step ca certificate` with OIDC to better support of admins
-### Deprecated
-### Removed
 ### Fixed
 - Fix `make bootstrap` failing to get GOPATH and install `golangci-lint`.
 - ipv6 address error in multi-DNS csv `step ca init`
