@@ -207,10 +207,6 @@ func certificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	// Hack to make the flag "password-file" the content of
-	// "provisioner-password-file" so the token command works as expected
-	ctx.Set("password-file", provisionerPasswordFile)
-
 	// Validation
 	switch {
 	case noPassword && !insecure:
