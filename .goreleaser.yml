@@ -123,17 +123,17 @@ release:
 
     #### Linux
 
-    - 📦 [step_linux_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/cli/{{ .Tag }}/step_linux_{{ .Version }}_amd64.tar.gz)
-    - 📦 [step-cli_{{ .Env.DEB_VERSION }}_amd64.deb](https://dl.step.sm/cli/{{ .Tag }}/step-cli_{{ .Env.DEB_VERSION }}_amd64.deb)
+    - 📦 [step_linux_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_linux_{{ .Version }}_amd64.tar.gz)
+    - 📦 [step-cli_{{ .Env.DEB_VERSION }}_amd64.deb](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Env.DEB_VERSION }}_amd64.deb)
 
     #### OSX Darwin
 
-    - 📦 [step_darwin_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/cli/{{ .Tag }}/step_darwin_{{ .Version }}_amd64.tar.gz)
-    - 📦 [step_darwin_{{ .Version }}_arm64.tar.gz](https://dl.step.sm/cli/{{ .Tag }}/step_darwin_{{ .Version }}_arm64.tar.gz)
+    - 📦 [step_darwin_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_darwin_{{ .Version }}_amd64.tar.gz)
+    - 📦 [step_darwin_{{ .Version }}_arm64.tar.gz](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_darwin_{{ .Version }}_arm64.tar.gz)
 
     #### Windows
 
-    - 📦 [step_windows_{{ .Version }}_arm64.zip](https://dl.step.sm/cli/{{ .Tag }}/step_windows_{{ .Version }}_amd64.zip)
+    - 📦 [step_windows_{{ .Version }}_arm64.zip](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_windows_{{ .Version }}_amd64.zip)
 
     For more builds across platforms and architectures see the `Assets` section below.
     And for packaged versions (Homebrew, Scoop, etc.), see our [installation docs](https://smallstep.com/docs/step-cli/installation).
