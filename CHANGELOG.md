@@ -6,12 +6,22 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 0.17.4] - DATE
+## [Unreleased - 0.17.5] - DATE
 ### Added
 ### Changed
 ### Deprecated
 ### Removed
 ### Fixed
+### Security
+
+## [0.17.4] - 2021-09-2028
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+- Bug in step ssh certificate --offline where password-file flag was always set 
+to the value of provisioner-password-file flag.
 ### Security
 
 ## [0.17.3] - 2021-09-24
