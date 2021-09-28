@@ -55,7 +55,7 @@ func NewOfflineCA(ctx *cli.Context, configFile string) (*OfflineCA, error) {
 		return nil, errors.Errorf("error parsing %s: no provisioners found", configFile)
 	}
 
-	if ctx.IsSet("password-file") {
+	if ctx.String("password-file") != "" {
 		passFile := ctx.String("password-file")
 		pass, err := utils.ReadPasswordFromFile(passFile)
 		if err != nil {
