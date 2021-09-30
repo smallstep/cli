@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -121,7 +122,7 @@ func generateOIDCToken(ctx *cli.Context, p *provisioner.OIDC) (string, error) {
 	if ctx.Bool("console") {
 		args = append(args, "--console")
 	}
-	if p.ListenAddress != "" {
+	if p.ListenAddress != "" && os.Getenv("STEP_LISTEN") == "" {
 		args = append(args, "--listen", p.ListenAddress)
 	}
 	out, err := exec.Step(args...)
