@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased - 0.17.5] - DATE
 ### Added
-- Allow override the listen address on OIDC flows when there is an existing
+- Allow override of the listen address on OIDC flows when there is an existing
   value in provisioner configuration.
 - Add a way to set the redirect_uri in an OIDC flow. Allowing to get a
   certificate from containers or environments where it is hard to send traffic
