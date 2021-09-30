@@ -116,6 +116,11 @@ Redirect to a fixed port instead of random one:
 $ step oauth --listen :10000
 '''
 
+Redirect to a fixed url but listen in all the interfaces:
+'''
+$ step oauth --listen 0.0.0.0:10000 --listen-url http://127.0.0.1:10000
+'''
+
 Get just the access token:
 '''
 $ step oauth --bare
@@ -215,6 +220,10 @@ OpenID standard defines the following values, but your provider may support some
 				Name:  "listen",
 				Usage: "Callback listener <address> (e.g. \":10000\")",
 			},
+			cli.StringFlag{
+				Name:  "listen-url",
+				Usage: "The redirect_uri <url> in the authorize request (e.g. \"http://127.0.0.1:10000\")",
+			},
 			cli.BoolFlag{
 				Name:   "implicit",
 				Usage:  "Uses the implicit flow to authenticate the user. Requires **--insecure** and **--client-id** flags.",
@@ -240,13 +249,14 @@ OpenID standard defines the following values, but your provider may support some
 
 func oauthCmd(c *cli.Context) error {
 	opts := &options{
-		Provider:         c.String("provider"),
-		Email:            c.String("email"),
-		Console:          c.Bool("console"),
-		Implicit:         c.Bool("implicit"),
-		CallbackListener: c.String("listen"),
-		TerminalRedirect: c.String("redirect-url"),
-		Browser:          c.String("browser"),
+		Provider:            c.String("provider"),
+		Email:               c.String("email"),
+		Console:             c.Bool("console"),
+		Implicit:            c.Bool("implicit"),
+		CallbackListener:    c.String("listen"),
+		CallbackListenerURL: c.String("listen-url"),
+		TerminalRedirect:    c.String("redirect-url"),
+		Browser:             c.String("browser"),
 	}
 	if err := opts.Validate(); err != nil {
 		return err
@@ -373,13 +383,14 @@ func oauthCmd(c *cli.Context) error {
 }
 
 type options struct {
-	Provider         string
-	Email            string
-	Console          bool
-	Implicit         bool
-	CallbackListener string
-	TerminalRedirect string
-	Browser          string
+	Provider            string
+	Email               string
+	Console             bool
+	Implicit            bool
+	CallbackListener    string
+	CallbackListenerURL string
+	TerminalRedirect    string
+	Browser             string
 }
 
 // Validate validates the options.
@@ -392,29 +403,35 @@ func (o *options) Validate() error {
 			return errors.Wrapf(err, "invalid value '%s' for flag '--listen'", o.CallbackListener)
 		}
 	}
+	if o.CallbackListenerURL != "" {
+		if u, err := url.Parse(o.CallbackListenerURL); err != nil || u.Scheme == "" {
+			return errors.Wrapf(err, "invalid value '%s' for flag '--listen-url'", o.CallbackListenerURL)
+		}
+	}
 	return nil
 }
 
 type oauth struct {
-	provider         string
-	clientID         string
-	clientSecret     string
-	scope            string
-	prompt           string
-	loginHint        string
-	redirectURI      string
-	tokenEndpoint    string
-	authzEndpoint    string
-	userInfoEndpoint string // For testing
-	state            string
-	codeChallenge    string
-	nonce            string
-	implicit         bool
-	CallbackListener string
-	terminalRedirect string
-	browser          string
-	errCh            chan error
-	tokCh            chan *token
+	provider            string
+	clientID            string
+	clientSecret        string
+	scope               string
+	prompt              string
+	loginHint           string
+	redirectURI         string
+	tokenEndpoint       string
+	authzEndpoint       string
+	userInfoEndpoint    string // For testing
+	state               string
+	codeChallenge       string
+	nonce               string
+	implicit            bool
+	CallbackListener    string
+	CallbackListenerURL string
+	terminalRedirect    string
+	browser             string
+	errCh               chan error
+	tokCh               chan *token
 }
 
 func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, prompt string, opts *options) (*oauth, error) {
@@ -436,24 +453,25 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 	switch provider {
 	case "google":
 		return &oauth{
-			provider:         provider,
-			clientID:         clientID,
-			clientSecret:     clientSecret,
-			scope:            scope,
-			prompt:           prompt,
-			authzEndpoint:    "https://accounts.google.com/o/oauth2/v2/auth",
-			tokenEndpoint:    "https://www.googleapis.com/oauth2/v4/token",
-			userInfoEndpoint: "https://www.googleapis.com/oauth2/v3/userinfo",
-			loginHint:        opts.Email,
-			state:            state,
-			codeChallenge:    challenge,
-			nonce:            nonce,
-			implicit:         opts.Implicit,
-			CallbackListener: opts.CallbackListener,
-			terminalRedirect: opts.TerminalRedirect,
-			browser:          opts.Browser,
-			errCh:            make(chan error),
-			tokCh:            make(chan *token),
+			provider:            provider,
+			clientID:            clientID,
+			clientSecret:        clientSecret,
+			scope:               scope,
+			prompt:              prompt,
+			authzEndpoint:       "https://accounts.google.com/o/oauth2/v2/auth",
+			tokenEndpoint:       "https://www.googleapis.com/oauth2/v4/token",
+			userInfoEndpoint:    "https://www.googleapis.com/oauth2/v3/userinfo",
+			loginHint:           opts.Email,
+			state:               state,
+			codeChallenge:       challenge,
+			nonce:               nonce,
+			implicit:            opts.Implicit,
+			CallbackListener:    opts.CallbackListener,
+			CallbackListenerURL: opts.CallbackListenerURL,
+			terminalRedirect:    opts.TerminalRedirect,
+			browser:             opts.Browser,
+			errCh:               make(chan error),
+			tokCh:               make(chan *token),
 		}, nil
 	default:
 		userinfoEp := ""
@@ -474,24 +492,25 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			userinfoEp = d["token_endpoint"].(string)
 		}
 		return &oauth{
-			provider:         provider,
-			clientID:         clientID,
-			clientSecret:     clientSecret,
-			scope:            scope,
-			prompt:           prompt,
-			authzEndpoint:    authzEp,
-			tokenEndpoint:    tokenEp,
-			userInfoEndpoint: userinfoEp,
-			loginHint:        opts.Email,
-			state:            state,
-			codeChallenge:    challenge,
-			nonce:            nonce,
-			implicit:         opts.Implicit,
-			CallbackListener: opts.CallbackListener,
-			terminalRedirect: opts.TerminalRedirect,
-			browser:          opts.Browser,
-			errCh:            make(chan error),
-			tokCh:            make(chan *token),
+			provider:            provider,
+			clientID:            clientID,
+			clientSecret:        clientSecret,
+			scope:               scope,
+			prompt:              prompt,
+			authzEndpoint:       authzEp,
+			tokenEndpoint:       tokenEp,
+			userInfoEndpoint:    userinfoEp,
+			loginHint:           opts.Email,
+			state:               state,
+			codeChallenge:       challenge,
+			nonce:               nonce,
+			implicit:            opts.Implicit,
+			CallbackListener:    opts.CallbackListener,
+			CallbackListenerURL: opts.CallbackListenerURL,
+			terminalRedirect:    opts.TerminalRedirect,
+			browser:             opts.Browser,
+			errCh:               make(chan error),
+			tokCh:               make(chan *token),
 		}, nil
 	}
 }
@@ -545,7 +564,7 @@ func (o *oauth) NewServer() (*httptest.Server, error) {
 	}
 	srv.Start()
 
-	// Update host to use for example localhost
+	// Update server url to use for example http://localhost:port
 	if host != "127.0.0.1" {
 		_, p, err := net.SplitHostPort(l.Addr().String())
 		if err != nil {
@@ -565,7 +584,12 @@ func (o *oauth) DoLoopbackAuthorization() (*token, error) {
 	if err != nil {
 		return nil, err
 	}
-	o.redirectURI = srv.URL
+	// Update server url if --listen-url is set
+	if o.CallbackListenerURL != "" {
+		o.redirectURI = o.CallbackListenerURL
+	} else {
+		o.redirectURI = srv.URL
+	}
 	defer srv.Close()
 
 	// Get auth url and open it in a browser
