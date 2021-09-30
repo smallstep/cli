@@ -116,7 +116,7 @@ Redirect to a fixed port instead of random one:
 $ step oauth --listen :10000
 '''
 
-Redirect to a fixed url but listen in all the interfaces:
+Redirect to a fixed url but listen on all the interfaces:
 '''
 $ step oauth --listen 0.0.0.0:10000 --listen-url http://127.0.0.1:10000
 '''
