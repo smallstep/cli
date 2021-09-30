@@ -114,8 +114,6 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return errs.IncompatibleFlagWithFlag(ctx, "roots", "roots")
 	case team != "" && isFederation:
 		return errs.IncompatibleFlagWithFlag(ctx, "roots", "federation")
-	case team != "" && len(sets) > 0:
-		return errs.IncompatibleFlagWithFlag(ctx, "roots", "set")
 	case isRoots && isFederation:
 		return errs.IncompatibleFlagWithFlag(ctx, "roots", "federation")
 	case isRoots && len(sets) > 0:
