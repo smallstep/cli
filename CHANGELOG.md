@@ -6,7 +6,15 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 0.17.5] - DATE
+## [Unreleased - 0.17.7] - 2021-09-28
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [0.17.6] - 2021-09-28
 ### Added
 - Allow override of the listen address on OIDC flows when there is an existing
   value in provisioner configuration.
@@ -14,6 +22,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   certificate from containers or environments where it is hard to send traffic
   to 127.0.0.1 and where the IDP does not support the urn:ietf:wg:oauth:2.0:oob
   flow.
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [0.17.5] - 2021-09-28
+### Added
 ### Changed
 ### Deprecated
 ### Removed
