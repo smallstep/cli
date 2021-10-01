@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 ### Security
 
-## [0.17.6] - 2021-09-28
+## [0.17.6] - 2021-10-01
 ### Added
 - Allow override of the listen address on OIDC flows when there is an existing
   value in provisioner configuration.
