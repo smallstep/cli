@@ -208,7 +208,7 @@ jobs:
           cp ./output/binary/darwin/bin/step ./.releases/step-darwin-${{ needs.create_release.outputs.version }}
           cp ./output/binary/darwin/bin/step ./.releases/step-darwin-latest
           cp ./output/binary/windows/bin/step ./.releases/step-windows-${{ needs.create_release.outputs.version }}.exe
-          cp ./output/binary/darwin/bin/step ./.releases/step-windows-latest.exe
+          cp ./output/binary/windows/bin/step ./.releases/step-windows-latest.exe
       -
         name: Upload s3
         id: upload-s3
