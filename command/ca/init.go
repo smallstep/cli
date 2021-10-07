@@ -170,11 +170,11 @@ func initAction(ctx *cli.Context) (err error) {
 	helm := ctx.Bool("helm")
 
 	switch {
-	case len(root) > 0 && key == "":
+	case root != "" && key == "":
 		return errs.RequiredWithFlag(ctx, "root", "key")
-	case root == "" && len(key) > 0:
+	case root == "" && key != "":
 		return errs.RequiredWithFlag(ctx, "key", "root")
-	case len(root) > 0 && len(key) > 0:
+	case root != "" && key != "":
 		if rootCrt, err = pemutil.ReadCertificate(root); err != nil {
 			return err
 		}

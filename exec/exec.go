@@ -175,7 +175,8 @@ func run(name string, arg ...string) (*exec.Cmd, chan int, error) {
 
 func getExitStatus(cmd *exec.Cmd) int {
 	if cmd.ProcessState != nil {
-		// nolint:gocritic // allow single case switch for typeof check
+		// ignore single conditional in switch warning
+		// nolint:gocritic
 		switch sys := cmd.ProcessState.Sys().(type) {
 		case syscall.WaitStatus:
 			return sys.ExitStatus()
@@ -208,8 +209,8 @@ func signalHandler(cmd *exec.Cmd, exitCh chan int) {
 		case sig := <-signals:
 			cmd.Process.Signal(sig)
 		case code := <-exitCh:
-			// nolint:gocritic // ignore exitAfterDefer error because the defer
-			// is required for recovery.
+			// ignore exitAfterDefer error - defer is required for recovery.
+			// nolint:gocritic
 			os.Exit(code)
 		}
 	}

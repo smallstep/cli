@@ -108,7 +108,6 @@ func fingerprintAction(ctx *cli.Context) error {
 		return err
 	}
 
-	// nolint:gocritic // avoid switch statement suggestion
 	switch addr, isURL, err := trimURL(crtFile); {
 	case err != nil:
 		return err

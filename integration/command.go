@@ -59,7 +59,7 @@ type CLICommand struct {
 }
 
 // CLIOutput represents the output from executing a CLICommand.
-// nolint:unused // this code block is unused
+// nolint:unused
 type CLIOutput struct {
 	stdout   string
 	stderr   string
