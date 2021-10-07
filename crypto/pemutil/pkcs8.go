@@ -252,7 +252,7 @@ func MarshalPKIXPublicKey(pub interface{}) ([]byte, error) {
 			Bytes:     p,
 			BitLength: 8 * len(p),
 		}
-		return asn1.Marshal(p)
+		return asn1.Marshal(pki)
 	default:
 		return nil, errors.Errorf("x509: unknown public key type: %T", pub)
 	}
