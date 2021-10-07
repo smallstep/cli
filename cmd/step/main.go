@@ -111,6 +111,8 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 			}
 		}
+		// nolint:gocritic // ignore exitAfterDefer error because the defer
+		// is required for recovery.
 		os.Exit(1)
 	}
 }

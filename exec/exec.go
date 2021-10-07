@@ -208,6 +208,8 @@ func signalHandler(cmd *exec.Cmd, exitCh chan int) {
 		case sig := <-signals:
 			cmd.Process.Signal(sig)
 		case code := <-exitCh:
+			// nolint:gocritic // ignore exitAfterDefer error because the defer
+			// is required for recovery.
 			os.Exit(code)
 		}
 	}
