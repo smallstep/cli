@@ -82,15 +82,15 @@ func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.
 	}
 	// Prepare client for bootstrap or provisioning tokens
 	if len(jwt.Payload.SHA) > 0 && len(jwt.Payload.Audience) > 0 && strings.HasPrefix(strings.ToLower(jwt.Payload.Audience[0]), "http") {
-		if len(caURL) == 0 {
+		if caURL == "" {
 			caURL = jwt.Payload.Audience[0]
 		}
 		options = append(options, ca.WithRootSHA256(jwt.Payload.SHA))
 	} else {
-		if len(caURL) == 0 {
+		if caURL == "" {
 			return nil, errs.RequiredFlag(ctx, "ca-url")
 		}
-		if len(root) == 0 {
+		if root == "" {
 			root = pki.GetRootCAPath()
 			if _, err := os.Stat(root); err != nil {
 				return nil, errs.RequiredFlag(ctx, "root")
@@ -115,12 +115,12 @@ func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return "", err
-	} else if len(caURL) == 0 {
+	} else if caURL == "" {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
 	}
 
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return "", errs.RequiredUnlessFlag(ctx, "root", "token")
@@ -148,12 +148,12 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, typ
 	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return "", err
-	} else if len(caURL) == 0 {
+	} else if caURL == "" {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
 	}
 
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return "", errs.RequiredUnlessFlag(ctx, "root", "token")
@@ -177,7 +177,7 @@ func (f *CertificateFlow) GenerateIdentityToken(ctx *cli.Context) (string, error
 		return "", err
 	}
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return "", errs.RequiredFlag(ctx, "root")
@@ -187,8 +187,8 @@ func (f *CertificateFlow) GenerateIdentityToken(ctx *cli.Context) (string, error
 }
 
 // Sign signs the CSR using the online or the offline certificate authority.
-func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {
-	client, err := f.GetClient(ctx, token)
+func (f *CertificateFlow) Sign(ctx *cli.Context, tok string, csr api.CertificateRequest, crtFile string) error {
+	client, err := f.GetClient(ctx, tok)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 
 	req := &api.SignRequest{
 		CsrPEM:       csr,
-		OTT:          token,
+		OTT:          tok,
 		NotBefore:    notBefore,
 		NotAfter:     notAfter,
 		TemplateData: templateData,

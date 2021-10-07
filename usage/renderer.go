@@ -121,7 +121,7 @@ func (r *Renderer) renderParagraphKeepBreaks(buf *bytes.Buffer) {
 }
 
 func (r *Renderer) renderParagraphBreakLines(buf *bytes.Buffer, maxlen int) {
-	maxlen = maxlen - r.depth
+	maxlen -= r.depth
 	scanner := bufio.NewScanner(buf)
 	scanner.Split(bufio.ScanWords)
 	line := []string{}
@@ -131,13 +131,14 @@ func (r *Renderer) renderParagraphBreakLines(buf *bytes.Buffer, maxlen int) {
 		wordLength := len(stripColors([]byte(word)))
 		// Print the line if we've got a collection of words over 80 characters, or if
 		// we have a single word that is over 80 characters on an otherwise empty line.
-		if length+wordLength > maxlen {
+		switch {
+		case length+wordLength > maxlen:
 			r.printf(strings.Repeat(" ", r.depth)+"%s\n", strings.Join(line, " "))
 			line = []string{word}
 			length = wordLength
-		} else if length == 0 && wordLength > maxlen {
+		case length == 0 && wordLength > maxlen:
 			r.printf(strings.Repeat(" ", r.depth)+"%s\n", word)
-		} else {
+		default:
 			line = append(line, word)
 			length += wordLength + 1 // Plus one for space
 		}
@@ -262,11 +263,11 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 			}
 			r.listdepth--
 			r.list = r.list.parent
-			//r.printf(":list]")
+			// r.printf(":list]")
 		}
 	case md.Item:
 		incdepth := 4
-		//ltype := "normal"
+		// ltype := "normal"
 		if node.ListFlags&md.ListTypeTerm != 0 {
 			// Nested definition list terms get indented two spaces. Non-nested
 			// definition list terms are not indented.
@@ -275,14 +276,14 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 			} else {
 				incdepth = 0
 			}
-			//ltype = "dt"
+			// ltype = "dt"
 		} else if node.ListFlags&md.ListTypeDefinition != 0 {
 			incdepth = 4
-			//ltype = "dd"
+			// ltype = "dd"
 		}
 
 		if entering {
-			//fmt.Fprintf(out, "[list item %s:", ltype)
+			// fmt.Fprintf(out, "[list item %s:", ltype)
 			r.depth += incdepth
 			if r.listdepth > 1 && r.list.isDefinition() {
 				r.capture(RenderModeKeepBreaks)
@@ -293,7 +294,7 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 				r.list.items = append(r.list.items, item{node.ListFlags, nil, nil})
 			}
 		} else {
-			//fmt.Fprintf(out, ":list item]")
+			// fmt.Fprintf(out, ":list item]")
 			r.depth -= incdepth
 			buf := r.finishCapture()
 			if r.list.isDefinition() && node.ListFlags&md.ListTypeTerm == 0 {
@@ -359,8 +360,8 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 		r.printf("unknown block %s:", node.Type)
 		r.write(node.Literal)
 	}
-	//w.Write([]byte(fmt.Sprintf("node<%s; %t>", node.Type, entering)))
-	//w.Write(node.Literal)
+	// w.Write([]byte(fmt.Sprintf("node<%s; %t>", node.Type, entering)))
+	// w.Write(node.Literal)
 	return md.GoToNext
 }
 

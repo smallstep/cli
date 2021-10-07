@@ -154,7 +154,7 @@ Cloud.`,
 }
 
 func initAction(ctx *cli.Context) (err error) {
-	if err = assertCryptoRand(); err != nil {
+	if err := assertCryptoRand(); err != nil {
 		return err
 	}
 
@@ -170,9 +170,9 @@ func initAction(ctx *cli.Context) (err error) {
 	helm := ctx.Bool("helm")
 
 	switch {
-	case len(root) > 0 && len(key) == 0:
+	case len(root) > 0 && key == "":
 		return errs.RequiredWithFlag(ctx, "root", "key")
-	case len(root) == 0 && len(key) > 0:
+	case root == "" && len(key) > 0:
 		return errs.RequiredWithFlag(ctx, "key", "root")
 	case len(root) > 0 && len(key) > 0:
 		if rootCrt, err = pemutil.ReadCertificate(root); err != nil {
@@ -379,7 +379,7 @@ func initAction(ctx *cli.Context) (err error) {
 		dnsValue = strings.Replace(dnsValue, " ", ",", -1)
 		parts := strings.Split(dnsValue, ",")
 		for _, name := range parts {
-			if len(name) == 0 {
+			if name == "" {
 				continue
 			}
 			if err := dnsValidator(name); err != nil {
@@ -457,11 +457,11 @@ func initAction(ctx *cli.Context) (err error) {
 	if !pkiOnly && deploymentType == pki.StandaloneDeployment {
 		// Generate provisioner key pairs.
 		if len(provisionerPassword) > 0 {
-			if err = p.GenerateKeyPairs(provisionerPassword); err != nil {
+			if err := p.GenerateKeyPairs(provisionerPassword); err != nil {
 				return err
 			}
 		} else {
-			if err = p.GenerateKeyPairs(pass); err != nil {
+			if err := p.GenerateKeyPairs(pass); err != nil {
 				return err
 			}
 		}
@@ -481,7 +481,7 @@ func initAction(ctx *cli.Context) (err error) {
 		} else {
 			ui.Printf("Copying root certificate... ")
 			// Do not copy key in STEPPATH
-			if err = p.WriteRootCertificate(rootCrt, nil, nil); err != nil {
+			if err := p.WriteRootCertificate(rootCrt, nil, nil); err != nil {
 				return err
 			}
 			root = p.CreateCertificateAuthorityResponse(rootCrt, rootKey)
@@ -496,11 +496,9 @@ func initAction(ctx *cli.Context) (err error) {
 			return err
 		}
 		ui.Println("done!")
-	} else {
+	} else if err := p.GetCertificateAuthority(); err != nil {
 		// Attempt to get the root certificate from RA.
-		if err := p.GetCertificateAuthority(); err != nil {
-			return err
-		}
+		return err
 	}
 
 	if ctx.Bool("ssh") {

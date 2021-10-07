@@ -66,6 +66,7 @@ func SplitSANs(sans []string) (dnsNames []string, ips []net.IP, emails []string,
 		return
 	}
 	for _, san := range sans {
+		// nolint:gocritic // avoid switch statement suggestion
 		if ip := net.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
 		} else if u, err := url.Parse(san); err == nil && u.Scheme != "" {

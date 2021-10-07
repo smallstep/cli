@@ -102,6 +102,7 @@ func (report *Report) processNode(node *html.Node) (string, *html.Node) {
 	text := ""
 	current := node.NextSibling
 
+	// nolint
 	r, _ := regexp.Compile("<[^>]*>")
 
 	for current != nil {

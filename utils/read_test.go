@@ -22,9 +22,9 @@ func (r *mockReader) Read(p []byte) (int, error) {
 }
 
 // Helper function for setting os.Stdin for mocking in tests.
-func setStdin(new *os.File) (cleanup func()) {
+func setStdin(f *os.File) (cleanup func()) {
 	old := stdin
-	stdin = new
+	stdin = f
 	return func() { stdin = old }
 }
 

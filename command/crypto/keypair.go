@@ -93,7 +93,7 @@ existing <jwk-file> instead of creating a new key.`,
 }
 
 func createAction(ctx *cli.Context) (err error) {
-	if err = errs.NumberOfArguments(ctx, 2); err != nil {
+	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
 

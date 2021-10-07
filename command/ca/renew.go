@@ -207,12 +207,12 @@ func renewCertificateAction(ctx *cli.Context) error {
 	execCmd := ctx.String("exec")
 
 	outFile := ctx.String("out")
-	if len(outFile) == 0 {
+	if outFile == "" {
 		outFile = certFile
 	}
 
 	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
+	if rootFile == "" {
 		rootFile = pki.GetRootCAPath()
 	}
 

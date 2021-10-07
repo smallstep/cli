@@ -204,9 +204,11 @@ func inspectAction(ctx *cli.Context) error {
 
 	var block *pem.Block
 	var blocks []*pem.Block
-	if addr, isURL, err := trimURL(crtFile); err != nil {
+
+	switch addr, isURL, err := trimURL(crtFile); {
+	case err != nil:
 		return err
-	} else if isURL {
+	case isURL:
 		peerCertificates, err := getPeerCertificates(addr, serverName, roots, insecure)
 		if err != nil {
 			return err
@@ -217,7 +219,7 @@ func inspectAction(ctx *cli.Context) error {
 				Bytes: crt.Raw,
 			})
 		}
-	} else {
+	default: // is not URL
 		crtBytes, err := utils.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)

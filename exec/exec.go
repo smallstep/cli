@@ -100,7 +100,7 @@ func RunWithPid(pidFile, name string, arg ...string) {
 }
 
 // OpenInBrowser opens the given url on a web browser
-func OpenInBrowser(url string, browser string) error {
+func OpenInBrowser(url, browser string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
@@ -132,10 +132,10 @@ func Step(args ...string) ([]byte, error) {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = &stdout
 
-	if err := cmd.Start(); nil != err {
+	if err := cmd.Start(); err != nil {
 		return nil, errors.Wrapf(err, "error starting: %s %s", os.Args[0], strings.Join(args, " "))
 	}
-	if err := cmd.Wait(); nil != err {
+	if err := cmd.Wait(); err != nil {
 		return nil, errors.Wrapf(err, "error running: %s %s", os.Args[0], strings.Join(args, " "))
 	}
 
@@ -175,6 +175,7 @@ func run(name string, arg ...string) (*exec.Cmd, chan int, error) {
 
 func getExitStatus(cmd *exec.Cmd) int {
 	if cmd.ProcessState != nil {
+		// nolint:gocritic // allow single case switch for typeof check
 		switch sys := cmd.ProcessState.Sys().(type) {
 		case syscall.WaitStatus:
 			return sys.ExitStatus()

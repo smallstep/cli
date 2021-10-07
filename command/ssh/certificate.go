@@ -255,7 +255,7 @@ func certificateAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	if len(token) == 0 {
+	if token == "" {
 		if token, err = flow.GenerateSSHToken(ctx, subject, tokType, principals, validAfter, validBefore); err != nil {
 			return err
 		}

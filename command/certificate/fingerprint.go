@@ -108,14 +108,16 @@ func fingerprintAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if addr, isURL, err := trimURL(crtFile); err != nil {
+	// nolint:gocritic // avoid switch statement suggestion
+	switch addr, isURL, err := trimURL(crtFile); {
+	case err != nil:
 		return err
-	} else if isURL {
+	case isURL:
 		certs, err = getPeerCertificates(addr, serverName, roots, insecure)
 		if err != nil {
 			return err
 		}
-	} else {
+	default:
 		certs, err = pemutil.ReadCertificateBundle(crtFile)
 		if err != nil {
 			return err

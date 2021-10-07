@@ -152,9 +152,9 @@ func verifyAction(ctx *cli.Context) error {
 	aud := ctx.String("aud")
 	if !isSubtle {
 		switch {
-		case len(iss) == 0:
+		case iss == "":
 			return errs.RequiredUnlessSubtleFlag(ctx, "iss")
-		case len(aud) == 0:
+		case aud == "":
 			return errs.RequiredUnlessSubtleFlag(ctx, "aud")
 		}
 	}
@@ -259,26 +259,26 @@ func verifyAction(ctx *cli.Context) error {
 // validateClaimsWithLeeway is a custom implementation of go-jose
 // jwt.Claims.ValidateWithLeeway that returns all the errors found.
 func validateClaimsWithLeeway(ctx *cli.Context, c jose.Claims, e jose.Expected, t timeClaims, leeway time.Duration) error {
-	var errs []string
+	var ers []string
 
 	if e.Issuer != "" && e.Issuer != c.Issuer {
-		errs = append(errs, "invalid issuer claim (iss)")
+		ers = append(ers, "invalid issuer claim (iss)")
 	}
 
 	// we're not currently checking the subject
 	if e.Subject != "" && e.Subject != c.Subject {
-		errs = append(errs, "invalid subject subject (sub)")
+		ers = append(ers, "invalid subject subject (sub)")
 	}
 
 	// we're not currently checking the id
 	if e.ID != "" && e.ID != c.ID {
-		errs = append(errs, "invalid ID claim (jti)")
+		ers = append(ers, "invalid ID claim (jti)")
 	}
 
 	if len(e.Audience) != 0 {
 		for _, v := range e.Audience {
 			if !c.Audience.Contains(v) {
-				errs = append(errs, "invalid audience claim (aud)")
+				ers = append(ers, "invalid audience claim (aud)")
 				break
 			}
 		}
@@ -287,19 +287,19 @@ func validateClaimsWithLeeway(ctx *cli.Context, c jose.Claims, e jose.Expected, 
 	// Only if nbf is defined, just in case is tested in time <0 :)
 	if t.NotBefore != nil {
 		if !e.Time.IsZero() && e.Time.Add(leeway).Before(c.NotBefore.Time()) {
-			errs = append(errs, "token not valid yet (nbf)")
+			ers = append(ers, "token not valid yet (nbf)")
 		}
 	}
 
 	// Only if exp is defined and no-exp-check is not used
 	if t.Expiry != nil && !ctx.Bool("no-exp-check") {
 		if !e.Time.IsZero() && e.Time.Add(-leeway).After(c.Expiry.Time()) {
-			errs = append(errs, fmt.Sprintf("token is expired by %s (exp)", e.Time.Sub(c.Expiry.Time()).Round(time.Millisecond)))
+			ers = append(ers, fmt.Sprintf("token is expired by %s (exp)", e.Time.Sub(c.Expiry.Time()).Round(time.Millisecond)))
 		}
 	}
 
-	if len(errs) > 0 {
-		return errors.Errorf("validation failed: %s", strings.Join(errs, ", "))
+	if len(ers) > 0 {
+		return errors.Errorf("validation failed: %s", strings.Join(ers, ", "))
 	}
 
 	return nil

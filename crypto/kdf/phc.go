@@ -54,7 +54,7 @@ func phcEncode(identifier, params string, salt, hash []byte) string {
 }
 
 // phcDecode returns the different parts of a PHC encoded string.
-func phcDecode(s string) (id string, version int, params string, salt []byte, hash []byte, err error) {
+func phcDecode(s string) (id string, version int, params string, salt, hash []byte, err error) {
 	subs := strings.SplitN(s, "$", 6)
 	if subs[0] != "" || len(subs) < 2 || (subs[1] == bcryptHash && len(subs) != 4) {
 		return "", 0, "", nil, nil, errors.New("cannot decode password hash")

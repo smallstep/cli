@@ -314,7 +314,7 @@ func oauthCmd(c *cli.Context) error {
 			tokenEp = details["token_uri"].(string)
 			clientID = details["client_id"].(string)
 			clientSecret = details["client_secret"].(string)
-		} else if accountType, ok := account["type"]; ok && "service_account" == accountType {
+		} else if accountType, ok := account["type"]; ok && accountType == "service_account" {
 			authzEp = account["auth_uri"].(string)
 			tokenEp = account["token_uri"].(string)
 			clientID = account["private_key_id"].(string)
@@ -341,15 +341,16 @@ func oauthCmd(c *cli.Context) error {
 	}
 
 	var tok *token
-	if do2lo {
+	switch {
+	case do2lo:
 		if c.Bool("jwt") {
 			tok, err = o.DoJWTAuthorization(issuer, scope)
 		} else {
 			tok, err = o.DoTwoLeggedAuthorization(issuer)
 		}
-	} else if opts.Console {
+	case opts.Console:
 		tok, err = o.DoManualAuthorization()
-	} else {
+	default:
 		tok, err = o.DoLoopbackAuthorization()
 	}
 
@@ -434,7 +435,7 @@ type oauth struct {
 	tokCh               chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, prompt string, opts *options) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt string, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -516,28 +517,28 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 }
 
 func disco(provider string) (map[string]interface{}, error) {
-	url, err := url.Parse(provider)
+	u, err := url.Parse(provider)
 	if err != nil {
 		return nil, err
 	}
 	// TODO: OIDC and OAuth specify two different ways of constructing this
 	// URL. This is the OIDC way. Probably want to try both. See
 	// https://tools.ietf.org/html/rfc8414#section-5
-	if !strings.Contains(url.Path, "/.well-known/openid-configuration") {
-		url.Path = path.Join(url.Path, "/.well-known/openid-configuration")
+	if !strings.Contains(u.Path, "/.well-known/openid-configuration") {
+		u.Path = path.Join(u.Path, "/.well-known/openid-configuration")
 	}
-	resp, err := http.Get(url.String())
+	resp, err := http.Get(u.String())
 	if err != nil {
-		return nil, errors.Wrapf(err, "error retrieving %s", url.String())
+		return nil, errors.Wrapf(err, "error retrieving %s", u.String())
 	}
 	defer resp.Body.Close()
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error retrieving %s", url.String())
+		return nil, errors.Wrapf(err, "error retrieving %s", u.String())
 	}
 	details := make(map[string]interface{})
 	if err = json.Unmarshal(b, &details); err != nil {
-		return nil, errors.Wrapf(err, "error reading %s: unsupported format", url.String())
+		return nil, errors.Wrapf(err, "error reading %s: unsupported format", u.String())
 	}
 	return details, err
 }

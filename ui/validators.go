@@ -12,7 +12,7 @@ import (
 // empty.
 func NotEmpty() promptui.ValidateFunc {
 	return func(s string) error {
-		if len(strings.TrimSpace(s)) == 0 {
+		if strings.TrimSpace(s) == "" {
 			return fmt.Errorf("value is empty")
 		}
 		return nil
@@ -45,7 +45,7 @@ func IPAddress() promptui.ValidateFunc {
 // DNS name.
 func DNS() promptui.ValidateFunc {
 	return func(s string) error {
-		if len(strings.TrimSpace(s)) == 0 {
+		if strings.TrimSpace(s) == "" {
 			return fmt.Errorf("value is empty")
 		}
 		if _, _, err := net.SplitHostPort(s + ":443"); err != nil {

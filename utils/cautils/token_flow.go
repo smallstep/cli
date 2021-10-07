@@ -186,9 +186,9 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 	// Require issuer and keyFile if ca.json does not exists.
 	// kid can be passed or created using jwk.Thumbprint.
 	switch {
-	case len(issuer) == 0:
+	case issuer == "":
 		return "", errs.RequiredWithFlag(ctx, "offline", "issuer")
-	case len(ctx.String("key")) == 0:
+	case ctx.String("key") == "":
 		return "", errs.RequiredWithFlag(ctx, "offline", "key")
 	}
 
@@ -200,7 +200,7 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 
 	// Get root from argument or default location
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if utils.FileExists(root) {
 			return "", errs.RequiredFlag(ctx, "root")
@@ -271,7 +271,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	}
 
 	// Filter by kid
-	if kid := ctx.String("kid"); len(kid) != 0 {
+	if kid := ctx.String("kid"); kid != "" {
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			switch p := p.(type) {
 			case *provisioner.JWK:
@@ -288,7 +288,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	}
 
 	// Filter by issuer (provisioner name)
-	if issuer := ctx.String("issuer"); len(issuer) != 0 {
+	if issuer := ctx.String("issuer"); issuer != "" {
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			return p.GetName() == issuer
 		})
@@ -298,7 +298,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	}
 
 	// Filter by admin-provisioner (provisioner name)
-	if issuer := ctx.String("admin-provisioner"); len(issuer) != 0 {
+	if issuer := ctx.String("admin-provisioner"); issuer != "" {
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			return p.GetName() == issuer
 		})

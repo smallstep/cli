@@ -454,13 +454,14 @@ func TestSerialize(t *testing.T) {
 		assert.FatalError(t, err)
 
 		var p *pem.Block
-		if test.pass == "" && test.file == "" {
+		switch {
+		case test.pass == "" && test.file == "":
 			p, err = Serialize(in)
-		} else if test.pass != "" && test.file != "" {
+		case test.pass != "" && test.file != "":
 			p, err = Serialize(in, WithPassword([]byte(test.pass)), ToFile(test.file, 0600))
-		} else if test.pass != "" {
+		case test.pass != "":
 			p, err = Serialize(in, WithPassword([]byte(test.pass)))
-		} else {
+		default:
 			p, err = Serialize(in, ToFile(test.file, 0600))
 		}
 

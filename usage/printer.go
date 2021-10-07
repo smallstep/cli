@@ -18,8 +18,6 @@ var sectionNameRe = regexp.MustCompile(`(?m:^## [^\n]+)`)
 var indentRe = regexp.MustCompile(`(?m:^:[^\n]+)`)
 var definitionListRe = regexp.MustCompile(`(?m:^[\t ]+\*\*[^\*]+\*\*[^\n]*\s+:[^\n]+)`)
 
-//var sectionRe = regexp.MustCompile(`^## [^\n]*$`)
-
 type frontmatterData struct {
 	Data     interface{}
 	Parent   string
@@ -44,7 +42,7 @@ func htmlHelpPrinter(w io.Writer, templ string, data interface{}) []byte {
 	return html
 }
 
-func markdownHelpPrinter(w io.Writer, templ string, parent string, data interface{}) {
+func markdownHelpPrinter(w io.Writer, templ, parent string, data interface{}) {
 	b := helpPreprocessor(w, templ, data, true)
 
 	frontmatter := frontmatterData{
@@ -89,8 +87,6 @@ menu:
 func helpPreprocessor(w io.Writer, templ string, data interface{}, applyRx bool) []byte {
 	buf := new(bytes.Buffer)
 	cli.HelpPrinterCustom(buf, templ, data, nil)
-	//w.Write(buf.Bytes())
-	// s := string(markdownify(buf.Bytes()))
 	s := markdownify(buf)
 	// Move the OPTIONS section to the right place. urfave puts them at the end
 	// of the file, we want them to be after POSITIONAL ARGUMENTS, DESCRIPTION,
@@ -111,7 +107,7 @@ func helpPreprocessor(w io.Writer, templ string, data interface{}, applyRx bool)
 				s = s[:newLoc] + options + s[newLoc:]
 			} else {
 				// Keep it at the end I guess :/.
-				s = s + options
+				s += options
 			}
 		}
 	}
@@ -216,13 +212,11 @@ func markdownify(r *bytes.Buffer) string {
 			if last == escapeByte {
 				w.WriteByte(escapeByte)
 				b = 0
-			} else {
-				if n, _, err := r.ReadRune(); err == nil {
-					if unicode.IsSpace(n) {
-						w.WriteByte(escapeByte)
-					}
-					r.UnreadRune()
+			} else if n, _, err := r.ReadRune(); err == nil {
+				if unicode.IsSpace(n) {
+					w.WriteByte(escapeByte)
 				}
+				r.UnreadRune()
 			}
 		case 0: // probably because io.EOF
 		default:

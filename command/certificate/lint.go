@@ -103,9 +103,10 @@ func lintAction(ctx *cli.Context) error {
 		insecure   = ctx.Bool("insecure")
 		block      *pem.Block
 	)
-	if addr, isURL, err := trimURL(crtFile); err != nil {
+	switch addr, isURL, err := trimURL(crtFile); {
+	case err != nil:
 		return err
-	} else if isURL {
+	case isURL:
 		peerCertificates, err := getPeerCertificates(addr, serverName, roots, insecure)
 		if err != nil {
 			return err
@@ -115,7 +116,7 @@ func lintAction(ctx *cli.Context) error {
 			Type:  "CERTIFICATE",
 			Bytes: crt.Raw,
 		}
-	} else {
+	default: // is not URL
 		crtBytes, err := ioutil.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)

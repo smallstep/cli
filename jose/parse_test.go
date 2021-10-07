@@ -176,7 +176,7 @@ func TestGuessJWKAlgorithm(t *testing.T) {
 	assert.FatalError(t, err)
 	p521, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	assert.FatalError(t, err)
-	rsa, err := rsa.GenerateKey(rand.Reader, 2048)
+	rsak, err := rsa.GenerateKey(rand.Reader, 2048)
 	assert.FatalError(t, err)
 	edPub, edPriv, err := ed25519.GenerateKey(rand.Reader)
 	assert.FatalError(t, err)
@@ -194,12 +194,12 @@ func TestGuessJWKAlgorithm(t *testing.T) {
 		{&JSONWebKey{Key: p256.Public(), Use: ""}, ES256},
 		{&JSONWebKey{Key: p384.Public(), Use: "sig"}, ES384},
 		{&JSONWebKey{Key: p521.Public(), Use: "enc"}, "ECDH-ES"},
-		{&JSONWebKey{Key: rsa, Use: ""}, RS256},
-		{&JSONWebKey{Key: rsa, Use: "sig"}, RS256},
-		{&JSONWebKey{Key: rsa, Use: "enc"}, "RSA-OAEP-256"},
-		{&JSONWebKey{Key: rsa.Public(), Use: ""}, RS256},
-		{&JSONWebKey{Key: rsa.Public(), Use: "sig"}, RS256},
-		{&JSONWebKey{Key: rsa.Public(), Use: "enc"}, "RSA-OAEP-256"},
+		{&JSONWebKey{Key: rsak, Use: ""}, RS256},
+		{&JSONWebKey{Key: rsak, Use: "sig"}, RS256},
+		{&JSONWebKey{Key: rsak, Use: "enc"}, "RSA-OAEP-256"},
+		{&JSONWebKey{Key: rsak.Public(), Use: ""}, RS256},
+		{&JSONWebKey{Key: rsak.Public(), Use: "sig"}, RS256},
+		{&JSONWebKey{Key: rsak.Public(), Use: "enc"}, "RSA-OAEP-256"},
 		{&JSONWebKey{Key: edPub, Use: ""}, EdDSA},
 		{&JSONWebKey{Key: edPub, Use: "sig"}, EdDSA},
 		{&JSONWebKey{Key: edPriv, Use: ""}, EdDSA},

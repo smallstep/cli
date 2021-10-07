@@ -16,7 +16,7 @@ func healthCommand() cli.Command {
 		Name:   "health",
 		Action: healthAction,
 		Usage:  "get the status of the CA",
-		UsageText: `**step ca health** 
+		UsageText: `**step ca health**
 [**--ca-url**=<URI>] [**--root**=<file>]`,
 		Description: `**step ca health** makes an API request to the /health
 endpoint of the Step CA to check if it is running. If the CA is healthy, the
@@ -62,7 +62,7 @@ func healthAction(ctx *cli.Context) error {
 
 	root := ctx.String("root")
 	// Prepare client for bootstrap or provisioning tokens
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return errs.RequiredFlag(ctx, "root")
