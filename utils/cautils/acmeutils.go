@@ -28,7 +28,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-func startHTTPServer(addr string, token string, keyAuth string) *http.Server {
+func startHTTPServer(addr, token, keyAuth string) *http.Server {
 	srv := &http.Server{Addr: addr}
 
 	http.HandleFunc(fmt.Sprintf("/.well-known/acme-challenge/%s", token), func(w http.ResponseWriter, r *http.Request) {
@@ -327,7 +327,7 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 	switch {
 	case isStandalone && len(webroot) > 0:
 		return nil, errs.MutuallyExclusiveFlags(ctx, "standalone", "webroot")
-	case !isStandalone && len(webroot) == 0:
+	case !isStandalone && webroot == "":
 		if err := ctx.Set("standalone", "true"); err != nil {
 			return nil, errors.Wrap(err, "error setting 'standalone' value in cli ctx")
 		}
@@ -346,12 +346,12 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 	af.ctx = ctx
 
 	af.acmeDir = ctx.String("acme")
-	if len(af.acmeDir) == 0 {
+	if af.acmeDir == "" {
 		caURL, err := flags.ParseCaURL(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if len(af.provisionerName) == 0 {
+		if af.provisionerName == "" {
 			return nil, errors.New("acme flow expected provisioner ID")
 		}
 		af.acmeDir = fmt.Sprintf("%s/acme/%s/directory", caURL, af.provisionerName)
@@ -411,7 +411,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	} else {
 		// If the CA is not public then a root file is required.
 		root := af.ctx.String("root")
-		if len(root) == 0 {
+		if root == "" {
 			root = pki.GetRootCAPath()
 			if _, err := os.Stat(root); err != nil {
 				return nil, errs.RequiredFlag(af.ctx, "root")
@@ -445,7 +445,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		return nil, errors.Wrapf(err, "error creating new ACME order")
 	}
 
-	if err = authorizeOrder(af.ctx, ac, o); err != nil {
+	if err := authorizeOrder(af.ctx, ac, o); err != nil {
 		return nil, err
 	}
 

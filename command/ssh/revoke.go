@@ -127,7 +127,7 @@ func revokeAction(ctx *cli.Context) error {
 	case 0:
 		certFile := ctx.String("sshpop-cert")
 		keyFile := ctx.String("sshpop-key")
-		if len(certFile) == 0 || len(keyFile) == 0 {
+		if certFile == "" || keyFile == "" {
 			return errors.New("--sshpop-cert and --sshpop-key must be supplied if serial number is not supplied as first argument")
 		}
 		// Load the cert, because we need the serial number.
@@ -162,7 +162,7 @@ func revokeAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if len(token) == 0 {
+	if token == "" {
 		token, err = flow.GenerateSSHToken(ctx, serial, cautils.SSHRevokeType, nil, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 		if err != nil {
 			return err

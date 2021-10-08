@@ -77,7 +77,7 @@ func rootAction(ctx *cli.Context) error {
 	}
 
 	fingerprint := strings.TrimSpace(ctx.String("fingerprint"))
-	if len(fingerprint) == 0 {
+	if fingerprint == "" {
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}
 

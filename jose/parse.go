@@ -116,16 +116,16 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 		if err != nil {
 			return nil, err
 		}
-		if len(ctx.kid) == 0 {
-			if err = defKeyID(jwk); err != nil {
+		if ctx.kid == "" {
+			if err := defKeyID(jwk); err != nil {
 				return nil, err
 			}
 		}
 
 	case octKeyType:
 		jwk.Key = b
-		if len(ctx.kid) == 0 {
-			if err = defKeyID(jwk); err != nil {
+		if ctx.kid == "" {
+			if err := defKeyID(jwk); err != nil {
 				return nil, err
 			}
 		}

@@ -128,7 +128,7 @@ func removeAction(ctx *cli.Context) error {
 	clientID := ctx.String("client-id")
 	typ := ctx.String("type")
 
-	if len(caCfg) == 0 {
+	if caCfg == "" {
 		return errs.RequiredFlag(ctx, "ca-config")
 	}
 
@@ -137,16 +137,14 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	if all {
-		if len(kid) != 0 {
+		if kid != "" {
 			return errs.MutuallyExclusiveFlags(ctx, "all", "kid")
 		}
-		if len(clientID) != 0 {
+		if clientID != "" {
 			return errs.MutuallyExclusiveFlags(ctx, "all", "client-id")
 		}
-	} else {
-		if len(kid) == 0 && len(clientID) == 0 && len(typ) == 0 {
-			return errs.RequiredOrFlag(ctx, "all", "kid", "client-id", "type")
-		}
+	} else if kid == "" && clientID == "" && typ == "" {
+		return errs.RequiredOrFlag(ctx, "all", "kid", "client-id", "type")
 	}
 
 	c, err := config.LoadConfiguration(caCfg)
@@ -197,7 +195,7 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	c.AuthorityConfig.Provisioners = provisioners
-	if err = c.Save(caCfg); err != nil {
+	if err := c.Save(caCfg); err != nil {
 		return err
 	}
 

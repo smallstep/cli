@@ -138,7 +138,7 @@ func (o *offsetCounter) ScanLines(data []byte, atEOF bool) (advance int, token [
 	return
 }
 
-func findConfiguration(r io.Reader) (lines []string, start int64, end int64) {
+func findConfiguration(r io.Reader) (lines []string, start, end int64) {
 	var inConfig bool
 	counter := new(offsetCounter)
 	scanner := bufio.NewScanner(r)

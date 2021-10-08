@@ -117,22 +117,22 @@ func InsecureArgument(ctx *cli.Context, name string) error {
 
 // FlagValueInsecure returns an error with the given flag and value requiring
 // the --insecure flag.
-func FlagValueInsecure(ctx *cli.Context, flag string, value string) error {
+func FlagValueInsecure(ctx *cli.Context, flag, value string) error {
 	return errors.Errorf("flag '--%s %s' requires the '--insecure' flag", flag, value)
 }
 
 // InvalidFlagValue returns an error with the given value being missing or
 // invalid for the given flag. Optionally it lists the given formatted options
 // at the end.
-func InvalidFlagValue(ctx *cli.Context, flag string, value string, options string) error {
+func InvalidFlagValue(ctx *cli.Context, flag, value, options string) error {
 	var format string
-	if len(value) == 0 {
+	if value == "" {
 		format = fmt.Sprintf("missing value for flag '--%s'", flag)
 	} else {
 		format = fmt.Sprintf("invalid value '%s' for flag '--%s'", value, flag)
 	}
 
-	if len(options) == 0 {
+	if options == "" {
 		return errors.New(format)
 	}
 
@@ -142,15 +142,15 @@ func InvalidFlagValue(ctx *cli.Context, flag string, value string, options strin
 // InvalidFlagValueMsg returns an error with the given value being missing or
 // invalid for the given flag. Optionally it returns an error message to aid
 // in debugging.
-func InvalidFlagValueMsg(ctx *cli.Context, flag string, value string, msg string) error {
+func InvalidFlagValueMsg(ctx *cli.Context, flag, value, msg string) error {
 	var format string
-	if len(value) == 0 {
+	if value == "" {
 		format = fmt.Sprintf("missing value for flag '--%s'", flag)
 	} else {
 		format = fmt.Sprintf("invalid value '%s' for flag '--%s'", value, flag)
 	}
 
-	if len(msg) == 0 {
+	if msg == "" {
 		return errors.New(format)
 	}
 
@@ -159,13 +159,13 @@ func InvalidFlagValueMsg(ctx *cli.Context, flag string, value string, msg string
 
 // IncompatibleFlag returns an error with the flag being incompatible with the
 // given value.
-func IncompatibleFlag(ctx *cli.Context, flag string, value string) error {
+func IncompatibleFlag(ctx *cli.Context, flag, value string) error {
 	return errors.Errorf("flag '--%s' is incompatible with '%s'", flag, value)
 }
 
 // IncompatibleFlagWithFlag returns an error with the flag being incompatible with the
 // given value.
-func IncompatibleFlagWithFlag(ctx *cli.Context, flag string, withFlag string) error {
+func IncompatibleFlagWithFlag(ctx *cli.Context, flag, withFlag string) error {
 	return errors.Errorf("flag '--%s' is incompatible with '--%s'", flag, withFlag)
 }
 
@@ -188,12 +188,12 @@ func IncompatibleFlagValues(ctx *cli.Context, flag, value, incompatibleWith,
 // IncompatibleFlagValueWithFlagValue returns an error with the given value
 // being missing or invalid for the given flag. Optionally it lists the given
 // formatted options at the end.
-func IncompatibleFlagValueWithFlagValue(ctx *cli.Context, flag string, value string,
-	withFlag string, withValue, options string) error {
+func IncompatibleFlagValueWithFlagValue(ctx *cli.Context, flag, value, withFlag,
+	withValue, options string) error {
 	format := fmt.Sprintf("flag '--%s %s' is incompatible with flag '--%s %s'",
 		flag, value, withFlag, withValue)
 
-	if len(options) == 0 {
+	if options == "" {
 		return errors.New(format)
 	}
 
@@ -272,7 +272,7 @@ func RequiredWithOrFlag(ctx *cli.Context, withFlag string, flags ...string) erro
 
 // MinSizeFlag returns an error with a greater or equal message message for
 // the given flag and size.
-func MinSizeFlag(ctx *cli.Context, flag string, size string) error {
+func MinSizeFlag(ctx *cli.Context, flag, size string) error {
 	return errors.Errorf("flag '--%s' must be greater or equal than %s", flag, size)
 }
 
@@ -296,12 +296,12 @@ func UnsupportedFlag(ctx *cli.Context, flag string) error {
 
 // usage returns the command usage text if set or a default usage string.
 func usage(ctx *cli.Context) string {
-	if len(ctx.Command.UsageText) == 0 {
+	if ctx.Command.UsageText == "" {
 		return fmt.Sprintf("%s %s [command options]", ctx.App.HelpName, ctx.Command.Name)
 	}
 	// keep just the first line and remove markdown
 	lines := strings.Split(ctx.Command.UsageText, "\n")
-	return strings.Replace(lines[0], "**", "", -1)
+	return strings.ReplaceAll(lines[0], "**", "")
 }
 
 // FileError is a wrapper for errors of the os package.

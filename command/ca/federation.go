@@ -126,7 +126,7 @@ func rootsAndFederationFlow(ctx *cli.Context, typ flowType) error {
 	}
 
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return errs.RequiredFlag(ctx, "root")

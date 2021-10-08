@@ -43,7 +43,7 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 				crv = DefaultECCurve
 			}
 			switch crv {
-			case "P-256", "P-384", "P-521": //ok
+			case "P-256", "P-384", "P-521": // ok
 			default:
 				return kty, crv, size, errs.IncompatibleFlagValueWithFlagValue(ctx, ktyKey, kty,
 					curveKey, crv, "P-256, P-384, P-521")
@@ -53,7 +53,7 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 				return kty, crv, size, errs.IncompatibleFlagValue(ctx, sizeKey, ktyKey, kty)
 			}
 			switch crv {
-			case "Ed25519": //ok
+			case "Ed25519": // ok
 			case "": // ok: OKP defaults to Ed25519
 				crv = "Ed25519"
 			default:

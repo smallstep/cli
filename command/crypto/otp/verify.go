@@ -82,7 +82,7 @@ func verifyAction(ctx *cli.Context) error {
 	)
 
 	secretFile := ctx.String("secret")
-	if len(secretFile) == 0 {
+	if secretFile == "" {
 		args := ctx.Args()
 		if len(args) == 0 {
 			return errs.RequiredFlag(ctx, "secret")
@@ -173,12 +173,13 @@ func verifyAction(ctx *cli.Context) error {
 		Algorithm: alg,
 	})
 
-	if err != nil {
+	switch {
+	case err != nil:
 		return errors.Wrap(err, "error while validating TOTP")
-	} else if valid {
+	case valid:
 		fmt.Println("ok")
 		os.Exit(0)
-	} else {
+	default:
 		fmt.Println("fail")
 		os.Exit(1)
 	}

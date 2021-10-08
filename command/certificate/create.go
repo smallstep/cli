@@ -686,7 +686,7 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 
 	ops := []pemutil.Options{}
 	passFile := ctx.String("password-file")
-	if len(passFile) != 0 {
+	if passFile != "" {
 		ops = append(ops, pemutil.WithPasswordFile(passFile))
 	}
 	v, err := pemutil.Read(keyFile, ops...)
@@ -755,7 +755,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	// Parse --ca-key as a crypto.Signer.
 	passFile := ctx.String("ca-password-file")
 	ops := []pemutil.Options{}
-	if len(passFile) != 0 {
+	if passFile != "" {
 		ops = append(ops, pemutil.WithPasswordFile(passFile))
 	}
 	key, err := pemutil.Read(caKey, ops...)

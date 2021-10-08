@@ -215,12 +215,13 @@ func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv inter
 		lifetime uint64
 		now      = uint64(time.Now().Unix())
 	)
-	if cert.ValidBefore == ssh.CertTimeInfinity {
+	switch {
+	case cert.ValidBefore == ssh.CertTimeInfinity:
 		// 0 indicates that the certificate should never expire from the agent.
 		lifetime = 0
-	} else if cert.ValidBefore <= now {
+	case cert.ValidBefore <= now:
 		return errors.New("error adding certificate to ssh agent - certificate is already expired")
-	} else {
+	default:
 		lifetime = cert.ValidBefore - now
 	}
 

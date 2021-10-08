@@ -52,7 +52,7 @@ func markdownHelpAction(ctx *cli.Context) error {
 	return nil
 }
 
-func markdownHelpCommand(app *cli.App, cmd cli.Command, parent cli.Command, base string, isHugo bool) error {
+func markdownHelpCommand(app *cli.App, cmd, parent cli.Command, base string, isHugo bool) error {
 	if err := os.MkdirAll(base, 0755); err != nil {
 		return errs.FileError(err, base)
 	}
@@ -232,20 +232,21 @@ func (h *htmlHelpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for _, cmd := range subcmd {
-		if cmd.HasName(lastName) {
-			cmd.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args, " "))
-			parent.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args[:last], " "))
+		if !cmd.HasName(lastName) {
+			continue
+		}
+		cmd.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args, " "))
+		parent.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args[:last], " "))
 
-			ctx.Command = cmd
-			if len(cmd.Subcommands) == 0 {
-				htmlHelpPrinter(w, mdCommandHelpTemplate, cmd)
-				return
-			}
-
-			ctx.App = createCliApp(ctx, cmd)
-			htmlHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
+		ctx.Command = cmd
+		if len(cmd.Subcommands) == 0 {
+			htmlHelpPrinter(w, mdCommandHelpTemplate, cmd)
 			return
 		}
+
+		ctx.App = createCliApp(ctx, cmd)
+		htmlHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
+		return
 	}
 
 	http.NotFound(w, req)

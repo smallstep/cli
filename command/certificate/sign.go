@@ -190,7 +190,7 @@ func signAction(ctx *cli.Context) error {
 	}
 	ops := []pemutil.Options{}
 	passFile := ctx.String("password-file")
-	if len(passFile) == 0 {
+	if passFile == "" {
 		ops = append(ops, pemutil.WithPasswordPrompt(
 			fmt.Sprintf("Please enter the password to decrypt %s", keyFile),
 			func(s string) ([]byte, error) {

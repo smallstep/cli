@@ -7,7 +7,7 @@ import (
 	"syscall"
 )
 
-func flock(fd int, how int) error {
+func flock(fd, how int) error {
 	return syscall.Flock(fd, how)
 }
 
@@ -23,6 +23,6 @@ func kill(pid int, signum syscall.Signal) error {
 	return syscall.Kill(pid, signum)
 }
 
-func exec(argv0 string, argv []string, envv []string) error {
+func exec(argv0 string, argv, envv []string) error {
 	return syscall.Exec(argv0, argv, envv)
 }

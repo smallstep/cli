@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
-	mathRand "math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -207,12 +206,12 @@ func renewCertificateAction(ctx *cli.Context) error {
 	execCmd := ctx.String("exec")
 
 	outFile := ctx.String("out")
-	if len(outFile) == 0 {
+	if outFile == "" {
 		outFile = certFile
 	}
 
 	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
+	if rootFile == "" {
 		rootFile = pki.GetRootCAPath()
 	}
 
@@ -301,7 +300,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
-		jitter := mathRand.Int63n(int64(expiresIn / 20))
+		jitter := rand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
 			return nil

@@ -449,22 +449,22 @@ func (c *OfflineCA) SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse
 		return nil, err
 	}
 
-	var config api.SSHConfigResponse
+	var cfg api.SSHConfigResponse
 	switch req.Type {
 	case provisioner.SSHUserCert:
-		config.UserTemplates = ts
+		cfg.UserTemplates = ts
 	case provisioner.SSHHostCert:
-		config.UserTemplates = ts
+		cfg.UserTemplates = ts
 	default:
 		return nil, errors.New("it should hot get here")
 	}
 
-	return &config, nil
+	return &cfg, nil
 }
 
 // SSHCheckHost is a wrapper on top of the CheckSSHHost method. It returns an
 // api.SSHCheckPrincipalResponse.
-func (c *OfflineCA) SSHCheckHost(principal string, tok string) (*api.SSHCheckPrincipalResponse, error) {
+func (c *OfflineCA) SSHCheckHost(principal, tok string) (*api.SSHCheckPrincipalResponse, error) {
 	exists, err := c.authority.CheckSSHHost(context.Background(), principal, tok)
 	if err != nil {
 		return nil, err

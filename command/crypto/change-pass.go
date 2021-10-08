@@ -105,7 +105,7 @@ func changePassAction(ctx *cli.Context) error {
 
 	keyPath := ctx.Args().Get(0)
 	newKeyPath := ctx.String("out")
-	if len(newKeyPath) == 0 {
+	if newKeyPath == "" {
 		newKeyPath = keyPath
 	}
 

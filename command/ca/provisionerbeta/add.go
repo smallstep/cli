@@ -462,7 +462,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			return nil, errors.New("invalid JWK: a symmetric key cannot be used as a provisioner")
 		}
 		// Create kid if not present
-		if len(jwk.KeyID) == 0 {
+		if jwk.KeyID == "" {
 			jwk.KeyID, err = jose.Thumbprint(jwk)
 			if err != nil {
 				return nil, err
@@ -549,7 +549,7 @@ func createSSHPOPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error)
 
 func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	x5cRootFile := ctx.String("x5c-root")
-	if len(x5cRootFile) == 0 {
+	if x5cRootFile == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "x5c", "x5c-root")
 	}
 
@@ -581,7 +581,7 @@ func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 
 func createK8SSADetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	pemKeysF := ctx.String("public-key")
-	if len(pemKeysF) == 0 {
+	if pemKeysF == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "public-key")
 	}
 
@@ -631,12 +631,12 @@ func createK8SSADetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) 
 
 func createOIDCDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	clientID := ctx.String("client-id")
-	if len(clientID) == 0 {
+	if clientID == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "client-id")
 	}
 
 	confURL := ctx.String("configuration-endpoint")
-	if len(confURL) == 0 {
+	if confURL == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "configuration-endpoint")
 	}
 	u, err := url.Parse(confURL)

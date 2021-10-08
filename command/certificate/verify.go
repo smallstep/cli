@@ -107,9 +107,10 @@ func verifyAction(ctx *cli.Context) error {
 		cert             *x509.Certificate
 	)
 
-	if addr, isURL, err := trimURL(crtFile); err != nil {
+	switch addr, isURL, err := trimURL(crtFile); {
+	case err != nil:
 		return err
-	} else if isURL {
+	case isURL:
 		peerCertificates, err := getPeerCertificates(addr, serverName, roots, false)
 		if err != nil {
 			return err
@@ -118,7 +119,7 @@ func verifyAction(ctx *cli.Context) error {
 		for _, pc := range peerCertificates {
 			intermediatePool.AddCert(pc)
 		}
-	} else {
+	default:
 		crtBytes, err := ioutil.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)

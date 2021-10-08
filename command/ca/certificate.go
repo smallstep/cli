@@ -184,7 +184,7 @@ func certificateAction(ctx *cli.Context) error {
 
 	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
-	if offline && len(tok) != 0 {
+	if offline && tok != "" {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
 	}
 
@@ -194,7 +194,7 @@ func certificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if len(tok) == 0 {
+	if tok == "" {
 		// Use the ACME protocol with a different certificate authority.
 		if ctx.IsSet("acme") {
 			return cautils.ACMECreateCertFlow(ctx, "")
@@ -235,7 +235,7 @@ func certificateAction(ctx *cli.Context) error {
 		return errors.New("token is not supported")
 	}
 
-	if err = flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
+	if err := flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
 		return err
 	}
 
