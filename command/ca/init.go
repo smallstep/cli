@@ -1,6 +1,7 @@
 package ca
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/x509"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/smallstep/certificates/cas/apiv1"
+	"github.com/smallstep/certificates/kms"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -18,6 +20,9 @@ import (
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+
+	// Enable azurekms
+	_ "github.com/smallstep/certificates/kms/azurekms"
 )
 
 func initCommand() cli.Command {
@@ -26,10 +31,11 @@ func initCommand() cli.Command {
 		Action: cli.ActionFunc(initAction),
 		Usage:  "initialize the CA PKI",
 		UsageText: `**step ca init**
-[**--root**=<file>] [**--key**=<file>] [**--pki**] [**--ssh**] [**--name**=<name>]
+[**--root**=<file>] [**--key**=<file>] [**--pki**] [**--ssh**]
+[**--helm**] [**--deployment-type**=<name>] [**--name**=<name>]
 [**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
 [**--provisioner-password-file**=<file>] [**--password-file**=<file>]
-[**--with-ca-url**=<url>] [**--no-db**]`,
+[**--with-ca-url**=<url>] [**--ra**=<name>] [**--kms**=<name>] [**--no-db**]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
 		Flags: []cli.Flag{
@@ -112,6 +118,13 @@ Use the '--dns' flag multiple times to configure multiple DNS names.`,
 				Usage: `The registration authority <name> to use. Currently "StepCAS" and "CloudCAS" are supported.`,
 			},
 			cli.StringFlag{
+				Name: "kms",
+				Usage: `The key manager service <name> to use to manage keys. Options are:
+	**azurekms**
+    :  Use Azure Key Vault to manage X.509 and SSH keys. The key URIs have
+	the following format <azurekms:name=key-name;vault=vault-name>.`,
+			},
+			cli.StringFlag{
 				Name: "issuer",
 				Usage: `The registration authority issuer <url> to use.
 
@@ -165,6 +178,7 @@ func initAction(ctx *cli.Context) (err error) {
 	root := ctx.String("root")
 	key := ctx.String("key")
 	ra := strings.ToLower(ctx.String("ra"))
+	kmsName := strings.ToLower(ctx.String("kms"))
 	pkiOnly := ctx.Bool("pki")
 	noDB := ctx.Bool("no-db")
 	helm := ctx.Bool("helm")
@@ -183,6 +197,10 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	case ra != "" && ra != apiv1.CloudCAS && ra != apiv1.StepCAS:
 		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "StepCAS or CloudCAS")
+	case kmsName != "" && kmsName != "azurekms":
+		return errs.InvalidFlagValue(ctx, "kms", ctx.String("kms"), "azurekms")
+	case kmsName != "" && ra != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "kms", "ra")
 	case pkiOnly && noDB:
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "no-db")
 	case pkiOnly && helm:
@@ -212,6 +230,7 @@ func initAction(ctx *cli.Context) (err error) {
 	var name, org, resource string
 	var casOptions apiv1.Options
 	var deploymentType pki.DeploymentType
+	var opts []pki.Option
 	switch ra {
 	case apiv1.CloudCAS:
 		var create bool
@@ -356,14 +375,68 @@ func initAction(ctx *cli.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		org = name
+
+		// Get names for key managers keys.
+		// Currently only azure is supported.
+		var keyManager kms.KeyManager
+		if kmsName != "" {
+			var rootURI, intermediateURI, sshHostURI, sshUserURI string
+			keyManager, err = kms.New(context.Background(), kms.Options{
+				Type: kmsName,
+			})
+			if err != nil {
+				return err
+			}
+
+			var validateFunc func(s string) error
+			if v, ok := keyManager.(interface{ ValidateName(s string) error }); ok {
+				validateFunc = v.ValidateName
+			} else {
+				validateFunc = func(s string) error {
+					return nil
+				}
+			}
+
+			ui.Println("What would be the URI for the root certificate key?")
+			rootURI, err = ui.Prompt("(e.g. azurekms:name=my-root-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
+			if err != nil {
+				return err
+			}
+			ui.Println("What would be the URI for the intermediate certificate key?")
+			intermediateURI, err = ui.Prompt("(e.g. azurekms:name=my-intermediate-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
+			if err != nil {
+				return err
+			}
+
+			if ctx.Bool("ssh") {
+				ui.Println("What would be the URI for the SSH host key?")
+				sshHostURI, err = ui.Prompt("(e.g. azurekms:name=my-host-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
+				if err != nil {
+					return err
+				}
+
+				ui.Println("What would be the URI for the SSH user key?")
+				sshUserURI, err = ui.Prompt("(e.g. azurekms:name=my-user-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
+				if err != nil {
+					return err
+				}
+			}
+
+			// Add uris to the pki options. Empty URIs will be ignored.
+			opts = append(opts, pki.WithKMS(kmsName))
+			opts = append(opts, pki.WithKeyURIs(rootURI, intermediateURI, sshHostURI, sshUserURI))
+		}
+
+		// set org and resource to pki name
+		org, resource = name, name
+
 		casOptions = apiv1.Options{
-			Type:      apiv1.SoftCAS,
-			IsCreator: true,
+			Type:       apiv1.SoftCAS,
+			IsCreator:  true,
+			KeyManager: keyManager,
 		}
 	}
 
-	var opts []pki.Option
 	if pkiOnly {
 		opts = append(opts, pki.WithPKIOnly())
 	} else {
@@ -409,12 +482,12 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 		}
 
-		opts = []pki.Option{
+		opts = append(opts,
 			pki.WithAddress(address),
 			pki.WithCaURL(caURL),
 			pki.WithDNSNames(dnsNames),
 			pki.WithDeploymentType(deploymentType),
-		}
+		)
 		if deploymentType == pki.StandaloneDeployment {
 			opts = append(opts, pki.WithProvisioner(provisioner))
 		}
@@ -473,6 +546,7 @@ func initAction(ctx *cli.Context) (err error) {
 		// Generate root certificate if not set.
 		if rootCrt == nil && rootKey == nil {
 			ui.Print("Generating root certificate... ")
+			fmt.Printf("name: %s, org: %s, resource: %s\n", name, org, resource)
 			root, err = p.GenerateRootCertificate(name, org, resource, pass)
 			if err != nil {
 				return err
