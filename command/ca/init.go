@@ -423,8 +423,8 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 
 			// Add uris to the pki options. Empty URIs will be ignored.
-			opts = append(opts, pki.WithKMS(kmsName))
-			opts = append(opts, pki.WithKeyURIs(rootURI, intermediateURI, sshHostURI, sshUserURI))
+			opts = append(opts, pki.WithKMS(kmsName),
+				pki.WithKeyURIs(rootURI, intermediateURI, sshHostURI, sshUserURI))
 		}
 
 		// set org and resource to pki name
