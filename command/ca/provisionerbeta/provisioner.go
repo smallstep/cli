@@ -84,7 +84,7 @@ func parseIntaceAge(ctx *cli.Context) (age string, err error) {
 	return
 }
 
-func removeElements(list []string, rems []string) []string {
+func removeElements(list, rems []string) []string {
 	if len(list) == 0 {
 		return list
 	}

@@ -274,22 +274,22 @@ func compareAction(ctx *cli.Context) error {
 func getHash(ctx *cli.Context, alg string, insecure bool) (hashConstructor, error) {
 	switch strings.ToLower(alg) {
 	case "sha", "sha1":
-		return func() hash.Hash { return sha1.New() }, nil
+		return sha1.New, nil
 	case "sha224":
-		return func() hash.Hash { return sha256.New224() }, nil
+		return sha256.New224, nil
 	case "sha256":
-		return func() hash.Hash { return sha256.New() }, nil
+		return sha256.New, nil
 	case "sha384":
-		return func() hash.Hash { return sha512.New384() }, nil
+		return sha512.New384, nil
 	case "sha512":
-		return func() hash.Hash { return sha512.New() }, nil
+		return sha512.New, nil
 	case "sha512-224":
-		return func() hash.Hash { return sha512.New512_224() }, nil
+		return sha512.New512_224, nil
 	case "sha512-256":
-		return func() hash.Hash { return sha512.New512_256() }, nil
+		return sha512.New512_256, nil
 	case "md5":
 		if insecure {
-			return func() hash.Hash { return md5.New() }, nil
+			return md5.New, nil
 		}
 		return nil, errs.FlagValueInsecure(ctx, "alg", alg)
 	default:

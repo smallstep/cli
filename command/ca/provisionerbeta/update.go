@@ -312,7 +312,7 @@ func updateAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	if err = client.UpdateProvisioner(name, p); err != nil {
+	if err := client.UpdateProvisioner(name, p); err != nil {
 		return err
 	}
 
@@ -500,7 +500,7 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 				return errors.New("invalid JWK: a symmetric key cannot be used as a provisioner")
 			}
 			// Create kid if not present
-			if len(jwk.KeyID) == 0 {
+			if jwk.KeyID == "" {
 				jwk.KeyID, err = jose.Thumbprint(jwk)
 				if err != nil {
 					return err
@@ -789,7 +789,7 @@ func updateGCPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.ProjectIds = removeElements(details.ProjectIds, ctx.StringSlice("gcp-project"))
 	}
 	if ctx.IsSet("gcp-project") {
-		details.ServiceAccounts = append(details.ProjectIds, ctx.StringSlice("add-gcp-project")...)
+		details.ProjectIds = append(details.ProjectIds, ctx.StringSlice("add-gcp-project")...)
 	}
 	return nil
 }

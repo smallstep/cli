@@ -111,6 +111,8 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 			}
 		}
+		// ignore exitAfterDefer error because the defer is required for recovery.
+		// nolint:gocritic
 		os.Exit(1)
 	}
 }
@@ -143,8 +145,8 @@ var placeholderString = regexp.MustCompile(`<.*?>`)
 
 func stringifyFlag(f cli.Flag) string {
 	fv := flagValue(f)
-	usage := fv.FieldByName("Usage").String()
-	placeholder := placeholderString.FindString(usage)
+	usg := fv.FieldByName("Usage").String()
+	placeholder := placeholderString.FindString(usg)
 	if placeholder == "" {
 		switch f.(type) {
 		case cli.BoolFlag, cli.BoolTFlag:
@@ -152,5 +154,5 @@ func stringifyFlag(f cli.Flag) string {
 			placeholder = "<value>"
 		}
 	}
-	return cli.FlagNamePrefixer(fv.FieldByName("Name").String(), placeholder) + "\t" + usage
+	return cli.FlagNamePrefixer(fv.FieldByName("Name").String(), placeholder) + "\t" + usg
 }

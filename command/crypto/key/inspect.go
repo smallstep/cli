@@ -150,14 +150,14 @@ func bigIntPaddedPrinter(name string, val *big.Int, size int) {
 	bytesPrinter(name, paddedBytes(val.Bytes(), size))
 }
 
-func bytesPrinter(name string, bytes []byte) {
+func bytesPrinter(name string, bs []byte) {
 	fmt.Print(name + ":")
-	for i, b := range bytes {
+	for i, b := range bs {
 		if (i % 16) == 0 {
 			fmt.Print("\n    ")
 		}
 		fmt.Printf("%02x", b)
-		if i != len(bytes)-1 {
+		if i != len(bs)-1 {
 			fmt.Print(":")
 		}
 	}

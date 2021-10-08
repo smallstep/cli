@@ -72,9 +72,9 @@ https://github.com/google/google-authenticator/wiki/Key-Uri-Format`,
 
 func generateAction(ctx *cli.Context) error {
 	switch {
-	case len(ctx.String("issuer")) == 0:
+	case ctx.String("issuer") == "":
 		return errs.RequiredFlag(ctx, "issuer")
-	case len(ctx.String("account")) == 0:
+	case ctx.String("account") == "":
 		return errs.RequiredFlag(ctx, "account")
 	}
 

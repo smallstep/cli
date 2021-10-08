@@ -230,7 +230,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	}
 
 	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
+	if rootFile == "" {
 		rootFile = pki.GetRootCAPath()
 	}
 

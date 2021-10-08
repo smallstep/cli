@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -121,7 +122,7 @@ func generateOIDCToken(ctx *cli.Context, p *provisioner.OIDC) (string, error) {
 	if ctx.Bool("console") {
 		args = append(args, "--console")
 	}
-	if p.ListenAddress != "" {
+	if p.ListenAddress != "" && os.Getenv("STEP_LISTEN") == "" {
 		args = append(args, "--listen", p.ListenAddress)
 	}
 	out, err := exec.Step(args...)
@@ -145,7 +146,7 @@ type tokenAttrs struct {
 
 func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) {
 	path := ctx.String("k8ssa-token-path")
-	if len(path) == 0 {
+	if path == "" {
 		path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	}
 	tokBytes, err := ioutil.ReadFile(path)
@@ -158,10 +159,10 @@ func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) 
 func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttrs tokenAttrs) (string, error) {
 	x5cCertFile := ctx.String("x5c-cert")
 	x5cKeyFile := ctx.String("x5c-key")
-	if len(x5cCertFile) == 0 {
+	if x5cCertFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "X5C", "x5c-cert")
 	}
-	if len(x5cKeyFile) == 0 {
+	if x5cKeyFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "X5C", "x5c-key")
 	}
 
@@ -196,10 +197,10 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, tokAttrs tokenAttrs) (string, error) {
 	sshPOPCertFile := ctx.String("sshpop-cert")
 	sshPOPKeyFile := ctx.String("sshpop-key")
-	if len(sshPOPCertFile) == 0 {
+	if sshPOPCertFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "SSHPOP", "sshpop-cert")
 	}
-	if len(sshPOPKeyFile) == 0 {
+	if sshPOPKeyFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "SSHPOP", "sshpop-key")
 	}
 
@@ -251,7 +252,7 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 		opts = append(opts, passOpt)
 	}
 
-	if keyFile := ctx.String("key"); len(keyFile) == 0 {
+	if keyFile := ctx.String("key"); keyFile == "" {
 		if p == nil {
 			return nil, "", errors.New("no provisioner selected")
 		}
@@ -260,7 +261,7 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 		var encryptedKey string
 		if ctx.IsSet("offline") {
 			encryptedKey = p.EncryptedKey
-			if len(encryptedKey) == 0 {
+			if encryptedKey == "" {
 				return nil, "", errors.Errorf("provisioner '%s' does not have an 'encryptedKey' property", kid)
 			}
 		} else {
@@ -292,11 +293,12 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 			return nil, "", err
 		}
 
-		if p != nil {
+		switch {
+		case p != nil:
 			kid = p.Key.KeyID
-		} else if len(tokAttrs.kid) > 0 {
+		case len(tokAttrs.kid) > 0:
 			kid = tokAttrs.kid
-		} else {
+		default:
 			hash, err := jwk.Thumbprint(crypto.SHA256)
 			if err != nil {
 				return nil, "", errors.Wrap(err, "error generating JWK thumbprint")

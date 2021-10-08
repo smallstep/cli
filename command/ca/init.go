@@ -167,7 +167,7 @@ Cloud.`,
 }
 
 func initAction(ctx *cli.Context) (err error) {
-	if err = assertCryptoRand(); err != nil {
+	if err := assertCryptoRand(); err != nil {
 		return err
 	}
 
@@ -184,11 +184,11 @@ func initAction(ctx *cli.Context) (err error) {
 	helm := ctx.Bool("helm")
 
 	switch {
-	case len(root) > 0 && len(key) == 0:
+	case root != "" && key == "":
 		return errs.RequiredWithFlag(ctx, "root", "key")
-	case len(root) == 0 && len(key) > 0:
+	case root == "" && key != "":
 		return errs.RequiredWithFlag(ctx, "key", "root")
-	case len(root) > 0 && len(key) > 0:
+	case root != "" && key != "":
 		if rootCrt, err = pemutil.ReadCertificate(root); err != nil {
 			return err
 		}
@@ -449,10 +449,10 @@ func initAction(ctx *cli.Context) (err error) {
 			dnsValidator = ui.DNS()
 			dnsNames     []string
 		)
-		dnsValue = strings.Replace(dnsValue, " ", ",", -1)
+		dnsValue = strings.ReplaceAll(dnsValue, " ", ",")
 		parts := strings.Split(dnsValue, ",")
 		for _, name := range parts {
-			if len(name) == 0 {
+			if name == "" {
 				continue
 			}
 			if err := dnsValidator(name); err != nil {
@@ -463,7 +463,7 @@ func initAction(ctx *cli.Context) (err error) {
 
 		var address string
 		ui.Println("What IP and port will your new CA bind to?", ui.WithValue(ctx.String("address")))
-		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:4343)",
+		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:443)",
 			ui.WithValidateFunc(ui.Address()), ui.WithValue(ctx.String("address")))
 		if err != nil {
 			return err
@@ -530,11 +530,11 @@ func initAction(ctx *cli.Context) (err error) {
 	if !pkiOnly && deploymentType == pki.StandaloneDeployment {
 		// Generate provisioner key pairs.
 		if len(provisionerPassword) > 0 {
-			if err = p.GenerateKeyPairs(provisionerPassword); err != nil {
+			if err := p.GenerateKeyPairs(provisionerPassword); err != nil {
 				return err
 			}
 		} else {
-			if err = p.GenerateKeyPairs(pass); err != nil {
+			if err := p.GenerateKeyPairs(pass); err != nil {
 				return err
 			}
 		}
@@ -555,7 +555,7 @@ func initAction(ctx *cli.Context) (err error) {
 		} else {
 			ui.Printf("Copying root certificate... ")
 			// Do not copy key in STEPPATH
-			if err = p.WriteRootCertificate(rootCrt, nil, nil); err != nil {
+			if err := p.WriteRootCertificate(rootCrt, nil, nil); err != nil {
 				return err
 			}
 			root = p.CreateCertificateAuthorityResponse(rootCrt, rootKey)
@@ -570,11 +570,9 @@ func initAction(ctx *cli.Context) (err error) {
 			return err
 		}
 		ui.Println("done!")
-	} else {
+	} else if err := p.GetCertificateAuthority(); err != nil {
 		// Attempt to get the root certificate from RA.
-		if err := p.GetCertificateAuthority(); err != nil {
-			return err
-		}
+		return err
 	}
 
 	if ctx.Bool("ssh") {

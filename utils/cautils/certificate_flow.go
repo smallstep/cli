@@ -82,15 +82,15 @@ func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.
 	}
 	// Prepare client for bootstrap or provisioning tokens
 	if len(jwt.Payload.SHA) > 0 && len(jwt.Payload.Audience) > 0 && strings.HasPrefix(strings.ToLower(jwt.Payload.Audience[0]), "http") {
-		if len(caURL) == 0 {
+		if caURL == "" {
 			caURL = jwt.Payload.Audience[0]
 		}
 		options = append(options, ca.WithRootSHA256(jwt.Payload.SHA))
 	} else {
-		if len(caURL) == 0 {
+		if caURL == "" {
 			return nil, errs.RequiredFlag(ctx, "ca-url")
 		}
-		if len(root) == 0 {
+		if root == "" {
 			root = pki.GetRootCAPath()
 			if _, err := os.Stat(root); err != nil {
 				return nil, errs.RequiredFlag(ctx, "root")
@@ -115,12 +115,12 @@ func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return "", err
-	} else if len(caURL) == 0 {
+	} else if caURL == "" {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
 	}
 
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return "", errs.RequiredUnlessFlag(ctx, "root", "token")
@@ -148,12 +148,12 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, typ
 	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return "", err
-	} else if len(caURL) == 0 {
+	} else if caURL == "" {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
 	}
 
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return "", errs.RequiredUnlessFlag(ctx, "root", "token")
@@ -177,7 +177,7 @@ func (f *CertificateFlow) GenerateIdentityToken(ctx *cli.Context) (string, error
 		return "", err
 	}
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return "", errs.RequiredFlag(ctx, "root")
@@ -187,8 +187,8 @@ func (f *CertificateFlow) GenerateIdentityToken(ctx *cli.Context) (string, error
 }
 
 // Sign signs the CSR using the online or the offline certificate authority.
-func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.CertificateRequest, crtFile string) error {
-	client, err := f.GetClient(ctx, token)
+func (f *CertificateFlow) Sign(ctx *cli.Context, tok string, csr api.CertificateRequest, crtFile string) error {
+	client, err := f.GetClient(ctx, tok)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, token string, csr api.Certifica
 
 	req := &api.SignRequest{
 		CsrPEM:       csr,
-		OTT:          token,
+		OTT:          tok,
 		NotBefore:    notBefore,
 		NotAfter:     notAfter,
 		TemplateData: templateData,
@@ -256,7 +256,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		if len(ips) == 0 && len(dnsNames) == 0 {
 			defaultSANs := []string{
 				doc.PrivateIP,
-				fmt.Sprintf("ip-%s.%s.compute.internal", strings.Replace(doc.PrivateIP, ".", "-", -1), doc.Region),
+				fmt.Sprintf("ip-%s.%s.compute.internal", strings.ReplaceAll(doc.PrivateIP, ".", "-"), doc.Region),
 			}
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
@@ -286,10 +286,29 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			dnsNames, ips, emails, uris = splitSANs(defaultSANs)
 		}
 	case token.OIDC:
-		if jwt.Payload.Email != "" {
-			emails = append(emails, jwt.Payload.Email)
+		// If no sans are given using the --san flag, and the subject argument
+		// matches the email then CN=token.sub SANs=email, token.iss#token.sub
+		//
+		// If no sans are given and the subject argument does not match the
+		// email then CN=subject SANs=splitSANs(subject)
+		//
+		// If sans are provided CN=subject SANs=splitSANs(sans)
+		//
+		// Note that with the way token types are identified, an OIDC token with
+		// `sans` claim will never reach this code. We will leave the condition
+		// as it is in case we want it to support it later.
+		if len(sans) == 0 && len(jwt.Payload.SANs) == 0 {
+			if jwt.Payload.Email != "" && strings.EqualFold(subject, jwt.Payload.Email) {
+				subject = jwt.Payload.Subject
+				emails = append(emails, jwt.Payload.Email)
+				if iss, err := url.Parse(jwt.Payload.Issuer); err == nil && iss.Scheme != "" {
+					iss.Fragment = jwt.Payload.Subject
+					uris = append(uris, iss)
+				}
+			} else {
+				dnsNames, ips, emails, uris = splitSANs([]string{subject})
+			}
 		}
-		subject = jwt.Payload.Subject
 	case token.K8sSA:
 		// Use subject from command line. K8sSA tokens are multi-use so the
 		// subject of the token is not necessarily related to the requested
@@ -332,7 +351,7 @@ func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email
 	var unique []string
 	for _, sans := range args {
 		for _, san := range sans {
-			if ok := m[san]; !ok {
+			if ok := m[san]; !ok && san != "" {
 				m[san] = true
 				unique = append(unique, san)
 			}

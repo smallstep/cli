@@ -105,9 +105,9 @@ func bootstrapAction(ctx *cli.Context) error {
 	switch {
 	case team != "":
 		return cautils.BootstrapTeam(ctx, team)
-	case len(caURL) == 0:
+	case caURL == "":
 		return errs.RequiredFlag(ctx, "ca-url")
-	case len(fingerprint) == 0:
+	case fingerprint == "":
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}
 

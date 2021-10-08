@@ -158,7 +158,7 @@ func signCertificateAction(ctx *cli.Context) error {
 
 	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
-	if offline && len(tok) != 0 {
+	if offline && tok != "" {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
 	}
 
@@ -168,7 +168,7 @@ func signCertificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if len(tok) == 0 {
+	if tok == "" {
 		// Use the ACME protocol with a different certificate authority.
 		if ctx.IsSet("acme") {
 			return cautils.ACMESignCSRFlow(ctx, csr, crtFile, "")
@@ -191,7 +191,7 @@ func signCertificateAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error parsing flag '--token'")
 	}
 	switch jwt.Payload.Type() {
-	case token.AWS, token.GCP, token.Azure, token.K8sSA:
+	case token.OIDC, token.AWS, token.GCP, token.Azure, token.K8sSA:
 		// Common name will be validated on the server side, it depends on
 		// server configuration.
 	default:

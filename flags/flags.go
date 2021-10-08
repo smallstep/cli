@@ -326,7 +326,7 @@ func ParseTimeOrDuration(s string) (time.Time, bool) {
 }
 
 // ParseTimeDuration parses the not-before and not-after flags as a timeDuration
-func ParseTimeDuration(ctx *cli.Context) (notBefore api.TimeDuration, notAfter api.TimeDuration, err error) {
+func ParseTimeDuration(ctx *cli.Context) (notBefore, notAfter api.TimeDuration, err error) {
 	var zero api.TimeDuration
 	notBefore, err = api.ParseTimeDuration(ctx.String("not-before"))
 	if err != nil {
@@ -383,7 +383,7 @@ func ParseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
 //  - Error if the URL scheme is not implicitly or explicitly 'https'.
 func ParseCaURL(ctx *cli.Context) (string, error) {
 	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
+	if caURL == "" {
 		return "", errs.RequiredFlag(ctx, "ca-url")
 	}
 
@@ -397,7 +397,7 @@ func ParseCaURL(ctx *cli.Context) (string, error) {
 //  - Error if the URL scheme is not implicitly or explicitly 'https'.
 func ParseCaURLIfExists(ctx *cli.Context) (string, error) {
 	caURL := ctx.String("ca-url")
-	if len(caURL) == 0 {
+	if caURL == "" {
 		return "", nil
 	}
 	return parseCaURL(ctx, caURL)

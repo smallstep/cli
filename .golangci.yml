@@ -36,23 +36,30 @@ linters-settings:
       - performance
       - style
       - experimental
+      - diagnostic
     disabled-checks:
-      - wrapperFunc
-      - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - commentFormatting
+      - commentedOutCode
+      - hugeParam
+      - octalLiteral
+      - rangeValCopy
+      - tooManyResultsChecker
+      - unnamedResult
 
 linters:
   disable-all: true
   enable:
-    - gofmt
-    - revive
-    - govet
-    - misspell
-    - ineffassign
     - deadcode
-    - staticcheck
-    - unused
-    - structcheck
+    - gocritic
+    - gofmt
     - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - revive
+    - staticcheck
+    - structcheck
+    - unused
 
 run:
   skip-dirs:

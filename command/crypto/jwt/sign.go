@@ -240,7 +240,7 @@ func signAction(ctx *cli.Context) error {
 	kid := ctx.String("kid")
 	var isX5C bool
 	if len(x5cCertFile) > 0 {
-		if len(x5cKeyFile) == 0 {
+		if x5cKeyFile == "" {
 			return errs.RequiredWithOrFlag(ctx, "x5c-cert", "key", "x5c-key")
 		}
 		if len(x5tCertFile) > 0 {
@@ -257,7 +257,7 @@ func signAction(ctx *cli.Context) error {
 
 	var isX5T bool
 	if len(x5tCertFile) > 0 {
-		if len(x5tKeyFile) == 0 {
+		if x5tKeyFile == "" {
 			return errs.RequiredWithOrFlag(ctx, "x5t-cert", "key", "x5t-key")
 		}
 		if len(x5cCertFile) > 0 {
@@ -337,7 +337,7 @@ func signAction(ctx *cli.Context) error {
 	if jwk.Algorithm == "" {
 		return errors.New("flag '--alg' is required with the given key")
 	}
-	if err = jose.ValidateJWK(jwk); err != nil {
+	if err := jose.ValidateJWK(jwk); err != nil {
 		return err
 	}
 
@@ -382,11 +382,11 @@ func signAction(ctx *cli.Context) error {
 	// Validate recommended claims
 	if !isSubtle {
 		switch {
-		case len(c.Issuer) == 0:
+		case c.Issuer == "":
 			return errors.New("flag '--iss' is required unless '--subtle' is used")
 		case len(c.Audience) == 0:
 			return errors.New("flag '--aud' is required unless '--subtle' is used")
-		case len(c.Subject) == 0:
+		case c.Subject == "":
 			return errors.New("flag '--sub' is required unless '--subtle' is used")
 		case c.Expiry == nil:
 			return errors.New("flag '--exp' is required unless '--subtle' is used")

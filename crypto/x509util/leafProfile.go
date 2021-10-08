@@ -18,7 +18,7 @@ type Leaf struct {
 // Subject Certificate set to the value of the template argument.
 // A public/private keypair **WILL NOT** be generated for this profile because
 // the public key will be populated from the Subject Certificate parameter.
-func NewLeafProfileWithTemplate(sub *x509.Certificate, iss *x509.Certificate, issPriv crypto.PrivateKey, withOps ...WithOption) (Profile, error) {
+func NewLeafProfileWithTemplate(sub, iss *x509.Certificate, issPriv crypto.PrivateKey, withOps ...WithOption) (Profile, error) {
 	withOps = append(withOps, WithPublicKey(sub.PublicKey))
 	return newProfile(&Leaf{}, sub, iss, issPriv, withOps...)
 }
@@ -65,7 +65,7 @@ func NewLeafProfileWithCSR(csr *x509.CertificateRequest, iss *x509.Certificate, 
 	return newProfile(&Leaf{}, sub, iss, issPriv, withOps...)
 }
 
-func defaultLeafTemplate(sub pkix.Name, iss pkix.Name) *x509.Certificate {
+func defaultLeafTemplate(sub, iss pkix.Name) *x509.Certificate {
 	notBefore := time.Now()
 	return &x509.Certificate{
 		IsCA:      false,

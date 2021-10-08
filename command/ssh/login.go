@@ -137,7 +137,7 @@ func loginAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	if len(token) == 0 {
+	if token == "" {
 		// Make sure the validAfter is in the past. It avoids `Certificate
 		// invalid: not yet valid` errors if the times are not in sync
 		// perfectly.
