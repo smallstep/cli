@@ -492,7 +492,7 @@ func ReasonCodeToNum(rc string) (int, error) {
 		return code, nil
 	}
 
-	code, found := RevocationReasonCodes[strings.ToLower(strings.Replace(rc, " ", "", -1))]
+	code, found := RevocationReasonCodes[strings.ToLower(strings.ReplaceAll(rc, " ", ""))]
 	if !found {
 		return 0, errors.Errorf("unrecognized revocation reason code '%s'", rc)
 	}

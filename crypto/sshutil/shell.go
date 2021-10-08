@@ -22,10 +22,10 @@ import (
 //  %p  The remote port.
 //  %r  The remote username.
 func ProxyCommand(cmd, user, host, port string) string {
-	cmd = strings.Replace(cmd, "%%", "%", -1)
-	cmd = strings.Replace(cmd, "%h", host, -1)
-	cmd = strings.Replace(cmd, "%p", port, -1)
-	return strings.Replace(cmd, "%r", user, -1)
+	cmd = strings.ReplaceAll(cmd, "%%", "%")
+	cmd = strings.ReplaceAll(cmd, "%h", host)
+	cmd = strings.ReplaceAll(cmd, "%p", port)
+	return strings.ReplaceAll(cmd, "%r", user)
 }
 
 // ShellOption is the type used to add new options to the shell.

@@ -376,7 +376,7 @@ func initAction(ctx *cli.Context) (err error) {
 			dnsValidator = ui.DNS()
 			dnsNames     []string
 		)
-		dnsValue = strings.Replace(dnsValue, " ", ",", -1)
+		dnsValue = strings.ReplaceAll(dnsValue, " ", ",")
 		parts := strings.Split(dnsValue, ",")
 		for _, name := range parts {
 			if name == "" {

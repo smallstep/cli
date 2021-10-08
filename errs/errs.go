@@ -301,7 +301,7 @@ func usage(ctx *cli.Context) string {
 	}
 	// keep just the first line and remove markdown
 	lines := strings.Split(ctx.Command.UsageText, "\n")
-	return strings.Replace(lines[0], "**", "", -1)
+	return strings.ReplaceAll(lines[0], "**", "")
 }
 
 // FileError is a wrapper for errors of the os package.

@@ -36,16 +36,15 @@ linters-settings:
       - performance
       - style
       - experimental
+      - diagnostic
     disabled-checks:
       - commentFormatting
       - commentedOutCode
-      - dupImport # https://github.com/go-critic/go-critic/issues/845
       - hugeParam
       - octalLiteral
-      - tooManyResultsChecker
       - rangeValCopy
+      - tooManyResultsChecker
       - unnamedResult
-      - wrapperFunc
 
 linters:
   disable-all: true

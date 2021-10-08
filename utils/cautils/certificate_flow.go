@@ -256,7 +256,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		if len(ips) == 0 && len(dnsNames) == 0 {
 			defaultSANs := []string{
 				doc.PrivateIP,
-				fmt.Sprintf("ip-%s.%s.compute.internal", strings.Replace(doc.PrivateIP, ".", "-", -1), doc.Region),
+				fmt.Sprintf("ip-%s.%s.compute.internal", strings.ReplaceAll(doc.PrivateIP, ".", "-"), doc.Region),
 			}
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)

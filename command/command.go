@@ -104,7 +104,7 @@ func getConfigVars(ctx *cli.Context) error {
 func getEnvVar(name string) string {
 	parts := strings.Split(name, ",")
 	name = strings.TrimSpace(parts[0])
-	name = strings.Replace(name, "-", "_", -1)
+	name = strings.ReplaceAll(name, "-", "_")
 	return "STEP_" + strings.ToUpper(name)
 }
 

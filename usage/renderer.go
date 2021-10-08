@@ -190,7 +190,7 @@ func (r *Renderer) RenderNode(w io.Writer, node *md.Node, entering bool) md.Walk
 		if r.inParagraph() {
 			r.write(node.Literal)
 		} else {
-			s := strings.Replace(string(node.Literal), "\n", "\n"+strings.Repeat(" ", r.depth), -1)
+			s := strings.ReplaceAll(string(node.Literal), "\n", "\n"+strings.Repeat(" ", r.depth))
 			r.printf(s)
 		}
 	case md.Heading:
