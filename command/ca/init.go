@@ -397,11 +397,14 @@ func initAction(ctx *cli.Context) (err error) {
 				}
 			}
 
-			ui.Println("What would be the URI for the root certificate key?")
-			rootURI, err = ui.Prompt("(e.g. azurekms:name=my-root-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
-			if err != nil {
-				return err
+			if rootKey == nil {
+				ui.Println("What would be the URI for the root certificate key?")
+				rootURI, err = ui.Prompt("(e.g. azurekms:name=my-root-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
+				if err != nil {
+					return err
+				}
 			}
+
 			ui.Println("What would be the URI for the intermediate certificate key?")
 			intermediateURI, err = ui.Prompt("(e.g. azurekms:name=my-intermediate-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
 			if err != nil {
@@ -509,7 +512,7 @@ func initAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	if ra != "" {
+	if ra != "" || kmsName != "" {
 		// RA mode will not have encrypted keys. With the exception of SSH keys,
 		// but this is not common on RA mode.
 		ui.Println("Choose a password for your first provisioner.", ui.WithValue(password))
