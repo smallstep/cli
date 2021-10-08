@@ -546,7 +546,6 @@ func initAction(ctx *cli.Context) (err error) {
 		// Generate root certificate if not set.
 		if rootCrt == nil && rootKey == nil {
 			ui.Print("Generating root certificate... ")
-			fmt.Printf("name: %s, org: %s, resource: %s\n", name, org, resource)
 			root, err = p.GenerateRootCertificate(name, org, resource, pass)
 			if err != nil {
 				return err
