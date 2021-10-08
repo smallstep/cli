@@ -247,6 +247,8 @@ func signAction(ctx *cli.Context) error {
 	return nil
 }
 
+// TODO(mariano): try to guess the hash algorithm for RSA and RSA-PSS signatures
+// looking at the length of the signature.
 func verifyAction(ctx *cli.Context) error {
 	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
 		return err
