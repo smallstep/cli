@@ -72,9 +72,8 @@ func addAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	eak, err := client.CreateExternalAccountKey(&adminAPI.CreateExternalAccountKeyRequest{
-		Provisioner: provisioner,
-		Reference:   reference,
+	eak, err := client.CreateExternalAccountKey(provisioner, &adminAPI.CreateExternalAccountKeyRequest{
+		Reference: reference,
 	})
 	if err != nil {
 		return err

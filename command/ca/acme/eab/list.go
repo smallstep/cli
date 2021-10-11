@@ -61,7 +61,7 @@ func listAction(ctx *cli.Context) (err error) {
 	}
 
 	args := ctx.Args()
-	provisionerName := args.Get(0)
+	provisioner := args.Get(0)
 
 	reference := ""
 	if ctx.NArg() == 2 {
@@ -73,7 +73,7 @@ func listAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	eaks, err := client.GetExternalAccountKeys(provisionerName, reference)
+	eaks, err := client.GetExternalAccountKeys(provisioner, reference)
 	if err != nil {
 		return err
 	}
