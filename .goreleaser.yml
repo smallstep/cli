@@ -12,16 +12,18 @@ builds:
   - env:
       - CGO_ENABLED=0
     goos:
+      - darwin
       - linux
       - windows
-      - darwin
     goarch:
+      - 386
       - amd64
       - arm
       - arm64
-      - 386
       - mips
       - mips64
+      - ppc64
+      - ppc64le
     goarm:
       - 6
       - 7
@@ -30,23 +32,31 @@ builds:
       - softfloat
     ignore:
       - goos: darwin
-        goarch: arm
-      - goos: darwin
         goarch: 386
+      - goos: darwin
+        goarch: arm
       - goos: darwin
         goarch: mips
       - goos: darwin
         goarch: mips64
+      - goos: darwin
+        goarch: ppc64
+      - goos: darwin
+        goarch: ppc64le
+      - goos: windows
+        goarch: 386
       - goos: windows
         goarch: arm
       - goos: windows
         goarch: arm64
       - goos: windows
-        goarch: 386
-      - goos: windows
         goarch: mips
       - goos: windows
         goarch: mips64
+      - goos: windows
+        goarch: ppc64
+      - goos: windows
+        goarch: ppc64le
 
     flags:
       - -trimpath
