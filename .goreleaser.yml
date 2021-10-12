@@ -11,43 +11,20 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm
-      - arm64
-      - 386
-      - mips
-      - mips64
-    goarm:
-      - 6
-      - 7
-    gomips:
-      - hardfloat
-      - softfloat
-    ignore:
-      - goos: darwin
-        goarch: arm
-      - goos: darwin
-        goarch: 386
-      - goos: darwin
-        goarch: mips
-      - goos: darwin
-        goarch: mips64
-      - goos: windows
-        goarch: arm
-      - goos: windows
-        goarch: arm64
-      - goos: windows
-        goarch: 386
-      - goos: windows
-        goarch: mips
-      - goos: windows
-        goarch: mips64
-
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - freebsd_amd64
+      - linux_386
+      - linux_amd64
+      - linux_arm64
+      - linux_arm_6
+      - linux_arm_7
+      - linux_mips
+      - linux_mips64
+      - linux_ppc64le
+      - windows_amd64
+      - windows_arm64
     flags:
       - -trimpath
     main: ./cmd/step/main.go
