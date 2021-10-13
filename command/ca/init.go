@@ -398,27 +398,27 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 
 			if rootKey == nil {
-				ui.Println("What would be the URI for the root certificate key?")
+				ui.Println("What URI would you like to use for the root certificate key?")
 				rootURI, err = ui.Prompt("(e.g. azurekms:name=my-root-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
 				if err != nil {
 					return err
 				}
 			}
 
-			ui.Println("What would be the URI for the intermediate certificate key?")
+			ui.Println("What URI would you like to use for the intermediate certificate key?")
 			intermediateURI, err = ui.Prompt("(e.g. azurekms:name=my-intermediate-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
 			if err != nil {
 				return err
 			}
 
 			if ctx.Bool("ssh") {
-				ui.Println("What would be the URI for the SSH host key?")
+				ui.Println("What URI would you like to use for the SSH host key?")
 				sshHostURI, err = ui.Prompt("(e.g. azurekms:name=my-host-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
 				if err != nil {
 					return err
 				}
 
-				ui.Println("What would be the URI for the SSH user key?")
+				ui.Println("What URI would you like to use for the SSH user key?")
 				sshUserURI, err = ui.Prompt("(e.g. azurekms:name=my-user-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
 				if err != nil {
 					return err
