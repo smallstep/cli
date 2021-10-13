@@ -22,8 +22,8 @@ func verifyCommand() cli.Command {
 		Name:   "verify",
 		Action: command.ActionFunc(verifyAction),
 		Usage:  `verify a signed message`,
-		UsageText: `**step crypto key verify** [<file>] **--key**=<key-file>
-[**--signature**=<base64>] [**--alg**=<algorithm>] [**--pss**]`,
+		UsageText: `**step crypto key verify** [<file>] **--key**=<key-file> **--signature**=<base64>
+[**--alg**=<algorithm>] [**--pss**]`,
 		Description: `**step crypto key verify** verifies the signature of a file or a message.
 
 ## POSITIONAL ARGUMENTS
@@ -83,6 +83,11 @@ func verifyAction(ctx *cli.Context) error {
 		return errs.RequiredFlag(ctx, "key")
 	}
 
+	signature := ctx.String("signature")
+	if signature == "" {
+		return errs.RequiredFlag(ctx, "signature")
+	}
+
 	var input string
 	switch ctx.NArg() {
 	case 0:
@@ -98,7 +103,7 @@ func verifyAction(ctx *cli.Context) error {
 		return errs.FileError(err, input)
 	}
 
-	sig, err := base64.StdEncoding.DecodeString(ctx.String("signature"))
+	sig, err := base64.StdEncoding.DecodeString(signature)
 	if err != nil {
 		return errors.Wrap(err, "error decoding base64 signature")
 	}
