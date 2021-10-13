@@ -58,7 +58,7 @@ func signCommand() cli.Command {
 		Name:      "sign",
 		Action:    command.ActionFunc(signAction),
 		Usage:     `sign a message using an asymmetric key`,
-		UsageText: `**step crypto key sign** -key <key-file> [<file>]`,
+		UsageText: `**step crypto key sign** **--key**=<key-file> [<file>]`,
 		Description: `**step crypto key sign** generates a signature of the digest of a file or a message
 using an asymmetric key.
 
@@ -124,7 +124,7 @@ func verifyCommand() cli.Command {
 		Name:      "verify",
 		Action:    command.ActionFunc(verifyAction),
 		Usage:     `verify a signed message`,
-		UsageText: `**step crypto key verify** -key <key-file> [<file>]`,
+		UsageText: `**step crypto key verify** **--key**=<key-file> [<file>]`,
 		Description: `**step crypto key verify** verifies the signature of a file or a message.
 
 ## POSITIONAL ARGUMENTS
