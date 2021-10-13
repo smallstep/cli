@@ -114,7 +114,7 @@ $ step crypto key sign --key rsa.key --pss file.txt
 			},
 			cli.StringFlag{
 				Name:  "password-file",
-				Usage: "The path to the <file> containing passphrase to decrypt a private key.",
+				Usage: "The path to the <file> containing passphrase to decrypt the private key.",
 			},
 		},
 	}
