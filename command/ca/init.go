@@ -35,7 +35,7 @@ func initCommand() cli.Command {
 [**--helm**] [**--deployment-type**=<name>] [**--name**=<name>]
 [**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
 [**--provisioner-password-file**=<file>] [**--password-file**=<file>]
-[**--with-ca-url**=<url>] [**--ra**=<name>] [**--kms**=<name>] [**--no-db**]`,
+[**--with-ca-url**=<url>] [**--ra**=<type>] [**--kms**=<type>] [**--no-db**]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
 		Flags: []cli.Flag{
@@ -115,11 +115,11 @@ Use the '--dns' flag multiple times to configure multiple DNS names.`,
 			},
 			cli.StringFlag{
 				Name:  "ra",
-				Usage: `The registration authority <name> to use. Currently "StepCAS" and "CloudCAS" are supported.`,
+				Usage: `The registration authority <type> to use. Currently "StepCAS" and "CloudCAS" are supported.`,
 			},
 			cli.StringFlag{
 				Name: "kms",
-				Usage: `The key manager service <name> to use to manage keys. Options are:
+				Usage: `The key manager service <type> to use to manage keys. Options are:
 	**azurekms**
     :  Use Azure Key Vault to manage X.509 and SSH keys. The key URIs have
 	the following format <azurekms:name=key-name;vault=vault-name>.`,
