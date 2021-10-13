@@ -124,6 +124,11 @@ func signAction(ctx *cli.Context) error {
 		return err
 	}
 
+	keyFile := ctx.String("key")
+	if keyFile == "" {
+		return errs.RequiredFlag(ctx, "key")
+	}
+
 	var input string
 	switch ctx.NArg() {
 	case 0:
@@ -139,7 +144,6 @@ func signAction(ctx *cli.Context) error {
 		return errs.FileError(err, input)
 	}
 
-	keyFile := ctx.String("key")
 	key, err := pemutil.Read(keyFile)
 	if err != nil {
 		return err
