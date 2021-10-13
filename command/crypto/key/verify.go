@@ -40,7 +40,7 @@ true
 
 Verify a file using the PKCS #1 v1.5:
 '''
-$ step crypto key verify --key  --sig "base64...=" file.txt
+$ step crypto key verify --key rsa.pub --sig "base64...=" file.txt
 '''
 
 Verify a file using the PKCS #1 v1.5 and SHA512:
