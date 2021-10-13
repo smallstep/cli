@@ -27,38 +27,39 @@ var hashAlgFlag = cli.StringFlag{
 
 : <algorithm> must be one of:
 
-**sha1** (or sha)
-:  SHA-1 produces a 160-bit hash value
+		**sha1** (or sha)
+		:  SHA-1 produces a 160-bit hash value
 
-**sha224**
-:  SHA-224 produces a 224-bit hash value
+		**sha224**
+		:  SHA-224 produces a 224-bit hash value
 
-**sha256** (default)
-:  SHA-256 produces a 256-bit hash value
+		**sha256** (default)
+		:  SHA-256 produces a 256-bit hash value
 
-**sha384**
-:  SHA-384 produces a 384-bit hash value
+		**sha384**
+		:  SHA-384 produces a 384-bit hash value
 
-**sha512**
-:  SHA-512 produces a 512-bit hash value
+		**sha512**
+		:  SHA-512 produces a 512-bit hash value
 
-**sha512-224**
-:  SHA-512/224 uses SHA-512 and truncates the output to 224 bits
+		**sha512-224**
+		:  SHA-512/224 uses SHA-512 and truncates the output to 224 bits
 
-**sha512-256**
-:  SHA-512/256 uses SHA-512 and truncates the output to 256 bits
+		**sha512-256**
+		:  SHA-512/256 uses SHA-512 and truncates the output to 256 bits
 
-**md5** (requires --insecure)
-:  MD5 produces a 128-bit hash value
+		**md5**
+		:  MD5 produces a 128-bit hash value
 `,
 }
 
 func signCommand() cli.Command {
 	return cli.Command{
-		Name:      "sign",
-		Action:    command.ActionFunc(signAction),
-		Usage:     `sign a message using an asymmetric key`,
-		UsageText: `**step crypto key sign** **--key**=<key-file> [<file>]`,
+		Name:   "sign",
+		Action: command.ActionFunc(signAction),
+		Usage:  `sign a message using an asymmetric key`,
+		UsageText: `**step crypto key sign** [<file>] **--key**=<key-file>
+[**--alg**=<algorithm>] [**--pss**] [**--raw**] [**--password-file**=<file>]`,
 		Description: `**step crypto key sign** generates a signature of the digest of a file or a message
 using an asymmetric key.
 
@@ -102,19 +103,19 @@ $ step crypto key sign --key rsa.key --pss file.txt
 				Name:  "key",
 				Usage: "The path to the <file> containing the private key.",
 			},
-			cli.StringFlag{
-				Name:  "password-file",
-				Usage: "The path to the <file> containing passphrase to decrypt a private key.",
+			hashAlgFlag,
+			cli.BoolFlag{
+				Name:  "pss",
+				Usage: "Use RSA-PSS signature scheme.",
 			},
 			cli.BoolFlag{
 				Name:  "raw",
 				Usage: "Print the raw bytes instead of the base64 format.",
 			},
-			cli.BoolFlag{
-				Name:  "pss",
-				Usage: "Use RSA-PSS signature scheme.",
+			cli.StringFlag{
+				Name:  "password-file",
+				Usage: "The path to the <file> containing passphrase to decrypt a private key.",
 			},
-			hashAlgFlag,
 		},
 	}
 }

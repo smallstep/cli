@@ -19,10 +19,11 @@ import (
 
 func verifyCommand() cli.Command {
 	return cli.Command{
-		Name:      "verify",
-		Action:    command.ActionFunc(verifyAction),
-		Usage:     `verify a signed message`,
-		UsageText: `**step crypto key verify** **--key**=<key-file> [<file>]`,
+		Name:   "verify",
+		Action: command.ActionFunc(verifyAction),
+		Usage:  `verify a signed message`,
+		UsageText: `**step crypto key verify** [<file>] **--key**=<key-file>
+[**--signature**=<base64>] [**--alg**=<algorithm>] [**--pss**]`,
 		Description: `**step crypto key verify** verifies the signature of a file or a message.
 
 ## POSITIONAL ARGUMENTS
@@ -61,11 +62,11 @@ $ step crypto key verify --key rsa.pub --pss --sig "base64...=" file.txt
 				Name:  "signature,sig",
 				Usage: "The <base64> version of the signature.",
 			},
+			hashAlgFlag,
 			cli.BoolFlag{
 				Name:  "pss",
 				Usage: "Verify using the RSA-PSS signature scheme.",
 			},
-			hashAlgFlag,
 		},
 	}
 }
