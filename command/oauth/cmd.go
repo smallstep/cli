@@ -255,6 +255,7 @@ func oauthCmd(c *cli.Context) error {
 		Implicit:            c.Bool("implicit"),
 		CallbackListener:    c.String("listen"),
 		CallbackListenerURL: c.String("listen-url"),
+		CallbackPath:        "/",
 		TerminalRedirect:    c.String("redirect-url"),
 		Browser:             c.String("browser"),
 	}
@@ -390,6 +391,7 @@ type options struct {
 	Implicit            bool
 	CallbackListener    string
 	CallbackListenerURL string
+	CallbackPath        string
 	TerminalRedirect    string
 	Browser             string
 }
@@ -405,8 +407,12 @@ func (o *options) Validate() error {
 		}
 	}
 	if o.CallbackListenerURL != "" {
-		if u, err := url.Parse(o.CallbackListenerURL); err != nil || u.Scheme == "" {
+		u, err := url.Parse(o.CallbackListenerURL)
+		if err != nil || u.Scheme == "" {
 			return errors.Wrapf(err, "invalid value '%s' for flag '--listen-url'", o.CallbackListenerURL)
+		}
+		if u.Path != "" {
+			o.CallbackPath = u.Path
 		}
 	}
 	return nil
@@ -429,6 +435,7 @@ type oauth struct {
 	implicit            bool
 	CallbackListener    string
 	CallbackListenerURL string
+	CallbackPath        string
 	terminalRedirect    string
 	browser             string
 	errCh               chan error
@@ -469,6 +476,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 			implicit:            opts.Implicit,
 			CallbackListener:    opts.CallbackListener,
 			CallbackListenerURL: opts.CallbackListenerURL,
+			CallbackPath:        opts.CallbackPath,
 			terminalRedirect:    opts.TerminalRedirect,
 			browser:             opts.Browser,
 			errCh:               make(chan error),
@@ -508,6 +516,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 			implicit:            opts.Implicit,
 			CallbackListener:    opts.CallbackListener,
 			CallbackListenerURL: opts.CallbackListenerURL,
+			CallbackPath:        opts.CallbackPath,
 			terminalRedirect:    opts.TerminalRedirect,
 			browser:             opts.Browser,
 			errCh:               make(chan error),
@@ -768,7 +777,7 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 // ServeHTTP is the handler that performs the OAuth 2.0 dance and returns the
 // tokens using channels.
 func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if req.URL.Path != "/" {
+	if req.URL.Path != o.CallbackPath {
 		http.NotFound(w, req)
 		return
 	}
