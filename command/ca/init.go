@@ -204,6 +204,7 @@ func initAction(ctx *cli.Context) (err error) {
 		if rootKey, err = pemutil.Read(key); err != nil {
 			return err
 		}
+<<<<<<< HEAD
 	case ra != "" && ra != apiv1.CloudCAS && ra != apiv1.StepCAS:
 		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "StepCAS or CloudCAS")
 	case kmsName != "" && kmsName != "azurekms":
@@ -211,6 +212,20 @@ func initAction(ctx *cli.Context) (err error) {
 	case kmsName != "" && ra != "":
 		return errs.IncompatibleFlagWithFlag(ctx, "kms", "ra")
 	case pkiOnly && noDB:
+=======
+	case ra != "" && ra != apiv1.CloudCAS:
+		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "CloudCAS")
+	}
+
+	var pkiOpts = []pki.Option{}
+
+	configure := !ctx.Bool("pki")
+	noDB := ctx.Bool("no-db")
+	if noDB {
+		pkiOpts = append(pkiOpts, pki.WithNoDB())
+	}
+	if !configure && noDB {
+>>>>>>> 081edd7 (Over master rebase and merges)
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "no-db")
 	case pkiOnly && helm:
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "helm")
@@ -536,11 +551,6 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 		}
 
-		p, err = pki.New(casOptions)
-		if err != nil {
-			return err
-		}
-
 		var address string
 		ui.Println("What IP and port will your new CA bind to?", ui.WithValue(ctx.String("address")))
 		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:443)",
@@ -584,6 +594,7 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
+<<<<<<< HEAD
 	p, err := pki.New(casOptions, opts...)
 	if err != nil {
 		return err
@@ -600,6 +611,23 @@ func initAction(ctx *cli.Context) (err error) {
 		} else {
 			ui.Println("Choose a password for your CA keys and first provisioner.", ui.WithValue(password))
 		}
+=======
+		pkiOpts = append(pkiOpts,
+			pki.WithProvisioner(provisioner),
+			pki.WithAddress(address),
+			pki.WithDNSNames(dnsNames),
+			pki.WithCaURL(caURL),
+		)
+	} else {
+		pkiOpts = append(pkiOpts,
+			pki.WithPKIOnly(),
+		)
+	}
+
+	p, err := pki.New(casOptions, pkiOpts...)
+	if err != nil {
+		return err
+>>>>>>> 081edd7 (Over master rebase and merges)
 	}
 
 	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]", ui.WithRichPrompt(), ui.WithValue(password))
@@ -712,6 +740,7 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 	var deploymentTypes []deployment
 	deploymentType := strings.ToLower(ctx.String("deployment-type"))
 
+<<<<<<< HEAD
 	// Assume standalone for backward compatibility if all required flags are
 	// passed.
 	if deploymentType == "" && isNonInteractiveInit(ctx) {
@@ -760,6 +789,9 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 		return 0, err
 	}
 	return deploymentTypes[i].Value, nil
+=======
+	return p.Save()
+>>>>>>> 081edd7 (Over master rebase and merges)
 }
 
 // assertCryptoRand asserts that a cryptographically secure random number
