@@ -26,7 +26,7 @@ func TestLoadIdentityFromDisk(t *testing.T) {
 			crtPath: testBadCert,
 			keyPath: "",
 			pass:    "",
-			err: errors.Errorf("error parsing %s:",
+			err: errors.Errorf("error parsing %s: x509: trailing data",
 				testBadCert),
 		},
 		"error parsing rsa key": {
