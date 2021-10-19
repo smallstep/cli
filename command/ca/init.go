@@ -204,7 +204,6 @@ func initAction(ctx *cli.Context) (err error) {
 		if rootKey, err = pemutil.Read(key); err != nil {
 			return err
 		}
-<<<<<<< HEAD
 	case ra != "" && ra != apiv1.CloudCAS && ra != apiv1.StepCAS:
 		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "StepCAS or CloudCAS")
 	case kmsName != "" && kmsName != "azurekms":
@@ -212,20 +211,6 @@ func initAction(ctx *cli.Context) (err error) {
 	case kmsName != "" && ra != "":
 		return errs.IncompatibleFlagWithFlag(ctx, "kms", "ra")
 	case pkiOnly && noDB:
-=======
-	case ra != "" && ra != apiv1.CloudCAS:
-		return errs.InvalidFlagValue(ctx, "ra", ctx.String("ra"), "CloudCAS")
-	}
-
-	var pkiOpts = []pki.Option{}
-
-	configure := !ctx.Bool("pki")
-	noDB := ctx.Bool("no-db")
-	if noDB {
-		pkiOpts = append(pkiOpts, pki.WithNoDB())
-	}
-	if !configure && noDB {
->>>>>>> 081edd7 (Over master rebase and merges)
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "no-db")
 	case pkiOnly && helm:
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "helm")
@@ -254,7 +239,7 @@ func initAction(ctx *cli.Context) (err error) {
 	var name, org, resource string
 	var casOptions apiv1.Options
 	var deploymentType pki.DeploymentType
-	var opts []pki.Option
+	var pkiOpts []pki.Option
 	switch ra {
 	case apiv1.CloudCAS:
 		var create bool
@@ -450,7 +435,7 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 
 			// Add uris to the pki options. Empty URIs will be ignored.
-			opts = append(opts, pki.WithKMS(kmsName),
+			pkiOpts = append(pkiOpts, pki.WithKMS(kmsName),
 				pki.WithKeyURIs(rootURI, intermediateURI, sshHostURI, sshUserURI))
 		}
 
@@ -497,10 +482,11 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	if configure {
-		var names string
+	if pkiOnly {
+		pkiOpts = append(pkiOpts, pki.WithPKIOnly())
+	} else {
 		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithValue(ctx.String("dns")))
-		names, err = ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
+		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
 			ui.WithValidateFunc(ui.DNS()), ui.WithValue(ctx.String("dns")))
 		if err != nil {
 			return err
@@ -572,32 +558,26 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 		}
 
-		opts = append(opts,
+		pkiOpts = append(pkiOpts,
 			pki.WithAddress(address),
 			pki.WithCaURL(caURL),
 			pki.WithDNSNames(dnsNames),
 			pki.WithDeploymentType(deploymentType),
 		)
 		if deploymentType == pki.StandaloneDeployment {
-			opts = append(opts, pki.WithProvisioner(provisioner))
+			pkiOpts = append(pkiOpts, pki.WithProvisioner(provisioner))
 		}
 		if deploymentType == pki.LinkedDeployment {
-			opts = append(opts, pki.WithAdmin())
+			pkiOpts = append(pkiOpts, pki.WithAdmin())
 		} else if ctx.Bool("ssh") {
-			opts = append(opts, pki.WithSSH())
+			pkiOpts = append(pkiOpts, pki.WithSSH())
 		}
 		if noDB {
-			opts = append(opts, pki.WithNoDB())
+			pkiOpts = append(pkiOpts, pki.WithNoDB())
 		}
 		if helm {
-			opts = append(opts, pki.WithHelm())
+			pkiOpts = append(pkiOpts, pki.WithHelm())
 		}
-	}
-
-<<<<<<< HEAD
-	p, err := pki.New(casOptions, opts...)
-	if err != nil {
-		return err
 	}
 
 	if ra != "" || kmsName != "" {
@@ -611,23 +591,11 @@ func initAction(ctx *cli.Context) (err error) {
 		} else {
 			ui.Println("Choose a password for your CA keys and first provisioner.", ui.WithValue(password))
 		}
-=======
-		pkiOpts = append(pkiOpts,
-			pki.WithProvisioner(provisioner),
-			pki.WithAddress(address),
-			pki.WithDNSNames(dnsNames),
-			pki.WithCaURL(caURL),
-		)
-	} else {
-		pkiOpts = append(pkiOpts,
-			pki.WithPKIOnly(),
-		)
 	}
 
 	p, err := pki.New(casOptions, pkiOpts...)
 	if err != nil {
 		return err
->>>>>>> 081edd7 (Over master rebase and merges)
 	}
 
 	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]", ui.WithRichPrompt(), ui.WithValue(password))
@@ -740,7 +708,6 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 	var deploymentTypes []deployment
 	deploymentType := strings.ToLower(ctx.String("deployment-type"))
 
-<<<<<<< HEAD
 	// Assume standalone for backward compatibility if all required flags are
 	// passed.
 	if deploymentType == "" && isNonInteractiveInit(ctx) {
@@ -789,9 +756,6 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 		return 0, err
 	}
 	return deploymentTypes[i].Value, nil
-=======
-	return p.Save()
->>>>>>> 081edd7 (Over master rebase and merges)
 }
 
 // assertCryptoRand asserts that a cryptographically secure random number
