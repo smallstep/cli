@@ -189,19 +189,19 @@ generating key.`,
 	// Context is a cli.Flag used to selecta a context name.
 	Context = cli.StringFlag{
 		Name:  "context",
-		Usage: "The <context> to apply for the given command.",
+		Usage: "The context <name> to apply for the given command.",
 	}
 
 	// ContextProfile s a cli.Flag to select a context profile name.
 	ContextProfile = cli.StringFlag{
 		Name:  "profile",
-		Usage: `The <string> that will serve as the profile name for the context.`,
+		Usage: `The <name> that will serve as the profile name for the context.`,
 	}
 
 	// ContextAuthority is a cli.Flag used to select a context authority name.
 	ContextAuthority = cli.StringFlag{
 		Name:  "authority",
-		Usage: `The <string> that will serve as the authority name for the context.`,
+		Usage: `The <name> that will serve as the authority name for the context.`,
 	}
 
 	// Offline is a cli.Flag used to activate the offline flow.

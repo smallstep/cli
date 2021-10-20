@@ -21,13 +21,6 @@ Select the default certificate authority context:
 $ step context select alpha-one
 '''`,
 		Action: command.ActionFunc(selectAction),
-		Flags: []cli.Flag{
-			cli.BoolFlag{
-				Name:   "force",
-				Usage:  `Create the JWK key pair for the provisioner.`,
-				Hidden: true,
-			},
-		},
 	}
 }
 

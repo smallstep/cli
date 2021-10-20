@@ -1,7 +1,8 @@
 package context
 
 import (
-	"github.com/smallstep/cli/ui"
+	"fmt"
+
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/step"
@@ -19,9 +20,9 @@ func listCommand() cli.Command {
 List all certificate authority contexts:
 '''
 $ step context list
-alpha-one.alpha.ca.smallstep.com
-alpha-two.alpha.ca.smallstep.com
-beta.beta.ca.smallstep.com
+▶ alpha-one
+alpha-two
+ssh.beta
 '''`,
 		Action: command.ActionFunc(listAction),
 	}
@@ -32,14 +33,14 @@ func listAction(ctx *cli.Context) error {
 
 	def := step.GetCurrentContext()
 	if def != nil {
-		ui.Printf("▶ %s\n", def.Name)
+		fmt.Printf("▶ %s\n", def.Name)
 	}
 
 	for k := range cm {
 		if def != nil && k == def.Name {
 			continue
 		}
-		ui.Println(k)
+		fmt.Println(k)
 	}
 	return nil
 }

@@ -19,7 +19,7 @@ func addCommand() cli.Command {
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add an admin to the CA configuration",
 		UsageText: `**step beta ca admin add** <subject> <provisioner> [**--super**]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner=<name>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<context]`,
 		Flags: []cli.Flag{

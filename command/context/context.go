@@ -10,7 +10,7 @@ func init() {
 	cmd := cli.Command{
 		Name:      "context",
 		Usage:     "manage certificate authority contexts",
-		UsageText: "**step context** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "**step context** [global-flags] <subcommand> [arguments] [subcommand-flags]",
 		Description: `**step context** command group provides facilities to manage certificate
 authority contexts.
 

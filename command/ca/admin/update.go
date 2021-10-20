@@ -19,7 +19,7 @@ func updateCommand() cli.Command {
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update an admin",
 		UsageText: `**step beta ca admin update** <subject> [**--super**] [**--provisioner**=<name>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner=<name>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<context]`,
 		Flags: []cli.Flag{

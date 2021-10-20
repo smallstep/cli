@@ -18,7 +18,7 @@ func listCommand() cli.Command {
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all admins in the CA configuration",
 		UsageText: `**step beta ca admin list** [**--super**] [**--provisioner**=<name>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner=<name>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<context>]`,
 		Flags: []cli.Flag{
