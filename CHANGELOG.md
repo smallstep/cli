@@ -6,9 +6,10 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 0.17.7] - 2021-09-28
+## [Unreleased - 0.17.7] - 2021-10-28
 ### Added
 - gocritic linter
+- Allow to initialize step-ca config with Azure Key Vault using `step ca init --kms azurekms`.
 ### Changed
 ### Deprecated
 ### Removed
