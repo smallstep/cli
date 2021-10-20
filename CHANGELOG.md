@@ -6,17 +6,22 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 0.17.7] - 2021-10-28
+## [Unreleased - 0.17.8] - DATE
 ### Added
-- gocritic linter
-- Allow to initialize step-ca config with Azure Key Vault using `step ca init --kms azurekms`.
 ### Changed
 ### Deprecated
 ### Removed
 ### Fixed
-- gocritic warnings
 ### Security
 
+## [0.17.7] - 2021-10-20
+### Added
+- gocritic linter
+- Allow to initialize step-ca config with Azure Key Vault using `step ca init --kms azurekms`.
+### Fixed
+- gocritic warnings
+
+### Security
 ## [0.17.6] - 2021-10-01
 ### Added
 - Allow override of the listen address on OIDC flows when there is an existing
@@ -25,29 +30,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   certificate from containers or environments where it is hard to send traffic
   to 127.0.0.1 and where the IDP does not support the urn:ietf:wg:oauth:2.0:oob
   flow.
-### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security
 
 ## [0.17.5] - 2021-09-28
-### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security
 
 ## [0.17.4] - 2021-09-28
-### Added
-### Changed
-### Deprecated
-### Removed
 ### Fixed
 - Bug in step ssh certificate --offline where password-file flag was always set 
 to the value of provisioner-password-file flag.
-### Security
 
 ## [0.17.3] - 2021-09-24
 ### Added
@@ -79,10 +68,6 @@ certificate.
 - logging of invalid http requests to the oauth server
 ### Changed
 - default PEM format encryption alg AES128 -> AES256
-### Deprecated
-### Removed
-### Fixed
-### Security
 
 ## [0.0.1] - 2018-08-07
 ### Added
