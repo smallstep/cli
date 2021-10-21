@@ -161,7 +161,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 		err     error
 	)
 	for attempts := 0; attempts < 10; attempts++ {
-		time.Sleep(1 * time.Second)
+		time.Sleep(5 * time.Second)
 		ui.Printf(".")
 		vch, err = ac.GetChallenge(ch.URL)
 		if err != nil {
