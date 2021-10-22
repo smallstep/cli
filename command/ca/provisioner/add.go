@@ -164,7 +164,7 @@ instance identity documents in AWS.`,
 			},
 			cli.BoolFlag{
 				Name: "disable-custom-sans",
-				Usage: `On cloud provisioners, if anabled only the internal DNS and IP will be added as a SAN.
+				Usage: `On cloud provisioners, if enabled only the internal DNS and IP will be added as a SAN.
 By default it will accept any SAN in the CSR.`,
 			},
 			cli.BoolFlag{
