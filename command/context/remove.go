@@ -1,9 +1,13 @@
 package context
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
@@ -15,7 +19,7 @@ func removeCommand() cli.Command {
 		Hidden:    true,
 		Name:      "remove",
 		Usage:     "remove a context and all associated configuration",
-		UsageText: "**step context remove** <name>",
+		UsageText: "**step context remove** <name> [**--force**]",
 		Description: `**step context remove** command removes a context, along
 with all associated configuration, from disk.
 
@@ -31,6 +35,10 @@ Remove a context:
 $ step context remove alpha-one
 '''`,
 		Action: command.ActionFunc(removeAction),
+		Flags: []cli.Flag{
+			flags.Force,
+			flags.HiddenNoContext,
+		},
 	}
 }
 
@@ -38,25 +46,40 @@ func removeAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
+
 	name := ctx.Args()[0]
 
-	if !step.IsContextEnabled() {
+	if !ctx.Bool("force") {
+		str, err := ui.Prompt(fmt.Sprintf("Are you sure you want to delete the configuration for context %s (this cannot be undone!) [y/n]", name), ui.WithValidateYesNo())
+		if err != nil {
+			return err
+		}
+		switch strings.ToLower(strings.TrimSpace(str)) {
+		case "y", "yes":
+		case "n", "no":
+			return errors.New("context not removed")
+		}
+	}
+
+	cs := step.Contexts()
+	if !cs.Enabled() {
 		return errors.Errorf("context '%s' not found - step path context management not enabled", name)
 	}
-	stepCtx := step.GetCurrentContext()
-	if stepCtx.Name == name {
+	cur := cs.GetCurrent()
+	c, ok := cs.Get(name)
+	if !ok {
+		return errors.Errorf("context '%s' not found", name)
+	}
+	if cur != nil && c.Name == cur.Name {
 		return errors.Errorf("cannot remove current default context")
 	}
-	if err := step.SwitchCurrentContext(name); err != nil {
+	if err := os.RemoveAll(c.Path()); err != nil {
 		return err
 	}
-	if err := os.RemoveAll(step.Path()); err != nil {
+	if err := os.RemoveAll(c.ProfilePath()); err != nil {
 		return err
 	}
-	if err := os.RemoveAll(step.ProfilePath()); err != nil {
-		return err
-	}
-	if err := step.RemoveContext(name); err != nil {
+	if err := cs.Remove(name); err != nil {
 		return err
 	}
 	return nil

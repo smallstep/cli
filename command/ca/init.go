@@ -25,7 +25,6 @@ import (
 	// Enable azurekms
 	_ "github.com/smallstep/certificates/kms/azurekms"
 
-	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 )
@@ -48,12 +47,12 @@ func initCommand() cli.Command {
 			cli.StringFlag{
 				Name:   "root",
 				Usage:  "The path of an existing PEM <file> to be used as the root certificate authority.",
-				EnvVar: command.IgnoreEnvVar,
+				EnvVar: step.IgnoreEnvVar,
 			},
 			cli.StringFlag{
 				Name:   "key",
 				Usage:  "The path of an existing key <file> of the root certificate authority.",
-				EnvVar: command.IgnoreEnvVar,
+				EnvVar: step.IgnoreEnvVar,
 			},
 			cli.BoolFlag{
 				Name:  "pki",
@@ -168,9 +167,13 @@ Cloud.`,
 				Name:  "no-db",
 				Usage: `Generate a CA configuration without the DB stanza. No persistence layer.`,
 			},
-			flags.Context,
+			cli.StringFlag{
+				Name:  "context",
+				Usage: `The <name> of the context for the new authority.`,
+			},
 			flags.ContextProfile,
 			flags.ContextAuthority,
+			flags.HiddenNoContext,
 		},
 	}
 }
@@ -455,6 +458,8 @@ func initAction(ctx *cli.Context) (err error) {
 	fi, err = os.Stat(filepath.Join(step.BasePath(), "authorities"))
 	authoritiesDirExists := !os.IsNotExist(err) && fi.IsDir()
 
+	cs := step.Contexts()
+
 	if !configDirExists || authoritiesDirExists {
 		reg, err := regexp.Compile("[^a-zA-Z0-9]+")
 		if err != nil {
@@ -470,14 +475,14 @@ func initAction(ctx *cli.Context) (err error) {
 		if contextProfile == "" {
 			contextProfile = processedName
 		}
-		if err := step.AddContext(&step.Context{
+		if err := cs.Add(&step.Context{
 			Name:      contextName,
 			Profile:   contextProfile,
 			Authority: processedName,
 		}); err != nil {
 			return err
 		}
-		if err := step.SwitchCurrentContext(contextName); err != nil {
+		if err := cs.SetCurrent(contextName); err != nil {
 			return err
 		}
 	}
@@ -525,14 +530,14 @@ func initAction(ctx *cli.Context) (err error) {
 			if contextAuthority == "" {
 				contextAuthority = dnsNames[0]
 			}
-			if err := step.AddContext(&step.Context{
+			if err := cs.Add(&step.Context{
 				Name:      contextName,
 				Profile:   contextProfile,
 				Authority: contextAuthority,
 			}); err != nil {
 				return err
 			}
-			if err := step.SwitchCurrentContext(contextName); err != nil {
+			if err := cs.SetCurrent(contextName); err != nil {
 				return err
 			}
 		}

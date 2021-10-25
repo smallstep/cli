@@ -3,6 +3,7 @@ package context
 import (
 	"fmt"
 
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/step"
@@ -25,22 +26,25 @@ alpha-two
 ssh.beta
 '''`,
 		Action: command.ActionFunc(listAction),
+		Flags: []cli.Flag{
+			flags.HiddenNoContext,
+		},
 	}
 }
 
 func listAction(ctx *cli.Context) error {
-	cm := step.GetContextMap()
+	cs := step.Contexts()
 
-	def := step.GetCurrentContext()
-	if def != nil {
-		fmt.Printf("▶ %s\n", def.Name)
+	cur := cs.GetCurrent()
+	if cur != nil {
+		fmt.Printf("▶ %s\n", cur.Name)
 	}
 
-	for k := range cm {
-		if def != nil && k == def.Name {
+	for _, v := range cs.List() {
+		if cur != nil && v.Name == cur.Name {
 			continue
 		}
-		fmt.Println(k)
+		fmt.Println(v.Name)
 	}
 	return nil
 }

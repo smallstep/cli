@@ -186,13 +186,22 @@ generating key.`,
 		Usage: "The path to the PEM <file> used as the root certificate authority.",
 	}
 
-	// Context is a cli.Flag used to selecta a context name.
+	// HiddenNoContext is a cli.Flag that prevents context configuration
+	// from being applied for a given command.
+	HiddenNoContext = cli.IntFlag{
+		Name:   "no-context",
+		Usage:  "Do not apply context specific environment for this command.",
+		Value:  1,
+		Hidden: true,
+	}
+
+	// Context is a cli.Flag used to select a a context name.
 	Context = cli.StringFlag{
 		Name:  "context",
 		Usage: "The context <name> to apply for the given command.",
 	}
 
-	// ContextProfile s a cli.Flag to select a context profile name.
+	// ContextProfile is a cli.Flag to select a context profile name.
 	ContextProfile = cli.StringFlag{
 		Name:  "profile",
 		Usage: `The <name> that will serve as the profile name for the context.`,

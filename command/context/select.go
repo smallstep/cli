@@ -1,6 +1,7 @@
 package context
 
 import (
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
@@ -21,12 +22,15 @@ Select the default certificate authority context:
 $ step context select alpha-one
 '''`,
 		Action: command.ActionFunc(selectAction),
+		Flags: []cli.Flag{
+			flags.HiddenNoContext,
+		},
 	}
 }
 
 func selectAction(ctx *cli.Context) error {
 	name := ctx.Args().Get(0)
-	if err := step.WriteCurrentContext(name); err != nil {
+	if err := step.Contexts().SaveCurrent(name); err != nil {
 		return err
 	}
 	ui.PrintSelected("Context", name)

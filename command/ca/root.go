@@ -1,10 +1,8 @@
 package ca
 
 import (
-	"crypto/tls"
 	"encoding/pem"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -13,6 +11,7 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
@@ -82,7 +81,7 @@ func rootAction(ctx *cli.Context) error {
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}
 
-	tr := getInsecureTransport()
+	tr := utils.GetInsecureTransport()
 	client, err := ca.NewClient(caURL, ca.WithTransport(tr))
 	if err != nil {
 		return err
@@ -107,11 +106,4 @@ func rootAction(ctx *cli.Context) error {
 		fmt.Print(string(pem.EncodeToMemory(block)))
 	}
 	return nil
-}
-
-func getInsecureTransport() *http.Transport {
-	return &http.Transport{
-		Proxy:           http.ProxyFromEnvironment,
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
 }
