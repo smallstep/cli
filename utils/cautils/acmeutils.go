@@ -160,7 +160,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 		vch     *acme.Challenge
 		err     error
 	)
-	teim.Sleep(time.Second) // brief sleep to allow server time to validate challenge.
+	time.Sleep(time.Second) // brief sleep to allow server time to validate challenge.
 	for attempts := 0; attempts < 10; attempts++ {
 		vch, err = ac.GetChallenge(ch.URL)
 		if err != nil {
