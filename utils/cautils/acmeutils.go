@@ -160,9 +160,8 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 		vch     *acme.Challenge
 		err     error
 	)
+	time.Sleep(time.Second) // brief sleep to allow server time to validate challenge.
 	for attempts := 0; attempts < 10; attempts++ {
-		time.Sleep(1 * time.Second)
-		ui.Printf(".")
 		vch, err = ac.GetChallenge(ch.URL)
 		if err != nil {
 			ui.Printf(" Error!\n\n")
@@ -173,6 +172,8 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 			isValid = true
 			break
 		}
+		ui.Printf(".")
+		time.Sleep(5 * time.Second)
 	}
 	if !isValid {
 		ui.Printf(" Error!\n\n")
