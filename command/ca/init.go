@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -20,6 +18,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 
 	// Enable azurekms
@@ -452,47 +451,12 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	// Set appropriate context.
-	fi, err := os.Stat(filepath.Join(step.BasePath(), "config"))
-	configDirExists := !os.IsNotExist(err) && fi.IsDir()
-	fi, err = os.Stat(filepath.Join(step.BasePath(), "authorities"))
-	authoritiesDirExists := !os.IsNotExist(err) && fi.IsDir()
-
-	cs := step.Contexts()
-
-	if !configDirExists || authoritiesDirExists {
-		reg, err := regexp.Compile("[^a-zA-Z0-9]+")
-		if err != nil {
-			return err
-		}
-		processedName := strings.ToLower(strings.ReplaceAll(reg.ReplaceAllString(name, ""), " ", "-"))
-
-		contextName := ctx.String("context")
-		if contextName == "" {
-			contextName = processedName
-		}
-		contextProfile := ctx.String("profile")
-		if contextProfile == "" {
-			contextProfile = processedName
-		}
-		if err := cs.Add(&step.Context{
-			Name:      contextName,
-			Profile:   contextProfile,
-			Authority: processedName,
-		}); err != nil {
-			return err
-		}
-		if err := cs.SetCurrent(contextName); err != nil {
-			return err
-		}
-	}
-
 	if pkiOnly {
 		pkiOpts = append(pkiOpts, pki.WithPKIOnly())
 	} else {
 		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithValue(ctx.String("dns")))
 		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
-			ui.WithValidateFunc(ui.DNS()), ui.WithValue(ctx.String("dns")))
+			ui.WithSliceValue(ctx.StringSlice("dns")))
 		if err != nil {
 			return err
 		}
@@ -512,32 +476,27 @@ func initAction(ctx *cli.Context) (err error) {
 			dnsNames = append(dnsNames, strings.TrimSpace(name))
 		}
 
-		// Set appropriate context.
-		_, err = os.Stat(filepath.Join(step.BasePath(), "contexts.json"))
-		contextsMapExists := !os.IsNotExist(err)
-
-		contextName := ctx.String("context")
-		contextProfile := ctx.String("profile")
-		contextAuthority := ctx.String("authority")
-
-		if contextName != "" || contextProfile != "" || contextAuthority != "" || contextsMapExists {
-			if contextName == "" {
-				contextName = dnsNames[0]
+		if cautils.UseContext(ctx) {
+			context := ctx.String("context")
+			if context == "" {
+				context = dnsNames[0]
 			}
-			if contextProfile == "" {
-				contextProfile = dnsNames[0]
+			authority := ctx.String("authority")
+			if authority == "" {
+				authority = dnsNames[0]
 			}
-			if contextAuthority == "" {
-				contextAuthority = dnsNames[0]
+			profile := ctx.String("profile")
+			if profile == "" {
+				profile = dnsNames[0]
 			}
-			if err := cs.Add(&step.Context{
-				Name:      contextName,
-				Profile:   contextProfile,
-				Authority: contextAuthority,
+			if err := step.Contexts().Add(&step.Context{
+				Name:      context,
+				Profile:   profile,
+				Authority: authority,
 			}); err != nil {
 				return err
 			}
-			if err := cs.SetCurrent(contextName); err != nil {
+			if err := step.Contexts().SetCurrent(context); err != nil {
 				return err
 			}
 		}

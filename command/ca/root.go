@@ -11,7 +11,6 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
-	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
@@ -81,8 +80,7 @@ func rootAction(ctx *cli.Context) error {
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}
 
-	tr := utils.GetInsecureTransport()
-	client, err := ca.NewClient(caURL, ca.WithTransport(tr))
+	client, err := ca.NewClient(caURL, ca.WithInsecure())
 	if err != nil {
 		return err
 	}

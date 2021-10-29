@@ -30,7 +30,7 @@ type bootstrapAPIResponse struct {
 	RedirectURL string `json:"redirect-url"`
 }
 
-func useContext(ctx *cli.Context) bool {
+func UseContext(ctx *cli.Context) bool {
 	return step.Contexts().Enabled() ||
 		ctx.IsSet("context") ||
 		ctx.IsSet("authority") ||
@@ -73,7 +73,18 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 		o(bc)
 	}
 
-	if useContext(ctx) {
+	client, err := ca.NewClient(caURL, ca.WithInsecure())
+	if err != nil {
+		return err
+	}
+
+	// Root already validates the certificate
+	resp, err := client.Root(fingerprint)
+	if err != nil {
+		return errors.Wrap(err, "error downloading root certificate")
+	}
+
+	if UseContext(ctx) {
 		authority := ctx.String("authority")
 		if authority == "" {
 			authority = bc.defaultAuthorityName
@@ -100,18 +111,6 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 		if err := step.Contexts().SetCurrent(context); err != nil {
 			return errors.Wrap(err, "error setting context '%s'")
 		}
-	}
-
-	tr := utils.GetInsecureTransport()
-	client, err := ca.NewClient(caURL, ca.WithTransport(tr))
-	if err != nil {
-		return err
-	}
-
-	// Root already validates the certificate
-	resp, err := client.Root(fingerprint)
-	if err != nil {
-		return errors.Wrap(err, "error downloading root certificate")
 	}
 
 	rootFile := pki.GetRootCAPath()
@@ -148,6 +147,10 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 	if err != nil {
 		return errors.Wrap(err, "error marshaling defaults.json")
 	}
+
+	ctx.Set("ca-url", caURL)
+	ctx.Set("fingerprint", fingerprint)
+	ctx.Set("root", rootFile)
 
 	if err := utils.WriteFile(configFile, b, 0644); err != nil {
 		return err

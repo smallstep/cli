@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -60,12 +58,4 @@ func CompleteURL(rawurl string) (string, error) {
 	// scheme:opaque[?query][#fragment]
 	// rawurl looks like ca.smallstep.com:443 or ca.smallstep.com:443/1.0/sign
 	return CompleteURL("https://" + rawurl)
-}
-
-// GetInsecureTransport returns a transport that bypasses TLS server auth.
-func GetInsecureTransport() *http.Transport {
-	return &http.Transport{
-		Proxy:           http.ProxyFromEnvironment,
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
 }
