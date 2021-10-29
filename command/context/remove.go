@@ -3,7 +3,6 @@ package context
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
@@ -16,7 +15,6 @@ import (
 
 func removeCommand() cli.Command {
 	return cli.Command{
-		Hidden:    true,
 		Name:      "remove",
 		Usage:     "remove a context and all associated configuration",
 		UsageText: "**step context remove** <name> [**--force**]",
@@ -50,13 +48,9 @@ func removeAction(ctx *cli.Context) error {
 	name := ctx.Args()[0]
 
 	if !ctx.Bool("force") {
-		str, err := ui.Prompt(fmt.Sprintf("Are you sure you want to delete the configuration for context %s (this cannot be undone!) [y/n]", name), ui.WithValidateYesNo())
-		if err != nil {
+		if ok, err := ui.PromptYesNo(fmt.Sprintf("Are you sure you want to delete the configuration for context %s (this cannot be undone!) [y/n]", name)); err != nil {
 			return err
-		}
-		switch strings.ToLower(strings.TrimSpace(str)) {
-		case "y", "yes":
-		case "n", "no":
+		} else if !ok {
 			return errors.New("context not removed")
 		}
 	}

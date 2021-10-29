@@ -18,7 +18,8 @@ func bootstrapCommand() cli.Command {
 		UsageText: `**step ca bootstrap**
 [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**]
 [**--team**=<name>] [**--authority**=<name>] [**--team-url**=<uri>] [**--redirect-url**=<uri>]
-[**--context**=<string>] [**--profile**=<string>] [**--authority**=<string>]`,
+[**--context**=<name>] [**--profile**=<name>]
+[**--authority**=<name>] [**--team-authority**=<sub-domain>]`,
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
 authority and sets up the current environment to use it.
 

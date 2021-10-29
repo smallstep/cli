@@ -188,10 +188,9 @@ generating key.`,
 
 	// HiddenNoContext is a cli.Flag that prevents context configuration
 	// from being applied for a given command.
-	HiddenNoContext = cli.IntFlag{
+	HiddenNoContext = cli.BoolTFlag{
 		Name:   "no-context",
 		Usage:  "Do not apply context specific environment for this command.",
-		Value:  1,
 		Hidden: true,
 	}
 
