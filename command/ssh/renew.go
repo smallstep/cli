@@ -28,10 +28,11 @@ func renewCommand() cli.Command {
 [**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<file>]
 [**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--offline**] [**--ca-config**=<file>]`,
-		Description: `**step ssh renew** command renews an SSH Cerfificate
+		Description: `**step ssh renew** command renews an SSH Host Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 It writes the new certificate to disk - either overwriting <ssh-cert> or
-using a new file when the **--out**=<file> flag is used.
+using a new file when the **--out**=<file> flag is used. This command cannot
+be used to renew SSH User Certificates.
 
 ## POSITIONAL ARGUMENTS
 
