@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased - 0.17.8] - DATE
 ### Added
+- Add additional `emoji` and `base64-raw` encoding to the `--format` flag of `step certificate fingerprint`.
+- Add `--format` flag to `step crypto key fingerprint`.
+- Add `--format` flag to `step ssh fingerprint`.
 ### Changed
 ### Deprecated
 ### Removed

@@ -3,6 +3,7 @@ package ssh
 import (
 	"fmt"
 
+	libfingerprint "github.com/smallstep/cli/crypto/fingerprint"
 	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -35,12 +36,32 @@ Print the fingerprint for an SSH public key:
 '''
 $ step ssh fingerprint id_ecdsa.pub
 '''`,
+		Flags: []cli.Flag{
+			command.FingerprintFormatFlag(),
+		},
 	}
 }
 
 func fingerprint(ctx *cli.Context) error {
 	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
 		return err
+	}
+
+	var (
+		format = ctx.String("format")
+
+		opts []libfingerprint.Option
+	)
+
+	if format != "" {
+		encoding, err := command.GetFingerprintEncoding(format, "hex")
+		if err != nil {
+			return err
+		}
+		opts = []libfingerprint.Option{
+			libfingerprint.WithPrefix("SHA256:"),
+			libfingerprint.WithEncoding(encoding),
+		}
 	}
 
 	name := ctx.Args().First()
@@ -53,7 +74,7 @@ func fingerprint(ctx *cli.Context) error {
 		return err
 	}
 
-	s, err := sshutil.Fingerprint(b)
+	s, err := sshutil.Fingerprint(b, sshutil.WithFingerprintOptions(opts...))
 	if err != nil {
 		return err
 	}

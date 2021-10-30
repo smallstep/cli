@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto/fingerprint"
 	"github.com/smallstep/cli/usage"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/step"
@@ -206,5 +207,35 @@ func setEnvVar(c *cli.Command) {
 
 	for i := range c.Subcommands {
 		setEnvVar(&c.Subcommands[i])
+	}
+}
+
+// FingerprintFormatFlag returns a flag for configuring the fingerprint format.
+func FingerprintFormatFlag() cli.StringFlag {
+	return cli.StringFlag{
+		Name:  "format",
+		Usage: `The <format> of the fingerprint, it must be "hex", "base64", "base64-url", "base64-raw", or "emoji".`,
+	}
+}
+
+// GetFingerprintEncoding gets the fingerprint encoding from the format flag.
+func GetFingerprintEncoding(format, defaultFmt string) (fingerprint.Encoding, error) {
+	if format == "" {
+		format = defaultFmt
+	}
+
+	switch strings.ToLower(strings.TrimSpace(format)) {
+	case "hex", "":
+		return fingerprint.HexFingerprint, nil
+	case "base64":
+		return fingerprint.Base64Fingerprint, nil
+	case "base64url", "base64-url":
+		return fingerprint.Base64URLFingerprint, nil
+	case "base64raw", "base64-raw":
+		return fingerprint.Base64RawFingerprint, nil
+	case "emoji", "emojisum":
+		return fingerprint.EmojiFingerprint, nil
+	default:
+		return 0, errors.Errorf("error parsing fingerprint format: '%s' is not a valid fingerprint format", format)
 	}
 }
