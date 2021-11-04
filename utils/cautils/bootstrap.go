@@ -30,6 +30,7 @@ type bootstrapAPIResponse struct {
 	RedirectURL string `json:"redirect-url"`
 }
 
+// UseContext returns true if contexts should be used, false otherwise.
 func UseContext(ctx *cli.Context) bool {
 	return step.Contexts().Enabled() ||
 		ctx.IsSet("context") ||
@@ -241,7 +242,7 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 func BootstrapAuthority(ctx *cli.Context, caURL, fingerprint string) (err error) {
 	caHostname := ctx.String("authority")
 	if caHostname == "" {
-		if caHostname, err = getHost(caHostname); err != nil {
+		if caHostname, err = getHost(caURL); err != nil {
 			return err
 		}
 	}
