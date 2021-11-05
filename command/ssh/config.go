@@ -136,6 +136,10 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		if err := cautils.BootstrapTeamAuthority(ctx, team, "ssh"); err != nil {
 			return err
 		}
+	} else {
+		if err := step.Contexts().Apply(ctx); err != nil {
+			return err
+		}
 	}
 
 	// Prepare retry function
