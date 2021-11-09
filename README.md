@@ -1,7 +1,6 @@
 # Step CLI
 
 [![GitHub release](https://img.shields.io/github/release/smallstep/cli.svg)](https://github.com/smallstep/cli/releases)
-[![CA Image](https://images.microbadger.com/badges/image/smallstep/step-cli.svg)](https://microbadger.com/images/smallstep/step-cli)
 [![Go Report Card](https://goreportcard.com/badge/github.com/smallstep/cli)](https://goreportcard.com/report/github.com/smallstep/cli)
 [![Build Status](https://travis-ci.com/smallstep/cli.svg?branch=master)](https://travis-ci.com/smallstep/cli)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -24,7 +23,8 @@ You can use it for many common crypto and X.509 operations—independently, or w
 
 ## Features
 
-Step CLI's command groups illustrate some of its uses:
+Step CLI's command groups illustrate its wide-ranging uses:
+
 - [`step certificate`](https://smallstep.com/docs/step-cli/reference/certificate/): Work with X.509 (TLS/HTTPS) certificates.
   - Create, revoke, validate, lint, and bundle X.509 certificates.
   - Install (and remove) X.509 certificates into your system's (and brower's) trust store.
@@ -56,10 +56,12 @@ Step CLI's command groups illustrate some of its uses:
       signing
   - [Apply key derivation functions](https://smallstep.com/docs/step-cli/reference/crypto/kdf/) (KDFs) and [verify passwords](https://smallstep.com/docs/step-cli/reference/crypto/kdf/compare/) using `scrypt`, `bcrypt`, and `argo2`
   - Generate and check [file hashes](https://smallstep.com/docs/step-cli/reference/crypto/hash/)
+
 - [`step oauth`](https://smallstep.com/docs/step-cli/reference/oauth/): Add an OAuth 2.0 single sign-on flow to any CLI application.
   - Supports OAuth authorization code, out-of-band (OOB), JWT bearer, and refresh token flows
   - Get OAuth access tokens and OIDC identity tokens at the command line from any provider.
   - Verify OIDC identity tokens (`step crypto jwt verify`)
+
 - [`step ssh`](https://smallstep.com/docs/step-cli/reference/ssh/): Create and manage SSH certificates (requires an online or offline [`step-ca`](https://github.com/smallstep/certificates) instance)
   - Generate SSH user and host key pairs and short-lived certificates
   - Add and remove certificates to the SSH agent
