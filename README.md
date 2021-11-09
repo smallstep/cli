@@ -10,19 +10,16 @@
 [![GitHub stars](https://img.shields.io/github/stars/smallstep/cli.svg?style=social)](https://github.com/smallstep/cli/stargazers)
 [![Twitter followers](https://img.shields.io/twitter/follow/smallsteplabs.svg?label=Follow&style=social)](https://twitter.com/intent/follow?screen_name=smallsteplabs)
 
-`step` is a toolkit for working with your *public key infrastructure* (PKI). 
-It's also the client counterpart to the [`step-ca`](https://github.com/smallstep/certificates) online Certificate Authority (CA).
-
-Here's a quick example, combining `step oauth` and `step crypto` to get and verify the signature of a Google OAuth OIDC token:
-
-![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
+`step` is an easy-to-use CLI tool for building, operating, and automating Public Key Infrastructure (PKI) systems and workflows.
+It's the client counterpart to the [`step-ca` online Certificate Authority (CA)](https://github.com/smallstep/certificates).
+You can use it for many common crypto and X.509 operations—independently, or with a CA.
 
 **Questions? Ask us on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/step-discord).**
 
 [Website](https://smallstep.com) |
 [Documentation](https://smallstep.com/docs/step-cli) |
 [Installation](https://smallstep.com/docs/step-cli/installation) |
-[Getting Started](https://smallstep.com/docs/step-cli/basic-crypto-operations) |
+[Basic Crypto Operations](https://smallstep.com/docs/step-cli/basic-crypto-operations) |
 [Contributor's Guide](./docs/CONTRIBUTING.md)
 
 ## Features
@@ -31,6 +28,7 @@ Step CLI's command groups illustrate some of its uses:
 - [`step certificate`](https://smallstep.com/docs/step-cli/reference/certificate/): Work with X.509 (TLS/HTTPS) certificates.
   - Create, revoke, validate, lint, and bundle X.509 certificates.
   - Install (and remove) X.509 certificates into your system's (and brower's) trust store.
+  - Validate certificate deployment and renewal status for automation
   - Create key pairs (RSA, ECDSA, EdDSA) and certificate signing requests (CSRs)
   - [Sign CSRs](https://smallstep.com/docs/step-cli/reference/certificate/sign/)
   - Create [RFC5280](https://tools.ietf.org/html/rfc5280) and [CA/Browser Forum](https://cabforum.org/baseline-requirements-documents/)-compliant certificates that work for TLS and HTTPS
@@ -45,6 +43,7 @@ Step CLI's command groups illustrate some of its uses:
   - Securely [distribute root certificates](https://smallstep.com/docs/step-cli/reference/ca/root/) and [bootstrap](https://smallstep.com/docs/step-cli/reference/ca/bootstrap/) PKI relying parties
   - [Renew](https://smallstep.com/docs/step-cli/reference/ca/renew/) and [revoke](https://smallstep.com/docs/step-cli/reference/ca/revoke/) certificates issued by [`step-ca`](https://github.com/smallstep/certificates)
   - [Submit CSRs](https://smallstep.com/docs/step-cli/reference/ca/sign/) to be signed by [`step-ca`](https://github.com/smallstep/certificates)
+  - With an ACME CA, `step` supports the `http-01` challenge type
 
 - [`step crypto`](https://smallstep.com/docs/step-cli/reference/crypto/): A general-purpose crypto toolkit
   - Work with [JWTs](https://jwt.io) ([RFC7519](https://tools.ietf.org/html/rfc7519)) and [other JOSE constructs](https://datatracker.ietf.org/wg/jose/documents/)
@@ -70,6 +69,12 @@ Step CLI's command groups illustrate some of its uses:
 ## Installation
 
 See our installation docs [here](https://smallstep.com/docs/step-cli/installation).
+
+## Example
+
+Here's a quick example, combining `step oauth` and `step crypto` to get and verify the signature of a Google OAuth OIDC token:
+
+![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
 
 ## Community
 
