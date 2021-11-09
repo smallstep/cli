@@ -199,10 +199,6 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		if err != nil {
 			return errors.Wrap(err, "error parsing ca-url")
 		}
-		//host, _, err := net.SplitHostPort(u.Host)
-		//if err != nil {
-		//	return errors.Wrap(err, "error splitting ca-url into host and port")
-		//}
 		authority = u.Hostname()
 	}
 
