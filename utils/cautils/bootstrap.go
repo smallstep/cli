@@ -31,11 +31,21 @@ type bootstrapAPIResponse struct {
 }
 
 // UseContext returns true if contexts should be used, false otherwise.
-func UseContext(ctx *cli.Context) bool {
-	return step.Contexts().Enabled() ||
+func UseContext(ctx *cli.Context) (ret bool) {
+	if step.Contexts().Enabled() ||
 		ctx.IsSet("context") ||
 		ctx.IsSet("authority") ||
-		ctx.IsSet("profile")
+		ctx.IsSet("profile") {
+		return true
+	}
+	// If not using contexts but an existing CA has already been configured,
+	// advise the user to use contexts in the future.
+	if _, err := os.Stat(filepath.Join(step.BasePath(), "/config/ca.sjon")); err == nil {
+		ui.Println("⚠️  It looks like step is already configured to connect to an authority. " +
+			"You can use 'contexts' to easily switch between teams and authorities. " +
+			"Learn more at <whatever-url-maxey-says-to-use>.")
+	}
+	return false
 }
 
 type bootstrapOption func(bc *bootstrapContext)
@@ -113,7 +123,6 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 			return errors.Wrap(err, "error setting context '%s'")
 		}
 	}
-
 	rootFile := pki.GetRootCAPath()
 	configFile := step.DefaultsFile()
 

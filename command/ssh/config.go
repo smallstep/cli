@@ -3,6 +3,7 @@ package ssh
 import (
 	"encoding/base64"
 	"net/http"
+	"net/url"
 	"runtime"
 	"strings"
 
@@ -188,9 +189,30 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return nil
 	}
 
+	authority := ctx.String("authority")
+	if authority == "" {
+		caURL := ctx.String("ca-url")
+		if caURL == "" {
+			return errs.RequiredFlag(ctx, "ca-url")
+		}
+		u, err := url.Parse(caURL)
+		if err != nil {
+			return errors.Wrap(err, "error parsing ca-url")
+		}
+		//host, _, err := net.SplitHostPort(u.Host)
+		//if err != nil {
+		//	return errors.Wrap(err, "error splitting ca-url into host and port")
+		//}
+		authority = u.Hostname()
+	}
+
 	data := map[string]string{
-		"GOOS":     runtime.GOOS,
-		"StepPath": step.Path(),
+		"GOOS":      runtime.GOOS,
+		"StepPath":  step.Path(),
+		"Authority": authority,
+	}
+	if step.Contexts().Enabled() {
+		data["Context"] = step.Contexts().GetCurrent().Name
 	}
 	if len(sets) > 0 {
 		for _, s := range sets {

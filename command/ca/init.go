@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/manifoldco/promptui"
+	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/kms"
 	"github.com/smallstep/certificates/pki"
@@ -496,8 +497,11 @@ func initAction(ctx *cli.Context) (err error) {
 			}); err != nil {
 				return err
 			}
+			if err := step.Contexts().SaveCurrent(context); err != nil {
+				return errors.Wrap(err, "error storing new default context")
+			}
 			if err := step.Contexts().SetCurrent(context); err != nil {
-				return err
+				return errors.Wrap(err, "error setting context '%s'")
 			}
 		}
 

@@ -5,6 +5,7 @@ import (
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 )
 
@@ -29,6 +30,9 @@ $ step context select alpha-one
 }
 
 func selectAction(ctx *cli.Context) error {
+	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		return err
+	}
 	name := ctx.Args().Get(0)
 	if err := step.Contexts().SaveCurrent(name); err != nil {
 		return err
