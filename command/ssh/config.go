@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"net/http"
 	"net/url"
+	"os"
 	"runtime"
 	"strings"
 
@@ -202,10 +203,17 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		authority = u.Hostname()
 	}
 
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
 	data := map[string]string{
-		"GOOS":      runtime.GOOS,
-		"StepPath":  step.Path(),
-		"Authority": authority,
+		"GOOS":         runtime.GOOS,
+		"StepPath":     step.Path(),
+		"StepBasePath": step.BasePath(),
+		"Home":         home,
+		"Authority":    authority,
 	}
 	if step.Contexts().Enabled() {
 		data["Context"] = step.Contexts().GetCurrent().Name

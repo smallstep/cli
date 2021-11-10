@@ -237,6 +237,11 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
+	useContext := cautils.UseContext(ctx)
+	if !useContext {
+		cautils.WarnContext()
+	}
+
 	// Common for both CA and RA
 
 	var name, org, resource string
@@ -477,7 +482,7 @@ func initAction(ctx *cli.Context) (err error) {
 			dnsNames = append(dnsNames, strings.TrimSpace(name))
 		}
 
-		if cautils.UseContext(ctx) {
+		if useContext {
 			context := ctx.String("context")
 			if context == "" {
 				context = dnsNames[0]

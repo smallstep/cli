@@ -3,6 +3,7 @@ package context
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
@@ -10,6 +11,7 @@ import (
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/fileutil"
 	"go.step.sm/cli-utils/step"
 )
 
@@ -76,5 +78,15 @@ func removeAction(ctx *cli.Context) error {
 	if err := cs.Remove(name); err != nil {
 		return err
 	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	// Attempt to remove line associated with the authority from removed context.
+	if err := fileutil.RemoveLine(filepath.Join(home, ".ssh/include"), c.Authority); err != nil {
+		return err
+	}
+
 	return nil
 }
