@@ -46,7 +46,7 @@ func WarnContext() {
 	if _, err := os.Stat(filepath.Join(step.BasePath(), "/config/ca.json")); err == nil {
 		ui.Println("⚠️  It looks like step is already configured to connect to an authority.\n" +
 			"You can use 'contexts' to easily switch between teams and authorities.\n" +
-			"Learn more at <whatever-url-maxey-says-to-use>.\n")
+			"Learn more at https://smallstep.com/docs/step-cli/the-step-command#contexts.\n")
 	}
 }
 
