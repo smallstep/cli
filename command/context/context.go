@@ -47,6 +47,7 @@ alpha-two
 beta
 '''`,
 		Subcommands: cli.Commands{
+			currentCommand(),
 			listCommand(),
 			removeCommand(),
 			selectCommand(),

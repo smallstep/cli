@@ -68,11 +68,7 @@ $ step ca bootstrap --team superteam --team-url https://config.example.org/<>
 				Usage: "Install the root certificate into the system truststore.",
 			},
 			flags.Team,
-			cli.StringFlag{
-				Name: "team-authority",
-				Usage: `The <sub-domain> of the certificate authority to bootstrap. E.g., for an authority with
-domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
-			},
+			flags.TeamAuthority,
 			flags.TeamURL,
 			flags.RedirectURL,
 			flags.Force,

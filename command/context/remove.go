@@ -46,16 +46,7 @@ func removeAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
-
 	name := ctx.Args()[0]
-
-	if !ctx.Bool("force") {
-		if ok, err := ui.PromptYesNo(fmt.Sprintf("Are you sure you want to delete the configuration for context %s (this cannot be undone!) [y/n]", name)); err != nil {
-			return err
-		} else if !ok {
-			return errors.New("context not removed")
-		}
-	}
 
 	cs := step.Contexts()
 	if !cs.Enabled() {
@@ -66,8 +57,37 @@ func removeAction(ctx *cli.Context) error {
 	if !ok {
 		return errors.Errorf("context '%s' not found", name)
 	}
+
+	if !ctx.Bool("force") {
+		f, err := os.Open(c.Path())
+		if err != nil {
+			return errs.FileError(err, c.Path())
+		}
+		fi, err := f.Readdir(-1)
+		f.Close()
+		if err != nil {
+			return errs.FileError(err, c.Path())
+		}
+		ui.Printf("The contents of path %s will be removed:\n", c.Path())
+		ui.Println()
+		for _, file := range fi {
+			ftyp := "file"
+			if file.IsDir() {
+				ftyp = "directory"
+			}
+			ui.Printf("  - ./%s\t (%s)\n", file.Name(), ftyp)
+		}
+		ui.Println()
+
+		if ok, err := ui.PromptYesNo(fmt.Sprintf("Are you sure you want to delete the configuration for context %s (this cannot be undone!) [y/n]", name)); err != nil {
+			return err
+		} else if !ok {
+			return errors.New("context not removed")
+		}
+	}
+
 	if cur != nil && c.Name == cur.Name {
-		return errors.Errorf("cannot remove current default context")
+		return errors.Errorf("cannot remove current context")
 	}
 	if err := os.RemoveAll(c.Path()); err != nil {
 		return err

@@ -35,14 +35,14 @@ func updateCommand() cli.Command {
 [**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 ACME
 
 **step beta ca provisioner update** <name> [**--force-cn**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 OIDC
 
@@ -54,21 +54,21 @@ OIDC
 [**--admin**=<email>]... [**--remove-admin**=<email>]...
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 X5C
 
 **step beta ca provisioner update** <name> **--x5c-root**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 Kubernetes Service Account
 
 **step beta ca provisioner update** <name> [**--public-key**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 IID (AWS/GCP/Azure)
 
@@ -81,7 +81,7 @@ IID (AWS/GCP/Azure)
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]`,
+[**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "name",

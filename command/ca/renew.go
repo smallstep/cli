@@ -43,7 +43,7 @@ func renewCertificateCommand() cli.Command {
 [**--password-file**=<file>] [**--out**=<file>] [**--expires-in**=<duration>]
 [**--force**] [**--expires-in**=<duration>] [**--pid**=<int>]
 [**--pid-file**=<file>] [**--signal**=<int>] [**--exec**=<string>] [**--daemon**]
-[**--renew-period**=<duration>] [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context>]`,
+[**--renew-period**=<duration>] [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `
 **step ca renew** command renews the given certificate (with a request to the
 certificate authority) and writes the new certificate to disk - either overwriting

@@ -40,7 +40,7 @@ func initCommand() cli.Command {
 [**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
 [**--provisioner-password-file**=<file>] [**--password-file**=<file>]
 [**--ra**=<type>] [**--kms**=<type>] [**--with-ca-url**=<url>] [**--no-db**]
-[**--context**=<string>] [**--profile**=<string>] [**--authority**<string>]`,
+[**--context**=<name>] [**--profile**=<name>] [**--authority**=<name>]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
 		Flags: []cli.Flag{
@@ -460,7 +460,8 @@ func initAction(ctx *cli.Context) (err error) {
 	if pkiOnly {
 		pkiOpts = append(pkiOpts, pki.WithPKIOnly())
 	} else {
-		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithValue(ctx.String("dns")))
+		ui.Println("What DNS names or IP addresses would you like to add to your new CA?",
+			ui.WithSliceValue(ctx.StringSlice("dns")))
 		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
 			ui.WithSliceValue(ctx.StringSlice("dns")))
 		if err != nil {

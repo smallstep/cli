@@ -21,7 +21,7 @@ func getCommand() cli.Command {
 		UsageText: `**step beta ca provisioner get** <name>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]`,
+[**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,

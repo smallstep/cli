@@ -28,7 +28,7 @@ func revokeCommand() cli.Command {
 [**--set-file**=<file>] [**--password-file**=<file>] [**--reason**=<string>]
 [**--reasonCode**=<code>] [**--sshpop-cert**=<file>] [**--sshpop-key**=<key>]
 [**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<context]`,
+[**--context**=<name>]`,
 
 		Description: `**step ssh revoke** command revokes an SSH Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).

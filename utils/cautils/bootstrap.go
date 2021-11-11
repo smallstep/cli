@@ -213,6 +213,8 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 		apiEndpoint = u.String()
 	} else {
 		// The user specified a custom endpoint..
+		// TODO implement support for replacing the authority section of the
+		// URL with placeholders as well.
 		apiEndpoint = strings.ReplaceAll(apiEndpoint, "<>", team)
 		u, err := url.Parse(apiEndpoint)
 		if err != nil {

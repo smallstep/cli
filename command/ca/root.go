@@ -22,7 +22,7 @@ func rootComand() cli.Command {
 		Action: command.ActionFunc(rootAction),
 		Usage:  "download and validate the root certificate",
 		UsageText: `**step ca root** [<root-file>]
-[**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--context**=<context>]`,
+[**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--context**=<name>]`,
 		Description: `**step ca root** downloads and validates the root certificate from the
 certificate authority.
 

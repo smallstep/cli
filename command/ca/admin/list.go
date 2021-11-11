@@ -20,7 +20,7 @@ func listCommand() cli.Command {
 		UsageText: `**step beta ca admin list** [**--super**] [**--provisioner**=<name>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]`,
+[**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "super",

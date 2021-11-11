@@ -2,9 +2,9 @@ package ssh
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"runtime"
 	"strings"
 
@@ -29,11 +29,11 @@ func configCommand() cli.Command {
 		Action: command.ActionFunc(configAction),
 		Usage:  "configures ssh to be used with certificates",
 		UsageText: `**step ssh config**
-[**--team**=<name>] [**--host**] [**--set**=<key=value>] [**--set-file**=<file>]
-[**--dry-run**] [**--roots**] [**--federation**] [**--force**]
-[**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<string>] [**--authority**=<string>]
-[**--profile**=<string>]`,
+[**--team**=<name>] [**--team-authority**=<sub-domain>] [**--host**]
+[**--set**=<key=value>] [**--set-file**=<file>] [**--dry-run**] [**--roots**]
+[**--federation**] [**--force**] [**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
+[**--authority**=<name>] [**--profile**=<name>]`,
 		Description: `**step ssh config** configures SSH to be used with certificates. It also supports
 flags to inspect the root certificates used to sign the certificates.
 
@@ -72,6 +72,7 @@ $ step ssh config --set User=joe --set Bastion=bastion.example.com
 				Usage: `Configures a SSH server instead of a client.`,
 			},
 			flags.Team,
+			flags.TeamAuthority,
 			flags.TeamURL,
 			cli.BoolFlag{
 				Name:  "roots",
@@ -120,7 +121,7 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	case team != "" && isHost:
 		return errs.IncompatibleFlagWithFlag(ctx, "team", "host")
 	case team != "" && isRoots:
-		return errs.IncompatibleFlagWithFlag(ctx, "team", "isRoots")
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "roots")
 	case team != "" && isFederation:
 		return errs.IncompatibleFlagWithFlag(ctx, "team", "federation")
 	case team != "" && len(sets) > 0:
@@ -135,7 +136,12 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 
 	// Bootstrap Authority
 	if team != "" {
-		if err := cautils.BootstrapTeamAuthority(ctx, team, "ssh"); err != nil {
+		teamAuthority := ctx.String("team-authority")
+		// Default to the default SSH authority.
+		if teamAuthority == "" {
+			teamAuthority = "ssh"
+		}
+		if err := cautils.BootstrapTeamAuthority(ctx, team, teamAuthority); err != nil {
 			return err
 		}
 	} else {
@@ -185,7 +191,7 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		}
 
 		for _, key := range keys {
-			ui.Printf("%s %s\n", key.Type(), base64.StdEncoding.EncodeToString(key.Marshal()))
+			fmt.Printf("%s %s\n", key.Type(), base64.StdEncoding.EncodeToString(key.Marshal()))
 		}
 		return nil
 	}
@@ -203,16 +209,10 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		authority = u.Hostname()
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
 	data := map[string]string{
 		"GOOS":         runtime.GOOS,
 		"StepPath":     step.Path(),
 		"StepBasePath": step.BasePath(),
-		"Home":         home,
 		"Authority":    authority,
 	}
 	if step.Contexts().Enabled() {

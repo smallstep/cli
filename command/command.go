@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -61,7 +60,7 @@ func IsForce() bool {
 func getConfigVars(ctx *cli.Context) error {
 	configFile := ctx.GlobalString("config")
 	if configFile == "" {
-		configFile = filepath.Join(step.Path(), "config", "defaults.json")
+		configFile = step.DefaultsFile()
 	}
 
 	b, err := ioutil.ReadFile(configFile)

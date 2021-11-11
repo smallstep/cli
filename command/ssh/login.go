@@ -29,7 +29,7 @@ func loginCommand() cli.Command {
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--set**=<key=value>] [**--set-file**=<file>] [**--force**]
 [**--offline**] [**--ca-config**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ssh login** generates a new SSH key pair and send a request to [step
 certificates](https://github.com/smallstep/certificates) to sign a user
 certificate. This certificate will be automatically added to the SSH agent.

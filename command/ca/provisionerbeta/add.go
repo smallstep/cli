@@ -35,7 +35,7 @@ func addCommand() cli.Command {
 [**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=OIDC
 [**--client-id**=<id>] [**--client-secret**=<secret>]
@@ -43,23 +43,23 @@ func addCommand() cli.Command {
 [**--admin**=<email>]...
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 
 **step beta ca provisioner add** <name> **--type**=X5C **--x5c-root**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=SSHPOP
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=K8SSA [**--public-key**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
 [**--aws-account**=<id>] [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
@@ -68,12 +68,12 @@ func addCommand() cli.Command {
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context>]`,
+[**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "type",

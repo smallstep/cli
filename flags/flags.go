@@ -224,7 +224,7 @@ but can accept a different configuration file using **--ca-config** flag.`,
 	CaConfig = cli.StringFlag{
 		Name: "ca-config",
 		Usage: `The certificate authority configuration <file>. Defaults to
-$STEPPATH/config/ca.json`,
+$(step path)/config/ca.json`,
 		Value: filepath.Join(step.Path(), "config", "ca.json"),
 	}
 
@@ -295,7 +295,16 @@ be stored in the 'sshpop' header.`,
 	TeamURL = cli.StringFlag{
 		Name: "team-url",
 		Usage: `The <url> step queries to retrieve initial team configuration. Only used with
-the **--team** option. If the url contains <\<\>> placeholders, they are replaced with the team ID.`,
+the **--team** option. If the url contains <\<\>> placeholders, they are replaced with the team ID.
+Replacing the authority-id section of the url is not supported with placeholders.`,
+	}
+
+	// TeamAuthority is a cli.Flag used to pass the name of the authority belonging
+	// to a team.
+	TeamAuthority = cli.StringFlag{
+		Name: "team-authority",
+		Usage: `The <sub-domain> of the certificate authority to bootstrap. E.g., for an authority with
+domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
 	}
 
 	// RedirectURL is a cli.Flag used to pass a url to redirect after an OAuth

@@ -29,7 +29,7 @@ func signCertificateCommand() cli.Command {
 [**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
 [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
 [**--k8ssa-token-path**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS

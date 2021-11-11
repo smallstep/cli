@@ -41,7 +41,7 @@ func certificateCommand() cli.Command {
 [**--not-after**=<time|duration>] [**--token**=<token>] [**--issuer**=<name>]
 [**--no-password**] [**--insecure**] [**--force**] [**--x5c-cert**=<file>]
 [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<context]`,
+[**--root**=<file>] [**--context**=<name>]`,
 
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).

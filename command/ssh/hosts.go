@@ -20,7 +20,7 @@ func hostsCommand() cli.Command {
 		Usage:  "returns a list of all valid hosts",
 		UsageText: `**step ssh hosts** [**--set**=<key=value>] [**--set-file**=<file>]
 [**--offline**] [**--ca-config**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<string>]`,
 		Description: `**step ssh hosts** returns a list of valid hosts for SSH.
 
 This command returns a zero exit status then the server exists, it will return 1

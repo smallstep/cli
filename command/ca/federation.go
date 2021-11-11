@@ -31,7 +31,7 @@ func rootsCommand() cli.Command {
 		Action: command.ActionFunc(rootsAction),
 		Usage:  "download all the root certificates",
 		UsageText: `**step ca roots** [<roots-file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca roots** downloads a certificate bundle with all the root
 certificates.
 
@@ -73,7 +73,7 @@ func federationCommand() cli.Command {
 		Action: command.ActionFunc(federationAction),
 		Usage:  "download all the federated certificates",
 		UsageText: `**step ca federation** [<federation-file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca federation** downloads a certificate bundle with all the root
 certificates in the federation.
 

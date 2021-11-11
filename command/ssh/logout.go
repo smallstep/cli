@@ -20,7 +20,7 @@ func logoutCommand() cli.Command {
 		Usage:  "removes a private key from the ssh-agent",
 		UsageText: `**step ssh logout** <identity> [**--all**]
 [**--identity**=<identity>] [**--offline**] [**--ca-config**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 
 		Description: `**step ssh logout** commands removes a key from the ssh-agent.
 

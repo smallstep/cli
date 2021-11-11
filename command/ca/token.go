@@ -33,8 +33,8 @@ func tokenCommand() cli.Command {
 [**--output-file**=<file>] [**--key**=<file>] [**--san**=<SAN>] [**--offline**]
 [**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
 [**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
-[**--ssh**] [**--host**] [**--principal**=<string>] [**--k8ssa-token-path**=<file>
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<context>]`,
+[**--ssh**] [**--host**] [**--principal**=<name>] [**--k8ssa-token-path**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
