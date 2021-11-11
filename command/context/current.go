@@ -47,7 +47,7 @@ func currentAction(ctx *cli.Context) error {
 		return errors.New("no context selected")
 	}
 
-	if ctx.Bool("verbose") {
+	if ctx.Bool("json") {
 		b, err := json.Marshal(struct {
 			Name      string `json:"name"`
 			Authority string `json:"authority"`
