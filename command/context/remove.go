@@ -59,24 +59,10 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	if !ctx.Bool("force") {
-		f, err := os.Open(c.Path())
-		if err != nil {
-			return errs.FileError(err, c.Path())
-		}
-		fi, err := f.Readdir(-1)
-		f.Close()
-		if err != nil {
-			return errs.FileError(err, c.Path())
-		}
-		ui.Printf("The contents of path %s will be removed:\n", c.Path())
+		ui.Printf("The following directories will be removed:\n")
 		ui.Println()
-		for _, file := range fi {
-			ftyp := "file"
-			if file.IsDir() {
-				ftyp = "directory"
-			}
-			ui.Printf("  - ./%s\t (%s)\n", file.Name(), ftyp)
-		}
+		ui.Printf("  - %s\n", c.Path())
+		ui.Printf("  - %s\n", c.ProfilePath())
 		ui.Println()
 
 		if ok, err := ui.PromptYesNo(fmt.Sprintf("Are you sure you want to delete the configuration for context %s (this cannot be undone!) [y/n]", name)); err != nil {
