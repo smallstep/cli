@@ -214,6 +214,7 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		"StepPath":     step.Path(),
 		"StepBasePath": step.BasePath(),
 		"Authority":    authority,
+		"Version":      "v2",
 	}
 	if step.Contexts().Enabled() {
 		data["Context"] = step.Contexts().GetCurrent().Name
