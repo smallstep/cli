@@ -12,6 +12,7 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/certificates/templates"
 	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
@@ -213,9 +214,8 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		"GOOS":         runtime.GOOS,
 		"StepPath":     step.Path(),
 		"StepBasePath": step.BasePath(),
-		"Authority":    authority,
-		"Version":      "v2",
 	}
+	data[templates.SSHTemplateVersionKey] = "v2"
 	if step.Contexts().Enabled() {
 		data["Context"] = step.Contexts().GetCurrent().Name
 	}
