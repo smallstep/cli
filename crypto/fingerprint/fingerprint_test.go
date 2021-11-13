@@ -36,7 +36,7 @@ func TestEncodedFingerprint(t *testing.T) {
 		{"base64raw", "testdata/ca.der", "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat/pg",
 			[]Option{WithHash(crypto.SHA256), WithEncoding(Base64RawFingerprint)},
 		},
-		{"emoji", "testdata/ca.der", "🚁🍎👺🚌🏮☁🎍👀🇮🇹✋🍼🚽⛅🐼🚬🎅🇷🇺🇷🇺🚂🤢🎀💩🚁🎆👺🎨👌✔🚸🌈⚡🐼",
+		{"emoji", "testdata/ca.der", "🚁🍎👺🚌🏮☁️🎍👀🇮🇹✋🍼🚽⛅🐼🚬🎅🇷🇺🇷🇺🚂🤢🎀💩🚁🎆👺🎨👌✔️🚸🌈⚡🐼",
 			[]Option{WithHash(crypto.SHA256), WithEncoding(EmojiFingerprint)},
 		},
 
@@ -52,7 +52,7 @@ func TestEncodedFingerprint(t *testing.T) {
 		{"prefix, base64raw", "testdata/ca.der", "PREFIX:aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat/pg",
 			[]Option{WithHash(crypto.SHA256), WithEncoding(Base64RawFingerprint), WithPrefix("PREFIX:")},
 		},
-		{"prefix, emoji", "testdata/ca.der", "PREFIX:🚁🍎👺🚌🏮☁🎍👀🇮🇹✋🍼🚽⛅🐼🚬🎅🇷🇺🇷🇺🚂🤢🎀💩🚁🎆👺🎨👌✔🚸🌈⚡🐼",
+		{"prefix, emoji", "testdata/ca.der", "PREFIX:🚁🍎👺🚌🏮☁️🎍👀🇮🇹✋🍼🚽⛅🐼🚬🎅🇷🇺🇷🇺🚂🤢🎀💩🚁🎆👺🎨👌✔️🚸🌈⚡🐼",
 			[]Option{WithHash(crypto.SHA256), WithEncoding(EmojiFingerprint), WithPrefix("PREFIX:")},
 		},
 	}
