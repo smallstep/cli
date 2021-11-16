@@ -53,16 +53,41 @@ func removeAction(ctx *cli.Context) error {
 		return errors.Errorf("context '%s' not found - step path context management not enabled", name)
 	}
 	cur := cs.GetCurrent()
-	c, ok := cs.Get(name)
+	target, ok := cs.Get(name)
 	if !ok {
 		return errors.Errorf("context '%s' not found", name)
 	}
+	if cur != nil && target.Name == cur.Name {
+		return errors.Errorf("cannot remove current context")
+	}
 
-	if !ctx.Bool("force") {
+	// Check if either authority or profile should not be removed because it
+	// is being used by another context.
+	saveAuthority, saveProfile := false, false
+	for _, c := range cs.List() {
+		if target.Name == c.Name {
+			continue
+		}
+		if saveAuthority && saveProfile {
+			break
+		}
+		if !saveAuthority && target.Authority == c.Authority {
+			saveAuthority = true
+		}
+		if !saveProfile && target.Profile == c.Profile {
+			saveProfile = true
+		}
+	}
+
+	if !ctx.Bool("force") && !(saveAuthority && saveProfile) {
 		ui.Printf("The following directories will be removed:\n")
 		ui.Println()
-		ui.Printf("  - %s\n", c.Path())
-		ui.Printf("  - %s\n", c.ProfilePath())
+		if !saveAuthority {
+			ui.Printf("  - %s\n", target.Path())
+		}
+		if !saveProfile {
+			ui.Printf("  - %s\n", target.ProfilePath())
+		}
 		ui.Println()
 
 		if ok, err := ui.PromptYesNo(fmt.Sprintf("Are you sure you want to delete the configuration for context %s (this cannot be undone!) [y/n]", name)); err != nil {
@@ -72,21 +97,22 @@ func removeAction(ctx *cli.Context) error {
 		}
 	}
 
-	if cur != nil && c.Name == cur.Name {
-		return errors.Errorf("cannot remove current context")
+	if !saveAuthority {
+		if err := os.RemoveAll(target.Path()); err != nil {
+			return err
+		}
 	}
-	if err := os.RemoveAll(c.Path()); err != nil {
-		return err
-	}
-	if err := os.RemoveAll(c.ProfilePath()); err != nil {
-		return err
+	if !saveProfile {
+		if err := os.RemoveAll(target.ProfilePath()); err != nil {
+			return err
+		}
 	}
 	if err := cs.Remove(name); err != nil {
 		return err
 	}
 
 	// Attempt to remove line associated with the authority from removed context.
-	if err := fileutil.RemoveLine(filepath.Join(step.BasePath(), "ssh/includes"), c.Authority); err != nil {
+	if err := fileutil.RemoveLine(filepath.Join(step.BasePath(), "ssh/includes"), target.Authority); err != nil {
 		return err
 	}
 
