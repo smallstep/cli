@@ -76,7 +76,7 @@ func SelectTemplates(name string) *promptui.SelectTemplates {
 		Label:    fmt.Sprintf("%s {{ . }}: ", IconInitial),
 		Active:   fmt.Sprintf("%s {{ . | underline }}", IconSelect),
 		Inactive: "  {{ . }}",
-		Selected: fmt.Sprintf(`{{ %q | green }} {{ %q: | bold }} {{ .Name }}`, IconGood, name),
+		Selected: fmt.Sprintf(`{{ %q | green }} {{ "%s:" | bold }} {{ .Name }}`, IconGood, name),
 	}
 }
 
@@ -88,6 +88,6 @@ func NamedSelectTemplates(name string) *promptui.SelectTemplates {
 		Label:    fmt.Sprintf("%s {{.Name}}: ", IconInitial),
 		Active:   fmt.Sprintf("%s {{ .Name | underline }}", IconSelect),
 		Inactive: "  {{.Name}}",
-		Selected: fmt.Sprintf(`{{ %q | green }} {{ %q: | bold }} {{ .Name }}`, IconGood, name),
+		Selected: fmt.Sprintf(`{{ %q | green }} {{ "%s:" | bold }} {{ .Name }}`, IconGood, name),
 	}
 }
