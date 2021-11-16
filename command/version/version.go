@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 
 	"go.step.sm/cli-utils/command"
@@ -16,6 +17,9 @@ func init() {
 		UsageText:   "**step version**",
 		Description: `**step version** prints the version of the cli.`,
 		Action:      Command,
+		Flags: []cli.Flag{
+			flags.HiddenNoContext,
+		},
 	}
 
 	command.Register(cmd)
