@@ -957,6 +957,8 @@ go.opentelemetry.io/proto/otlp v0.7.0 h1:rwOQPCuKAKmwGKq2aVNnYIibI6wnV7EvzgfTCzc
 go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqeYNgFYFoEGnI=
 go.step.sm/cli-utils v0.7.0-rc1 h1:f5/dMhmo7j69xVz9DHkcgbDQOE0NdcSwC2fUnvaZD5c=
 go.step.sm/cli-utils v0.7.0-rc1/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/E=
+go.step.sm/cli-utils v0.7.0-rc2 h1:cFPuZ9IfX6y0k+obQnbjBjGNdCkHMCvKn4EFhP1ySq4=
+go.step.sm/cli-utils v0.7.0-rc2/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/E=
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
 go.step.sm/crypto v0.11.0 h1:VDpeVgEmqme/FK2w5QINxkOQ1FWOm/Wi2TwQXiacKr8=
 go.step.sm/crypto v0.11.0/go.mod h1:5YzQ85BujYBu6NH18jw7nFjwuRnDch35nLzH0ES5sKg=
