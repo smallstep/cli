@@ -3,7 +3,7 @@ package certificate
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/x509util"
@@ -120,7 +120,7 @@ func verifyAction(ctx *cli.Context) error {
 			intermediatePool.AddCert(pc)
 		}
 	default:
-		crtBytes, err := ioutil.ReadFile(crtFile)
+		crtBytes, err := os.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)
 		}

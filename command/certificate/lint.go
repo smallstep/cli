@@ -3,7 +3,6 @@ package certificate
 import (
 	"encoding/json"
 	"encoding/pem"
-	"io/ioutil"
 	"os"
 
 	"github.com/pkg/errors"
@@ -117,7 +116,7 @@ func lintAction(ctx *cli.Context) error {
 			Bytes: crt.Raw,
 		}
 	default: // is not URL
-		crtBytes, err := ioutil.ReadFile(crtFile)
+		crtBytes, err := os.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)
 		}

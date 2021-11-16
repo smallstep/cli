@@ -3,17 +3,17 @@ package winpe
 import (
 	"bytes"
 	"encoding/base64"
-	"github.com/smallstep/assert"
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/smallstep/assert"
 )
 
 // This test will write the chrome.exe installer into a temporary file
 // Then it will just run the extractPE function.
 func TestExtract(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "step-crypto-winpe-extract-chrome.*.exe")
+	tmpfile, err := os.CreateTemp("", "step-crypto-winpe-extract-chrome.*.exe")
 	assert.NoError(t, err)
 	defer os.Remove(tmpfile.Name())
 	defer tmpfile.Close()

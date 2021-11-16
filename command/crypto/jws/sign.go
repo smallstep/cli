@@ -2,7 +2,6 @@ package jws
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -361,7 +360,7 @@ func readPayload(filename string) ([]byte, error) {
 	case "-":
 		return utils.ReadAll(os.Stdin)
 	default:
-		b, err := ioutil.ReadFile(filename)
+		b, err := os.ReadFile(filename)
 		if err != nil {
 			return nil, errs.FileError(err, filename)
 		}

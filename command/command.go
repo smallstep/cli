@@ -3,7 +3,6 @@ package command
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -64,7 +63,7 @@ func getConfigVars(ctx *cli.Context) error {
 		configFile = filepath.Join(config.StepPath(), "config", "defaults.json")
 	}
 
-	b, err := ioutil.ReadFile(configFile)
+	b, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil
 	}

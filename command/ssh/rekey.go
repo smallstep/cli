@@ -1,7 +1,7 @@
 package ssh
 
 import (
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -105,7 +105,7 @@ func rekeyAction(ctx *cli.Context) error {
 	}
 
 	// Load the cert, because we need the serial number.
-	certBytes, err := ioutil.ReadFile(certFile)
+	certBytes, err := os.ReadFile(certFile)
 	if err != nil {
 		return errors.Wrapf(err, "error reading ssh certificate from %s", certFile)
 	}

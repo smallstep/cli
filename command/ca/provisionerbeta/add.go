@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/provisioner"
@@ -471,7 +471,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 
 		if ctx.IsSet("private-key") {
 			jwkFile = ctx.String("private-key")
-			b, err := ioutil.ReadFile(jwkFile)
+			b, err := os.ReadFile(jwkFile)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error reading %s", jwkFile)
 			}
@@ -585,7 +585,7 @@ func createK8SSADetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) 
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "public-key")
 	}
 
-	pemKeysB, err := ioutil.ReadFile(pemKeysF)
+	pemKeysB, err := os.ReadFile(pemKeysF)
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading pem keys")
 	}

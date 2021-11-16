@@ -1,7 +1,6 @@
 package errs
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -21,7 +20,7 @@ func TestFileError(t *testing.T) {
 		},
 		{
 			err: func() error {
-				_, err := ioutil.ReadFile("im-fairly-certain-this-file-doesnt-exist")
+				_, err := os.ReadFile("im-fairly-certain-this-file-doesnt-exist")
 				require.Error(t, err)
 				return err
 			}(),

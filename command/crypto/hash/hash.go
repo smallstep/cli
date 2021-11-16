@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -320,7 +319,7 @@ func hashFile(h hash.Hash, filename string) ([]byte, error) {
 //   3. return sum
 func hashDir(hc hashConstructor, dirname string) ([]byte, error) {
 	// ReadDir returns the entries sorted by filename
-	files, err := ioutil.ReadDir(dirname)
+	dirEntries, err := os.ReadDir(dirname)
 	if err != nil {
 		return nil, errs.FileError(err, dirname)
 	}
@@ -336,7 +335,11 @@ func hashDir(hc hashConstructor, dirname string) ([]byte, error) {
 	h := hc()
 	binary.LittleEndian.PutUint32(mode, uint32(st.Mode()))
 	h.Write(mode)
-	for _, fi := range files {
+	for _, dirEntry := range dirEntries {
+		fi, err := dirEntry.Info()
+		if err != nil {
+			return nil, errs.FileError(err, dirEntry.Name())
+		}
 		name := path.Join(dirname, fi.Name())
 		switch {
 		case fi.IsDir():

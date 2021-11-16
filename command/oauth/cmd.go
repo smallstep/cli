@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -300,7 +300,7 @@ func oauthCmd(c *cli.Context) error {
 	if c.IsSet("account") {
 		opts.Provider = ""
 		filename := c.String("account")
-		b, err := ioutil.ReadFile(filename)
+		b, err := os.ReadFile(filename)
 		if err != nil {
 			return errors.Wrapf(err, "error reading account from %s", filename)
 		}
@@ -541,7 +541,7 @@ func disco(provider string) (map[string]interface{}, error) {
 		return nil, errors.Wrapf(err, "error retrieving %s", u.String())
 	}
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error retrieving %s", u.String())
 	}
@@ -866,7 +866,7 @@ func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(`<html><head><title>Processing OAuth Request</title>`))
 	w.Write([]byte(`</head>`))
 	w.Write([]byte(`<script type="text/javascript">`))
-	w.Write([]byte(fmt.Sprintf(`function redirect(){var hash = window.location.hash.substr(1); document.location.href = "%s?urlhash=true&"+hash;}`, o.redirectURI)))
+	fmt.Fprintf(w, `function redirect(){var hash = window.location.hash.substr(1); document.location.href = "%s?urlhash=true&"+hash;}`, o.redirectURI)
 	w.Write([]byte(`if (window.addEventListener) window.addEventListener("load", redirect, false); else if (window.attachEvent) window.attachEvent("onload", redirect); else window.onload = redirect;`))
 	w.Write([]byte("</script>"))
 	w.Write([]byte(`<body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))

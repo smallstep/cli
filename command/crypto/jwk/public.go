@@ -3,7 +3,7 @@ package jwk
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/pkg/errors"
@@ -25,7 +25,7 @@ For examples, see **step help crypto jwk**.`,
 }
 
 func publicAction(ctx *cli.Context) error {
-	b, err := ioutil.ReadAll(os.Stdin)
+	b, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return errors.Wrap(err, "error reading from STDIN")
 	}

@@ -5,8 +5,8 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/x509"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -489,7 +489,7 @@ func marshalPublicKey(key ssh.PublicKey, subject string) []byte {
 
 func deriveMachineID() (uuid.UUID, error) {
 	// use /etc/machine-id
-	machineID, err := ioutil.ReadFile("/etc/machine-id")
+	machineID, err := os.ReadFile("/etc/machine-id")
 	if err != nil {
 		return uuid.Nil, err
 	}
