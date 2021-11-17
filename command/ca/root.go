@@ -1,21 +1,19 @@
 package ca
 
 import (
-	"crypto/tls"
 	"encoding/pem"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/pkg/errors"
 
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func rootComand() cli.Command {
@@ -24,7 +22,7 @@ func rootComand() cli.Command {
 		Action: command.ActionFunc(rootAction),
 		Usage:  "download and validate the root certificate",
 		UsageText: `**step ca root** [<root-file>]
-[**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>]`,
+[**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--context**=<name>]`,
 		Description: `**step ca root** downloads and validates the root certificate from the
 certificate authority.
 
@@ -59,9 +57,10 @@ Print the root certificate using the flags set by <step ca bootstrap>:
 $ step ca root
 '''`,
 		Flags: []cli.Flag{
-			flags.CaURL,
 			flags.Force,
 			fingerprintFlag,
+			flags.CaURL,
+			flags.Context,
 		},
 	}
 }
@@ -81,8 +80,7 @@ func rootAction(ctx *cli.Context) error {
 		return errs.RequiredFlag(ctx, "fingerprint")
 	}
 
-	tr := getInsecureTransport()
-	client, err := ca.NewClient(caURL, ca.WithTransport(tr))
+	client, err := ca.NewClient(caURL, ca.WithInsecure())
 	if err != nil {
 		return err
 	}
@@ -106,11 +104,4 @@ func rootAction(ctx *cli.Context) error {
 		fmt.Print(string(pem.EncodeToMemory(block)))
 	}
 	return nil
-}
-
-func getInsecureTransport() *http.Transport {
-	return &http.Transport{
-		Proxy:           http.ProxyFromEnvironment,
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
 }

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/linkedca"
 )
 
@@ -52,6 +52,11 @@ Remove an admin:
 $ step beta ca admin remove max@smallstep.com
 '''`,
 	}
+}
+
+var provisionerFilterFlag = cli.StringFlag{
+	Name:  "provisioner",
+	Usage: `The provisioner <name> by which to filter admins.`,
 }
 
 type adminSelect struct {

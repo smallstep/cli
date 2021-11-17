@@ -10,10 +10,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
-	"github.com/smallstep/cli/config"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/step"
 )
 
 var (
@@ -186,6 +186,32 @@ generating key.`,
 		Usage: "The path to the PEM <file> used as the root certificate authority.",
 	}
 
+	// HiddenNoContext is a cli.Flag that prevents context configuration
+	// from being applied for a given command.
+	HiddenNoContext = cli.BoolTFlag{
+		Name:   "no-context",
+		Usage:  "Do not apply context specific environment for this command.",
+		Hidden: true,
+	}
+
+	// Context is a cli.Flag used to select a a context name.
+	Context = cli.StringFlag{
+		Name:  "context",
+		Usage: "The context <name> to apply for the given command.",
+	}
+
+	// ContextProfile is a cli.Flag to select a context profile name.
+	ContextProfile = cli.StringFlag{
+		Name:  "profile",
+		Usage: `The <name> that will serve as the profile name for the context.`,
+	}
+
+	// ContextAuthority is a cli.Flag used to select a context authority name.
+	ContextAuthority = cli.StringFlag{
+		Name:  "authority",
+		Usage: `The <name> that will serve as the authority name for the context.`,
+	}
+
 	// Offline is a cli.Flag used to activate the offline flow.
 	Offline = cli.BoolFlag{
 		Name: "offline",
@@ -198,8 +224,8 @@ but can accept a different configuration file using **--ca-config** flag.`,
 	CaConfig = cli.StringFlag{
 		Name: "ca-config",
 		Usage: `The certificate authority configuration <file>. Defaults to
-$STEPPATH/config/ca.json`,
-		Value: filepath.Join(config.StepPath(), "config", "ca.json"),
+$(step path)/config/ca.json`,
+		Value: filepath.Join(step.Path(), "config", "ca.json"),
 	}
 
 	// AdminCert is a cli.Flag used to pass the x5c header certificate for a JWT.
@@ -269,7 +295,16 @@ be stored in the 'sshpop' header.`,
 	TeamURL = cli.StringFlag{
 		Name: "team-url",
 		Usage: `The <url> step queries to retrieve initial team configuration. Only used with
-the **--team** option. If the url contains <\<\>> placeholders, they are replaced with the team ID.`,
+the **--team** option. If the url contains <\<\>> placeholders, they are replaced with the team ID.
+Replacing the authority-id section of the url is not supported with placeholders.`,
+	}
+
+	// TeamAuthority is a cli.Flag used to pass the name of the authority belonging
+	// to a team.
+	TeamAuthority = cli.StringFlag{
+		Name: "team-authority",
+		Usage: `The <sub-domain> of the certificate authority to bootstrap. E.g., for an authority with
+domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
 	}
 
 	// RedirectURL is a cli.Flag used to pass a url to redirect after an OAuth

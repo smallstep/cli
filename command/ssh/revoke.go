@@ -8,13 +8,13 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/command"
 	cmdca "github.com/smallstep/cli/command/ca"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -24,12 +24,12 @@ func revokeCommand() cli.Command {
 		Action: command.ActionFunc(revokeAction),
 		Usage:  "revoke a SSH certificate using the SSH CA",
 		UsageText: `**step ssh revoke** <serial-number>
-[**--token**=<token>]  [**--issuer**=<name>]
-[**--set**=<key=value>] [**--set-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>]
-[**--ca-config**=<file>] [**--password-file**=<file>] [**--offline**]
-[**--reason**=<string>] [**--reasonCode**=<code>]
-[**--sshpop-cert**=<file>] [**--sshpop-key**=<key>]`,
+[**--token**=<token>]  [**--issuer**=<name>] [**--set**=<key=value>]
+[**--set-file**=<file>] [**--password-file**=<file>] [**--reason**=<string>]
+[**--reasonCode**=<code>] [**--sshpop-cert**=<file>] [**--sshpop-key**=<key>]
+[**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>]`,
+
 		Description: `**step ssh revoke** command revokes an SSH Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 
@@ -50,10 +50,6 @@ $ step ssh revoke 3997477584487736496
 			flags.Provisioner,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
-			flags.CaURL,
-			flags.Root,
-			flags.Offline,
-			flags.CaConfig,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
 			cli.StringFlag{
@@ -114,6 +110,11 @@ Note: This is specific to the CertificateHold reason and is only used in DeltaCR
 attribute certificate have been compromised (reasonCode=10).
 `,
 			},
+			flags.Offline,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

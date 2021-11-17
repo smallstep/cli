@@ -11,18 +11,22 @@ import (
 	"time"
 
 	"github.com/manifoldco/promptui"
+	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/kms"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 
 	// Enable azurekms
 	_ "github.com/smallstep/certificates/kms/azurekms"
+
+	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/step"
 )
 
 func initCommand() cli.Command {
@@ -35,19 +39,20 @@ func initCommand() cli.Command {
 [**--helm**] [**--deployment-type**=<name>] [**--name**=<name>]
 [**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
 [**--provisioner-password-file**=<file>] [**--password-file**=<file>]
-[**--with-ca-url**=<url>] [**--ra**=<type>] [**--kms**=<type>] [**--no-db**]`,
+[**--ra**=<type>] [**--kms**=<type>] [**--with-ca-url**=<url>] [**--no-db**]
+[**--context**=<name>] [**--profile**=<name>] [**--authority**=<name>]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:   "root",
 				Usage:  "The path of an existing PEM <file> to be used as the root certificate authority.",
-				EnvVar: command.IgnoreEnvVar,
+				EnvVar: step.IgnoreEnvVar,
 			},
 			cli.StringFlag{
 				Name:   "key",
 				Usage:  "The path of an existing key <file> of the root certificate authority.",
-				EnvVar: command.IgnoreEnvVar,
+				EnvVar: step.IgnoreEnvVar,
 			},
 			cli.BoolFlag{
 				Name:  "pki",
@@ -162,6 +167,13 @@ Cloud.`,
 				Name:  "no-db",
 				Usage: `Generate a CA configuration without the DB stanza. No persistence layer.`,
 			},
+			cli.StringFlag{
+				Name:  "context",
+				Usage: `The <name> of the context for the new authority.`,
+			},
+			flags.ContextProfile,
+			flags.ContextAuthority,
+			flags.HiddenNoContext,
 		},
 	}
 }
@@ -225,12 +237,17 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 	}
 
+	useContext := cautils.UseContext(ctx)
+	if !useContext {
+		cautils.WarnContext()
+	}
+
 	// Common for both CA and RA
 
 	var name, org, resource string
 	var casOptions apiv1.Options
 	var deploymentType pki.DeploymentType
-	var opts []pki.Option
+	var pkiOpts []pki.Option
 	switch ra {
 	case apiv1.CloudCAS:
 		var create bool
@@ -426,7 +443,7 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 
 			// Add uris to the pki options. Empty URIs will be ignored.
-			opts = append(opts, pki.WithKMS(kmsName),
+			pkiOpts = append(pkiOpts, pki.WithKMS(kmsName),
 				pki.WithKeyURIs(rootURI, intermediateURI, sshHostURI, sshUserURI))
 		}
 
@@ -441,10 +458,12 @@ func initAction(ctx *cli.Context) (err error) {
 	}
 
 	if pkiOnly {
-		opts = append(opts, pki.WithPKIOnly())
+		pkiOpts = append(pkiOpts, pki.WithPKIOnly())
 	} else {
-		ui.Println("What DNS names or IP addresses would you like to add to your new CA?", ui.WithSliceValue(ctx.StringSlice("dns")))
-		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])", ui.WithSliceValue(ctx.StringSlice("dns")))
+		ui.Println("What DNS names or IP addresses would you like to add to your new CA?",
+			ui.WithSliceValue(ctx.StringSlice("dns")))
+		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
+			ui.WithSliceValue(ctx.StringSlice("dns")))
 		if err != nil {
 			return err
 		}
@@ -462,6 +481,34 @@ func initAction(ctx *cli.Context) (err error) {
 				return err
 			}
 			dnsNames = append(dnsNames, strings.TrimSpace(name))
+		}
+
+		if useContext {
+			ctxName := ctx.String("context")
+			if ctxName == "" {
+				ctxName = dnsNames[0]
+			}
+			ctxAuthority := ctx.String("authority")
+			if ctxAuthority == "" {
+				ctxAuthority = dnsNames[0]
+			}
+			ctxProfile := ctx.String("profile")
+			if ctxProfile == "" {
+				ctxProfile = dnsNames[0]
+			}
+			if err := step.Contexts().Add(&step.Context{
+				Name:      ctxName,
+				Profile:   ctxProfile,
+				Authority: ctxAuthority,
+			}); err != nil {
+				return err
+			}
+			if err := step.Contexts().SaveCurrent(ctxName); err != nil {
+				return errors.Wrap(err, "error storing new default context")
+			}
+			if err := step.Contexts().SetCurrent(ctxName); err != nil {
+				return errors.Wrap(err, "error setting context '%s'")
+			}
 		}
 
 		var address string
@@ -485,31 +532,26 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 		}
 
-		opts = append(opts,
+		pkiOpts = append(pkiOpts,
 			pki.WithAddress(address),
 			pki.WithCaURL(caURL),
 			pki.WithDNSNames(dnsNames),
 			pki.WithDeploymentType(deploymentType),
 		)
 		if deploymentType == pki.StandaloneDeployment {
-			opts = append(opts, pki.WithProvisioner(provisioner))
+			pkiOpts = append(pkiOpts, pki.WithProvisioner(provisioner))
 		}
 		if deploymentType == pki.LinkedDeployment {
-			opts = append(opts, pki.WithAdmin())
+			pkiOpts = append(pkiOpts, pki.WithAdmin())
 		} else if ctx.Bool("ssh") {
-			opts = append(opts, pki.WithSSH())
+			pkiOpts = append(pkiOpts, pki.WithSSH())
 		}
 		if noDB {
-			opts = append(opts, pki.WithNoDB())
+			pkiOpts = append(pkiOpts, pki.WithNoDB())
 		}
 		if helm {
-			opts = append(opts, pki.WithHelm())
+			pkiOpts = append(pkiOpts, pki.WithHelm())
 		}
-	}
-
-	p, err := pki.New(casOptions, opts...)
-	if err != nil {
-		return err
 	}
 
 	if ra != "" || kmsName != "" {
@@ -523,6 +565,11 @@ func initAction(ctx *cli.Context) (err error) {
 		} else {
 			ui.Println("Choose a password for your CA keys and first provisioner.", ui.WithValue(password))
 		}
+	}
+
+	p, err := pki.New(casOptions, pkiOpts...)
+	if err != nil {
+		return err
 	}
 
 	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]", ui.WithRichPrompt(), ui.WithValue(password))

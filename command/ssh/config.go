@@ -11,14 +11,15 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/config"
+	"github.com/smallstep/certificates/templates"
 	"github.com/smallstep/cli/crypto/sshutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/step"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -28,10 +29,11 @@ func configCommand() cli.Command {
 		Action: command.ActionFunc(configAction),
 		Usage:  "configures ssh to be used with certificates",
 		UsageText: `**step ssh config**
-[**--team**=<name>] [**--host**] [**--set**=<key=value>] [**--set-file**=<file>]
-[**--dry-run**] [**--roots**] [**--federation**]
-[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>] [**--team-url**=<url>]`,
+[**--team**=<name>] [**--team-authority**=<sub-domain>] [**--host**]
+[**--set**=<key=value>] [**--set-file**=<file>] [**--dry-run**] [**--roots**]
+[**--federation**] [**--force**] [**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
+[**--authority**=<name>] [**--profile**=<name>]`,
 		Description: `**step ssh config** configures SSH to be used with certificates. It also supports
 flags to inspect the root certificates used to sign the certificates.
 
@@ -70,6 +72,7 @@ $ step ssh config --set User=joe --set Bastion=bastion.example.com
 				Usage: `Configures a SSH server instead of a client.`,
 			},
 			flags.Team,
+			flags.TeamAuthority,
 			flags.TeamURL,
 			cli.BoolFlag{
 				Name:  "roots",
@@ -87,11 +90,18 @@ times to set multiple variables.`,
 			},
 			flags.TemplateSetFile,
 			flags.DryRun,
+			flags.Force,
+			flags.CaConfig,
 			flags.CaURL,
 			flags.Root,
 			flags.Offline,
-			flags.CaConfig,
-			flags.Force,
+			cli.StringFlag{
+				Name:  "context",
+				Usage: `The <name> of the context for the new authority.`,
+			},
+			flags.ContextProfile,
+			flags.ContextAuthority,
+			flags.HiddenNoContext,
 		},
 	}
 }
@@ -109,11 +119,13 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 
 	switch {
 	case team != "" && isHost:
-		return errs.IncompatibleFlagWithFlag(ctx, "roots", "host")
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "host")
 	case team != "" && isRoots:
-		return errs.IncompatibleFlagWithFlag(ctx, "roots", "roots")
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "roots")
 	case team != "" && isFederation:
-		return errs.IncompatibleFlagWithFlag(ctx, "roots", "federation")
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "federation")
+	case team != "" && len(sets) > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "set")
 	case isRoots && isFederation:
 		return errs.IncompatibleFlagWithFlag(ctx, "roots", "federation")
 	case isRoots && len(sets) > 0:
@@ -122,9 +134,18 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return errs.IncompatibleFlagWithFlag(ctx, "federation", "set")
 	}
 
-	// Bootstrap team
+	// Bootstrap Authority
 	if team != "" {
-		if err := cautils.BootstrapTeam(ctx, team); err != nil {
+		teamAuthority := ctx.String("team-authority")
+		// Default to the default SSH authority.
+		if teamAuthority == "" {
+			teamAuthority = "ssh"
+		}
+		if err := cautils.BootstrapTeamAuthority(ctx, team, teamAuthority); err != nil {
+			return err
+		}
+	} else {
+		if err := step.Contexts().Apply(ctx); err != nil {
 			return err
 		}
 	}
@@ -176,8 +197,13 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	}
 
 	data := map[string]string{
-		"GOOS":     runtime.GOOS,
-		"StepPath": config.StepPath(),
+		"GOOS":         runtime.GOOS,
+		"StepPath":     step.Path(),
+		"StepBasePath": step.BasePath(),
+	}
+	data[templates.SSHTemplateVersionKey] = "v2"
+	if step.Contexts().Enabled() {
+		data["Context"] = step.Contexts().GetCurrent().Name
 	}
 	if len(sets) > 0 {
 		for _, s := range sets {
@@ -233,14 +259,14 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return err
 	}
 
-	var templates []api.Template
+	var tmplts []api.Template
 	if isHost {
-		templates = resp.HostTemplates
+		tmplts = resp.HostTemplates
 	} else {
-		templates = resp.UserTemplates
+		tmplts = resp.UserTemplates
 	}
-	if len(templates) == 0 {
-		fmt.Println("No configuration changes were found.")
+	if len(tmplts) == 0 {
+		ui.Println("No configuration changes were found.")
 		return nil
 	}
 
@@ -255,18 +281,18 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	}()
 
 	if ctx.Bool("dry-run") {
-		for _, t := range templates {
-			ui.Printf("{{ \"%s\" | bold }}\n", config.StepAbs(t.Path))
-			fmt.Println(string(t.Content))
+		for _, t := range tmplts {
+			ui.Printf("{{ \"%s\" | bold }}\n", step.Abs(t.Path))
+			ui.Println(string(t.Content))
 		}
 		return nil
 	}
 
-	for _, t := range templates {
+	for _, t := range tmplts {
 		if err := t.Write(); err != nil {
 			return err
 		}
-		ui.Printf(`{{ "%s" | green }} {{ "%s" | bold }}`+"\n", ui.IconGood, config.StepAbs(t.Path))
+		ui.Printf(`{{ "%s" | green }} {{ "%s" | bold }}`+"\n", ui.IconGood, step.Abs(t.Path))
 	}
 
 	return nil

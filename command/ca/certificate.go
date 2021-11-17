@@ -4,14 +4,14 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func certificateCommand() cli.Command {
@@ -20,13 +20,13 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
-[**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--san**=<SAN>] [**--set**=<key=value>] [**--set-file**=<file>]
-[**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
-[**--contact**=<email>] [**--http-listen**=<address>]
+[**--token**=<token>]  [**--issuer**=<name>] [**--not-before**=<time|duration>]
+[**--not-after**=<time|duration>] [**--san**=<SAN>] [**--set**=<key=value>]
+[**--set-file**=<file>] [**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
+[**--contact**=<email>] [**--http-listen**=<address>] [**--bundle**]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
-[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]`,
+[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -147,6 +147,7 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			flags.CaURL,
 			flags.Root,
 			flags.Token,
+			flags.Context,
 			flags.Provisioner,
 			flags.ProvisionerPasswordFile,
 			flags.KTY,

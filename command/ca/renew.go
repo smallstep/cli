@@ -21,16 +21,16 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/smallstep/cli/utils/sysutils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func renewCertificateCommand() cli.Command {
@@ -39,11 +39,10 @@ func renewCertificateCommand() cli.Command {
 		Action: command.ActionFunc(renewCertificateAction),
 		Usage:  "renew a certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
-[**--ca-url**=<uri>] [**--root**=<file>] [**--password-file**=<file>]
-[**--out**=<file>] [**--expires-in**=<duration>] [**--force**]
-[**--expires-in**=<duration>] [**--pid**=<int>] [**--pid-file**=<file>]
-[**--signal**=<int>] [**--exec**=<string>] [**--daemon**]
-[**--renew-period**=<duration>]`,
+[**--password-file**=<file>] [**--out**=<file>] [**--expires-in**=<duration>]
+[**--force**] [**--expires-in**=<duration>] [**--pid**=<int>]
+[**--pid-file**=<file>] [**--signal**=<int>] [**--exec**=<string>] [**--daemon**]
+[**--renew-period**=<duration>] [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `
 **step ca renew** command renews the given certificate (with a request to the
 certificate authority) and writes the new certificate to disk - either overwriting
@@ -132,11 +131,9 @@ $ step ca renew --offline internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
 			flags.CaConfig,
-			flags.CaURL,
 			flags.Force,
 			flags.Offline,
 			flags.PasswordFile,
-			flags.Root,
 			cli.StringFlag{
 				Name:  "out,output-file",
 				Usage: "The new certificate <file> path. Defaults to overwriting the <crt-file> positional argument",
@@ -187,6 +184,9 @@ Requires the **--daemon** flag. The <duration> is a sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "1.5h", or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

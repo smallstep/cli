@@ -11,11 +11,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certinfo"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func inspectCommand() cli.Command {

@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 // DefaultRSASize sets the default key size for RSA to 2048 bits.

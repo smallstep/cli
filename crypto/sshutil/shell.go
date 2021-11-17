@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/config"
+	"go.step.sm/cli-utils/step"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 	"golang.org/x/term"
@@ -182,7 +182,7 @@ func NewShell(user, address string, opts ...ShellOption) (*Shell, error) {
 	address = formatAddress(address)
 
 	// Use known_host as HostKeyCallback
-	knownHosts, err := knownhosts.New(filepath.Join(config.Home(), ".ssh", "known_hosts"))
+	knownHosts, err := knownhosts.New(filepath.Join(step.Home(), ".ssh", "known_hosts"))
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading known_hosts")
 	}

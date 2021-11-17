@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 var (

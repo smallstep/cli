@@ -7,9 +7,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/x509util"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func verifyCommand() cli.Command {

@@ -1,24 +1,13 @@
 package ca
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/config"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/ui"
-	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func bootstrapCommand() cli.Command {
@@ -28,7 +17,9 @@ func bootstrapCommand() cli.Command {
 		Usage:  "initialize the environment to use the CA commands",
 		UsageText: `**step ca bootstrap**
 [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**]
-[**--team**=name] [**--team-url**=url] [**--redirect-url**=<url>]`,
+[**--team**=<name>] [**--authority**=<name>] [**--team-url**=<uri>] [**--redirect-url**=<uri>]
+[**--context**=<name>] [**--profile**=<name>]
+[**--authority**=<name>] [**--team-authority**=<sub-domain>]`,
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
 authority and sets up the current environment to use it.
 
@@ -77,18 +68,16 @@ $ step ca bootstrap --team superteam --team-url https://config.example.org/<>
 				Usage: "Install the root certificate into the system truststore.",
 			},
 			flags.Team,
+			flags.TeamAuthority,
 			flags.TeamURL,
 			flags.RedirectURL,
 			flags.Force,
+			flags.Context,
+			flags.ContextProfile,
+			flags.ContextAuthority,
+			flags.HiddenNoContext,
 		},
 	}
-}
-
-type bootstrapConfig struct {
-	CA          string `json:"ca-url"`
-	Fingerprint string `json:"fingerprint"`
-	Root        string `json:"root"`
-	Redirect    string `json:"redirect-url"`
 }
 
 func bootstrapAction(ctx *cli.Context) error {
@@ -98,77 +87,20 @@ func bootstrapAction(ctx *cli.Context) error {
 	}
 	fingerprint := strings.TrimSpace(ctx.String("fingerprint"))
 	team := ctx.String("team")
-	rootFile := pki.GetRootCAPath()
-	configFile := filepath.Join(config.StepPath(), "config", "defaults.json")
-	redirectURL := ctx.String("redirect-url")
+	teamAuthority := ctx.String("team-authority")
 
 	switch {
+	case team != "" && teamAuthority != "":
+		return cautils.BootstrapTeamAuthority(ctx, team, teamAuthority)
 	case team != "":
-		return cautils.BootstrapTeam(ctx, team)
+		return cautils.BootstrapTeamAuthority(ctx, team, "ssh")
+	case teamAuthority != "":
+		return errs.RequiredWithFlag(ctx, "team-authority", "team")
 	case caURL == "":
 		return errs.RequiredFlag(ctx, "ca-url")
 	case fingerprint == "":
 		return errs.RequiredFlag(ctx, "fingerprint")
+	default:
+		return cautils.BootstrapAuthority(ctx, caURL, fingerprint)
 	}
-
-	tr := getInsecureTransport()
-	client, err := ca.NewClient(caURL, ca.WithTransport(tr))
-	if err != nil {
-		return err
-	}
-
-	// Root already validates the certificate
-	resp, err := client.Root(fingerprint)
-	if err != nil {
-		return errors.Wrap(err, "error downloading root certificate")
-	}
-
-	if err = os.MkdirAll(filepath.Dir(rootFile), 0700); err != nil {
-		return errs.FileError(err, rootFile)
-	}
-
-	if err = os.MkdirAll(filepath.Dir(configFile), 0700); err != nil {
-		return errs.FileError(err, configFile)
-	}
-
-	// Serialize root
-	_, err = pemutil.Serialize(resp.RootPEM.Certificate, pemutil.ToFile(rootFile, 0600))
-	if err != nil {
-		return err
-	}
-	ui.Printf("The root certificate has been saved in %s.\n", rootFile)
-
-	// make sure to store the url with https
-	caURL, err = completeURL(caURL)
-	if err != nil {
-		return err
-	}
-
-	// Serialize defaults.json
-	b, err := json.MarshalIndent(bootstrapConfig{
-		CA:          caURL,
-		Fingerprint: fingerprint,
-		Root:        pki.GetRootCAPath(),
-		Redirect:    redirectURL,
-	}, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "error marshaling defaults.json")
-	}
-
-	if err := utils.WriteFile(configFile, b, 0644); err != nil {
-		return err
-	}
-
-	ui.Printf("Your configuration has been saved in %s.\n", configFile)
-
-	if ctx.Bool("install") {
-		ui.Printf("Installing the root certificate in the system truststore... ")
-		if err := truststore.InstallFile(rootFile); err != nil {
-			ui.Println()
-			return err
-		}
-		ui.Println("done.")
-	}
-
-	return nil
 }

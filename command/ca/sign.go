@@ -6,14 +6,14 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func signCertificateCommand() cli.Command {
@@ -24,12 +24,12 @@ func signCertificateCommand() cli.Command {
 		UsageText: `**step ca sign** <csr-file> <crt-file>
 [**--token**=<token>] [**--issuer**=<name>] [**--provisioner-password-file=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--ca-url**=<uri>] [**--root**=<file>]
 [**--set**=<key=value>] [**--set-file**=<file>]
 [**--acme**=<uri>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
 [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
-[**--k8ssa-token-path**=<file>]`,
+[**--k8ssa-token-path**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
@@ -108,9 +108,6 @@ $ step ca sign foo.csr foo.crt \
 --acme https://acme-staging-v02.api.letsencrypt.org/directory
 '''`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
-			flags.CaURL,
-			flags.Root,
 			flags.Token,
 			flags.Provisioner,
 			flags.ProvisionerPasswordFile,
@@ -129,6 +126,10 @@ $ step ca sign foo.csr foo.crt \
 			acmeContactFlag,
 			acmeHTTPListenFlag,
 			flags.K8sSATokenPathFlag,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

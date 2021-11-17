@@ -15,15 +15,15 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ocsp"
 )
 
@@ -41,8 +41,8 @@ func revokeCertificateCommand() cli.Command {
 		Usage:  "revoke a certificate",
 		UsageText: `**step ca revoke** <serial-number>
 [**--cert**=<file>] [**--key**=<file>] [**--token**=<ott>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--reason**=<string>]
-[**--reasonCode**=<code>] [**--offline**]`,
+[**--reason**=<string>] [**--reasonCode**=<code>] [**-offline**]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `
 **step ca revoke** command revokes a certificate with the given serial
 number.
@@ -183,11 +183,12 @@ Note: This is specific to the CertificateHold reason and is only used in DeltaCR
 attribute certificate have been compromised (reasonCode=10).
 `,
 			},
-			flags.CaConfig,
-			flags.CaURL,
-			flags.Offline,
-			flags.Root,
 			flags.Token,
+			flags.CaConfig,
+			flags.Offline,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }
