@@ -3,7 +3,6 @@ package exec
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -30,7 +29,7 @@ func LookPath(file string) (string, error) {
 // "Official" way of detecting WSL
 // https://github.com/Microsoft/WSL/issues/423#issuecomment-221627364
 func IsWSL() bool {
-	b, err := ioutil.ReadFile("/proc/sys/kernel/osrelease")
+	b, err := os.ReadFile("/proc/sys/kernel/osrelease")
 	if err != nil {
 		return false
 	}
@@ -85,7 +84,8 @@ func RunWithPid(pidFile, name string, arg ...string) {
 	}
 
 	// Write pid
-	f.Write([]byte(strconv.Itoa(cmd.Process.Pid)))
+	f.WriteString(strconv.Itoa(cmd.Process.Pid))
+
 	f.Close()
 
 	// Wait until it finishes

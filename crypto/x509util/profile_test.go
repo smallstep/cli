@@ -11,9 +11,9 @@ import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
-	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 	"reflect"
 	"testing"
 
@@ -24,7 +24,7 @@ import (
 func mustParseRSAKey(t *testing.T, filename string) *rsa.PrivateKey {
 	t.Helper()
 
-	b, err := ioutil.ReadFile("test_files/noPasscodeCa.key")
+	b, err := os.ReadFile("test_files/noPasscodeCa.key")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func mustParseRSAKey(t *testing.T, filename string) *rsa.PrivateKey {
 
 func decodeCertificateFile(t *testing.T, filename string) *x509.Certificate {
 	t.Helper()
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil {
 		t.Fatal(err)
 	}

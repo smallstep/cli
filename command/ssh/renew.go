@@ -1,7 +1,7 @@
 package ssh
 
 import (
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/smallstep/certificates/ca/identity"
@@ -28,10 +28,11 @@ func renewCommand() cli.Command {
 [**--issuer**=<name>] [**--password-file**=<file>] [**--force**] [**--offline**]
 [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
-		Description: `**step ssh renew** command renews an SSH Cerfificate
+		Description: `**step ssh renew** command renews an SSH Host Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 It writes the new certificate to disk - either overwriting <ssh-cert> or
-using a new file when the **--out**=<file> flag is used.
+using a new file when the **--out**=<file> flag is used. This command cannot
+be used to renew SSH User Certificates.
 
 ## POSITIONAL ARGUMENTS
 
@@ -92,7 +93,7 @@ func renewAction(ctx *cli.Context) error {
 	}
 
 	// Load the cert, because we need the serial number.
-	certBytes, err := ioutil.ReadFile(certFile)
+	certBytes, err := os.ReadFile(certFile)
 	if err != nil {
 		return errors.Wrapf(err, "error reading ssh certificate from %s", certFile)
 	}

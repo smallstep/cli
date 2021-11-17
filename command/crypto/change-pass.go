@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -109,7 +109,7 @@ func changePassAction(ctx *cli.Context) error {
 		newKeyPath = keyPath
 	}
 
-	b, err := ioutil.ReadFile(keyPath)
+	b, err := os.ReadFile(keyPath)
 	if err != nil {
 		return errs.FileError(err, keyPath)
 	}

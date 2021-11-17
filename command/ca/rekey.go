@@ -2,8 +2,8 @@ package ca
 
 import (
 	"crypto"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"strconv"
 	"strings"
 	"syscall"
@@ -267,7 +267,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 
 	pidFile := ctx.String("pid-file")
 	if len(pidFile) > 0 {
-		pidB, err := ioutil.ReadFile(pidFile)
+		pidB, err := os.ReadFile(pidFile)
 		if err != nil {
 			return errs.FileError(err, pidFile)
 		}

@@ -2,7 +2,6 @@ package usage
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -122,7 +121,7 @@ func htmlHelpAction(ctx *cli.Context) error {
 
 	// css style
 	cssFile := path.Join(dir, "style.css")
-	if err := ioutil.WriteFile(cssFile, []byte(css), 0666); err != nil {
+	if err := os.WriteFile(cssFile, []byte(css), 0666); err != nil {
 		return errs.FileError(err, cssFile)
 	}
 

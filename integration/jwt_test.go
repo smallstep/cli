@@ -9,9 +9,9 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/rand"
+	"os"
 	"os/exec"
 	"reflect"
 	"regexp"
@@ -38,7 +38,7 @@ type JWK struct {
 
 func (j JWK) jwk() (*jose.JSONWebKey, error) {
 	jwk := new(jose.JSONWebKey)
-	b, err := ioutil.ReadFile(j.prvfile)
+	b, err := os.ReadFile(j.prvfile)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (j JWK) pem() (string, error) {
 }
 
 func readJSON(name string) (map[string]interface{}, error) {
-	dat, err := ioutil.ReadFile(name)
+	dat, err := os.ReadFile(name)
 	if err != nil {
 		return nil, err
 	}
@@ -696,11 +696,11 @@ func TestCryptoJWT(t *testing.T) {
 			// We don't currently support JSON Serialization, Flattened JSON Serialzation, or multiple signatures
 			// TODO: Right now these are parse failures. They should probably parse correctly and give more helpful error messages.
 			vtst := NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("iss", "foo").setFlag("aud", "bar").setFlag("alg", "RS256")
-			jwtb, _ := ioutil.ReadFile("testdata/jwt-json-serialization.json")
+			jwtb, _ := os.ReadFile("testdata/jwt-json-serialization.json")
 			vtst.fail(t, "json-serialization", string(jwtb), "error parsing token: unexpected end of JSON input\n")
-			jwtb, _ = ioutil.ReadFile("testdata/jwt-json-serialization-flattened.json")
+			jwtb, _ = os.ReadFile("testdata/jwt-json-serialization-flattened.json")
 			vtst.fail(t, "json-serialization-flattened", string(jwtb), "error parsing token: unexpected end of JSON input\n")
-			jwtb, _ = ioutil.ReadFile("testdata/jwt-json-serialization-multi.json")
+			jwtb, _ = os.ReadFile("testdata/jwt-json-serialization-multi.json")
 			vtst.fail(t, "json-serialization-multi", string(jwtb), "error parsing token: unexpected end of JSON input\n")
 		})
 

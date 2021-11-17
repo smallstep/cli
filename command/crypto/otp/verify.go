@@ -2,7 +2,6 @@ package otp
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strconv"
@@ -89,7 +88,7 @@ func verifyAction(ctx *cli.Context) error {
 		}
 		secretFile = args[0]
 	}
-	b, err := ioutil.ReadFile(secretFile)
+	b, err := os.ReadFile(secretFile)
 	if err != nil {
 		return errs.FileError(err, secretFile)
 	}

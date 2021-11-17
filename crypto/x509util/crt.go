@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
-	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -94,7 +93,7 @@ func ReadCertPool(path string) (*x509.CertPool, error) {
 		pool  = x509.NewCertPool()
 	)
 	if info != nil && info.IsDir() {
-		finfos, err := ioutil.ReadDir(path)
+		finfos, err := os.ReadDir(path)
 		if err != nil {
 			return nil, errs.FileError(err, path)
 		}
@@ -110,7 +109,7 @@ func ReadCertPool(path string) (*x509.CertPool, error) {
 
 	var pems []byte
 	for _, f := range files {
-		bytes, err := ioutil.ReadFile(f)
+		bytes, err := os.ReadFile(f)
 		if err != nil {
 			return nil, errs.FileError(err, f)
 		}

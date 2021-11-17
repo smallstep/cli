@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -467,7 +466,7 @@ func readPayload(filename string) (interface{}, error) {
 	case "-":
 		r = os.Stdin
 	default:
-		b, err := ioutil.ReadFile(filename)
+		b, err := os.ReadFile(filename)
 		if err != nil {
 			return nil, errs.FileError(err, filename)
 		}

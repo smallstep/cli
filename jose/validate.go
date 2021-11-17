@@ -8,7 +8,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
@@ -22,7 +22,7 @@ func ValidateSSHPOP(certFile string, key interface{}) (string, error) {
 	if certFile == "" {
 		return "", errors.New("ssh certfile cannot be empty")
 	}
-	certBytes, err := ioutil.ReadFile(certFile)
+	certBytes, err := os.ReadFile(certFile)
 	if err != nil {
 		return "", errors.Wrapf(err, "error reading ssh certificate from %s", certFile)
 	}

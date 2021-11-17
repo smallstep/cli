@@ -2,7 +2,6 @@ package nacl
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/pkg/errors"
@@ -158,7 +157,7 @@ func secretboxOpenAction(ctx *cli.Context) error {
 		return errors.New("nonce cannot be longer than 24 bytes")
 	}
 
-	key, err := ioutil.ReadFile(keyFile)
+	key, err := os.ReadFile(keyFile)
 	if err != nil {
 		return errs.FileError(err, keyFile)
 	} else if len(key) != 32 {
@@ -216,7 +215,7 @@ func secretboxSealAction(ctx *cli.Context) error {
 		return errors.New("nonce cannot be longer than 24 bytes")
 	}
 
-	key, err := ioutil.ReadFile(keyFile)
+	key, err := os.ReadFile(keyFile)
 	if err != nil {
 		return errs.FileError(err, keyFile)
 	} else if len(key) != 32 {

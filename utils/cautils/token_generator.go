@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -149,7 +148,7 @@ func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) 
 	if path == "" {
 		path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	}
-	tokBytes, err := ioutil.ReadFile(path)
+	tokBytes, err := os.ReadFile(path)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading kubernetes service account token")
 	}

@@ -3,7 +3,6 @@ package nacl
 import (
 	"crypto/rand"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/pkg/errors"
@@ -155,7 +154,7 @@ func signOpenAction(ctx *cli.Context) error {
 	}
 
 	pubFile := ctx.Args().Get(0)
-	pub, err := ioutil.ReadFile(pubFile)
+	pub, err := os.ReadFile(pubFile)
 	if err != nil {
 		return errs.FileError(err, pubFile)
 	} else if len(pub) != 32 {
@@ -199,7 +198,7 @@ func signSignAction(ctx *cli.Context) error {
 	}
 
 	privFile := ctx.Args().Get(0)
-	priv, err := ioutil.ReadFile(privFile)
+	priv, err := os.ReadFile(privFile)
 	if err != nil {
 		return errs.FileError(err, privFile)
 	} else if len(priv) != 64 {
