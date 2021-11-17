@@ -243,6 +243,6 @@ jobs:
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.PAT }}
-          branch: 'master'
+          branch: 'main'
           directory: './docs'
           repository: 'smallstep/docs'
