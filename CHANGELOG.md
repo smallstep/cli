@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 ### Security
 
+## [0.18.0] - 2021-11-17
+### Added
+- Ability to use multiple certificate authority contexts without the need to change
+  $STEPPATH.
+### Deprecated
+- Support for go 1.15
+
 ## [0.17.7] - 2021-10-20
 ### Added
 - gocritic linter
