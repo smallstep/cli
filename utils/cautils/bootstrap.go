@@ -3,7 +3,6 @@ package cautils
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -43,7 +42,7 @@ func UseContext(ctx *cli.Context) (ret bool) {
 func WarnContext() {
 	// If not using contexts but an existing CA has already been configured,
 	// advise the user to use contexts in the future.
-	if _, err := os.Stat(filepath.Join(step.BasePath(), "/config/ca.json")); err == nil {
+	if _, err := os.Stat(filepath.Join(step.BasePath(), "config", "ca.json")); err == nil {
 		ui.Println("⚠️  It looks like step is already configured to connect to an authority.\n" +
 			"You can use 'contexts' to easily switch between teams and authorities.\n" +
 			"Learn more at https://smallstep.com/docs/step-cli/the-step-command#contexts.\n")
@@ -180,7 +179,7 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 		}
 
 		if _, err := os.Stat(profileDefaultsFile); os.IsNotExist(err) {
-			if err := ioutil.WriteFile(profileDefaultsFile, []byte("{}"), 0600); err != nil {
+			if err := os.WriteFile(profileDefaultsFile, []byte("{}"), 0600); err != nil {
 				return errs.FileError(err, profileDefaultsFile)
 			}
 			ui.Printf("The profile configuration has been saved in %s.\n", profileDefaultsFile)
@@ -253,7 +252,7 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 		withRedirectURL(r.RedirectURL))
 }
 
-// BootstrapAuthority bootstraps an autority using only the caURL and fingerprint.
+// BootstrapAuthority bootstraps an authority using only the caURL and fingerprint.
 func BootstrapAuthority(ctx *cli.Context, caURL, fingerprint string) (err error) {
 	caHostname := ctx.String("authority")
 	if caHostname == "" {

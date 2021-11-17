@@ -112,7 +112,7 @@ func removeAction(ctx *cli.Context) error {
 	}
 
 	// Attempt to remove line associated with the authority from removed context.
-	if err := fileutil.RemoveLine(filepath.Join(step.BasePath(), "ssh/includes"), target.Authority); err != nil {
+	if err := fileutil.RemoveLine(filepath.Join(step.BasePath(), "ssh", "includes"), target.Authority); err != nil {
 		return err
 	}
 

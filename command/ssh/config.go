@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"net/url"
 	"runtime"
 	"strings"
 
@@ -197,19 +196,6 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return nil
 	}
 
-	authority := ctx.String("authority")
-	if authority == "" {
-		caURL := ctx.String("ca-url")
-		if caURL == "" {
-			return errs.RequiredFlag(ctx, "ca-url")
-		}
-		u, err := url.Parse(caURL)
-		if err != nil {
-			return errors.Wrap(err, "error parsing ca-url")
-		}
-		authority = u.Hostname()
-	}
-
 	data := map[string]string{
 		"GOOS":         runtime.GOOS,
 		"StepPath":     step.Path(),
@@ -273,13 +259,13 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return err
 	}
 
-	var templates []api.Template
+	var tmplts []api.Template
 	if isHost {
-		templates = resp.HostTemplates
+		tmplts = resp.HostTemplates
 	} else {
-		templates = resp.UserTemplates
+		tmplts = resp.UserTemplates
 	}
-	if len(templates) == 0 {
+	if len(tmplts) == 0 {
 		ui.Println("No configuration changes were found.")
 		return nil
 	}
@@ -295,14 +281,14 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	}()
 
 	if ctx.Bool("dry-run") {
-		for _, t := range templates {
+		for _, t := range tmplts {
 			ui.Printf("{{ \"%s\" | bold }}\n", step.Abs(t.Path))
 			ui.Println(string(t.Content))
 		}
 		return nil
 	}
 
-	for _, t := range templates {
+	for _, t := range tmplts {
 		if err := t.Write(); err != nil {
 			return err
 		}

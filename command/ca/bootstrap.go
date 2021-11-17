@@ -96,7 +96,7 @@ func bootstrapAction(ctx *cli.Context) error {
 		return cautils.BootstrapTeamAuthority(ctx, team, "ssh")
 	case teamAuthority != "":
 		return errs.RequiredWithFlag(ctx, "team-authority", "team")
-	case len(caURL) == 0:
+	case caURL == "":
 		return errs.RequiredFlag(ctx, "ca-url")
 	case fingerprint == "":
 		return errs.RequiredFlag(ctx, "fingerprint")

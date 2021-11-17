@@ -484,29 +484,29 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 
 		if useContext {
-			context := ctx.String("context")
-			if context == "" {
-				context = dnsNames[0]
+			ctxName := ctx.String("context")
+			if ctxName == "" {
+				ctxName = dnsNames[0]
 			}
-			authority := ctx.String("authority")
-			if authority == "" {
-				authority = dnsNames[0]
+			ctxAuthority := ctx.String("authority")
+			if ctxAuthority == "" {
+				ctxAuthority = dnsNames[0]
 			}
-			profile := ctx.String("profile")
-			if profile == "" {
-				profile = dnsNames[0]
+			ctxProfile := ctx.String("profile")
+			if ctxProfile == "" {
+				ctxProfile = dnsNames[0]
 			}
 			if err := step.Contexts().Add(&step.Context{
-				Name:      context,
-				Profile:   profile,
-				Authority: authority,
+				Name:      ctxName,
+				Profile:   ctxProfile,
+				Authority: ctxAuthority,
 			}); err != nil {
 				return err
 			}
-			if err := step.Contexts().SaveCurrent(context); err != nil {
+			if err := step.Contexts().SaveCurrent(ctxName); err != nil {
 				return errors.Wrap(err, "error storing new default context")
 			}
-			if err := step.Contexts().SetCurrent(context); err != nil {
+			if err := step.Contexts().SetCurrent(ctxName); err != nil {
 				return errors.Wrap(err, "error setting context '%s'")
 			}
 		}
