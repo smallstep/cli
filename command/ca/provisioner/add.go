@@ -6,8 +6,8 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -662,7 +662,7 @@ func addK8sSAProvisioner(ctx *cli.Context, name string, provMap map[string]bool)
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "pem-keys")
 	}
 
-	pemKeysB, err := ioutil.ReadFile(pemKeysF)
+	pemKeysB, err := os.ReadFile(pemKeysF)
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading pem keys")
 	}

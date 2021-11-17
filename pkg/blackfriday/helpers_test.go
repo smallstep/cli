@@ -14,7 +14,7 @@
 package blackfriday
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"testing"
@@ -151,7 +151,7 @@ func doTestsReference(t *testing.T, files []string, flag Extensions) {
 	execRecoverableTestSuite(t, files, params, func(candidate *string) {
 		for _, basename := range files {
 			filename := filepath.Join("testdata", basename+".text")
-			inputBytes, err := ioutil.ReadFile(filename)
+			inputBytes, err := os.ReadFile(filename)
 			if err != nil {
 				t.Errorf("Couldn't open '%s', error: %v\n", filename, err)
 				continue
@@ -159,7 +159,7 @@ func doTestsReference(t *testing.T, files []string, flag Extensions) {
 			input := string(inputBytes)
 
 			filename = filepath.Join("testdata", basename+".html")
-			expectedBytes, err := ioutil.ReadFile(filename)
+			expectedBytes, err := os.ReadFile(filename)
 			if err != nil {
 				t.Errorf("Couldn't open '%s', error: %v\n", filename, err)
 				continue

@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -404,7 +403,7 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 	if token == "" {
 		certFile, keyFile := ctx.String("cert"), ctx.String("key")
 
-		certPEMBytes, err := ioutil.ReadFile(certFile)
+		certPEMBytes, err := os.ReadFile(certFile)
 		if err != nil {
 			return errors.Wrap(err, "error reading certificate")
 		}

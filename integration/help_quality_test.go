@@ -5,7 +5,7 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -18,7 +18,7 @@ func TestHelpQuality(t *testing.T) {
 	cmd := NewCLICommand().setCommand("../bin/step help").setFlag("html", "./html").setFlag("report", "")
 	cmd.run()
 
-	raw, _ := ioutil.ReadFile("./html/report.json")
+	raw, _ := os.ReadFile("./html/report.json")
 	var report *usage.Report
 	json.Unmarshal([]byte(raw), &report)
 

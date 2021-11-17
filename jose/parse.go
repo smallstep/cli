@@ -11,8 +11,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -89,7 +90,7 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 		return nil, err
 	}
 
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error reading %s", filename)
 	}
@@ -164,13 +165,13 @@ func ReadJWKSet(filename string) ([]byte, error) {
 			return nil, errors.Wrapf(err, "error retrieving %s", filename)
 		}
 		defer resp.Body.Close()
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error retrieving %s", filename)
 		}
 		return b, nil
 	}
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error reading %s", filename)
 	}

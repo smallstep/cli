@@ -3,9 +3,9 @@ package x509util
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/smallstep/assert"
@@ -51,7 +51,7 @@ func TestEncodedFingerprint(t *testing.T) {
 }
 
 func mustParseCertificate(t *testing.T, filename string) *x509.Certificate {
-	pemData, err := ioutil.ReadFile(filename)
+	pemData, err := os.ReadFile(filename)
 	if err != nil {
 		t.Fatalf("failed to read %s: %v", filename, err)
 	}

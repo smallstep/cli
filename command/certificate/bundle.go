@@ -2,7 +2,7 @@ package certificate
 
 import (
 	"encoding/pem"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
@@ -55,7 +55,7 @@ func bundleAction(ctx *cli.Context) error {
 	}
 
 	crtFile := ctx.Args().Get(0)
-	crtBytes, err := ioutil.ReadFile(crtFile)
+	crtBytes, err := os.ReadFile(crtFile)
 	if err != nil {
 		return errs.FileError(err, crtFile)
 	}
@@ -65,7 +65,7 @@ func bundleAction(ctx *cli.Context) error {
 	}
 
 	caFile := ctx.Args().Get(1)
-	caBytes, err := ioutil.ReadFile(caFile)
+	caBytes, err := os.ReadFile(caFile)
 	if err != nil {
 		return errs.FileError(err, caFile)
 	}

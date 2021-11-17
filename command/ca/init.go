@@ -677,7 +677,7 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 		ui.WithSelectTemplates(&promptui.SelectTemplates{
 			Active:   fmt.Sprintf("%s {{ printf \"%%s - %%s\" .Name .Description | underline }}", ui.IconSelect),
 			Inactive: "  {{ .Name }} - {{ .Description }}",
-			Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Deployment Type:" | bold }} {{ .Name }}`, ui.IconGood),
+			Selected: fmt.Sprintf(`{{ %q | green }} {{ "Deployment Type:" | bold }} {{ .Name }}`, ui.IconGood),
 		}))
 	if err != nil {
 		return 0, err
