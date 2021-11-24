@@ -53,25 +53,15 @@ include make/common.mk
 include make/docker.mk
 
 #########################################
-# Debian
+# fRPM changelog
 #########################################
 
 changelog:
-	$Q echo "step-cli ($(DEB_VERSION)) unstable; urgency=medium" > debian/changelog
-	$Q echo >> debian/changelog
-	$Q echo "  * See https://github.com/smallstep/cli/releases" >> debian/changelog
-	$Q echo >> debian/changelog
-	$Q echo " -- Smallstep Labs, Inc. <techadmin@smallstep.com>  $(shell date -uR)" >> debian/changelog
-
-debian: changelog
-	$Q set -e; mkdir -p $(RELEASE); \
-	OUTPUT=../step-cli_*.deb; \
-	rm -f $$OUTPUT; \
-	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
-
-distclean: clean
-
-.PHONY: changelog debian distclean
+	$Q echo "step-cli ($(DEB_VERSION)) unstable; urgency=medium" > output/changelog
+	$Q echo >> output/changelog
+	$Q echo "  * See https://github.com/smallstep/cli/releases" >> output/changelog
+	$Q echo >> output/changelog
+	$Q echo " -- Smallstep Labs, Inc. <techadmin@smallstep.com>  $(shell date -uR)" >> output/changelog
 
 #################################################
 # Build statically compiled step binary for various operating systems

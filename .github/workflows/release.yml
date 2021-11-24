@@ -112,10 +112,11 @@ jobs:
         id: aptInstall
         run: sudo apt-get -y install build-essential debhelper fakeroot
       -
-        name: Build Debian package
-        id: make_debian
+        name: Install nFPM
+        id: install_nFPM
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
           make debian
           # need to restore the git state otherwise goreleaser fails due to dirty state
           git restore debian/changelog

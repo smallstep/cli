@@ -70,6 +70,28 @@ archives:
       - LICENSE
       - autocomplete/*
 
+nfpms:
+  # An array of nfpm configurations
+  # see https://nfpm.goreleaser.com/configuration/
+  # and https://goreleaser.com/customization/nfpm/
+  -
+    vendor: Smallstep Labs
+    homepage: https://github.com/smallstep/cli
+    maintainer: Smallstep <techadmin@smallstep.com>
+    description: step is a CLI tool for building, operating, and automating Public Key Infrastructure (PKI) systems and workflows. It's a swiss army knife for authenticated encryption (X.509, TLS), single sign-on (OAuth OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML assertions).
+    license: Apache 2.0
+    section: utils
+    formats:
+      - deb
+      - rpm
+    priority: optional
+    contents:
+      - src: bin/step
+        dest: /usr/bin/step-cli
+      - src: autocomplete/bash_autocomplete
+        dest: /usr/share/bash-completion/completions/step-cli
+
+
 source:
   enabled: true
   name_template: '{{ .ProjectName }}_{{ .Version }}'
@@ -124,7 +146,7 @@ release:
     #### Linux
 
     - 📦 [step_linux_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/cli/{{ .Tag }}/step_linux_{{ .Version }}_amd64.tar.gz)
-    - 📦 [step-cli_{{ .Env.DEB_VERSION }}_amd64.deb](https://dl.step.sm/cli/{{ .Tag }}/step-cli_{{ .Env.DEB_VERSION }}_amd64.deb)
+    - 📦 [step-cli_{{ .Version }}_amd64.deb](https://dl.step.sm/cli/{{ .Tag }}/step-cli_{{ .Version }}_amd64.deb)
 
     #### OSX Darwin
 
