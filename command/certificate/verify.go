@@ -17,7 +17,7 @@ func verifyCommand() cli.Command {
 		Name:   "verify",
 		Action: cli.ActionFunc(verifyAction),
 		Usage:  `verify a certificate`,
-		UsageText: `**step certificate verify** <crt_file> [**--host**=<host>]
+		UsageText: `**step certificate verify** <crt-file> [**--host**=<host>]
 [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
 		Description: `**step certificate verify** executes the certificate path
 validation algorithm for x.509 certificates defined in RFC 5280. If the
@@ -26,7 +26,7 @@ an error occurs, this command will produce a non-zero return value.
 
 ## POSITIONAL ARGUMENTS
 
-<crt_file>
+<crt-file>
 : The path to a certificate to validate.
 
 ## EXIT CODES

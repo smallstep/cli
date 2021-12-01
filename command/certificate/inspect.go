@@ -23,7 +23,7 @@ func inspectCommand() cli.Command {
 		Name:   "inspect",
 		Action: cli.ActionFunc(inspectAction),
 		Usage:  `print certificate or CSR details in human readable format`,
-		UsageText: `**step certificate inspect** <crt_file>
+		UsageText: `**step certificate inspect** <crt-file>
 [**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]
 [**--servername**=<servername>]`,
 		Description: `**step certificate inspect** prints the details of a certificate
@@ -32,14 +32,14 @@ STDERR instead of STDOUT. This is an intentional barrier to accidental
 misuse: scripts should never rely on the contents of an unvalidated certificate.
 For scripting purposes, use **step certificate verify**.
 
-If crt_file contains multiple certificates (i.e., it is a certificate "bundle")
+If crt-file contains multiple certificates (i.e., it is a certificate "bundle")
 the first certificate in the bundle will be output. Pass the --bundle option to
 print all certificates in the order in which they appear in the bundle.
 
 ## POSITIONAL ARGUMENTS
 
-<crt_file>
-:  Path to a certificate or certificate signing request (CSR) to inspect. A hyphen ("-") indicates STDIN as <crt_file>.
+<crt-file>
+:  Path to a certificate or certificate signing request (CSR) to inspect. A hyphen ("-") indicates STDIN as <crt-file>.
 
 ## EXIT CODES
 

@@ -36,7 +36,7 @@ func signCommand() cli.Command {
 		Name:   "sign",
 		Action: cli.ActionFunc(signAction),
 		Usage:  "sign a certificate signing request (CSR)",
-		UsageText: `**step certificate sign** <csr_file> <crt_file> <key_file>
+		UsageText: `**step certificate sign** <csr-file> <crt-file> <key-file>
 [**--profile**=<profile>] [**--template**=<file>]
 [**--password-file**=<file>] [**--path-len**=<maximum>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
@@ -46,13 +46,13 @@ certificate from a certificate signing request (CSR).
 
 ## POSITIONAL ARGUMENTS
 
-<csr_file>
+<csr-file>
 : The path to a certificate signing request (CSR) to be signed.
 
-<crt_file>
+<crt-file>
 : The path to an issuing certificate.
 
-<key_file>
+<key-file>
 : The path to a private key for signing the CSR.
 
 ## EXIT CODES
