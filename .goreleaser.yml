@@ -86,7 +86,7 @@ nfpms:
       - rpm
     priority: optional
     # bin/step gets added to bindir
-    bindir: /usr/local
+    bindir: /usr
     contents:
       #- src: dist/step_{{ .Os }}_{{ .Arch }}/bin/step
       #  dst: /usr/bin/step-cli
