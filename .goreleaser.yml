@@ -57,6 +57,10 @@ builds:
     ldflags:
       - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
   -
+    # This build is specifically for nFPM targets (.deb and .rpm files).
+    # It's exactly the same as the default build above, except:
+    # - it only builds the archs we want to produce .deb and .rpm files for
+    # - the name of the output binary is step-cli
     id: nfpm
     env:
       - CGO_ENABLED=0
