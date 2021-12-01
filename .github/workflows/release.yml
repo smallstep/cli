@@ -107,7 +107,7 @@ jobs:
       -
         name: APT Install
         id: aptInstall
-        run: sudo apt-get -y install build-essential debhelper fakeroot
+        run: sudo apt-get -y install build-essential fakeroot
       -
         name: Configure Go
         id: configure_go
