@@ -9,19 +9,19 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/linkedca"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -32,47 +32,48 @@ func addCommand() cli.Command {
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add a provisioner",
 		UsageText: `**step beta ca provisioner add** <name> **--type**=JWK [**--public-key**=<file>]
-[**--private-key**=<file>] [**--create**]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>]
+[**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=OIDC
 [**--client-id**=<id>] [**--client-secret**=<secret>]
-[**--configuration-endpoint**=<url>] [**--domain**=<domain>] [**--admin**=<email>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--configuration-endpoint**=<url>] [**--domain**=<domain>]
+[**--admin**=<email>]...
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
+
 
 **step beta ca provisioner add** <name> **--type**=X5C **--x5c-root**=<file>
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=SSHPOP
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=K8SSA [**--public-key**=<file>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
 [**--aws-account**=<id>] [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "type",
@@ -200,6 +201,7 @@ provisioning tokens.`,
 			flags.PasswordFile,
 			flags.CaURL,
 			flags.Root,
+			flags.Context,
 		},
 		Description: `**step ca provisioner add** adds a provisioner to the CA configuration.
 
@@ -462,7 +464,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			return nil, errors.New("invalid JWK: a symmetric key cannot be used as a provisioner")
 		}
 		// Create kid if not present
-		if len(jwk.KeyID) == 0 {
+		if jwk.KeyID == "" {
 			jwk.KeyID, err = jose.Thumbprint(jwk)
 			if err != nil {
 				return nil, err
@@ -471,7 +473,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 
 		if ctx.IsSet("private-key") {
 			jwkFile = ctx.String("private-key")
-			b, err := ioutil.ReadFile(jwkFile)
+			b, err := os.ReadFile(jwkFile)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error reading %s", jwkFile)
 			}
@@ -549,7 +551,7 @@ func createSSHPOPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error)
 
 func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	x5cRootFile := ctx.String("x5c-root")
-	if len(x5cRootFile) == 0 {
+	if x5cRootFile == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "x5c", "x5c-root")
 	}
 
@@ -581,11 +583,11 @@ func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 
 func createK8SSADetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	pemKeysF := ctx.String("public-key")
-	if len(pemKeysF) == 0 {
+	if pemKeysF == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "public-key")
 	}
 
-	pemKeysB, err := ioutil.ReadFile(pemKeysF)
+	pemKeysB, err := os.ReadFile(pemKeysF)
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading pem keys")
 	}
@@ -631,12 +633,12 @@ func createK8SSADetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) 
 
 func createOIDCDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	clientID := ctx.String("client-id")
-	if len(clientID) == 0 {
+	if clientID == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "client-id")
 	}
 
 	confURL := ctx.String("configuration-endpoint")
-	if len(confURL) == 0 {
+	if confURL == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "configuration-endpoint")
 	}
 	u, err := url.Parse(confURL)

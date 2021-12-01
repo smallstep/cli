@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,15 +15,15 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ocsp"
 )
 
@@ -42,8 +41,8 @@ func revokeCertificateCommand() cli.Command {
 		Usage:  "revoke a certificate",
 		UsageText: `**step ca revoke** <serial-number>
 [**--cert**=<file>] [**--key**=<file>] [**--token**=<ott>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--reason**=<string>]
-[**--reasonCode**=<code>] [**--offline**]`,
+[**--reason**=<string>] [**--reasonCode**=<code>] [**-offline**]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `
 **step ca revoke** command revokes a certificate with the given serial
 number.
@@ -184,11 +183,12 @@ Note: This is specific to the CertificateHold reason and is only used in DeltaCR
 attribute certificate have been compromised (reasonCode=10).
 `,
 			},
-			flags.CaConfig,
-			flags.CaURL,
-			flags.Offline,
-			flags.Root,
 			flags.Token,
+			flags.CaConfig,
+			flags.Offline,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }
@@ -207,7 +207,7 @@ func revokeCertificateAction(ctx *cli.Context) error {
 
 	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
-	if offline && len(token) != 0 {
+	if offline && token != "" {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
 	}
 
@@ -224,10 +224,10 @@ func revokeCertificateAction(ctx *cli.Context) error {
 		if ctx.NArg() > 0 {
 			return errors.Errorf("'%s %s --cert <certificate> --key <key>' expects no additional positional arguments", ctx.App.Name, ctx.Command.Name)
 		}
-		if len(certFile) == 0 {
+		if certFile == "" {
 			return errs.RequiredWithFlag(ctx, "key", "cert")
 		}
-		if len(keyFile) == 0 {
+		if keyFile == "" {
 			return errs.RequiredWithFlag(ctx, "cert", "key")
 		}
 		if len(token) > 0 {
@@ -244,10 +244,10 @@ func revokeCertificateAction(ctx *cli.Context) error {
 		serial = cert[0].SerialNumber.String()
 	} else {
 		// Must be using serial number so verify that only 1 command line args was given.
-		if err = errs.NumberOfArguments(ctx, 1); err != nil {
+		if err := errs.NumberOfArguments(ctx, 1); err != nil {
 			return err
 		}
-		if len(token) == 0 {
+		if token == "" {
 			// No token and no cert/key pair - so generate a token.
 			token, err = flow.GenerateToken(ctx, &serial)
 			if err != nil {
@@ -289,7 +289,7 @@ func newRevokeFlow(ctx *cli.Context, certFile, keyFile string) (*revokeFlow, err
 			return nil, err
 		}
 		if len(certFile) > 0 || len(keyFile) > 0 {
-			if err = offlineClient.VerifyClientCert(certFile, keyFile); err != nil {
+			if err := offlineClient.VerifyClientCert(certFile, keyFile); err != nil {
 				return nil, err
 			}
 		}
@@ -329,21 +329,19 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.
 
 		// Prepare client for bootstrap or provisioning tokens
 		if len(claims.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
-			if len(caURL) == 0 {
+			if caURL == "" {
 				caURL = claims.Audience[0]
 			}
 			options = append(options, ca.WithRootSHA256(claims.SHA))
 			ui.PrintSelected("CA", caURL)
 			return ca.NewClient(caURL, options...)
 		}
-	} else {
+	} else if caURL == "" {
 		// If there is no token then caURL is required.
-		if len(caURL) == 0 {
-			return nil, errs.RequiredFlag(ctx, "ca-url")
-		}
+		return nil, errs.RequiredFlag(ctx, "ca-url")
 	}
 
-	if len(rootFile) == 0 {
+	if rootFile == "" {
 		rootFile = pki.GetRootCAPath()
 		if _, err := os.Stat(rootFile); err != nil {
 			return nil, errs.RequiredFlag(ctx, "root")
@@ -365,12 +363,12 @@ func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, e
 	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return "", err
-	} else if len(caURL) == 0 {
+	} else if caURL == "" {
 		return "", errs.RequiredUnlessFlag(ctx, "ca-url", "token")
 	}
 
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return "", errs.RequiredUnlessFlag(ctx, "root", "token")
@@ -403,10 +401,10 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 	var tr http.RoundTripper
 
 	// If token is not provided then set up mTLS client with expected cert and key.
-	if len(token) == 0 {
+	if token == "" {
 		certFile, keyFile := ctx.String("cert"), ctx.String("key")
 
-		certPEMBytes, err := ioutil.ReadFile(certFile)
+		certPEMBytes, err := os.ReadFile(certFile)
 		if err != nil {
 			return errors.Wrap(err, "error reading certificate")
 		}
@@ -427,7 +425,7 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 			return errors.New("error loading certificate: certificate chain is empty")
 		}
 		root := ctx.String("root")
-		if len(root) == 0 {
+		if root == "" {
 			root = pki.GetRootCAPath()
 			if _, err = os.Stat(root); err != nil {
 				return errs.RequiredUnlessFlag(ctx, "root", "token")
@@ -494,7 +492,7 @@ func ReasonCodeToNum(rc string) (int, error) {
 		return code, nil
 	}
 
-	code, found := RevocationReasonCodes[strings.ToLower(strings.Replace(rc, " ", "", -1))]
+	code, found := RevocationReasonCodes[strings.ToLower(strings.ReplaceAll(rc, " ", ""))]
 	if !found {
 		return 0, errors.Errorf("unrecognized revocation reason code '%s'", rc)
 	}

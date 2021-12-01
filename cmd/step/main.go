@@ -12,18 +12,19 @@ import (
 	"time"
 
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/version"
-	"github.com/smallstep/cli/config"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/usage"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/step"
 
 	// Enabled commands
 	_ "github.com/smallstep/cli/command/base64"
 	_ "github.com/smallstep/cli/command/beta"
 	_ "github.com/smallstep/cli/command/ca"
 	_ "github.com/smallstep/cli/command/certificate"
+	_ "github.com/smallstep/cli/command/context"
 	_ "github.com/smallstep/cli/command/crypto"
 	_ "github.com/smallstep/cli/command/fileserver"
 	_ "github.com/smallstep/cli/command/oauth"
@@ -48,8 +49,8 @@ var Version = "N/A"
 var BuildTime = "N/A"
 
 func init() {
-	config.Set("Smallstep CLI", Version, BuildTime)
-	ca.UserAgent = config.Version()
+	step.Set("Smallstep CLI", Version, BuildTime)
+	ca.UserAgent = step.Version()
 	rand.Seed(time.Now().UnixNano())
 }
 
@@ -71,7 +72,7 @@ func main() {
 	app.Name = "step"
 	app.HelpName = "step"
 	app.Usage = "plumbing for distributed systems"
-	app.Version = config.Version()
+	app.Version = step.Version()
 	app.Commands = command.Retrieve()
 	app.Flags = append(app.Flags, cli.HelpFlag)
 	app.EnableBashCompletion = true
@@ -111,6 +112,8 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 			}
 		}
+		// ignore exitAfterDefer error because the defer is required for recovery.
+		// nolint:gocritic
 		os.Exit(1)
 	}
 }
@@ -118,8 +121,8 @@ func main() {
 func panicHandler() {
 	if r := recover(); r != nil {
 		if os.Getenv("STEPDEBUG") == "1" {
-			fmt.Fprintf(os.Stderr, "%s\n", config.Version())
-			fmt.Fprintf(os.Stderr, "Release Date: %s\n\n", config.ReleaseDate())
+			fmt.Fprintf(os.Stderr, "%s\n", step.Version())
+			fmt.Fprintf(os.Stderr, "Release Date: %s\n\n", step.ReleaseDate())
 			panic(r)
 		} else {
 			fmt.Fprintln(os.Stderr, "Something unexpected happened.")
@@ -143,8 +146,8 @@ var placeholderString = regexp.MustCompile(`<.*?>`)
 
 func stringifyFlag(f cli.Flag) string {
 	fv := flagValue(f)
-	usage := fv.FieldByName("Usage").String()
-	placeholder := placeholderString.FindString(usage)
+	usg := fv.FieldByName("Usage").String()
+	placeholder := placeholderString.FindString(usg)
 	if placeholder == "" {
 		switch f.(type) {
 		case cli.BoolFlag, cli.BoolTFlag:
@@ -152,5 +155,5 @@ func stringifyFlag(f cli.Flag) string {
 			placeholder = "<value>"
 		}
 	}
-	return cli.FlagNamePrefixer(fv.FieldByName("Name").String(), placeholder) + "\t" + usage
+	return cli.FlagNamePrefixer(fv.FieldByName("Name").String(), placeholder) + "\t" + usg
 }

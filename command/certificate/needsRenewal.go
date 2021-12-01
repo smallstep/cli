@@ -11,8 +11,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 const defaultPercentUsedThreshold = 66
@@ -135,14 +135,15 @@ func needsRenewalAction(ctx *cli.Context) error {
 	)
 
 	var certs []*x509.Certificate
-	if addr, isURL, err := trimURL(certFile); err != nil {
+	switch addr, isURL, err := trimURL(certFile); {
+	case err != nil:
 		return errs.NewExitError(err, 255)
-	} else if isURL {
+	case isURL:
 		certs, err = getPeerCertificates(addr, serverName, roots, false)
 		if err != nil {
 			return errs.NewExitError(err, 255)
 		}
-	} else {
+	default:
 		_, err = os.Stat(certFile)
 		switch {
 		case os.IsNotExist(err):
@@ -193,10 +194,8 @@ func needsRenewalAction(ctx *cli.Context) error {
 			if int(percentUsed) >= percentThreshold {
 				return nil
 			}
-		} else {
-			if duration >= remainingValidity {
-				return nil
-			}
+		} else if duration >= remainingValidity {
+			return nil
 		}
 	}
 

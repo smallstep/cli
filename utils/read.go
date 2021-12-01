@@ -4,14 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"unicode"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
+	"go.step.sm/cli-utils/errs"
 )
 
 // In command line utilities, it is a de facto standard that a hyphen "-"
@@ -34,7 +33,7 @@ func FileExists(path string) bool {
 
 // ReadAll returns a slice of bytes with the content of the given reader.
 func ReadAll(r io.Reader) ([]byte, error) {
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	return b, errors.Wrap(err, "error reading data")
 }
 
@@ -51,7 +50,7 @@ func ReadString(r io.Reader) (string, error) {
 // ReadPasswordFromFile reads and returns the password from the given filename.
 // The contents of the file will be trimmed at the right.
 func ReadPasswordFromFile(filename string) ([]byte, error) {
-	password, err := ioutil.ReadFile(filename)
+	password, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, errs.FileError(err, filename)
 	}
@@ -89,9 +88,9 @@ func ReadInput(prompt string) ([]byte, error) {
 func ReadFile(name string) (b []byte, err error) {
 	if name == stdinFilename {
 		name = "/dev/stdin"
-		b, err = ioutil.ReadAll(stdin)
+		b, err = io.ReadAll(stdin)
 	} else {
-		b, err = ioutil.ReadFile(name)
+		b, err = os.ReadFile(name)
 	}
 	if err != nil {
 		return nil, errs.FileError(err, name)

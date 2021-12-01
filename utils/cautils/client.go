@@ -15,10 +15,10 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 // CaClient is the interface implemented by a client used to sign, renew, revoke
@@ -58,7 +58,7 @@ func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
 		return nil, err
 	}
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return nil, errs.RequiredFlag(ctx, "root")
@@ -74,11 +74,11 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 	if err != nil {
 		return nil, err
 	}
-	if len(caURL) == 0 {
+	if caURL == "" {
 		return nil, errs.RequiredFlag(ctx, "ca-url")
 	}
 	root := ctx.String("root")
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return nil, errs.RequiredFlag(ctx, "root")
@@ -92,10 +92,10 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		adminKey      interface{}
 	)
 	if len(adminCertFile) > 0 || len(adminKeyFile) > 0 {
-		if len(adminCertFile) == 0 {
+		if adminCertFile == "" {
 			return nil, errs.RequiredWithFlag(ctx, "admin-key", "admin-cert")
 		}
-		if len(adminKeyFile) == 0 {
+		if adminKeyFile == "" {
 			return nil, errs.RequiredWithFlag(ctx, "admin-cert", "admin-key")
 		}
 		adminCert, err = pemutil.ReadCertificateBundle(adminCertFile)

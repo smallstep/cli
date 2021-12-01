@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"testing"
@@ -82,7 +81,7 @@ func (j JWKTest) test(t *testing.T, msg ...interface{}) (CLIOutput, string) {
 }
 
 func (j JWKTest) readJson(t *testing.T, name string) map[string]interface{} {
-	dat, err := ioutil.ReadFile(name)
+	dat, err := os.ReadFile(name)
 	assert.FatalError(t, err)
 	m := make(map[string]interface{})
 	assert.FatalError(t, json.Unmarshal(dat, &m))
@@ -256,7 +255,7 @@ func isJWE(m map[string]interface{}) bool {
 }
 
 func (j JWKTest) decryptJWEPayload(t *testing.T, password string) map[string]interface{} {
-	dat, err := ioutil.ReadFile(j.prvfile)
+	dat, err := os.ReadFile(j.prvfile)
 	assert.FatalError(t, err)
 	enc, err := jose.ParseEncrypted(string(dat))
 	assert.FatalError(t, err)

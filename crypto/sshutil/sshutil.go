@@ -132,7 +132,7 @@ func publicKeyTypeAndSize(key ssh.PublicKey) (string, int, error) {
 	}
 
 	if isCert {
-		typ = typ + "-CERT"
+		typ += "-CERT"
 	}
 
 	return typ, size, nil

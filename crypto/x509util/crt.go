@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
-	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -14,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
+	"go.step.sm/cli-utils/errs"
 )
 
 // Fingerprint returns the SHA-256 fingerprint of the certificate.
@@ -66,6 +65,8 @@ func SplitSANs(sans []string) (dnsNames []string, ips []net.IP, emails []string,
 		return
 	}
 	for _, san := range sans {
+		// avoid ifelse -> switch statement linter suggestion
+		// nolint:gocritic
 		if ip := net.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
 		} else if u, err := url.Parse(san); err == nil && u.Scheme != "" {
@@ -92,7 +93,7 @@ func ReadCertPool(path string) (*x509.CertPool, error) {
 		pool  = x509.NewCertPool()
 	)
 	if info != nil && info.IsDir() {
-		finfos, err := ioutil.ReadDir(path)
+		finfos, err := os.ReadDir(path)
 		if err != nil {
 			return nil, errs.FileError(err, path)
 		}
@@ -108,7 +109,7 @@ func ReadCertPool(path string) (*x509.CertPool, error) {
 
 	var pems []byte
 	for _, f := range files {
-		bytes, err := ioutil.ReadFile(f)
+		bytes, err := os.ReadFile(f)
 		if err != nil {
 			return nil, errs.FileError(err, f)
 		}

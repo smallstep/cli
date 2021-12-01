@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
+	"go.step.sm/cli-utils/errs"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/jose"
@@ -129,7 +129,7 @@ func decryptAction(ctx *cli.Context) error {
 		}
 
 		// Validate jwk
-		if err = jose.ValidateJWK(jwk); err != nil {
+		if err := jose.ValidateJWK(jwk); err != nil {
 			return err
 		}
 

@@ -11,14 +11,13 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 type hashConstructor func() hash.Hash
@@ -274,22 +273,22 @@ func compareAction(ctx *cli.Context) error {
 func getHash(ctx *cli.Context, alg string, insecure bool) (hashConstructor, error) {
 	switch strings.ToLower(alg) {
 	case "sha", "sha1":
-		return func() hash.Hash { return sha1.New() }, nil
+		return sha1.New, nil
 	case "sha224":
-		return func() hash.Hash { return sha256.New224() }, nil
+		return sha256.New224, nil
 	case "sha256":
-		return func() hash.Hash { return sha256.New() }, nil
+		return sha256.New, nil
 	case "sha384":
-		return func() hash.Hash { return sha512.New384() }, nil
+		return sha512.New384, nil
 	case "sha512":
-		return func() hash.Hash { return sha512.New() }, nil
+		return sha512.New, nil
 	case "sha512-224":
-		return func() hash.Hash { return sha512.New512_224() }, nil
+		return sha512.New512_224, nil
 	case "sha512-256":
-		return func() hash.Hash { return sha512.New512_256() }, nil
+		return sha512.New512_256, nil
 	case "md5":
 		if insecure {
-			return func() hash.Hash { return md5.New() }, nil
+			return md5.New, nil
 		}
 		return nil, errs.FlagValueInsecure(ctx, "alg", alg)
 	default:
@@ -320,7 +319,7 @@ func hashFile(h hash.Hash, filename string) ([]byte, error) {
 //   3. return sum
 func hashDir(hc hashConstructor, dirname string) ([]byte, error) {
 	// ReadDir returns the entries sorted by filename
-	files, err := ioutil.ReadDir(dirname)
+	dirEntries, err := os.ReadDir(dirname)
 	if err != nil {
 		return nil, errs.FileError(err, dirname)
 	}
@@ -336,7 +335,11 @@ func hashDir(hc hashConstructor, dirname string) ([]byte, error) {
 	h := hc()
 	binary.LittleEndian.PutUint32(mode, uint32(st.Mode()))
 	h.Write(mode)
-	for _, fi := range files {
+	for _, dirEntry := range dirEntries {
+		fi, err := dirEntry.Info()
+		if err != nil {
+			return nil, errs.FileError(err, dirEntry.Name())
+		}
 		name := path.Join(dirname, fi.Name())
 		switch {
 		case fi.IsDir():

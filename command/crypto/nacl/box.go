@@ -3,16 +3,15 @@ package nacl
 import (
 	"crypto/rand"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/nacl/box"
 )
 
@@ -248,14 +247,14 @@ func boxOpenAction(ctx *cli.Context) error {
 		return errors.New("nonce cannot be longer than 24 bytes")
 	}
 
-	pub, err := ioutil.ReadFile(pubFile)
+	pub, err := os.ReadFile(pubFile)
 	if err != nil {
 		return errs.FileError(err, pubFile)
 	} else if len(pub) != 32 {
 		return errors.New("invalid public key: key size is not 32 bytes")
 	}
 
-	priv, err := ioutil.ReadFile(privFile)
+	priv, err := os.ReadFile(privFile)
 	if err != nil {
 		return errs.FileError(err, privFile)
 	} else if len(priv) != 32 {
@@ -314,14 +313,14 @@ func boxSealAction(ctx *cli.Context) error {
 		return errors.New("nonce cannot be longer than 24 bytes")
 	}
 
-	pub, err := ioutil.ReadFile(pubFile)
+	pub, err := os.ReadFile(pubFile)
 	if err != nil {
 		return errs.FileError(err, pubFile)
 	} else if len(pub) != 32 {
 		return errors.New("invalid public key: key size is not 32 bytes")
 	}
 
-	priv, err := ioutil.ReadFile(privFile)
+	priv, err := os.ReadFile(privFile)
 	if err != nil {
 		return errs.FileError(err, privFile)
 	} else if len(priv) != 32 {

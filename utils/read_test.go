@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
@@ -22,15 +21,15 @@ func (r *mockReader) Read(p []byte) (int, error) {
 }
 
 // Helper function for setting os.Stdin for mocking in tests.
-func setStdin(new *os.File) (cleanup func()) {
+func setStdin(f *os.File) (cleanup func()) {
 	old := stdin
-	stdin = new
+	stdin = f
 	return func() { stdin = old }
 }
 
 // Returns a temp file and a cleanup function to delete it.
 func newFile(t *testing.T, data []byte) (file *os.File, cleanup func()) {
-	f, err := ioutil.TempFile("" /* dir */, "utils-read-test")
+	f, err := os.CreateTemp("" /* dir */, "utils-read-test")
 	require.NoError(t, err)
 	// write to temp file and reset read cursor to beginning of file
 	_, err = f.Write(data)

@@ -30,7 +30,7 @@ type Argument struct {
 func (a Argument) Decorate() string {
 	name := a.Name
 	if a.Multiple {
-		name = name + "(s)..."
+		name += "(s)..."
 	}
 	if a.Required {
 		return fmt.Sprintf("<%s>", name)

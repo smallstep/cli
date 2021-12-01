@@ -8,9 +8,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func fingerprintCommand() cli.Command {
@@ -108,14 +108,15 @@ func fingerprintAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if addr, isURL, err := trimURL(crtFile); err != nil {
+	switch addr, isURL, err := trimURL(crtFile); {
+	case err != nil:
 		return err
-	} else if isURL {
+	case isURL:
 		certs, err = getPeerCertificates(addr, serverName, roots, insecure)
 		if err != nil {
 			return err
 		}
-	} else {
+	default:
 		certs, err = pemutil.ReadCertificateBundle(crtFile)
 		if err != nil {
 			return err

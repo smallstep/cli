@@ -97,7 +97,7 @@ func ExtractKey(in interface{}) (interface{}, error) {
 }
 
 // VerifyPair that the public key matches the given private key.
-func VerifyPair(pubkey interface{}, key interface{}) error {
+func VerifyPair(pubkey, key interface{}) error {
 	switch pub := pubkey.(type) {
 	case *rsa.PublicKey:
 		priv, ok := key.(*rsa.PrivateKey)

@@ -26,6 +26,8 @@ $ step crypto key format foo-key.pem
 			publicCommand(),
 			inspectCommand(),
 			fingerprintCommand(),
+			signCommand(),
+			verifyCommand(),
 		},
 	}
 }

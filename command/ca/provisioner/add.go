@@ -6,20 +6,20 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func addCommand() cli.Command {
@@ -164,7 +164,7 @@ instance identity documents in AWS.`,
 			},
 			cli.BoolFlag{
 				Name: "disable-custom-sans",
-				Usage: `On cloud provisioners, if anabled only the internal DNS and IP will be added as a SAN.
+				Usage: `On cloud provisioners, if enabled only the internal DNS and IP will be added as a SAN.
 By default it will accept any SAN in the CSR.`,
 			},
 			cli.BoolFlag{
@@ -316,7 +316,7 @@ func addAction(ctx *cli.Context) (err error) {
 	name := args[0]
 
 	caCfg := ctx.String("ca-config")
-	if len(caCfg) == 0 {
+	if caCfg == "" {
 		return errs.RequiredFlag(ctx, "ca-config")
 	}
 
@@ -364,7 +364,7 @@ func addAction(ctx *cli.Context) (err error) {
 	}
 
 	c.AuthorityConfig.Provisioners = append(c.AuthorityConfig.Provisioners, list...)
-	if err = c.Save(caCfg); err != nil {
+	if err := c.Save(caCfg); err != nil {
 		return err
 	}
 
@@ -433,7 +433,7 @@ func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 			return nil, errors.New("invalid JWK: a symmetric key cannot be used as a provisioner")
 		}
 		// Create kid if not present
-		if len(jwk.KeyID) == 0 {
+		if jwk.KeyID == "" {
 			jwk.KeyID, err = jose.Thumbprint(jwk)
 			if err != nil {
 				return nil, err
@@ -474,12 +474,12 @@ func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 
 func addOIDCProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
 	clientID := ctx.String("client-id")
-	if len(clientID) == 0 {
+	if clientID == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "client-id")
 	}
 
 	confURL := ctx.String("configuration-endpoint")
-	if len(confURL) == 0 {
+	if confURL == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "configuration-endpoint")
 	}
 	u, err := url.Parse(confURL)
@@ -612,7 +612,7 @@ func addACMEProvisioner(ctx *cli.Context, name string, provMap map[string]bool) 
 
 func addX5CProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
 	x5cRootFile := ctx.String("x5c-root")
-	if len(x5cRootFile) == 0 {
+	if x5cRootFile == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "x5c", "x5c-root")
 	}
 
@@ -658,11 +658,11 @@ func addX5CProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 // is entered by the user will be overwritten by a default value.
 func addK8sSAProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
 	pemKeysF := ctx.String("pem-keys")
-	if len(pemKeysF) == 0 {
+	if pemKeysF == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "pem-keys")
 	}
 
-	pemKeysB, err := ioutil.ReadFile(pemKeysF)
+	pemKeysB, err := os.ReadFile(pemKeysF)
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading pem keys")
 	}
