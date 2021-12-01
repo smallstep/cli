@@ -18,14 +18,14 @@ func lintCommand() cli.Command {
 		Name:   "lint",
 		Action: cli.ActionFunc(lintAction),
 		Usage:  `lint certificate details`,
-		UsageText: `**step certificate lint** <crt_file> [**--roots**=<root-bundle>]
+		UsageText: `**step certificate lint** <crt-file> [**--roots**=<root-bundle>]
 [**--servername**=<servername>]`,
 		Description: `**step certificate lint** checks a certificate for common
 errors and outputs the result in JSON format.
 
 ## POSITIONAL ARGUMENTS
 
-<crt_file>
+<crt-file>
 :  Path to a certificate or certificate signing request (CSR) to lint.
 
 ## EXIT CODES

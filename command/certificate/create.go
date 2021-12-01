@@ -59,10 +59,10 @@ you need something else, you can customize the output using templates. See **TEM
 <subject>
 : The subject of the certificate. Typically this is a hostname for services or an email address for people.
 
-<crt_file>
+<crt-file>
 : File to write CRT or CSR to (PEM format)
 
-<key_file>
+<key-file>
 : File to write private key to (PEM format). This argument is optional if **--key** is passed.
 
 ## EXIT CODES
