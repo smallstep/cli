@@ -58,7 +58,6 @@ jobs:
     outputs:
       version: ${{ steps.extract-tag.outputs.VERSION }}
       vversion: ${{ steps.extract-tag.outputs.VVERSION }}
-      debversion: ${{ steps.extract-tag.outputs.DEB_VERSION }}
       is_prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
     steps:
       -
@@ -67,10 +66,8 @@ jobs:
         run: |
           VVERSION=${GITHUB_REF#refs/tags/}
           VERSION=${GITHUB_REF#refs/tags/v}
-          DEB_VERSION=$(echo ${VERSION} | sed 's/-/./')
           echo "::set-output name=VVERSION::${VVERSION}"
           echo "::set-output name=VERSION::${VERSION}"
-          echo "::set-output name=DEB_VERSION::${DEB_VERSION}"
       -
         name: Is Pre-release
         id: is_prerelease
@@ -116,11 +113,6 @@ jobs:
         id: configure_go
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          # go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
-          #make changelog
-          # need to restore the git state otherwise goreleaser fails due to dirty state
-          #git restore debian/changelog
-          #git clean -fd
       -
         name: Install cosign
         uses: sigstore/cosign-installer@v1.1.0
@@ -145,7 +137,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
           COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
-          DEB_VERSION: ${{ needs.create_release.outputs.debversion }}
           RELEASE_DATE: ${{ steps.release_date.outputs.RELEASE_DATE }}
 
   build_upload_docker:

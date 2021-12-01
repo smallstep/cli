@@ -39,29 +39,16 @@ PUSHTYPE := branch
 endif
 
 VERSION := $(shell echo $(VERSION) | sed 's/^v//')
-DEB_VERSION := $(shell echo $(VERSION) | sed 's/-/./')
 
 ifdef V
 $(info    TRAVIS_TAG is $(TRAVIS_TAG))
 $(info    GITHUB_REF is $(GITHUB_REF))
 $(info    VERSION is $(VERSION))
-$(info    DEB_VERSION is $(DEB_VERSION))
 $(info    PUSHTYPE is $(PUSHTYPE))
 endif
 
 include make/common.mk
 include make/docker.mk
-
-#########################################
-# fRPM changelog
-#########################################
-
-changelog:
-	$Q echo "step-cli ($(DEB_VERSION)) unstable; urgency=medium" > output/changelog
-	$Q echo >> output/changelog
-	$Q echo "  * See https://github.com/smallstep/cli/releases" >> output/changelog
-	$Q echo >> output/changelog
-	$Q echo " -- Smallstep Labs, Inc. <techadmin@smallstep.com>  $(shell date -uR)" >> output/changelog
 
 #################################################
 # Build statically compiled step binary for various operating systems
