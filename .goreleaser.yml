@@ -85,12 +85,13 @@ nfpms:
       - deb
       - rpm
     priority: optional
+    # bin/step gets added to bindir
+    bindir: /usr/local
     contents:
-      - src: bin/step
-        dest: /usr/bin/step-cli
+      #- src: dist/step_{{ .Os }}_{{ .Arch }}/bin/step
+      #  dst: /usr/bin/step-cli
       - src: autocomplete/bash_autocomplete
-        dest: /usr/share/bash-completion/completions/step-cli
-
+        dst: /usr/share/bash-completion/completions/step-cli
 
 source:
   enabled: true

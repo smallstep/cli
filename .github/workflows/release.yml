@@ -112,15 +112,15 @@ jobs:
         id: aptInstall
         run: sudo apt-get -y install build-essential debhelper fakeroot
       -
-        name: Install nFPM
-        id: install_nFPM
+        name: Configure Go
+        id: configure_go
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
-          make debian
+          # go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+          #make changelog
           # need to restore the git state otherwise goreleaser fails due to dirty state
-          git restore debian/changelog
-          git clean -fd
+          #git restore debian/changelog
+          #git clean -fd
       -
         name: Install cosign
         uses: sigstore/cosign-installer@v1.1.0
