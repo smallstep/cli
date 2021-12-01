@@ -89,9 +89,15 @@ archives:
       - autocomplete/*
 
 nfpms:
-  # An array of nfpm configurations
-  # see https://nfpm.goreleaser.com/configuration/
+  # Configure nFPM for .deb and .rpm releases
+  #
+  # See https://nfpm.goreleaser.com/configuration/
   # and https://goreleaser.com/customization/nfpm/
+  #
+  # Useful tools for debugging .debs:
+  # List file contents: dpkg -c dist/step_...deb
+  # Package metadata: dpkg --info dist/step_....deb
+  # 
   -
     builds:
       - nfpm
