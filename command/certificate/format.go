@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"os"
+
+	"github.com/smallstep/cli/crypto/pemutil"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
@@ -27,19 +28,21 @@ func formatCommand() cli.Command {
 [**--ca**=<file>] [**--out**=<file>] [**--format**=<format>]`,
 		Description: `**step certificate format** prints the certificate or CSR in a different format.
 
-If either PEM or ASN.1 DER is provided as a positional argument, this tool will convert
-a certificate or CSR in one format to the other.
+If either PEM or ASN.1 DER is provided as a positional argument, this command
+will convert a certificate or CSR in one format to the other.
 
-If PFX / PKCS12 file is provided as a positional argument, and the format is specified as "pem"/"der", 
-it extracts a certificate and private key from the input.
+If PFX / PKCS12 file is provided as a positional argument, and the format is
+specified as "pem"/"der", this command extracts a certificate and private key
+from the input.
 
-If either PEM or ASN.1 DER is provided in "--crt", "--key" and "--ca", and the format is specified as "p12", 
-it creates PFX / PKCS12 file from the input .
+If either PEM or ASN.1 DER is provided in "--crt" | "--key" | "--ca", and the
+format is specified as "p12", this command creates a PFX / PKCS12 file from the input .
 
 ## POSITIONAL ARGUMENTS
 
 <crt-file>
-:  Path to a certificate or CSR file, or .p12 file when you specify --crt/--ca option.
+:  Path to a certificate, CSR, or .p12 file.
+<crt-file>
 
 ## EXIT CODES
 
@@ -80,34 +83,46 @@ Convert a certificate and private key to a .p12 file:
 $ step certificate format foo.crt --crt foo.p12 --key foo.key --format p12
 '''
 
-Convert a certificate, a private key, and intermediate certificates to a .p12 file:
+Convert a certificate, a private key, and intermediate certificates(s) to a .p12 file:
 
 '''
-$ step certificate format foo.crt --crt foo.p12 --key foo.key --ca intermediate.crt --format p12
+$ step certificate format foo.crt --crt foo.p12 --key foo.key \
+  --ca intermediate-1.crt --ca intermediate-2 --format p12
 '''
 `,
 		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:  "format",
-				Usage: `Target format.`,
+				Name: "format",
+				Usage: `The desired output <format> for the input. The default behavior is to
+convert between DER and PEM format. Acceptable inputs are 'pem', 'der', and 'p12'.`,
 			},
 			cli.StringFlag{
-				Name:  "crt",
-				Usage: `The path to a certificate.`,
+				Name: "crt",
+				Usage: `The path to a certificate <file>. If --format is 'p12' then this flag
+must be a PEM or DER encoded certificate. If the positional argument is a P12
+encoded file then this flag contains the name for the PEM or DER encoded leaf
+certificate extracted from the p12 file.`,
 			},
 			cli.StringFlag{
-				Name:  "key",
-				Usage: `The path to a private key.`,
+				Name: "key",
+				Usage: `The path to a key <file>. If --format is 'p12' then this flag
+must be a PEM or DER encoded private key. If the positional argument is a P12
+encoded file then this flag contains the name for the PEM or DER encoded private
+key extracted from the p12 file.`,
 			},
 			cli.StringSliceFlag{
 				Name: "ca",
-				Usage: `The path a CA or intermediate certificate. When converting certificates
-to p12 file, Use the '--ca' flag multiple times to add
-multiple CAs or intermediates.`,
+				Usage: `The path to a root or intermediate certificate <file>. If --format is 'p12'
+then this flag can be used to submit one or more CA files encoded as PEM or DER.
+Additional CA certificates can be added by using the --ca flag multiple times.
+If the positional argument is a p12 encoded file then this flag contains the
+name for the PEM or DER encoded certificate chain extracted from the p12 file.`,
 			},
 			cli.StringFlag{
-				Name:  "out",
-				Usage: `Path to write the reformatted result.`,
+				Name: "out",
+				Usage: `The <file> to write the reformatted result. Only use this flag
+for conversions between PEM and DER. Conversions to P12 should use --crt, --key,
+and --ca.`,
 			},
 			cli.StringFlag{
 				Name:  "password-file",
@@ -178,7 +193,7 @@ func formatAction(ctx *cli.Context) error {
 			return err
 		}
 	default:
-		return errors.Errorf("unrecognized argument: --format %s", format)
+		return errs.InvalidFlagValue(ctx, "format", format, "")
 	}
 	return nil
 }
@@ -227,7 +242,7 @@ func interconvertPemAndDer(crtFile, out string) error {
 			}
 		}
 		if err := utils.WriteFile(out, ob, mode); err != nil {
-			return err
+			return errs.FileError(err, out)
 		}
 		ui.Printf("Your certificate has been saved in %s\n", out)
 	}
@@ -367,7 +382,7 @@ func maybeWrite(filename string, out []byte) error {
 		os.Stdout.Write(out)
 	} else {
 		if err := utils.WriteFile(filename, out, 0600); err != nil {
-			return err
+			return errs.FileError(err, filename)
 		}
 	}
 	return nil
