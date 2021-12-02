@@ -101,9 +101,11 @@ nfpms:
         dst: /usr/share/bash-completion/completions/step-cli
       - src: debian/copyright
         dst: /usr/share/doc/step-cli/copyright
-    scripts:
-      postinstall: "debian/postinstall.sh"
-      preremove: "debian/preremove.sh"
+    overrides:
+      deb:
+        scripts:
+          postinstall: "debian/postinstall.sh"
+          preremove: "debian/preremove.sh"
 
 source:
   enabled: true
