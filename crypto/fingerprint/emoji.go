@@ -12,8 +12,8 @@ func toEmoji(input []byte) string {
 
 // emojiCodeMap is a mapping from byte to emoji.
 //
-// The mapping is based on https://github.com/emojisum/emojisum with amendments
-// proposed in https://github.com/emojisum/emojisum/issues/37.
+// The mapping is based on draft+2 of https://github.com/emojisum/emojisum.
+// (see: https://github.com/emojisum/emojisum/releases/tag/draft%2B2)
 var emojiCodeMap = []string{
 	"\U0001f44d",                   // 👍 :+1:
 	"\U0001f3b1",                   // 🎱 :8ball:

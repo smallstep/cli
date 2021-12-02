@@ -27,11 +27,13 @@ const (
 	// HexFingerprint represents hex encoding of fingerprint.
 	HexFingerprint = FingerprintEncoding(fingerprint.HexFingerprint)
 	// Base64Fingerprint represents base64 encoding of fingerprint.
-	Base64Fingerprint = FingerprintEncoding(fingerprint.Base64Fingerprint)
+	Base64Fingerprint = FingerprintEncoding(fingerprint.Base64StdFingerprint)
 	// Base64URLFingerprint represents base64URL encoding of fingerprint.
 	Base64URLFingerprint = FingerprintEncoding(fingerprint.Base64URLFingerprint)
-	// Base64RawFingerprint represents base64Raw encoding of fingerprint.
-	Base64RawFingerprint = FingerprintEncoding(fingerprint.Base64RawFingerprint)
+	// Base64RawURLFingerprint represents base64Raw encoding of fingerprint.
+	Base64RawURLFingerprint = FingerprintEncoding(fingerprint.Base64RawURLFingerprint)
+	// Base64RawStdFingerprint represents base64Raw encoding of fingerprint.
+	Base64RawStdFingerprint = FingerprintEncoding(fingerprint.Base64RawStdFingerprint)
 	// EmojiFingerprint represents emoji encoding of fingerprint.
 	EmojiFingerprint = FingerprintEncoding(fingerprint.EmojiFingerprint)
 )

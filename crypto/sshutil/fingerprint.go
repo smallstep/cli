@@ -53,8 +53,8 @@ func Fingerprint(in []byte, opts ...FingerprintOption) (string, error) {
 	}
 
 	fp := ssh.FingerprintSHA256(key)
-	if o.FingerprintOptions != nil {
-		raw, err := fingerprint.Decode(fp, fingerprint.WithPrefix("SHA256:"), fingerprint.WithEncoding(fingerprint.Base64RawFingerprint))
+	if len(o.FingerprintOptions) != 0 {
+		raw, err := fingerprint.Decode(fp, fingerprint.WithPrefix("SHA256:"), fingerprint.WithEncoding(fingerprint.Base64RawStdFingerprint))
 		if err != nil {
 			return "", errors.Wrap(err, "decoding fingerprint")
 		}

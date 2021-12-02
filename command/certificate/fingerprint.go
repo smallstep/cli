@@ -79,7 +79,7 @@ authenticity of the remote server.
 debugging invalid certificates remotely.`,
 			},
 			flags.ServerName,
-			command.FingerprintFormatFlag(),
+			command.FingerprintFormatFlag("hex"),
 		},
 	}
 }
@@ -99,7 +99,7 @@ func fingerprintAction(ctx *cli.Context) error {
 		format     = ctx.String("format")
 	)
 
-	encoding, err := command.GetFingerprintEncoding(format, "hex")
+	encoding, err := command.GetFingerprintEncoding(format)
 	if err != nil {
 		return err
 	}

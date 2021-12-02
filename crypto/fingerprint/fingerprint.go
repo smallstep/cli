@@ -15,12 +15,14 @@ type Encoding int
 const (
 	// HexFingerprint represents the hex encoding of the fingerprint.
 	HexFingerprint Encoding = iota
-	// Base64Fingerprint represents the base64 encoding of the fingerprint.
-	Base64Fingerprint
+	// Base64StdFingerprint represents the base64 encoding of the fingerprint.
+	Base64StdFingerprint
 	// Base64URLFingerprint represents the base64URL encoding of the fingerprint.
 	Base64URLFingerprint
-	// Base64RawFingerprint represents the base64Raw encoding of the fingerprint.
-	Base64RawFingerprint
+	// Base64RawStdFingerprint represents the base64RawStd encoding of the fingerprint.
+	Base64RawStdFingerprint
+	// Base64RawURLFingerprint represents the base64RawURL encoding of the fingerprint.
+	Base64RawURLFingerprint
 	// EmojiFingerprint represents the emoji encoding of the fingerprint.
 	EmojiFingerprint
 )
@@ -88,12 +90,14 @@ func encode(input []byte, encoding Encoding) string {
 	switch encoding {
 	case HexFingerprint:
 		return strings.ToLower(hex.EncodeToString(input))
-	case Base64Fingerprint:
+	case Base64StdFingerprint:
 		return base64.StdEncoding.EncodeToString(input)
 	case Base64URLFingerprint:
 		return base64.URLEncoding.EncodeToString(input)
-	case Base64RawFingerprint:
+	case Base64RawStdFingerprint:
 		return base64.RawStdEncoding.EncodeToString(input)
+	case Base64RawURLFingerprint:
+		return base64.RawURLEncoding.EncodeToString(input)
 	case EmojiFingerprint:
 		return toEmoji(input)
 	default:
@@ -112,11 +116,13 @@ func decode(input string, encoding Encoding) ([]byte, error) {
 	switch encoding {
 	case HexFingerprint:
 		return hex.DecodeString(input)
-	case Base64Fingerprint:
+	case Base64StdFingerprint:
 		return base64.StdEncoding.DecodeString(input)
 	case Base64URLFingerprint:
 		return base64.URLEncoding.DecodeString(input)
-	case Base64RawFingerprint:
+	case Base64RawStdFingerprint:
+		return base64.RawStdEncoding.DecodeString(input)
+	case Base64RawURLFingerprint:
 		return base64.RawURLEncoding.DecodeString(input)
 	case EmojiFingerprint:
 		return nil, errors.New("decoding emoji fingerprint not supported")

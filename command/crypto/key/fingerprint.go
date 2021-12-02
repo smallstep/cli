@@ -10,11 +10,12 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/fingerprint"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
+	libcommand "go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
@@ -22,7 +23,7 @@ import (
 func fingerprintCommand() cli.Command {
 	return cli.Command{
 		Name:      "fingerprint",
-		Action:    command.ActionFunc(fingerprintAction),
+		Action:    libcommand.ActionFunc(fingerprintAction),
 		Usage:     `print the fingerprint of a public key`,
 		UsageText: `**step crypto key fingerprint** <key-file>`,
 		Description: `**step crypto key fingerprint** prints the fingerprint of a public key. The
@@ -101,7 +102,7 @@ $ step crypto key fingerprint --password-file pass.txt priv.pem
 				Name:  "raw",
 				Usage: "Print the raw bytes instead of the fingerprint. These bytes can be piped to a different hash command.",
 			},
-			command.FingerprintFormatFlag(),
+			command.FingerprintFormatFlag(""),
 		},
 	}
 }
@@ -138,7 +139,12 @@ func fingerprintAction(ctx *cli.Context) error {
 		prefix = "SHA1:"
 		hash = crypto.SHA1
 	}
-	encoding, err := command.GetFingerprintEncoding(format, defaultFmt)
+
+	if format == "" {
+		format = defaultFmt
+	}
+
+	encoding, err := command.GetFingerprintEncoding(format)
 	if err != nil {
 		return err
 	}
