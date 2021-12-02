@@ -82,6 +82,7 @@ nfpms:
   -
     builds:
       - nfpm
+    package_name: step-cli
     vendor: Smallstep Labs
     homepage: https://github.com/smallstep/cli
     maintainer: Smallstep <techadmin@smallstep.com>
@@ -157,8 +158,8 @@ release:
     #### Linux
 
     - 📦 [step_linux_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_linux_{{ .Version }}_amd64.tar.gz)
-    - 📦 [step_{{ .Version }}_linux_amd64.deb](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_{{ .Version }}_linux_amd64.deb)
-    - 📦 [step_{{ .Version }}_linux_amd64.rpm](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_{{ .Version }}_linux_amd64.rpm)
+    - 📦 [step-cli_{{ .Version }}_linux_amd64.deb](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_linux_amd64.deb)
+    - 📦 [step-cli_{{ .Version }}_linux_amd64.rpm](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_linux_amd64.rpm)
 
     #### OSX Darwin
 
