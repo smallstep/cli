@@ -143,23 +143,20 @@ func formatAction(ctx *cli.Context) error {
 
 	sourceFile := ctx.Args().First()
 	format := ctx.String("format")
-	crt := ctx.String("crt")
-	key := ctx.String("key")
-	ca := ctx.StringSlice("ca")
+	crtFile := ctx.String("crt")
+	keyFile := ctx.String("key")
+	caFiles := ctx.StringSlice("ca")
 	out := ctx.String("out")
 	passwordFile := ctx.String("password-file")
 	noPassword := ctx.Bool("no-password")
 	insecure := ctx.Bool("insecure")
 
 	if out != "" {
-		if crt != "" {
+		if crtFile != "" {
 			return errs.IncompatibleFlagWithFlag(ctx, "out", "crt")
 		}
-		if key != "" {
+		if keyFile != "" {
 			return errs.IncompatibleFlagWithFlag(ctx, "out", "key")
-		}
-		if len(ca) != 0 {
-			return errs.IncompatibleFlagWithFlag(ctx, "out", "ca")
 		}
 		if format != "" {
 			return errs.IncompatibleFlagWithFlag(ctx, "out", "format")
@@ -188,18 +185,28 @@ func formatAction(ctx *cli.Context) error {
 		}
 
 		// First check if P12 input.
-		if _, _, err := pkcs12.Decode(srcBytes, pass); err == nil {
+		if keyFrom, crtFrom, caFrom, err := pkcs12.DecodeChain(srcBytes, pass); err == nil {
 			if format == "p12" {
 				return errors.Errorf("invalid flag --format with value 'p12'; cannot from P12 format to P12 format")
 			}
-			if len(ca) > 1 {
-				return errors.Errorf("flag --ca cannot be used multiple times when flag --format is 'pem' or 'der'")
+			if len(caFrom) > 1 {
+				return errors.Errorf("flag --ca cannot be used multiple times when converting from P12 format")
 			}
 			caFile := ""
-			if len(ca) == 1 {
-				caFile = ca[0]
+			if len(caFiles) == 1 {
+				caFile = caFiles[0]
 			}
-			return fromP12(sourceFile, crt, key, caFile, passwordFile, noPassword, format)
+			if err := write(crtFile, format, crtFrom); err != nil {
+				return err
+			}
+
+			if err := writeCerts(caFile, format, caFrom); err != nil {
+				return err
+			}
+
+			if err := write(keyFile, format, keyFrom); err != nil {
+				return err
+			}
 		}
 
 		// Now we know input is not P12 format. Check if we're converting to P12.
@@ -207,7 +214,7 @@ func formatAction(ctx *cli.Context) error {
 			if noPassword && !insecure {
 				return errs.RequiredInsecureFlag(ctx, "no-password")
 			}
-			return ToP12(out, crt, key, ca, passwordFile, noPassword, insecure)
+			return ToP12(out, crtFile, keyFile, caFiles, passwordFile, noPassword, insecure)
 		}
 
 		// Otherwise interconvert between PEM and DER.
@@ -218,7 +225,7 @@ func formatAction(ctx *cli.Context) error {
 	if format != "p12" {
 		return errors.Errorf("flag --format with value '%s' requires a certificate file as positional argument", format)
 	}
-	return ToP12(out, crt, key, ca, passwordFile, noPassword, insecure)
+	return ToP12(out, crtFile, keyFile, caFiles, passwordFile, noPassword, insecure)
 }
 
 func interconvertPemAndDer(crtFile, out string) error {
@@ -316,45 +323,6 @@ func decodeCertificatePem(b []byte) ([]byte, error) {
 }
 
 func fromP12(p12File, crtFile, keyFile, caFile, pass string, format string) error {
-	var err error
-	var password string
-	if passwordFile != "" {
-		password, err = utils.ReadStringPasswordFromFile(passwordFile)
-		if err != nil {
-			return err
-		}
-	}
-
-	if password == "" && !noPassword {
-		pass, err := ui.PromptPassword("Please enter a password to decrypt the .p12 file")
-		if err != nil {
-			return errs.Wrap(err, "error reading password")
-		}
-		password = string(pass)
-	}
-
-	p12Data, err := utils.ReadFile(p12File)
-	if err != nil {
-		return errs.Wrap(err, "error reading file %s", p12File)
-	}
-
-	key, crt, ca, err := pkcs12.DecodeChain(p12Data, password)
-	if err != nil {
-		return errs.Wrap(err, "failed to decode PKCS12 data")
-	}
-
-	if err := write(crtFile, format, crt); err != nil {
-		return err
-	}
-
-	if err := writeCerts(caFile, format, ca); err != nil {
-		return err
-	}
-
-	if err := write(keyFile, format, key); err != nil {
-		return err
-	}
-
 	return nil
 }
 
