@@ -94,7 +94,7 @@ $ step certificate format foo.crt --crt foo.p12 --key foo.key \
 			cli.StringFlag{
 				Name: "format",
 				Usage: `The desired output <format> for the input. The default behavior is to
-convert between DER and PEM format. Acceptable inputs are 'pem', 'der', and 'p12'.`,
+convert between DER and PEM format. Acceptable formats are 'pem', 'der', and 'p12'.`,
 			},
 			cli.StringFlag{
 				Name: "crt",
