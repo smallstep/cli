@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/x509"
 	"encoding/pem"
+	"io/ioutil"
 	"os"
 
 	"go.step.sm/crypto/pemutil"
@@ -169,33 +170,55 @@ func formatAction(ctx *cli.Context) error {
 		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "password-file")
 	}
 
-	switch {
-	case format == "pem" || format == "der":
-		if len(ca) > 1 {
-			return errors.Errorf("flag --ca cannot be used multiple times when flag --format is 'pem' or 'der'")
+	var (
+		err  error
+		pass = ""
+	)
+	if passwordFile != "" {
+		pass, err = utils.ReadStringPasswordFromFile(passwordFile)
+		if err != nil {
+			return errs.FileError(err, passwordFile)
 		}
-		caFile := ""
-		if len(ca) == 1 {
-			caFile = ca[0]
-		}
-		if err := fromP12(sourceFile, crt, key, caFile, passwordFile, noPassword, format); err != nil {
-			return err
-		}
-	case format == "p12":
-		if noPassword && !insecure {
-			return errs.RequiredInsecureFlag(ctx, "no-password")
-		}
-		if err := ToP12(crt, sourceFile, key, ca, passwordFile, noPassword, insecure); err != nil {
-			return err
-		}
-	case format == "":
-		if err := interconvertPemAndDer(sourceFile, out); err != nil {
-			return err
-		}
-	default:
-		return errs.InvalidFlagValue(ctx, "format", format, "")
 	}
-	return nil
+
+	if sourceFile != "" {
+		srcBytes, err := ioutil.ReadFile(sourceFile)
+		if err != nil {
+			return errs.FileError(err, sourceFile)
+		}
+
+		// First check if P12 input.
+		if _, _, err := pkcs12.Decode(srcBytes, pass); err == nil {
+			if format == "p12" {
+				return errors.Errorf("invalid flag --format with value 'p12'; cannot from P12 format to P12 format")
+			}
+			if len(ca) > 1 {
+				return errors.Errorf("flag --ca cannot be used multiple times when flag --format is 'pem' or 'der'")
+			}
+			caFile := ""
+			if len(ca) == 1 {
+				caFile = ca[0]
+			}
+			return fromP12(sourceFile, crt, key, caFile, passwordFile, noPassword, format)
+		}
+
+		// Now we know input is not P12 format. Check if we're converting to P12.
+		if format == "p12" {
+			if noPassword && !insecure {
+				return errs.RequiredInsecureFlag(ctx, "no-password")
+			}
+			return ToP12(out, crt, key, ca, passwordFile, noPassword, insecure)
+		}
+
+		// Otherwise interconvert between PEM and DER.
+		return interconvertPemAndDer(sourceFile, out)
+	}
+
+	// If format is PEM or DER (not P12) then an input certificate file is required.
+	if format != "p12" {
+		return errors.Errorf("flag --format with value '%s' requires a certificate file as positional argument", format)
+	}
+	return ToP12(out, crt, key, ca, passwordFile, noPassword, insecure)
 }
 
 func interconvertPemAndDer(crtFile, out string) error {
@@ -292,7 +315,7 @@ func decodeCertificatePem(b []byte) ([]byte, error) {
 	return nil, errors.Errorf("error decoding certificate: invalid PEM block")
 }
 
-func fromP12(p12File, crtFile, keyFile, caFile, passwordFile string, noPassword bool, format string) error {
+func fromP12(p12File, crtFile, keyFile, caFile, pass string, format string) error {
 	var err error
 	var password string
 	if passwordFile != "" {
