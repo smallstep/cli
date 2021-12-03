@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"os"
 
 	"go.step.sm/crypto/pemutil"
@@ -179,7 +178,7 @@ func formatAction(ctx *cli.Context) error {
 	}
 
 	if sourceFile != "" {
-		srcBytes, err := ioutil.ReadFile(sourceFile)
+		srcBytes, err := os.ReadFile(sourceFile)
 		if err != nil {
 			return errs.FileError(err, sourceFile)
 		}
@@ -320,10 +319,6 @@ func decodeCertificatePem(b []byte) ([]byte, error) {
 	}
 
 	return nil, errors.Errorf("error decoding certificate: invalid PEM block")
-}
-
-func fromP12(p12File, crtFile, keyFile, caFile, pass string, format string) error {
-	return nil
 }
 
 func writeCerts(filename, format string, certs []*x509.Certificate) error {
