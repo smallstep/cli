@@ -172,7 +172,7 @@ func formatAction(ctx *cli.Context) error {
 	switch {
 	case format == "pem" || format == "der":
 		if len(ca) > 1 {
-			return errors.Errorf("--ca option specified for multiple times when the target format is pem/der")
+			return errors.Errorf("flag --ca cannot be used multiple times when flag --format is 'pem' or 'der'")
 		}
 		caFile := ""
 		if len(ca) == 1 {
