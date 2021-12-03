@@ -6,7 +6,7 @@ import (
 	"encoding/pem"
 	"os"
 
-	"github.com/smallstep/cli/crypto/pemutil"
+	"go.step.sm/crypto/pemutil"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
