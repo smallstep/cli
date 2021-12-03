@@ -259,44 +259,31 @@ func decodeCertificatePem(b []byte) ([]byte, error) {
 		}
 		switch block.Type {
 		case "CERTIFICATE":
-			crt, err := x509.ParseCertificate(block.Bytes)
-			if err != nil {
+			if _, err := x509.ParseCertificate(block.Bytes); err != nil {
 				return nil, errors.Wrap(err, "error parsing certificate")
 			}
-			return crt.Raw, nil
+			return block.Bytes, nil
 		case "CERTIFICATE REQUEST":
-			csr, err := x509.ParseCertificateRequest(block.Bytes)
-			if err != nil {
+			if _, err := x509.ParseCertificateRequest(block.Bytes); err != nil {
 				return nil, errors.Wrap(err, "error parsing certificate request")
 			}
-			return csr.Raw, nil
+			return block.Bytes, nil
 		case "RSA PRIVATE KEY":
-			key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-			if err != nil {
+			if _, err := x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
 				return nil, errors.Wrap(err, "error parsing RSA private key")
 			}
-			keyBytes := x509.MarshalPKCS1PrivateKey(key)
-			return keyBytes, nil
+			return block.Bytes, nil
 		case "EC PRIVATE KEY":
-			key, err := x509.ParseECPrivateKey(block.Bytes)
-			if err != nil {
+			if _, err := x509.ParseECPrivateKey(block.Bytes); err != nil {
 				return nil, errors.Wrap(err, "error parsing EC private key")
 			}
-			keyBytes, err := x509.MarshalECPrivateKey(key)
-			if err != nil {
-				return nil, errors.Wrap(err, "error converting EC private key to DER format")
-			}
-			return keyBytes, nil
+			return block.Bytes, nil
 		case "PRIVATE KEY":
-			key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-			if err != nil {
+			if _, err := x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
 				return nil, errors.Wrap(err, "error parsing private key")
 			}
-			keyBytes, err := x509.MarshalPKCS8PrivateKey(key)
-			if err != nil {
-				return nil, errors.Wrap(err, "error converting private key to DER format")
-			}
-			return keyBytes, nil
+
+			return block.Bytes, nil
 		default:
 			continue
 		}
