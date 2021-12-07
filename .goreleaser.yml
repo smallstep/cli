@@ -87,7 +87,10 @@ nfpms:
     vendor: Smallstep Labs
     homepage: https://github.com/smallstep/cli
     maintainer: Smallstep <techadmin@smallstep.com>
-    description: step is a CLI tool for building, operating, and automating Public Key Infrastructure (PKI) systems and workflows. It's a swiss army knife for authenticated encryption (X.509, TLS), single sign-on (OAuth OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML assertions).
+    description: >
+      step-cli lets you build, operate, and automate Public Key Infrastructure (PKI) systems and workflows.
+      
+      It's a swiss army knife for authenticated encryption (X.509, TLS), single sign-on (OAuth OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML assertions).
     license: Apache 2.0
     section: utils
     formats:
@@ -106,6 +109,16 @@ nfpms:
         scripts:
           postinstall: "debian/postinstall.sh"
           preremove: "debian/preremove.sh"
+      rpm:
+        contents:
+        - src: autocomplete/bash_autocomplete
+          dst: /usr/share/bash-completion/completions/step-cli
+        - src: debian/copyright
+          dst: /usr/share/doc/step-cli/copyright
+        - src: /usr/bin/step-cli
+          dst: /usr/bin/step
+          type: "symlink"
+
 
 source:
   enabled: true
