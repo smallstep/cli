@@ -11,7 +11,7 @@
 
 `step` is an easy-to-use CLI tool for building, operating, and automating Public Key Infrastructure (PKI) systems and workflows.
 It's the client counterpart to the [`step-ca` online Certificate Authority (CA)](https://github.com/smallstep/certificates).
-You can use it for many common crypto and X.509 operations—independently, or with a CA.
+You can use it for many common crypto and X.509 operations—either independently, or with an online CA.
 
 **Questions? Ask us on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/step-discord).**
 
