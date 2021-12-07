@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
 )
@@ -36,7 +36,7 @@ func signCommand() cli.Command {
 		Name:   "sign",
 		Action: cli.ActionFunc(signAction),
 		Usage:  "sign a certificate signing request (CSR)",
-		UsageText: `**step certificate sign** <csr_file> <crt_file> <key_file>
+		UsageText: `**step certificate sign** <csr-file> <crt-file> <key-file>
 [**--profile**=<profile>] [**--template**=<file>]
 [**--password-file**=<file>] [**--path-len**=<maximum>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
@@ -46,13 +46,13 @@ certificate from a certificate signing request (CSR).
 
 ## POSITIONAL ARGUMENTS
 
-<csr_file>
+<csr-file>
 : The path to a certificate signing request (CSR) to be signed.
 
-<crt_file>
+<crt-file>
 : The path to an issuing certificate.
 
-<key_file>
+<key-file>
 : The path to a private key for signing the CSR.
 
 ## EXIT CODES
@@ -190,7 +190,7 @@ func signAction(ctx *cli.Context) error {
 	}
 	ops := []pemutil.Options{}
 	passFile := ctx.String("password-file")
-	if len(passFile) == 0 {
+	if passFile == "" {
 		ops = append(ops, pemutil.WithPasswordPrompt(
 			fmt.Sprintf("Please enter the password to decrypt %s", keyFile),
 			func(s string) ([]byte, error) {

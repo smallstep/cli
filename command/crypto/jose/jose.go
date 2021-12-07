@@ -2,7 +2,7 @@ package jose
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -65,7 +65,7 @@ $ step crypto jwt sign --key p256.priv.json --iss "joe" --aud "bob" \
 }
 
 func formatAction(ctx *cli.Context) error {
-	input, err := ioutil.ReadAll(os.Stdin)
+	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
 	}

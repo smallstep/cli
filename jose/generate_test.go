@@ -8,7 +8,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"testing"
@@ -216,7 +215,7 @@ func newCert(t *testing.T, keyUsage x509.KeyUsage) []byte {
 }
 
 func tempFile(t *testing.T) (_ *os.File, cleanup func()) {
-	f, err := ioutil.TempFile("" /* use default tmp dir */, "jose-generate-test")
+	f, err := os.CreateTemp("" /* use default tmp dir */, "jose-generate-test")
 	assert.NoError(t, err)
 	return f, func() {
 		f.Close()

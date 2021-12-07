@@ -2,7 +2,7 @@ package x509util
 
 import (
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -30,7 +30,7 @@ func LoadIdentityFromDisk(crtPath, keyPath string, pemOpts ...pemutil.Options) (
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	keyBytes, err := ioutil.ReadFile(keyPath)
+	keyBytes, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

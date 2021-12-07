@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -20,15 +19,15 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
-func startHTTPServer(addr string, token string, keyAuth string) *http.Server {
+func startHTTPServer(addr, token, keyAuth string) *http.Server {
 	srv := &http.Server{Addr: addr}
 
 	http.HandleFunc(fmt.Sprintf("/.well-known/acme-challenge/%s", token), func(w http.ResponseWriter, r *http.Request) {
@@ -127,7 +126,7 @@ func (wm *webrootMode) Run() error {
 		}
 	}
 
-	return errors.Wrapf(ioutil.WriteFile(fmt.Sprintf("%s/%s", chPath, wm.token), []byte(keyAuth), 0644),
+	return errors.Wrapf(os.WriteFile(fmt.Sprintf("%s/%s", chPath, wm.token), []byte(keyAuth), 0644),
 		"error writing key authorization file %s", chPath+wm.token)
 }
 
@@ -160,9 +159,8 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 		vch     *acme.Challenge
 		err     error
 	)
+	time.Sleep(time.Second) // brief sleep to allow server time to validate challenge.
 	for attempts := 0; attempts < 10; attempts++ {
-		time.Sleep(1 * time.Second)
-		ui.Printf(".")
 		vch, err = ac.GetChallenge(ch.URL)
 		if err != nil {
 			ui.Printf(" Error!\n\n")
@@ -173,6 +171,8 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 			isValid = true
 			break
 		}
+		ui.Printf(".")
+		time.Sleep(5 * time.Second)
 	}
 	if !isValid {
 		ui.Printf(" Error!\n\n")
@@ -327,7 +327,7 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 	switch {
 	case isStandalone && len(webroot) > 0:
 		return nil, errs.MutuallyExclusiveFlags(ctx, "standalone", "webroot")
-	case !isStandalone && len(webroot) == 0:
+	case !isStandalone && webroot == "":
 		if err := ctx.Set("standalone", "true"); err != nil {
 			return nil, errors.Wrap(err, "error setting 'standalone' value in cli ctx")
 		}
@@ -346,12 +346,12 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 	af.ctx = ctx
 
 	af.acmeDir = ctx.String("acme")
-	if len(af.acmeDir) == 0 {
+	if af.acmeDir == "" {
 		caURL, err := flags.ParseCaURL(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if len(af.provisionerName) == 0 {
+		if af.provisionerName == "" {
 			return nil, errors.New("acme flow expected provisioner ID")
 		}
 		af.acmeDir = fmt.Sprintf("%s/acme/%s/directory", caURL, af.provisionerName)
@@ -411,7 +411,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	} else {
 		// If the CA is not public then a root file is required.
 		root := af.ctx.String("root")
-		if len(root) == 0 {
+		if root == "" {
 			root = pki.GetRootCAPath()
 			if _, err := os.Stat(root); err != nil {
 				return nil, errs.RequiredFlag(af.ctx, "root")
@@ -445,7 +445,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		return nil, errors.Wrapf(err, "error creating new ACME order")
 	}
 
-	if err = authorizeOrder(af.ctx, ac, o); err != nil {
+	if err := authorizeOrder(af.ctx, ac, o); err != nil {
 		return nil, err
 	}
 

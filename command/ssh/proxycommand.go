@@ -13,14 +13,14 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/sshutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -33,7 +33,8 @@ func proxycommandCommand() cli.Command {
 		Usage:  "proxy ssh connections according to the host registry",
 		UsageText: `**step ssh proxycommand** <user> <host> <port>
 [**--provisioner**=<name>] [**--set**=<key=value>] [**--set-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--offline**] [**--ca-config**=<file>]`,
+[**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ssh proxycommand** looks into the host registry
 and proxies the ssh connection according to its configuration. This command
 is used in the ssh client config with <ProxyCommand> keyword.
@@ -54,10 +55,11 @@ This command will add the user to the ssh-agent if necessary.
 			flags.Provisioner,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
-			flags.CaURL,
-			flags.Root,
 			flags.Offline,
 			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

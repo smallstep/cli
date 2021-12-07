@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func verifyCommand() cli.Command {
@@ -158,7 +158,7 @@ func verifyAction(ctx *cli.Context) error {
 	if jwk.Algorithm == "" {
 		return errors.New("flag '--alg' is required with the given key")
 	}
-	if err = jose.ValidateJWK(jwk); err != nil {
+	if err := jose.ValidateJWK(jwk); err != nil {
 		return err
 	}
 

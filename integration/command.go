@@ -59,7 +59,7 @@ type CLICommand struct {
 }
 
 // CLIOutput represents the output from executing a CLICommand.
-// nolint:unused
+// nolint:unused,gocritic
 type CLIOutput struct {
 	stdout   string
 	stderr   string
@@ -117,7 +117,7 @@ func (c CLICommand) spawn() (*gexpect.ExpectSubprocess, error) {
 	return gexpect.Spawn(c.cmd())
 }
 
-func (c CLICommand) test(t *testing.T, name string, expected string, msg ...interface{}) {
+func (c CLICommand) test(t *testing.T, name, expected string, msg ...interface{}) {
 	t.Run(name, func(t *testing.T) {
 		out, err := c.run()
 		assert.FatalError(t, err, fmt.Sprintf("`%s`: returned error '%s'\n\nOutput:\n%s", c.cmd(), err, out.combined))

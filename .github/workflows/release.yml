@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.15', '1.16' ]
+        go: [ '1.16', '1.17' ]
     steps:
       -
         name: Checkout
@@ -26,26 +26,8 @@ jobs:
         name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-          version: 'latest'
-
-          # Optional: working directory, useful for monorepos
-          # working-directory: somedir
-
-          # Optional: golangci-lint command line arguments.
+          version: 'v1.43.0'
           args: --timeout=30m
-
-          # Optional: show only new issues if it's a pull request. The default value is `false`.
-          # only-new-issues: true
-
-          # Optional: if set to true then the action will use pre-installed Go.
-          # skip-go-installation: true
-
-          # Optional: if set to true then the action don't cache or restore ~/go/pkg.
-          # skip-pkg-cache: true
-
-          # Optional: if set to true then the action don't cache or restore ~/.cache/go-build.
-          # skip-build-cache: true
       -
         name: Test, Build
         id: lintTestBuild
@@ -58,6 +40,7 @@ jobs:
     outputs:
       version: ${{ steps.extract-tag.outputs.VERSION }}
       vversion: ${{ steps.extract-tag.outputs.VVERSION }}
+      debversion: ${{ steps.extract-tag.outputs.DEB_VERSION }}
       is_prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
     steps:
       -
@@ -66,8 +49,10 @@ jobs:
         run: |
           VVERSION=${GITHUB_REF#refs/tags/}
           VERSION=${GITHUB_REF#refs/tags/v}
+          DEB_VERSION=$(echo ${VERSION} | sed 's/-/./')
           echo "::set-output name=VVERSION::${VVERSION}"
           echo "::set-output name=VERSION::${VERSION}"
+          echo "::set-output name=DEB_VERSION::${DEB_VERSION}"
       -
         name: Is Pre-release
         id: is_prerelease
@@ -103,49 +88,46 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
-      -
-        name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@56f5b77f7fa4a8fe068bf22b732ec036cc9bc13f # v2.4.1
-        with:
-          version: latest
-          args: release --rm-dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
-
-  release_deb:
-    name: Build & Release Debian package
-    runs-on: ubuntu-20.04
-    needs: create_release
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      -
-        name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
+          go-version: 1.17
       -
         name: APT Install
         id: aptInstall
         run: sudo apt-get -y install build-essential debhelper fakeroot
       -
         name: Build Debian package
-        id: build
+        id: make_debian
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
           make debian
+          # need to restore the git state otherwise goreleaser fails due to dirty state
+          git restore debian/changelog
+          git clean -fd
       -
-        name: Upload Debian Package
-        id: upload_deb
+        name: Install cosign
+        uses: sigstore/cosign-installer@v1.1.0
+        with:
+          cosign-release: 'v1.1.0'
+      -
+        name: Write cosign key to disk
+        id: write_key
+        run: echo "${{ secrets.COSIGN_KEY }}" > "/tmp/cosign.key"
+      -
+        name: Get Release Date
+        id: release_date
         run: |
-          tag_name="${GITHUB_REF##*/}"
-          hub release edit $(find ./.releases -type f -printf "-a %p ") -m "" "$tag_name"
+          RELEASE_DATE=$(date +"%y-%m-%d")
+          echo "::set-output name=RELEASE_DATE::${RELEASE_DATE}"
+      -
+        name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@5a54d7e660bda43b405e8463261b3d25631ffe86 # v2.7.0
+        with:
+          version: latest
+          args: release --rm-dist
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+          COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
+          DEB_VERSION: ${{ needs.create_release.outputs.debversion }}
+          RELEASE_DATE: ${{ steps.release_date.outputs.RELEASE_DATE }}
 
   build_upload_docker:
     name: Build & Upload Docker Images
@@ -159,7 +141,16 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17
+      -
+        name: Install cosign
+        uses: sigstore/cosign-installer@v1.1.0
+        with:
+          cosign-release: 'v1.1.0'
+      -
+        name: Write cosign key to disk
+        id: write_key
+        run: echo "${{ secrets.COSIGN_KEY }}" > "/tmp/cosign.key"
       -
         name: Build
         id: build
@@ -169,6 +160,7 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
 
 # All jobs below this are for full releases (non release candidates e.g. *-rc.*)
 
@@ -185,7 +177,7 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17
       -
         name: Build
         id: build
@@ -194,9 +186,11 @@ jobs:
           make -j1 binary-linux binary-darwin binary-windows
           mkdir -p ./.releases
           cp ./output/binary/linux/bin/step ./.releases/step-linux-${{ needs.create_release.outputs.version }}
-          cp ./output/binary/linux/bin/step ./.releases/step-linux-latest-integration
+          cp ./output/binary/linux/bin/step ./.releases/step-linux-latest
           cp ./output/binary/darwin/bin/step ./.releases/step-darwin-${{ needs.create_release.outputs.version }}
+          cp ./output/binary/darwin/bin/step ./.releases/step-darwin-latest
           cp ./output/binary/windows/bin/step ./.releases/step-windows-${{ needs.create_release.outputs.version }}.exe
+          cp ./output/binary/windows/bin/step ./.releases/step-windows-latest.exe
       -
         name: Upload s3
         id: upload-s3
@@ -223,7 +217,7 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17
       -
         name: Build
         id: build
@@ -239,7 +233,7 @@ jobs:
         name: Update Reference
         id: update_refrence
         run: |
-          ./bin/step help --markdown ./docs/step-cli/reference
+          ./bin/step help --markdown ./docs/src/pages/docs/step-cli/reference
           cd ./docs
           git config user.email "eng@smallstep.com"
           git config user.name "Github Action CI"
@@ -249,6 +243,6 @@ jobs:
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.PAT }}
-          branch: 'master'
+          branch: 'main'
           directory: './docs'
           repository: 'smallstep/docs'

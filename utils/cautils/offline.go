@@ -36,7 +36,7 @@ type OfflineCA struct {
 var offlineInstance *OfflineCA
 
 // NewOfflineCA initializes an offlineCA.
-func NewOfflineCA(configFile string) (*OfflineCA, error) {
+func NewOfflineCA(ctx *cli.Context, configFile string) (*OfflineCA, error) {
 	if offlineInstance != nil {
 		return offlineInstance, nil
 	}
@@ -53,6 +53,15 @@ func NewOfflineCA(configFile string) (*OfflineCA, error) {
 
 	if cfg.AuthorityConfig == nil || len(cfg.AuthorityConfig.Provisioners) == 0 {
 		return nil, errors.Errorf("error parsing %s: no provisioners found", configFile)
+	}
+
+	if ctx.String("password-file") != "" {
+		passFile := ctx.String("password-file")
+		pass, err := utils.ReadPasswordFromFile(passFile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading %s", passFile)
+		}
+		cfg.Password = string(pass)
 	}
 
 	auth, err := authority.New(&cfg)
@@ -266,6 +275,8 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 
 	return &api.RevokeResponse{Status: "ok"}, nil
 }
+
+// Rekey implements the step-ca client interface Rekey method for an offline client.
 func (c *OfflineCA) Rekey(req *api.RekeyRequest, rt http.RoundTripper) (*api.SignResponse, error) {
 	// it should not panic as this is always internal code
 	tr := rt.(*http.Transport)
@@ -438,22 +449,22 @@ func (c *OfflineCA) SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse
 		return nil, err
 	}
 
-	var config api.SSHConfigResponse
+	var cfg api.SSHConfigResponse
 	switch req.Type {
 	case provisioner.SSHUserCert:
-		config.UserTemplates = ts
+		cfg.UserTemplates = ts
 	case provisioner.SSHHostCert:
-		config.UserTemplates = ts
+		cfg.UserTemplates = ts
 	default:
 		return nil, errors.New("it should hot get here")
 	}
 
-	return &config, nil
+	return &cfg, nil
 }
 
 // SSHCheckHost is a wrapper on top of the CheckSSHHost method. It returns an
 // api.SSHCheckPrincipalResponse.
-func (c *OfflineCA) SSHCheckHost(principal string, tok string) (*api.SSHCheckPrincipalResponse, error) {
+func (c *OfflineCA) SSHCheckHost(principal, tok string) (*api.SSHCheckPrincipalResponse, error) {
 	exists, err := c.authority.CheckSSHHost(context.Background(), principal, tok)
 	if err != nil {
 		return nil, err

@@ -10,9 +10,9 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
 	"go.mozilla.org/pkcs7"
+	"go.step.sm/cli-utils/errs"
 )
 
 // Command returns the winpe subcommand.
@@ -36,6 +36,8 @@ step crypto winpe extract my.exe | step certificate inspect --format json --bund
 	}
 }
 
+// ErrCodeSignCertsNoCertificateTableFound is the error indicating that no
+// certificate table was found.
 var ErrCodeSignCertsNoCertificateTableFound = errors.New("No Certificate Table found")
 
 func extractCommand() cli.Command {
@@ -157,6 +159,7 @@ type codeSignCertsCertificateTable struct {
 	RawCertificates asn1.RawValue
 }
 
+// ExtractReadAt reads from the buffer starting at a given offset.
 func ExtractReadAt(reader io.ReaderAt, l int, off int64) ([]byte, error) {
 	buff := make([]byte, l)
 

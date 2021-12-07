@@ -1,7 +1,7 @@
 package ssh
 
 import (
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/smallstep/certificates/ca/identity"
@@ -9,13 +9,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -24,14 +24,15 @@ func renewCommand() cli.Command {
 		Name:   "renew",
 		Action: command.ActionFunc(renewAction),
 		Usage:  "renew a SSH certificate using the SSH CA",
-		UsageText: `**step ssh renew** <ssh-cert> <ssh-key>
-[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<file>]
-[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>]`,
-		Description: `**step ssh renew** command renews an SSH Cerfificate
+		UsageText: `**step ssh renew** <ssh-cert> <ssh-key> [**--out**=<file>]
+[**--issuer**=<name>] [**--password-file**=<file>] [**--force**] [**--offline**]
+[**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>]`,
+		Description: `**step ssh renew** command renews an SSH Host Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 It writes the new certificate to disk - either overwriting <ssh-cert> or
-using a new file when the **--out**=<file> flag is used.
+using a new file when the **--out**=<file> flag is used. This command cannot
+be used to renew SSH User Certificates.
 
 ## POSITIONAL ARGUMENTS
 
@@ -59,13 +60,14 @@ $ step ssh renew -out new-id_ecdsa-cer.pub id_ecdsa-cert.pub id_ecdsa
 			},
 			flags.Provisioner,
 			sshProvisionerPasswordFlag,
-			flags.Force,
-			flags.CaURL,
-			flags.Root,
-			flags.Offline,
-			flags.CaConfig,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
+			flags.Force,
+			flags.Offline,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }
@@ -91,7 +93,7 @@ func renewAction(ctx *cli.Context) error {
 	}
 
 	// Load the cert, because we need the serial number.
-	certBytes, err := ioutil.ReadFile(certFile)
+	certBytes, err := os.ReadFile(certFile)
 	if err != nil {
 		return errors.Wrapf(err, "error reading ssh certificate from %s", certFile)
 	}

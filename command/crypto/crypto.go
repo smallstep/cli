@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/crypto/hash"
 	"github.com/smallstep/cli/command/crypto/jose"
 	"github.com/smallstep/cli/command/crypto/jwe"
@@ -14,6 +13,7 @@ import (
 	"github.com/smallstep/cli/command/crypto/otp"
 	"github.com/smallstep/cli/command/crypto/winpe"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 func init() {

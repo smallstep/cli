@@ -1,20 +1,20 @@
 package ssh
 
 import (
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/command"
 	cmdca "github.com/smallstep/cli/command/ca"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -24,12 +24,12 @@ func revokeCommand() cli.Command {
 		Action: command.ActionFunc(revokeAction),
 		Usage:  "revoke a SSH certificate using the SSH CA",
 		UsageText: `**step ssh revoke** <serial-number>
-[**--token**=<token>]  [**--issuer**=<name>]
-[**--set**=<key=value>] [**--set-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>]
-[**--ca-config**=<file>] [**--password-file**=<file>] [**--offline**]
-[**--reason**=<string>] [**--reasonCode**=<code>]
-[**--sshpop-cert**=<file>] [**--sshpop-key**=<key>]`,
+[**--token**=<token>]  [**--issuer**=<name>] [**--set**=<key=value>]
+[**--set-file**=<file>] [**--password-file**=<file>] [**--reason**=<string>]
+[**--reasonCode**=<code>] [**--sshpop-cert**=<file>] [**--sshpop-key**=<key>]
+[**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>]`,
+
 		Description: `**step ssh revoke** command revokes an SSH Cerfificate
 using [step certificates](https://github.com/smallstep/certificates).
 
@@ -50,10 +50,6 @@ $ step ssh revoke 3997477584487736496
 			flags.Provisioner,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
-			flags.CaURL,
-			flags.Root,
-			flags.Offline,
-			flags.CaConfig,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
 			cli.StringFlag{
@@ -114,6 +110,11 @@ Note: This is specific to the CertificateHold reason and is only used in DeltaCR
 attribute certificate have been compromised (reasonCode=10).
 `,
 			},
+			flags.Offline,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }
@@ -127,11 +128,11 @@ func revokeAction(ctx *cli.Context) error {
 	case 0:
 		certFile := ctx.String("sshpop-cert")
 		keyFile := ctx.String("sshpop-key")
-		if len(certFile) == 0 || len(keyFile) == 0 {
+		if certFile == "" || keyFile == "" {
 			return errors.New("--sshpop-cert and --sshpop-key must be supplied if serial number is not supplied as first argument")
 		}
 		// Load the cert, because we need the serial number.
-		certBytes, err := ioutil.ReadFile(certFile)
+		certBytes, err := os.ReadFile(certFile)
 		if err != nil {
 			return errors.Wrapf(err, "error reading ssh certificate from %s", certFile)
 		}
@@ -162,7 +163,7 @@ func revokeAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if len(token) == 0 {
+	if token == "" {
 		token, err = flow.GenerateSSHToken(ctx, serial, cautils.SSHRevokeType, nil, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 		if err != nil {
 			return err

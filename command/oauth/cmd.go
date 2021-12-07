@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -19,14 +19,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/randutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 // These are the OAuth2.0 client IDs from the Step CLI. This application is
@@ -114,6 +114,11 @@ $ step oauth --listen localhost:0
 Redirect to a fixed port instead of random one:
 '''
 $ step oauth --listen :10000
+'''
+
+Redirect to a fixed url but listen on all the interfaces:
+'''
+$ step oauth --listen 0.0.0.0:10000 --listen-url http://127.0.0.1:10000
 '''
 
 Get just the access token:
@@ -215,6 +220,10 @@ OpenID standard defines the following values, but your provider may support some
 				Name:  "listen",
 				Usage: "Callback listener <address> (e.g. \":10000\")",
 			},
+			cli.StringFlag{
+				Name:  "listen-url",
+				Usage: "The redirect_uri <url> in the authorize request (e.g. \"http://127.0.0.1:10000\")",
+			},
 			cli.BoolFlag{
 				Name:   "implicit",
 				Usage:  "Uses the implicit flow to authenticate the user. Requires **--insecure** and **--client-id** flags.",
@@ -240,13 +249,15 @@ OpenID standard defines the following values, but your provider may support some
 
 func oauthCmd(c *cli.Context) error {
 	opts := &options{
-		Provider:         c.String("provider"),
-		Email:            c.String("email"),
-		Console:          c.Bool("console"),
-		Implicit:         c.Bool("implicit"),
-		CallbackListener: c.String("listen"),
-		TerminalRedirect: c.String("redirect-url"),
-		Browser:          c.String("browser"),
+		Provider:            c.String("provider"),
+		Email:               c.String("email"),
+		Console:             c.Bool("console"),
+		Implicit:            c.Bool("implicit"),
+		CallbackListener:    c.String("listen"),
+		CallbackListenerURL: c.String("listen-url"),
+		CallbackPath:        "/",
+		TerminalRedirect:    c.String("redirect-url"),
+		Browser:             c.String("browser"),
 	}
 	if err := opts.Validate(); err != nil {
 		return err
@@ -289,7 +300,7 @@ func oauthCmd(c *cli.Context) error {
 	if c.IsSet("account") {
 		opts.Provider = ""
 		filename := c.String("account")
-		b, err := ioutil.ReadFile(filename)
+		b, err := os.ReadFile(filename)
 		if err != nil {
 			return errors.Wrapf(err, "error reading account from %s", filename)
 		}
@@ -304,7 +315,7 @@ func oauthCmd(c *cli.Context) error {
 			tokenEp = details["token_uri"].(string)
 			clientID = details["client_id"].(string)
 			clientSecret = details["client_secret"].(string)
-		} else if accountType, ok := account["type"]; ok && "service_account" == accountType {
+		} else if accountType, ok := account["type"]; ok && accountType == "service_account" {
 			authzEp = account["auth_uri"].(string)
 			tokenEp = account["token_uri"].(string)
 			clientID = account["private_key_id"].(string)
@@ -331,15 +342,16 @@ func oauthCmd(c *cli.Context) error {
 	}
 
 	var tok *token
-	if do2lo {
+	switch {
+	case do2lo:
 		if c.Bool("jwt") {
 			tok, err = o.DoJWTAuthorization(issuer, scope)
 		} else {
 			tok, err = o.DoTwoLeggedAuthorization(issuer)
 		}
-	} else if opts.Console {
+	case opts.Console:
 		tok, err = o.DoManualAuthorization()
-	} else {
+	default:
 		tok, err = o.DoLoopbackAuthorization()
 	}
 
@@ -373,13 +385,15 @@ func oauthCmd(c *cli.Context) error {
 }
 
 type options struct {
-	Provider         string
-	Email            string
-	Console          bool
-	Implicit         bool
-	CallbackListener string
-	TerminalRedirect string
-	Browser          string
+	Provider            string
+	Email               string
+	Console             bool
+	Implicit            bool
+	CallbackListener    string
+	CallbackListenerURL string
+	CallbackPath        string
+	TerminalRedirect    string
+	Browser             string
 }
 
 // Validate validates the options.
@@ -392,32 +406,43 @@ func (o *options) Validate() error {
 			return errors.Wrapf(err, "invalid value '%s' for flag '--listen'", o.CallbackListener)
 		}
 	}
+	if o.CallbackListenerURL != "" {
+		u, err := url.Parse(o.CallbackListenerURL)
+		if err != nil || u.Scheme == "" {
+			return errors.Wrapf(err, "invalid value '%s' for flag '--listen-url'", o.CallbackListenerURL)
+		}
+		if u.Path != "" {
+			o.CallbackPath = u.Path
+		}
+	}
 	return nil
 }
 
 type oauth struct {
-	provider         string
-	clientID         string
-	clientSecret     string
-	scope            string
-	prompt           string
-	loginHint        string
-	redirectURI      string
-	tokenEndpoint    string
-	authzEndpoint    string
-	userInfoEndpoint string // For testing
-	state            string
-	codeChallenge    string
-	nonce            string
-	implicit         bool
-	CallbackListener string
-	terminalRedirect string
-	browser          string
-	errCh            chan error
-	tokCh            chan *token
+	provider            string
+	clientID            string
+	clientSecret        string
+	scope               string
+	prompt              string
+	loginHint           string
+	redirectURI         string
+	tokenEndpoint       string
+	authzEndpoint       string
+	userInfoEndpoint    string // For testing
+	state               string
+	codeChallenge       string
+	nonce               string
+	implicit            bool
+	CallbackListener    string
+	CallbackListenerURL string
+	CallbackPath        string
+	terminalRedirect    string
+	browser             string
+	errCh               chan error
+	tokCh               chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, prompt string, opts *options) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt string, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -436,24 +461,26 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 	switch provider {
 	case "google":
 		return &oauth{
-			provider:         provider,
-			clientID:         clientID,
-			clientSecret:     clientSecret,
-			scope:            scope,
-			prompt:           prompt,
-			authzEndpoint:    "https://accounts.google.com/o/oauth2/v2/auth",
-			tokenEndpoint:    "https://www.googleapis.com/oauth2/v4/token",
-			userInfoEndpoint: "https://www.googleapis.com/oauth2/v3/userinfo",
-			loginHint:        opts.Email,
-			state:            state,
-			codeChallenge:    challenge,
-			nonce:            nonce,
-			implicit:         opts.Implicit,
-			CallbackListener: opts.CallbackListener,
-			terminalRedirect: opts.TerminalRedirect,
-			browser:          opts.Browser,
-			errCh:            make(chan error),
-			tokCh:            make(chan *token),
+			provider:            provider,
+			clientID:            clientID,
+			clientSecret:        clientSecret,
+			scope:               scope,
+			prompt:              prompt,
+			authzEndpoint:       "https://accounts.google.com/o/oauth2/v2/auth",
+			tokenEndpoint:       "https://www.googleapis.com/oauth2/v4/token",
+			userInfoEndpoint:    "https://www.googleapis.com/oauth2/v3/userinfo",
+			loginHint:           opts.Email,
+			state:               state,
+			codeChallenge:       challenge,
+			nonce:               nonce,
+			implicit:            opts.Implicit,
+			CallbackListener:    opts.CallbackListener,
+			CallbackListenerURL: opts.CallbackListenerURL,
+			CallbackPath:        opts.CallbackPath,
+			terminalRedirect:    opts.TerminalRedirect,
+			browser:             opts.Browser,
+			errCh:               make(chan error),
+			tokCh:               make(chan *token),
 		}, nil
 	default:
 		userinfoEp := ""
@@ -474,51 +501,53 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope string, 
 			userinfoEp = d["token_endpoint"].(string)
 		}
 		return &oauth{
-			provider:         provider,
-			clientID:         clientID,
-			clientSecret:     clientSecret,
-			scope:            scope,
-			prompt:           prompt,
-			authzEndpoint:    authzEp,
-			tokenEndpoint:    tokenEp,
-			userInfoEndpoint: userinfoEp,
-			loginHint:        opts.Email,
-			state:            state,
-			codeChallenge:    challenge,
-			nonce:            nonce,
-			implicit:         opts.Implicit,
-			CallbackListener: opts.CallbackListener,
-			terminalRedirect: opts.TerminalRedirect,
-			browser:          opts.Browser,
-			errCh:            make(chan error),
-			tokCh:            make(chan *token),
+			provider:            provider,
+			clientID:            clientID,
+			clientSecret:        clientSecret,
+			scope:               scope,
+			prompt:              prompt,
+			authzEndpoint:       authzEp,
+			tokenEndpoint:       tokenEp,
+			userInfoEndpoint:    userinfoEp,
+			loginHint:           opts.Email,
+			state:               state,
+			codeChallenge:       challenge,
+			nonce:               nonce,
+			implicit:            opts.Implicit,
+			CallbackListener:    opts.CallbackListener,
+			CallbackListenerURL: opts.CallbackListenerURL,
+			CallbackPath:        opts.CallbackPath,
+			terminalRedirect:    opts.TerminalRedirect,
+			browser:             opts.Browser,
+			errCh:               make(chan error),
+			tokCh:               make(chan *token),
 		}, nil
 	}
 }
 
 func disco(provider string) (map[string]interface{}, error) {
-	url, err := url.Parse(provider)
+	u, err := url.Parse(provider)
 	if err != nil {
 		return nil, err
 	}
 	// TODO: OIDC and OAuth specify two different ways of constructing this
 	// URL. This is the OIDC way. Probably want to try both. See
 	// https://tools.ietf.org/html/rfc8414#section-5
-	if !strings.Contains(url.Path, "/.well-known/openid-configuration") {
-		url.Path = path.Join(url.Path, "/.well-known/openid-configuration")
+	if !strings.Contains(u.Path, "/.well-known/openid-configuration") {
+		u.Path = path.Join(u.Path, "/.well-known/openid-configuration")
 	}
-	resp, err := http.Get(url.String())
+	resp, err := http.Get(u.String())
 	if err != nil {
-		return nil, errors.Wrapf(err, "error retrieving %s", url.String())
+		return nil, errors.Wrapf(err, "error retrieving %s", u.String())
 	}
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error retrieving %s", url.String())
+		return nil, errors.Wrapf(err, "error retrieving %s", u.String())
 	}
 	details := make(map[string]interface{})
 	if err = json.Unmarshal(b, &details); err != nil {
-		return nil, errors.Wrapf(err, "error reading %s: unsupported format", url.String())
+		return nil, errors.Wrapf(err, "error reading %s: unsupported format", u.String())
 	}
 	return details, err
 }
@@ -545,7 +574,7 @@ func (o *oauth) NewServer() (*httptest.Server, error) {
 	}
 	srv.Start()
 
-	// Update host to use for example localhost
+	// Update server url to use for example http://localhost:port
 	if host != "127.0.0.1" {
 		_, p, err := net.SplitHostPort(l.Addr().String())
 		if err != nil {
@@ -565,7 +594,12 @@ func (o *oauth) DoLoopbackAuthorization() (*token, error) {
 	if err != nil {
 		return nil, err
 	}
-	o.redirectURI = srv.URL
+	// Update server url if --listen-url is set
+	if o.CallbackListenerURL != "" {
+		o.redirectURI = o.CallbackListenerURL
+	} else {
+		o.redirectURI = srv.URL
+	}
 	defer srv.Close()
 
 	// Get auth url and open it in a browser
@@ -743,7 +777,7 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 // ServeHTTP is the handler that performs the OAuth 2.0 dance and returns the
 // tokens using channels.
 func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if req.URL.Path != "/" {
+	if req.URL.Path != o.CallbackPath {
 		http.NotFound(w, req)
 		return
 	}
@@ -832,7 +866,7 @@ func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(`<html><head><title>Processing OAuth Request</title>`))
 	w.Write([]byte(`</head>`))
 	w.Write([]byte(`<script type="text/javascript">`))
-	w.Write([]byte(fmt.Sprintf(`function redirect(){var hash = window.location.hash.substr(1); document.location.href = "%s?urlhash=true&"+hash;}`, o.redirectURI)))
+	fmt.Fprintf(w, `function redirect(){var hash = window.location.hash.substr(1); document.location.href = "%s?urlhash=true&"+hash;}`, o.redirectURI)
 	w.Write([]byte(`if (window.addEventListener) window.addEventListener("load", redirect, false); else if (window.attachEvent) window.attachEvent("onload", redirect); else window.onload = redirect;`))
 	w.Write([]byte("</script>"))
 	w.Write([]byte(`<body><p style='font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-size: 22px; color: #333; width: 400px; margin: 0 auto; text-align: center; line-height: 1.7; padding: 20px;'>`))

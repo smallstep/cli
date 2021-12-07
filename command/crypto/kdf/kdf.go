@@ -6,9 +6,9 @@ import (
 	"github.com/smallstep/cli/crypto/kdf"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 // Command returns the cli.Command for kdf and related subcommands.

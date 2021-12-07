@@ -3,8 +3,8 @@ package provisionerbeta
 import (
 	"time"
 
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 // Command returns the jwk subcommand.
@@ -84,7 +84,7 @@ func parseIntaceAge(ctx *cli.Context) (age string, err error) {
 	return
 }
 
-func removeElements(list []string, rems []string) []string {
+func removeElements(list, rems []string) []string {
 	if len(list) == 0 {
 		return list
 	}
@@ -237,7 +237,7 @@ instance identity documents in AWS.`,
 	}
 	disableCustomSANsFlag = cli.BoolFlag{
 		Name: "disable-custom-sans",
-		Usage: `On cloud provisioners, if anabled only the internal DNS and IP will be added as a SAN.
+		Usage: `On cloud provisioners, if enabled only the internal DNS and IP will be added as a SAN.
 By default it will accept any SAN in the CSR.`,
 	}
 	disableTOFUFlag = cli.BoolFlag{

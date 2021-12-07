@@ -4,18 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func changePassCommand() cli.Command {
@@ -105,11 +105,11 @@ func changePassAction(ctx *cli.Context) error {
 
 	keyPath := ctx.Args().Get(0)
 	newKeyPath := ctx.String("out")
-	if len(newKeyPath) == 0 {
+	if newKeyPath == "" {
 		newKeyPath = keyPath
 	}
 
-	b, err := ioutil.ReadFile(keyPath)
+	b, err := os.ReadFile(keyPath)
 	if err != nil {
 		return errs.FileError(err, keyPath)
 	}

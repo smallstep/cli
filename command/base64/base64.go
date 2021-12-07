@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 func init() {
@@ -28,7 +28,7 @@ Encode to base64 using the standard encoding:
 '''
 $ echo -n This is the string to encode | step base64
 VGhpcyBpcyB0aGUgc3RyaW5nIHRvIGVuY29kZQ==
-$ step base64 This is the string to encode 
+$ step base64 This is the string to encode
 VGhpcyBpcyB0aGUgc3RyaW5nIHRvIGVuY29kZQ==
 '''
 

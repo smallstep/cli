@@ -3,15 +3,14 @@ package certificate
 import (
 	"encoding/json"
 	"encoding/pem"
-	"io/ioutil"
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/smallstep/zlint"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func lintCommand() cli.Command {
@@ -19,14 +18,14 @@ func lintCommand() cli.Command {
 		Name:   "lint",
 		Action: cli.ActionFunc(lintAction),
 		Usage:  `lint certificate details`,
-		UsageText: `**step certificate lint** <crt_file> [**--roots**=<root-bundle>]
+		UsageText: `**step certificate lint** <crt-file> [**--roots**=<root-bundle>]
 [**--servername**=<servername>]`,
 		Description: `**step certificate lint** checks a certificate for common
 errors and outputs the result in JSON format.
 
 ## POSITIONAL ARGUMENTS
 
-<crt_file>
+<crt-file>
 :  Path to a certificate or certificate signing request (CSR) to lint.
 
 ## EXIT CODES
@@ -103,9 +102,10 @@ func lintAction(ctx *cli.Context) error {
 		insecure   = ctx.Bool("insecure")
 		block      *pem.Block
 	)
-	if addr, isURL, err := trimURL(crtFile); err != nil {
+	switch addr, isURL, err := trimURL(crtFile); {
+	case err != nil:
 		return err
-	} else if isURL {
+	case isURL:
 		peerCertificates, err := getPeerCertificates(addr, serverName, roots, insecure)
 		if err != nil {
 			return err
@@ -115,8 +115,8 @@ func lintAction(ctx *cli.Context) error {
 			Type:  "CERTIFICATE",
 			Bytes: crt.Raw,
 		}
-	} else {
-		crtBytes, err := ioutil.ReadFile(crtFile)
+	default: // is not URL
+		crtBytes, err := os.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)
 		}

@@ -3,12 +3,12 @@ package nacl
 import (
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/nacl/auth"
 )
 
@@ -107,7 +107,7 @@ func authDigestAction(ctx *cli.Context) error {
 
 	keyFile := ctx.Args().Get(0)
 
-	key, err := ioutil.ReadFile(keyFile)
+	key, err := os.ReadFile(keyFile)
 	if err != nil {
 		return errs.FileError(err, keyFile)
 	} else if len(key) != auth.KeySize {
@@ -135,7 +135,7 @@ func authVerifyAction(ctx *cli.Context) error {
 	args := ctx.Args()
 	keyFile, digest := args[0], args[1]
 
-	key, err := ioutil.ReadFile(keyFile)
+	key, err := os.ReadFile(keyFile)
 	if err != nil {
 		return errs.FileError(err, keyFile)
 	} else if len(key) != auth.KeySize {

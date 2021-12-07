@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/sshutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -18,9 +18,10 @@ func logoutCommand() cli.Command {
 		Name:   "logout",
 		Action: command.ActionFunc(logoutAction),
 		Usage:  "removes a private key from the ssh-agent",
-		UsageText: `**step ssh logout** <identity>
-		[**--all**] [**--ca-url**=<uri>] [**--root**=<file>]
-		[**--offline**] [**--ca-config**=<file>]`,
+		UsageText: `**step ssh logout** <identity> [**--all**]
+[**--identity**=<identity>] [**--offline**] [**--ca-config**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+
 		Description: `**step ssh logout** commands removes a key from the ssh-agent.
 
 By default it only removes certificate keys signed by step-certificates, but the
@@ -58,10 +59,11 @@ $ step ssh logout --all
 				Usage: "Removes all the keys stored in the SSH agent.",
 			},
 			flags.Identity,
-			flags.CaURL,
-			flags.Root,
 			flags.Offline,
 			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }

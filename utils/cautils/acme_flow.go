@@ -24,7 +24,7 @@ func ACMECreateCertFlow(ctx *cli.Context, provisionerName string) error {
 	if err != nil {
 		return err
 	}
-	if err = writeCert(certs, certFile); err != nil {
+	if err := writeCert(certs, certFile); err != nil {
 		return err
 	}
 	ui.PrintSelected("Certificate", certFile)
@@ -48,7 +48,7 @@ func ACMESignCSRFlow(ctx *cli.Context, csr *x509.CertificateRequest, certFile, p
 	if err != nil {
 		return err
 	}
-	if err = writeCert(certs, certFile); err != nil {
+	if err := writeCert(certs, certFile); err != nil {
 		return err
 	}
 	ui.PrintSelected("Certificate", certFile)

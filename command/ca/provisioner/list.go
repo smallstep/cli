@@ -6,9 +6,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func listCommand() cli.Command {
@@ -16,17 +16,12 @@ func listCommand() cli.Command {
 		Name:   "list",
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list provisioners configured in the CA",
-		UsageText: `**step ca provisioner list** 
-[**--ca-url**=<uri>] [**--root**=<file>]`,
+		UsageText: `**step ca provisioner list**
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "ca-url",
-				Usage: "<URI> of the targeted Step Certificate Authority.",
-			},
-			cli.StringFlag{
-				Name:  "root",
-				Usage: "The path to the PEM <file> used as the root certificate authority.",
-			},
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 		Description: `**step ca provisioner list** lists the provisioners configured
 in the CA.

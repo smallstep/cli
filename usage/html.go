@@ -2,14 +2,13 @@ package usage
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"strings"
 
-	"github.com/smallstep/cli/errs"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func httpHelpAction(ctx *cli.Context) error {
@@ -52,7 +51,7 @@ func markdownHelpAction(ctx *cli.Context) error {
 	return nil
 }
 
-func markdownHelpCommand(app *cli.App, cmd cli.Command, parent cli.Command, base string, isHugo bool) error {
+func markdownHelpCommand(app *cli.App, cmd, parent cli.Command, base string, isHugo bool) error {
 	if err := os.MkdirAll(base, 0755); err != nil {
 		return errs.FileError(err, base)
 	}
@@ -122,7 +121,7 @@ func htmlHelpAction(ctx *cli.Context) error {
 
 	// css style
 	cssFile := path.Join(dir, "style.css")
-	if err := ioutil.WriteFile(cssFile, []byte(css), 0666); err != nil {
+	if err := os.WriteFile(cssFile, []byte(css), 0666); err != nil {
 		return errs.FileError(err, cssFile)
 	}
 
@@ -232,20 +231,21 @@ func (h *htmlHelpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for _, cmd := range subcmd {
-		if cmd.HasName(lastName) {
-			cmd.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args, " "))
-			parent.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args[:last], " "))
+		if !cmd.HasName(lastName) {
+			continue
+		}
+		cmd.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args, " "))
+		parent.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args[:last], " "))
 
-			ctx.Command = cmd
-			if len(cmd.Subcommands) == 0 {
-				htmlHelpPrinter(w, mdCommandHelpTemplate, cmd)
-				return
-			}
-
-			ctx.App = createCliApp(ctx, cmd)
-			htmlHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
+		ctx.Command = cmd
+		if len(cmd.Subcommands) == 0 {
+			htmlHelpPrinter(w, mdCommandHelpTemplate, cmd)
 			return
 		}
+
+		ctx.App = createCliApp(ctx, cmd)
+		htmlHelpPrinter(w, mdSubcommandHelpTemplate, ctx.App)
+		return
 	}
 
 	http.NotFound(w, req)

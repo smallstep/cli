@@ -4,15 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"syscall"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils/sysutils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func keysetCommand() cli.Command {
@@ -124,7 +123,7 @@ func keysetAddAction(ctx *cli.Context) error {
 		return err
 	}
 
-	b, err := ioutil.ReadAll(os.Stdin)
+	b, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return errors.Wrap(err, "error reading STDIN")
 	}
@@ -256,7 +255,7 @@ func rwLockKeySet(filename string) (jwks *jose.JSONWebKeySet, writeFunc func(boo
 
 	// Read key set
 	var b []byte
-	b, err = ioutil.ReadAll(f)
+	b, err = io.ReadAll(f)
 	if err != nil {
 		err = errors.Wrapf(err, "error reading %s", filename)
 		return
