@@ -19,7 +19,8 @@ func listCommand() cli.Command {
 		UsageText: `**step beta ca acme eab list** <provisioner> <reference>
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
@@ -28,6 +29,7 @@ func listCommand() cli.Command {
 			flags.PasswordFile,
 			flags.CaURL,
 			flags.Root,
+			flags.Context,
 		},
 		Description: `**step beta ca acme eab list** lists all ACME External Account Binding Keys.
 

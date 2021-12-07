@@ -20,7 +20,8 @@ func addCommand() cli.Command {
 		UsageText: `**step beta ca acme eab add** <provisioner> <reference>
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]`,
+[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
@@ -29,6 +30,7 @@ func addCommand() cli.Command {
 			flags.PasswordFile,
 			flags.CaURL,
 			flags.Root,
+			flags.Context,
 		},
 		Description: `**step beta ca acme eab add** adds ACME External Account Binding Key.
 
@@ -55,7 +57,7 @@ $ step beta ca acme eab add my_acme_provisioner my_first_eab_key
 }
 
 func addAction(ctx *cli.Context) (err error) {
-	if errs.MinMaxNumberOfArguments(ctx, 1, 2); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 1, 2); err != nil {
 		return err
 	}
 
@@ -84,7 +86,7 @@ func addAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	// TODO: JSON output, so that executing this command can be more easily automated?
+	// TODO(hs): JSON output, so that executing this command can be more easily automated?
 
 	w := new(tabwriter.Writer)
 	// Format in tab-separated columns with a tab stop of 8.
