@@ -37,7 +37,7 @@ Step CLI's command groups illustrate its wide-ranging uses:
   - [Inspect](https://smallstep.com/docs/step-cli/reference/certificate/inspect/) and [lint](https://smallstep.com/docs/step-cli/reference/certificate/lint/) certificates on disk or in use by a remote server
   - [Install root certificates](https://smallstep.com/docs/step-cli/reference/certificate/install/) so your CA is trusted by default (issue development certificates **that [work in browsers](https://smallstep.com/blog/step-v0-8-6-valid-HTTPS-certificates-for-dev-pre-prod.html)**)
 
-- [`step ca`](https://smallstep.com/docs/step-cli/reference/ca/): Set up your own CA, or make requests of any ACMEv2 ([RFC8555](https://tools.ietf.org/html/rfc8555)) CA, including [`step-ca`](https://github.com/smallstep/certificates). ACME is the protocol used by Let's Encrypt to automate the issuance of HTTPS certificates.
+- [`step ca`](https://smallstep.com/docs/step-cli/reference/ca/): Administer and use a [`step-ca`](https://github.com/smallstep/certificates) server, or any ACMEv2 ([RFC8555](https://tools.ietf.org/html/rfc8555)) compliant CA server. ACME is the protocol used by Let's Encrypt to automate the issuance of HTTPS certificates.
   - Initialize an X.509 and/or SSH CA in one command
   - [Authenticate and obtain a certificate](https://smallstep.com/docs/step-cli/reference/ca/certificate/) using any enrollment mechanism supported by [`step-ca`](https://github.com/smallstep/certificates)
   - Securely [distribute root certificates](https://smallstep.com/docs/step-cli/reference/ca/root/) and [bootstrap](https://smallstep.com/docs/step-cli/reference/ca/bootstrap/) PKI relying parties
