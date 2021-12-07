@@ -1,7 +1,7 @@
 package keys
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"testing"
@@ -9,7 +9,7 @@ import (
 
 func TestMain(m *testing.M) {
 	// discard log output when testing
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 
 	result := m.Run()
 

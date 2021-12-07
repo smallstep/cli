@@ -3,7 +3,6 @@ package exec
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -30,7 +29,7 @@ func LookPath(file string) (string, error) {
 // "Official" way of detecting WSL
 // https://github.com/Microsoft/WSL/issues/423#issuecomment-221627364
 func IsWSL() bool {
-	b, err := ioutil.ReadFile("/proc/sys/kernel/osrelease")
+	b, err := os.ReadFile("/proc/sys/kernel/osrelease")
 	if err != nil {
 		return false
 	}
@@ -85,7 +84,8 @@ func RunWithPid(pidFile, name string, arg ...string) {
 	}
 
 	// Write pid
-	f.Write([]byte(strconv.Itoa(cmd.Process.Pid)))
+	f.WriteString(strconv.Itoa(cmd.Process.Pid))
+
 	f.Close()
 
 	// Wait until it finishes
@@ -100,7 +100,7 @@ func RunWithPid(pidFile, name string, arg ...string) {
 }
 
 // OpenInBrowser opens the given url on a web browser
-func OpenInBrowser(url string, browser string) error {
+func OpenInBrowser(url, browser string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
@@ -132,10 +132,10 @@ func Step(args ...string) ([]byte, error) {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = &stdout
 
-	if err := cmd.Start(); nil != err {
+	if err := cmd.Start(); err != nil {
 		return nil, errors.Wrapf(err, "error starting: %s %s", os.Args[0], strings.Join(args, " "))
 	}
-	if err := cmd.Wait(); nil != err {
+	if err := cmd.Wait(); err != nil {
 		return nil, errors.Wrapf(err, "error running: %s %s", os.Args[0], strings.Join(args, " "))
 	}
 
@@ -175,6 +175,8 @@ func run(name string, arg ...string) (*exec.Cmd, chan int, error) {
 
 func getExitStatus(cmd *exec.Cmd) int {
 	if cmd.ProcessState != nil {
+		// ignore single conditional in switch warning
+		// nolint:gocritic
 		switch sys := cmd.ProcessState.Sys().(type) {
 		case syscall.WaitStatus:
 			return sys.ExitStatus()
@@ -207,6 +209,8 @@ func signalHandler(cmd *exec.Cmd, exitCh chan int) {
 		case sig := <-signals:
 			cmd.Process.Signal(sig)
 		case code := <-exitCh:
+			// ignore exitAfterDefer error - defer is required for recovery.
+			// nolint:gocritic
 			os.Exit(code)
 		}
 	}

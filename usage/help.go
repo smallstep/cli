@@ -94,19 +94,20 @@ func helpAction(ctx *cli.Context) error {
 		}
 
 		for _, cmd := range subcmd {
-			if cmd.HasName(lastName) {
-				cmd.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args, " "))
-				parent.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args[:last], " "))
-
-				ctx.Command = cmd
-				if len(cmd.Subcommands) == 0 {
-					ctx.App = createCliApp(ctx, parent)
-					return cli.ShowCommandHelp(ctx, lastName)
-				}
-
-				ctx.App = createCliApp(ctx, cmd)
-				return cli.ShowCommandHelp(ctx, "")
+			if !cmd.HasName(lastName) {
+				continue
 			}
+			cmd.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args, " "))
+			parent.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args[:last], " "))
+
+			ctx.Command = cmd
+			if len(cmd.Subcommands) == 0 {
+				ctx.App = createCliApp(ctx, parent)
+				return cli.ShowCommandHelp(ctx, lastName)
+			}
+
+			ctx.App = createCliApp(ctx, cmd)
+			return cli.ShowCommandHelp(ctx, "")
 		}
 
 		return cli.NewExitError(fmt.Sprintf("No help topic for '%s %s'", ctx.App.Name, strings.Join(args, " ")), 3)

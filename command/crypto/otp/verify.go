@@ -2,7 +2,6 @@ package otp
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strconv"
@@ -12,10 +11,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func verifyCommand() cli.Command {
@@ -82,14 +81,14 @@ func verifyAction(ctx *cli.Context) error {
 	)
 
 	secretFile := ctx.String("secret")
-	if len(secretFile) == 0 {
+	if secretFile == "" {
 		args := ctx.Args()
 		if len(args) == 0 {
 			return errs.RequiredFlag(ctx, "secret")
 		}
 		secretFile = args[0]
 	}
-	b, err := ioutil.ReadFile(secretFile)
+	b, err := os.ReadFile(secretFile)
 	if err != nil {
 		return errs.FileError(err, secretFile)
 	}
@@ -173,12 +172,13 @@ func verifyAction(ctx *cli.Context) error {
 		Algorithm: alg,
 	})
 
-	if err != nil {
+	switch {
+	case err != nil:
 		return errors.Wrap(err, "error while validating TOTP")
-	} else if valid {
+	case valid:
 		fmt.Println("ok")
 		os.Exit(0)
-	} else {
+	default:
 		fmt.Println("fail")
 		os.Exit(1)
 	}

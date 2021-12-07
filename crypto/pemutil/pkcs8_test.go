@@ -4,7 +4,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -19,7 +19,7 @@ func TestEncryptDecryptPKCS8(t *testing.T) {
 			continue
 		}
 
-		data, err := ioutil.ReadFile(fn)
+		data, err := os.ReadFile(fn)
 		assert.FatalError(t, err)
 
 		key1, err := Parse(data)
@@ -74,7 +74,7 @@ func TestMarshalPKIXPublicKey(t *testing.T) {
 	assert.FatalError(t, err)
 	edKey, err := Read("testdata/pkcs8/openssl.ed25519.pem")
 	assert.FatalError(t, err)
-	edPubDer, err := ioutil.ReadFile("testdata/pkcs8/openssl.ed25519.pub.der")
+	edPubDer, err := os.ReadFile("testdata/pkcs8/openssl.ed25519.pub.der")
 	assert.FatalError(t, err)
 
 	type args struct {
@@ -118,7 +118,7 @@ func TestMarshalPKCS8PrivateKey(t *testing.T) {
 	assert.FatalError(t, err)
 	edKey, err := Read("testdata/pkcs8/openssl.ed25519.pem")
 	assert.FatalError(t, err)
-	edPrivDer, err := ioutil.ReadFile("testdata/pkcs8/openssl.ed25519.der")
+	edPrivDer, err := os.ReadFile("testdata/pkcs8/openssl.ed25519.der")
 	assert.FatalError(t, err)
 
 	type args struct {

@@ -54,7 +54,7 @@ func TestGetPeerCertificateServerName(t *testing.T) {
 			break
 		}
 	}
-	if len(addr) == 0 {
+	if addr == "" {
 		assert.FatalError(t, errors.New("could not find ipv4 address for smallstep.com"))
 		return
 	}

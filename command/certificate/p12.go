@@ -5,13 +5,13 @@ import (
 	"crypto/x509"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 
 	"software.sslmate.com/src/go-pkcs12"
 )
@@ -85,12 +85,12 @@ func p12Action(ctx *cli.Context) error {
 	caFiles := ctx.StringSlice("ca")
 	hasKeyAndCert := crtFile != "" && keyFile != ""
 
-	//If either key or cert are provided, both must be provided
+	// If either key or cert are provided, both must be provided
 	if !hasKeyAndCert && (crtFile != "" || keyFile != "") {
 		return errs.MissingArguments(ctx, "key_file")
 	}
 
-	//If no key and cert are provided, ca files must be provided
+	// If no key and cert are provided, ca files must be provided
 	if !hasKeyAndCert && len(caFiles) == 0 {
 		return errors.Errorf("flag '--%s' must be provided when no <crt_path> and <key_path> are present", "ca")
 	}
@@ -133,7 +133,7 @@ func p12Action(ctx *cli.Context) error {
 
 	var pkcs12Data []byte
 	if hasKeyAndCert {
-		//If we have a key and certificate, we're making an identity store
+		// If we have a key and certificate, we're making an identity store
 		x509CertBundle, err := pemutil.ReadCertificateBundle(crtFile)
 		if err != nil {
 			return errors.Wrap(err, "error reading certificate")
@@ -144,9 +144,9 @@ func p12Action(ctx *cli.Context) error {
 			return errors.Wrap(err, "error reading key")
 		}
 
-		//The first certificate in the bundle will be our server cert
+		// The first certificate in the bundle will be our server cert
 		x509Cert := x509CertBundle[0]
-		//Any remaning certs will be intermediates for the server
+		// Any remaning certs will be intermediates for the server
 		x509CAs = append(x509CAs, x509CertBundle[1:]...)
 
 		pkcs12Data, err = pkcs12.Encode(rand.Reader, key, x509Cert, x509CAs, password)
@@ -154,7 +154,7 @@ func p12Action(ctx *cli.Context) error {
 			return errs.Wrap(err, "failed to encode PKCS12 data")
 		}
 	} else {
-		//If we have only --ca flags, we're making a trust store
+		// If we have only --ca flags, we're making a trust store
 		pkcs12Data, err = pkcs12.EncodeTrustStore(rand.Reader, x509CAs, password)
 		if err != nil {
 			return errs.Wrap(err, "failed to encode PKCS12 data")

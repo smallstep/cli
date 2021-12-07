@@ -2,8 +2,8 @@ package ca
 
 import (
 	"crypto"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"strconv"
 	"strings"
 	"syscall"
@@ -15,11 +15,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func rekeyCertificateCommand() cli.Command {
@@ -230,7 +230,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	}
 
 	rootFile := ctx.String("root")
-	if len(rootFile) == 0 {
+	if rootFile == "" {
 		rootFile = pki.GetRootCAPath()
 	}
 
@@ -267,7 +267,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 
 	pidFile := ctx.String("pid-file")
 	if len(pidFile) > 0 {
-		pidB, err := ioutil.ReadFile(pidFile)
+		pidB, err := os.ReadFile(pidFile)
 		if err != nil {
 			return errs.FileError(err, pidFile)
 		}

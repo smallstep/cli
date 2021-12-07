@@ -8,14 +8,14 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/randutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 const (
@@ -380,7 +380,7 @@ existing <pem-file> instead of creating a new key.`,
 
 func createAction(ctx *cli.Context) (err error) {
 	// require public and private files
-	if err = errs.NumberOfArguments(ctx, 2); err != nil {
+	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
 
@@ -475,16 +475,14 @@ func createAction(ctx *cli.Context) (err error) {
 
 	if ctx.IsSet("kid") {
 		jwk.KeyID = ctx.String("kid")
-	} else {
+	} else if kty != "oct" {
 		// A hash of a symmetric key can leak information, so we only thumbprint asymmetric keys.
-		if kty != "oct" {
-			var hash []byte
-			hash, err = jwk.Thumbprint(crypto.SHA256)
-			if err != nil {
-				return errors.Wrap(err, "error generating JWK thumbprint")
-			}
-			jwk.KeyID = base64.RawURLEncoding.EncodeToString(hash)
+		var hash []byte
+		hash, err = jwk.Thumbprint(crypto.SHA256)
+		if err != nil {
+			return errors.Wrap(err, "error generating JWK thumbprint")
 		}
+		jwk.KeyID = base64.RawURLEncoding.EncodeToString(hash)
 	}
 	jwk.Use = use
 
@@ -492,7 +490,7 @@ func createAction(ctx *cli.Context) (err error) {
 		jwk.Algorithm = alg
 	}
 
-	if err = jose.ValidateJWK(jwk); err != nil {
+	if err := jose.ValidateJWK(jwk); err != nil {
 		return err
 	}
 

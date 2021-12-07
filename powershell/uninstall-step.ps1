@@ -1,4 +1,12 @@
 echo ""
+$step_path = step.exe path --base
+if ( Test-Path -Path $step_path -PathType Container ) {
+	$Confirm = Read-Host "Remove user configuration directory '$step_path'? [Y/N]"
+	if ($Confirm -match 'y') {
+		echo "Removing user configuration directory: '$step_path'"
+		rm -R $step_path
+	}
+}
 $install_dir = join-path $env:ProgramW6432 "Smallstep Labs"
 echo "Uninstalling step: '$install_dir'"
 rm -R $install_dir

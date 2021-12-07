@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/crypto/x509util"
 )
 
@@ -59,10 +59,10 @@ you need something else, you can customize the output using templates. See **TEM
 <subject>
 : The subject of the certificate. Typically this is a hostname for services or an email address for people.
 
-<crt_file>
+<crt-file>
 : File to write CRT or CSR to (PEM format)
 
-<key_file>
+<key-file>
 : File to write private key to (PEM format). This argument is optional if **--key** is passed.
 
 ## EXIT CODES
@@ -686,7 +686,7 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 
 	ops := []pemutil.Options{}
 	passFile := ctx.String("password-file")
-	if len(passFile) != 0 {
+	if passFile != "" {
 		ops = append(ops, pemutil.WithPasswordFile(passFile))
 	}
 	v, err := pemutil.Read(keyFile, ops...)
@@ -755,7 +755,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	// Parse --ca-key as a crypto.Signer.
 	passFile := ctx.String("ca-password-file")
 	ops := []pemutil.Options{}
-	if len(passFile) != 0 {
+	if passFile != "" {
 		ops = append(ops, pemutil.WithPasswordFile(passFile))
 	}
 	key, err := pemutil.Read(caKey, ops...)

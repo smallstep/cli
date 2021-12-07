@@ -3,13 +3,13 @@ package certificate
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/x509util"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func verifyCommand() cli.Command {
@@ -17,7 +17,7 @@ func verifyCommand() cli.Command {
 		Name:   "verify",
 		Action: cli.ActionFunc(verifyAction),
 		Usage:  `verify a certificate`,
-		UsageText: `**step certificate verify** <crt_file> [**--host**=<host>]
+		UsageText: `**step certificate verify** <crt-file> [**--host**=<host>]
 [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
 		Description: `**step certificate verify** executes the certificate path
 validation algorithm for x.509 certificates defined in RFC 5280. If the
@@ -26,7 +26,7 @@ an error occurs, this command will produce a non-zero return value.
 
 ## POSITIONAL ARGUMENTS
 
-<crt_file>
+<crt-file>
 : The path to a certificate to validate.
 
 ## EXIT CODES
@@ -107,9 +107,10 @@ func verifyAction(ctx *cli.Context) error {
 		cert             *x509.Certificate
 	)
 
-	if addr, isURL, err := trimURL(crtFile); err != nil {
+	switch addr, isURL, err := trimURL(crtFile); {
+	case err != nil:
 		return err
-	} else if isURL {
+	case isURL:
 		peerCertificates, err := getPeerCertificates(addr, serverName, roots, false)
 		if err != nil {
 			return err
@@ -118,8 +119,8 @@ func verifyAction(ctx *cli.Context) error {
 		for _, pc := range peerCertificates {
 			intermediatePool.AddCert(pc)
 		}
-	} else {
-		crtBytes, err := ioutil.ReadFile(crtFile)
+	default:
+		crtBytes, err := os.ReadFile(crtFile)
 		if err != nil {
 			return errs.FileError(err, crtFile)
 		}

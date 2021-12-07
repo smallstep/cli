@@ -44,7 +44,7 @@ func init() {
 
 // PrintSelectedTemplate returns the default template used in PrintSelected.
 func PrintSelectedTemplate() string {
-	return fmt.Sprintf(`{{ "%s" | green }} {{ .Name | bold }}{{ ":" | bold }} {{ .Value }}`, IconGood) + "\n"
+	return fmt.Sprintf(`{{ %q | green }} {{ .Name | bold }}{{ ":" | bold }} {{ .Value }}`, IconGood) + "\n"
 }
 
 // PromptTemplates is the default style for a prompt.
@@ -76,7 +76,7 @@ func SelectTemplates(name string) *promptui.SelectTemplates {
 		Label:    fmt.Sprintf("%s {{ . }}: ", IconInitial),
 		Active:   fmt.Sprintf("%s {{ . | underline }}", IconSelect),
 		Inactive: "  {{ . }}",
-		Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "%s:" | bold }} {{ .Name }}`, IconGood, name),
+		Selected: fmt.Sprintf(`{{ %q | green }} {{ "%s:" | bold }} {{ .Name }}`, IconGood, name),
 	}
 }
 
@@ -88,6 +88,6 @@ func NamedSelectTemplates(name string) *promptui.SelectTemplates {
 		Label:    fmt.Sprintf("%s {{.Name}}: ", IconInitial),
 		Active:   fmt.Sprintf("%s {{ .Name | underline }}", IconSelect),
 		Inactive: "  {{.Name}}",
-		Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "%s:" | bold }} {{ .Name }}`, IconGood, name),
+		Selected: fmt.Sprintf(`{{ %q | green }} {{ "%s:" | bold }} {{ .Name }}`, IconGood, name),
 	}
 }

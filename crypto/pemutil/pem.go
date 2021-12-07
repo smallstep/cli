@@ -11,15 +11,14 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -161,7 +160,7 @@ func WithFirstBlock() Options {
 // ReadCertificate returns a *x509.Certificate from the given filename. It
 // supports certificates formats PEM and DER.
 func ReadCertificate(filename string, opts ...Options) (*x509.Certificate, error) {
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, errs.FileError(err, filename)
 	}
@@ -190,7 +189,7 @@ func ReadCertificate(filename string, opts ...Options) (*x509.Certificate, error
 // filename. It supports certificates formats PEM and DER. If a DER-formatted
 // file is given only one certificate will be returned.
 func ReadCertificateBundle(filename string) ([]*x509.Certificate, error) {
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, errs.FileError(err, filename)
 	}
@@ -309,7 +308,7 @@ func ParseKey(b []byte, opts ...Options) (interface{}, error) {
 // keys are PKCS#1, PKCS#8, RFC5915 for EC, and base64-encoded DER for
 // certificates and public keys.
 func Read(filename string, opts ...Options) (interface{}, error) {
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, errs.FileError(err, filename)
 	}

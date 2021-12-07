@@ -94,10 +94,8 @@ func TestCompare(t *testing.T) {
 		assert.False(t, ok, tc.phc)
 		if tc.err == "" {
 			assert.NoError(t, err, i, err)
-		} else {
-			if assert.Error(t, err) {
-				assert.Equals(t, tc.err, err.Error(), i, tc.err, err.Error())
-			}
+		} else if assert.Error(t, err) {
+			assert.Equals(t, tc.err, err.Error(), i, tc.err, err.Error())
 		}
 	}
 }

@@ -6,9 +6,9 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 func healthCommand() cli.Command {
@@ -16,8 +16,8 @@ func healthCommand() cli.Command {
 		Name:   "health",
 		Action: healthAction,
 		Usage:  "get the status of the CA",
-		UsageText: `**step ca health** 
-[**--ca-url**=<URI>] [**--root**=<file>]`,
+		UsageText: `**step ca health**
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca health** makes an API request to the /health
 endpoint of the Step CA to check if it is running. If the CA is healthy, the
 response will be 'ok'.
@@ -46,6 +46,7 @@ ok
 		Flags: []cli.Flag{
 			flags.CaURL,
 			flags.Root,
+			flags.Context,
 		},
 	}
 }
@@ -62,7 +63,7 @@ func healthAction(ctx *cli.Context) error {
 
 	root := ctx.String("root")
 	// Prepare client for bootstrap or provisioning tokens
-	if len(root) == 0 {
+	if root == "" {
 		root = pki.GetRootCAPath()
 		if _, err := os.Stat(root); err != nil {
 			return errs.RequiredFlag(ctx, "root")

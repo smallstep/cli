@@ -3,9 +3,9 @@ package x509util
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/smallstep/assert"
@@ -39,6 +39,9 @@ func TestEncodedFingerprint(t *testing.T) {
 		{"hex", "test_files/ca.crt", HexFingerprint, "6908751f68290d4573ae0be39a98c8b9b7b7d4e8b2a6694b7509946626adfe98"},
 		{"base64", "test_files/ca.crt", Base64Fingerprint, "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat/pg="},
 		{"base64url", "test_files/ca.crt", Base64URLFingerprint, "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat_pg="},
+		{"base64raw", "test_files/ca.crt", Base64RawStdFingerprint, "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat/pg"},
+		{"base64raw", "test_files/ca.crt", Base64RawURLFingerprint, "aQh1H2gpDUVzrgvjmpjIube31OiypmlLdQmUZiat_pg"},
+		{"emoji", "test_files/ca.crt", EmojiFingerprint, "🚁🍎👺🚌🏮☁️🎍👀🇮🇹✋🍼🚽⛅🐼🚬🎅🇷🇺🇷🇺🚂🤢🎀💩🚁🎆👺🎨👌✔️🚸🌈⚡🐼"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -51,7 +54,7 @@ func TestEncodedFingerprint(t *testing.T) {
 }
 
 func mustParseCertificate(t *testing.T, filename string) *x509.Certificate {
-	pemData, err := ioutil.ReadFile(filename)
+	pemData, err := os.ReadFile(filename)
 	if err != nil {
 		t.Fatalf("failed to read %s: %v", filename, err)
 	}

@@ -4,14 +4,14 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 func certificateCommand() cli.Command {
@@ -20,13 +20,13 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
-[**--token**=<token>]  [**--issuer**=<name>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--san**=<SAN>] [**--set**=<key=value>] [**--set-file**=<file>]
-[**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
-[**--contact**=<email>] [**--http-listen**=<address>]
+[**--token**=<token>]  [**--issuer**=<name>] [**--not-before**=<time|duration>]
+[**--not-after**=<time|duration>] [**--san**=<SAN>] [**--set**=<key=value>]
+[**--set-file**=<file>] [**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
+[**--contact**=<email>] [**--http-listen**=<address>] [**--bundle**]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
-[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]`,
+[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -147,6 +147,7 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			flags.CaURL,
 			flags.Root,
 			flags.Token,
+			flags.Context,
 			flags.Provisioner,
 			flags.ProvisionerPasswordFile,
 			flags.KTY,
@@ -184,7 +185,7 @@ func certificateAction(ctx *cli.Context) error {
 
 	// offline and token are incompatible because the token is generated before
 	// the start of the offline CA.
-	if offline && len(tok) != 0 {
+	if offline && tok != "" {
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
 	}
 
@@ -194,7 +195,7 @@ func certificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if len(tok) == 0 {
+	if tok == "" {
 		// Use the ACME protocol with a different certificate authority.
 		if ctx.IsSet("acme") {
 			return cautils.ACMECreateCertFlow(ctx, "")
@@ -228,21 +229,14 @@ func certificateAction(ctx *cli.Context) error {
 		if !strings.EqualFold(subject, req.CsrPEM.Subject.CommonName) {
 			return errors.Errorf("token subject '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
 		}
-	case token.OIDC: // Validate that the subject matches an email SAN
-		if len(req.CsrPEM.EmailAddresses) == 0 {
-			return errors.New("unexpected token: payload does not contain an email claim")
-		}
-		if email := req.CsrPEM.EmailAddresses[0]; email != subject {
-			return errors.Errorf("token email '%s' and argument '%s' do not match", email, subject)
-		}
-	case token.AWS, token.GCP, token.Azure, token.K8sSA:
+	case token.OIDC, token.AWS, token.GCP, token.Azure, token.K8sSA:
 		// Common name will be validated on the server side, it depends on
 		// server configuration.
 	default:
 		return errors.New("token is not supported")
 	}
 
-	if err = flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
+	if err := flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
 		return err
 	}
 

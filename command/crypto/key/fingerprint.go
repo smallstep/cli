@@ -3,28 +3,27 @@ package key
 import (
 	"bytes"
 	"crypto"
-	"crypto/sha1"
-	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"encoding/base64"
 	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
+	"github.com/smallstep/cli/crypto/fingerprint"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	libcommand "go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 
 func fingerprintCommand() cli.Command {
 	return cli.Command{
 		Name:      "fingerprint",
-		Action:    command.ActionFunc(fingerprintAction),
+		Action:    libcommand.ActionFunc(fingerprintAction),
 		Usage:     `print the fingerprint of a public key`,
 		UsageText: `**step crypto key fingerprint** <key-file>`,
 		Description: `**step crypto key fingerprint** prints the fingerprint of a public key. The
@@ -103,6 +102,7 @@ $ step crypto key fingerprint --password-file pass.txt priv.pem
 				Name:  "raw",
 				Usage: "Print the raw bytes instead of the fingerprint. These bytes can be piped to a different hash command.",
 			},
+			command.FingerprintFormatFlag(""),
 		},
 	}
 }
@@ -120,6 +120,33 @@ func fingerprintAction(ctx *cli.Context) error {
 		name = ctx.Args().First()
 	default:
 		return errs.TooManyArguments(ctx)
+	}
+
+	var (
+		raw    = ctx.Bool("raw")
+		sha1   = ctx.Bool("sha1")
+		encSSH = ctx.Bool("ssh")
+		format = ctx.String("format")
+
+		defaultFmt = "base64"
+		prefix     = "SHA256:"
+		hash       = crypto.SHA256
+	)
+
+	// Keep backwards compatibility for SHA1.
+	if sha1 {
+		defaultFmt = "hex"
+		prefix = "SHA1:"
+		hash = crypto.SHA1
+	}
+
+	if format == "" {
+		format = defaultFmt
+	}
+
+	encoding, err := command.GetFingerprintEncoding(format)
+	if err != nil {
+		return err
 	}
 
 	b, err := utils.ReadFile(name)
@@ -158,7 +185,7 @@ func fingerprintAction(ctx *cli.Context) error {
 		key = k.Public()
 	}
 
-	if ctx.Bool("ssh") {
+	if encSSH {
 		b, err = sshFingerprintBytes(key)
 	} else {
 		b, err = x509FingerprintBytes(key)
@@ -167,17 +194,17 @@ func fingerprintAction(ctx *cli.Context) error {
 		return err
 	}
 
-	switch {
-	case ctx.Bool("raw"):
+	if raw {
 		os.Stdout.Write(b)
-	case ctx.Bool("sha1"):
-		sum := sha1.Sum(b)
-		fmt.Printf("SHA1:%x\n", sum[:])
-	default:
-		sum := sha256.Sum256(b)
-		fmt.Println("SHA256:" + base64.RawStdEncoding.EncodeToString(sum[:]))
+		return nil
 	}
 
+	fp := fingerprint.Fingerprint(b,
+		fingerprint.WithPrefix(prefix),
+		fingerprint.WithHash(hash),
+		fingerprint.WithEncoding(encoding),
+	)
+	fmt.Println(fp)
 	return nil
 }
 

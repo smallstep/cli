@@ -5,8 +5,8 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/x509"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -15,16 +15,16 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/ca/identity"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/sshutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/ssh"
 )
@@ -35,12 +35,14 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "sign a SSH certificate using the the SSH CA",
 		UsageText: `**step ssh certificate** <key-id> <key-file>
-[**--host**] [--**host-id**] [**--sign**] [**--principal**=<string>] [**--password-file**=<file>]
-[**--provisioner-password-file**=<file>] [**--add-user**]
-[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--token**=<token>] [**--issuer**=<name>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--no-password**] [**--insecure**] [**--force**]
-[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path=<file>]`,
+[**--host**] [--**host-id**] [**--sign**] [**--principal**=<string>]
+[**--password-file**=<file>] [**--provisioner-password-file**=<file>]
+[**--add-user**] [**--not-before**=<time|duration>]
+[**--not-after**=<time|duration>] [**--token**=<token>] [**--issuer**=<name>]
+[**--no-password**] [**--insecure**] [**--force**] [**--x5c-cert**=<file>]
+[**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]`,
+
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
 
@@ -145,11 +147,8 @@ Generate a new key pair and a certificate using a given token:
 $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 '''`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
-			flags.CaURL,
 			flags.Force,
 			flags.Insecure,
-			flags.Root,
 			flags.NoPassword,
 			flags.NotBefore,
 			flags.NotAfter,
@@ -169,6 +168,10 @@ $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 			flags.X5cCert,
 			flags.X5cKey,
 			flags.K8sSATokenPathFlag,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }
@@ -206,10 +209,6 @@ func certificateAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-
-	// Hack to make the flag "password-file" the content of
-	// "provisioner-password-file" so the token command works as expected
-	ctx.Set("password-file", provisionerPasswordFile)
 
 	// Validation
 	switch {
@@ -259,7 +258,7 @@ func certificateAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	if len(token) == 0 {
+	if token == "" {
 		if token, err = flow.GenerateSSHToken(ctx, subject, tokType, principals, validAfter, validBefore); err != nil {
 			return err
 		}
@@ -493,7 +492,7 @@ func marshalPublicKey(key ssh.PublicKey, subject string) []byte {
 
 func deriveMachineID() (uuid.UUID, error) {
 	// use /etc/machine-id
-	machineID, err := ioutil.ReadFile("/etc/machine-id")
+	machineID, err := os.ReadFile("/etc/machine-id")
 	if err != nil {
 		return uuid.Nil, err
 	}

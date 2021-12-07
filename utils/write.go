@@ -5,15 +5,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/ui"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 )
 
 var (
@@ -32,19 +31,19 @@ var (
 	SnippetFooter = "# end"
 )
 
-// WriteFile wraps ioutil.WriteFile with a prompt to overwrite a file if
+// WriteFile wraps os.WriteFile with a prompt to overwrite a file if
 // the file exists. It returns ErrFileExists if the user picks to not overwrite
 // the file. If force is set to true, the prompt will not be presented and the
 // file if exists will be overwritten.
 func WriteFile(filename string, data []byte, perm os.FileMode) error {
 	if command.IsForce() {
-		return ioutil.WriteFile(filename, data, perm)
+		return os.WriteFile(filename, data, perm)
 	}
 
 	st, err := os.Stat(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return ioutil.WriteFile(filename, data, perm)
+			return os.WriteFile(filename, data, perm)
 		}
 		return errors.Wrapf(err, "error reading information for %s", filename)
 	}
@@ -63,7 +62,7 @@ func WriteFile(filename string, data []byte, perm os.FileMode) error {
 		return ErrFileExists
 	}
 
-	return ioutil.WriteFile(filename, data, perm)
+	return os.WriteFile(filename, data, perm)
 }
 
 // AppendNewLine appends the given data at the end of the file. If the last
@@ -97,7 +96,7 @@ func WriteSnippet(filename string, data []byte, perm os.FileMode) error {
 	}
 
 	// Read file contents
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil && !os.IsNotExist(err) {
 		return errs.FileError(err, filename)
 	}
@@ -138,7 +137,7 @@ func (o *offsetCounter) ScanLines(data []byte, atEOF bool) (advance int, token [
 	return
 }
 
-func findConfiguration(r io.Reader) (lines []string, start int64, end int64) {
+func findConfiguration(r io.Reader) (lines []string, start, end int64) {
 	var inConfig bool
 	counter := new(offsetCounter)
 	scanner := bufio.NewScanner(r)

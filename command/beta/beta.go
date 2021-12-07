@@ -1,9 +1,9 @@
 package beta
 
 import (
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/command/ca"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 // init creates and registers the ca command

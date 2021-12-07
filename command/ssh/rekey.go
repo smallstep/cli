@@ -1,22 +1,22 @@
 package ssh
 
 import (
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca/identity"
-	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/errs"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -25,10 +25,10 @@ func rekeyCommand() cli.Command {
 		Name:   "rekey",
 		Action: command.ActionFunc(rekeyAction),
 		Usage:  "rekey a SSH certificate using the SSH CA",
-		UsageText: `**step ssh rekey** <ssh-cert> <ssh-key>
-[**--out**=<file>] [**--issuer**=<name>] [**--password-file**=<file>]
-[**--force**] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--offline**] [**--ca-config**=<file>]`,
+		UsageText: `**step ssh rekey** <ssh-cert> <ssh-key> [**--out**=<file>]
+[**--issuer**=<name>] [**--password-file**=<file>] [**--force**]
+[**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>]`,
 		Description: `**step ssh rekey** command generates a new SSH Certificate and key using
 an existing SSH Cerfificate and key pair to authenticate and templatize the
 request. It writes the new certificate to disk - either overwriting
@@ -63,12 +63,13 @@ $ step ssh rekey --out id2_ecdsa id_ecdsa-cert.pub id_ecdsa
 			flags.NoPassword,
 			flags.Insecure,
 			flags.Force,
-			flags.CaURL,
-			flags.Root,
-			flags.Offline,
-			flags.CaConfig,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
+			flags.Offline,
+			flags.CaConfig,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
 		},
 	}
 }
@@ -105,7 +106,7 @@ func rekeyAction(ctx *cli.Context) error {
 	}
 
 	// Load the cert, because we need the serial number.
-	certBytes, err := ioutil.ReadFile(certFile)
+	certBytes, err := os.ReadFile(certFile)
 	if err != nil {
 		return errors.Wrapf(err, "error reading ssh certificate from %s", certFile)
 	}

@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -13,13 +13,13 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/randutil"
-	"github.com/smallstep/cli/errs"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
 	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 )
 
 // TokenGenerator is a helper used to generate different types of tokens used in
@@ -121,7 +121,7 @@ func generateOIDCToken(ctx *cli.Context, p *provisioner.OIDC) (string, error) {
 	if ctx.Bool("console") {
 		args = append(args, "--console")
 	}
-	if p.ListenAddress != "" {
+	if p.ListenAddress != "" && os.Getenv("STEP_LISTEN") == "" {
 		args = append(args, "--listen", p.ListenAddress)
 	}
 	out, err := exec.Step(args...)
@@ -145,10 +145,10 @@ type tokenAttrs struct {
 
 func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) {
 	path := ctx.String("k8ssa-token-path")
-	if len(path) == 0 {
+	if path == "" {
 		path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	}
-	tokBytes, err := ioutil.ReadFile(path)
+	tokBytes, err := os.ReadFile(path)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading kubernetes service account token")
 	}
@@ -158,17 +158,17 @@ func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) 
 func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttrs tokenAttrs) (string, error) {
 	x5cCertFile := ctx.String("x5c-cert")
 	x5cKeyFile := ctx.String("x5c-key")
-	if len(x5cCertFile) == 0 {
+	if x5cCertFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "X5C", "x5c-cert")
 	}
-	if len(x5cKeyFile) == 0 {
+	if x5cKeyFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "X5C", "x5c-key")
 	}
 
 	// Get private key from given key file
 	var opts []jose.Option
-	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
-		opts = append(opts, jose.WithPasswordFile(passwordFile))
+	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
+		opts = append(opts, passOpt)
 	}
 	jwk, err := jose.ParseKey(x5cKeyFile, opts...)
 	if err != nil {
@@ -196,17 +196,17 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, tokAttrs tokenAttrs) (string, error) {
 	sshPOPCertFile := ctx.String("sshpop-cert")
 	sshPOPKeyFile := ctx.String("sshpop-key")
-	if len(sshPOPCertFile) == 0 {
+	if sshPOPCertFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "SSHPOP", "sshpop-cert")
 	}
-	if len(sshPOPKeyFile) == 0 {
+	if sshPOPKeyFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "SSHPOP", "sshpop-key")
 	}
 
 	// Get private key from given key file
 	var opts []jose.Option
-	if passwordFile := ctx.String("password-file"); len(passwordFile) != 0 {
-		opts = append(opts, jose.WithPasswordFile(passwordFile))
+	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
+		opts = append(opts, passOpt)
 	}
 	jwk, err := jose.ParseKey(sshPOPKeyFile, opts...)
 	if err != nil {
@@ -227,6 +227,17 @@ func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, t
 	}
 }
 
+func getProvisionerPasswordOption(ctx *cli.Context) jose.Option {
+	switch {
+	case ctx.String("provisioner-password-file") != "":
+		return jose.WithPasswordFile(ctx.String("provisioner-password-file"))
+	case ctx.String("password-file") != "":
+		return jose.WithPasswordFile(ctx.String("password-file"))
+	default:
+		return nil
+	}
+}
+
 // loadJWK loads a JWK based on the following system:
 //  1. If a private key is specified on the command line, then load the JWK from
 //     that private key.
@@ -236,14 +247,11 @@ func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, t
 //    b) Online-mode: get the provisioner private key from the CA.
 func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jose.JSONWebKey, kid string, err error) {
 	var opts []jose.Option
-	switch {
-	case ctx.String("provisioner-password-file") != "":
-		opts = append(opts, jose.WithPasswordFile(ctx.String("provisioner-password-file")))
-	case ctx.String("password-file") != "":
-		opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
+	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
+		opts = append(opts, passOpt)
 	}
 
-	if keyFile := ctx.String("key"); len(keyFile) == 0 {
+	if keyFile := ctx.String("key"); keyFile == "" {
 		if p == nil {
 			return nil, "", errors.New("no provisioner selected")
 		}
@@ -252,7 +260,7 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 		var encryptedKey string
 		if ctx.IsSet("offline") {
 			encryptedKey = p.EncryptedKey
-			if len(encryptedKey) == 0 {
+			if encryptedKey == "" {
 				return nil, "", errors.Errorf("provisioner '%s' does not have an 'encryptedKey' property", kid)
 			}
 		} else {
@@ -284,11 +292,12 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 			return nil, "", err
 		}
 
-		if p != nil {
+		switch {
+		case p != nil:
 			kid = p.Key.KeyID
-		} else if len(tokAttrs.kid) > 0 {
+		case len(tokAttrs.kid) > 0:
 			kid = tokAttrs.kid
-		} else {
+		default:
 			hash, err := jwk.Thumbprint(crypto.SHA256)
 			if err != nil {
 				return nil, "", errors.Wrap(err, "error generating JWK thumbprint")

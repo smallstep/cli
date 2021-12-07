@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/config"
+	"go.step.sm/cli-utils/step"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 	"golang.org/x/term"
@@ -22,10 +22,10 @@ import (
 //  %p  The remote port.
 //  %r  The remote username.
 func ProxyCommand(cmd, user, host, port string) string {
-	cmd = strings.Replace(cmd, "%%", "%", -1)
-	cmd = strings.Replace(cmd, "%h", host, -1)
-	cmd = strings.Replace(cmd, "%p", port, -1)
-	return strings.Replace(cmd, "%r", user, -1)
+	cmd = strings.ReplaceAll(cmd, "%%", "%")
+	cmd = strings.ReplaceAll(cmd, "%h", host)
+	cmd = strings.ReplaceAll(cmd, "%p", port)
+	return strings.ReplaceAll(cmd, "%r", user)
 }
 
 // ShellOption is the type used to add new options to the shell.
@@ -182,7 +182,7 @@ func NewShell(user, address string, opts ...ShellOption) (*Shell, error) {
 	address = formatAddress(address)
 
 	// Use known_host as HostKeyCallback
-	knownHosts, err := knownhosts.New(filepath.Join(config.Home(), ".ssh", "known_hosts"))
+	knownHosts, err := knownhosts.New(filepath.Join(step.Home(), ".ssh", "known_hosts"))
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading known_hosts")
 	}
