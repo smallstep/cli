@@ -75,8 +75,8 @@ can revoke any certificate.
 When you supply a certificate and private key (with --crt and --key),
 mTLS is used to authorize the revocation.
 
-Certificates generated using the OIDC provisioner cannot be revoked
-using the API token method.
+Certificates generated using an OIDC provisioner cannot be revoked
+by their serial number.
 
 ## POSITIONAL ARGUMENTS
 
