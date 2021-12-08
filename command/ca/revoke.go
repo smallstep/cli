@@ -68,7 +68,7 @@ is on our roadmap.
 A revocation request can be authorized using a JWK provisioner token, or using a
 client certificate.
 
-When you supply a serial number, you're prompted to choose a JWK provisioner,
+When you supply a serial number, you're prompted to choose a provisioner,
 and a provisioner token is transparently generated. Any JWK provisioner
 can revoke any certificate.
 
