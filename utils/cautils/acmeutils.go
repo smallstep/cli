@@ -436,12 +436,20 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 				hasSubject = true
 			}
 		}
-		subjectIsNotAnIP := net.ParseIP(af.subject) == nil
-		if !hasSubject && subjectIsNotAnIP {
+		subjectIsAnIP := net.ParseIP(af.subject) != nil
+		if !hasSubject && !subjectIsAnIP {
 			dnsNames = append(dnsNames, af.subject)
 			idents = append(idents, acme.Identifier{
 				Type:  "dns",
 				Value: af.subject,
+			})
+		}
+		if !hasSubject && subjectIsAnIP {
+			ip := net.ParseIP(af.subject)
+			ips = append(ips, ip)
+			idents = append(idents, acme.Identifier{
+				Type:  "ip",
+				Value: ip.String(),
 			})
 		}
 		nor := acmeAPI.NewOrderRequest{
@@ -484,11 +492,8 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			DNSNames:    dnsNames,
 			IPAddresses: ips,
 		}
-		subjectIsNotAnIP := net.ParseIP(af.subject) == nil
-		if subjectIsNotAnIP {
-			_csr.Subject = pkix.Name{
-				CommonName: af.subject,
-			}
+		_csr.Subject = pkix.Name{
+			CommonName: af.subject,
 		}
 		var csrBytes []byte
 		csrBytes, err = x509.CreateCertificateRequest(rand.Reader, _csr, af.priv)
