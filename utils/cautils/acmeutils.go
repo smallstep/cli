@@ -430,27 +430,35 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// check if the list of identifiers for which to
+		// request a certificate already contains the subject
 		hasSubject := false
 		for _, n := range idents {
 			if n.Value == af.subject {
 				hasSubject = true
 			}
 		}
-		subjectIsAnIP := net.ParseIP(af.subject) != nil
-		if !hasSubject && !subjectIsAnIP {
-			dnsNames = append(dnsNames, af.subject)
-			idents = append(idents, acme.Identifier{
-				Type:  "dns",
-				Value: af.subject,
-			})
-		}
-		if !hasSubject && subjectIsAnIP {
+		// if the subject is not yet included in the slice
+		// of identifiers, it is added to either the DNS names
+		// or IP addresses slice and the corresponding type of
+		// identifier is added to the slice of identifers.
+		if !hasSubject {
 			ip := net.ParseIP(af.subject)
-			ips = append(ips, ip)
-			idents = append(idents, acme.Identifier{
-				Type:  "ip",
-				Value: ip.String(),
-			})
+			subjectIsNotAnIP := ip == nil
+			if subjectIsNotAnIP {
+				dnsNames = append(dnsNames, af.subject)
+				idents = append(idents, acme.Identifier{
+					Type:  "dns",
+					Value: af.subject,
+				})
+			} else {
+				ips = append(ips, ip)
+				idents = append(idents, acme.Identifier{
+					Type:  "ip",
+					Value: ip.String(),
+				})
+			}
 		}
 		nor := acmeAPI.NewOrderRequest{
 			Identifiers: idents,
@@ -489,11 +497,11 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		}
 
 		_csr := &x509.CertificateRequest{
+			Subject: pkix.Name{
+				CommonName: af.subject,
+			},
 			DNSNames:    dnsNames,
 			IPAddresses: ips,
-		}
-		_csr.Subject = pkix.Name{
-			CommonName: af.subject,
 		}
 		var csrBytes []byte
 		csrBytes, err = x509.CreateCertificateRequest(rand.Reader, _csr, af.priv)
