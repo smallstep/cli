@@ -3,8 +3,6 @@ package x509util
 import (
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/pem"
 	"net"
 	"net/url"
@@ -13,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto/fingerprint"
 	"go.step.sm/cli-utils/errs"
 )
 
@@ -26,31 +25,23 @@ type FingerprintEncoding int
 
 const (
 	// HexFingerprint represents hex encoding of fingerprint.
-	HexFingerprint FingerprintEncoding = iota
+	HexFingerprint = FingerprintEncoding(fingerprint.HexFingerprint)
 	// Base64Fingerprint represents base64 encoding of fingerprint.
-	Base64Fingerprint
+	Base64Fingerprint = FingerprintEncoding(fingerprint.Base64StdFingerprint)
 	// Base64URLFingerprint represents base64URL encoding of fingerprint.
-	Base64URLFingerprint
+	Base64URLFingerprint = FingerprintEncoding(fingerprint.Base64URLFingerprint)
+	// Base64RawURLFingerprint represents base64Raw encoding of fingerprint.
+	Base64RawURLFingerprint = FingerprintEncoding(fingerprint.Base64RawURLFingerprint)
+	// Base64RawStdFingerprint represents base64Raw encoding of fingerprint.
+	Base64RawStdFingerprint = FingerprintEncoding(fingerprint.Base64RawStdFingerprint)
+	// EmojiFingerprint represents emoji encoding of fingerprint.
+	EmojiFingerprint = FingerprintEncoding(fingerprint.EmojiFingerprint)
 )
 
 // EncodedFingerprint returns an encoded the SHA-256 fingerprint of the certificate. Defaults to hex encoding
 func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding) string {
 	sum := sha256.Sum256(cert.Raw)
-	if encoding == HexFingerprint {
-		return strings.ToLower(hex.EncodeToString(sum[:]))
-	}
-	src := make([]byte, len(sum))
-	for i, b := range sum {
-		src[i] = b
-	}
-	switch encoding {
-	case Base64Fingerprint:
-		return base64.StdEncoding.EncodeToString(src)
-	case Base64URLFingerprint:
-		return base64.URLEncoding.EncodeToString(src)
-	}
-	// should not get here
-	return ""
+	return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding)))
 }
 
 // SplitSANs splits a slice of Subject Alternative Names into slices of

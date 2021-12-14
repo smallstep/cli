@@ -9,7 +9,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rsa"
 	"encoding/binary"
-	"fmt"
 	"math/big"
 
 	"github.com/pkg/errors"
@@ -61,26 +60,6 @@ func PublicKey(key ssh.PublicKey) (crypto.PublicKey, error) {
 	default:
 		return nil, errors.Errorf("public key %s is not supported", key.Type())
 	}
-}
-
-// Fingerprint returns the key size, fingerprint, comment and algorithm of a
-// public key.
-func Fingerprint(in []byte) (string, error) {
-	key, comment, _, _, err := ssh.ParseAuthorizedKey(in)
-	if err != nil {
-		return "", errors.Wrap(err, "error parsing public key")
-	}
-	if comment == "" {
-		comment = "no comment"
-	}
-
-	// set typ, size
-	typ, size, err := publicKeyTypeAndSize(key)
-	if err != nil {
-		return "", errors.Wrap(err, "error determining key type and size")
-	}
-
-	return fmt.Sprintf("%d %s %s (%s)", size, ssh.FingerprintSHA256(key), comment, typ), nil
 }
 
 func publicKeyTypeAndSize(key ssh.PublicKey) (string, int, error) {
