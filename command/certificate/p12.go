@@ -3,6 +3,7 @@ package certificate
 import (
 	"crypto/rand"
 	"crypto/x509"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -85,6 +86,10 @@ func p12Action(ctx *cli.Context) error {
 	caFiles := ctx.StringSlice("ca")
 	hasKeyAndCert := crtFile != "" && keyFile != ""
 
+	passwordFile := ctx.String("password-file")
+	noPassword := ctx.Bool("no-password")
+	insecure := ctx.Bool("insecure")
+
 	// If either key or cert are provided, both must be provided
 	if !hasKeyAndCert && (crtFile != "" || keyFile != "") {
 		return errs.MissingArguments(ctx, "key_file")
@@ -97,13 +102,20 @@ func p12Action(ctx *cli.Context) error {
 
 	// Validate flags
 	switch {
-	case ctx.String("password-file") != "" && ctx.Bool("no-password"):
+	case passwordFile != "" && noPassword:
 		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "password-file")
-	case ctx.Bool("no-password") && !ctx.Bool("insecure"):
+	case noPassword && !insecure:
 		return errs.RequiredInsecureFlag(ctx, "no-password")
 	}
 
-	x509CAs := []*x509.Certificate{}
+	if err := ToP12(p12File, crtFile, keyFile, caFiles, passwordFile, noPassword, insecure); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ToP12(p12File, crtFile, keyFile string, caFiles []string, passwordFile string, noPassword, insecure bool) error {
+	var x509CAs []*x509.Certificate
 	for _, caFile := range caFiles {
 		x509Bundle, err := pemutil.ReadCertificateBundle(caFile)
 		if err != nil {
@@ -114,8 +126,8 @@ func p12Action(ctx *cli.Context) error {
 
 	var err error
 	var password string
-	if !ctx.Bool("no-password") {
-		if passwordFile := ctx.String("password-file"); passwordFile != "" {
+	if !noPassword {
+		if passwordFile != "" {
 			password, err = utils.ReadStringPasswordFromFile(passwordFile)
 			if err != nil {
 				return err
@@ -132,7 +144,7 @@ func p12Action(ctx *cli.Context) error {
 	}
 
 	var pkcs12Data []byte
-	if hasKeyAndCert {
+	if crtFile != "" && keyFile != "" {
 		// If we have a key and certificate, we're making an identity store
 		x509CertBundle, err := pemutil.ReadCertificateBundle(crtFile)
 		if err != nil {
@@ -146,7 +158,7 @@ func p12Action(ctx *cli.Context) error {
 
 		// The first certificate in the bundle will be our server cert
 		x509Cert := x509CertBundle[0]
-		// Any remaning certs will be intermediates for the server
+		// Any remaining certs will be intermediates for the server
 		x509CAs = append(x509CAs, x509CertBundle[1:]...)
 
 		pkcs12Data, err = pkcs12.Encode(rand.Reader, key, x509Cert, x509CAs, password)
@@ -161,10 +173,16 @@ func p12Action(ctx *cli.Context) error {
 		}
 	}
 
-	if err := utils.WriteFile(p12File, pkcs12Data, 0600); err != nil {
-		return err
+	if p12File != "" {
+		if err := utils.WriteFile(p12File, pkcs12Data, 0600); err != nil {
+			return err
+		}
+		ui.Printf("Your .p12 bundle has been saved as %s.\n", p12File)
+	} else {
+		if _, err := os.Stdout.Write(pkcs12Data); err != nil {
+			return err
+		}
 	}
 
-	ui.Printf("Your .p12 bundle has been saved as %s.\n", p12File)
 	return nil
 }
