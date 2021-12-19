@@ -13,10 +13,10 @@ import (
 	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
-	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
+	"go.step.sm/cli-utils/ui"
 	"golang.org/x/crypto/ssh"
 )
 

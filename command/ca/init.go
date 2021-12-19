@@ -17,7 +17,6 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
@@ -27,6 +26,7 @@ import (
 
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
+	"go.step.sm/cli-utils/ui"
 )
 
 func initCommand() cli.Command {
