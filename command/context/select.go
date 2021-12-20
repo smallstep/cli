@@ -2,11 +2,11 @@ package context
 
 import (
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
+	"go.step.sm/cli-utils/ui"
 )
 
 func selectCommand() cli.Command {

@@ -7,12 +7,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/fileutil"
 	"go.step.sm/cli-utils/step"
+	"go.step.sm/cli-utils/ui"
 )
 
 func removeCommand() cli.Command {

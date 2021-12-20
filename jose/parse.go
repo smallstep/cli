@@ -19,7 +19,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/ui"
+	"go.step.sm/cli-utils/ui"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
