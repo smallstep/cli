@@ -6,7 +6,6 @@ require (
 	github.com/Microsoft/go-winio v0.4.14
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
 	github.com/boombuler/barcode v1.0.1 // indirect
-	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/corpix/uarand v0.1.1 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
@@ -25,7 +24,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.5
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
-	go.step.sm/cli-utils v0.7.0
+	go.step.sm/cli-utils v0.7.1
 	go.step.sm/crypto v0.13.0
 	go.step.sm/linkedca v0.7.0
 	golang.org/x/crypto v0.0.0-20210915214749-c084706c2272
@@ -41,6 +40,5 @@ require (
 // replace github.com/smallstep/certificates => ../certificates
 // replace github.com/smallstep/certinfo => ../certinfo
 // replace go.step.sm/linkedca => ../linkedca
-replace go.step.sm/cli-utils => ../cli-utils
-
+// replace go.step.sm/cli-utils => ../cli-utils
 // replace go.step.sm/crypto => ../crypto
