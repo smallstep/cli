@@ -444,19 +444,17 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		// or IP addresses slice and the corresponding type of
 		// identifier is added to the slice of identifers.
 		if !hasSubject {
-			ip := net.ParseIP(af.subject)
-			subjectIsNotAnIP := ip == nil
-			if subjectIsNotAnIP {
-				dnsNames = append(dnsNames, af.subject)
-				idents = append(idents, acme.Identifier{
-					Type:  "dns",
-					Value: af.subject,
-				})
-			} else {
+			if ip := net.ParseIP(af.subject); ip != nil {
 				ips = append(ips, ip)
 				idents = append(idents, acme.Identifier{
 					Type:  "ip",
 					Value: ip.String(),
+				})
+			} else {
+				dnsNames = append(dnsNames, af.subject)
+				idents = append(idents, acme.Identifier{
+					Type:  "dns",
+					Value: af.subject,
 				})
 			}
 		}
