@@ -39,39 +39,16 @@ PUSHTYPE := branch
 endif
 
 VERSION := $(shell echo $(VERSION) | sed 's/^v//')
-DEB_VERSION := $(shell echo $(VERSION) | sed 's/-/./')
 
 ifdef V
 $(info    TRAVIS_TAG is $(TRAVIS_TAG))
 $(info    GITHUB_REF is $(GITHUB_REF))
 $(info    VERSION is $(VERSION))
-$(info    DEB_VERSION is $(DEB_VERSION))
 $(info    PUSHTYPE is $(PUSHTYPE))
 endif
 
 include make/common.mk
 include make/docker.mk
-
-#########################################
-# Debian
-#########################################
-
-changelog:
-	$Q echo "step-cli ($(DEB_VERSION)) unstable; urgency=medium" > debian/changelog
-	$Q echo >> debian/changelog
-	$Q echo "  * See https://github.com/smallstep/cli/releases" >> debian/changelog
-	$Q echo >> debian/changelog
-	$Q echo " -- Smallstep Labs, Inc. <techadmin@smallstep.com>  $(shell date -uR)" >> debian/changelog
-
-debian: changelog
-	$Q set -e; mkdir -p $(RELEASE); \
-	OUTPUT=../step-cli_*.deb; \
-	rm -f $$OUTPUT; \
-	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
-
-distclean: clean
-
-.PHONY: changelog debian distclean
 
 #################################################
 # Build statically compiled step binary for various operating systems

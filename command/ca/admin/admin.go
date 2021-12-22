@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
+
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 	"go.step.sm/linkedca"
 )
 

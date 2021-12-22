@@ -24,13 +24,13 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/smallstep/cli/utils/sysutils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 )
 
 func renewCertificateCommand() cli.Command {
@@ -40,9 +40,9 @@ func renewCertificateCommand() cli.Command {
 		Usage:  "renew a certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
 [**--password-file**=<file>] [**--out**=<file>] [**--expires-in**=<duration>]
-[**--force**] [**--expires-in**=<duration>] [**--pid**=<int>]
-[**--pid-file**=<file>] [**--signal**=<int>] [**--exec**=<string>] [**--daemon**]
-[**--renew-period**=<duration>] [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--force**] [**--pid**=<int>] [**--pid-file**=<file>] [**--signal**=<int>]
+[**--exec**=<string>] [**--daemon**] [**--renew-period**=<duration>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `
 **step ca renew** command renews the given certificate (with a request to the
 certificate authority) and writes the new certificate to disk - either overwriting

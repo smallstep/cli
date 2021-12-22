@@ -17,9 +17,9 @@ import (
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
-	"github.com/smallstep/cli/ui"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 )
 
 // TokenGenerator is a helper used to generate different types of tokens used in

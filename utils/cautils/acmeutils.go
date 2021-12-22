@@ -22,10 +22,10 @@ import (
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
-	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 )
 
 func startHTTPServer(addr, token, keyAuth string) *http.Server {

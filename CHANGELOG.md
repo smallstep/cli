@@ -6,11 +6,12 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 0.17.8] - DATE
+## [Unreleased]
 ### Added
 - Add additional `emoji` and `base64-raw` encoding to the `--format` flag of `step certificate fingerprint`.
 - Add `--format` flag to `step crypto key fingerprint`.
 - Add `--format` flag to `step ssh fingerprint`.
+- Add FreeBSD support to `step certificate install`.
 ### Changed
 ### Deprecated
 ### Removed
