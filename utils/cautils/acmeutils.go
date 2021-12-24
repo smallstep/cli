@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -267,18 +268,18 @@ func finalizeOrder(ac *ca.ACMEClient, o *acme.Order, csr *x509.CertificateReques
 	return fo, nil
 }
 
-func validateSANsForACME(sans []string) ([]string, error) {
+func validateSANsForACME(sans []string) ([]string, []net.IP, error) {
 	dnsNames, ips, emails, uris := splitSANs(sans)
-	if len(ips) > 0 || len(emails) > 0 || len(uris) > 0 {
-		return nil, errors.New("IP Address, Email Address, and URI SANs are not supported for ACME flow")
+	if len(emails) > 0 || len(uris) > 0 {
+		return nil, nil, errors.New("Email Address and URI SANs are not supported for ACME flow")
 	}
 	for _, dns := range dnsNames {
 		if strings.Contains(dns, "*") {
-			return nil, errors.Errorf("wildcard dnsnames (%s) require dns validation, "+
+			return nil, nil, errors.Errorf("wildcard dnsnames (%s) require dns validation, "+
 				"which is currently not implemented in this client", dns)
 		}
 	}
-	return dnsNames, nil
+	return dnsNames, ips, nil
 }
 
 type acmeFlowOp func(*acmeFlow) error
@@ -361,7 +362,7 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 }
 
 func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
-	dnsNames, err := validateSANsForACME(af.sans)
+	dnsNames, ips, err := validateSANsForACME(af.sans)
 	if err != nil {
 		return nil, err
 	}
@@ -371,6 +372,12 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		idents = append(idents, acme.Identifier{
 			Type:  "dns",
 			Value: dns,
+		})
+	}
+	for _, ip := range ips {
+		idents = append(idents, acme.Identifier{
+			Type:  "ip",
+			Value: ip.String(),
 		})
 	}
 
@@ -424,6 +431,33 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			return nil, err
 		}
 
+		// check if the list of identifiers for which to
+		// request a certificate already contains the subject
+		hasSubject := false
+		for _, n := range idents {
+			if n.Value == af.subject {
+				hasSubject = true
+			}
+		}
+		// if the subject is not yet included in the slice
+		// of identifiers, it is added to either the DNS names
+		// or IP addresses slice and the corresponding type of
+		// identifier is added to the slice of identifers.
+		if !hasSubject {
+			if ip := net.ParseIP(af.subject); ip != nil {
+				ips = append(ips, ip)
+				idents = append(idents, acme.Identifier{
+					Type:  "ip",
+					Value: ip.String(),
+				})
+			} else {
+				dnsNames = append(dnsNames, af.subject)
+				idents = append(idents, acme.Identifier{
+					Type:  "dns",
+					Value: af.subject,
+				})
+			}
+		}
 		nor := acmeAPI.NewOrderRequest{
 			Identifiers: idents,
 			NotAfter:    naf.Time(),
@@ -464,7 +498,8 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			Subject: pkix.Name{
 				CommonName: af.subject,
 			},
-			DNSNames: dnsNames,
+			DNSNames:    dnsNames,
+			IPAddresses: ips,
 		}
 		var csrBytes []byte
 		csrBytes, err = x509.CreateCertificateRequest(rand.Reader, _csr, af.priv)
