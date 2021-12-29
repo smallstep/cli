@@ -531,6 +531,8 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string,
 		return generateX5CToken(ctx, p, tokType, tokAttrs)
 	case *provisioner.SSHPOP: // Generate an SSHPOP token using ssh cert + key.
 		return generateSSHPOPToken(ctx, p, tokType, tokAttrs)
+	case *provisioner.Nebula: // Generate an JWK with an nbc header and signature.
+		return generateNebulaToken(ctx, p, tokType, tokAttrs)
 	case *provisioner.K8sSA: // Get the Kubernetes service account token.
 		return generateK8sSAToken(ctx, p)
 	case *provisioner.GCP: // Do the identity request to get the token.

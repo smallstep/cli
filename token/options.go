@@ -3,6 +3,7 @@ package token
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -166,6 +167,19 @@ func WithX5CFile(certFile string, key interface{}) Options {
 			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
 		}
 		c.SetHeader("x5c", certStrs)
+		return nil
+	}
+}
+
+// WithNebulaCert returns a Options that sets the header nbc claims.
+func WithNebulaCert(certFile string, key interface{}) Options {
+	return func(c *Claims) error {
+		// TODO: validate cert and key
+		b, err := os.ReadFile(certFile)
+		if err != nil {
+			return errors.Wrapf(err, "error reading %s", certFile)
+		}
+		c.SetHeader("nbc", b)
 		return nil
 	}
 }

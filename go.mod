@@ -16,7 +16,7 @@ require (
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.18.0
+	github.com/smallstep/certificates v0.18.1-0.20211229221203-32390a29641c
 	github.com/smallstep/certinfo v1.5.2
 	github.com/smallstep/truststore v0.10.1
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
@@ -25,12 +25,12 @@ require (
 	github.com/urfave/cli v1.22.5
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.1
-	go.step.sm/crypto v0.13.0
+	go.step.sm/crypto v0.13.1-0.20211229193631-2dc253d64706
 	go.step.sm/linkedca v0.7.0
-	golang.org/x/crypto v0.0.0-20210915214749-c084706c2272
-	golang.org/x/net v0.0.0-20210913180222-943fd674d43e
-	golang.org/x/sys v0.0.0-20211031064116-611d5d643895
-	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
+	golang.org/x/sys v0.0.0-20211103235746-7861aae1554b
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/square/go-jose.v2 v2.6.0
 	howett.net/plist v1.0.0 // indirect
