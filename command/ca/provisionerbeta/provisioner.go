@@ -3,6 +3,9 @@ package provisionerbeta
 import (
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/slackhq/nebula/cert"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 )
@@ -238,4 +241,44 @@ By default it will accept any SAN in the CSR.`,
 with the same instance will be accepted. By default only the first request
 will be accepted.`,
 	}
+
+	// Nebula provisioner flags
+	nebulaRootFlag = cli.StringFlag{
+		Name: "nebula-root",
+		Usage: `Root certificate (chain) <file> used to validate the signature on Nebula
+provisioning tokens.`,
+	}
 )
+
+func readNebulaRoots(rootFile string) ([][]byte, error) {
+	b, err := utils.ReadFile(rootFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var crt *cert.NebulaCertificate
+	var certs []*cert.NebulaCertificate
+	for len(b) > 0 {
+		crt, b, err = cert.UnmarshalNebulaCertificateFromPEM(b)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading %s", rootFile)
+		}
+		if crt.Details.IsCA {
+			certs = append(certs, crt)
+		}
+	}
+	if len(certs) == 0 {
+		return nil, errors.Errorf("error reading %s: no certificates found", rootFile)
+	}
+
+	rootBytes := make([][]byte, len(certs))
+	for i, crt := range certs {
+		b, err = crt.MarshalToPEM()
+		if err != nil {
+			return nil, errors.Wrap(err, "error marshaling certificate")
+		}
+		rootBytes[i] = b
+	}
+
+	return rootBytes, nil
+}
