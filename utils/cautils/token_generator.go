@@ -2,6 +2,7 @@ package cautils
 
 import (
 	"crypto"
+	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/x25519"
 )
 
 // TokenGenerator is a helper used to generate different types of tokens used in
@@ -203,10 +205,23 @@ func generateNebulaToken(ctx *cli.Context, p *provisioner.Nebula, tokType int, t
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "Nebula", "nebula-key")
 	}
 
-	// Get private key from given key file
+	// Get private key from given key file, nebula CAs uses ed25519 keys while
+	// nebula leafs uses X25519 keys.
 	jwk, err := jose.ReadKey(keyFile)
 	if err != nil {
 		return "", err
+	}
+
+	var key []byte
+	switch k := jwk.Key.(type) {
+	case x25519.PrivateKey:
+		key = []byte(k)
+	case ed25519.PrivateKey:
+		key = []byte(k)
+	case []byte:
+		key = k
+	default:
+		return "", errors.Errorf("error reading %s: content is not a valid nebula key", keyFile)
 	}
 
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
@@ -214,17 +229,17 @@ func generateNebulaToken(ctx *cli.Context, p *provisioner.Nebula, tokType int, t
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
 	switch tokType {
 	case SignType:
-		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, token.WithNebulaCert(certFile, jwk.Key))
+		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, token.WithNebulaCert(certFile, key))
 	case RevokeType:
-		return tokenGen.RevokeToken(tokAttrs.subject, token.WithNebulaCert(certFile, jwk.Key))
+		return tokenGen.RevokeToken(tokAttrs.subject, token.WithNebulaCert(certFile, key))
 	case SSHUserSignType:
 		return tokenGen.SignSSHToken(tokAttrs.subject, provisioner.SSHUserCert, tokAttrs.sans,
-			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithNebulaCert(certFile, jwk.Key))
+			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithNebulaCert(certFile, key))
 	case SSHHostSignType:
 		return tokenGen.SignSSHToken(tokAttrs.subject, provisioner.SSHHostCert, tokAttrs.sans,
-			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithNebulaCert(certFile, jwk.Key))
+			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithNebulaCert(certFile, key))
 	default:
-		return tokenGen.Token(tokAttrs.subject, token.WithNebulaCert(certFile, jwk.Key))
+		return tokenGen.Token(tokAttrs.subject, token.WithNebulaCert(certFile, key))
 	}
 }
 
