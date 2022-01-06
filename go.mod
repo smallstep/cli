@@ -15,6 +15,7 @@ require (
 	github.com/pquerna/otp v1.0.0
 	github.com/samfoo/ansi v0.0.0-20160124022901-b6bd2ded7189
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
+	github.com/slackhq/nebula v1.5.2
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.18.1-0.20211229221203-32390a29641c
 	github.com/smallstep/certinfo v1.5.2
@@ -25,15 +26,14 @@ require (
 	github.com/urfave/cli v1.22.5
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.1
-	go.step.sm/crypto v0.13.1-0.20211229193631-2dc253d64706
-	go.step.sm/linkedca v0.7.0
+	go.step.sm/crypto v0.14.0
+	go.step.sm/linkedca v0.9.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
-	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
-	golang.org/x/sys v0.0.0-20211103235746-7861aae1554b
+	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/square/go-jose.v2 v2.6.0
-	howett.net/plist v1.0.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20201103104416-57fc603b7f52
 )
 
