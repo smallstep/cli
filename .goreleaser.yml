@@ -104,20 +104,14 @@ nfpms:
         dst: /usr/share/bash-completion/completions/step-cli
       - src: debian/copyright
         dst: /usr/share/doc/step-cli/copyright
-    overrides:
-      deb:
-        scripts:
-          postinstall: "debian/postinstall.sh"
-          preremove: "debian/preremove.sh"
-      rpm:
-        contents:
-        - src: autocomplete/bash_autocomplete
-          dst: /usr/share/bash-completion/completions/step-cli
-        - src: debian/copyright
-          dst: /usr/share/doc/step-cli/copyright
-        - src: /usr/bin/step-cli
-          dst: /usr/bin/step
-          type: "symlink"
+        # Ghost files are used for RPM and ignored elsewhere
+      - dst: /usr/bin/step
+        type: ghost
+      - dst: /usr/share/bash-completion/completions/step
+        type: ghost
+    scripts:
+      postinstall: scripts/postinstall.sh
+      postremove: scripts/postremove.sh
 
 
 source:
