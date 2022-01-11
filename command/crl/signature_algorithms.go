@@ -6,6 +6,7 @@ package crl
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -43,29 +44,32 @@ var (
 var signatureAlgorithmDetails = []struct {
 	algo x509.SignatureAlgorithm
 	oid  asn1.ObjectIdentifier
+	hash crypto.Hash
 }{
-	{x509.MD2WithRSA, oidSignatureMD2WithRSA},
-	{x509.MD5WithRSA, oidSignatureMD5WithRSA},
-	{x509.SHA1WithRSA, oidSignatureSHA1WithRSA},
-	{x509.SHA1WithRSA, oidISOSignatureSHA1WithRSA},
-	{x509.SHA256WithRSA, oidSignatureSHA256WithRSA},
-	{x509.SHA384WithRSA, oidSignatureSHA384WithRSA},
-	{x509.SHA512WithRSA, oidSignatureSHA512WithRSA},
-	{x509.SHA256WithRSAPSS, oidSignatureRSAPSS},
-	{x509.SHA384WithRSAPSS, oidSignatureRSAPSS},
-	{x509.SHA512WithRSAPSS, oidSignatureRSAPSS},
-	{x509.DSAWithSHA1, oidSignatureDSAWithSHA1},
-	{x509.DSAWithSHA256, oidSignatureDSAWithSHA256},
-	{x509.ECDSAWithSHA1, oidSignatureECDSAWithSHA1},
-	{x509.ECDSAWithSHA256, oidSignatureECDSAWithSHA256},
-	{x509.ECDSAWithSHA384, oidSignatureECDSAWithSHA384},
-	{x509.ECDSAWithSHA512, oidSignatureECDSAWithSHA512},
-	{x509.PureEd25519, oidSignatureEd25519},
+	{x509.MD2WithRSA, oidSignatureMD2WithRSA, crypto.Hash(0)}, // no value for MD2
+	{x509.MD5WithRSA, oidSignatureMD5WithRSA, crypto.MD5},
+	{x509.SHA1WithRSA, oidSignatureSHA1WithRSA, crypto.SHA1},
+	{x509.SHA1WithRSA, oidISOSignatureSHA1WithRSA, crypto.SHA1},
+	{x509.SHA256WithRSA, oidSignatureSHA256WithRSA, crypto.SHA256},
+	{x509.SHA384WithRSA, oidSignatureSHA384WithRSA, crypto.SHA384},
+	{x509.SHA512WithRSA, oidSignatureSHA512WithRSA, crypto.SHA512},
+	{x509.SHA256WithRSAPSS, oidSignatureRSAPSS, crypto.SHA256},
+	{x509.SHA384WithRSAPSS, oidSignatureRSAPSS, crypto.SHA384},
+	{x509.SHA512WithRSAPSS, oidSignatureRSAPSS, crypto.SHA512},
+	{x509.DSAWithSHA1, oidSignatureDSAWithSHA1, crypto.SHA1},
+	{x509.DSAWithSHA256, oidSignatureDSAWithSHA256, crypto.SHA256},
+	{x509.ECDSAWithSHA1, oidSignatureECDSAWithSHA1, crypto.SHA1},
+	{x509.ECDSAWithSHA256, oidSignatureECDSAWithSHA256, crypto.SHA256},
+	{x509.ECDSAWithSHA384, oidSignatureECDSAWithSHA384, crypto.SHA384},
+	{x509.ECDSAWithSHA512, oidSignatureECDSAWithSHA512, crypto.SHA512},
+	{x509.PureEd25519, oidSignatureEd25519, crypto.Hash(0)},
 }
 
 type SignatureAlgorithm struct {
 	Name string `json:"name"`
 	OID  string `json:"oid"`
+	algo x509.SignatureAlgorithm
+	hash crypto.Hash
 }
 
 func (s SignatureAlgorithm) String() string {
@@ -104,6 +108,8 @@ func newSignatureAlgorithm(ai pkix.AlgorithmIdentifier) SignatureAlgorithm {
 		for _, details := range signatureAlgorithmDetails {
 			if ai.Algorithm.Equal(details.oid) {
 				sa.Name = details.algo.String()
+				sa.algo = details.algo
+				sa.hash = details.hash
 			}
 		}
 		return sa
@@ -138,10 +144,16 @@ func newSignatureAlgorithm(ai pkix.AlgorithmIdentifier) SignatureAlgorithm {
 	switch {
 	case params.Hash.Algorithm.Equal(oidSHA256) && params.SaltLength == 32:
 		sa.Name = x509.SHA256WithRSAPSS.String()
+		sa.algo = x509.SHA256WithRSAPSS
+		sa.hash = crypto.SHA256
 	case params.Hash.Algorithm.Equal(oidSHA384) && params.SaltLength == 48:
 		sa.Name = x509.SHA384WithRSAPSS.String()
+		sa.algo = x509.SHA384WithRSAPSS
+		sa.hash = crypto.SHA384
 	case params.Hash.Algorithm.Equal(oidSHA512) && params.SaltLength == 64:
 		sa.Name = x509.SHA512WithRSAPSS.String()
+		sa.algo = x509.SHA512WithRSAPSS
+		sa.hash = crypto.SHA512
 	}
 
 	return sa
