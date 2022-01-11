@@ -23,7 +23,7 @@ const (
 	AWS          // Amazon Web Services
 	Azure        // Microsoft Azure
 	K8sSA        // Kubernetes Service Account
-	Nebula       // Nebula, a JWT with nbc header
+	Nebula       // Nebula, a JWT with nebula header
 )
 
 // JSONWebToken represents a JSON Web Token (as specified in RFC7519). Using the

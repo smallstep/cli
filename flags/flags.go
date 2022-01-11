@@ -285,11 +285,11 @@ the 'x5t' header.`,
 be stored in the 'sshpop' header.`,
 	}
 
-	// NebulaCert is a cli.Flag used to pass the nebula certificate used as nbc
-	// header certificate in a JWT.
+	// NebulaCert is a cli.Flag used to pass the nebula certificate used as the
+	// nebula header certificate in a JWT.
 	NebulaCert = cli.StringFlag{
 		Name:  "nebula-cert",
-		Usage: "Certificate <file> in PEM format to store in the 'nbc' header of a JWT.",
+		Usage: "Certificate <file> in PEM format to store in the 'nebula' header of a JWT.",
 	}
 
 	// NebulaKey is a cli.Flag used to pass the private key (corresponding to
@@ -297,7 +297,7 @@ be stored in the 'sshpop' header.`,
 	NebulaKey = cli.StringFlag{
 		Name: "nebula-key",
 		Usage: `Private key <file>, used to sign a JWT, corresponding to the certificate that will
-be stored in the 'nbc' header.`,
+be stored in the 'nebula' header.`,
 	}
 
 	// Team is a cli.Flag used to pass the team ID.

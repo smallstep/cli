@@ -176,7 +176,7 @@ func WithX5CFile(certFile string, key interface{}) Options {
 
 var pemCertPrefix = []byte("-----BEGIN")
 
-// WithNebulaCert returns a Options that sets the header nbc claims.
+// WithNebulaCert returns a Options that sets the nebula header.
 func WithNebulaCert(certFile string, key []byte) Options {
 	return func(c *Claims) error {
 		b, err := os.ReadFile(certFile)

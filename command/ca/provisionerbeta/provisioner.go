@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/slackhq/nebula/cert"
+	nebula "github.com/slackhq/nebula/cert"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -256,10 +256,10 @@ func readNebulaRoots(rootFile string) ([][]byte, error) {
 		return nil, err
 	}
 
-	var crt *cert.NebulaCertificate
-	var certs []*cert.NebulaCertificate
+	var crt *nebula.NebulaCertificate
+	var certs []*nebula.NebulaCertificate
 	for len(b) > 0 {
-		crt, b, err = cert.UnmarshalNebulaCertificateFromPEM(b)
+		crt, b, err = nebula.UnmarshalNebulaCertificateFromPEM(b)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error reading %s", rootFile)
 		}

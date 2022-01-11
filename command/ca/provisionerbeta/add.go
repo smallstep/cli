@@ -57,7 +57,7 @@ func addCommand() cli.Command {
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
 
-**step beta ca provisioner add** <name> **--type**=NEBULA **--nebula-root**=<file>
+**step beta ca provisioner add** <name> **--type**=Nebula **--nebula-root**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
@@ -107,16 +107,16 @@ func addCommand() cli.Command {
     : Uses the ACME protocol to create certificates.
 
     **X5C**
-    : Uses an X509 Certificate / private key pair to sign provisioning tokens.
+    : Uses an X509 certificate / private key pair to sign provisioning tokens.
 
     **K8SSA**
     : Uses Kubernetes Service Account tokens.
 
     **SSHPOP**
-    : Uses an SSH Certificate / private key pair to sign provisioning tokens.
+    : Uses an SSH certificate / private key pair to sign provisioning tokens.
 
-	**NEBULA**
-	: Uses a Nebula Certificate / private key pair to sign provisioning tokens.`},
+	**Nebula**
+	: Uses a Nebula certificate / private key pair to sign provisioning tokens.`},
 			x509TemplateFlag,
 			x509TemplateDataFlag,
 			sshTemplateFlag,
