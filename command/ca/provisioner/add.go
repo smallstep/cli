@@ -503,7 +503,7 @@ func addOIDCProvisioner(ctx *cli.Context, name string, provMap map[string]bool) 
 	if _, ok := provMap[p.GetID()]; !ok {
 		provMap[p.GetID()] = true
 	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with name=%s and client-id=%s", p.GetName(), p.GetID())
+		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with client-id=%s", p.GetID())
 	}
 	list = append(list, p)
 	return
