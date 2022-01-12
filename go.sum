@@ -789,8 +789,8 @@ github.com/slackhq/nebula v1.5.2/go.mod h1:xaCM6wqbFk/NRmmUe1bv88fWBm3a1UioXJVIp
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1/1fApl1A+9VcBk+9dcqGfnePY87LY=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
-github.com/smallstep/certificates v0.18.1-0.20211229221203-32390a29641c h1:yLaszMKUVP/v0qf7me5FJjBKWehpYqAodXYUmJ/UXyU=
-github.com/smallstep/certificates v0.18.1-0.20211229221203-32390a29641c/go.mod h1:9CLJ/No75BUjJzLhpYA1/uqIZuXhgxVieYInNTVFwKk=
+github.com/smallstep/certificates v0.18.1-rc1.0.20220112015040-57f9e5415160 h1:F6rpaAIbg8JcW7E+hflQPz8mfUe8xC0LUgnIromBzag=
+github.com/smallstep/certificates v0.18.1-rc1.0.20220112015040-57f9e5415160/go.mod h1:G+ZCrHnwT9k6M3bQjvyB5LcmFEeuPO3zudFDgXdmZ2M=
 github.com/smallstep/certinfo v1.6.0 h1:o1eS9+iE6OPLRdnRFiYqAtXYR2FioNUt8q4CIj7X3Nk=
 github.com/smallstep/certinfo v1.6.0/go.mod h1:DsKAlSDLWsywdiVBCfqqVdRuny77wqiI+NFskLM7Ods=
 github.com/smallstep/nosql v0.3.9 h1:YPy5PR3PXClqmpFaVv0wfXDXDc7NXGBE1auyU2c87dc=
@@ -973,10 +973,8 @@ go.step.sm/cli-utils v0.7.0/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/
 go.step.sm/cli-utils v0.7.1 h1:+ZCRWbSc3gfj+LA1d6GgjtJXIljl3qxnrufgRF851bs=
 go.step.sm/cli-utils v0.7.1/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/E=
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
-go.step.sm/crypto v0.13.1-0.20211229193631-2dc253d64706/go.mod h1:3G0yQr5lQqfEG0CMYz8apC/qMtjLRQlzflL2AxkcN+g=
 go.step.sm/crypto v0.14.0 h1:HzSkUDwqKhODKpsTxevJz956U2xVDZ3sDdGQVwR6Ttw=
 go.step.sm/crypto v0.14.0/go.mod h1:3G0yQr5lQqfEG0CMYz8apC/qMtjLRQlzflL2AxkcN+g=
-go.step.sm/linkedca v0.7.0/go.mod h1:5uTRjozEGSPAZal9xJqlaD38cvJcLe3o1VAFVjqcORo=
 go.step.sm/linkedca v0.9.0 h1:xKXZoRXy4B7LeGBZozq62IQ0p3v8dT33O9UOMpVtRtI=
 go.step.sm/linkedca v0.9.0/go.mod h1:5uTRjozEGSPAZal9xJqlaD38cvJcLe3o1VAFVjqcORo=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
