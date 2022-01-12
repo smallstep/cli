@@ -36,9 +36,10 @@ func inspectCommand() cli.Command {
 	return cli.Command{
 		Name:      "inspect",
 		Action:    command.ActionFunc(inspectAction),
-		Usage:     "print certificate revocation list or CRL details in human readable format",
+		Usage:     "print certificate revocation list (CRL) details in human-readable format",
 		UsageText: `**step crl inspect** <file|url>`,
-		Description: `**step crl inspect** prints the details of a certificate revocation list (CRL).
+		Description: `**step crl inspect** validates and prints the details of a certificate revocation list (CRL). 
+A CRL is considered valid if its signature is valid, the CA is not expired, and the next update time is in the future.
 
 ## POSITIONAL ARGUMENTS
 

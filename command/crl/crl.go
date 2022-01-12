@@ -12,7 +12,7 @@ func init() {
 		Usage:     "initialize and manage a certificate revocation list",
 		UsageText: "**step crl** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step crl** command group provides facilities to create, manage and inspect a
-certificate revocation list or CRL.
+certificate revocation list (CRL).
 
 ## EXAMPLES
 
