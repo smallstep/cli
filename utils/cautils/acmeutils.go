@@ -3,11 +3,13 @@ package cautils
 import (
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -361,6 +363,43 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 	return af, nil
 }
 
+func (af *acmeFlow) getRootCAs(mergeRootCAs bool) (ca.ClientOption, error) {
+	root := ""
+	if af.ctx.IsSet("root") {
+		root = af.ctx.String("root")
+		// If there's an error reading the local root ca, ignore the error and use the system store
+	} else if _, err := os.Stat(pki.GetRootCAPath()); err == nil {
+		root = pki.GetRootCAPath()
+	}
+
+	// 1. Merge local RootCA with system store
+	if mergeRootCAs && len(root) > 0 {
+		rootCAs, err := x509.SystemCertPool()
+		if err != nil || rootCAs == nil {
+			rootCAs = x509.NewCertPool()
+		}
+
+		cert, err := ioutil.ReadFile(root)
+		if err != nil {
+			return ca.WithRootFile(root), errors.Wrap(err, "failed to read local root ca")
+		}
+
+		if ok := rootCAs.AppendCertsFromPEM(cert); !ok {
+			return ca.WithRootFile(root), errors.New("failed to append local root ca to system cert pool")
+		}
+
+		return ca.WithTransport(&http.Transport{TLSClientConfig: &tls.Config{RootCAs: rootCAs}}), nil
+	}
+
+	// Use local Root CA only
+	if len(root) > 0 {
+		return ca.WithRootFile(root), nil
+	}
+
+	// Use system store only
+	return ca.WithTransport(http.DefaultTransport), nil
+}
+
 func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	dnsNames, ips, err := validateSANsForACME(af.sans)
 	if err != nil {
@@ -385,14 +424,20 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		orderPayload []byte
 		clientOps    []ca.ClientOption
 	)
+
+	ops, err := af.getRootCAs(af.ctx.IsSet("acme"))
+	if err != nil {
+		return nil, err
+	}
+
+	clientOps = append(clientOps, ops)
+
 	if strings.Contains(af.acmeDir, "letsencrypt") {
 		// LetsEncrypt does not support NotBefore and NotAfter attributes in orders.
 		if af.ctx.IsSet("not-before") || af.ctx.IsSet("not-after") {
 			return nil, errors.New("LetsEncrypt public CA does not support NotBefore/NotAfter " +
 				"attributes for certificates. Instead, each certificate has a default lifetime of 3 months.")
 		}
-		// Use default transport for public CAs
-		clientOps = append(clientOps, ca.WithTransport(http.DefaultTransport))
 		// LetsEncrypt requires that the Common Name of the Certificate also be
 		// represented as a DNSName in the SAN extension, and therefore must be
 		// authorized as part of the ACME order.
@@ -416,15 +461,6 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			return nil, errors.Wrap(err, "error marshaling new letsencrypt order request")
 		}
 	} else {
-		// If the CA is not public then a root file is required.
-		root := af.ctx.String("root")
-		if root == "" {
-			root = pki.GetRootCAPath()
-			if _, err := os.Stat(root); err != nil {
-				return nil, errs.RequiredFlag(af.ctx, "root")
-			}
-		}
-		clientOps = append(clientOps, ca.WithRootFile(root))
 		// parse times or durations
 		nbf, naf, err := flags.ParseTimeDuration(af.ctx)
 		if err != nil {
