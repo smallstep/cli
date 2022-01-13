@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -363,7 +362,7 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 	return af, nil
 }
 
-func (af *acmeFlow) getRootCAs(mergeRootCAs bool) (ca.ClientOption, error) {
+func (af *acmeFlow) getClientTruststoreOption(mergeRootCAs bool) (ca.ClientOption, error) {
 	root := ""
 	if af.ctx.IsSet("root") {
 		root = af.ctx.String("root")
@@ -379,13 +378,13 @@ func (af *acmeFlow) getRootCAs(mergeRootCAs bool) (ca.ClientOption, error) {
 			rootCAs = x509.NewCertPool()
 		}
 
-		cert, err := ioutil.ReadFile(root)
+		cert, err := os.ReadFile(root)
 		if err != nil {
-			return ca.WithRootFile(root), errors.Wrap(err, "failed to read local root ca")
+			return nil, errors.Wrap(err, "failed to read local root ca")
 		}
 
 		if ok := rootCAs.AppendCertsFromPEM(cert); !ok {
-			return ca.WithRootFile(root), errors.New("failed to append local root ca to system cert pool")
+			return nil, errors.New("failed to append local root ca to system cert pool")
 		}
 
 		return ca.WithTransport(&http.Transport{TLSClientConfig: &tls.Config{RootCAs: rootCAs}}), nil
@@ -425,7 +424,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		clientOps    []ca.ClientOption
 	)
 
-	ops, err := af.getRootCAs(af.ctx.IsSet("acme"))
+	ops, err := af.getClientTruststoreOption(af.ctx.IsSet("acme"))
 	if err != nil {
 		return nil, err
 	}
