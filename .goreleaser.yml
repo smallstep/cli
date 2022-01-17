@@ -9,7 +9,7 @@ before:
     # - go generate ./...
 
 builds:
-  - 
+  -
     id: default
     env:
       - CGO_ENABLED=0
@@ -20,6 +20,7 @@ builds:
       - linux_386
       - linux_amd64
       - linux_arm64
+      - linux_arm_5
       - linux_arm_6
       - linux_arm_7
       - linux_mips
@@ -78,7 +79,7 @@ nfpms:
   # Useful tools for debugging .debs:
   # List file contents: dpkg -c dist/step_...deb
   # Package metadata: dpkg --info dist/step_....deb
-  # 
+  #
   -
     builds:
       - nfpm
@@ -89,7 +90,7 @@ nfpms:
     maintainer: Smallstep <techadmin@smallstep.com>
     description: >
       step-cli lets you build, operate, and automate Public Key Infrastructure (PKI) systems and workflows.
-      
+
       It's a swiss army knife for authenticated encryption (X.509, TLS), single sign-on (OAuth OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML assertions).
     license: Apache 2.0
     section: utils
