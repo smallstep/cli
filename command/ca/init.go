@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -480,7 +481,7 @@ func initAction(ctx *cli.Context) (err error) {
 			if err := dnsValidator(name); err != nil {
 				return err
 			}
-			dnsNames = append(dnsNames, strings.TrimSpace(name))
+			dnsNames = append(dnsNames, normalize(strings.TrimSpace(name)))
 		}
 
 		if useContext {
@@ -741,4 +742,13 @@ func assertCryptoRand() error {
 		return errs.NewError("crypto/rand is unavailable: Read() failed with %#v", err)
 	}
 	return nil
+}
+
+func normalize(name string) string {
+	if strings.HasPrefix(name, "[") && strings.HasSuffix(name, "]") {
+		if ip := net.ParseIP(name[1 : len(name)-1]); ip != nil {
+			name = name[1 : len(name)-1]
+		}
+	}
+	return name
 }

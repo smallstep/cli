@@ -3,6 +3,7 @@ package flags
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -448,6 +449,10 @@ func parseCaURL(ctx *cli.Context, caURL string) (string, error) {
 	}
 	if u.Scheme != "https" {
 		return "", errs.InvalidFlagValueMsg(ctx, "ca-url", caURL, "must have https scheme")
+	}
+	// if host represents a valid IPv6 address, ensure that it contains brackets
+	if ip := net.ParseIP(u.Hostname()); ip != nil && ip.To4() == nil {
+		u.Host = "[" + ip.String() + "]" + ":" + u.Port()
 	}
 	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
 }

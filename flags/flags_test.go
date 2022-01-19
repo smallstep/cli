@@ -85,6 +85,12 @@ func Test_parseCaURL(t *testing.T) {
 		{name: "fail/invalidScheme-http", caURL: "http://ca.smallstep.com:8080", ret: "", err: errors.New("invalid value 'http://ca.smallstep.com:8080' for flag '--ca-url'; must have https scheme")},
 		{name: "ok", caURL: "https://ca.smallstep.com:8080", ret: "https://ca.smallstep.com:8080"},
 		{name: "ok/provide-scheme", caURL: "ca.smallstep.com:8080", ret: "https://ca.smallstep.com:8080"},
+		{name: "ok/ipv4", caURL: "https://127.0.0.1:8080", ret: "https://127.0.0.1:8080"},
+		{name: "ok/ipv4-no-scheme", caURL: "127.0.0.1:8080", ret: "https://127.0.0.1:8080"},
+		{name: "ok/ipv6-bracketed", caURL: "https://[::1]:8080", ret: "https://[::1]:8080"},
+		{name: "ok/ipv6-bracketed-no-scheme", caURL: "[::1]:8080", ret: "https://[::1]:8080"},
+		{name: "ok/ipv6-non-bracketed", caURL: "https://::1:8080", ret: "https://[::1]:8080"},
+		{name: "ok/ipv6-non-bracketed-no-scheme", caURL: "::1:8080", ret: "https://[::1]:8080"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
