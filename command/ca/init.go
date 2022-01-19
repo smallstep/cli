@@ -513,7 +513,7 @@ func initAction(ctx *cli.Context) (err error) {
 
 		var address string
 		if helm {
-			ui.Println("What IP and port will your new CA bind to, it should match service.targetPort?", ui.WithValue(ctx.String("address")))
+			ui.Println("What IP and port will your new CA bind to (it should match service.targetPort)?", ui.WithValue(ctx.String("address")))
 		} else {
 			ui.Println("What IP and port will your new CA bind to?", ui.WithValue(ctx.String("address")))
 		}
