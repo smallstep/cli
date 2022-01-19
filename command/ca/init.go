@@ -490,11 +490,11 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 			ctxAuthority := ctx.String("authority")
 			if ctxAuthority == "" {
-				ctxAuthority = dnsNames[0]
+				ctxAuthority = ctxName
 			}
 			ctxProfile := ctx.String("profile")
 			if ctxProfile == "" {
-				ctxProfile = dnsNames[0]
+				ctxProfile = ctxName
 			}
 			if err := step.Contexts().Add(&step.Context{
 				Name:      ctxName,
