@@ -2,7 +2,6 @@ package eab
 
 import (
 	"encoding/base64"
-	"time"
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/urfave/cli"
@@ -14,12 +13,12 @@ type cliEAK struct {
 	provisioner string
 	reference   string
 	key         string
-	createdAt   time.Time
+	createdAt   string
 	boundAt     string
 	account     string
 }
 
-func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *linkedca.EABKey) (*cliEAK, error) {
+func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *linkedca.EABKey) *cliEAK {
 	boundAt := ""
 	if !eak.BoundAt.AsTime().IsZero() {
 		boundAt = eak.BoundAt.AsTime().Format("2006-01-02 15:04:05 -07:00")
@@ -29,10 +28,10 @@ func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *linkedca.EABKey) (*cli
 		provisioner: eak.Provisioner,
 		reference:   eak.Reference,
 		key:         base64.RawURLEncoding.Strict().EncodeToString(eak.HmacKey),
-		createdAt:   eak.CreatedAt.AsTime(),
+		createdAt:   eak.CreatedAt.AsTime().Format("2006-01-02 15:04:05 -07:00"),
 		boundAt:     boundAt,
 		account:     eak.Account,
-	}, nil
+	}
 }
 
 // Command returns the eab subcommand.

@@ -2,9 +2,11 @@ package eab
 
 import (
 	"fmt"
+	"io"
 	"os"
-	"text/tabwriter"
+	"os/exec"
 
+	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
@@ -16,7 +18,7 @@ func listCommand() cli.Command {
 		Name:   "list",
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all ACME External Account Binding Keys",
-		UsageText: `**step beta ca acme eab list** <provisioner> <reference>
+		UsageText: `**step beta ca acme eab list** <provisioner> [<reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -31,7 +33,9 @@ func listCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step beta ca acme eab list** lists all ACME External Account Binding Keys.
+		Description: `**step beta ca acme eab list** lists all ACME External Account Binding (EAB) Keys.
+
+Output will go to stdout by default. If many EAB keys are stored in the ACME provisioner, output will be sent to $PAGER (when set). 
 
 ## POSITIONAL ARGUMENTS
 
@@ -39,19 +43,19 @@ func listCommand() cli.Command {
 : Name of the provisioner to list ACME EAB keys for
 
 <reference>
-: (Optional) Reference (from external system) for the key to be created
+: (Optional) reference (from external system) for the key to be listed
 
 
 ## EXAMPLES
 
 List all ACME External Account Binding Keys:
 '''
-$ step beta ca acme eab list my_provisioner
+$ step beta ca acme eab list my_acme_provisioner
 '''
 
 Show ACME External Account Binding Key with specific reference:
 '''
-$ step beta ca acme eab list my_provisioner my_reference
+$ step beta ca acme eab list my_acme_provisioner my_reference
 '''
 `,
 	}
@@ -72,29 +76,56 @@ func listAction(ctx *cli.Context) (err error) {
 
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error creating admin client")
 	}
 
 	eaks, err := client.GetExternalAccountKeys(provisioner, reference)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error retrieving ACME EAB keys")
 	}
 
-	w := new(tabwriter.Writer)
-	// Format in tab-separated columns with a tab stop of 8.
-	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
+	if len(eaks) == 0 {
+		fmt.Printf("No ACME EAB keys stored for provisioner %s\n", provisioner)
+		return nil
+	}
 
-	fmt.Fprintln(w, "Key ID\tProvisioner\tReference\tKey (masked)\tCreated At\tBound At\tAccount")
+	var out io.WriteCloser
+	var cmd *exec.Cmd
 
-	for _, k := range eaks {
-		cliEAK, err := toCLI(ctx, client, k)
+	// prepare the $PAGER command to run
+	pager := os.Getenv("PAGER")
+	if pager != "" && len(eaks) > 15 { // use $PAGER only when more than 15 results are returned
+		cmd = exec.Command(pager)
+		var err error
+		out, err = cmd.StdinPipe()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error setting stdin")
 		}
-		fmt.Fprintf(w, "%s\t%s \t%s \t%s \t%s \t%s \t%s\n", cliEAK.id, cliEAK.provisioner, cliEAK.reference, "*****", cliEAK.createdAt.Format("2006-01-02 15:04:05 -07:00"), cliEAK.boundAt, cliEAK.account)
+		cmd.Stdout = os.Stdout
+		if err := cmd.Start(); err != nil {
+			return errors.Wrap(err, "unable to start $PAGER")
+		}
+	} else {
+		out = os.Stdout
 	}
 
-	w.Flush()
+	format := "%-36s%-28s%-16s%-30s%-30s%-36s%s\n"
+	fmt.Fprintf(out, format, "Key ID", "Provisioner", "Key (masked)", "Created At", "Bound At", "Account", "Reference")
+	for _, k := range eaks {
+		cliEAK := toCLI(ctx, client, k)
+		_, err = fmt.Fprintf(out, format, cliEAK.id, cliEAK.provisioner, "*****", cliEAK.createdAt, cliEAK.boundAt, cliEAK.account, cliEAK.reference)
+		if err != nil {
+			return errors.Wrap(err, "error writing to output")
+		}
+	}
+
+	out.Close()
+
+	if cmd != nil {
+		if err := cmd.Wait(); err != nil {
+			return errors.Wrap(err, "error waiting for $PAGER")
+		}
+	}
 
 	return nil
 }

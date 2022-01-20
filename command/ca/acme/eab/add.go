@@ -3,8 +3,8 @@ package eab
 import (
 	"fmt"
 	"os"
-	"text/tabwriter"
 
+	"github.com/pkg/errors"
 	adminAPI "github.com/smallstep/certificates/authority/admin/api"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
@@ -17,7 +17,7 @@ func addCommand() cli.Command {
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add ACME External Account Binding Key",
-		UsageText: `**step beta ca acme eab add** <provisioner> <reference>
+		UsageText: `**step beta ca acme eab add** <provisioner> [<reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -71,30 +71,24 @@ func addAction(ctx *cli.Context) (err error) {
 
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error creating admin client")
 	}
 
 	eak, err := client.CreateExternalAccountKey(provisioner, &adminAPI.CreateExternalAccountKeyRequest{
 		Reference: reference,
 	})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error creating ACME EAB key")
 	}
 
-	cliEAK, err := toCLI(ctx, client, eak)
-	if err != nil {
-		return err
-	}
+	cliEAK := toCLI(ctx, client, eak)
 
 	// TODO(hs): JSON output, so that executing this command can be more easily automated?
 
-	w := new(tabwriter.Writer)
-	// Format in tab-separated columns with a tab stop of 8.
-	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
-
-	fmt.Fprintln(w, "Key ID\tProvisioner\tReference\tKey (base64, raw url encoded)")
-	fmt.Fprintf(w, "%s\t%s \t%s \t%s\n", cliEAK.id, cliEAK.provisioner, cliEAK.reference, cliEAK.key)
-	w.Flush()
+	out := os.Stdout
+	format := "%-36s%-28s%-48s%s\n"
+	fmt.Fprintf(out, format, "Key ID", "Provisioner", "Key (base64, raw url encoded)", "Reference")
+	fmt.Fprintf(out, format, cliEAK.id, cliEAK.provisioner, cliEAK.key, cliEAK.reference)
 
 	return nil
 }

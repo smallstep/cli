@@ -1,6 +1,7 @@
 package eab
 
 import (
+	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils/cautils"
@@ -40,9 +41,9 @@ func removeCommand() cli.Command {
 
 ## EXAMPLES
 
-Remove ACME EAB Key with Key ID "zFGdKC1sHmNf3Wsx3OujY808chxwEdmr":
+Remove ACME EAB Key with Key ID "zFGdKC1sHmNf3Wsx3OujY808chxwEdmr" from my_acme_provisioner:
 '''
-$ step beta ca acme eab remove zFGdKC1sHmNf3Wsx3OujY808chxwEdmr
+$ step beta ca acme eab remove my_acme_provisioner zFGdKC1sHmNf3Wsx3OujY808chxwEdmr
 '''
 `,
 	}
@@ -59,12 +60,12 @@ func removeAction(ctx *cli.Context) error {
 
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error creating admin client")
 	}
 
 	err = client.RemoveExternalAccountKey(provisioner, keyID)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error removing ACME EAB key")
 	}
 
 	ui.Println("Key was deleted successfully!")
