@@ -67,21 +67,25 @@ func init() {
 		Usage: "authorization and single sign-on using OAuth & OIDC",
 		UsageText: `**step oauth**
 [**--provider**=<provider>] [**--client-id**=<client-id> **--client-secret**=<client-secret>]
-[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]] [**--prompt**=<prompt>]
+[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
+[**--prompt**=<prompt>] [**--auth-param**=<key-value>]
 
 **step oauth**
 **--authorization-endpoint**=<authorization-endpoint>
 **--token-endpoint**=<token-endpoint>
 **--client-id**=<client-id> **--client-secret**=<client-secret>
-[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]] [**--prompt**=<prompt>]
+[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
+[**--prompt**=<prompt>] [**--auth-param**=<key-value>]
 
 **step oauth** [**--account**=<account>]
 [**--authorization-endpoint**=<authorization-endpoint>]
 [**--token-endpoint**=<token-endpoint>]
-[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]] [**--prompt**=<prompt>]
+[**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
+[**--prompt**=<prompt>] [**--auth-param**=<key-value>]
 
 **step oauth** **--account**=<account> **--jwt**
-[**--scope**=<scope> ...] [**--header**] [**-bare**] [**--prompt**=<prompt>]`,
+[**--scope**=<scope> ...] [**--header**] [**-bare**] [**--prompt**=<prompt>]
+[**--auth-param**=<key-value>]`,
 		Description: `**step oauth** command implements the OAuth 2.0 authorization flow.
 
 OAuth is an open standard for access delegation, commonly used as a way for
@@ -135,6 +139,12 @@ Use a custom OAuth2.0 server:
 '''
 $ step oauth --client-id my-client-id --client-secret my-client-secret \
   --provider https://example.org
+'''
+
+Use additional authentication parameters:
+'''
+$ step oauth --client-id my-client-id --client-secret my-client-secret \
+  --provider https://example.org --auth-param "access_type=offline"
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -185,6 +195,12 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 			cli.StringSliceFlag{
 				Name:  "scope",
 				Usage: "OAuth scopes",
+			},
+			cli.StringSliceFlag{
+				Name: "auth-param",
+				Usage: `OAuth additional authentication parameters to include as part of the URL query.
+Use this flag multiple times to add multiple parameters. This flag expects a
+'key' and 'value' in the format '--auth-param "key=value"'.`,
 			},
 			cli.StringFlag{
 				Name: "prompt",
@@ -336,7 +352,20 @@ func oauthCmd(c *cli.Context) error {
 		prompt = c.String("prompt")
 	}
 
-	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt, opts)
+	authParams := map[string]string{}
+	for _, keyval := range c.StringSlice("auth-param") {
+		parts := strings.Split(keyval, "=")
+		if len(parts) != 2 {
+			return errs.InvalidFlagValue(c, "auth-param", keyval, "")
+		}
+		k, v := parts[0], parts[1]
+		if k == "" || v == "" {
+			return errs.InvalidFlagValue(c, "auth-param", keyval, "")
+		}
+		authParams[k] = v
+	}
+
+	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt, authParams, opts)
 	if err != nil {
 		return err
 	}
@@ -438,11 +467,12 @@ type oauth struct {
 	CallbackPath        string
 	terminalRedirect    string
 	browser             string
+	authParams          map[string]string
 	errCh               chan error
 	tokCh               chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt string, opts *options) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt string, authParams map[string]string, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -479,6 +509,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 			CallbackPath:        opts.CallbackPath,
 			terminalRedirect:    opts.TerminalRedirect,
 			browser:             opts.Browser,
+			authParams:          authParams,
 			errCh:               make(chan error),
 			tokCh:               make(chan *token),
 		}, nil
@@ -519,6 +550,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 			CallbackPath:        opts.CallbackPath,
 			terminalRedirect:    opts.TerminalRedirect,
 			browser:             opts.Browser,
+			authParams:          authParams,
 			errCh:               make(chan error),
 			tokCh:               make(chan *token),
 		}, nil
@@ -885,6 +917,9 @@ func (o *oauth) Auth() (string, error) {
 	q := u.Query()
 	q.Add("client_id", o.clientID)
 	q.Add("redirect_uri", o.redirectURI)
+	for k, v := range o.authParams {
+		q.Add(k, v)
+	}
 	if o.implicit {
 		q.Add("response_type", "id_token token")
 	} else {
