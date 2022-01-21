@@ -73,7 +73,13 @@ func addCommand() cli.Command {
 **step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]`,
+[**--root**=<file>] [**--context**=<name>]
+
+**step beta ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>] 
+[**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>] 
+[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>] [**--password-file**=<file>] 
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "type",
@@ -107,7 +113,10 @@ func addCommand() cli.Command {
     : Uses Kubernetes Service Account tokens.
 
     **SSHPOP**
-    : Uses an SSH Certificate / private key pair to sign provisioning tokens.`},
+    : Uses an SSH Certificate / private key pair to sign provisioning tokens.
+	
+    **SCEP**
+	: Uses the SCEP protocol to create certificates.`},
 			x509TemplateFlag,
 			x509TemplateDataFlag,
 			sshTemplateFlag,
@@ -183,6 +192,13 @@ provisioning tokens.`,
 			// ACME provisioner flags
 			forceCNFlag,
 
+			// SCEP provisioner flags
+			scepChallengeFlag,
+			scepCapabilitiesFlag,
+			scepIncludeRootFlag,
+			scepMinimumPublicKeyLengthFlag,
+			scepEncryptionAlgorithmIdentifierFlag,
+
 			// Cloud provisioner flags
 			awsAccountFlag,
 			azureTenantFlag,
@@ -253,6 +269,11 @@ step beta ca provisioner add kube --type K8SSA --ssh --public-key key.pub
 Create an SSHPOP provisioner for renewing SSH host certificates:")
 '''
 step beta ca provisioner add sshpop --type SSHPOP
+'''
+
+Create a SCEP provisioner with 'secret' challenge and AES-256-CBC:
+'''
+step beta ca provisioner add my_scep_provisioner --type SCEP --challenge secret --encryption-algorithm-identifier 2  
 '''
 
 Create an Azure provisioner with two service groups:
@@ -393,7 +414,10 @@ func addAction(ctx *cli.Context) (err error) {
 	case linkedca.Provisioner_GCP.String():
 		p.Type = linkedca.Provisioner_GCP
 		p.Details, err = createGCPDetails(ctx)
-	// TODO add SCEP provisioner support.
+	case linkedca.Provisioner_SCEP.String():
+		p.Type = linkedca.Provisioner_SCEP
+		p.Details, err = createSCEPDetails(ctx)
+	// TODO: add Nebula support
 	default:
 		return fmt.Errorf("unsupported provisioner type %s", typ)
 	}
@@ -663,7 +687,7 @@ func createOIDCDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createAWSDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
-	d, err := parseIntaceAge(ctx)
+	d, err := parseInstanceAge(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -701,7 +725,7 @@ func createAzureDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) 
 }
 
 func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
-	d, err := parseIntaceAge(ctx)
+	d, err := parseInstanceAge(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -714,6 +738,21 @@ func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 				DisableCustomSans:      ctx.Bool("disable-custom-sans"),
 				DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
 				InstanceAge:            d,
+			},
+		},
+	}, nil
+}
+
+func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_SCEP{
+			SCEP: &linkedca.SCEPProvisioner{
+				ForceCn:                       ctx.Bool("force-cn"),
+				Challenge:                     ctx.String("challenge"),
+				Capabilities:                  ctx.StringSlice("capabilities"),
+				MinimumPublicKeyLength:        int32(ctx.Int("minimum-public-key-length")),
+				IncludeRoot:                   ctx.Bool("include-root"),
+				EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
 			},
 		},
 	}, nil
