@@ -68,24 +68,24 @@ func init() {
 		UsageText: `**step oauth**
 [**--provider**=<provider>] [**--client-id**=<client-id> **--client-secret**=<client-secret>]
 [**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
-[**--prompt**=<prompt>] [**--auth-param**=<key-value>]
+[**--prompt**=<prompt>] [**--auth-param**=<key=value>]
 
 **step oauth**
 **--authorization-endpoint**=<authorization-endpoint>
 **--token-endpoint**=<token-endpoint>
 **--client-id**=<client-id> **--client-secret**=<client-secret>
 [**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
-[**--prompt**=<prompt>] [**--auth-param**=<key-value>]
+[**--prompt**=<prompt>] [**--auth-param**=<key=value>]
 
 **step oauth** [**--account**=<account>]
 [**--authorization-endpoint**=<authorization-endpoint>]
 [**--token-endpoint**=<token-endpoint>]
 [**--scope**=<scope> ...] [**--bare** [**--oidc**]] [**--header** [**--oidc**]]
-[**--prompt**=<prompt>] [**--auth-param**=<key-value>]
+[**--prompt**=<prompt>] [**--auth-param**=<key=value>]
 
 **step oauth** **--account**=<account> **--jwt**
 [**--scope**=<scope> ...] [**--header**] [**-bare**] [**--prompt**=<prompt>]
-[**--auth-param**=<key-value>]`,
+[**--auth-param**=<key=value>]`,
 		Description: `**step oauth** command implements the OAuth 2.0 authorization flow.
 
 OAuth is an open standard for access delegation, commonly used as a way for
@@ -352,17 +352,23 @@ func oauthCmd(c *cli.Context) error {
 		prompt = c.String("prompt")
 	}
 
-	authParams := map[string]string{}
+	authParams := url.Values{}
 	for _, keyval := range c.StringSlice("auth-param") {
-		parts := strings.Split(keyval, "=")
-		if len(parts) != 2 {
+		parts := strings.SplitN(keyval, "=", 2)
+		var k, v string
+		switch len(parts) {
+		case 0:
+			return errs.InvalidFlagValue(c, "auth-param", keyval, "")
+		case 1:
+			k, v = parts[0], ""
+			authParams.Add(parts[0], "")
+		case 2:
+			k, v = parts[0], parts[1]
+		}
+		if k == "" {
 			return errs.InvalidFlagValue(c, "auth-param", keyval, "")
 		}
-		k, v := parts[0], parts[1]
-		if k == "" || v == "" {
-			return errs.InvalidFlagValue(c, "auth-param", keyval, "")
-		}
-		authParams[k] = v
+		authParams.Add(k, v)
 	}
 
 	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt, authParams, opts)
@@ -467,12 +473,12 @@ type oauth struct {
 	CallbackPath        string
 	terminalRedirect    string
 	browser             string
-	authParams          map[string]string
+	authParams          url.Values
 	errCh               chan error
 	tokCh               chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt string, authParams map[string]string, opts *options) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt string, authParams url.Values, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -917,9 +923,6 @@ func (o *oauth) Auth() (string, error) {
 	q := u.Query()
 	q.Add("client_id", o.clientID)
 	q.Add("redirect_uri", o.redirectURI)
-	for k, v := range o.authParams {
-		q.Add(k, v)
-	}
 	if o.implicit {
 		q.Add("response_type", "id_token token")
 	} else {
@@ -937,7 +940,7 @@ func (o *oauth) Auth() (string, error) {
 	if o.loginHint != "" {
 		q.Add("login_hint", o.loginHint)
 	}
-	u.RawQuery = q.Encode()
+	u.RawQuery = fmt.Sprintf("%s&%s", q.Encode(), o.authParams.Encode())
 	return u.String(), nil
 }
 
