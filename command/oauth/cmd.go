@@ -357,13 +357,12 @@ func oauthCmd(c *cli.Context) error {
 		parts := strings.SplitN(keyval, "=", 2)
 		var k, v string
 		switch len(parts) {
-		case 0:
-			return errs.InvalidFlagValue(c, "auth-param", keyval, "")
 		case 1:
 			k, v = parts[0], ""
-			authParams.Add(parts[0], "")
 		case 2:
 			k, v = parts[0], parts[1]
+		default:
+			return errs.InvalidFlagValue(c, "auth-param", keyval, "")
 		}
 		if k == "" {
 			return errs.InvalidFlagValue(c, "auth-param", keyval, "")
@@ -940,7 +939,12 @@ func (o *oauth) Auth() (string, error) {
 	if o.loginHint != "" {
 		q.Add("login_hint", o.loginHint)
 	}
-	u.RawQuery = fmt.Sprintf("%s&%s", q.Encode(), o.authParams.Encode())
+	for k, vs := range o.authParams {
+		for _, v := range vs {
+			q.Add(k, v)
+		}
+	}
+	u.RawQuery = q.Encode()
 	return u.String(), nil
 }
 
