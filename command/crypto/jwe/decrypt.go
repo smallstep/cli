@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/smallstep/cli/ui"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/jose"

@@ -3,11 +3,13 @@ package cautils
 import (
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -21,10 +23,10 @@ import (
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
-	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 )
 
 func startHTTPServer(addr, token, keyAuth string) *http.Server {
@@ -267,18 +269,18 @@ func finalizeOrder(ac *ca.ACMEClient, o *acme.Order, csr *x509.CertificateReques
 	return fo, nil
 }
 
-func validateSANsForACME(sans []string) ([]string, error) {
+func validateSANsForACME(sans []string) ([]string, []net.IP, error) {
 	dnsNames, ips, emails, uris := splitSANs(sans)
-	if len(ips) > 0 || len(emails) > 0 || len(uris) > 0 {
-		return nil, errors.New("IP Address, Email Address, and URI SANs are not supported for ACME flow")
+	if len(emails) > 0 || len(uris) > 0 {
+		return nil, nil, errors.New("Email Address and URI SANs are not supported for ACME flow")
 	}
 	for _, dns := range dnsNames {
 		if strings.Contains(dns, "*") {
-			return nil, errors.Errorf("wildcard dnsnames (%s) require dns validation, "+
+			return nil, nil, errors.Errorf("wildcard dnsnames (%s) require dns validation, "+
 				"which is currently not implemented in this client", dns)
 		}
 	}
-	return dnsNames, nil
+	return dnsNames, ips, nil
 }
 
 type acmeFlowOp func(*acmeFlow) error
@@ -360,8 +362,45 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 	return af, nil
 }
 
+func (af *acmeFlow) getClientTruststoreOption(mergeRootCAs bool) (ca.ClientOption, error) {
+	root := ""
+	if af.ctx.IsSet("root") {
+		root = af.ctx.String("root")
+		// If there's an error reading the local root ca, ignore the error and use the system store
+	} else if _, err := os.Stat(pki.GetRootCAPath()); err == nil {
+		root = pki.GetRootCAPath()
+	}
+
+	// 1. Merge local RootCA with system store
+	if mergeRootCAs && len(root) > 0 {
+		rootCAs, err := x509.SystemCertPool()
+		if err != nil || rootCAs == nil {
+			rootCAs = x509.NewCertPool()
+		}
+
+		cert, err := os.ReadFile(root)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read local root ca")
+		}
+
+		if ok := rootCAs.AppendCertsFromPEM(cert); !ok {
+			return nil, errors.New("failed to append local root ca to system cert pool")
+		}
+
+		return ca.WithTransport(&http.Transport{TLSClientConfig: &tls.Config{RootCAs: rootCAs}}), nil
+	}
+
+	// Use local Root CA only
+	if len(root) > 0 {
+		return ca.WithRootFile(root), nil
+	}
+
+	// Use system store only
+	return ca.WithTransport(http.DefaultTransport), nil
+}
+
 func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
-	dnsNames, err := validateSANsForACME(af.sans)
+	dnsNames, ips, err := validateSANsForACME(af.sans)
 	if err != nil {
 		return nil, err
 	}
@@ -373,19 +412,31 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			Value: dns,
 		})
 	}
+	for _, ip := range ips {
+		idents = append(idents, acme.Identifier{
+			Type:  "ip",
+			Value: ip.String(),
+		})
+	}
 
 	var (
 		orderPayload []byte
 		clientOps    []ca.ClientOption
 	)
+
+	ops, err := af.getClientTruststoreOption(af.ctx.IsSet("acme"))
+	if err != nil {
+		return nil, err
+	}
+
+	clientOps = append(clientOps, ops)
+
 	if strings.Contains(af.acmeDir, "letsencrypt") {
 		// LetsEncrypt does not support NotBefore and NotAfter attributes in orders.
 		if af.ctx.IsSet("not-before") || af.ctx.IsSet("not-after") {
 			return nil, errors.New("LetsEncrypt public CA does not support NotBefore/NotAfter " +
 				"attributes for certificates. Instead, each certificate has a default lifetime of 3 months.")
 		}
-		// Use default transport for public CAs
-		clientOps = append(clientOps, ca.WithTransport(http.DefaultTransport))
 		// LetsEncrypt requires that the Common Name of the Certificate also be
 		// represented as a DNSName in the SAN extension, and therefore must be
 		// authorized as part of the ACME order.
@@ -409,21 +460,39 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			return nil, errors.Wrap(err, "error marshaling new letsencrypt order request")
 		}
 	} else {
-		// If the CA is not public then a root file is required.
-		root := af.ctx.String("root")
-		if root == "" {
-			root = pki.GetRootCAPath()
-			if _, err := os.Stat(root); err != nil {
-				return nil, errs.RequiredFlag(af.ctx, "root")
-			}
-		}
-		clientOps = append(clientOps, ca.WithRootFile(root))
 		// parse times or durations
 		nbf, naf, err := flags.ParseTimeDuration(af.ctx)
 		if err != nil {
 			return nil, err
 		}
 
+		// check if the list of identifiers for which to
+		// request a certificate already contains the subject
+		hasSubject := false
+		for _, n := range idents {
+			if n.Value == af.subject {
+				hasSubject = true
+			}
+		}
+		// if the subject is not yet included in the slice
+		// of identifiers, it is added to either the DNS names
+		// or IP addresses slice and the corresponding type of
+		// identifier is added to the slice of identifers.
+		if !hasSubject {
+			if ip := net.ParseIP(af.subject); ip != nil {
+				ips = append(ips, ip)
+				idents = append(idents, acme.Identifier{
+					Type:  "ip",
+					Value: ip.String(),
+				})
+			} else {
+				dnsNames = append(dnsNames, af.subject)
+				idents = append(idents, acme.Identifier{
+					Type:  "dns",
+					Value: af.subject,
+				})
+			}
+		}
 		nor := acmeAPI.NewOrderRequest{
 			Identifiers: idents,
 			NotAfter:    naf.Time(),
@@ -464,7 +533,8 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			Subject: pkix.Name{
 				CommonName: af.subject,
 			},
-			DNSNames: dnsNames,
+			DNSNames:    dnsNames,
+			IPAddresses: ips,
 		}
 		var csrBytes []byte
 		csrBytes, err = x509.CreateCertificateRequest(rand.Reader, _csr, af.priv)

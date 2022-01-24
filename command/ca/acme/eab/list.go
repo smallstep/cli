@@ -12,6 +12,7 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 	"go.step.sm/linkedca"
 )
 
@@ -107,7 +108,7 @@ func listAction(ctx *cli.Context) (err error) {
 	}
 
 	if len(eaks) == 0 {
-		fmt.Printf("No ACME EAB keys stored for provisioner %s\n", provisioner)
+		ui.Println("No ACME EAB keys stored for provisioner %s\n", provisioner)
 		return nil
 	}
 

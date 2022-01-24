@@ -16,10 +16,10 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
-	"github.com/smallstep/cli/ui"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 )
 
 func addCommand() cli.Command {
@@ -332,7 +332,7 @@ func addAction(ctx *cli.Context) (err error) {
 
 	provMap := make(map[string]bool)
 	for _, p := range c.AuthorityConfig.Provisioners {
-		provMap[p.GetID()] = true
+		provMap[p.GetIDForToken()] = true
 	}
 
 	var list provisioner.List
@@ -408,8 +408,8 @@ func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 			Claims:       getClaims(ctx),
 		}
 		// Check for duplicates
-		if _, ok := provMap[p.GetID()]; !ok {
-			provMap[p.GetID()] = true
+		if _, ok := provMap[p.GetIDForToken()]; !ok {
+			provMap[p.GetIDForToken()] = true
 		} else {
 			return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with name=%s and kid=%s", name, jwk.KeyID)
 		}
@@ -448,8 +448,8 @@ func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 			Key:    &key,
 			Claims: getClaims(ctx),
 		}
-		if _, ok := provMap[p.GetID()]; !ok {
-			provMap[p.GetID()] = true
+		if _, ok := provMap[p.GetIDForToken()]; !ok {
+			provMap[p.GetIDForToken()] = true
 		} else {
 			return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with name=%s and kid=%s", name, jwk.KeyID)
 		}
@@ -500,10 +500,10 @@ func addOIDCProvisioner(ctx *cli.Context, name string, provMap map[string]bool) 
 		ListenAddress:         ctx.String("listen-address"),
 	}
 	// Check for duplicates
-	if _, ok := provMap[p.GetID()]; !ok {
-		provMap[p.GetID()] = true
+	if _, ok := provMap[p.GetIDForToken()]; !ok {
+		provMap[p.GetIDForToken()] = true
 	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with name=%s and client-id=%s", p.GetName(), p.GetID())
+		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with client-id=%s", p.GetID())
 	}
 	list = append(list, p)
 	return
@@ -527,8 +527,8 @@ func addAWSProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 	}
 
 	// Check for duplicates
-	if _, ok := provMap[p.GetID()]; !ok {
-		provMap[p.GetID()] = true
+	if _, ok := provMap[p.GetIDForToken()]; !ok {
+		provMap[p.GetIDForToken()] = true
 	} else {
 		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with type=AWS and name=%s", p.GetName())
 	}
@@ -554,8 +554,8 @@ func addAzureProvisioner(ctx *cli.Context, name string, provMap map[string]bool)
 	}
 
 	// Check for duplicates
-	if _, ok := provMap[p.GetID()]; !ok {
-		provMap[p.GetID()] = true
+	if _, ok := provMap[p.GetIDForToken()]; !ok {
+		provMap[p.GetIDForToken()] = true
 	} else {
 		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with type=Azure and name=%s", p.GetName())
 	}
@@ -582,8 +582,8 @@ func addGCPProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 	}
 
 	// Check for duplicates
-	if _, ok := provMap[p.GetID()]; !ok {
-		provMap[p.GetID()] = true
+	if _, ok := provMap[p.GetIDForToken()]; !ok {
+		provMap[p.GetIDForToken()] = true
 	} else {
 		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with type=GCP and name=%s", p.GetName())
 	}
@@ -600,10 +600,10 @@ func addACMEProvisioner(ctx *cli.Context, name string, provMap map[string]bool) 
 	}
 
 	// Check for duplicates
-	if _, ok := provMap[p.GetID()]; !ok {
-		provMap[p.GetID()] = true
+	if _, ok := provMap[p.GetIDForToken()]; !ok {
+		provMap[p.GetIDForToken()] = true
 	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID==%s", p.GetID())
+		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID==%s", p.GetIDForToken())
 	}
 
 	list = append(list, p)
@@ -641,10 +641,10 @@ func addX5CProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 	}
 
 	// Check for duplicates
-	if _, ok := provMap[p.GetID()]; !ok {
-		provMap[p.GetID()] = true
+	if _, ok := provMap[p.GetIDForToken()]; !ok {
+		provMap[p.GetIDForToken()] = true
 	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetID())
+		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetIDForToken())
 	}
 
 	list = append(list, p)
@@ -706,10 +706,10 @@ func addK8sSAProvisioner(ctx *cli.Context, name string, provMap map[string]bool)
 	}
 
 	// Check for duplicates
-	if _, ok := provMap[p.GetID()]; !ok {
-		provMap[p.GetID()] = true
+	if _, ok := provMap[p.GetIDForToken()]; !ok {
+		provMap[p.GetIDForToken()] = true
 	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetID())
+		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetIDForToken())
 	}
 
 	list = append(list, p)
@@ -726,10 +726,10 @@ func addSSHPOPProvisioner(ctx *cli.Context, name string, provMap map[string]bool
 	}
 
 	// Check for duplicates
-	if _, ok := provMap[p.GetID()]; !ok {
-		provMap[p.GetID()] = true
+	if _, ok := provMap[p.GetIDForToken()]; !ok {
+		provMap[p.GetIDForToken()] = true
 	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetID())
+		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetIDForToken())
 	}
 
 	list = append(list, p)

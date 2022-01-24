@@ -9,7 +9,9 @@ before:
     # - go generate ./...
 
 builds:
-  - env:
+  -
+    id: default
+    env:
       - CGO_ENABLED=0
     targets:
       - darwin_amd64
@@ -18,6 +20,7 @@ builds:
       - linux_386
       - linux_amd64
       - linux_arm64
+      - linux_arm_5
       - linux_arm_6
       - linux_arm_7
       - linux_mips
@@ -31,6 +34,24 @@ builds:
     binary: bin/step
     ldflags:
       - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
+  -
+    # This build is specifically for nFPM targets (.deb and .rpm files).
+    # It's exactly the same as the default build above, except:
+    # - it only builds the archs we want to produce .deb and .rpm files for
+    # - the name of the output binary is step-cli
+    id: nfpm
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    flags:
+      - -trimpath
+    main: ./cmd/step/main.go
+    binary: step-cli
+    ldflags:
+      - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
 
 archives:
   -
@@ -41,11 +62,58 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+    builds:
+      - default
     wrap_in_directory: "{{ .ProjectName }}_{{ .Version }}"
     files:
       - README.md
       - LICENSE
       - autocomplete/*
+
+nfpms:
+  # Configure nFPM for .deb and .rpm releases
+  #
+  # See https://nfpm.goreleaser.com/configuration/
+  # and https://goreleaser.com/customization/nfpm/
+  #
+  # Useful tools for debugging .debs:
+  # List file contents: dpkg -c dist/step_...deb
+  # Package metadata: dpkg --info dist/step_....deb
+  #
+  -
+    builds:
+      - nfpm
+    package_name: step-cli
+    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    vendor: Smallstep Labs
+    homepage: https://github.com/smallstep/cli
+    maintainer: Smallstep <techadmin@smallstep.com>
+    description: >
+      step-cli lets you build, operate, and automate Public Key Infrastructure (PKI) systems and workflows.
+
+      It's a swiss army knife for authenticated encryption (X.509, TLS), single sign-on (OAuth OIDC, SAML), multi-factor authentication (OATH OTP, FIDO U2F), encryption mechanisms (JSON Web Encryption, NaCl), and verifiable claims (JWT, SAML assertions).
+    license: Apache 2.0
+    section: utils
+    formats:
+      - deb
+      - rpm
+    priority: optional
+
+    bindir: /usr/bin
+    contents:
+      - src: autocomplete/bash_autocomplete
+        dst: /usr/share/bash-completion/completions/step-cli
+      - src: debian/copyright
+        dst: /usr/share/doc/step-cli/copyright
+        # Ghost files are used for RPM and ignored elsewhere
+      - dst: /usr/bin/step
+        type: ghost
+      - dst: /usr/share/bash-completion/completions/step
+        type: ghost
+    scripts:
+      postinstall: scripts/postinstall.sh
+      postremove: scripts/postremove.sh
+
 
 source:
   enabled: true
@@ -76,7 +144,7 @@ release:
   # IDs of the archives to use.
   # Defaults to all.
   #ids:
-  #  - foo
+  #  - default
   #  - bar
 
   # If set to true, will not auto-publish the release.
@@ -101,7 +169,8 @@ release:
     #### Linux
 
     - 📦 [step_linux_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_linux_{{ .Version }}_amd64.tar.gz)
-    - 📦 [step-cli_{{ .Env.DEB_VERSION }}_amd64.deb](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Env.DEB_VERSION }}_amd64.deb)
+    - 📦 [step-cli_{{ .Version }}_amd64.deb](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_amd64.deb)
+    - 📦 [step-cli_{{ .Version }}_amd64.rpm](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_amd64.rpm)
 
     #### OSX Darwin
 
