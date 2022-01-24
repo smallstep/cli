@@ -7,10 +7,12 @@ import (
 	"os/exec"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/linkedca"
 )
 
 func listCommand() cli.Command {
@@ -19,11 +21,12 @@ func listCommand() cli.Command {
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all ACME External Account Binding Keys",
 		UsageText: `**step beta ca acme eab list** <provisioner> [<reference>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--limit**=<number>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
 		Flags: []cli.Flag{
+			flags.Limit,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -79,9 +82,28 @@ func listAction(ctx *cli.Context) (err error) {
 		return errors.Wrap(err, "error creating admin client")
 	}
 
-	eaks, err := client.GetExternalAccountKeys(provisioner, reference)
-	if err != nil {
-		return errors.Wrap(err, "error retrieving ACME EAB keys")
+	// default to API paging per 100 entities
+	limit := 100
+	if ctx.IsSet("limit") {
+		limit = ctx.Int("limit")
+	}
+
+	cursor := ""
+	eaks := []*linkedca.EABKey{}
+	for {
+		// simply get all entities from the CA first and keep them in memory; in the future we could
+		// make this more dynamic and load data in the background or only when a user actively pages
+		// through the results on the CLI.
+		options := []ca.AdminOption{ca.WithAdminCursor(cursor), ca.WithAdminLimit(limit)}
+		eaksResponse, err := client.GetExternalAccountKeysPaginate(provisioner, reference, options...)
+		if err != nil {
+			return errors.Wrap(err, "error retrieving ACME EAB keys")
+		}
+		eaks = append(eaks, eaksResponse.EAKs...)
+		if eaksResponse.NextCursor == "" {
+			break
+		}
+		cursor = eaksResponse.NextCursor
 	}
 
 	if len(eaks) == 0 {

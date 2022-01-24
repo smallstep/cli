@@ -117,6 +117,12 @@ be written to disk unencrypted. This is not recommended. Requires **--insecure**
 certificate.`,
 	}
 
+	// Limit is a cli.Flag used to limit the number of entities returned in API requests.
+	Limit = cli.IntFlag{
+		Name:  "limit",
+		Usage: `The number of entities to return per (paging) API request.`,
+	}
+
 	// NotBefore is a cli.Flag used to pass the start period of the certificate
 	// validity.
 	NotBefore = cli.StringFlag{
