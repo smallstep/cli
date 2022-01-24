@@ -28,6 +28,7 @@ func listCommand() cli.Command {
 [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			flags.Limit,
+			flags.NoPager,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -115,9 +116,14 @@ func listAction(ctx *cli.Context) (err error) {
 	var out io.WriteCloser
 	var cmd *exec.Cmd
 
+	usePager := true
+	if ctx.IsSet("no-pager") {
+		usePager = !ctx.Bool("no-pager")
+	}
+
 	// prepare the $PAGER command to run
 	pager := os.Getenv("PAGER")
-	if pager != "" && len(eaks) > 15 { // use $PAGER only when more than 15 results are returned
+	if usePager && pager != "" && len(eaks) > 15 { // use $PAGER only when not disabled and more than 15 results are returned
 		cmd = exec.Command(pager)
 		var err error
 		out, err = cmd.StdinPipe()
