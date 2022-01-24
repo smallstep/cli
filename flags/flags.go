@@ -118,7 +118,7 @@ certificate.`,
 	}
 
 	// Limit is a cli.Flag used to limit the number of entities returned in API requests.
-	Limit = cli.IntFlag{
+	Limit = cli.UintFlag{
 		Name:  "limit",
 		Usage: `The number of entities to return per (paging) API request.`,
 	}

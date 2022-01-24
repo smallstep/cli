@@ -1,12 +1,13 @@
 package eab
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
 )
 
 func removeCommand() cli.Command {
@@ -68,7 +69,7 @@ func removeAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error removing ACME EAB key")
 	}
 
-	ui.Println("Key was deleted successfully!")
+	fmt.Println("Key was deleted successfully!")
 
 	return nil
 }
