@@ -115,8 +115,9 @@ func addCommand() cli.Command {
     **SSHPOP**
     : Uses an SSH certificate / private key pair to sign provisioning tokens.
 
-	**Nebula**
-	: Uses a Nebula certificate / private key pair to sign provisioning tokens.`},
+    **Nebula**
+    : Uses a Nebula certificate / private key pair to sign provisioning tokens.
+`},
 			x509TemplateFlag,
 			x509TemplateDataFlag,
 			sshTemplateFlag,
