@@ -44,7 +44,7 @@ A CRL is considered valid if its signature is valid, the CA is not expired, and 
 ## POSITIONAL ARGUMENTS
 
 <file|url>
-:  The file or URL where the CRL is. If <**--from**> is passed it will inspect
+:  The file or URL where the CRL is. If <--from> is passed it will inspect
 the certificate and extract the CRL distribution point from.
 
 ## EXAMPLES
