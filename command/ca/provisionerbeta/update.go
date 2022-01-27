@@ -832,8 +832,8 @@ func updateSCEPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("capabilities") {
 		details.Capabilities = ctx.StringSlice("capabilities")
 	}
-	if ctx.IsSet("minimum-public-key-length") {
-		details.MinimumPublicKeyLength = int32(ctx.Int("minimum-public-key-length"))
+	if ctx.IsSet("min-public-key-length") {
+		details.MinimumPublicKeyLength = int32(ctx.Int("min-public-key-length"))
 	}
 	if ctx.IsSet("include-root") {
 		details.IncludeRoot = ctx.Bool("include-root")

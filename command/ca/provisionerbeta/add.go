@@ -76,7 +76,7 @@ func addCommand() cli.Command {
 [**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>] 
-[**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>] 
+[**--capabilities**=<capabilities>] [**--include-root**] [**--min-public-key-length**=<length>] 
 [**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>] 
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>] [**--password-file**=<file>] 
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
@@ -271,7 +271,7 @@ Create an SSHPOP provisioner for renewing SSH host certificates:")
 step beta ca provisioner add sshpop --type SSHPOP
 '''
 
-Create a SCEP provisioner with 'secret' challenge and AES-256-CBC:
+Create a SCEP provisioner with 'secret' challenge and AES-256-CBC encryption:
 '''
 step beta ca provisioner add my_scep_provisioner --type SCEP --challenge secret --encryption-algorithm-identifier 2  
 '''
@@ -750,7 +750,7 @@ func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 				ForceCn:                       ctx.Bool("force-cn"),
 				Challenge:                     ctx.String("challenge"),
 				Capabilities:                  ctx.StringSlice("capabilities"),
-				MinimumPublicKeyLength:        int32(ctx.Int("minimum-public-key-length")),
+				MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
 				IncludeRoot:                   ctx.Bool("include-root"),
 				EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
 			},

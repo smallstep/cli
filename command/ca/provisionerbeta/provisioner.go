@@ -173,23 +173,23 @@ var (
 	// SCEP provisioner flags
 	scepChallengeFlag = cli.StringFlag{
 		Name:  "challenge",
-		Usage: `A SCEP challenge`,
+		Usage: `The SCEP <challenge> to use as a shared secret between a client and the CA`,
 	}
 	scepCapabilitiesFlag = cli.StringSliceFlag{
 		Name:  "capabilities",
-		Usage: `The SCEP capabilities to advertise`,
+		Usage: `The SCEP <capabilities> to advertise`,
 	}
 	scepIncludeRootFlag = cli.BoolFlag{
 		Name:  "include-root",
 		Usage: `Include the CA root certificate in the SCEP CA certificate chain`,
 	}
 	scepMinimumPublicKeyLengthFlag = cli.IntFlag{
-		Name:  "minimum-public-key-length",
-		Usage: `The minimum public key length of the SCEP RSA encryption key`,
+		Name:  "min-public-key-length",
+		Usage: `The minimum public key <length> of the SCEP RSA encryption key`,
 	}
 	scepEncryptionAlgorithmIdentifierFlag = cli.IntFlag{
 		Name: "encryption-algorithm-identifier",
-		Usage: `The identifier for the SCEP encryption algorithm to use.
+		Usage: `The <id> for the SCEP encryption algorithm to use.
 		Valid values are 0 - 4, inclusive. The values correspond to:
 		0: DES-CBC, 
 		1: AES-128-CBC,
