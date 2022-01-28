@@ -93,7 +93,7 @@ func listAction(ctx *cli.Context) (err error) {
 	}
 
 	// the pipeSignalHandler goroutine ensures that the parent process is closed
-	// whenever one of its childs is killed.
+	// whenever one of its children is killed.
 	go pipeSignalHandler()
 
 	// prepare the $PAGER command to run when not disabled and when available
@@ -170,9 +170,9 @@ func listAction(ctx *cli.Context) (err error) {
 func pipeSignalHandler() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGCHLD)
-	defer signal.Stop(signals)
 
 	for range signals {
+		signal.Stop(signals)
 		os.Exit(0)
 	}
 }

@@ -9,9 +9,9 @@ import (
 func Command() cli.Command {
 	return cli.Command{
 		Name:        "acme",
-		Usage:       "manage ACME EAB",
+		Usage:       "manage ACME",
 		UsageText:   "**step beta ca acme** <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**step beta ca acme** command group provides facilities for managing ACME EAB.`,
+		Description: `**step beta ca acme** command group provides facilities for managing ACME.`,
 		Subcommands: cli.Commands{
 			eab.Command(),
 		},
