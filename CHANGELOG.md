@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add `--format` flag to `step crypto key fingerprint`.
 - Add `--format` flag to `step ssh fingerprint`.
 - Add FreeBSD support to `step certificate install`.
+- Add `step crl inspect` to inspect a certificate revocation list (CRL).
 ### Changed
 ### Deprecated
 ### Removed
