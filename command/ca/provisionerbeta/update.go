@@ -39,7 +39,7 @@ func updateCommand() cli.Command {
 
 ACME
 
-**step beta ca provisioner update** <name> [**--force-cn**]
+**step beta ca provisioner update** <name> [**--force-cn**] [**--require-eab**] [**--disable-eab**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
@@ -170,8 +170,11 @@ Use the '--group' flag multiple times to configure multiple groups.`,
 				Usage: `Root certificate (chain) <file> used to validate the signature on X5C
 provisioning tokens.`,
 			},
+
 			// ACME provisioner flags
 			forceCNFlag,
+			requireEABFlag,
+			disableEABFlag,
 
 			// SCEP flags
 			scepChallengeFlag,
@@ -246,7 +249,7 @@ step beta ca provisioner update x5c --x5c-root x5c_ca.crt
 
 Update an ACME provisioner:
 '''
-step beta ca provisioner update acme --force-cn
+step beta ca provisioner update acme --force-cn --require-eab
 '''
 
 Update an K8SSA provisioner:
@@ -475,7 +478,7 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	data, ok := p.Details.GetData().(*linkedca.ProvisionerDetails_JWK)
 	if !ok {
-		return errors.New("error casting details to ACME type")
+		return errors.New("error casting details to JWK type")
 	}
 	details := data.JWK
 
@@ -594,6 +597,17 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	details := data.ACME
 	if ctx.IsSet("force-cn") {
 		details.ForceCn = ctx.Bool("force-cn")
+	}
+	requireEABSet := ctx.IsSet("require-eab")
+	disableEABSet := ctx.IsSet("disable-eab")
+	if requireEABSet && disableEABSet {
+		return errs.IncompatibleFlagWithFlag(ctx, "require-eab", "disable-eab")
+	}
+	if requireEABSet {
+		details.RequireEab = ctx.Bool("require-eab")
+	}
+	if disableEABSet {
+		details.RequireEab = false
 	}
 	return nil
 }

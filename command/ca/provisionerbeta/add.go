@@ -70,7 +70,7 @@ func addCommand() cli.Command {
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
 
-**step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**]
+**step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**] [**--require-eab**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
@@ -191,6 +191,7 @@ provisioning tokens.`,
 
 			// ACME provisioner flags
 			forceCNFlag,
+			requireEABFlag,
 
 			// SCEP provisioner flags
 			scepChallengeFlag,
@@ -259,6 +260,11 @@ step beta ca provisioner add x5c --type X5C --x5c-root x5c_ca.crt
 Create an ACME provisioner:
 '''
 step beta ca provisioner add acme --type ACME
+'''
+
+Create an ACME provisioner, forcing a CN and requiring EAB:
+'''
+step beta ca provisioner add acme --type ACME --force-cn --require-eab
 '''
 
 Create an K8SSA provisioner:
@@ -559,7 +565,8 @@ func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_ACME{
 			ACME: &linkedca.ACMEProvisioner{
-				ForceCn: ctx.Bool("force-cn"),
+				ForceCn:    ctx.Bool("force-cn"),
+				RequireEab: ctx.Bool("require-eab"),
 			},
 		},
 	}, nil
