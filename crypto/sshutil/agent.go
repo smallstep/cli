@@ -209,6 +209,27 @@ func (a *Agent) RemoveKeys(comment string, opts ...AgentOption) (bool, error) {
 	return removed, nil
 }
 
+// RemoveAllKeys removes from the agent all the keys matching the given options.
+func (a *Agent) RemoveAllKeys(opts ...AgentOption) (bool, error) {
+	o := newOptions(opts)
+	keys, err := a.List()
+	if err != nil {
+		return false, errors.Wrap(err, "error listing keys")
+	}
+
+	var removed bool
+	for _, key := range keys {
+		if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
+			if err := a.Remove(key); err != nil {
+				return false, errors.Wrap(err, "error removing key")
+			}
+			removed = true
+		}
+	}
+
+	return removed, nil
+}
+
 // AddCertificate adds the given certificate to the agent.
 func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv interface{}) error {
 	var (

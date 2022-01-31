@@ -18,7 +18,7 @@ func logoutCommand() cli.Command {
 		Name:   "logout",
 		Action: command.ActionFunc(logoutAction),
 		Usage:  "removes a private key from the ssh-agent",
-		UsageText: `**step ssh logout** <identity> [**--all**]
+		UsageText: `**step ssh logout** [<identity>] [**--all**]
 [**--identity**=<identity>] [**--offline**] [**--ca-config**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 
@@ -33,6 +33,11 @@ flag **--all** can be used to remove all keys with a given subject or all keys.
 :  The certificate identity or comment in the key.
 
 ## EXAMPLES
+
+Remove all identities signed by your SSH CA:
+'''
+$ step ssh logout
+'''
 
 Remove the certificate mariano@work from the SSH agent:
 '''
@@ -77,9 +82,6 @@ func logoutAction(ctx *cli.Context) error {
 	subject := ctx.Args().First()
 	if subject == "" {
 		subject = ctx.String("identity")
-		if subject == "" && !all {
-			return errs.TooFewArguments(ctx)
-		}
 	}
 
 	agent, err := sshutil.DialAgent()
@@ -113,19 +115,32 @@ func logoutAction(ctx *cli.Context) error {
 		}
 	}
 
-	// Remove if comment == subject
-	found, err := agent.RemoveKeys(subject, opts...)
+	found, err := removeSSHKeys(agent, subject, opts...)
 	if err != nil {
 		return err
 	}
 
 	switch {
 	case !found:
-		fmt.Printf("Identity not found: %s\n", subject)
+		fmt.Printf("Identity not found")
 	case all:
-		fmt.Printf("All identities removed: %s\n", subject)
+		fmt.Printf("All identities removed")
 	default:
-		fmt.Printf("Identity removed: %s\n", subject)
+		fmt.Printf("Identity removed")
 	}
+	if subject == "" {
+		fmt.Println(".")
+	} else {
+		fmt.Println(":", subject)
+	}
+
 	return nil
+}
+
+func removeSSHKeys(agent *sshutil.Agent, subject string, opts ...sshutil.AgentOption) (bool, error) {
+	if subject != "" {
+		// Remove if comment == subject
+		return agent.RemoveKeys(subject, opts...)
+	}
+	return agent.RemoveAllKeys(opts...)
 }
