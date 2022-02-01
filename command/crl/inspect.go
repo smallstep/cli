@@ -78,6 +78,7 @@ $ step crl inspect --from https://www.google.com
 
     **text**
     :  Print output in unstructured text suitable for a human to read.
+	   This is the default format.
 
     **json**
     :  Print output in JSON format.
