@@ -39,7 +39,7 @@ func updateCommand() cli.Command {
 
 ACME
 
-**step beta ca provisioner update** <name> [**--force-cn**]
+**step beta ca provisioner update** <name> [**--force-cn**] [**--require-eab**] [**--disable-eab**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
@@ -81,7 +81,14 @@ IID (AWS/GCP/Azure)
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]`,
+[**--root**=<file>] [**--context**=<name>]
+
+**step beta ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>] 
+[**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>] 
+[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>] 
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
+`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "name",
@@ -163,8 +170,18 @@ Use the '--group' flag multiple times to configure multiple groups.`,
 				Usage: `Root certificate (chain) <file> used to validate the signature on X5C
 provisioning tokens.`,
 			},
+
 			// ACME provisioner flags
 			forceCNFlag,
+			requireEABFlag,
+			disableEABFlag,
+
+			// SCEP flags
+			scepChallengeFlag,
+			scepCapabilitiesFlag,
+			scepIncludeRootFlag,
+			scepMinimumPublicKeyLengthFlag,
+			scepEncryptionAlgorithmIdentifierFlag,
 
 			// Cloud provisioner flags
 			awsAccountFlag,
@@ -232,7 +249,7 @@ step beta ca provisioner update x5c --x5c-root x5c_ca.crt
 
 Update an ACME provisioner:
 '''
-step beta ca provisioner update acme --force-cn
+step beta ca provisioner update acme --force-cn --require-eab
 '''
 
 Update an K8SSA provisioner:
@@ -246,7 +263,7 @@ $ step beta ca provisioner update Azure \
   --azure-resource-group identity --azure-resource-group accounting
 '''
 
-Update an GCP provisioner:
+Update a GCP provisioner:
 '''
 $ step beta ca provisioner update Google \
   --disable-custom-sans --gcp-project internal --remove-gcp-project public
@@ -255,6 +272,11 @@ $ step beta ca provisioner update Google \
 Update an AWS provisioner:
 '''
 $ step beta ca provisioner update Amazon --disable-custom-sans --disable-trust-on-first-use
+'''
+
+Update a SCEP provisioner:
+'''
+step beta ca provisioner update my_scep_provisioner --force-cn
 '''`,
 	}
 }
@@ -305,7 +327,9 @@ func updateAction(ctx *cli.Context) (err error) {
 		err = updateAzureDetails(ctx, p)
 	case linkedca.Provisioner_GCP:
 		err = updateGCPDetails(ctx, p)
-	// TODO add SCEP provisioner support.
+	case linkedca.Provisioner_SCEP:
+		err = updateSCEPDetails(ctx, p)
+	// TODO: add Nebula support
 	default:
 		return fmt.Errorf("unsupported provisioner type %s", p.Type.String())
 	}
@@ -454,7 +478,7 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	data, ok := p.Details.GetData().(*linkedca.ProvisionerDetails_JWK)
 	if !ok {
-		return errors.New("error casting details to ACME type")
+		return errors.New("error casting details to JWK type")
 	}
 	details := data.JWK
 
@@ -573,6 +597,17 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	details := data.ACME
 	if ctx.IsSet("force-cn") {
 		details.ForceCn = ctx.Bool("force-cn")
+	}
+	requireEABSet := ctx.IsSet("require-eab")
+	disableEABSet := ctx.IsSet("disable-eab")
+	if requireEABSet && disableEABSet {
+		return errs.IncompatibleFlagWithFlag(ctx, "require-eab", "disable-eab")
+	}
+	if requireEABSet {
+		details.RequireEab = ctx.Bool("require-eab")
+	}
+	if disableEABSet {
+		details.RequireEab = false
 	}
 	return nil
 }
@@ -709,13 +744,13 @@ func updateOIDCDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 func updateAWSDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	data, ok := p.Details.GetData().(*linkedca.ProvisionerDetails_AWS)
 	if !ok {
-		return errors.New("error casting details to OIDC type")
+		return errors.New("error casting details to AWS type")
 	}
 	details := data.AWS
 
 	var err error
 	if ctx.IsSet("instance-age") {
-		details.InstanceAge, err = parseIntaceAge(ctx)
+		details.InstanceAge, err = parseInstanceAge(ctx)
 		if err != nil {
 			return err
 		}
@@ -738,7 +773,7 @@ func updateAWSDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 func updateAzureDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	data, ok := p.Details.GetData().(*linkedca.ProvisionerDetails_Azure)
 	if !ok {
-		return errors.New("error casting details to OIDC type")
+		return errors.New("error casting details to Azure type")
 	}
 	details := data.Azure
 
@@ -763,13 +798,13 @@ func updateAzureDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 func updateGCPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	data, ok := p.Details.GetData().(*linkedca.ProvisionerDetails_GCP)
 	if !ok {
-		return errors.New("error casting details to OIDC type")
+		return errors.New("error casting details to GCP type")
 	}
 	details := data.GCP
 
 	var err error
 	if ctx.IsSet("instance-age") {
-		details.InstanceAge, err = parseIntaceAge(ctx)
+		details.InstanceAge, err = parseInstanceAge(ctx)
 		if err != nil {
 			return err
 		}
@@ -792,5 +827,34 @@ func updateGCPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("gcp-project") {
 		details.ProjectIds = append(details.ProjectIds, ctx.StringSlice("add-gcp-project")...)
 	}
+	return nil
+}
+
+func updateSCEPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
+	data, ok := p.Details.GetData().(*linkedca.ProvisionerDetails_SCEP)
+	if !ok {
+		return errors.New("error casting details to SCEP type")
+	}
+	details := data.SCEP
+
+	if ctx.IsSet("force-cn") {
+		details.ForceCn = ctx.Bool("force-cn")
+	}
+	if ctx.IsSet("challenge") {
+		details.Challenge = ctx.String("challenge")
+	}
+	if ctx.IsSet("capabilities") {
+		details.Capabilities = ctx.StringSlice("capabilities")
+	}
+	if ctx.IsSet("min-public-key-length") {
+		details.MinimumPublicKeyLength = int32(ctx.Int("min-public-key-length"))
+	}
+	if ctx.IsSet("include-root") {
+		details.IncludeRoot = ctx.Bool("include-root")
+	}
+	if ctx.IsSet("encryption-algorithm-identifier") {
+		details.EncryptionAlgorithmIdentifier = int32(ctx.Int("encryption-algorithm-identifier"))
+	}
+
 	return nil
 }
