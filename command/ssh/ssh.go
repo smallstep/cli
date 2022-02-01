@@ -250,6 +250,15 @@ func tokenHasEmail(s string) (string, bool) {
 	return jwt.Payload.Email, jwt.Payload.Email != ""
 }
 
+// tokenSubject extracts the token subject.
+func tokenSubject(s string) (string, bool) {
+	jwt, err := token.ParseInsecure(s)
+	if err != nil {
+		return "", false
+	}
+	return jwt.Payload.Subject, jwt.Payload.Subject != ""
+}
+
 func sshConfigErr(err error) error {
 	return &errs.Error{
 		Err: err,

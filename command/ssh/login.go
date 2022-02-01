@@ -200,6 +200,18 @@ func loginAction(ctx *cli.Context) error {
 		return err
 	}
 
+	// NOTE: For OIDC tokens the subject should always be the email. The
+	// provisioner is responsible for loading and setting the principals with
+	// the application of an Identity function.
+	if email, ok := tokenHasEmail(token); ok {
+		subject = email
+	} else if subject == "" {
+		// For non-oidc tokens we will use the token subject.
+		if sub, ok := tokenSubject(token); ok {
+			subject = sub
+		}
+	}
+
 	// Generate identity certificate (x509) if necessary
 	var identityCSR api.CertificateRequest
 	var identityKey crypto.PrivateKey
@@ -210,13 +222,6 @@ func loginAction(ctx *cli.Context) error {
 		}
 		identityCSR = *csr
 		identityKey = key
-	}
-
-	// NOTE: For OIDC tokens the subject should always be the email. The
-	// provisioner is responsible for loading and setting the principals with
-	// the application of an Identity function.
-	if email, ok := tokenHasEmail(token); ok {
-		subject = email
 	}
 
 	resp, err := caClient.SSHSign(&api.SSHSignRequest{
