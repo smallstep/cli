@@ -50,7 +50,7 @@ func WithSignatureKey(keys []ssh.PublicKey) AgentOption {
 	}
 }
 
-// WithCertsOnly filter by only certificates.
+// WithCertsOnly filters only those keys accompanied by a certificate.
 func WithCertsOnly() AgentOption {
 	return func(o *options) {
 		o.filterBySignatureKey = func(k *agent.Key) bool {
