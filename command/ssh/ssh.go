@@ -240,9 +240,9 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 	}, nil
 }
 
-// tokenHasEmail returns if the token payload has an email address. This is
+// tokenEmail returns if the token payload has an email address. This is
 // mainly used on OIDC token.
-func tokenHasEmail(s string) (string, bool) {
+func tokenEmail(s string) (string, bool) {
 	jwt, err := token.ParseInsecure(s)
 	if err != nil {
 		return "", false
