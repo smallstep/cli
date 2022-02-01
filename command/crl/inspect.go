@@ -195,7 +195,6 @@ func inspectAction(ctx *cli.Context) error {
 		}
 
 		if len(caCerts) == 0 && !ctx.Bool("insecure") {
-			println("foo")
 			return errs.InsecureCommand(ctx)
 		}
 	}
