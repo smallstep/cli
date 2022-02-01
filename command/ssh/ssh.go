@@ -111,6 +111,15 @@ var (
 		use the contents of the token to determine the principals.`,
 	}
 
+	sshUserPrincipalFlag = cli.StringSliceFlag{
+		Name: "principal,n",
+		Usage: `Add the specified principal (username) to the certificate request.
+		This flag can be used multiple times. However, it cannot be used in conjunction
+		with '--token' when requesting certificates from OIDC, JWK, and X5C provisioners, or
+		from any provisioner with 'disableCustomSANs' set to 'true'. These provisioners will
+		use the contents of the token to determine the principals.`,
+	}
+
 	sshHostFlag = cli.BoolFlag{
 		Name:  "host",
 		Usage: `Create a host certificate instead of a user certificate.`,

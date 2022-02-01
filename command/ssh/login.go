@@ -24,9 +24,9 @@ func loginCommand() cli.Command {
 		Name:   "login",
 		Action: command.ActionFunc(loginAction),
 		Usage:  "adds a SSH certificate into the authentication agent",
-		UsageText: `**step ssh login** <identity>
+		UsageText: `**step ssh login** [<identity>]
 [**--token**=<token>] [**--provisioner**=<name>] [**--provisioner-password-file**=<file>]
-[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+[**--principal**=<string>] [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--set**=<key=value>] [**--set-file**=<file>] [**--force**]
 [**--offline**] [**--ca-config**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
@@ -48,16 +48,27 @@ principal will be abc.
 
 Request a new SSH certificate and add it to the agent:
 '''
-$ step ssh login joe@example.com
+$ step ssh login bob
+'''
+
+Request a new SSH certificate using an OIDC provisioner:
+'''
+$ step ssh login
 '''
 
 Request a new SSH certificate valid only for 1h:
 '''
-$ step ssh login --not-after 1h joe@smallstep.com
+$ step ssh login --not-after 1h alice
+'''
+
+Request a new SSH certificate with multiple principals:
+'''
+$ step ssh login --principal admin --principal bob bob@smallstep.com
 '''`,
 		Flags: []cli.Flag{
 			flags.Token,
 			sshAddUserFlag,
+			sshUserPrincipalFlag,
 			flags.Identity,
 			flags.Provisioner,
 			flags.ProvisionerPasswordFileWithAlias,
@@ -83,11 +94,13 @@ func loginAction(ctx *cli.Context) error {
 	// Arguments
 	subject := ctx.Args().First()
 	if subject == "" {
-		if subject = ctx.String("identity"); subject == "" {
-			return errs.TooFewArguments(ctx)
-		}
+		subject = ctx.String("identity")
 	}
-	principals := createPrincipalsFromSubject(subject)
+
+	principals := ctx.StringSlice("principal")
+	if subject != "" && len(principals) == 0 {
+		principals = []string{subject}
+	}
 
 	// Flags
 	token := ctx.String("token")
@@ -127,8 +140,8 @@ func loginAction(ctx *cli.Context) error {
 		}
 
 		// Just return if key is present
-		if _, err := agent.GetKey(subject, opts...); err == nil {
-			ui.Printf("The key %s is already present in the SSH agent.\n", subject)
+		if key, err := agent.GetKey(subject, opts...); err == nil {
+			ui.Printf("The key %s is already present in the SSH agent.\n", key.String())
 			return nil
 		}
 	}
