@@ -50,6 +50,16 @@ func WithSignatureKey(keys []ssh.PublicKey) AgentOption {
 	}
 }
 
+// WithCertsOnly filter by only certificates.
+func WithCertsOnly() AgentOption {
+	return func(o *options) {
+		o.filterBySignatureKey = func(k *agent.Key) bool {
+			_, err := ParseCertificate(k.Marshal())
+			return err == nil
+		}
+	}
+}
+
 // WithRemoveExpiredCerts will remove the expired certificates automatically.
 func WithRemoveExpiredCerts(t time.Time) AgentOption {
 	unixNow := t.Unix()

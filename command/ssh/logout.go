@@ -101,7 +101,8 @@ func logoutAction(ctx *cli.Context) error {
 
 	var opts []sshutil.AgentOption
 	if !all {
-		// Remove only keys signed by the CA
+		// Remove only keys signed by the CA. If we cannot get the list of
+		// roots, remove only the ssh certificates.
 		client, err := cautils.NewClient(ctx)
 		if err != nil {
 			return err
@@ -112,6 +113,8 @@ func logoutAction(ctx *cli.Context) error {
 				userKeys[i] = uk.PublicKey
 			}
 			opts = append(opts, sshutil.WithSignatureKey(userKeys))
+		} else {
+			opts = append(opts, sshutil.WithCertsOnly())
 		}
 	}
 
