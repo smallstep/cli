@@ -56,7 +56,7 @@ $ step crl inspect --insecure http://ca.example.com/crls/exampleca.crl
 
 Inspect and validate a CRL in a file:
 '''
-$ step crl inspect -ca ca.crt exampleca.crl
+$ step crl inspect --ca ca.crt exampleca.crl
 '''
 
 Format the CRL in JSON:
