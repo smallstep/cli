@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add `--format` flag to `step crypto key fingerprint`.
 - Add `--format` flag to `step ssh fingerprint`.
 - Add FreeBSD support to `step certificate install`.
+- Add `--auth-param` flag to `step oauth` for adding args to query
+- Add `--no-agent` flag to `step ssh certificate` to skip ssh-add
 ### Changed
 ### Deprecated
 ### Removed
