@@ -101,7 +101,7 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 	}
 
 	if subject == "" {
-		// For OIDC provisioners the CA automatically generate the principals
+		// For OIDC provisioners the CA automatically generates the principals
 		// from the email address.
 		if _, ok := p.(*provisioner.OIDC); !ok {
 			q := "What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)"
