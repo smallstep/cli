@@ -288,7 +288,7 @@ func ParseCRL(b []byte) (*CRL, error) {
 	var issuerKeyID []byte
 	extensions := make([]Extension, len(tcrl.Extensions))
 	for i, e := range tcrl.Extensions {
-		extensions[i] = nexExtension(e)
+		extensions[i] = newExtension(e)
 		if e.Id.Equal(oidExtensionAuthorityKeyID) {
 			var v authorityKeyID
 			if _, err := asn1.Unmarshal(e.Value, &v); err == nil {

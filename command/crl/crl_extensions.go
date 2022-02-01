@@ -96,7 +96,7 @@ func (e *Extension) AddDetail(format string, args ...interface{}) {
 	e.Details = append(e.Details, fmt.Sprintf(format, args...))
 }
 
-func nexExtension(e pkix.Extension) Extension {
+func newExtension(e pkix.Extension) Extension {
 	var ext Extension
 	switch {
 	case e.Id.Equal(oidExtensionReasonCode):
