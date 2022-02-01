@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add `--format` flag to `step ssh fingerprint`.
 - Add FreeBSD support to `step certificate install`.
 ### Changed
+- Allow `step ssh login` and `step ssh logout` without positional arguments.
 ### Deprecated
 ### Removed
 ### Fixed
