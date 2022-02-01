@@ -40,8 +40,8 @@ func certificateCommand() cli.Command {
 [**--add-user**] [**--not-before**=<time|duration>]
 [**--not-after**=<time|duration>] [**--token**=<token>] [**--issuer**=<name>]
 [**--no-password**] [**--insecure**] [**--force**] [**--x5c-cert**=<file>]
-[**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]`,
+[**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>] [**--no-agent**]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
@@ -93,6 +93,11 @@ key path when we are just signing it.
 Generate a new SSH key pair and user certificate:
 '''
 $ step ssh certificate mariano@work id_ecdsa
+'''
+
+Generate a new SSH key pair and user certificate and do not add to SSH agent:
+'''
+$ step ssh certificate mariano@work id_ecdsa --no-agent
 '''
 
 Generate a new SSH key pair and user certificate and set the lifetime to 2hrs:
@@ -168,6 +173,10 @@ $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 			flags.X5cCert,
 			flags.X5cKey,
 			flags.K8sSATokenPathFlag,
+			cli.BoolFlag{
+				Name:  "no-agent",
+				Usage: "Do not add the generated certificate and associated private key to the SSH agent.",
+			},
 			flags.CaConfig,
 			flags.CaURL,
 			flags.Root,
@@ -460,15 +469,17 @@ func certificateAction(ctx *cli.Context) error {
 	ui.PrintSelected("Certificate", crtFile)
 
 	// Attempt to add key to agent if private key defined.
-	if priv != nil && certType == provisioner.SSHUserCert {
-		if agent, err := sshutil.DialAgent(); err != nil {
-			ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
-		} else {
-			defer agent.Close()
-			if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
+	if !ctx.Bool("no-agent") {
+		if priv != nil && certType == provisioner.SSHUserCert {
+			if agent, err := sshutil.DialAgent(); err != nil {
 				ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 			} else {
-				ui.PrintSelected("SSH Agent", "yes")
+				defer agent.Close()
+				if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
+					ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
+				} else {
+					ui.PrintSelected("SSH Agent", "yes")
+				}
 			}
 		}
 	}
