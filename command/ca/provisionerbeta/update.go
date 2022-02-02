@@ -171,6 +171,9 @@ Use the '--group' flag multiple times to configure multiple groups.`,
 provisioning tokens.`,
 			},
 
+			// Nebula provisioner flags
+			nebulaRootFlag,
+
 			// ACME provisioner flags
 			forceCNFlag,
 			requireEABFlag,
@@ -329,7 +332,8 @@ func updateAction(ctx *cli.Context) (err error) {
 		err = updateGCPDetails(ctx, p)
 	case linkedca.Provisioner_SCEP:
 		err = updateSCEPDetails(ctx, p)
-	// TODO: add Nebula support
+	case linkedca.Provisioner_NEBULA:
+		err = updateNebulaDetails(ctx, p)
 	default:
 		return fmt.Errorf("unsupported provisioner type %s", p.Type.String())
 	}
@@ -643,6 +647,24 @@ func updateX5CDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		}
 		details.Roots = rootBytes
 	}
+	return nil
+}
+
+func updateNebulaDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
+	data, ok := p.Details.GetData().(*linkedca.ProvisionerDetails_Nebula)
+	if !ok {
+		return errors.New("error casting details to Nebula type")
+	}
+
+	details := data.Nebula
+	if ctx.IsSet("nebula-root") {
+		rootBytes, err := readNebulaRoots(ctx.String("nebula-root"))
+		if err != nil {
+			return err
+		}
+		details.Roots = rootBytes
+	}
+
 	return nil
 }
 

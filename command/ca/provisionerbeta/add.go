@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/provisioner"
@@ -52,6 +53,11 @@ func addCommand() cli.Command {
 [**--root**=<file>] [**--context**=<name>]
 
 **step beta ca provisioner add** <name> **--type**=SSHPOP
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
+
+**step beta ca provisioner add** <name> **--type**=Nebula **--nebula-root**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
@@ -107,16 +113,20 @@ func addCommand() cli.Command {
     : Uses the ACME protocol to create certificates.
 
     **X5C**
-    : Uses an X509 Certificate / private key pair to sign provisioning tokens.
+    : Uses an X509 certificate / private key pair to sign provisioning tokens.
 
     **K8SSA**
     : Uses Kubernetes Service Account tokens.
 
     **SSHPOP**
-    : Uses an SSH Certificate / private key pair to sign provisioning tokens.
-	
+    : Uses an SSH certificate / private key pair to sign provisioning tokens.
+
     **SCEP**
-	: Uses the SCEP protocol to create certificates.`},
+	: Uses the SCEP protocol to create certificates.
+	
+    **Nebula**
+    : Uses a Nebula certificate / private key pair to sign provisioning tokens.
+`},
 			x509TemplateFlag,
 			x509TemplateDataFlag,
 			sshTemplateFlag,
@@ -188,6 +198,9 @@ Use the '--group' flag multiple times to configure multiple groups.`,
 				Usage: `Root certificate (chain) <file> used to validate the signature on X5C
 provisioning tokens.`,
 			},
+
+			// Nebula provisioner flags
+			nebulaRootFlag,
 
 			// ACME provisioner flags
 			forceCNFlag,
@@ -323,7 +336,10 @@ func addAction(ctx *cli.Context) (err error) {
 
 	args := ctx.Args()
 
-	typ := ctx.String("type")
+	typ, ok := linkedca.Provisioner_Type_value[strings.ToUpper(ctx.String("type"))]
+	if !ok {
+		return fmt.Errorf("unsupported provisioner type %s", ctx.String("type"))
+	}
 
 	p := &linkedca.Provisioner{
 		Name: args.Get(0),
@@ -387,46 +403,48 @@ func addAction(ctx *cli.Context) (err error) {
 		DisableRenewal: ctx.Bool("disable-renewal"),
 	}
 
-	client, err := cautils.NewAdminClient(ctx)
+	switch linkedca.Provisioner_Type(typ) {
+	case linkedca.Provisioner_JWK:
+		p.Type = linkedca.Provisioner_JWK
+		p.Details, err = createJWKDetails(ctx)
+	case linkedca.Provisioner_ACME:
+		p.Type = linkedca.Provisioner_ACME
+		p.Details, err = createACMEDetails(ctx)
+	case linkedca.Provisioner_SSHPOP:
+		p.Type = linkedca.Provisioner_SSHPOP
+		p.Details, err = createSSHPOPDetails(ctx)
+	case linkedca.Provisioner_X5C:
+		p.Type = linkedca.Provisioner_X5C
+		p.Details, err = createX5CDetails(ctx)
+	case linkedca.Provisioner_K8SSA:
+		p.Type = linkedca.Provisioner_K8SSA
+		p.Details, err = createK8SSADetails(ctx)
+	case linkedca.Provisioner_OIDC:
+		p.Type = linkedca.Provisioner_OIDC
+		p.Details, err = createOIDCDetails(ctx)
+	case linkedca.Provisioner_AWS:
+		p.Type = linkedca.Provisioner_AWS
+		p.Details, err = createAWSDetails(ctx)
+	case linkedca.Provisioner_AZURE:
+		p.Type = linkedca.Provisioner_AZURE
+		p.Details, err = createAzureDetails(ctx)
+	case linkedca.Provisioner_GCP:
+		p.Type = linkedca.Provisioner_GCP
+		p.Details, err = createGCPDetails(ctx)
+	case linkedca.Provisioner_SCEP:
+		p.Type = linkedca.Provisioner_SCEP
+		p.Details, err = createSCEPDetails(ctx)
+	case linkedca.Provisioner_NEBULA:
+		p.Type = linkedca.Provisioner_NEBULA
+		p.Details, err = createNebulaDetails(ctx)
+	default:
+		return fmt.Errorf("unsupported provisioner type %s", ctx.String("type"))
+	}
 	if err != nil {
 		return err
 	}
 
-	switch typ {
-	case linkedca.Provisioner_JWK.String():
-		p.Type = linkedca.Provisioner_JWK
-		p.Details, err = createJWKDetails(ctx)
-	case linkedca.Provisioner_ACME.String():
-		p.Type = linkedca.Provisioner_ACME
-		p.Details, err = createACMEDetails(ctx)
-	case linkedca.Provisioner_SSHPOP.String():
-		p.Type = linkedca.Provisioner_SSHPOP
-		p.Details, err = createSSHPOPDetails(ctx)
-	case linkedca.Provisioner_X5C.String():
-		p.Type = linkedca.Provisioner_X5C
-		p.Details, err = createX5CDetails(ctx)
-	case linkedca.Provisioner_K8SSA.String():
-		p.Type = linkedca.Provisioner_K8SSA
-		p.Details, err = createK8SSADetails(ctx)
-	case linkedca.Provisioner_OIDC.String():
-		p.Type = linkedca.Provisioner_OIDC
-		p.Details, err = createOIDCDetails(ctx)
-	case linkedca.Provisioner_AWS.String():
-		p.Type = linkedca.Provisioner_AWS
-		p.Details, err = createAWSDetails(ctx)
-	case linkedca.Provisioner_AZURE.String():
-		p.Type = linkedca.Provisioner_AZURE
-		p.Details, err = createAzureDetails(ctx)
-	case linkedca.Provisioner_GCP.String():
-		p.Type = linkedca.Provisioner_GCP
-		p.Details, err = createGCPDetails(ctx)
-	case linkedca.Provisioner_SCEP.String():
-		p.Type = linkedca.Provisioner_SCEP
-		p.Details, err = createSCEPDetails(ctx)
-	// TODO: add Nebula support
-	default:
-		return fmt.Errorf("unsupported provisioner type %s", typ)
-	}
+	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -606,6 +624,26 @@ func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_X5C{
 			X5C: &linkedca.X5CProvisioner{
+				Roots: rootBytes,
+			},
+		},
+	}, nil
+}
+
+func createNebulaDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	rootFile := ctx.String("nebula-root")
+	if rootFile == "" {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", "nebula", "nebula-root")
+	}
+
+	rootBytes, err := readNebulaRoots(rootFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_Nebula{
+			Nebula: &linkedca.NebulaProvisioner{
 				Roots: rootBytes,
 			},
 		},

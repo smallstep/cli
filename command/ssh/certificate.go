@@ -172,6 +172,8 @@ $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 			sshSignFlag,
 			flags.X5cCert,
 			flags.X5cKey,
+			flags.NebulaCert,
+			flags.NebulaKey,
 			flags.K8sSATokenPathFlag,
 			cli.BoolFlag{
 				Name:  "no-agent",
