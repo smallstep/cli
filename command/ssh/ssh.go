@@ -111,6 +111,15 @@ var (
 		use the contents of the token to determine the principals.`,
 	}
 
+	sshUserPrincipalFlag = cli.StringSliceFlag{
+		Name: "principal,n",
+		Usage: `Add the specified principal (username) to the certificate request.
+		This flag can be used multiple times. However, it cannot be used in conjunction
+		with '--token' when requesting certificates from OIDC, JWK, and X5C provisioners, or
+		from any provisioner with 'disableCustomSANs' set to 'true'. These provisioners will
+		use the contents of the token to determine the principals.`,
+	}
+
 	sshHostFlag = cli.BoolFlag{
 		Name:  "host",
 		Usage: `Create a host certificate instead of a user certificate.`,
@@ -231,14 +240,23 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 	}, nil
 }
 
-// tokenHasEmail returns if the token payload has an email address. This is
+// tokenEmail returns if the token payload has an email address. This is
 // mainly used on OIDC token.
-func tokenHasEmail(s string) (string, bool) {
+func tokenEmail(s string) (string, bool) {
 	jwt, err := token.ParseInsecure(s)
 	if err != nil {
 		return "", false
 	}
 	return jwt.Payload.Email, jwt.Payload.Email != ""
+}
+
+// tokenSubject extracts the token subject.
+func tokenSubject(s string) (string, bool) {
+	jwt, err := token.ParseInsecure(s)
+	if err != nil {
+		return "", false
+	}
+	return jwt.Payload.Subject, jwt.Payload.Subject != ""
 }
 
 func sshConfigErr(err error) error {

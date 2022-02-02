@@ -100,6 +100,21 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 		return "", err
 	}
 
+	if subject == "" {
+		// For OIDC provisioners the CA automatically generates the principals
+		// from the email address.
+		if _, ok := p.(*provisioner.OIDC); !ok {
+			q := "What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)"
+			if tokType == SSHUserSignType {
+				q = "What user principal would you like to use? (e.g. alice)"
+			}
+			subject, err = ui.Prompt(q, ui.WithValidateNotEmpty())
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
 	tokAttrs := tokenAttrs{
 		subject:       subject,
 		root:          root,
