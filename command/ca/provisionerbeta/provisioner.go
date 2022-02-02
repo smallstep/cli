@@ -305,7 +305,7 @@ func readNebulaRoots(rootFile string) ([][]byte, error) {
 		}
 	}
 	if len(certs) == 0 {
-		return nil, errors.Errorf("error reading %s: no certificates found", rootFile)
+		return nil, errors.Errorf("error reading %s: no CA certificates found", rootFile)
 	}
 
 	rootBytes := make([][]byte, len(certs))
