@@ -17,7 +17,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/slackhq/nebula v1.5.2
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.18.1-rc1.0.20220112015040-57f9e5415160
+	github.com/smallstep/certificates v0.18.1-rc1.0.20220131122744-4a0cfd24e568
 	github.com/smallstep/certinfo v1.6.0
 	github.com/smallstep/truststore v0.10.1
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
@@ -25,12 +25,12 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.5
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
-	go.step.sm/cli-utils v0.7.1
-	go.step.sm/crypto v0.14.0
-	go.step.sm/linkedca v0.9.0
+	go.step.sm/cli-utils v0.7.2
+	go.step.sm/crypto v0.15.0
+	go.step.sm/linkedca v0.9.2
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
-	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
+	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/square/go-jose.v2 v2.6.0

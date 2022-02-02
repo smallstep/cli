@@ -76,10 +76,16 @@ func addCommand() cli.Command {
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
 
-**step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**]
+**step beta ca provisioner add** <name> **--type**=ACME [**--force-cn**] [**--require-eab**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]`,
+[**--root**=<file>] [**--context**=<name>]
+
+**step beta ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>] 
+[**--capabilities**=<capabilities>] [**--include-root**] [**--min-public-key-length**=<length>] 
+[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>] [**--password-file**=<file>] 
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "type",
@@ -115,7 +121,10 @@ func addCommand() cli.Command {
     **SSHPOP**
     : Uses an SSH certificate / private key pair to sign provisioning tokens.
 
-    **Nebula**
+    **SCEP**
+	: Uses the SCEP protocol to create certificates.
+	
+	**Nebula**
     : Uses a Nebula certificate / private key pair to sign provisioning tokens.
 `},
 			x509TemplateFlag,
@@ -195,6 +204,14 @@ provisioning tokens.`,
 
 			// ACME provisioner flags
 			forceCNFlag,
+			requireEABFlag,
+
+			// SCEP provisioner flags
+			scepChallengeFlag,
+			scepCapabilitiesFlag,
+			scepIncludeRootFlag,
+			scepMinimumPublicKeyLengthFlag,
+			scepEncryptionAlgorithmIdentifierFlag,
 
 			// Cloud provisioner flags
 			awsAccountFlag,
@@ -258,6 +275,11 @@ Create an ACME provisioner:
 step beta ca provisioner add acme --type ACME
 '''
 
+Create an ACME provisioner, forcing a CN and requiring EAB:
+'''
+step beta ca provisioner add acme --type ACME --force-cn --require-eab
+'''
+
 Create an K8SSA provisioner:
 '''
 step beta ca provisioner add kube --type K8SSA --ssh --public-key key.pub
@@ -266,6 +288,11 @@ step beta ca provisioner add kube --type K8SSA --ssh --public-key key.pub
 Create an SSHPOP provisioner for renewing SSH host certificates:")
 '''
 step beta ca provisioner add sshpop --type SSHPOP
+'''
+
+Create a SCEP provisioner with 'secret' challenge and AES-256-CBC encryption:
+'''
+step beta ca provisioner add my_scep_provisioner --type SCEP --challenge secret --encryption-algorithm-identifier 2  
 '''
 
 Create an Azure provisioner with two service groups:
@@ -404,10 +431,12 @@ func addAction(ctx *cli.Context) (err error) {
 	case linkedca.Provisioner_GCP:
 		p.Type = linkedca.Provisioner_GCP
 		p.Details, err = createGCPDetails(ctx)
+	case linkedca.Provisioner_SCEP:
+		p.Type = linkedca.Provisioner_SCEP
+		p.Details, err = createSCEPDetails(ctx)
 	case linkedca.Provisioner_NEBULA:
 		p.Type = linkedca.Provisioner_NEBULA
 		p.Details, err = createNebulaDetails(ctx)
-	// TODO add SCEP provisioner support.
 	default:
 		return fmt.Errorf("unsupported provisioner type %s", ctx.String("type"))
 	}
@@ -554,7 +583,8 @@ func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_ACME{
 			ACME: &linkedca.ACMEProvisioner{
-				ForceCn: ctx.Bool("force-cn"),
+				ForceCn:    ctx.Bool("force-cn"),
+				RequireEab: ctx.Bool("require-eab"),
 			},
 		},
 	}, nil
@@ -702,7 +732,7 @@ func createOIDCDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createAWSDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
-	d, err := parseIntaceAge(ctx)
+	d, err := parseInstanceAge(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -740,7 +770,7 @@ func createAzureDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) 
 }
 
 func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
-	d, err := parseIntaceAge(ctx)
+	d, err := parseInstanceAge(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -753,6 +783,21 @@ func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 				DisableCustomSans:      ctx.Bool("disable-custom-sans"),
 				DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
 				InstanceAge:            d,
+			},
+		},
+	}, nil
+}
+
+func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_SCEP{
+			SCEP: &linkedca.SCEPProvisioner{
+				ForceCn:                       ctx.Bool("force-cn"),
+				Challenge:                     ctx.String("challenge"),
+				Capabilities:                  ctx.StringSlice("capabilities"),
+				MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
+				IncludeRoot:                   ctx.Bool("include-root"),
+				EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
 			},
 		},
 	}, nil

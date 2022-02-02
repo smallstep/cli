@@ -117,6 +117,18 @@ be written to disk unencrypted. This is not recommended. Requires **--insecure**
 certificate.`,
 	}
 
+	// Limit is a cli.Flag used to limit the number of entities returned in API requests.
+	Limit = cli.UintFlag{
+		Name:  "limit",
+		Usage: `The number of entities to return per (paging) API request.`,
+	}
+
+	// NoPager is a cli.Flag used to disable usage of $PAGER for paging purposes.
+	NoPager = cli.BoolFlag{
+		Name:  "no-pager",
+		Usage: `Disables usage of $PAGER for paging purposes`,
+	}
+
 	// NotBefore is a cli.Flag used to pass the start period of the certificate
 	// validity.
 	NotBefore = cli.StringFlag{
