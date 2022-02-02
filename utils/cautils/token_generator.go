@@ -321,10 +321,6 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 			}
 		}
 
-		// Add template with check mark
-		// opts = append(opts, jose.WithUIOptions(
-		// 	ui.WithPromptTemplates(ui.PromptTemplates()),
-		// ))
 		opts = append(opts, jose.WithPasswordPrompter("Please enter the password to decrypt the provisioner key",
 			func(s string) ([]byte, error) {
 				return ui.PromptPassword(s)
