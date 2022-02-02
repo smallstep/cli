@@ -124,7 +124,7 @@ func addCommand() cli.Command {
     **SCEP**
 	: Uses the SCEP protocol to create certificates.
 	
-	**Nebula**
+    **Nebula**
     : Uses a Nebula certificate / private key pair to sign provisioning tokens.
 `},
 			x509TemplateFlag,
