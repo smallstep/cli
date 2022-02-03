@@ -100,6 +100,21 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 		return "", err
 	}
 
+	if subject == "" {
+		// For OIDC provisioners the CA automatically generates the principals
+		// from the email address.
+		if _, ok := p.(*provisioner.OIDC); !ok {
+			q := "What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)"
+			if tokType == SSHUserSignType {
+				q = "What user principal would you like to use? (e.g. alice)"
+			}
+			subject, err = ui.Prompt(q, ui.WithValidateNotEmpty())
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
 	tokAttrs := tokenAttrs{
 		subject:       subject,
 		root:          root,
@@ -119,6 +134,8 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 		return generateOIDCToken(ctx, p)
 	case *provisioner.X5C: // Get a JWT with an X5C header and signature.
 		return generateX5CToken(ctx, p, tokType, tokAttrs)
+	case *provisioner.Nebula:
+		return generateNebulaToken(ctx, p, tokType, tokAttrs)
 	case *provisioner.SSHPOP: // Generate a SSHPOP token using an ssh cert + key.
 		return generateSSHPOPToken(ctx, p, tokType, tokAttrs)
 	case *provisioner.K8sSA: // Get the Kubernetes service account token.
@@ -240,6 +257,10 @@ func allowK8sSAProvisionerFilter(p provisioner.Interface) bool {
 	return p.GetType() == provisioner.TypeK8sSA
 }
 
+func allowNebulaProvisionerFilter(p provisioner.Interface) bool {
+	return p.GetType() == provisioner.TypeNebula
+}
+
 func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisioner.Interface, error) {
 	switch {
 	// If x5c flags then only list x5c provisioners.
@@ -249,14 +270,17 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	case ctx.IsSet("sshpop-cert") || ctx.IsSet("sshpop-key"):
 		provisioners = provisionerFilter(provisioners, allowSSHPOPProvisionerFilter)
 	// If k8ssa-token-path flag is set then we must be using the k8sSA provisioner.
+	case ctx.IsSet("nebula-cert") || ctx.IsSet("nebula-key"):
+		provisioners = provisionerFilter(provisioners, allowNebulaProvisionerFilter)
 	case ctx.IsSet("k8ssa-token-path"):
 		provisioners = provisionerFilter(provisioners, allowK8sSAProvisionerFilter)
 	// List all available provisioners.
 	default:
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			switch p.GetType() {
-			case provisioner.TypeJWK, provisioner.TypeX5C, provisioner.TypeOIDC,
-				provisioner.TypeACME, provisioner.TypeK8sSA, provisioner.TypeSSHPOP:
+			case provisioner.TypeJWK, provisioner.TypeOIDC,
+				provisioner.TypeACME, provisioner.TypeK8sSA,
+				provisioner.TypeX5C, provisioner.TypeSSHPOP, provisioner.TypeNebula:
 				return true
 			case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
 				return true
@@ -326,7 +350,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 				Name:        fmt.Sprintf("%s (%s) [tenant: %s]", p.Name, p.GetType(), p.TenantID),
 				Provisioner: p,
 			})
-		case *provisioner.GCP, *provisioner.AWS, *provisioner.X5C, *provisioner.SSHPOP, *provisioner.ACME:
+		case *provisioner.GCP, *provisioner.AWS, *provisioner.X5C, *provisioner.SSHPOP, *provisioner.ACME, *provisioner.Nebula:
 			items = append(items, &provisionersSelect{
 				Name:        fmt.Sprintf("%s (%s)", p.GetName(), p.GetType()),
 				Provisioner: p,

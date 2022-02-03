@@ -1,13 +1,11 @@
 package token
 
 import (
-	"crypto"
-	"encoding/base64"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/jose"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/keyutil"
 )
 
 const (
@@ -126,14 +124,9 @@ func DefaultClaims() *Claims {
 
 // GenerateKeyID returns the SHA256 of a public key.
 func GenerateKeyID(priv interface{}) (string, error) {
-	pub, err := keys.PublicKey(priv)
+	pub, err := keyutil.PublicKey(priv)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating kid")
 	}
-	jwk := jose.JSONWebKey{Key: pub}
-	keyID, err := jwk.Thumbprint(crypto.SHA256)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating kid")
-	}
-	return base64.RawURLEncoding.EncodeToString(keyID), nil
+	return jose.Thumbprint(&jose.JSONWebKey{Key: pub})
 }

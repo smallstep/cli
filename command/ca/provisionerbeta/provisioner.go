@@ -3,6 +3,9 @@ package provisionerbeta
 import (
 	"time"
 
+	"github.com/pkg/errors"
+	nebula "github.com/slackhq/nebula/cert"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 )
@@ -69,7 +72,7 @@ $ step beta ca provisioner remove max@smallstep.com
 	}
 }
 
-func parseIntaceAge(ctx *cli.Context) (age string, err error) {
+func parseInstanceAge(ctx *cli.Context) (age string, err error) {
 	if !ctx.IsSet("instance-age") {
 		return
 	}
@@ -169,6 +172,43 @@ var (
 		Name:  "force-cn",
 		Usage: `Always set the common name in provisioned certificates.`,
 	}
+	requireEABFlag = cli.BoolFlag{
+		Name:  "require-eab",
+		Usage: `Require (and enable) External Account Binding for Account creation.`,
+	}
+	disableEABFlag = cli.BoolFlag{
+		Name:  "disable-eab",
+		Usage: `Disable External Account Binding for Account creation.`,
+	}
+
+	// SCEP provisioner flags
+	scepChallengeFlag = cli.StringFlag{
+		Name:  "challenge",
+		Usage: `The SCEP <challenge> to use as a shared secret between a client and the CA`,
+	}
+	scepCapabilitiesFlag = cli.StringSliceFlag{
+		Name:  "capabilities",
+		Usage: `The SCEP <capabilities> to advertise`,
+	}
+	scepIncludeRootFlag = cli.BoolFlag{
+		Name:  "include-root",
+		Usage: `Include the CA root certificate in the SCEP CA certificate chain`,
+	}
+	scepMinimumPublicKeyLengthFlag = cli.IntFlag{
+		Name:  "min-public-key-length",
+		Usage: `The minimum public key <length> of the SCEP RSA encryption key`,
+	}
+	scepEncryptionAlgorithmIdentifierFlag = cli.IntFlag{
+		Name: "encryption-algorithm-identifier",
+		Usage: `The <id> for the SCEP encryption algorithm to use.
+		Valid values are 0 - 4, inclusive. The values correspond to:
+		0: DES-CBC, 
+		1: AES-128-CBC,
+		2: AES-256-CBC, 
+		3: AES-128-GCM, 
+		4: AES-256-GCM. 
+		Defaults to DES-CBC (0) for legacy clients.`,
+	}
 
 	// Cloud provisioner flags
 	awsAccountFlag = cli.StringSliceFlag{
@@ -238,4 +278,44 @@ By default it will accept any SAN in the CSR.`,
 with the same instance will be accepted. By default only the first request
 will be accepted.`,
 	}
+
+	// Nebula provisioner flags
+	nebulaRootFlag = cli.StringFlag{
+		Name: "nebula-root",
+		Usage: `Root certificate (chain) <file> used to validate the signature on Nebula
+provisioning tokens.`,
+	}
 )
+
+func readNebulaRoots(rootFile string) ([][]byte, error) {
+	b, err := utils.ReadFile(rootFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var crt *nebula.NebulaCertificate
+	var certs []*nebula.NebulaCertificate
+	for len(b) > 0 {
+		crt, b, err = nebula.UnmarshalNebulaCertificateFromPEM(b)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading %s", rootFile)
+		}
+		if crt.Details.IsCA {
+			certs = append(certs, crt)
+		}
+	}
+	if len(certs) == 0 {
+		return nil, errors.Errorf("error reading %s: no CA certificates found", rootFile)
+	}
+
+	rootBytes := make([][]byte, len(certs))
+	for i, crt := range certs {
+		b, err = crt.MarshalToPEM()
+		if err != nil {
+			return nil, errors.Wrap(err, "error marshaling certificate")
+		}
+		rootBytes[i] = b
+	}
+
+	return rootBytes, nil
+}

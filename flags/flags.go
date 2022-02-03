@@ -118,6 +118,18 @@ be written to disk unencrypted. This is not recommended. Requires **--insecure**
 certificate.`,
 	}
 
+	// Limit is a cli.Flag used to limit the number of entities returned in API requests.
+	Limit = cli.UintFlag{
+		Name:  "limit",
+		Usage: `The number of entities to return per (paging) API request.`,
+	}
+
+	// NoPager is a cli.Flag used to disable usage of $PAGER for paging purposes.
+	NoPager = cli.BoolFlag{
+		Name:  "no-pager",
+		Usage: `Disables usage of $PAGER for paging purposes`,
+	}
+
 	// NotBefore is a cli.Flag used to pass the start period of the certificate
 	// validity.
 	NotBefore = cli.StringFlag{
@@ -284,6 +296,21 @@ the 'x5t' header.`,
 		Name: "sshpop-key",
 		Usage: `Private key <file>, used to sign a JWT, corresponding to the certificate that will
 be stored in the 'sshpop' header.`,
+	}
+
+	// NebulaCert is a cli.Flag used to pass the nebula certificate used as the
+	// nebula header certificate in a JWT.
+	NebulaCert = cli.StringFlag{
+		Name:  "nebula-cert",
+		Usage: "Certificate <file> in PEM format to store in the 'nebula' header of a JWT.",
+	}
+
+	// NebulaKey is a cli.Flag used to pass the private key (corresponding to
+	// the nebula-cert) that is used to sign the token.
+	NebulaKey = cli.StringFlag{
+		Name: "nebula-key",
+		Usage: `Private key <file>, used to sign a JWT, corresponding to the certificate that will
+be stored in the 'nebula' header.`,
 	}
 
 	// Team is a cli.Flag used to pass the team ID.

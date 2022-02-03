@@ -513,7 +513,11 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 
 		var address string
-		ui.Println("What IP and port will your new CA bind to?", ui.WithValue(ctx.String("address")))
+		if helm {
+			ui.Println("What IP and port will your new CA bind to (it should match service.targetPort)?", ui.WithValue(ctx.String("address")))
+		} else {
+			ui.Println("What IP and port will your new CA bind to?", ui.WithValue(ctx.String("address")))
+		}
 		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:443)",
 			ui.WithValidateFunc(ui.Address()), ui.WithValue(ctx.String("address")))
 		if err != nil {

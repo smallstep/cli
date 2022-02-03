@@ -120,6 +120,8 @@ $ step ca sign foo.csr foo.crt \
 			consoleFlag,
 			flags.X5cCert,
 			flags.X5cKey,
+			flags.NebulaCert,
+			flags.NebulaKey,
 			acmeFlag,
 			acmeStandaloneFlag,
 			acmeWebrootFlag,

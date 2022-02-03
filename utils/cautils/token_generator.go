@@ -2,6 +2,7 @@ package cautils
 
 import (
 	"crypto"
+	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -14,12 +15,13 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/exec"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/x25519"
 )
 
 // TokenGenerator is a helper used to generate different types of tokens used in
@@ -170,7 +172,7 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
 		opts = append(opts, passOpt)
 	}
-	jwk, err := jose.ParseKey(x5cKeyFile, opts...)
+	jwk, err := jose.ReadKey(x5cKeyFile, opts...)
 	if err != nil {
 		return "", err
 	}
@@ -193,6 +195,54 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 	}
 }
 
+func generateNebulaToken(ctx *cli.Context, p *provisioner.Nebula, tokType int, tokAttrs tokenAttrs) (string, error) {
+	certFile := ctx.String("nebula-cert")
+	keyFile := ctx.String("nebula-key")
+	if certFile == "" {
+		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "Nebula", "nebula-cert")
+	}
+	if keyFile == "" {
+		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "Nebula", "nebula-key")
+	}
+
+	// Get private key from given key file, nebula CAs uses ed25519 keys while
+	// nebula leafs uses X25519 keys.
+	jwk, err := jose.ReadKey(keyFile)
+	if err != nil {
+		return "", err
+	}
+
+	var key []byte
+	switch k := jwk.Key.(type) {
+	case x25519.PrivateKey:
+		key = []byte(k)
+	case ed25519.PrivateKey:
+		key = []byte(k)
+	case []byte:
+		key = k
+	default:
+		return "", errors.Errorf("error reading %s: content is not a valid nebula key", keyFile)
+	}
+
+	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
+		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetIDForToken()), tokAttrs.root,
+		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
+	switch tokType {
+	case SignType:
+		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, token.WithNebulaCert(certFile, key))
+	case RevokeType:
+		return tokenGen.RevokeToken(tokAttrs.subject, token.WithNebulaCert(certFile, key))
+	case SSHUserSignType:
+		return tokenGen.SignSSHToken(tokAttrs.subject, provisioner.SSHUserCert, tokAttrs.sans,
+			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithNebulaCert(certFile, key))
+	case SSHHostSignType:
+		return tokenGen.SignSSHToken(tokAttrs.subject, provisioner.SSHHostCert, tokAttrs.sans,
+			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithNebulaCert(certFile, key))
+	default:
+		return tokenGen.Token(tokAttrs.subject, token.WithNebulaCert(certFile, key))
+	}
+}
+
 func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, tokAttrs tokenAttrs) (string, error) {
 	sshPOPCertFile := ctx.String("sshpop-cert")
 	sshPOPKeyFile := ctx.String("sshpop-key")
@@ -208,7 +258,7 @@ func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, t
 	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
 		opts = append(opts, passOpt)
 	}
-	jwk, err := jose.ParseKey(sshPOPKeyFile, opts...)
+	jwk, err := jose.ReadKey(sshPOPKeyFile, opts...)
 	if err != nil {
 		return "", err
 	}
@@ -271,12 +321,13 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 			}
 		}
 
-		// Add template with check mark
-		opts = append(opts, jose.WithUIOptions(
-			ui.WithPromptTemplates(ui.PromptTemplates()),
-		))
+		opts = append(opts, jose.WithPasswordPrompter("Please enter the password to decrypt the provisioner key",
+			func(s string) ([]byte, error) {
+				return ui.PromptPassword(s)
+			}),
+		)
 
-		decrypted, err := jose.Decrypt("Please enter the password to decrypt the provisioner key", []byte(encryptedKey), opts...)
+		decrypted, err := jose.Decrypt([]byte(encryptedKey), opts...)
 		if err != nil {
 			return nil, "", err
 		}
@@ -287,7 +338,7 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 		}
 	} else {
 		// Get private key from given key file
-		jwk, err = jose.ParseKey(keyFile, opts...)
+		jwk, err = jose.ReadKey(keyFile, opts...)
 		if err != nil {
 			return nil, "", err
 		}

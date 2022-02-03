@@ -160,13 +160,6 @@ func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, typ
 		}
 	}
 
-	if subject == "" {
-		subject, err = ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
-		if err != nil {
-			return "", err
-		}
-	}
-
 	return NewTokenFlow(ctx, typ, subject, principals, caURL, root, time.Time{}, time.Time{}, validAfter, validBefore)
 }
 
