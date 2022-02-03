@@ -190,8 +190,9 @@ func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 		return nil, err
 	}
 	signOpts := provisioner.SignOptions{
-		NotBefore: req.NotBefore,
-		NotAfter:  req.NotAfter,
+		NotBefore:    req.NotBefore,
+		NotAfter:     req.NotAfter,
+		TemplateData: req.TemplateData,
 	}
 	certChain, err := c.authority.Sign(req.CsrPEM.CertificateRequest, signOpts, opts...)
 	if err != nil {
