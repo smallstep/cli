@@ -5,8 +5,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"os/signal"
-	"syscall"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
@@ -165,14 +163,4 @@ func listAction(ctx *cli.Context) (err error) {
 	}
 
 	return nil
-}
-
-func pipeSignalHandler() {
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGCHLD)
-
-	for range signals {
-		signal.Stop(signals)
-		os.Exit(0)
-	}
 }
