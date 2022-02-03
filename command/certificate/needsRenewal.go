@@ -44,34 +44,29 @@ exist, and '255' for any other error.
 
 ## EXAMPLES
 
-Check certificate for renewal using custom directory:
+Check if certificate.crt has passed 66 percent of its validity period:
 '''
 $ step certificate needs-renewal ./certificate.crt
 '''
 
-Check certificate for renewal using a hostname:
+Perform the same check for the TLS server certificate at smallstep.com:
 '''
 $ step certificate needs-renewal https://smallstep.com
 '''
 
-Check if certificate will expire within a given duration:
+Check if certificate.crt expires within 1 hour 15 minutes from now:
 '''
 $ step certificate needs-renewal ./certificate.crt --expires-in 1h15m
 '''
 
-Check if certificate from hostname will expire within a given duration:
+Check if certificate for smallstep.com is expired or not:
 '''
-$ step certificate needs-renewal https://smallstep.com --expires-in 1h15m
+$ step certificate needs-renewal https://smallstep.com --expires-in 0s
 '''
 
-Check if certificate has passed 75 percent of it's lifetime:
+Check if certificate has passed 75 percent of it's validity period:
 '''
 $ step certificate needs-renewal ./certificate.crt --expires-in 75%
-'''
-
-Check if certificate from a hostname has passed 75 percent of it's lifetime:
-'''
-$ step certificate needs-renewal https://smallstep.com --expires-in 75%
 '''
 
 Check a remote certificate using a custom root certificate:
