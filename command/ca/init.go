@@ -468,22 +468,10 @@ func initAction(ctx *cli.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		var (
-			dnsValidator = ui.DNS()
-			dnsNames     []string
-		)
-		dnsValue = strings.ReplaceAll(dnsValue, " ", ",")
-		parts := strings.Split(dnsValue, ",")
-		for _, name := range parts {
-			if name == "" {
-				continue
-			}
-			if err := dnsValidator(name); err != nil {
-				return err
-			}
-			dnsNames = append(dnsNames, normalize(strings.TrimSpace(name)))
+		dnsNames, err := processDNSValue(dnsValue)
+		if err != nil {
+			return err
 		}
-
 		if useContext {
 			ctxName := ctx.String("context")
 			if ctxName == "" {
@@ -748,10 +736,33 @@ func assertCryptoRand() error {
 	return nil
 }
 
+// processDNSValue reads DNS names from user supplied DNS value
+// and transforms it into DNS names and IP addresses.
+func processDNSValue(dnsValue string) ([]string, error) {
+	var (
+		dnsValidator = ui.DNS()
+		dnsNames     []string
+	)
+	dnsValue = strings.ReplaceAll(dnsValue, " ", ",")
+	parts := strings.Split(dnsValue, ",")
+	for _, name := range parts {
+		if name == "" {
+			continue
+		}
+		if err := dnsValidator(name); err != nil {
+			return nil, err
+		}
+		dnsNames = append(dnsNames, normalize(strings.TrimSpace(name)))
+	}
+	return dnsNames, nil
+}
+
+// normalize ensures an IPv6 hostname (i.e. [::1]) representation is
+// converted to its IP representation (::1).
 func normalize(name string) string {
 	if strings.HasPrefix(name, "[") && strings.HasSuffix(name, "]") {
 		if ip := net.ParseIP(name[1 : len(name)-1]); ip != nil {
-			name = name[1 : len(name)-1]
+			name = ip.String()
 		}
 	}
 	return name

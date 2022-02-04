@@ -477,9 +477,35 @@ func parseCaURL(ctx *cli.Context, caURL string) (string, error) {
 	if u.Scheme != "https" {
 		return "", errs.InvalidFlagValueMsg(ctx, "ca-url", caURL, "must have https scheme")
 	}
-	// if host represents a valid IPv6 address, ensure that it contains brackets
-	if ip := net.ParseIP(u.Hostname()); ip != nil && ip.To4() == nil {
-		u.Host = "[" + ip.String() + "]" + ":" + u.Port()
+
+	hostname := u.Hostname()
+	host := hostname
+	if u.Port() != "" {
+		host += ":" + u.Port()
 	}
+	_, _, err = net.SplitHostPort(host)
+	// if host represents a valid IPv6 address, ensure that it contains brackets
+	if err != nil && strings.Contains(err.Error(), "too many colons in address") {
+		// this is most probably an IPv6 without brackets, e.g. ::1, 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+		// in case a port was appended to this wrong format, we try to extract the port, then check if it's
+		// still a valid IPv6: 2001:0db8:85a3:0000:0000:8a2e:0370:7334:8443 (8443 is the port). If none of
+		// these cases, then the input dns is not changed.
+		lastIndex := strings.LastIndex(host, ":")
+		hostPart, portPart := host[:lastIndex], host[lastIndex+1:]
+		fmt.Println(hostPart, portPart)
+		if ip := net.ParseIP(hostPart); ip != nil {
+			hostname = "[" + hostPart + "]:" + portPart
+		} else if ip := net.ParseIP(host); ip != nil {
+			hostname = "[" + host + "]"
+		}
+		u.Host = hostname
+	} else if ip := net.ParseIP(hostname); ip != nil && ip.To4() == nil {
+		u.Host = "[" + ip.String() + "]"
+		port := u.Port()
+		if port != "" {
+			u.Host += ":" + port
+		}
+	}
+
 	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
 }

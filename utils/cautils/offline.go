@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -133,23 +134,23 @@ func (c *OfflineCA) VerifyClientCert(certFile, keyFile string) error {
 func (c *OfflineCA) Audience(tokType int) string {
 	switch tokType {
 	case RevokeType:
-		return fmt.Sprintf("https://%s/revoke", c.config.DNSNames[0])
+		return fmt.Sprintf("https://%s/revoke", toHostname(c.config.DNSNames[0]))
 	case SSHUserSignType, SSHHostSignType:
-		return fmt.Sprintf("https://%s/ssh/sign", c.config.DNSNames[0])
+		return fmt.Sprintf("https://%s/ssh/sign", toHostname(c.config.DNSNames[0]))
 	case SSHRenewType:
-		return fmt.Sprintf("https://%s/ssh/renew", c.config.DNSNames[0])
+		return fmt.Sprintf("https://%s/ssh/renew", toHostname(c.config.DNSNames[0]))
 	case SSHRevokeType:
-		return fmt.Sprintf("https://%s/ssh/revoke", c.config.DNSNames[0])
+		return fmt.Sprintf("https://%s/ssh/revoke", toHostname(c.config.DNSNames[0]))
 	case SSHRekeyType:
-		return fmt.Sprintf("https://%s/ssh/rekey", c.config.DNSNames[0])
+		return fmt.Sprintf("https://%s/ssh/rekey", toHostname(c.config.DNSNames[0]))
 	default:
-		return fmt.Sprintf("https://%s/sign", c.config.DNSNames[0])
+		return fmt.Sprintf("https://%s/sign", toHostname(c.config.DNSNames[0]))
 	}
 }
 
 // CaURL returns the CA URL using the first DNS entry.
 func (c *OfflineCA) CaURL() string {
-	return fmt.Sprintf("https://%s", c.config.DNSNames[0])
+	return fmt.Sprintf("https://%s", toHostname(c.config.DNSNames[0]))
 }
 
 // Root returns the path of the file used as root certificate.
@@ -553,4 +554,12 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string,
 		}
 		return generateJWKToken(ctx, jwkP, tokType, tokAttrs)
 	}
+}
+
+// toHostname ensures IPv6 addresses are represented as IPv6 hostnames
+func toHostname(name string) string {
+	if ip := net.ParseIP(name); ip != nil && ip.To4() == nil {
+		name = "[" + name + "]"
+	}
+	return name
 }
