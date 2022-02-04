@@ -64,7 +64,7 @@ Check if certificate for smallstep.com is expired or not:
 $ step certificate needs-renewal https://smallstep.com --expires-in 0s
 '''
 
-Check if certificate has passed 75 percent of it's validity period:
+Check if certificate has passed 75 percent of its validity period:
 '''
 $ step certificate needs-renewal ./certificate.crt --expires-in 75%
 '''
