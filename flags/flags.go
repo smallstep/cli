@@ -492,7 +492,6 @@ func parseCaURL(ctx *cli.Context, caURL string) (string, error) {
 		// these cases, then the input dns is not changed.
 		lastIndex := strings.LastIndex(host, ":")
 		hostPart, portPart := host[:lastIndex], host[lastIndex+1:]
-		fmt.Println(hostPart, portPart)
 		if ip := net.ParseIP(hostPart); ip != nil {
 			hostname = "[" + hostPart + "]:" + portPart
 		} else if ip := net.ParseIP(host); ip != nil {
