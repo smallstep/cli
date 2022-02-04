@@ -1,11 +1,15 @@
 package token
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/pem"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
+	nebula "github.com/slackhq/nebula/cert"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/jose"
 )
@@ -166,6 +170,34 @@ func WithX5CFile(certFile string, key interface{}) Options {
 			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
 		}
 		c.SetHeader("x5c", certStrs)
+		return nil
+	}
+}
+
+var pemCertPrefix = []byte("-----BEGIN")
+
+// WithNebulaCert returns a Options that sets the nebula header.
+func WithNebulaCert(certFile string, key []byte) Options {
+	return func(c *Claims) error {
+		b, err := os.ReadFile(certFile)
+		if err != nil {
+			return errors.Wrapf(err, "error reading %s", certFile)
+		}
+		if bytes.HasPrefix(b, pemCertPrefix) {
+			block, _ := pem.Decode(b)
+			if block == nil || block.Type != nebula.CertBanner {
+				return errors.Errorf("error reading %s: not a proper nebula certificate", certFile)
+			}
+			b = block.Bytes
+		}
+		crt, err := nebula.UnmarshalNebulaCertificate(b)
+		if err != nil {
+			return errors.Wrapf(err, "error reading %s", certFile)
+		}
+		if err := crt.VerifyPrivateKey(key); err != nil {
+			return errors.Wrapf(err, "error validating %s", certFile)
+		}
+		c.SetHeader("nebula", b)
 		return nil
 	}
 }

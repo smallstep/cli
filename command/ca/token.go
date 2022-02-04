@@ -168,6 +168,8 @@ multiple principals.`,
 			flags.X5cKey,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
+			flags.NebulaCert,
+			flags.NebulaKey,
 			cli.StringFlag{
 				Name: "key",
 				Usage: `The private key <file> used to sign the JWT. This is usually downloaded from

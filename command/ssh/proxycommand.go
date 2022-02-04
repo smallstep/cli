@@ -148,7 +148,7 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 	// NOTE: For OIDC tokens the subject should always be the email. The
 	// provisioner is responsible for loading and setting the principals with
 	// the application of an Identity function.
-	if email, ok := tokenHasEmail(token); ok {
+	if email, ok := tokenEmail(token); ok {
 		subject = email
 	}
 

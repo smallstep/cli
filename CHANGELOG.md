@@ -8,15 +8,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- Add additional `emoji` and `base64-raw` encoding to the `--format` flag of `step certificate fingerprint`.
-- Add `--format` flag to `step crypto key fingerprint`.
-- Add `--format` flag to `step ssh fingerprint`.
-- Add FreeBSD support to `step certificate install`.
 ### Changed
 ### Deprecated
 ### Removed
 ### Fixed
 ### Security
+
+## [0.18.1] - 2021-02-03
+### Added
+- Add additional `emoji` and `base64-raw` encoding to the `--format` flag of `step certificate fingerprint`.
+- Add `--format` flag to `step crypto key fingerprint`.
+- Add `--format` flag to `step ssh fingerprint`.
+- Add FreeBSD support to `step certificate install`.
+- Add `step crl inspect` to inspect a certificate revocation list (CRL).
+- Add `--auth-param` flag to `step oauth` for adding args to query
+- Add `--no-agent` flag to `step ssh certificate` to skip ssh-add
+### Changed
+- Allow `step ssh login` and `step ssh logout` without positional arguments.
 
 ## [0.18.0] - 2021-11-17
 ### Added

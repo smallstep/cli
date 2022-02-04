@@ -50,6 +50,16 @@ func WithSignatureKey(keys []ssh.PublicKey) AgentOption {
 	}
 }
 
+// WithCertsOnly filters only those keys accompanied by a certificate.
+func WithCertsOnly() AgentOption {
+	return func(o *options) {
+		o.filterBySignatureKey = func(k *agent.Key) bool {
+			_, err := ParseCertificate(k.Marshal())
+			return err == nil
+		}
+	}
+}
+
 // WithRemoveExpiredCerts will remove the expired certificates automatically.
 func WithRemoveExpiredCerts(t time.Time) AgentOption {
 	unixNow := t.Unix()
@@ -203,6 +213,27 @@ func (a *Agent) RemoveKeys(comment string, opts ...AgentOption) (bool, error) {
 				}
 				removed = true
 			}
+		}
+	}
+
+	return removed, nil
+}
+
+// RemoveAllKeys removes from the agent all the keys matching the given options.
+func (a *Agent) RemoveAllKeys(opts ...AgentOption) (bool, error) {
+	o := newOptions(opts)
+	keys, err := a.List()
+	if err != nil {
+		return false, errors.Wrap(err, "error listing keys")
+	}
+
+	var removed bool
+	for _, key := range keys {
+		if o.filterBySignatureKey == nil || o.filterBySignatureKey(key) {
+			if err := a.Remove(key); err != nil {
+				return false, errors.Wrap(err, "error removing key")
+			}
+			removed = true
 		}
 	}
 
