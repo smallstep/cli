@@ -61,8 +61,8 @@ type bootstrapContext struct {
 func withDefaultContextValues(context, authority, profile string) bootstrapOption {
 	return func(bc *bootstrapContext) {
 		bc.defaultContextName = context
-		bc.defaultAuthorityName = authority
-		bc.defaultProfileName = profile
+		bc.defaultAuthorityName = authority // effectively ignored in bootstrap now
+		bc.defaultProfileName = profile     // effectively ignored in bootstrap now
 	}
 }
 
@@ -97,30 +97,30 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 	}
 
 	if UseContext(ctx) {
-		authority := ctx.String("authority")
-		if authority == "" {
-			authority = bc.defaultAuthorityName
+		ctxName := ctx.String("context")
+		if ctxName == "" {
+			ctxName = bc.defaultContextName
 		}
-		context := ctx.String("context")
-		if context == "" {
-			context = bc.defaultContextName
+		ctxAuthority := ctx.String("authority")
+		if ctxAuthority == "" {
+			ctxAuthority = ctxName
 		}
-		profile := ctx.String("profile")
-		if profile == "" {
-			profile = bc.defaultProfileName
+		ctxProfile := ctx.String("profile")
+		if ctxProfile == "" {
+			ctxProfile = ctxName
 		}
 		if err := step.Contexts().Add(&step.Context{
-			Name:      context,
-			Profile:   profile,
-			Authority: authority,
+			Name:      ctxName,
+			Profile:   ctxProfile,
+			Authority: ctxAuthority,
 		}); err != nil {
 			return errors.Wrapf(err, "error adding context: '%s' - {authority: '%s', profile: '%s'}",
-				context, authority, profile)
+				ctxName, ctxAuthority, ctxProfile)
 		}
-		if err := step.Contexts().SaveCurrent(context); err != nil {
+		if err := step.Contexts().SaveCurrent(ctxName); err != nil {
 			return errors.Wrap(err, "error storing new default context")
 		}
-		if err := step.Contexts().SetCurrent(context); err != nil {
+		if err := step.Contexts().SetCurrent(ctxName); err != nil {
 			return errors.Wrap(err, "error setting context '%s'")
 		}
 	} else {
