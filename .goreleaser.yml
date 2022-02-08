@@ -101,8 +101,6 @@ nfpms:
 
     bindir: /usr/bin
     contents:
-      - src: autocomplete/bash_autocomplete
-        dst: /usr/share/bash-completion/completions/step-cli
       - src: debian/copyright
         dst: /usr/share/doc/step-cli/copyright
         # Ghost files are used for RPM and ignored elsewhere

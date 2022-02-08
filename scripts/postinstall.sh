@@ -1,17 +1,22 @@
 #!/bin/sh
 
 updateAlternatives() {
-	update-alternatives \
-		--install /usr/bin/step step /usr/bin/step-cli 50 \
-		--slave /usr/share/bash-completion/completions/step step.bash-completion /usr/share/bash-completion/completions/step-cli
+	update-alternatives --install /usr/bin/step step /usr/bin/step-cli 50
+}
+
+updateCompletion() {
+  /usr/bin/step completion bash > /usr/share/bash-completion/completions/step
+  chmod 644 /usr/share/bash-completion/completions/step
 }
 
 cleanInstall() {
 	updateAlternatives
+	updateCompletion
 }
 
 upgrade() {
 	updateAlternatives
+	updateCompletion
 }
 
 action="$1"
