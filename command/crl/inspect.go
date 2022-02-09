@@ -310,7 +310,7 @@ func ParseCRL(b []byte) (*CRL, error) {
 			SignatureAlgorithm: newSignatureAlgorithm(tcrl.Signature),
 			Value:              crl.SignatureValue.Bytes,
 			Valid:              false,
-			InvalidReason:      "",
+			Reason:             "",
 		},
 		authorityKeyID: issuerKeyID,
 		raw:            crl.TBSCertList.Raw,
@@ -320,16 +320,16 @@ func ParseCRL(b []byte) (*CRL, error) {
 func (c *CRL) Verify(ca *x509.Certificate) bool {
 	now := time.Now()
 	if now.After(c.NextUpdate) {
-		c.Signature.InvalidReason = "CRL has expired"
+		c.Signature.Reason = "CRL has expired"
 		return false
 	}
 	if now.After(ca.NotAfter) {
-		c.Signature.InvalidReason = "CA certificate has expired"
+		c.Signature.Reason = "CA certificate has expired"
 		return false
 	}
 
 	if !c.VerifySignature(ca) {
-		c.Signature.InvalidReason = "Signature does not match"
+		c.Signature.Reason = "Signature does not match"
 		return false
 	}
 
@@ -369,8 +369,8 @@ func printCRL(crl *CRL) {
 	fmt.Println("Certificate Revocation List (CRL):")
 	fmt.Println("    Data:")
 	fmt.Printf("        Valid: %v\n", crl.Signature.Valid)
-	if len(crl.Signature.InvalidReason) > 0 {
-		fmt.Printf("        Reason: %s\n", crl.Signature.InvalidReason)
+	if len(crl.Signature.Reason) > 0 {
+		fmt.Printf("        Reason: %s\n", crl.Signature.Reason)
 	}
 	fmt.Printf("        Version: %d (0x%x)\n", crl.Version, crl.Version-1)
 	fmt.Println("    Signature algorithm:", crl.SignatureAlgorithm)
@@ -412,7 +412,7 @@ type Signature struct {
 	SignatureAlgorithm SignatureAlgorithm `json:"signature_algorithm"`
 	Value              []byte             `json:"value"`
 	Valid              bool               `json:"valid"`
-	InvalidReason      string             `json:"invalid_reason,omitempty"`
+	Reason             string             `json:"reason,omitempty"`
 }
 
 // DistinguisedName is the JSON representation of the CRL issuer.
