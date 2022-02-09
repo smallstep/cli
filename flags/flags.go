@@ -498,12 +498,6 @@ func parseCaURL(ctx *cli.Context, caURL string) (string, error) {
 			hostname = "[" + host + "]"
 		}
 		u.Host = hostname
-	} else if ip := net.ParseIP(hostname); ip != nil && ip.To4() == nil {
-		u.Host = "[" + ip.String() + "]"
-		port := u.Port()
-		if port != "" {
-			u.Host += ":" + port
-		}
 	}
 
 	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
