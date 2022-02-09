@@ -233,9 +233,10 @@ func inspectAction(ctx *cli.Context) error {
 			if (crt.KeyUsage&x509.KeyUsageCRLSign) == 0 || len(crt.SubjectKeyId) == 0 {
 				continue
 			}
-			if bytes.Equal(crt.SubjectKeyId, crl.authorityKeyID) {
-				crl.Signature.Valid = crl.Verify(crt)
-				break
+			if crl.authorityKeyID == nil || bytes.Equal(crt.SubjectKeyId, crl.authorityKeyID) {
+				if crl.Verify(crt) {
+					crl.Signature.Valid = true
+				}
 			}
 		}
 	}
@@ -309,6 +310,7 @@ func ParseCRL(b []byte) (*CRL, error) {
 			SignatureAlgorithm: newSignatureAlgorithm(tcrl.Signature),
 			Value:              crl.SignatureValue.Bytes,
 			Valid:              false,
+			Reason:             "",
 		},
 		authorityKeyID: issuerKeyID,
 		raw:            crl.TBSCertList.Raw,
@@ -317,10 +319,24 @@ func ParseCRL(b []byte) (*CRL, error) {
 
 func (c *CRL) Verify(ca *x509.Certificate) bool {
 	now := time.Now()
-	if now.After(c.NextUpdate) || now.After(ca.NotAfter) {
+	if now.After(c.NextUpdate) {
+		c.Signature.Reason = "CRL has expired"
+		return false
+	}
+	if now.After(ca.NotAfter) {
+		c.Signature.Reason = "CA certificate has expired"
 		return false
 	}
 
+	if !c.VerifySignature(ca) {
+		c.Signature.Reason = "Signature does not match"
+		return false
+	}
+
+	return true
+}
+
+func (c *CRL) VerifySignature(ca *x509.Certificate) bool {
 	var sum []byte
 	var hash crypto.Hash
 	if hash = c.SignatureAlgorithm.hash; hash > 0 {
@@ -353,6 +369,9 @@ func printCRL(crl *CRL) {
 	fmt.Println("Certificate Revocation List (CRL):")
 	fmt.Println("    Data:")
 	fmt.Printf("        Valid: %v\n", crl.Signature.Valid)
+	if len(crl.Signature.Reason) > 0 {
+		fmt.Printf("        Reason: %s\n", crl.Signature.Reason)
+	}
 	fmt.Printf("        Version: %d (0x%x)\n", crl.Version, crl.Version-1)
 	fmt.Println("    Signature algorithm:", crl.SignatureAlgorithm)
 	fmt.Println("        Issuer:", crl.Issuer)
@@ -393,6 +412,7 @@ type Signature struct {
 	SignatureAlgorithm SignatureAlgorithm `json:"signature_algorithm"`
 	Value              []byte             `json:"value"`
 	Valid              bool               `json:"valid"`
+	Reason             string             `json:"reason,omitempty"`
 }
 
 // DistinguisedName is the JSON representation of the CRL issuer.
