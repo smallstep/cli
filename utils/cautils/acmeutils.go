@@ -297,6 +297,9 @@ func withCSR(csr *x509.CertificateRequest) acmeFlowOp {
 		af.csr = csr
 		af.subject = csr.Subject.CommonName
 		af.sans = csr.DNSNames
+		for _, ip := range csr.IPAddresses {
+			af.sans = append(af.sans, ip.String())
+		}
 		return nil
 	}
 }
