@@ -234,7 +234,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		rootFile = pki.GetRootCAPath()
 	}
 
-	caURL, err := flags.ParseCaURL(ctx)
+	caURL, err := flags.ParseCaURLIfExists(ctx)
 	if err != nil {
 		return err
 	}
