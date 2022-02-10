@@ -446,8 +446,7 @@ func ParseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
 //  - Error if the URL scheme is not implicitly or explicitly 'https'.
 func ParseCaURL(ctx *cli.Context) (string, error) {
 	caURL := ctx.String("ca-url")
-	if caURL == "" && 
-           !ctx.IsSet("offline") {
+	if caURL == "" && !ctx.Bool("offline") {
 		return "", errs.RequiredFlag(ctx, "ca-url")
 	}
 
