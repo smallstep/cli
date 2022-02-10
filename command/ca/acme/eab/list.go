@@ -124,7 +124,7 @@ func listAction(ctx *cli.Context) (err error) {
 		options := []ca.AdminOption{ca.WithAdminCursor(cursor), ca.WithAdminLimit(int(limit))}
 		eaksResponse, err := client.GetExternalAccountKeysPaginate(provisioner, reference, options...)
 		if err != nil {
-			return errors.Wrap(err, "error retrieving ACME EAB keys")
+			return errors.Wrap(notImplemented(err), "error retrieving ACME EAB keys")
 		}
 		if firstIteration && len(eaksResponse.EAKs) == 0 {
 			fmt.Printf("No ACME EAB keys stored for provisioner %s\n", provisioner)

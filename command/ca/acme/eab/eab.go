@@ -2,7 +2,12 @@ package eab
 
 import (
 	"encoding/base64"
+	"fmt"
+	"html"
+	"strconv"
 
+	"github.com/pkg/errors"
+	"github.com/smallstep/certificates/authority/admin"
 	"github.com/smallstep/certificates/ca"
 	"github.com/urfave/cli"
 	"go.step.sm/linkedca"
@@ -66,4 +71,17 @@ $ step beta ca acme eab remove key_id
 '''
 `,
 	}
+}
+
+// notImplemented checks if an error indicates that the operation is not implemented
+// in the CA and adds additional information to the error if that's the case. Other
+// types of errors pass through without changes.
+func notImplemented(err error) error {
+	var adminErr *ca.AdminClientError
+	if errors.As(err, &adminErr) && adminErr.Type == admin.ErrorNotImplementedType.String() {
+		emoji := html.UnescapeString("&#"+strconv.Itoa(128640)+";") + " " +
+			html.UnescapeString("&#"+strconv.Itoa(129321)+";")
+		return fmt.Errorf("this functionality is currently only available in Certificate Manager: https://u.step.sm/cm " + emoji)
+	}
+	return err
 }

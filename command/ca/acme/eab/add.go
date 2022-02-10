@@ -78,7 +78,7 @@ func addAction(ctx *cli.Context) (err error) {
 		Reference: reference,
 	})
 	if err != nil {
-		return errors.Wrap(err, "error creating ACME EAB key")
+		return errors.Wrap(notImplemented(err), "error creating ACME EAB key")
 	}
 
 	cliEAK := toCLI(ctx, client, eak)
