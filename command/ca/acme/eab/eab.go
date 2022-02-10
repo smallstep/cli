@@ -81,7 +81,7 @@ func notImplemented(err error) error {
 	if errors.As(err, &adminErr) && adminErr.Type == admin.ErrorNotImplementedType.String() {
 		emoji := html.UnescapeString("&#"+strconv.Itoa(128640)+";") + " " +
 			html.UnescapeString("&#"+strconv.Itoa(129321)+";")
-		return fmt.Errorf("this functionality is currently only available in Certificate Manager: https://u.step.sm/cm " + emoji)
+		return fmt.Errorf("this functionality is currently only available in Certificate Manager: https://u.step.sm/cm %s", emoji)
 	}
 	return err
 }
