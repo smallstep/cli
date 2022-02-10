@@ -57,7 +57,6 @@ mkdir -p "$newdir/bin"
 
 cp "$OUTPUT_DIR/bin/step" "$newdir/bin/${STEP_EXEC_NAME}"
 cp README.md "$newdir"
-cp -a autocomplete "$newdir"
 
 if [ ${ZIP} -eq 0 ]; then
     NEW_BUNDLE="${RELEASE_DIR}/step_${STEP_PLATFORM}_${STEP_VERSION}_${STEP_ARCH}.tar.gz"
