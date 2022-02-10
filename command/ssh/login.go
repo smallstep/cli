@@ -99,7 +99,7 @@ func loginAction(ctx *cli.Context) error {
 
 	principals := ctx.StringSlice("principal")
 	if subject != "" && len(principals) == 0 {
-		principals = []string{subject}
+		principals = createPrincipalsFromSubject(subject)
 	}
 
 	// Flags
