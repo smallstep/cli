@@ -53,6 +53,7 @@ This command will add the user to the ssh-agent if necessary.
 :  The port to connect to.`,
 		Flags: []cli.Flag{
 			flags.Provisioner,
+			flags.ProvisionerPasswordFileWithAlias,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
 			flags.Offline,
