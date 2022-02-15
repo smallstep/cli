@@ -52,17 +52,13 @@ func WarnContext() {
 type bootstrapOption func(bc *bootstrapContext)
 
 type bootstrapContext struct {
-	defaultContextName   string
-	defaultAuthorityName string
-	defaultProfileName   string
-	redirectURL          string
+	defaultContextName string
+	redirectURL        string
 }
 
 func withDefaultContextValues(context, authority, profile string) bootstrapOption {
 	return func(bc *bootstrapContext) {
 		bc.defaultContextName = context
-		bc.defaultAuthorityName = authority // effectively ignored in bootstrap now
-		bc.defaultProfileName = profile     // effectively ignored in bootstrap now
 	}
 }
 
