@@ -8,10 +8,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- Add Solus OS support to truststore when used in `step ca bootstrap --install`.
+- Add `step completion` command to print the shell completion script.
 ### Changed
+- IPv6 addresses are normalized as IP addresses internally.
+- When the `--context` flag is provided when initializing a CA, configuration and other files will be stored in a directory named after the value provided instead of being named after the first DNS name.
 ### Deprecated
 ### Removed
 ### Fixed
+- IP SAN support when using `step ca sign` and an ACME provisioner (see [819](https://github.com/smallstep/certificates/discussions/819)).
+- Offline mode no longer requires `--ca-url` to be set.
+- Add missing `TemplateData` when signing x509 certificates in offline mode.
+- Improved `needs-renewal` example help texts.
+- Improved `step crl inspect` reason output.
 ### Security
 
 ## [0.18.1] - 2021-02-03
@@ -21,10 +30,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add `--format` flag to `step ssh fingerprint`.
 - Add FreeBSD support to `step certificate install`.
 - Add `step crl inspect` to inspect a certificate revocation list (CRL).
-- Add `--auth-param` flag to `step oauth` for adding args to query
-- Add `--no-agent` flag to `step ssh certificate` to skip ssh-add
+- Add `--auth-param` flag to `step oauth` for adding args to query.
+- Add `--no-agent` flag to `step ssh certificate` to skip ssh-add.
+- Add IP SANs support to `step ca certificate` when using an ACME provisioner.
+- Add support for adding and updating Nebula provisioners.
 ### Changed
 - Allow `step ssh login` and `step ssh logout` without positional arguments.
+- Additional configuration options for SCEP provisioners.
 
 ## [0.18.0] - 2021-11-17
 ### Added
