@@ -116,7 +116,7 @@ func listAction(ctx *cli.Context) (err error) {
 	}
 
 	cursor := ""
-	format := "%-36s%-28s%-16s%-30s%-30s%-36s%s\n"
+	format := "%-36s%-28s%-16s%-30s%-30s%-40s%s\n"
 	firstIteration := true
 	startedPager := false
 
@@ -130,7 +130,7 @@ func listAction(ctx *cli.Context) (err error) {
 			fmt.Printf("No ACME EAB keys stored for provisioner %s\n", provisioner)
 			break
 		}
-		if firstIteration && cmd != nil {
+		if shouldStartPager := (firstIteration && cmd != nil); shouldStartPager {
 			if err := cmd.Start(); err != nil {
 				return errors.Wrap(err, "unable to start $PAGER")
 			}
