@@ -8,10 +8,13 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/utils"
@@ -50,6 +53,9 @@ var hashAlgFlag = cli.StringFlag{
 
 		**md5**
 		:  MD5 produces a 128-bit hash value
+
+		**es256k**
+		:  ECDSA with the secp256k1 curve and the SHA-256 cryptographic hash function
 `,
 }
 
@@ -108,9 +114,10 @@ $ step crypto key sign --key rsa.key --pss file.txt
 				Name:  "pss",
 				Usage: "Use RSA-PSS signature scheme.",
 			},
-			cli.BoolFlag{
-				Name:  "raw",
-				Usage: "Print the raw bytes instead of the base64 format.",
+			cli.StringFlag{
+				Name:  "format",
+				Value: "hex",
+				Usage: "Format the output: hex/b64/raw. Default is hex",
 			},
 			cli.StringFlag{
 				Name:  "password-file",
@@ -119,6 +126,9 @@ $ step crypto key sign --key rsa.key --pss file.txt
 		},
 	}
 }
+
+// make it easy to unit-test
+var output io.Writer = os.Stdout
 
 func signAction(ctx *cli.Context) error {
 	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
@@ -145,7 +155,7 @@ func signAction(ctx *cli.Context) error {
 		return errs.FileError(err, input)
 	}
 
-	key, err := pemutil.Read(keyFile)
+	key, err := readKey(keyFile, false, ctx)
 	if err != nil {
 		return err
 	}
@@ -169,6 +179,8 @@ func signAction(ctx *cli.Context) error {
 			digest = hash(crypto.SHA384, b)
 		case elliptic.P521():
 			digest = hash(crypto.SHA512, b)
+		case secp256k1.S256(): // using SHA-256
+			digest = hash(crypto.SHA256, b)
 		default:
 			return errors.Errorf("unsupported elliptic curve %s", k.Params().Name)
 		}
@@ -190,13 +202,20 @@ func signAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error signing message")
 	}
 
-	if ctx.Bool("raw") {
-		os.Stdout.Write(sig)
-	} else {
-		fmt.Println(base64.StdEncoding.EncodeToString(sig))
+	var outputValue interface{}
+	switch v := ctx.String("format"); v {
+	case "raw":
+		outputValue = sig
+	case "hex":
+		outputValue = hex.EncodeToString(sig)
+	case "b64":
+		outputValue = base64.StdEncoding.EncodeToString(sig)
+	default:
+		return errors.Errorf("unsupported output format %T", v)
 	}
+	_, err = fmt.Fprintln(output, outputValue)
 
-	return nil
+	return err
 }
 
 func hash(h crypto.Hash, data []byte) []byte {
@@ -236,4 +255,27 @@ func rsaHash(ctx *cli.Context) (crypto.SignerOpts, error) {
 	}
 
 	return h, nil
+}
+
+func readKey(keyFile string, isPubKey bool, ctx *cli.Context) (interface{}, error) {
+	if strings.ToLower(ctx.String("alg")) == "es256k" {
+		hexRaw, err := os.ReadFile(keyFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "read file error")
+		}
+		raw, err := hex.DecodeString(strings.TrimPrefix(strings.TrimSpace(string(hexRaw)), "0x"))
+		if err != nil {
+			return nil, errors.Wrap(err, "file content is not in hex")
+		}
+		if isPubKey {
+			secp256k1Pk, err := secp256k1.ParsePubKey(raw)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to parse public key")
+			}
+			return secp256k1Pk.ToECDSA(), nil
+		}
+		secp256k1Pk := secp256k1.PrivKeyFromBytes(raw)
+		return secp256k1Pk.ToECDSA(), nil
+	}
+	return pemutil.Read(keyFile)
 }
