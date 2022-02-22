@@ -796,6 +796,8 @@ github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
 github.com/smallstep/certificates v0.18.1 h1:J/Wp5rd75pzBBZRxLn1M8AqnUdFH0zoaT8PoOW5jY8o=
 github.com/smallstep/certificates v0.18.1/go.mod h1:1p5avcwsX+CYrFWD1OTUnpzi4b8wd7LbFYn/OEIH7Q4=
+github.com/smallstep/certificates v0.18.2-0.20220210121144-4ebf43c011cc h1:7J1GzKAqyxSMHWCK5/87AJARZObWDpp2ECeUpgXAR4w=
+github.com/smallstep/certificates v0.18.2-0.20220210121144-4ebf43c011cc/go.mod h1:1p5avcwsX+CYrFWD1OTUnpzi4b8wd7LbFYn/OEIH7Q4=
 github.com/smallstep/certinfo v1.6.0 h1:o1eS9+iE6OPLRdnRFiYqAtXYR2FioNUt8q4CIj7X3Nk=
 github.com/smallstep/certinfo v1.6.0/go.mod h1:DsKAlSDLWsywdiVBCfqqVdRuny77wqiI+NFskLM7Ods=
 github.com/smallstep/nosql v0.3.9 h1:YPy5PR3PXClqmpFaVv0wfXDXDc7NXGBE1auyU2c87dc=
