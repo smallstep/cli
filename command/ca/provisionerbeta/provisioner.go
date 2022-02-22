@@ -228,12 +228,32 @@ Use the flag multiple times to remove multiple accounts.`,
 	azureResourceGroupFlag = cli.StringSliceFlag{
 		Name: "azure-resource-group",
 		Usage: `The Microsoft Azure resource group <name> used to validate the identity tokens.
-Use the flag multipl etimes to configure multiple resource groups`,
+Use the flag multiple times to configure multiple resource groups`,
 	}
 	removeAzureResourceGroupFlag = cli.StringSliceFlag{
 		Name: "remove-azure-resource-group",
 		Usage: `Remove a Microsoft Azure resource group <name> used to validate the identity tokens.
-Use the flag multipl etimes to configure multiple resource groups`,
+Use the flag multiple times to configure multiple resource groups`,
+	}
+	azureSubscriptionIDFlag = cli.StringSliceFlag{
+		Name: "azure-subscription-id",
+		Usage: `The Microsoft Azure subscription <id> used to validate the identity tokens.
+Use the flag multiple times to configure multiple subscription IDs`,
+	}
+	removeAzureSubscriptionIDFlag = cli.StringSliceFlag{
+		Name: "remove-azure-subscription-id",
+		Usage: `Remove a Microsoft Azure subscription <id> used to validate the identity tokens.
+Use the flag multiple times to configure multiple subscription IDs`,
+	}
+	azureAdIdentityObjectIDFlag = cli.StringSliceFlag{
+		Name: "azure-ad-object-id",
+		Usage: `The Microsoft Azure AD object <id> used to validate the identity tokens.
+Use the flag multiple times to configure multiple object IDs`,
+	}
+	removeAzureAdIdentityObjectIDFlag = cli.StringSliceFlag{
+		Name: "remove-azure-ad-object-id",
+		Usage: `Remove a Microsoft Azure AD object <id> used to validate the identity tokens.
+Use the flag multiple times to configure multiple object IDs`,
 	}
 	gcpServiceAccountFlag = cli.StringSliceFlag{
 		Name: "gcp-service-account",

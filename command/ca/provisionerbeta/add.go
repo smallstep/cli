@@ -217,6 +217,8 @@ provisioning tokens.`,
 			awsAccountFlag,
 			azureTenantFlag,
 			azureResourceGroupFlag,
+			azureSubscriptionIDFlag,
+			azureAdIdentityObjectIDFlag,
 			gcpServiceAccountFlag,
 			gcpProjectFlag,
 			instanceAgeFlag,
@@ -295,11 +297,13 @@ Create a SCEP provisioner with 'secret' challenge and AES-256-CBC encryption:
 step beta ca provisioner add my_scep_provisioner --type SCEP --challenge secret --encryption-algorithm-identifier 2  
 '''
 
-Create an Azure provisioner with two service groups:
+Create an Azure provisioner with two resource groups, one subscription ID and one AAD object ID:
 '''
 $ step beta ca provisioner add Azure --type Azure \
   --azure-tenant bc9043e2-b645-4c1c-a87a-78f8644bfe57 \
-  --azure-resource-group identity --azure-resource-group accounting
+  --azure-resource-group identity --azure-resource-group accounting \
+  --azure-subscripton-id dc760a01-2886-4a84-9abc-f3508e0f87d9 \
+  --azure-ad-object-id f50926c7-abbf-4c28-87dc-9adc7eaf3ba7
 '''
 
 Create an GCP provisioner that will only accept the SANs provided in the identity token:
