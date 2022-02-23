@@ -273,7 +273,7 @@ Add an Azure provisioner with two resource groups, one subscription ID and one A
 $ step ca provisioner add Azure --type Azure --ca-config ca.json \
   --azure-tenant bc9043e2-b645-4c1c-a87a-78f8644bfe57 \
   --azure-resource-group identity --azure-resource-group accounting \
-  --azure-subscripton-id dc760a01-2886-4a84-9abc-f3508e0f87d9 \
+  --azure-subscription-id dc760a01-2886-4a84-9abc-f3508e0f87d9 \
   --azure-ad-object-id f50926c7-abbf-4c28-87dc-9adc7eaf3ba7
 '''
 
