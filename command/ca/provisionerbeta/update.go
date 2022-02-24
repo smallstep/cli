@@ -76,7 +76,7 @@ IID (AWS/GCP/Azure)
 [**--aws-account**=<id>]... [**--remove-aws-account**=<id>]...
 [**--gcp-service-account**=<name>]... [**--remove-gcp-service-account**=<name>]...
 [**--gcp-project**=<name>]... [**--remove-gcp-project**=<name>]...
-[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
+[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>] [**--azure-subscription-id**=<id>] [**--azure-object-id**=<id>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
@@ -194,8 +194,8 @@ provisioning tokens.`,
 			removeAzureResourceGroupFlag,
 			azureSubscriptionIDFlag,
 			removeAzureSubscriptionIDFlag,
-			azureAdIdentityObjectIDFlag,
-			removeAzureAdIdentityObjectIDFlag,
+			azureObjectIDFlag,
+			removeAzureObjectIDFlag,
 			gcpServiceAccountFlag,
 			removeGCPServiceAccountFlag,
 			gcpProjectFlag,

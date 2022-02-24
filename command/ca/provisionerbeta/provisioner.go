@@ -245,13 +245,13 @@ Use the flag multiple times to configure multiple subscription IDs`,
 		Usage: `Remove a Microsoft Azure subscription <id> used to validate the identity tokens.
 Use the flag multiple times to configure multiple subscription IDs`,
 	}
-	azureAdIdentityObjectIDFlag = cli.StringSliceFlag{
-		Name: "azure-ad-object-id",
+	azureObjectIDFlag = cli.StringSliceFlag{
+		Name: "azure-object-id",
 		Usage: `The Microsoft Azure AD object <id> used to validate the identity tokens.
 Use the flag multiple times to configure multiple object IDs`,
 	}
-	removeAzureAdIdentityObjectIDFlag = cli.StringSliceFlag{
-		Name: "remove-azure-ad-object-id",
+	removeAzureObjectIDFlag = cli.StringSliceFlag{
+		Name: "remove-azure-object-id",
 		Usage: `Remove a Microsoft Azure AD object <id> used to validate the identity tokens.
 Use the flag multiple times to configure multiple object IDs`,
 	}

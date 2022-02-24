@@ -268,13 +268,13 @@ $ step ca provisioner add Google --type GCP --ca-config ca.json \
   --gcp-project identity --gcp-project accounting
 '''
 
-Add an Azure provisioner with two resource groups, one subscription ID and one AAD object ID:
+Add an Azure provisioner with two resource groups, one subscription ID and one object ID:
 '''
 $ step ca provisioner add Azure --type Azure --ca-config ca.json \
   --azure-tenant bc9043e2-b645-4c1c-a87a-78f8644bfe57 \
   --azure-resource-group identity --azure-resource-group accounting \
   --azure-subscription-id dc760a01-2886-4a84-9abc-f3508e0f87d9 \
-  --azure-ad-object-id f50926c7-abbf-4c28-87dc-9adc7eaf3ba7
+  --azure-object-id f50926c7-abbf-4c28-87dc-9adc7eaf3ba7
 '''
 
 Add an GCP provisioner that will only accept the SANs provided in the identity token:
@@ -561,7 +561,7 @@ func addAzureProvisioner(ctx *cli.Context, name string, provMap map[string]bool)
 		TenantID:               tenantID,
 		ResourceGroups:         ctx.StringSlice("azure-resource-group"),
 		SubscriptionIDs:        ctx.StringSlice("azure-subscription-id"),
-		AadObjectIDs:           ctx.StringSlice("azure-ad-object-id"),
+		ObjectIDs:              ctx.StringSlice("azure-object-id"),
 		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
 		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
 		Claims:                 getClaims(ctx),
