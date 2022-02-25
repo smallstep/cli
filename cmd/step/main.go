@@ -78,7 +78,7 @@ func main() {
 	app.Commands = command.Retrieve()
 	app.Flags = append(app.Flags, cli.HelpFlag)
 	app.EnableBashCompletion = true
-	app.Copyright = "(c) 2018-2020 Smallstep Labs, Inc."
+	app.Copyright = fmt.Sprintf("(c) 2018-%d Smallstep Labs, Inc.", time.Now().Year())
 
 	// Flag of custom configuration flag
 	app.Flags = append(app.Flags, cli.StringFlag{
