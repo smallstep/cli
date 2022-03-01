@@ -818,6 +818,18 @@ func updateAzureDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("azure-resource-group") {
 		details.ResourceGroups = append(details.ResourceGroups, ctx.StringSlice("add-azure-resource-group")...)
 	}
+	if ctx.IsSet("remove-azure-subscription-id") {
+		details.SubscriptionIds = removeElements(details.SubscriptionIds, ctx.StringSlice("remove-azure-subscription-id"))
+	}
+	if ctx.IsSet("azure-subscription-id") {
+		details.SubscriptionIds = append(details.SubscriptionIds, ctx.StringSlice("add-azure-subscription-id")...)
+	}
+	if ctx.IsSet("remove-azure-object-id") {
+		details.ObjectIds = removeElements(details.ObjectIds, ctx.StringSlice("remove-azure-object-id"))
+	}
+	if ctx.IsSet("azure-object-id") {
+		details.ObjectIds = append(details.ObjectIds, ctx.StringSlice("add-azure-object-id")...)
+	}
 	return nil
 }
 

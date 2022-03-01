@@ -766,6 +766,8 @@ func createAzureDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) 
 			Azure: &linkedca.AzureProvisioner{
 				TenantId:               tenantID,
 				ResourceGroups:         ctx.StringSlice("azure-resource-group"),
+				SubscriptionIds:        ctx.StringSlice("azure-subscription-id"),
+				ObjectIds:              ctx.StringSlice("azure-object-id"),
 				DisableCustomSans:      ctx.Bool("disable-custom-sans"),
 				DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
 			},
