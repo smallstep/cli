@@ -44,7 +44,7 @@ func addCommand() cli.Command {
 **step ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
 [**--ca-config**=<file>] [**--aws-account**=<id>]
 [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
-[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>] [**--azure-subscription-id**=<id>] [**--azure-ad-object-id**=<id>]
+[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>] [**--azure-subscription-id**=<id>] [**--azure-object-id**=<id>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 
@@ -146,7 +146,7 @@ Use the flag multiple times to configure multiple resource groups`,
 Use the flag multiple times to configure multiple subscription IDs`,
 			},
 			cli.StringSliceFlag{
-				Name: "azure-ad-object-id",
+				Name: "azure-object-id",
 				Usage: `The Microsoft Azure AD object <id> used to validate the identity tokens.
 Use the flag multiple times to configure multiple object IDs`,
 			},
