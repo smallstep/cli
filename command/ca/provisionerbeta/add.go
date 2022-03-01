@@ -81,10 +81,10 @@ func addCommand() cli.Command {
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
 
-**step beta ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>] 
-[**--capabilities**=<capabilities>] [**--include-root**] [**--min-public-key-length**=<length>] 
-[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>] 
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>] [**--password-file**=<file>] 
+**step beta ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
+[**--capabilities**=<capabilities>] [**--include-root**] [**--min-public-key-length**=<length>]
+[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>] [**--password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -123,7 +123,7 @@ func addCommand() cli.Command {
 
     **SCEP**
 	: Uses the SCEP protocol to create certificates.
-	
+
     **Nebula**
     : Uses a Nebula certificate / private key pair to sign provisioning tokens.
 `},
@@ -292,7 +292,7 @@ step beta ca provisioner add sshpop --type SSHPOP
 
 Create a SCEP provisioner with 'secret' challenge and AES-256-CBC encryption:
 '''
-step beta ca provisioner add my_scep_provisioner --type SCEP --challenge secret --encryption-algorithm-identifier 2  
+step beta ca provisioner add my_scep_provisioner --type SCEP --challenge secret --encryption-algorithm-identifier 2
 '''
 
 Create an Azure provisioner with two service groups:
