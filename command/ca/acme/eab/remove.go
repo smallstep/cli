@@ -66,7 +66,7 @@ func removeAction(ctx *cli.Context) error {
 
 	err = client.RemoveExternalAccountKey(provisioner, keyID)
 	if err != nil {
-		return errors.Wrap(err, "error removing ACME EAB key")
+		return errors.Wrap(notImplemented(err), "error removing ACME EAB key")
 	}
 
 	fmt.Println("Key was deleted successfully!")

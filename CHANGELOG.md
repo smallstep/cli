@@ -6,22 +6,27 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased - 0.18.2]
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [0.18.2] - 2021-03-01
 ### Added
 - Add Solus OS support to truststore when used in `step ca bootstrap --install`.
 - Add `step completion` command to print the shell completion script.
 ### Changed
 - IPv6 addresses are normalized as IP addresses internally.
 - When the `--context` flag is provided when initializing a CA, configuration and other files will be stored in a directory named after the value provided instead of being named after the first DNS name.
-### Deprecated
-### Removed
 ### Fixed
 - IP SAN support when using `step ca sign` and an ACME provisioner (see [819](https://github.com/smallstep/certificates/discussions/819)).
 - Offline mode no longer requires `--ca-url` to be set.
 - Add missing `TemplateData` when signing x509 certificates in offline mode.
 - Improved `needs-renewal` example help texts.
 - Improved `step crl inspect` reason output.
-### Security
 
 ## [0.18.1] - 2021-02-03
 ### Added
