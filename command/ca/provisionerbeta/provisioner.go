@@ -268,12 +268,12 @@ Use the flag multiple times to configure multiple service accounts.`,
 	gcpProjectFlag = cli.StringSliceFlag{
 		Name: "gcp-project",
 		Usage: `The Google project <id> used to validate the identity tokens.
-Use the flag multipl etimes to configure multiple projects`,
+Use the flag multiple times to configure multiple projects`,
 	}
 	removeGCPProjectFlag = cli.StringSliceFlag{
 		Name: "remove-gcp-project",
 		Usage: `Remove a Google project <id> used to validate the identity tokens.
-Use the flag multipl etimes to configure multiple projects`,
+Use the flag multiple times to configure multiple projects`,
 	}
 	instanceAgeFlag = cli.DurationFlag{
 		Name: "instance-age",
