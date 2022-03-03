@@ -76,7 +76,7 @@ IID (AWS/GCP/Azure)
 [**--aws-account**=<id>]... [**--remove-aws-account**=<id>]...
 [**--gcp-service-account**=<name>]... [**--remove-gcp-service-account**=<name>]...
 [**--gcp-project**=<name>]... [**--remove-gcp-project**=<name>]...
-[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
+[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>] [**--azure-subscription-id**=<id>] [**--azure-object-id**=<id>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
@@ -192,6 +192,10 @@ provisioning tokens.`,
 			azureTenantFlag,
 			azureResourceGroupFlag,
 			removeAzureResourceGroupFlag,
+			azureSubscriptionIDFlag,
+			removeAzureSubscriptionIDFlag,
+			azureObjectIDFlag,
+			removeAzureObjectIDFlag,
 			gcpServiceAccountFlag,
 			removeGCPServiceAccountFlag,
 			gcpProjectFlag,
@@ -787,7 +791,7 @@ func updateAWSDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.Accounts = removeElements(details.Accounts, ctx.StringSlice("remove-aws-account"))
 	}
 	if ctx.IsSet("aws-account") {
-		details.Accounts = append(details.Accounts, ctx.StringSlice("add-aws-account")...)
+		details.Accounts = append(details.Accounts, ctx.StringSlice("aws-account")...)
 	}
 	return nil
 }
@@ -812,7 +816,19 @@ func updateAzureDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.ResourceGroups = removeElements(details.ResourceGroups, ctx.StringSlice("remove-azure-resource-group"))
 	}
 	if ctx.IsSet("azure-resource-group") {
-		details.ResourceGroups = append(details.ResourceGroups, ctx.StringSlice("add-azure-resource-group")...)
+		details.ResourceGroups = append(details.ResourceGroups, ctx.StringSlice("azure-resource-group")...)
+	}
+	if ctx.IsSet("remove-azure-subscription-id") {
+		details.SubscriptionIds = removeElements(details.SubscriptionIds, ctx.StringSlice("remove-azure-subscription-id"))
+	}
+	if ctx.IsSet("azure-subscription-id") {
+		details.SubscriptionIds = append(details.SubscriptionIds, ctx.StringSlice("azure-subscription-id")...)
+	}
+	if ctx.IsSet("remove-azure-object-id") {
+		details.ObjectIds = removeElements(details.ObjectIds, ctx.StringSlice("remove-azure-object-id"))
+	}
+	if ctx.IsSet("azure-object-id") {
+		details.ObjectIds = append(details.ObjectIds, ctx.StringSlice("azure-object-id")...)
 	}
 	return nil
 }
@@ -841,13 +857,13 @@ func updateGCPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.ServiceAccounts = removeElements(details.ServiceAccounts, ctx.StringSlice("remove-gcp-service-account"))
 	}
 	if ctx.IsSet("gcp-service-account") {
-		details.ServiceAccounts = append(details.ServiceAccounts, ctx.StringSlice("add-gcp-service-account")...)
+		details.ServiceAccounts = append(details.ServiceAccounts, ctx.StringSlice("gcp-service-account")...)
 	}
 	if ctx.IsSet("remove-gcp-project") {
-		details.ProjectIds = removeElements(details.ProjectIds, ctx.StringSlice("gcp-project"))
+		details.ProjectIds = removeElements(details.ProjectIds, ctx.StringSlice("remove-gcp-project"))
 	}
 	if ctx.IsSet("gcp-project") {
-		details.ProjectIds = append(details.ProjectIds, ctx.StringSlice("add-gcp-project")...)
+		details.ProjectIds = append(details.ProjectIds, ctx.StringSlice("gcp-project")...)
 	}
 	return nil
 }

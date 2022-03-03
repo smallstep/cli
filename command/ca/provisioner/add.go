@@ -44,7 +44,7 @@ func addCommand() cli.Command {
 **step ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
 [**--ca-config**=<file>] [**--aws-account**=<id>]
 [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
-[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
+[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>] [**--azure-subscription-id**=<id>] [**--azure-object-id**=<id>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 
@@ -138,7 +138,17 @@ Use the flag multiple times to configure multiple accounts.`,
 			cli.StringSliceFlag{
 				Name: "azure-resource-group",
 				Usage: `The Microsoft Azure resource group <name> used to validate the identity tokens.
-Use the flag multipl etimes to configure multiple resource groups`,
+Use the flag multiple times to configure multiple resource groups`,
+			},
+			cli.StringSliceFlag{
+				Name: "azure-subscription-id",
+				Usage: `The Microsoft Azure subscription <id> used to validate the identity tokens.
+Use the flag multiple times to configure multiple subscription IDs`,
+			},
+			cli.StringSliceFlag{
+				Name: "azure-object-id",
+				Usage: `The Microsoft Azure AD object <id> used to validate the identity tokens.
+Use the flag multiple times to configure multiple object IDs`,
 			},
 			cli.StringSliceFlag{
 				Name: "gcp-service-account",
@@ -258,11 +268,13 @@ $ step ca provisioner add Google --type GCP --ca-config ca.json \
   --gcp-project identity --gcp-project accounting
 '''
 
-Add an Azure provisioner with two service groups:
+Add an Azure provisioner with two resource groups, one subscription ID and one object ID:
 '''
 $ step ca provisioner add Azure --type Azure --ca-config ca.json \
   --azure-tenant bc9043e2-b645-4c1c-a87a-78f8644bfe57 \
-  --azure-resource-group identity --azure-resource-group accounting
+  --azure-resource-group identity --azure-resource-group accounting \
+  --azure-subscription-id dc760a01-2886-4a84-9abc-f3508e0f87d9 \
+  --azure-object-id f50926c7-abbf-4c28-87dc-9adc7eaf3ba7
 '''
 
 Add an GCP provisioner that will only accept the SANs provided in the identity token:
@@ -510,7 +522,7 @@ func addOIDCProvisioner(ctx *cli.Context, name string, provMap map[string]bool) 
 }
 
 func addAWSProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	d, err := parseIntaceAge(ctx)
+	d, err := parseInstanceAge(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -548,6 +560,8 @@ func addAzureProvisioner(ctx *cli.Context, name string, provMap map[string]bool)
 		Name:                   name,
 		TenantID:               tenantID,
 		ResourceGroups:         ctx.StringSlice("azure-resource-group"),
+		SubscriptionIDs:        ctx.StringSlice("azure-subscription-id"),
+		ObjectIDs:              ctx.StringSlice("azure-object-id"),
 		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
 		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
 		Claims:                 getClaims(ctx),
@@ -565,7 +579,7 @@ func addAzureProvisioner(ctx *cli.Context, name string, provMap map[string]bool)
 }
 
 func addGCPProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	d, err := parseIntaceAge(ctx)
+	d, err := parseInstanceAge(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -746,7 +760,7 @@ func getClaims(ctx *cli.Context) *provisioner.Claims {
 	return nil
 }
 
-func parseIntaceAge(ctx *cli.Context) (provisioner.Duration, error) {
+func parseInstanceAge(ctx *cli.Context) (provisioner.Duration, error) {
 	age := ctx.Duration("instance-age")
 	if age == 0 {
 		return provisioner.Duration{}, nil
