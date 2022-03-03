@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased - 0.18.2]
 ### Added
+- Add flags to include subscription and object ids in the Azure provisioner.
 ### Changed
 ### Deprecated
 ### Removed
 ### Fixed
+- Fix flags to add or remove options in AWS, Azure, and GCP provisioners.
 ### Security
 
 ## [0.18.2] - 2021-03-01
