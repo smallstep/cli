@@ -269,6 +269,13 @@ be stored in the 'x5c' header.`,
 be stored in the 'x5c' header.`,
 	}
 
+	// X5cInsecure is a cli.Flag used set the JWT header x5cInsecure instead of
+	// x5c when --x5c-cert is used.
+	X5cInsecure = cli.BoolFlag{
+		Name:  "x5c-insecure",
+		Usage: "Use the JWT header 'x5cInsecure' instead of 'x5c'.",
+	}
+
 	// X5tCert is a cli.Flag used to pass the x5t header certificate thumbprint
 	// for a JWS or JWT.
 	X5tCert = cli.StringFlag{
