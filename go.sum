@@ -860,12 +860,12 @@ github.com/slackhq/nebula v1.5.2/go.mod h1:xaCM6wqbFk/NRmmUe1bv88fWBm3a1UioXJVIp
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1/1fApl1A+9VcBk+9dcqGfnePY87LY=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
-github.com/smallstep/certificates v0.18.2 h1:3A5aOGO/Cghht2FhRwAahPHPCwKUJ1ofRRDwlk0z2nE=
-github.com/smallstep/certificates v0.18.2/go.mod h1:GfaGvnmQXSR6JxG7ZkpDRixKyQPpWdw7GFD9zKs04nc=
+github.com/smallstep/certificates v0.18.3-0.20220311232253-6dcde8a7438f h1:9X9PoK4dtp8R0aPupVWuEpKwRwD4RnwYlDyPqtO5dVI=
+github.com/smallstep/certificates v0.18.3-0.20220311232253-6dcde8a7438f/go.mod h1:8w5su0K/wzq26O/wB0ROCg7FKDxBO3vhq3tlG6pVbw4=
 github.com/smallstep/certinfo v1.6.0 h1:o1eS9+iE6OPLRdnRFiYqAtXYR2FioNUt8q4CIj7X3Nk=
 github.com/smallstep/certinfo v1.6.0/go.mod h1:DsKAlSDLWsywdiVBCfqqVdRuny77wqiI+NFskLM7Ods=
-github.com/smallstep/nosql v0.3.10 h1:Xs7nueSl250GYb5XdfbzR8w+xPbvF6/oSw6pryY7gJI=
-github.com/smallstep/nosql v0.3.10/go.mod h1:yKZT5h7cdIVm6wEKM9+jN5dgK80Hljpuy8HNsnI7Gzo=
+github.com/smallstep/nosql v0.4.0 h1:Go3WYwttUuvwqMtFiiU4g7kBIlY+hR0bIZAqVdakQ3M=
+github.com/smallstep/nosql v0.4.0/go.mod h1:yKZT5h7cdIVm6wEKM9+jN5dgK80Hljpuy8HNsnI7Gzo=
 github.com/smallstep/truststore v0.11.0 h1:JUTkQ4oHr40jHTS/A2t0usEhteMWG+45CDD2iJA/dIk=
 github.com/smallstep/truststore v0.11.0/go.mod h1:HwHKRcBi0RUxxw1LYDpTRhYC4jZUuxPpkHdVonlkoDM=
 github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71 h1:q0IDrQpquiWcU1nJmjwEremPwG+pT2AAGsDatPgg3Kw=
@@ -1045,8 +1045,8 @@ go.step.sm/cli-utils v0.7.0/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/
 go.step.sm/cli-utils v0.7.2 h1:kUNNhGRWAad3bLkhvbLjVr3Dqs5DgxCZQcUspWaQCIQ=
 go.step.sm/cli-utils v0.7.2/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/E=
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
-go.step.sm/crypto v0.15.0 h1:VioBln+x3+RoejgeBhvxkLGVYdWRy6PFiAaUUN29/E0=
-go.step.sm/crypto v0.15.0/go.mod h1:3G0yQr5lQqfEG0CMYz8apC/qMtjLRQlzflL2AxkcN+g=
+go.step.sm/crypto v0.15.3 h1:f3GMl+aCydt294BZRjTYwpaXRqwwndvoTY2NLN4wu10=
+go.step.sm/crypto v0.15.3/go.mod h1:3G0yQr5lQqfEG0CMYz8apC/qMtjLRQlzflL2AxkcN+g=
 go.step.sm/linkedca v0.10.0 h1:+bqymMRulHYkVde4l16FnqFVskoS6HCWJN5Z5cxAqF8=
 go.step.sm/linkedca v0.10.0/go.mod h1:5uTRjozEGSPAZal9xJqlaD38cvJcLe3o1VAFVjqcORo=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=

@@ -31,7 +31,7 @@ func tokenCommand() cli.Command {
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--password-file**=<file>] [**--provisioner-password-file**=<file>]
 [**--output-file**=<file>] [**--key**=<file>] [**--san**=<SAN>] [**--offline**]
-[**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
+[**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--x5c-insecure**]
 [**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
 [**--ssh**] [**--host**] [**--principal**=<name>] [**--k8ssa-token-path**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
@@ -166,6 +166,7 @@ multiple principals.`,
 			flags.ProvisionerPasswordFile,
 			flags.X5cCert,
 			flags.X5cKey,
+			flags.X5cInsecure,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
 			flags.NebulaCert,

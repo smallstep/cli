@@ -30,6 +30,7 @@ const (
 	SSHRevokeType
 	SSHRenewType
 	SSHRekeyType
+	RenewType
 )
 
 // parseAudience creates the ca audience url from the ca-url

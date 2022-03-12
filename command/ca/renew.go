@@ -600,7 +600,7 @@ func (r *renewer) RenewAfterExpiry(cert tls.Certificate) (*api.SignResponse, err
 	}
 	claims.ExtraHeaders[jose.X5cInsecureKey] = x5c
 
-	token, err := claims.Sign("", cert.PrivateKey)
+	tok, err := claims.Sign("", cert.PrivateKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating authorization token")
 	}
@@ -611,7 +611,7 @@ func (r *renewer) RenewAfterExpiry(cert tls.Certificate) (*api.SignResponse, err
 	r.transport.TLSClientConfig.Certificates = nil
 	defer r.transport.CloseIdleConnections()
 
-	return r.client.RenewWithToken(token)
+	return r.client.RenewWithToken(tok)
 }
 
 func tlsLoadX509KeyPair(certFile, keyFile, passFile string) (tls.Certificate, error) {

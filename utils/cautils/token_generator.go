@@ -176,22 +176,31 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 	if err != nil {
 		return "", err
 	}
+
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
 		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetIDForToken()), tokAttrs.root,
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
+
+	var tokenOpts []token.Options
+	if ctx.Bool("x5c-insecure") {
+		tokenOpts = append(tokenOpts, token.WithX5CInsecureFile(x5cCertFile, jwk.Key))
+	} else {
+		tokenOpts = append(tokenOpts, token.WithX5CFile(x5cCertFile, jwk.Key))
+	}
+
 	switch tokType {
 	case SignType:
-		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, token.WithX5CFile(x5cCertFile, jwk.Key))
+		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, tokenOpts...)
 	case RevokeType:
-		return tokenGen.RevokeToken(tokAttrs.subject, token.WithX5CFile(x5cCertFile, jwk.Key))
+		return tokenGen.RevokeToken(tokAttrs.subject, tokenOpts...)
 	case SSHUserSignType:
 		return tokenGen.SignSSHToken(tokAttrs.subject, provisioner.SSHUserCert, tokAttrs.sans,
-			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithX5CFile(x5cCertFile, jwk.Key))
+			tokAttrs.certNotBefore, tokAttrs.certNotAfter, tokenOpts...)
 	case SSHHostSignType:
 		return tokenGen.SignSSHToken(tokAttrs.subject, provisioner.SSHHostCert, tokAttrs.sans,
-			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithX5CFile(x5cCertFile, jwk.Key))
+			tokAttrs.certNotBefore, tokAttrs.certNotAfter, tokenOpts...)
 	default:
-		return tokenGen.Token(tokAttrs.subject, token.WithX5CFile(x5cCertFile, jwk.Key))
+		return tokenGen.Token(tokAttrs.subject, tokenOpts...)
 	}
 }
 
