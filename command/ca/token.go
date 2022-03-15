@@ -137,6 +137,12 @@ $ step ca token max@smallstep.com --ssh
 Get a new token for an SSH host certificate:
 '''
 $ step ca token my-remote.hostname --ssh --host
+'''
+
+Generate a renew token and use it in a renew after expiry request:
+'''
+$ TOKEN=$(tep ca token --x5c-cert internal.crt --x5c-key internal.key --renew internal.example.com)
+$ curl -X POST -H "Authorization: Bearer $TOKEN" https://ca.example.com/1.0/renew
 '''`,
 		Flags: []cli.Flag{
 			certNotAfterFlag,
@@ -260,6 +266,8 @@ func tokenAction(ctx *cli.Context) error {
 		switch {
 		case isRevoke:
 			typ = cautils.RevokeType
+		case isRenew:
+			typ = cautils.RenewType
 		default:
 			typ = cautils.SignType
 		}

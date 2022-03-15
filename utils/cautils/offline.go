@@ -539,6 +539,11 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string,
 	root := c.Root()
 	audience := c.Audience(tokType)
 
+	// All provisioners use the same type of tokens to do a X.509 renewal.
+	if tokType == RenewType {
+		return generateRenewToken(ctx, audience, subject)
+	}
+
 	// Get provisioner to use
 	provisioners := c.Provisioners()
 	p, err := provisionerPrompt(ctx, provisioners)

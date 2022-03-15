@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/token"
@@ -395,4 +396,57 @@ func generateJWKToken(ctx *cli.Context, p *provisioner.JWK, tokType int, tokAttr
 	default:
 		return tokenGen.Token(tokAttrs.subject)
 	}
+}
+
+func generateRenewToken(ctx *cli.Context, aud, sub string) (string, error) {
+	renewCert := ctx.String("x5c-cert")
+	if renewCert == "" {
+		return "", errs.RequiredFlag(ctx, "x5c-cert")
+	}
+	renewKey := ctx.String("x5c-key")
+	if renewKey == "" {
+		return "", errs.RequiredFlag(ctx, "x5c-key")
+	}
+
+	bundle, err := pemutil.ReadCertificateBundle(renewCert)
+	if err != nil {
+		return "", err
+	}
+	if len(bundle) == 0 {
+		return "", errs.InvalidFlagValueMsg(ctx, "--x5c-cert", renewCert, "certificate not found")
+	}
+	key, err := pemutil.Read(renewKey)
+	if err != nil {
+		return "", err
+	}
+	if sub != "" && sub != bundle[0].Subject.CommonName {
+		return "", errors.Errorf("positional argument <subject> must match the certificate common name")
+	}
+
+	var issuer string
+	if ext, ok := provisioner.GetProvisionerExtension(bundle[0]); ok {
+		issuer = ext.Name
+	}
+	claims, err := token.NewClaims(
+		token.WithAudience(aud),
+		token.WithIssuer(issuer),
+		token.WithSubject(bundle[0].Subject.CommonName),
+	)
+	if err != nil {
+		return "", errors.Wrap(err, "error creating renew token")
+	}
+	var x5c []string
+	for _, crt := range bundle {
+		x5c = append(x5c, base64.StdEncoding.EncodeToString(crt.Raw))
+	}
+	if claims.ExtraHeaders == nil {
+		claims.ExtraHeaders = make(map[string]interface{})
+	}
+	claims.ExtraHeaders[jose.X5cInsecureKey] = x5c
+
+	tok, err := claims.Sign("", key)
+	if err != nil {
+		return "", errors.Wrap(err, "error creating renew token")
+	}
+	return tok, nil
 }
