@@ -1,6 +1,7 @@
 package x509util
 
 import (
+	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
@@ -17,7 +18,8 @@ import (
 
 // Fingerprint returns the SHA-256 fingerprint of the certificate.
 func Fingerprint(cert *x509.Certificate) string {
-	return EncodedFingerprint(cert, HexFingerprint)
+	h, _ := EncodedFingerprint(cert, HexFingerprint, "SHA-256")
+	return h
 }
 
 // FingerprintEncoding represents the fingerprint encoding type.
@@ -38,10 +40,19 @@ const (
 	EmojiFingerprint = FingerprintEncoding(fingerprint.EmojiFingerprint)
 )
 
-// EncodedFingerprint returns an encoded the SHA-256 fingerprint of the certificate. Defaults to hex encoding
-func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding) string {
-	sum := sha256.Sum256(cert.Raw)
-	return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding)))
+// EncodedFingerprint returns an encoded fingerprint of the certificate.
+// Defaults to hex encoding and SHA-256.
+func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding, alg string) (string, error) {
+	switch alg {
+	case "SHA-1":
+		sum := sha1.Sum(cert.Raw)
+		return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding))), nil
+	case "SHA-256": // Default
+		sum := sha256.Sum256(cert.Raw)
+		return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding))), nil
+	default:
+		return "", errors.Errorf("unrecognized alg: %s", alg)
+	}
 }
 
 // SplitSANs splits a slice of Subject Alternative Names into slices of

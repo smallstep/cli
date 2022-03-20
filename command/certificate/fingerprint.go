@@ -80,6 +80,18 @@ debugging invalid certificates remotely.`,
 			},
 			flags.ServerName,
 			command.FingerprintFormatFlag("hex"),
+			cli.StringFlag{
+				Name:  "alg",
+				Value: "SHA-256",
+				Usage: `The <alg> to hash the certificate. 
+ If unset, default is SHA-256. 
+  
+: <alg> is a case-sensitive string and must be one of: 
+  
+     **SHA-256**
+
+     **SHA-1** `,
+			},
 		},
 	}
 }
@@ -97,6 +109,7 @@ func fingerprintAction(ctx *cli.Context) error {
 		insecure   = ctx.Bool("insecure")
 		crtFile    = ctx.Args().First()
 		format     = ctx.String("format")
+		alg        = ctx.String("alg")
 	)
 
 	encoding, err := command.GetFingerprintEncoding(format)
@@ -124,7 +137,10 @@ func fingerprintAction(ctx *cli.Context) error {
 	}
 
 	for i, crt := range certs {
-		fp := x509util.EncodedFingerprint(crt, x509util.FingerprintEncoding(encoding))
+		fp, err := x509util.EncodedFingerprint(crt, x509util.FingerprintEncoding(encoding), alg)
+		if err != nil {
+			return err
+		}
 		if bundle {
 			fmt.Printf("%d: %s\n", i, fp)
 		} else {
