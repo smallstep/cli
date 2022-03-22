@@ -243,7 +243,8 @@ func TestParseInsecure(t *testing.T) {
 			Azure: &AzurePayload{
 				SubscriptionID: "subscriptionID",
 				ResourceGroup:  "resourceGroup",
-				VirtualMachine: "virtualMachine",
+				ResourceType:   "virtualMachines",
+				ResourceName:   "virtualMachine",
 			},
 		}, false},
 		{"ok Azure", args{azureTokenMI}, Payload{
@@ -258,7 +259,8 @@ func TestParseInsecure(t *testing.T) {
 			Azure: &AzurePayload{
 				SubscriptionID: "subscriptionID",
 				ResourceGroup:  "resourceGroup",
-				VirtualMachine: "",
+				ResourceType:   "userAssignedIdentities",
+				ResourceName:   "managedIdentityName",
 			},
 		}, false},
 		{"fail bad token", args{"foobarzar"}, Payload{}, true},

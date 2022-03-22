@@ -131,7 +131,8 @@ var azureXMSMirIDRegExp = regexp.MustCompile(`(?i)^/subscriptions/([^/]+)/resour
 type AzurePayload struct {
 	SubscriptionID string
 	ResourceGroup  string
-	VirtualMachine string
+	ResourceType   string
+	ResourceName   string
 }
 
 // Parse parses the given token verifying the signature with the key.
@@ -172,16 +173,11 @@ func parseResponse(jwt *jose.JSONWebToken, p Payload) (*JSONWebToken, error) {
 		}
 	case strings.HasPrefix(p.Issuer, "https://sts.windows.net/"):
 		if re := azureXMSMirIDRegExp.FindStringSubmatch(p.XMSMirID); len(re) > 0 {
-			var vmName string
-			if strings.Contains(p.XMSMirID, "virtualMachines") {
-				// The token is for a resource type of Microsoft.Compute/virtualMachines
-				// So extract the VM name from the resource ID - else this will be the empty string
-				vmName = re[4]
-			}
 			p.Azure = &AzurePayload{
 				SubscriptionID: re[1],
 				ResourceGroup:  re[2],
-				VirtualMachine: vmName,
+				ResourceType:   strings.Split(re[3], "/")[1],
+				ResourceName:   re[4],
 			}
 		}
 	}
