@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Add flags to include subscription and object ids in the Azure provisioner.
 ### Changed
+- Support two latest versions of Go (1.17, 1.18)
 ### Deprecated
 ### Removed
 ### Fixed
