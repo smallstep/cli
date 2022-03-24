@@ -271,7 +271,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 	case token.Azure:
 		if len(ips) == 0 && len(dnsNames) == 0 {
 			defaultSANs := []string{
-				jwt.Payload.Azure.VirtualMachine,
+				jwt.Payload.Azure.ResourceName,
 			}
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
