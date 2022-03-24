@@ -1,6 +1,7 @@
 [Unit]
-Description=Certificate renewal timer for %I
+Description=Timer for Certificate renewal timer for %I
 Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
+PartOf=cert-renewer.target
 
 [Timer]
 Persistent=true
