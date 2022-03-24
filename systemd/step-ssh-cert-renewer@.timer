@@ -1,0 +1,19 @@
+[Unit]
+Description=Timer for Smallstep SSH Certificate Renewal for the %I host certificate
+Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
+PartOf=step-ssh-cert-renewer.target
+
+[Timer]
+Persistent=true
+
+; Run the timer unit every 5 minutes.
+OnCalendar=*:1/5
+
+; Always run the timer on time.
+AccuracySec=1us
+
+; Add jitter to prevent a "thundering hurd" of simultaneous certificate renewals.
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target

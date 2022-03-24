@@ -1,0 +1,30 @@
+[Unit]
+Description=Smallstep SSH Certificate Renewal for the %I host certificate
+After=network-online.target
+Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
+StartLimitIntervalSec=0
+PartOf=step-ssh-cert-renewer.target
+
+[Service]
+Type=oneshot
+User=root
+
+Environment=STEPPATH=/etc/step \
+            CERT_LOCATION=/etc/ssh/ssh_host_%i_key-cert.pub \
+            KEY_LOCATION=/etc/ssh/ssh_host_%i_key
+
+; ExecCondition checks if the certificate is ready for renewal,
+; based on the exit status of the command.
+; (In systemd <242, you can use ExecStartPre= here.)
+ExecCondition=/usr/bin/step ssh needs-renewal ${CERT_LOCATION}
+
+; ExecStart renews the certificate, if ExecStartPre was successful.
+ExecStart=/usr/bin/step ssh renew --force ${CERT_LOCATION} ${KEY_LOCATION}
+
+; Try to reload or restart the systemd service that relies on this cert-renewer
+; If the relying service doesn't exist, forge ahead.
+; (In systemd <229, use `reload-or-try-restart` instead of `try-reload-or-restart`)
+ExecStartPost=/usr/bin/env sh -c "! systemctl --quiet is-enabled sshd.service || systemctl try-reload-or-restart sshd"
+
+[Install]
+WantedBy=multi-user.target
