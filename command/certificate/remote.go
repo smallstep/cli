@@ -63,6 +63,9 @@ func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509
 // trimURL returns the host[:port] if the input is a URL, otherwise returns an
 // empty string (and 'isURL:false').
 //
+// If the URL is valid and no port is specified, the default port determined
+// by the URL prefix is used.
+//
 // Examples:
 // trimURL("https://smallstep.com/onbaording") -> "smallstep.com:443", true, nil
 // trimURL("https://ca.smallSTEP.com:8080") -> "ca.smallSTEP.com:8080", true, nil
