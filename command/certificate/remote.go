@@ -78,8 +78,8 @@ func trimURL(ref string) (string, bool, error) {
 				return "", false, errors.Wrapf(err, "error parsing URL '%s'", ref)
 			}
 			if _, _, err := net.SplitHostPort(u.Host); err != nil {
-				port := uint64(urlPrefixes[prefix])
-				u.Host += ":" + strconv.FormatUint(port, 10)
+				port := strconv.FormatUint(uint64(urlPrefixes[prefix]), 10)
+				u.Host = net.JoinHostPort(u.Host, port)
 			}
 			return u.Host, true, nil
 		}
