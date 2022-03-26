@@ -74,7 +74,7 @@ func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509
 // trimURL("hTtPs://sMaLlStEp.cOm hello") -> "", false, err{"invalid url"}
 func trimURL(ref string) (string, bool, error) {
 	tmp := strings.ToLower(ref)
-	for prefix, _ := range urlPrefixes {
+	for prefix := range urlPrefixes {
 		if strings.HasPrefix(tmp, prefix) {
 			u, err := url.Parse(ref)
 			if err != nil {
