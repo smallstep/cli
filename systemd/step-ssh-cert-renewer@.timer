@@ -6,8 +6,8 @@ PartOf=step-ssh-cert-renewer.target
 [Timer]
 Persistent=true
 
-; Run the timer unit every 5 minutes.
-OnCalendar=*:1/5
+; Run the timer unit every 15 minutes.
+OnCalendar=*:1/15
 
 ; Always run the timer on time.
 AccuracySec=1us
