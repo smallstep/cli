@@ -9,12 +9,12 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
-	"go.step.sm/crypto/pemutil"
 )
 
 func verifyCommand() cli.Command {
@@ -108,9 +108,9 @@ func verifyAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error decoding base64 signature")
 	}
 
-	key, err := pemutil.Read(keyFile)
+	key, err := readKey(keyFile, true, ctx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to read key file")
 	}
 
 	printAndReturn := func(b bool) error {
@@ -127,7 +127,7 @@ func verifyAction(ctx *cli.Context) error {
 		switch k.Curve {
 		case elliptic.P224():
 			digest = hash(crypto.SHA224, b)
-		case elliptic.P256():
+		case elliptic.P256(), secp256k1.S256():
 			digest = hash(crypto.SHA256, b)
 		case elliptic.P384():
 			digest = hash(crypto.SHA384, b)
