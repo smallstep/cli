@@ -18,7 +18,7 @@ import (
 
 // Fingerprint returns the SHA-256 fingerprint of the certificate.
 func Fingerprint(cert *x509.Certificate) string {
-	h, _ := EncodedFingerprint(cert, HexFingerprint, "SHA-256")
+	h, _ := EncodedFingerprint(cert, HexFingerprint, false, false)
 	return h
 }
 
@@ -42,17 +42,17 @@ const (
 
 // EncodedFingerprint returns an encoded fingerprint of the certificate.
 // Defaults to hex encoding and SHA-256.
-func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding, alg string) (string, error) {
-	switch alg {
-	case "SHA-1":
+func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding,
+	sha1Mode bool, insecure bool) (string, error) {
+	if sha1Mode {
+		if !insecure {
+			return "", errors.New("sha1 require '--insecure' flag")
+		}
 		sum := sha1.Sum(cert.Raw)
 		return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding))), nil
-	case "SHA-256": // Default
-		sum := sha256.Sum256(cert.Raw)
-		return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding))), nil
-	default:
-		return "", errors.Errorf("unrecognized alg: %s", alg)
 	}
+	sum := sha256.Sum256(cert.Raw)
+	return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding))), nil
 }
 
 // SplitSANs splits a slice of Subject Alternative Names into slices of

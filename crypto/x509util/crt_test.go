@@ -46,7 +46,7 @@ func TestEncodedFingerprint(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cert := mustParseCertificate(t, tt.fn)
-			if got, _ := EncodedFingerprint(cert, tt.encoding, "SHA-256"); got != tt.want {
+			if got, _ := EncodedFingerprint(cert, tt.encoding, false, false); got != tt.want {
 				t.Errorf("EncodedFingerprint() = %v, want %v", got, tt.want)
 			}
 		})
