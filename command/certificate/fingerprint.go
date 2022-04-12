@@ -18,7 +18,8 @@ func fingerprintCommand() cli.Command {
 		Action: cli.ActionFunc(fingerprintAction),
 		Usage:  "print the fingerprint of a certificate",
 		UsageText: `**step certificate fingerprint** <crt-file>
-[**--bundle**] [**--roots**=<root-bundle>] [**--servername**=<servername>] [**--format**=<format>]`,
+[**--bundle**] [**--roots**=<root-bundle>] [**--servername**=<servername>] 
+[**--format**=<format>] [**--sha1**] [**--insecure**]`,
 		Description: `**step certificate fingerprint** reads a certificate and prints to STDOUT the
 certificate SHA256 of the raw certificate.
 
@@ -82,7 +83,7 @@ debugging invalid certificates remotely.`,
 			command.FingerprintFormatFlag("hex"),
 			cli.BoolFlag{
 				Name:  "sha1",
-				Usage: `Use the SHA-1 hash algorithm to hash the certificate. Require '--insecure' flag.`,
+				Usage: `Use the SHA-1 hash algorithm to hash the certificate. Requires **--insecure** flag.`,
 			},
 		},
 	}
@@ -101,7 +102,7 @@ func fingerprintAction(ctx *cli.Context) error {
 		insecure   = ctx.Bool("insecure")
 		crtFile    = ctx.Args().First()
 		format     = ctx.String("format")
-		sha1       = ctx.Bool("sha1")
+		useSHA1    = ctx.Bool("sha1")
 	)
 
 	encoding, err := command.GetFingerprintEncoding(format)
@@ -129,7 +130,7 @@ func fingerprintAction(ctx *cli.Context) error {
 	}
 
 	for i, crt := range certs {
-		fp, err := x509util.EncodedFingerprint(crt, x509util.FingerprintEncoding(encoding), sha1, insecure)
+		fp, err := x509util.EncodedFingerprint(crt, x509util.FingerprintEncoding(encoding), useSHA1, insecure)
 		if err != nil {
 			return err
 		}

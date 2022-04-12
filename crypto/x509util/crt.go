@@ -46,7 +46,7 @@ func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding,
 	sha1Mode bool, insecure bool) (string, error) {
 	if sha1Mode {
 		if !insecure {
-			return "", errors.New("sha1 require '--insecure' flag")
+			return "", errors.New("sha1 requires '--insecure' flag")
 		}
 		sum := sha1.Sum(cert.Raw)
 		return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding))), nil
