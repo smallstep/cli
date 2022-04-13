@@ -30,6 +30,7 @@ const (
 	SSHRevokeType
 	SSHRenewType
 	SSHRekeyType
+	RenewType
 )
 
 // parseAudience creates the ca audience url from the ca-url
@@ -47,10 +48,10 @@ func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 	case "https", "":
 		var path string
 		switch tokType {
-		// default
 		case SignType:
 			path = "/1.0/sign"
-		// revocation token
+		case RenewType:
+			path = "/1.0/renew"
 		case RevokeType:
 			path = "/1.0/revoke"
 		case SSHUserSignType, SSHHostSignType:
@@ -89,6 +90,11 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 	audience, err := parseAudience(ctx, tokType)
 	if err != nil {
 		return "", err
+	}
+
+	// All provisioners use the same type of tokens to do a X.509 renewal.
+	if tokType == RenewType {
+		return generateRenewToken(ctx, audience, subject)
 	}
 
 	provisioners, err := pki.GetProvisioners(caURL, root)

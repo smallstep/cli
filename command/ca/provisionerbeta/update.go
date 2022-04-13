@@ -108,6 +108,7 @@ IID (AWS/GCP/Azure)
 			sshHostMaxDurFlag,
 			sshHostDefaultDurFlag,
 			disableRenewalFlag,
+			allowRenewalAfterExpiryFlag,
 			enableX509Flag,
 			enableSSHFlag,
 
@@ -424,6 +425,9 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 	}
 	if ctx.IsSet("disable-renewal") {
 		p.Claims.DisableRenewal = ctx.Bool("disable-renewal")
+	}
+	if ctx.IsSet("allow-renewal-after-expiry") {
+		p.Claims.AllowRenewalAfterExpiry = ctx.Bool("allow-renewal-after-expiry")
 	}
 	claims := p.Claims
 

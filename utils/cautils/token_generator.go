@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/token"
@@ -176,22 +177,31 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 	if err != nil {
 		return "", err
 	}
+
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
 		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetIDForToken()), tokAttrs.root,
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
+
+	var tokenOpts []token.Options
+	if ctx.Bool("x5c-insecure") {
+		tokenOpts = append(tokenOpts, token.WithX5CInsecureFile(x5cCertFile, jwk.Key))
+	} else {
+		tokenOpts = append(tokenOpts, token.WithX5CFile(x5cCertFile, jwk.Key))
+	}
+
 	switch tokType {
 	case SignType:
-		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, token.WithX5CFile(x5cCertFile, jwk.Key))
+		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, tokenOpts...)
 	case RevokeType:
-		return tokenGen.RevokeToken(tokAttrs.subject, token.WithX5CFile(x5cCertFile, jwk.Key))
+		return tokenGen.RevokeToken(tokAttrs.subject, tokenOpts...)
 	case SSHUserSignType:
 		return tokenGen.SignSSHToken(tokAttrs.subject, provisioner.SSHUserCert, tokAttrs.sans,
-			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithX5CFile(x5cCertFile, jwk.Key))
+			tokAttrs.certNotBefore, tokAttrs.certNotAfter, tokenOpts...)
 	case SSHHostSignType:
 		return tokenGen.SignSSHToken(tokAttrs.subject, provisioner.SSHHostCert, tokAttrs.sans,
-			tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithX5CFile(x5cCertFile, jwk.Key))
+			tokAttrs.certNotBefore, tokAttrs.certNotAfter, tokenOpts...)
 	default:
-		return tokenGen.Token(tokAttrs.subject, token.WithX5CFile(x5cCertFile, jwk.Key))
+		return tokenGen.Token(tokAttrs.subject, tokenOpts...)
 	}
 }
 
@@ -386,4 +396,52 @@ func generateJWKToken(ctx *cli.Context, p *provisioner.JWK, tokType int, tokAttr
 	default:
 		return tokenGen.Token(tokAttrs.subject)
 	}
+}
+
+func generateRenewToken(ctx *cli.Context, aud, sub string) (string, error) {
+	renewCert := ctx.String("x5c-cert")
+	if renewCert == "" {
+		return "", errs.RequiredFlag(ctx, "x5c-cert")
+	}
+	renewKey := ctx.String("x5c-key")
+	if renewKey == "" {
+		return "", errs.RequiredFlag(ctx, "x5c-key")
+	}
+
+	bundle, err := pemutil.ReadCertificateBundle(renewCert)
+	if err != nil {
+		return "", err
+	}
+	if len(bundle) == 0 {
+		return "", errs.InvalidFlagValueMsg(ctx, "--x5c-cert", renewCert, "certificate not found")
+	}
+	key, err := pemutil.Read(renewKey)
+	if err != nil {
+		return "", err
+	}
+	if sub != "" && sub != bundle[0].Subject.CommonName {
+		return "", errors.Errorf("positional argument <subject> must match the certificate common name")
+	}
+	claims, err := token.NewClaims(
+		token.WithAudience(aud),
+		token.WithIssuer("step-ca-client/1.0"),
+		token.WithSubject(bundle[0].Subject.CommonName),
+	)
+	if err != nil {
+		return "", errors.Wrap(err, "error creating renew token")
+	}
+	var x5c []string
+	for _, crt := range bundle {
+		x5c = append(x5c, base64.StdEncoding.EncodeToString(crt.Raw))
+	}
+	if claims.ExtraHeaders == nil {
+		claims.ExtraHeaders = make(map[string]interface{})
+	}
+	claims.ExtraHeaders[jose.X5cInsecureKey] = x5c
+
+	tok, err := claims.Sign("", key)
+	if err != nil {
+		return "", errors.Wrap(err, "error creating renew token")
+	}
+	return tok, nil
 }
