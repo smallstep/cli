@@ -141,7 +141,7 @@ $ step ca token my-remote.hostname --ssh --host
 
 Generate a renew token and use it in a renew after expiry request:
 '''
-$ TOKEN=$(tep ca token --x5c-cert internal.crt --x5c-key internal.key --renew internal.example.com)
+$ TOKEN=$(step ca token --x5c-cert internal.crt --x5c-key internal.key --renew internal.example.com)
 $ curl -X POST -H "Authorization: Bearer $TOKEN" https://ca.example.com/1.0/renew
 '''`,
 		Flags: []cli.Flag{
