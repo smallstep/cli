@@ -422,14 +422,9 @@ func generateRenewToken(ctx *cli.Context, aud, sub string) (string, error) {
 	if sub != "" && sub != bundle[0].Subject.CommonName {
 		return "", errors.Errorf("positional argument <subject> must match the certificate common name")
 	}
-
-	var issuer string
-	if ext, ok := provisioner.GetProvisionerExtension(bundle[0]); ok {
-		issuer = ext.Name
-	}
 	claims, err := token.NewClaims(
 		token.WithAudience(aud),
-		token.WithIssuer(issuer),
+		token.WithIssuer("step-ca-client/1.0"),
 		token.WithSubject(bundle[0].Subject.CommonName),
 	)
 	if err != nil {
