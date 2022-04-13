@@ -21,7 +21,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
-	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/pemutil"
@@ -579,13 +578,9 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 // RenewAfterExpiry creates an authorization token with the given certificate
 // and attempts to renew the expired certificate.
 func (r *renewer) RenewAfterExpiry(cert tls.Certificate) (*api.SignResponse, error) {
-	var issuer string
-	if ext, ok := provisioner.GetProvisionerExtension(cert.Leaf); ok {
-		issuer = ext.Name
-	}
 	claims, err := token.NewClaims(
 		token.WithAudience(r.caURL.ResolveReference(&url.URL{Path: "/renew"}).String()),
-		token.WithIssuer(issuer),
+		token.WithIssuer("step-ca-client/1.0"),
 		token.WithSubject(cert.Leaf.Subject.CommonName),
 	)
 	if err != nil {
