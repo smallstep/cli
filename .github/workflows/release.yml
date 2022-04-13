@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.16', '1.17' ]
+        go: [ '1.17', '1.18' ]
     steps:
       -
         name: Checkout
@@ -26,7 +26,7 @@ jobs:
         name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: 'v1.43.0'
+          version: 'v1.45.0'
           args: --timeout=30m
       -
         name: Test, Build
@@ -85,7 +85,7 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
       -
         name: Configure Go
         id: configure_go
@@ -129,7 +129,7 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
       -
         name: Install cosign
         uses: sigstore/cosign-installer@v1.1.0
@@ -165,7 +165,7 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
       -
         name: Build
         id: build
@@ -205,7 +205,7 @@ jobs:
         name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
       -
         name: Build
         id: build

@@ -72,6 +72,11 @@ Inspect a remote certificate (using the default root certificate bundle to verif
 $ step certificate inspect https://smallstep.com
 '''
 
+Inspect a remote certificate (using the standard port derived from the URL prefix):
+'''
+$ step certificate inspect smtps://smtp.gmail.com
+'''
+
 Inspect an invalid remote certificate:
 '''
 $ step certificate inspect --insecure https://expired.badssl.com

@@ -125,13 +125,14 @@ type AWSInstanceIdentityDocument struct {
 
 // azureXMSMirIDRegExp is the regular expression used to parse the xms_mirid claim.
 // Using case insensitive as resourceGroups appears as resourcegroups.
-var azureXMSMirIDRegExp = regexp.MustCompile(`(?i)^/subscriptions/([^/]+)/resourceGroups/([^/]+)/providers/Microsoft.Compute/virtualMachines/([^/]+)$`)
+var azureXMSMirIDRegExp = regexp.MustCompile(`(?i)^/subscriptions/([^/]+)/resourceGroups/([^/]+)/providers/Microsoft.(Compute/virtualMachines|ManagedIdentity/userAssignedIdentities)/([^/]+)$`)
 
 // AzurePayload contains the information in the xms_mirid claim.
 type AzurePayload struct {
 	SubscriptionID string
 	ResourceGroup  string
-	VirtualMachine string
+	ResourceType   string
+	ResourceName   string
 }
 
 // Parse parses the given token verifying the signature with the key.
@@ -175,7 +176,8 @@ func parseResponse(jwt *jose.JSONWebToken, p Payload) (*JSONWebToken, error) {
 			p.Azure = &AzurePayload{
 				SubscriptionID: re[1],
 				ResourceGroup:  re[2],
-				VirtualMachine: re[3],
+				ResourceType:   strings.Split(re[3], "/")[1],
+				ResourceName:   re[4],
 			}
 		}
 	}
