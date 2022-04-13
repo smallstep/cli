@@ -597,7 +597,7 @@ func (r *renewer) RenewAfterExpiry(cert tls.Certificate) (*api.SignResponse, err
 
 	tok, err := claims.Sign("", cert.PrivateKey)
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating authorization token")
+		return nil, errors.Wrap(err, "error signing authorization token")
 	}
 
 	// Remove existing certificate from the transport. And close keep-alive
