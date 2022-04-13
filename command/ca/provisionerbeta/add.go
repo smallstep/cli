@@ -141,7 +141,7 @@ func addCommand() cli.Command {
 			sshHostMaxDurFlag,
 			sshHostDefaultDurFlag,
 			disableRenewalFlag,
-			allowRenewAfterExpiryFlag,
+			allowRenewalAfterExpiryFlag,
 			enableX509Flag,
 			enableSSHFlag,
 
@@ -405,8 +405,8 @@ func addAction(ctx *cli.Context) (err error) {
 			},
 			Enabled: !(ctx.IsSet("ssh") && !ctx.Bool("ssh")),
 		},
-		DisableRenewal:        ctx.Bool("disable-renewal"),
-		AllowRenewAfterExpiry: ctx.Bool("allow-renew-after-expiry"),
+		DisableRenewal:          ctx.Bool("disable-renewal"),
+		AllowRenewalAfterExpiry: ctx.Bool("allow-renewal-after-expiry"),
 	}
 
 	switch linkedca.Provisioner_Type(typ) {

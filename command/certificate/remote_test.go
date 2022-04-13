@@ -2,7 +2,6 @@ package certificate
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"testing"
 
@@ -66,7 +65,7 @@ func TestGetPeerCertificateServerName(t *testing.T) {
 	tests := map[string]newTest{
 		"sni-disabled-host": {host, "", nil},
 		"sni-enabled-host":  {host, serverName, nil},
-		"sni-disabled-ip":   {addr, "", fmt.Errorf("failed to connect: x509: cannot validate certificate for %s because it doesn't contain any IP SANs", addr)},
+		"sni-disabled-ip":   {addr, "", errors.New("failed to connect: x509:")},
 		"sni-enabled-ip":    {addr, serverName, nil},
 	}
 
