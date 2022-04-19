@@ -37,8 +37,7 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20201103104416-57fc603b7f52
 )
 
-replace github.com/smallstep/certificates => ../certificates
-
+// replace github.com/smallstep/certificates => ../certificates
 // replace github.com/smallstep/certinfo => ../certinfo
 // replace go.step.sm/linkedca => ../linkedca
 // replace go.step.sm/cli-utils => ../cli-utils
