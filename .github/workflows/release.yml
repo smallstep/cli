@@ -171,14 +171,16 @@ jobs:
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-          make -j1 binary-linux binary-darwin binary-windows
+          make -j1 binary-linux-amd64 binary-linux-arm64 binary-darwin-amd64 binary-windows-amd64
           mkdir -p ./.releases
-          cp ./output/binary/linux/bin/step ./.releases/step-linux-${{ needs.create_release.outputs.version }}
-          cp ./output/binary/linux/bin/step ./.releases/step-linux-latest
-          cp ./output/binary/darwin/bin/step ./.releases/step-darwin-${{ needs.create_release.outputs.version }}
-          cp ./output/binary/darwin/bin/step ./.releases/step-darwin-latest
-          cp ./output/binary/windows/bin/step ./.releases/step-windows-${{ needs.create_release.outputs.version }}.exe
-          cp ./output/binary/windows/bin/step ./.releases/step-windows-latest.exe
+          cp ./output/binary/linux-amd64/bin/step ./.releases/step_${{ needs.create_release.outputs.version }}_linux_amd64
+          cp ./output/binary/linux-amd64/bin/step ./.releases/step_latest_linux_amd64
+          cp ./output/binary/linux-arm64/bin/step ./.releases/step_${{ needs.create_release.outputs.version }}_linux_arm64
+          cp ./output/binary/linux-arm64/bin/step ./.releases/step_latest_linux_arm64
+          cp ./output/binary/darwin-amd64/bin/step ./.releases/step_${{ needs.create_release.outputs.version }}_darwin_amd64
+          cp ./output/binary/darwin-amd64/bin/step ./.releases/step_latest_darwin_amd64
+          cp ./output/binary/windows-amd64/bin/step ./.releases/step_${{ needs.create_release.outputs.version }}_windows.exe
+          cp ./output/binary/windows-amd64/bin/step ./.releases/step_latest_windows.exe
       -
         name: Upload s3
         id: upload-s3
