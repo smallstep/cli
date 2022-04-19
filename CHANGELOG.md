@@ -6,18 +6,33 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 0.18.2]
+## [Unreleased - 0.19.1] - DATE
 ### Added
-- Add flags to include subscription and object ids in the Azure provisioner.
 ### Changed
-- Support two latest versions of Go (1.17, 1.18)
 ### Deprecated
 ### Removed
 ### Fixed
-- Fix flags to add or remove options in AWS, Azure, and GCP provisioners.
 ### Security
 
-## [0.18.2] - 2021-03-01
+## [0.19.0] - 2022-04-19
+### Added
+- Add flags to include subscription and object ids in the Azure provisioner.
+- Add support for certificate renewals after expiry using the `--allow-renewal-after-expiry` flag.
+- Add `--x5c-insecure` flag.
+- Add support for Azure `Managed Identity` tokens.
+- Add `smtps` and `ldaps` as additional protocols supported by the `certificate inspect` command.
+- Add `--sha1` flag to get `certificate fingerprint` using SHA-1 instead of the default SHA-256 algorithm.
+### Changed
+- Support two latest versions of Go (1.17, 1.18).
+### Deprecated
+- Go 1.16 support.
+### Removed
+### Fixed
+- Fix flags to add or remove options in AWS, Azure, and GCP provisioners.
+- Fix admin credentials on RAs.
+### Security
+
+## [0.18.2] - 2022-03-01
 ### Added
 - Add Solus OS support to truststore when used in `step ca bootstrap --install`.
 - Add `step completion` command to print the shell completion script.
@@ -31,7 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Improved `needs-renewal` example help texts.
 - Improved `step crl inspect` reason output.
 
-## [0.18.1] - 2021-02-03
+## [0.18.1] - 2022-02-03
 ### Added
 - Add additional `emoji` and `base64-raw` encoding to the `--format` flag of `step certificate fingerprint`.
 - Add `--format` flag to `step crypto key fingerprint`.
