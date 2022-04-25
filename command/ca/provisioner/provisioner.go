@@ -96,25 +96,25 @@ type crudClient interface {
 	RemoveProvisioner(opts ...ca.ProvisionerOption) error
 }
 
-func newCRUDClient(cliCtx *cli.Context, configFile string) (crudClient, error) {
-	_, err := os.Stat(configFile)
+func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
+	_, err := os.Stat(cfgFile)
 	switch {
 	case errors.Is(err, os.ErrNotExist):
 		return cautils.NewAdminClient(cliCtx)
 	case err == nil:
-		config, err := config.LoadConfiguration(configFile)
+		cfg, err := config.LoadConfiguration(cfgFile)
 		if err != nil {
 			return nil, fmt.Errorf("error loading configuration: %w", err)
 		}
-		if config.AuthorityConfig.EnableAdmin {
-			if len(config.AuthorityConfig.Provisioners) > 0 {
+		if cfg.AuthorityConfig.EnableAdmin {
+			if len(cfg.AuthorityConfig.Provisioners) > 0 {
 				return nil, errors.New("when 'enableAdmin' attribute set to 'true', provisioners list in ca.json must be empty")
 			}
 			return cautils.NewAdminClient(cliCtx)
 		}
-		return newAdminAPIDisabledClient(context.Background(), config, configFile)
+		return newAdminAPIDisabledClient(context.Background(), cfg, cfgFile)
 	default:
-		return nil, errs.FileError(err, configFile)
+		return nil, errs.FileError(err, cfgFile)
 	}
 }
 

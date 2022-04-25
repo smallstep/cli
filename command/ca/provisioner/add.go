@@ -452,7 +452,7 @@ func addAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	if p, err = client.CreateProvisioner(p); err != nil {
+	if _, err = client.CreateProvisioner(p); err != nil {
 		return err
 	}
 

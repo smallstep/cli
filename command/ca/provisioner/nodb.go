@@ -20,13 +20,13 @@ type nodbCRUD struct {
 	auth       *authority.Authority
 }
 
-func newAdminAPIDisabledClient(ctx context.Context, config *config.Config, configFile string) (*nodbCRUD, error) {
-	a, err := authority.FromOptions(authority.WithConfig(config), authority.WithAdminDB(admin.NewNoDB()))
+func newAdminAPIDisabledClient(ctx context.Context, cfg *config.Config, cfgFile string) (*nodbCRUD, error) {
+	a, err := authority.FromOptions(authority.WithConfig(cfg), authority.WithAdminDB(admin.NewNoDB()))
 	if err != nil {
 		return nil, fmt.Errorf("error loading authority: %w", err)
 	}
 	ndb := &nodbCRUD{
-		configFile: configFile,
+		configFile: cfgFile,
 		ctx:        ctx,
 		auth:       a,
 	}
@@ -160,9 +160,9 @@ func (ndb *nodbCRUD) write() error {
 	if err != nil {
 		return err
 	}
-	config := ndb.auth.GetConfig()
-	config.AuthorityConfig.Provisioners = provs
-	if err := config.Save(ndb.configFile); err != nil {
+	cfg := ndb.auth.GetConfig()
+	cfg.AuthorityConfig.Provisioners = provs
+	if err := cfg.Save(ndb.configFile); err != nil {
 		return err
 	}
 
