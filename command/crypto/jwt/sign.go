@@ -27,7 +27,8 @@ func signCommand() cli.Command {
 [**--exp**=<expiration>] [**--iat**=<issued_at>] [**--nbf**=<not-before>]
 [**--key**=<file>] [**--jwks**=<jwks>] [**--kid**=<kid>] [**--jti**=<jti>]
 [**--header=<key=value>**] [**--password-file**=<file>]
-[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--x5t-cert**=<file>] [**--x5t-key**=<file>]`,
+[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--x5c-insecure**]
+[**--x5t-cert**=<file>] [**--x5t-key**=<file>]`,
 		Description: `**step crypto jwt sign** command generates a signed JSON Web Token (JWT) by
 computing a digital signature or message authentication code for a JSON
 payload. By default, the payload to sign is read from STDIN and the JWT will
@@ -207,6 +208,7 @@ the **"kid"** member of one of the JWKs in the JWK Set.`,
 			},
 			flags.X5cCert,
 			flags.X5tCert,
+			flags.X5cInsecure,
 		},
 	}
 }
@@ -234,6 +236,7 @@ func signAction(ctx *cli.Context) error {
 
 	x5cCertFile, x5cKeyFile := ctx.String("x5c-cert"), ctx.String("x5c-key")
 	x5tCertFile, x5tKeyFile := ctx.String("x5t-cert"), ctx.String("x5t-key")
+
 	key := ctx.String("key")
 	jwks := ctx.String("jwks")
 	kid := ctx.String("kid")
@@ -352,8 +355,6 @@ func signAction(ctx *cli.Context) error {
 		}
 	}
 
-	headers := ctx.StringSlice("header")
-
 	// Add claims
 	c := &jose.Claims{
 		Issuer:    ctx.String("iss"),
@@ -401,14 +402,13 @@ func signAction(ctx *cli.Context) error {
 		so.WithHeader("kid", jwk.KeyID)
 	}
 
-	if len(headers) > 0 {
-		for _, s := range headers {
-			i := strings.Index(s, "=")
-			if i == -1 {
-				return errs.InvalidFlagValue(ctx, "set", s, "")
-			}
-			so.WithHeader(jose.HeaderKey(s[:i]), s[i+1:])
+	// Add extra headers. Currently only string headers are supported.
+	for _, s := range ctx.StringSlice("header") {
+		i := strings.Index(s, "=")
+		if i == -1 {
+			return errs.InvalidFlagValue(ctx, "header", s, "")
 		}
+		so.WithHeader(jose.HeaderKey(s[:i]), s[i+1:])
 	}
 
 	if isX5C {
@@ -416,7 +416,11 @@ func signAction(ctx *cli.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
 		}
-		so.WithHeader("x5c", certStrs)
+		if ctx.Bool("x5c-insecure") {
+			so.WithHeader("x5cInsecure", certStrs)
+		} else {
+			so.WithHeader("x5c", certStrs)
+		}
 	}
 
 	if isX5T {

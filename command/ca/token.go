@@ -31,7 +31,7 @@ func tokenCommand() cli.Command {
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--password-file**=<file>] [**--provisioner-password-file**=<file>]
 [**--output-file**=<file>] [**--key**=<file>] [**--san**=<SAN>] [**--offline**]
-[**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
+[**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--x5c-insecure**]
 [**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
 [**--ssh**] [**--host**] [**--principal**=<name>] [**--k8ssa-token-path**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
@@ -137,6 +137,12 @@ $ step ca token max@smallstep.com --ssh
 Get a new token for an SSH host certificate:
 '''
 $ step ca token my-remote.hostname --ssh --host
+'''
+
+Generate a renew token and use it in a renew after expiry request:
+'''
+$ TOKEN=$(step ca token --x5c-cert internal.crt --x5c-key internal.key --renew internal.example.com)
+$ curl -X POST -H "Authorization: Bearer $TOKEN" https://ca.example.com/1.0/renew
 '''`,
 		Flags: []cli.Flag{
 			certNotAfterFlag,
@@ -166,6 +172,7 @@ multiple principals.`,
 			flags.ProvisionerPasswordFile,
 			flags.X5cCert,
 			flags.X5cKey,
+			flags.X5cInsecure,
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
 			flags.NebulaCert,
@@ -259,6 +266,8 @@ func tokenAction(ctx *cli.Context) error {
 		switch {
 		case isRevoke:
 			typ = cautils.RevokeType
+		case isRenew:
+			typ = cautils.RenewType
 		default:
 			typ = cautils.SignType
 		}

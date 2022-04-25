@@ -5,10 +5,12 @@ import (
 	cryptoRand "crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -24,6 +26,8 @@ import (
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/smallstep/cli/utils/sysutils"
@@ -269,12 +273,8 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	leaf := cert.Leaf
 
-	if leaf.NotAfter.Before(time.Now()) {
-		return errors.New("cannot renew an expired certificate")
-	}
-	cvp := leaf.NotAfter.Sub(leaf.NotBefore)
+	cvp := cert.Leaf.NotAfter.Sub(cert.Leaf.NotBefore)
 	if renewPeriod > 0 && renewPeriod >= cvp {
 		return errors.Errorf("flag '--renew-period' must be within (lower than) the certificate "+
 			"validity period; renew-period=%v, cert-validity-period=%v", renewPeriod, cvp)
@@ -293,14 +293,14 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if isDaemon {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
-		next := nextRenewDuration(leaf, expiresIn, renewPeriod)
+		next := nextRenewDuration(cert.Leaf, expiresIn, renewPeriod)
 		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew)
 	}
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
 		jitter := rand.Int63n(int64(expiresIn / 20))
-		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
+		if d := time.Until(cert.Leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
 			return nil
 		}
@@ -377,6 +377,8 @@ type renewer struct {
 	transport *http.Transport
 	key       crypto.PrivateKey
 	offline   bool
+	cert      tls.Certificate
+	caURL     *url.URL
 }
 
 func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile string) (*renewer, error) {
@@ -392,10 +394,13 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
-			Certificates:             []tls.Certificate{cert},
 			RootCAs:                  rootCAs,
 			PreferServerCipherSuites: true,
 		},
+	}
+
+	if time.Now().Before(cert.Leaf.NotAfter) {
+		tr.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
 
 	var client cautils.CaClient
@@ -416,16 +421,27 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 		}
 	}
 
+	u, err := url.Parse(client.GetCaURL())
+	if err != nil {
+		return nil, errors.Errorf("error parsing CA URL: %s", client.GetCaURL())
+	}
+
 	return &renewer{
 		client:    client,
 		transport: tr,
 		key:       cert.PrivateKey,
 		offline:   offline,
+		cert:      cert,
+		caURL:     u,
 	}, nil
 }
 
-func (r *renewer) Renew(outFile string) (*api.SignResponse, error) {
-	resp, err := r.client.Renew(r.transport)
+func (r *renewer) Renew(outFile string) (resp *api.SignResponse, err error) {
+	if time.Now().After(r.cert.Leaf.NotAfter) {
+		resp, err = r.RenewAfterExpiry(r.cert)
+	} else {
+		resp, err = r.client.Renew(r.transport)
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "error renewing certificate")
 	}
@@ -515,6 +531,7 @@ func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod tim
 	}
 
 	// Prepare next transport
+	r.cert = cert
 	r.transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
 
 	// Get next renew duration
@@ -556,6 +573,40 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 			}
 		}
 	}
+}
+
+// RenewAfterExpiry creates an authorization token with the given certificate
+// and attempts to renew the expired certificate.
+func (r *renewer) RenewAfterExpiry(cert tls.Certificate) (*api.SignResponse, error) {
+	claims, err := token.NewClaims(
+		token.WithAudience(r.caURL.ResolveReference(&url.URL{Path: "/renew"}).String()),
+		token.WithIssuer("step-ca-client/1.0"),
+		token.WithSubject(cert.Leaf.Subject.CommonName),
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating authorization token")
+	}
+	var x5c []string
+	for _, b := range cert.Certificate {
+		x5c = append(x5c, base64.StdEncoding.EncodeToString(b))
+	}
+	if claims.ExtraHeaders == nil {
+		claims.ExtraHeaders = make(map[string]interface{})
+	}
+	claims.ExtraHeaders[jose.X5cInsecureKey] = x5c
+
+	tok, err := claims.Sign("", cert.PrivateKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "error signing authorization token")
+	}
+
+	// Remove existing certificate from the transport. And close keep-alive
+	// connections. When daemon is used we don't want to re-use the connection
+	// that did not include a certificate.
+	r.transport.TLSClientConfig.Certificates = nil
+	defer r.transport.CloseIdleConnections()
+
+	return r.client.RenewWithToken(tok)
 }
 
 func tlsLoadX509KeyPair(certFile, keyFile, passFile string) (tls.Certificate, error) {

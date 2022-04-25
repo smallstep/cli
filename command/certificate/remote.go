@@ -5,13 +5,20 @@ import (
 	"crypto/x509"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/x509util"
 )
 
-var urlPrefixes = []string{"https://", "tcp://", "tls://"}
+var urlPrefixes = map[string]uint16{
+	"tcp://":   443,
+	"tls://":   443,
+	"https://": 443,
+	"smtps://": 465,
+	"ldaps://": 636,
+}
 
 // getPeerCertificates creates a connection to a remote server and returns the
 // list of server certificates.
@@ -56,19 +63,26 @@ func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509
 // trimURL returns the host[:port] if the input is a URL, otherwise returns an
 // empty string (and 'isURL:false').
 //
+// If the URL is valid and no port is specified, the default port determined
+// by the URL prefix is used.
+//
 // Examples:
-// trimURL("https://smallstep.com/onbaording") -> "smallstep.com", true, nil
+// trimURL("https://smallstep.com/onbaording") -> "smallstep.com:443", true, nil
 // trimURL("https://ca.smallSTEP.com:8080") -> "ca.smallSTEP.com:8080", true, nil
 // trimURL("./certs/root_ca.crt") -> "", false, nil
-// trimURL("hTtPs://sMaLlStEp.cOm") -> "sMaLlStEp.cOm", true, nil
+// trimURL("hTtPs://sMaLlStEp.cOm") -> "sMaLlStEp.cOm:443", true, nil
 // trimURL("hTtPs://sMaLlStEp.cOm hello") -> "", false, err{"invalid url"}
 func trimURL(ref string) (string, bool, error) {
 	tmp := strings.ToLower(ref)
-	for _, prefix := range urlPrefixes {
+	for prefix := range urlPrefixes {
 		if strings.HasPrefix(tmp, prefix) {
 			u, err := url.Parse(ref)
 			if err != nil {
 				return "", false, errors.Wrapf(err, "error parsing URL '%s'", ref)
+			}
+			if _, _, err := net.SplitHostPort(u.Host); err != nil {
+				port := strconv.FormatUint(uint64(urlPrefixes[prefix]), 10)
+				u.Host = net.JoinHostPort(u.Host, port)
 			}
 			return u.Host, true, nil
 		}

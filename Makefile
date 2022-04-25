@@ -65,23 +65,26 @@ define BUNDLE_MAKE
 	$(q) GOOS_OVERRIDE='GOOS=$(1) GOARCH=$(2) GOARM=$(3)' PREFIX=$(4) make $(4)bin/step
 endef
 
-binary-linux:
-	$(call BUNDLE_MAKE,linux,amd64,,$(BINARY_OUTPUT)linux/)
+binary-linux-amd64:
+	$(call BUNDLE_MAKE,linux,amd64,,$(BINARY_OUTPUT)linux-amd64/)
 
 binary-linux-arm64:
-	$(call BUNDLE_MAKE,linux,arm64,,$(BINARY_OUTPUT)linux.arm64/)
+	$(call BUNDLE_MAKE,linux,arm64,,$(BINARY_OUTPUT)linux-arm64/)
 
 binary-linux-armv7:
-	$(call BUNDLE_MAKE,linux,arm,7,$(BINARY_OUTPUT)linux.armv7/)
+	$(call BUNDLE_MAKE,linux,arm,7,$(BINARY_OUTPUT)linux-armv7/)
 
 binary-linux-mips:
-	$(call BUNDLE_MAKE,linux,mips,,$(BINARY_OUTPUT)linux.mips/)
+	$(call BUNDLE_MAKE,linux,mips,,$(BINARY_OUTPUT)linux-mips/)
 
-binary-darwin:
-	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin/)
+binary-darwin-amd64:
+	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin-amd64/)
 
-binary-windows:
-	$(call BUNDLE_MAKE,windows,amd64,,$(BINARY_OUTPUT)windows/)
+binary-darwin-arm64:
+	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin-arm64/)
+
+binary-windows-amd64:
+	$(call BUNDLE_MAKE,windows,amd64,,$(BINARY_OUTPUT)windows-amd64/)
 
 define BUNDLE
     # $(1) -- Format output as .ZIP archive, rather than .tar.gzip (for older windows architecture)
@@ -92,20 +95,21 @@ define BUNDLE
 	$(q) ./make/bundle.sh $(1) "$(BINARY_OUTPUT)$(2)" "$(RELEASE)" "$(VERSION)" "$(3)" "$(4)" "$(5)"
 endef
 
-bundle-linux: binary-linux binary-linux-arm64 binary-linux-armv7 binary-linux-mips
-	$(call BUNDLE,,linux,linux,amd64,step)
-	$(call BUNDLE,,linux.arm64,linux,arm64,step)
-	$(call BUNDLE,,linux.armv7,linux,armv7,step)
-	$(call BUNDLE,,linux.mips,linux,mips,step)
+bundle-linux: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips
+	$(call BUNDLE,,linux-amd64,linux,amd64,step)
+	$(call BUNDLE,,linux-arm64,linux,arm64,step)
+	$(call BUNDLE,,linux-armv7,linux,armv7,step)
+	$(call BUNDLE,,linux-mips,linux,mips,step)
 
-bundle-darwin: binary-darwin
-	$(call BUNDLE,,darwin,darwin,amd64,step)
+bundle-darwin: binary-darwin-amd64 binary-darwin-arm64
+	$(call BUNDLE,,darwin-amd64,darwin,amd64,step)
+	$(call BUNDLE,,darwin-arm64,darwin,arm64,step)
 
-bundle-windows: binary-windows
-	$(call BUNDLE,,windows,windows,amd64,step.exe)
-	$(call BUNDLE,--zip,windows,windows,amd64,step.exe)
+bundle-windows: binary-windows-amd64
+	$(call BUNDLE,,windows-amd64,windows,amd64,step.exe)
+	$(call BUNDLE,--zip,windows-amd64,windows,amd64,step.exe)
 
-.PHONY: binary-linux binary-darwin binary-windows bundle-linux bundle-darwin bundle-windows
+.PHONY: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips binary-darwin-amd64 binary-darwin-arm64 binary-windows-amd64 bundle-linux bundle-darwin bundle-windows
 
 #################################################
 # Targets for creating step artifacts
