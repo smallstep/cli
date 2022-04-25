@@ -1,13 +1,15 @@
 package ca
 
 import (
-	"github.com/smallstep/cli/command/ca/acme"
+	"github.com/urfave/cli"
 
+	"go.step.sm/cli-utils/command"
+
+	"github.com/smallstep/cli/command/ca/acme"
 	"github.com/smallstep/cli/command/ca/admin"
+	"github.com/smallstep/cli/command/ca/policy"
 	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/smallstep/cli/command/ca/provisionerbeta"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
 )
 
 // init creates and registers the ca command
@@ -168,6 +170,7 @@ commands may change, disappear, or be promoted to a different subcommand in the 
 			admin.Command(),
 			provisionerbeta.Command(),
 			acme.Command(),
+			policy.Command(),
 		},
 	}
 }

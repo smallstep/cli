@@ -22,23 +22,25 @@ require (
 	github.com/smallstep/truststore v0.11.0
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/urfave/cli v1.22.5
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.2
-	go.step.sm/crypto v0.15.0
-	go.step.sm/linkedca v0.10.0
+	go.step.sm/crypto v0.16.1
+	go.step.sm/linkedca v0.15.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
-	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
+	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b
+	golang.org/x/sys v0.0.0-20220405052023-b1e9470b6e64
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20201103104416-57fc603b7f52
 )
 
-// replace github.com/smallstep/certificates => ../certificates
+replace github.com/smallstep/certificates => ../certificates
+
 // replace github.com/smallstep/certinfo => ../certinfo
-// replace go.step.sm/linkedca => ../linkedca
+replace go.step.sm/linkedca => ../linkedca
+
 // replace go.step.sm/cli-utils => ../cli-utils
 // replace go.step.sm/crypto => ../crypto

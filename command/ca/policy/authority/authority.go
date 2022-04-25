@@ -1,0 +1,28 @@
+package authority
+
+import (
+	"context"
+
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli/command/ca/policy/actions"
+	"github.com/smallstep/cli/command/ca/policy/policycontext"
+	"github.com/smallstep/cli/command/ca/policy/ssh"
+	"github.com/smallstep/cli/command/ca/policy/x509"
+)
+
+// Command returns the authority policy subcommand.
+func Command(ctx context.Context) cli.Command {
+	return cli.Command{
+		Name:        "authority",
+		Usage:       "manage certificate issuance policies for authorities",
+		UsageText:   "**step beta ca policy authority** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step beta ca policy authority** command group provides facilities for managing certificate issuance policies for authorities.`,
+		Subcommands: cli.Commands{
+			actions.ViewCommand(policycontext.NewContextWithAuthorityPolicyLevel(ctx)),
+			actions.RemoveCommand(policycontext.NewContextWithAuthorityPolicyLevel(ctx)),
+			x509.Command(policycontext.NewContextWithAuthorityPolicyLevel(ctx)),
+			ssh.Command(policycontext.NewContextWithAuthorityPolicyLevel(ctx)),
+		},
+	}
+}
