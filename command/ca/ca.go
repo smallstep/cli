@@ -10,6 +10,8 @@ import (
 	"github.com/smallstep/cli/command/ca/policy"
 	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/smallstep/cli/command/ca/provisionerbeta"
+	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/command"
 )
 
 // init creates and registers the ca command
@@ -171,6 +173,7 @@ commands may change, disappear, or be promoted to a different subcommand in the 
 		Subcommands: cli.Commands{
 			admin.Command(),
 			provisionerbeta.Command(),
+			acme.Command(),
 		},
 	}
 }

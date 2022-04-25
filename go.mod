@@ -191,10 +191,9 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-// replace github.com/smallstep/certificates => ../certificates
+replace github.com/smallstep/certificates => ../certificates
 
 // replace github.com/smallstep/certinfo => ../certinfo
 // replace go.step.sm/linkedca => ../linkedca
-
 // replace go.step.sm/cli-utils => ../cli-utils
 // replace go.step.sm/crypto => ../crypto

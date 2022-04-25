@@ -6,12 +6,12 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
@@ -20,37 +20,69 @@ import (
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/linkedca"
 )
 
 func addCommand() cli.Command {
 	return cli.Command{
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
-		Usage:  "add one or more provisioners to the CA configuration",
-		UsageText: `**step ca provisioner add** <name> <jwk-file> [<jwk-file> ...]
-**--ca-config**=<file> [**--type**=JWK]  [**--create**] [**--password-file**=<file>]
+		Usage:  "add a provisioner",
+		UsageText: `**step ca provisioner add** <name> **--type**=JWK [**--public-key**=<file>]
+[**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
 
-**step ca provisioner add** <name> **--type**=OIDC **--ca-config**=<file>
+**step ca provisioner add** <name> **--type**=OIDC
 [**--client-id**=<id>] [**--client-secret**=<secret>]
 [**--configuration-endpoint**=<url>] [**--domain**=<domain>]
 [**--admin**=<email>]...
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
 
-**step ca provisioner add** <name> **--type**=x5c **--x5c-root**=<file>
-[**--ca-config**=<file>]...
 
-**step ca provisioner add** <name> **--type**=k8sSA
-[**--pem-keys=<file>**] [**--ca-config**=<file>]...
+**step ca provisioner add** <name> **--type**=X5C **--x5c-root**=<file>
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
+
+**step ca provisioner add** <name> **--type**=SSHPOP
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
+
+**step ca provisioner add** <name> **--type**=Nebula **--nebula-root**=<file>
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
+
+**step ca provisioner add** <name> **--type**=K8SSA [**--public-key**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
 
 **step ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
-[**--ca-config**=<file>] [**--aws-account**=<id>]
-[**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
-[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>] [**--azure-subscription-id**=<id>] [**--azure-object-id**=<id>]
+[**--aws-account**=<id>] [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
+[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
 
-**step ca provisioner add** <name> **--type**=ACME **--ca-config**=<file>`,
+**step ca provisioner add** <name> **--type**=ACME [**--force-cn**] [**--require-eab**]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]
+
+**step ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
+[**--capabilities**=<capabilities>] [**--include-root**] [**--min-public-key-length**=<length>]
+[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<string>] [**--admin-subject**=<string>] [**--password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
-			flags.CaConfig,
 			cli.StringFlag{
 				Name:  "type",
 				Value: provisioner.TypeJWK.String(),
@@ -77,23 +109,51 @@ func addCommand() cli.Command {
     : Uses the ACME protocol to create certificates.
 
     **X5C**
-    : Uses an X509 Certificate / private key pair to sign provisioning tokens.
+    : Uses an X509 certificate / private key pair to sign provisioning tokens.
 
-    **K8sSA**
+    **K8SSA**
     : Uses Kubernetes Service Account tokens.
 
     **SSHPOP**
-    : Uses an SSH Certificate / private key pair to sign provisioning tokens.`,
-			},
-			flags.PasswordFile,
+    : Uses an SSH certificate / private key pair to sign provisioning tokens.
+
+    **SCEP**
+	: Uses the SCEP protocol to create certificates.
+
+    **Nebula**
+    : Uses a Nebula certificate / private key pair to sign provisioning tokens.
+`},
+			x509TemplateFlag,
+			x509TemplateDataFlag,
+			sshTemplateFlag,
+			sshTemplateDataFlag,
+			x509MinDurFlag,
+			x509MaxDurFlag,
+			x509DefaultDurFlag,
+			sshUserMinDurFlag,
+			sshUserMaxDurFlag,
+			sshUserDefaultDurFlag,
+			sshHostMinDurFlag,
+			sshHostMaxDurFlag,
+			sshHostDefaultDurFlag,
+			disableRenewalFlag,
+			allowRenewalAfterExpiryFlag,
+			enableX509Flag,
+			enableSSHFlag,
+
+			// JWK provisioner flags
 			cli.BoolFlag{
-				Name: "create",
-				Usage: `Create a new ECDSA key pair using curve P-256 and populate a new JWK
-provisioner with it.`,
+				Name:  "create",
+				Usage: `Create the JWK key pair for the provisioner.`,
 			},
-			cli.BoolFlag{
-				Name:  "ssh",
-				Usage: `Enable SSH on the new provisioners.`,
+			cli.StringFlag{
+				Name:  "private-key",
+				Usage: `The <file> containing the JWK private key.`,
+			},
+			cli.StringFlag{
+				Name: "public-key",
+				Usage: `The <file> containing the JWK public key. Or, a <file>
+containing one or more PEM formatted keys, if used with the K8SSA provisioner.`,
 			},
 
 			// OIDC provisioner flags
@@ -120,68 +180,13 @@ will not have restrictions in the certificates to sign. Use the
 '--admin' flag multiple times to configure multiple administrators.`,
 			},
 			cli.StringSliceFlag{
-				Name: "domain",
-				Usage: `The <domain> used to validate the email claim in an OpenID Connect provisioner.
-Use the '--domain' flag multiple times to configure multiple domains.`,
-			},
-
-			// Cloud provisioner flags
-			cli.StringSliceFlag{
-				Name: "aws-account",
-				Usage: `The AWS account <id> used to validate the identity documents.
-Use the flag multiple times to configure multiple accounts.`,
+				Name: "group",
+				Usage: `The <group> list used to validate the groups extenstion in an OpenID Connect token.
+Use the '--group' flag multiple times to configure multiple groups.`,
 			},
 			cli.StringFlag{
-				Name:  "azure-tenant",
-				Usage: `The Microsoft Azure tenant <id> used to validate the identity tokens.`,
-			},
-			cli.StringSliceFlag{
-				Name: "azure-resource-group",
-				Usage: `The Microsoft Azure resource group <name> used to validate the identity tokens.
-Use the flag multiple times to configure multiple resource groups`,
-			},
-			cli.StringSliceFlag{
-				Name: "azure-subscription-id",
-				Usage: `The Microsoft Azure subscription <id> used to validate the identity tokens.
-Use the flag multiple times to configure multiple subscription IDs`,
-			},
-			cli.StringSliceFlag{
-				Name: "azure-object-id",
-				Usage: `The Microsoft Azure AD object <id> used to validate the identity tokens.
-Use the flag multiple times to configure multiple object IDs`,
-			},
-			cli.StringSliceFlag{
-				Name: "gcp-service-account",
-				Usage: `The Google service account <email> or <id> used to validate the identity tokens.
-Use the flag multiple times to configure multiple service accounts.`,
-			},
-			cli.StringSliceFlag{
-				Name: "gcp-project",
-				Usage: `The Google project <id> used to validate the identity tokens.
-Use the flag multipl etimes to configure multiple projects`,
-			},
-			cli.DurationFlag{
-				Name: "instance-age",
-				Usage: `The maximum <duration> to grant a certificate in AWS and GCP provisioners.
-A <duration> is sequence of decimal numbers, each with optional fraction and a
-unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".`,
-			},
-			cli.StringFlag{
-				Name: "iid-roots",
-				Usage: `The <file> containing the certificates used to validate the
-instance identity documents in AWS.`,
-			},
-			cli.BoolFlag{
-				Name: "disable-custom-sans",
-				Usage: `On cloud provisioners, if enabled only the internal DNS and IP will be added as a SAN.
-By default it will accept any SAN in the CSR.`,
-			},
-			cli.BoolFlag{
-				Name: "disable-trust-on-first-use,disable-tofu",
-				Usage: `On cloud provisioners, if enabled multiple sign request for this provisioner
-with the same instance will be accepted. By default only the first request
-will be accepted.`,
+				Name:  "tenant-id",
+				Usage: `The <tenant-id> used to replace the templatized {tenantid} in the OpenID Configuration.`,
 			},
 
 			// X5C provisioner flags
@@ -190,203 +195,275 @@ will be accepted.`,
 				Usage: `Root certificate (chain) <file> used to validate the signature on X5C
 provisioning tokens.`,
 			},
-			// K8sSA provisioner flags
-			cli.StringFlag{
-				Name: "pem-keys",
-				Usage: `Public key <file> for validating signatures on K8s Service Account Tokens.
-PEM formatted bundle (can have multiple PEM blocks in the same file) of public
-keys and x509 Certificates.`,
-			},
-		},
-		Description: `**step ca provisioner add** adds one or more provisioners
-to the configuration and writes the new configuration back to the CA config.
 
-To pick up the new configuration you must SIGHUP (kill -1 <pid>) or restart the
-step-ca process.
+			// Nebula provisioner flags
+			nebulaRootFlag,
+
+			// ACME provisioner flags
+			forceCNFlag,
+			requireEABFlag,
+
+			// SCEP provisioner flags
+			scepChallengeFlag,
+			scepCapabilitiesFlag,
+			scepIncludeRootFlag,
+			scepMinimumPublicKeyLengthFlag,
+			scepEncryptionAlgorithmIdentifierFlag,
+
+			// Cloud provisioner flags
+			awsAccountFlag,
+			azureTenantFlag,
+			azureResourceGroupFlag,
+			azureSubscriptionIDFlag,
+			azureObjectIDFlag,
+			gcpServiceAccountFlag,
+			gcpProjectFlag,
+			instanceAgeFlag,
+			iidRootsFlag,
+			disableCustomSANsFlag,
+			disableTOFUFlag,
+
+			flags.AdminCert,
+			flags.AdminKey,
+			flags.AdminProvisioner,
+			flags.AdminSubject,
+			flags.PasswordFile,
+			flags.CaURL,
+			flags.Root,
+			flags.Context,
+			flags.CaConfig,
+		},
+		Description: `**step ca provisioner add** adds a provisioner to the CA configuration.
 
 ## POSITIONAL ARGUMENTS
 
 <name>
-: The name of the provisioners, if a list of JWK files are passed, this name
-will be linked to all the keys.
-
-<jwk-path>
-: List of private (or public) keys in JWK or PEM format.
+: The name of the provisioner.
 
 ## EXAMPLES
 
-Add a single JWK provisioner:
+Create a JWK provisioner with newly generated keys and a template for x509 certificates:
 '''
-$ step ca provisioner add max@smallstep.com ./max-laptop.jwk --ca-config ca.json
-'''
-
-Add a single JWK provisioner using an auto-generated asymmetric key pair:
-'''
-$ step ca provisioner add max@smallstep.com --ca-config ca.json \
---create
+step ca provisioner add cicd --type JWK --create --x509-template ./templates/example.tpl
 '''
 
-Add a single JWK provisioner with ssh enabled:
+Create a JWK provisioner with duration claims:
 '''
-$ step ca provisioner add max@smallstep.com --ca-config ca.json --ssh --create
-'''
-
-Add a list of provisioners for a single name:
-'''
-$ step ca provisioner add max@smallstep.com ./max-laptop.jwk ./max-phone.pem ./max-work.pem \
---ca-config ca.json
+step ca provisioner add cicd --type JWK --create --x509-min-dur 20m --x509-default-dur 48h --ssh-user-min-dur 17m --ssh-host-default-dur 16h
 '''
 
-Add a single OIDC provisioner:
+Create a JWK provisioner with existing keys:
 '''
-$ step ca provisioner add Google --type oidc --ca-config ca.json \
-  --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
-  --configuration-endpoint https://accounts.google.com/.well-known/openid-configuration
+step ca provisioner add jane@doe.com --type JWK --public-key jwk.pub --private-key jwk.priv
 '''
 
-Add an OIDC provisioner with two administrators:
+Create an OIDC provisioner:
 '''
-$ step ca provisioner add Google --type oidc --ca-config ca.json \
-  --client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
-  --client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
-  --configuration-endpoint https://accounts.google.com/.well-known/openid-configuration \
-  --admin mariano@smallstep.com --admin max@smallstep.com \
-  --domain smallstep.com
+step ca provisioner add Google --type OIDC --ssh \
+	--client-id 1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com \
+	--client-secret udTrOT3gzrO7W9fDPgZQLfYJ \
+	--configuration-endpoint https://accounts.google.com/.well-known/openid-configuration
 '''
 
-Add an AWS provisioner on one account with a one hour of instance age:
+Create an X5C provisioner:
 '''
-$ step ca provisioner add Amazon --type AWS --ca-config ca.json \
-  --aws-account 123456789 --instance-age 1h
-'''
-
-Add an GCP provisioner with two service accounts and two project ids:
-'''
-$ step ca provisioner add Google --type GCP --ca-config ca.json \
-  --gcp-service-account 1234567890-compute@developer.gserviceaccount.com \
-  --gcp-service-account 9876543210-compute@developer.gserviceaccount.com \
-  --gcp-project identity --gcp-project accounting
+step ca provisioner add x5c --type X5C --x5c-root x5c_ca.crt
 '''
 
-Add an Azure provisioner with two resource groups, one subscription ID and one object ID:
+Create an ACME provisioner:
 '''
-$ step ca provisioner add Azure --type Azure --ca-config ca.json \
+step ca provisioner add acme --type ACME
+'''
+
+Create an ACME provisioner, forcing a CN and requiring EAB:
+'''
+step ca provisioner add acme --type ACME --force-cn --require-eab
+'''
+
+Create an K8SSA provisioner:
+'''
+step ca provisioner add kube --type K8SSA --ssh --public-key key.pub
+'''
+
+Create an SSHPOP provisioner for renewing SSH host certificates:")
+'''
+step ca provisioner add sshpop --type SSHPOP
+'''
+
+Create a SCEP provisioner with 'secret' challenge and AES-256-CBC encryption:
+'''
+step ca provisioner add my_scep_provisioner --type SCEP --challenge secret --encryption-algorithm-identifier 2
+'''
+
+Create an Azure provisioner with two resource groups, one subscription ID and one object ID:
+'''
+$ step ca provisioner add Azure --type Azure \
   --azure-tenant bc9043e2-b645-4c1c-a87a-78f8644bfe57 \
   --azure-resource-group identity --azure-resource-group accounting \
   --azure-subscription-id dc760a01-2886-4a84-9abc-f3508e0f87d9 \
   --azure-object-id f50926c7-abbf-4c28-87dc-9adc7eaf3ba7
 '''
 
-Add an GCP provisioner that will only accept the SANs provided in the identity token:
+Create an GCP provisioner that will only accept the SANs provided in the identity token:
 '''
-$ step ca provisioner add Google --type GCP --ca-config ca.json \
+$ step ca provisioner add Google --type GCP \
   --disable-custom-sans --gcp-project internal
 '''
 
-Add an AWS provisioner that will only accept the SANs provided in the identity
+Create an AWS provisioner that will only accept the SANs provided in the identity
 document and will allow multiple certificates from the same instance:
 '''
-$ step ca provisioner add Amazon --type AWS --ca-config ca.json \
+$ step ca provisioner add Amazon --type AWS \
   --aws-account 123456789 --disable-custom-sans --disable-trust-on-first-use
 '''
 
-Add an AWS provisioner that will use a custom certificate to validate the instance
+Create an AWS provisioner that will use a custom certificate to validate the instance
 identity documents:
 '''
-$ step ca provisioner add Amazon --type AWS --ca-config ca.json \
+$ step ca provisioner add Amazon --type AWS \
   --aws-account 123456789 --iid-roots $(step path)/certs/aws.crt
-'''
-
-Add an ACME provisioner.
-'''
-$ step ca provisioner add acme-smallstep --type ACME
-'''
-
-Add an X5C provisioner.
-'''
-$ step ca provisioner add x5c-smallstep --type X5C --x5c-root x5cRoot.crt
-'''
-
-Add a K8s Service Account provisioner.
-'''
-$ step ca provisioner add my-kube-provisioner --type K8sSA --pem-keys keys.pub
-'''
-
-Add an SSH-POP provisioner.
-'''
-$ step ca provisioner add sshpop-smallstep --type SSHPOP
 '''`,
 	}
 }
 
 func addAction(ctx *cli.Context) (err error) {
-	if ctx.NArg() == 0 {
-		return errs.TooFewArguments(ctx)
+	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		return err
 	}
+
+	x509TemplateFile := ctx.String("x509-template")
+	x509TemplateDataFile := ctx.String("x509-template-data")
+	sshTemplateFile := ctx.String("ssh-template")
+	sshTemplateDataFile := ctx.String("ssh-template-data")
 
 	args := ctx.Args()
-	name := args[0]
 
-	caCfg := ctx.String("ca-config")
-	if caCfg == "" {
-		return errs.RequiredFlag(ctx, "ca-config")
+	typ, ok := linkedca.Provisioner_Type_value[strings.ToUpper(ctx.String("type"))]
+	if !ok {
+		return fmt.Errorf("unsupported provisioner type %s", ctx.String("type"))
 	}
 
-	c, err := config.LoadConfiguration(caCfg)
-	if err != nil {
-		return errors.Wrapf(err, "error loading configuration")
+	p := &linkedca.Provisioner{
+		Name: args.Get(0),
 	}
 
-	typ, err := parseProvisionerType(ctx)
-	if err != nil {
-		return err
+	// Read x509 template if passed
+	p.X509Template = &linkedca.Template{}
+	if x509TemplateFile != "" {
+		b, err := utils.ReadFile(x509TemplateFile)
+		if err != nil {
+			return err
+		}
+		p.X509Template.Template = b
+	}
+	if x509TemplateDataFile != "" {
+		b, err := utils.ReadFile(x509TemplateDataFile)
+		if err != nil {
+			return err
+		}
+		p.X509Template.Data = b
+	}
+	// Read ssh template if passed
+	p.SshTemplate = &linkedca.Template{}
+	if sshTemplateFile != "" {
+		b, err := utils.ReadFile(sshTemplateFile)
+		if err != nil {
+			return err
+		}
+		p.SshTemplate.Template = b
+	}
+	if sshTemplateDataFile != "" {
+		b, err := utils.ReadFile(sshTemplateDataFile)
+		if err != nil {
+			return err
+		}
+		p.SshTemplate.Data = b
 	}
 
-	provMap := make(map[string]bool)
-	for _, p := range c.AuthorityConfig.Provisioners {
-		provMap[p.GetIDForToken()] = true
+	p.Claims = &linkedca.Claims{
+		X509: &linkedca.X509Claims{
+			Durations: &linkedca.Durations{
+				Min:     ctx.String("x509-min-dur"),
+				Max:     ctx.String("x509-max-dur"),
+				Default: ctx.String("x509-default-dur"),
+			},
+			Enabled: !(ctx.IsSet("x509") && !ctx.Bool("x509")),
+		},
+		Ssh: &linkedca.SSHClaims{
+			UserDurations: &linkedca.Durations{
+				Min:     ctx.String("ssh-user-min-dur"),
+				Max:     ctx.String("ssh-user-max-dur"),
+				Default: ctx.String("ssh-user-default-dur"),
+			},
+			HostDurations: &linkedca.Durations{
+				Min:     ctx.String("ssh-host-min-dur"),
+				Max:     ctx.String("ssh-host-max-dur"),
+				Default: ctx.String("ssh-host-default-dur"),
+			},
+			Enabled: !(ctx.IsSet("ssh") && !ctx.Bool("ssh")),
+		},
+		DisableRenewal:          ctx.Bool("disable-renewal"),
+		AllowRenewalAfterExpiry: ctx.Bool("allow-renewal-after-expiry"),
 	}
 
-	var list provisioner.List
-	switch typ {
-	case provisioner.TypeJWK:
-		list, err = addJWKProvisioner(ctx, name, provMap)
-	case provisioner.TypeOIDC:
-		list, err = addOIDCProvisioner(ctx, name, provMap)
-	case provisioner.TypeAWS:
-		list, err = addAWSProvisioner(ctx, name, provMap)
-	case provisioner.TypeAzure:
-		list, err = addAzureProvisioner(ctx, name, provMap)
-	case provisioner.TypeGCP:
-		list, err = addGCPProvisioner(ctx, name, provMap)
-	case provisioner.TypeACME:
-		list, err = addACMEProvisioner(ctx, name, provMap)
-	case provisioner.TypeX5C:
-		list, err = addX5CProvisioner(ctx, name, provMap)
-	case provisioner.TypeK8sSA:
-		list, err = addK8sSAProvisioner(ctx, name, provMap)
-	case provisioner.TypeSSHPOP:
-		list, err = addSSHPOPProvisioner(ctx, name, provMap)
+	switch linkedca.Provisioner_Type(typ) {
+	case linkedca.Provisioner_JWK:
+		p.Type = linkedca.Provisioner_JWK
+		p.Details, err = createJWKDetails(ctx)
+	case linkedca.Provisioner_ACME:
+		p.Type = linkedca.Provisioner_ACME
+		p.Details, err = createACMEDetails(ctx)
+	case linkedca.Provisioner_SSHPOP:
+		p.Type = linkedca.Provisioner_SSHPOP
+		p.Details, err = createSSHPOPDetails(ctx)
+	case linkedca.Provisioner_X5C:
+		p.Type = linkedca.Provisioner_X5C
+		p.Details, err = createX5CDetails(ctx)
+	case linkedca.Provisioner_K8SSA:
+		p.Type = linkedca.Provisioner_K8SSA
+		p.Details, err = createK8SSADetails(ctx)
+	case linkedca.Provisioner_OIDC:
+		p.Type = linkedca.Provisioner_OIDC
+		p.Details, err = createOIDCDetails(ctx)
+	case linkedca.Provisioner_AWS:
+		p.Type = linkedca.Provisioner_AWS
+		p.Details, err = createAWSDetails(ctx)
+	case linkedca.Provisioner_AZURE:
+		p.Type = linkedca.Provisioner_AZURE
+		p.Details, err = createAzureDetails(ctx)
+	case linkedca.Provisioner_GCP:
+		p.Type = linkedca.Provisioner_GCP
+		p.Details, err = createGCPDetails(ctx)
+	case linkedca.Provisioner_SCEP:
+		p.Type = linkedca.Provisioner_SCEP
+		p.Details, err = createSCEPDetails(ctx)
+	case linkedca.Provisioner_NEBULA:
+		p.Type = linkedca.Provisioner_NEBULA
+		p.Details, err = createNebulaDetails(ctx)
 	default:
-		return errors.Errorf("unknown type %s: this should not happen", typ)
+		return fmt.Errorf("unsupported provisioner type %s", ctx.String("type"))
 	}
-
 	if err != nil {
 		return err
 	}
 
-	c.AuthorityConfig.Provisioners = append(c.AuthorityConfig.Provisioners, list...)
-	if err := c.Save(caCfg); err != nil {
+	client, err := newCRUDClient(ctx, ctx.String("ca-config"))
+	if err != nil {
 		return err
 	}
 
-	ui.Println("Success! Your `step-ca` config has been updated. To pick up the new configuration SIGHUP (kill -1 <pid>) or restart the step-ca process.")
+	if p, err = client.CreateProvisioner(p); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	var password string
+func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	var (
+		err      error
+		password string
+	)
 	if passwordFile := ctx.String("password-file"); len(passwordFile) > 0 {
 		password, err = utils.ReadStringPasswordFromFile(passwordFile)
 		if err != nil {
@@ -394,52 +471,35 @@ func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 		}
 	}
 
+	var (
+		jwk *jose.JSONWebKey
+		jwe *jose.JSONWebEncryption
+	)
 	if ctx.Bool("create") {
-		if ctx.NArg() > 1 {
-			return nil, errs.IncompatibleFlag(ctx, "create", "<jwk-path> positional arg")
+		if ctx.IsSet("public-key") {
+			return nil, errs.IncompatibleFlag(ctx, "create", "public-key")
+		}
+		if ctx.IsSet("private-key") {
+			return nil, errs.IncompatibleFlag(ctx, "create", "private-key")
 		}
 		pass, err := ui.PromptPasswordGenerate("Please enter a password to encrypt the provisioner private key? [leave empty and we'll generate one]", ui.WithValue(password))
 		if err != nil {
 			return nil, err
 		}
-		jwk, jwe, err := jose.GenerateDefaultKeyPair(pass)
+		jwk, jwe, err = jose.GenerateDefaultKeyPair(pass)
 		if err != nil {
 			return nil, err
 		}
-		encryptedKey, err := jwe.CompactSerialize()
+	} else {
+		if !ctx.IsSet("public-key") {
+			return nil, errs.RequiredWithFlagValue(ctx, "create", "false", "public-key")
+		}
+		jwkFile := ctx.String("public-key")
+		jwk, err = jose.ParseKey(jwkFile)
 		if err != nil {
-			return nil, errors.Wrap(err, "error serializing private key")
+			return nil, errs.FileError(err, jwkFile)
 		}
 
-		// Create provisioner
-		p := &provisioner.JWK{
-			Type:         provisioner.TypeJWK.String(),
-			Name:         name,
-			Key:          jwk,
-			EncryptedKey: encryptedKey,
-			Claims:       getClaims(ctx),
-		}
-		// Check for duplicates
-		if _, ok := provMap[p.GetIDForToken()]; !ok {
-			provMap[p.GetIDForToken()] = true
-		} else {
-			return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with name=%s and kid=%s", name, jwk.KeyID)
-		}
-		list = append(list, p)
-		return list, nil
-	}
-
-	// Add multiple provisioners using JWK files.
-	if ctx.NArg() < 2 {
-		return nil, errs.TooFewArguments(ctx)
-	}
-
-	jwkFiles := ctx.Args()[1:]
-	for _, filename := range jwkFiles {
-		jwk, err := jose.ParseKey(filename)
-		if err != nil {
-			return nil, errs.FileError(err, filename)
-		}
 		// Only use asymmetric cryptography
 		if _, ok := jwk.Key.([]byte); ok {
 			return nil, errors.New("invalid JWK: a symmetric key cannot be used as a provisioner")
@@ -451,180 +511,87 @@ func addJWKProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 				return nil, err
 			}
 		}
-		key := jwk.Public()
 
-		// Initialize provisioner and check for duplicates
-		p := &provisioner.JWK{
-			Type:   provisioner.TypeJWK.String(),
-			Name:   name,
-			Key:    &key,
-			Claims: getClaims(ctx),
-		}
-		if _, ok := provMap[p.GetIDForToken()]; !ok {
-			provMap[p.GetIDForToken()] = true
-		} else {
-			return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with name=%s and kid=%s", name, jwk.KeyID)
-		}
-
-		// Encrypt JWK
-		if !jwk.IsPublic() {
-			jwe, err := jose.EncryptJWK(jwk)
+		if ctx.IsSet("private-key") {
+			jwkFile = ctx.String("private-key")
+			b, err := os.ReadFile(jwkFile)
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrapf(err, "error reading %s", jwkFile)
 			}
-			encryptedKey, err := jwe.CompactSerialize()
+
+			// Attempt to parse private key as Encrypted JSON.
+			// If this operation fails then either,
+			//   1. the key is not encrypted
+			//   2. the key has an invalid format
+			//
+			// Attempt to parse as decrypted private key.
+			jwe, err = jose.ParseEncrypted(string(b))
 			if err != nil {
-				return nil, errors.Wrap(err, "error serializing private key")
+				privjwk, err := jose.ParseKey(jwkFile)
+				if err != nil {
+					return nil, errs.FileError(err, jwkFile)
+				}
+
+				if privjwk.IsPublic() {
+					return nil, errors.New("invalid jwk: private-key is a public key")
+				}
+
+				// Encrypt JWK
+				opts := []jose.Option{}
+				if ctx.IsSet("password-file") {
+					opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
+				}
+				jwe, err = jose.EncryptJWK(privjwk, opts...)
+				if err != nil {
+					return nil, err
+				}
 			}
-			p.EncryptedKey = encryptedKey
 		}
-
-		list = append(list, p)
-	}
-	return list, nil
-}
-
-func addOIDCProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	clientID := ctx.String("client-id")
-	if clientID == "" {
-		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "client-id")
 	}
 
-	confURL := ctx.String("configuration-endpoint")
-	if confURL == "" {
-		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "configuration-endpoint")
-	}
-	u, err := url.Parse(confURL)
-	if err != nil || (u.Scheme != "https" && u.Scheme != "http") {
-		return nil, errs.InvalidFlagValue(ctx, "configuration-endpoint", confURL, "")
-	}
-
-	// Create provisioner
-	p := &provisioner.OIDC{
-		Type:                  provisioner.TypeOIDC.String(),
-		Name:                  name,
-		ClientID:              clientID,
-		ClientSecret:          ctx.String("client-secret"),
-		ConfigurationEndpoint: confURL,
-		Admins:                ctx.StringSlice("admin"),
-		Domains:               ctx.StringSlice("domain"),
-		Claims:                getClaims(ctx),
-		ListenAddress:         ctx.String("listen-address"),
-	}
-	// Check for duplicates
-	if _, ok := provMap[p.GetIDForToken()]; !ok {
-		provMap[p.GetIDForToken()] = true
-	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with client-id=%s", p.GetID())
-	}
-	list = append(list, p)
-	return
-}
-
-func addAWSProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	d, err := parseInstanceAge(ctx)
+	jwkPubBytes, err := jwk.MarshalJSON()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error marshaling JWK")
+	}
+	jwkProv := &linkedca.JWKProvisioner{
+		PublicKey: jwkPubBytes,
 	}
 
-	p := &provisioner.AWS{
-		Type:                   provisioner.TypeAWS.String(),
-		Name:                   name,
-		Accounts:               ctx.StringSlice("aws-account"),
-		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
-		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
-		InstanceAge:            d,
-		IIDRoots:               ctx.String("iid-roots"),
-		Claims:                 getClaims(ctx),
+	if jwe != nil {
+		jwePrivStr, err := jwe.CompactSerialize()
+		if err != nil {
+			return nil, errors.Wrap(err, "error serializing JWE")
+		}
+		jwkProv.EncryptedPrivateKey = []byte(jwePrivStr)
 	}
 
-	// Check for duplicates
-	if _, ok := provMap[p.GetIDForToken()]; !ok {
-		provMap[p.GetIDForToken()] = true
-	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with type=AWS and name=%s", p.GetName())
-	}
-
-	list = append(list, p)
-	return
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_JWK{
+			JWK: jwkProv,
+		},
+	}, nil
 }
 
-func addAzureProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	tenantID := ctx.String("azure-tenant")
-	if tenantID == "" {
-		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "azure-tenant")
-	}
-
-	p := &provisioner.Azure{
-		Type:                   provisioner.TypeAzure.String(),
-		Name:                   name,
-		TenantID:               tenantID,
-		ResourceGroups:         ctx.StringSlice("azure-resource-group"),
-		SubscriptionIDs:        ctx.StringSlice("azure-subscription-id"),
-		ObjectIDs:              ctx.StringSlice("azure-object-id"),
-		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
-		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
-		Claims:                 getClaims(ctx),
-	}
-
-	// Check for duplicates
-	if _, ok := provMap[p.GetIDForToken()]; !ok {
-		provMap[p.GetIDForToken()] = true
-	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with type=Azure and name=%s", p.GetName())
-	}
-
-	list = append(list, p)
-	return
+func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_ACME{
+			ACME: &linkedca.ACMEProvisioner{
+				ForceCn:    ctx.Bool("force-cn"),
+				RequireEab: ctx.Bool("require-eab"),
+			},
+		},
+	}, nil
 }
 
-func addGCPProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	d, err := parseInstanceAge(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	p := &provisioner.GCP{
-		Type:                   provisioner.TypeGCP.String(),
-		Name:                   name,
-		ServiceAccounts:        ctx.StringSlice("gcp-service-account"),
-		ProjectIDs:             ctx.StringSlice("gcp-project"),
-		DisableCustomSANs:      ctx.Bool("disable-custom-sans"),
-		DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
-		InstanceAge:            d,
-		Claims:                 getClaims(ctx),
-	}
-
-	// Check for duplicates
-	if _, ok := provMap[p.GetIDForToken()]; !ok {
-		provMap[p.GetIDForToken()] = true
-	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with type=GCP and name=%s", p.GetName())
-	}
-
-	list = append(list, p)
-	return
+func createSSHPOPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_SSHPOP{
+			SSHPOP: &linkedca.SSHPOPProvisioner{},
+		},
+	}, nil
 }
 
-func addACMEProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	p := &provisioner.ACME{
-		Type:   provisioner.TypeACME.String(),
-		Name:   name,
-		Claims: getClaims(ctx),
-	}
-
-	// Check for duplicates
-	if _, ok := provMap[p.GetIDForToken()]; !ok {
-		provMap[p.GetIDForToken()] = true
-	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID==%s", p.GetIDForToken())
-	}
-
-	list = append(list, p)
-	return
-}
-
-func addX5CProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
+func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	x5cRootFile := ctx.String("x5c-root")
 	if x5cRootFile == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", "x5c", "x5c-root")
@@ -634,7 +601,7 @@ func addX5CProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading X5C Root certificates from %s", x5cRootFile)
 	}
-	var rootBytes []byte
+	var rootBytes [][]byte
 	for _, r := range roots {
 		if r.KeyUsage&x509.KeyUsageCertSign == 0 {
 			return nil, errors.Errorf("error: certificate with common name '%s' cannot be "+
@@ -645,35 +612,41 @@ func addX5CProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (
 		rootBytes = append(rootBytes, pem.EncodeToMemory(&pem.Block{
 			Type:  "CERTIFICATE",
 			Bytes: r.Raw,
-		})...)
+		}))
 	}
-	p := &provisioner.X5C{
-		Type:   provisioner.TypeX5C.String(),
-		Name:   name,
-		Claims: getClaims(ctx),
-		Roots:  rootBytes,
-	}
-
-	// Check for duplicates
-	if _, ok := provMap[p.GetIDForToken()]; !ok {
-		provMap[p.GetIDForToken()] = true
-	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetIDForToken())
-	}
-
-	list = append(list, p)
-	return
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_X5C{
+			X5C: &linkedca.X5CProvisioner{
+				Roots: rootBytes,
+			},
+		},
+	}, nil
 }
 
-// addK8sSAProvisioner returns a provisioner list containing a kubernetes
-// service account provisioner.
-// NOTE: step-ca currently only supports one k8sSA provisioner (because we do
-// not have a good way of distinguishing between tokens), therefore w/e `name`
-// is entered by the user will be overwritten by a default value.
-func addK8sSAProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	pemKeysF := ctx.String("pem-keys")
+func createNebulaDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	rootFile := ctx.String("nebula-root")
+	if rootFile == "" {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", "nebula", "nebula-root")
+	}
+
+	rootBytes, err := readNebulaRoots(rootFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_Nebula{
+			Nebula: &linkedca.NebulaProvisioner{
+				Roots: rootBytes,
+			},
+		},
+	}, nil
+}
+
+func createK8SSADetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	pemKeysF := ctx.String("public-key")
 	if pemKeysF == "" {
-		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "pem-keys")
+		return nil, errs.RequiredWithFlagValue(ctx, "type", "k8sSA", "public-key")
 	}
 
 	pemKeysB, err := os.ReadFile(pemKeysF)
@@ -703,96 +676,124 @@ func addK8sSAProvisioner(ctx *cli.Context, name string, provMap map[string]bool)
 		pemKeys = append(pemKeys, key)
 	}
 
-	var pubKeyBytes []byte
+	var pubKeyBytes [][]byte
 	for _, k := range pemKeys {
 		blk, err := pemutil.Serialize(k)
 		if err != nil {
 			return nil, errors.Wrap(err, "error serializing pem key")
 		}
-		pubKeyBytes = append(pubKeyBytes, pem.EncodeToMemory(blk)...)
+		pubKeyBytes = append(pubKeyBytes, pem.EncodeToMemory(blk))
 	}
-
-	p := &provisioner.K8sSA{
-		Type:    provisioner.TypeK8sSA.String(),
-		Name:    name,
-		Claims:  getClaims(ctx),
-		PubKeys: pubKeyBytes,
-	}
-
-	// Check for duplicates
-	if _, ok := provMap[p.GetIDForToken()]; !ok {
-		provMap[p.GetIDForToken()] = true
-	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetIDForToken())
-	}
-
-	list = append(list, p)
-	return
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_K8SSA{
+			K8SSA: &linkedca.K8SSAProvisioner{
+				PublicKeys: pubKeyBytes,
+			},
+		},
+	}, nil
 }
 
-// addSSHPOPProvisioner returns a provisioner list containing a SSHPOP provisioner.
-func addSSHPOPProvisioner(ctx *cli.Context, name string, provMap map[string]bool) (list provisioner.List, err error) {
-	ctx.Set("ssh", "true")
-	p := &provisioner.SSHPOP{
-		Type:   provisioner.TypeSSHPOP.String(),
-		Name:   name,
-		Claims: getClaims(ctx),
+func createOIDCDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	clientID := ctx.String("client-id")
+	if clientID == "" {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "client-id")
 	}
 
-	// Check for duplicates
-	if _, ok := provMap[p.GetIDForToken()]; !ok {
-		provMap[p.GetIDForToken()] = true
-	} else {
-		return nil, errors.Errorf("duplicated provisioner: CA config already contains a provisioner with ID=%s", p.GetIDForToken())
+	confURL := ctx.String("configuration-endpoint")
+	if confURL == "" {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "configuration-endpoint")
+	}
+	u, err := url.Parse(confURL)
+	if err != nil || (u.Scheme != "https" && u.Scheme != "http") {
+		return nil, errs.InvalidFlagValue(ctx, "configuration-endpoint", confURL, "")
 	}
 
-	list = append(list, p)
-	return
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_OIDC{
+			OIDC: &linkedca.OIDCProvisioner{
+				ClientId:              clientID,
+				ClientSecret:          ctx.String("client-secret"),
+				ConfigurationEndpoint: confURL,
+				Admins:                ctx.StringSlice("admin"),
+				Domains:               ctx.StringSlice("domain"),
+				Groups:                ctx.StringSlice("group"),
+				ListenAddress:         ctx.String("listen-address"),
+				TenantId:              ctx.String("tenant-id"),
+			},
+		},
+	}, nil
 }
 
-func getClaims(ctx *cli.Context) *provisioner.Claims {
-	if ctx.Bool("ssh") {
-		enable := true
-		return &provisioner.Claims{
-			EnableSSHCA: &enable,
-		}
+func createAWSDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	d, err := parseInstanceAge(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_AWS{
+			AWS: &linkedca.AWSProvisioner{
+				Accounts:               ctx.StringSlice("aws-account"),
+				DisableCustomSans:      ctx.Bool("disable-custom-sans"),
+				DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
+				InstanceAge:            d,
+				// TODO IID Roots
+				// IIDRoots:               ctx.String("iid-roots"),
+			},
+		},
+	}, nil
 }
 
-func parseInstanceAge(ctx *cli.Context) (provisioner.Duration, error) {
-	age := ctx.Duration("instance-age")
-	if age == 0 {
-		return provisioner.Duration{}, nil
+func createAzureDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	tenantID := ctx.String("azure-tenant")
+	if tenantID == "" {
+		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "azure-tenant")
 	}
-	if age < 0 {
-		return provisioner.Duration{}, errs.MinSizeFlag(ctx, "instance-age", "0s")
-	}
-	return provisioner.Duration{Duration: age}, nil
+
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_Azure{
+			Azure: &linkedca.AzureProvisioner{
+				TenantId:               tenantID,
+				ResourceGroups:         ctx.StringSlice("azure-resource-group"),
+				SubscriptionIds:        ctx.StringSlice("azure-subscription-id"),
+				ObjectIds:              ctx.StringSlice("azure-object-id"),
+				DisableCustomSans:      ctx.Bool("disable-custom-sans"),
+				DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
+			},
+		},
+	}, nil
 }
 
-func parseProvisionerType(ctx *cli.Context) (provisioner.Type, error) {
-	typ := ctx.String("type")
-	switch strings.ToLower(typ) {
-	case "", "jwk":
-		return provisioner.TypeJWK, nil
-	case "oidc":
-		return provisioner.TypeOIDC, nil
-	case "gcp":
-		return provisioner.TypeGCP, nil
-	case "aws":
-		return provisioner.TypeAWS, nil
-	case "azure":
-		return provisioner.TypeAzure, nil
-	case "acme":
-		return provisioner.TypeACME, nil
-	case "x5c":
-		return provisioner.TypeX5C, nil
-	case "sshpop":
-		return provisioner.TypeSSHPOP, nil
-	case "k8ssa":
-		return provisioner.TypeK8sSA, nil
-	default:
-		return 0, errs.InvalidFlagValue(ctx, "type", typ, "JWK, OIDC, AWS, Azure, GCP, ACME, X5C, SSHPOP, K8sSA")
+func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	d, err := parseInstanceAge(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_GCP{
+			GCP: &linkedca.GCPProvisioner{
+				ServiceAccounts:        ctx.StringSlice("gcp-service-account"),
+				ProjectIds:             ctx.StringSlice("gcp-project"),
+				DisableCustomSans:      ctx.Bool("disable-custom-sans"),
+				DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
+				InstanceAge:            d,
+			},
+		},
+	}, nil
+}
+
+func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	return &linkedca.ProvisionerDetails{
+		Data: &linkedca.ProvisionerDetails_SCEP{
+			SCEP: &linkedca.SCEPProvisioner{
+				ForceCn:                       ctx.Bool("force-cn"),
+				Challenge:                     ctx.String("challenge"),
+				Capabilities:                  ctx.StringSlice("capabilities"),
+				MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
+				IncludeRoot:                   ctx.Bool("include-root"),
+				EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
+			},
+		},
+	}, nil
 }

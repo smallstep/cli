@@ -1,12 +1,10 @@
-package provisionerbeta
+package provisioner
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"net/url"
@@ -18,12 +16,10 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
-	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/linkedca"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func updateCommand() cli.Command {
@@ -31,7 +27,7 @@ func updateCommand() cli.Command {
 		Name:   "update",
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update a provisioner",
-		UsageText: `**step beta ca provisioner update** <name> [**--public-key**=<file>]
+		UsageText: `**step ca provisioner update** <name> [**--public-key**=<file>]
 [**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
@@ -39,14 +35,14 @@ func updateCommand() cli.Command {
 
 ACME
 
-**step beta ca provisioner update** <name> [**--force-cn**] [**--require-eab**] [**--disable-eab**]
+**step ca provisioner update** <name> [**--force-cn**] [**--require-eab**] [**--disable-eab**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
 
 OIDC
 
-**step beta ca provisioner update** <name>
+**step ca provisioner update** <name>
 [**--client-id**=<id>] [**--client-secret**=<secret>]
 [**--configuration-endpoint**=<url>] [**--listen-address=<address>]
 [**--domain**=<domain>] [**--remove-domain**=<domain>]
@@ -58,21 +54,21 @@ OIDC
 
 X5C
 
-**step beta ca provisioner update** <name> **--x5c-root**=<file>
+**step ca provisioner update** <name> **--x5c-root**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
 
 Kubernetes Service Account
 
-**step beta ca provisioner update** <name> [**--public-key**=<file>]
+**step ca provisioner update** <name> [**--public-key**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
 
 IID (AWS/GCP/Azure)
 
-**step beta ca provisioner update** <name>
+**step ca provisioner update** <name>
 [**--aws-account**=<id>]... [**--remove-aws-account**=<id>]...
 [**--gcp-service-account**=<name>]... [**--remove-gcp-service-account**=<name>]...
 [**--gcp-project**=<name>]... [**--remove-gcp-project**=<name>]...
@@ -83,10 +79,10 @@ IID (AWS/GCP/Azure)
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]
 
-**step beta ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>] 
-[**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>] 
-[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>] 
-[**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>] 
+**step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
+[**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>]
+[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
 `,
 		Flags: []cli.Flag{
@@ -214,6 +210,7 @@ provisioning tokens.`,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
+			flags.CaConfig,
 		},
 		Description: `**step ca provisioner update** updates a provisioner in the CA configuration.
 
@@ -226,65 +223,65 @@ provisioning tokens.`,
 
 Update a JWK provisioner with newly generated keys and a template for x509 certificates:
 '''
-step beta ca provisioner update cicd --create --x509-template ./templates/example.tpl
+step ca provisioner update cicd --create --x509-template ./templates/example.tpl
 '''
 
 Update a JWK provisioner with duration claims:
 '''
-step beta ca provisioner update cicd --create --x509-min-dur 20m --x509-default-dur 48h --ssh-user-min-dur 17m --ssh-host-default-dur 16h
+step ca provisioner update cicd --create --x509-min-dur 20m --x509-default-dur 48h --ssh-user-min-dur 17m --ssh-host-default-dur 16h
 '''
 
 Update a JWK provisioner with existing keys:
 '''
-step beta ca provisioner update jane@doe.com --public-key jwk.pub --private-key jwk.priv
+step ca provisioner update jane@doe.com --public-key jwk.pub --private-key jwk.priv
 '''
 
 Update a JWK provisioner to disable ssh provisioning:
 '''
-step beta ca provisioner update cicd --ssh=false
+step ca provisioner update cicd --ssh=false
 '''
 
 Update an OIDC provisioner:
 '''
-step beta ca provisioner update Google \
+step ca provisioner update Google \
 	--configuration-endpoint https://accounts.google.com/.well-known/openid-configuration
 '''
 
 Update an X5C provisioner:
 '''
-step beta ca provisioner update x5c --x5c-root x5c_ca.crt
+step ca provisioner update x5c --x5c-root x5c_ca.crt
 '''
 
 Update an ACME provisioner:
 '''
-step beta ca provisioner update acme --force-cn --require-eab
+step ca provisioner update acme --force-cn --require-eab
 '''
 
 Update an K8SSA provisioner:
 '''
-step beta ca provisioner update kube --public-key key.pub --x509-min-duration 30m
+step ca provisioner update kube --public-key key.pub --x509-min-duration 30m
 '''
 
 Update an Azure provisioner:
 '''
-$ step beta ca provisioner update Azure \
+$ step ca provisioner update Azure \
   --azure-resource-group identity --azure-resource-group accounting
 '''
 
 Update a GCP provisioner:
 '''
-$ step beta ca provisioner update Google \
+$ step ca provisioner update Google \
   --disable-custom-sans --gcp-project internal --remove-gcp-project public
 '''
 
 Update an AWS provisioner:
 '''
-$ step beta ca provisioner update Amazon --disable-custom-sans --disable-trust-on-first-use
+$ step ca provisioner update Amazon --disable-custom-sans --disable-trust-on-first-use
 '''
 
 Update a SCEP provisioner:
 '''
-step beta ca provisioner update my_scep_provisioner --force-cn
+step ca provisioner update my_scep_provisioner --force-cn
 '''`,
 	}
 }
@@ -297,8 +294,7 @@ func updateAction(ctx *cli.Context) (err error) {
 	args := ctx.Args()
 	name := args[0]
 
-	// Create online client
-	client, err := cautils.NewAdminClient(ctx)
+	client, err := newCRUDClient(ctx, ctx.String("ca-config"))
 	if err != nil {
 		return err
 	}
@@ -349,16 +345,6 @@ func updateAction(ctx *cli.Context) (err error) {
 	if err := client.UpdateProvisioner(name, p); err != nil {
 		return err
 	}
-
-	var buf bytes.Buffer
-	b, err := protojson.Marshal(p)
-	if err != nil {
-		return err
-	}
-	if err := json.Indent(&buf, b, "", "  "); err != nil {
-		return err
-	}
-	fmt.Println(buf.String())
 
 	return nil
 }
