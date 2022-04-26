@@ -1,10 +1,12 @@
 package certificate
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/x509"
-
+	"fmt"
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/crypto/fingerprint"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
@@ -155,7 +157,17 @@ func p12Action(ctx *cli.Context) error {
 		}
 	} else {
 		// If we have only --ca flags, we're making a trust store
-		pkcs12Data, err = pkcs12.EncodeTrustStore(rand.Reader, x509CAs, password)
+		var certsWithFriendlyNames []pkcs12.TrustStoreEntry
+		for _, cert := range x509CAs {
+			certsWithFriendlyNames = append(certsWithFriendlyNames, pkcs12.TrustStoreEntry{
+				Cert: cert,
+				FriendlyName: fmt.Sprintf(
+					"%s - %s",
+					cert.Subject.String(),
+					fingerprint.Fingerprint(cert.Raw, fingerprint.WithHash(crypto.SHA256))),
+			})
+		}
+		pkcs12Data, err = pkcs12.EncodeTrustStoreEntries(rand.Reader, certsWithFriendlyNames, password)
 		if err != nil {
 			return errs.Wrap(err, "failed to encode PKCS12 data")
 		}
