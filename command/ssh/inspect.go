@@ -1,6 +1,8 @@
 package ssh
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -82,7 +84,16 @@ func inspectAction(ctx *cli.Context) error {
 
 	pub, _, _, _, err := ssh.ParseAuthorizedKey(b)
 	if err != nil {
-		return errors.Wrap(err, "error parsing ssh certificate")
+		// Attempt to parse the key without the type.
+		b = bytes.TrimSpace(b)
+		keyBytes := make([]byte, base64.StdEncoding.DecodedLen(len(b)))
+		n, err := base64.StdEncoding.Decode(keyBytes, b)
+		if err != nil {
+			return errors.Wrap(err, "error parsing ssh certificate")
+		}
+		if pub, err = ssh.ParsePublicKey(keyBytes[:n]); err != nil {
+			return errors.Wrap(err, "error parsing ssh certificate")
+		}
 	}
 	cert, ok := pub.(*ssh.Certificate)
 	if !ok {
