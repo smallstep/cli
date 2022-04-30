@@ -226,6 +226,11 @@ Update a JWK provisioner with newly generated keys and a template for x509 certi
 step ca provisioner update cicd --create --x509-template ./templates/example.tpl
 '''
 
+Update a JWK provisioner by removing a previously set template:
+'''
+step ca provisioner update cicd --create --x509-template ""
+'''
+
 Update a JWK provisioner with duration claims:
 '''
 step ca provisioner update cicd --create --x509-min-dur 20m --x509-default-dur 48h --ssh-user-min-dur 17m --ssh-host-default-dur 16h
