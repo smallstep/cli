@@ -96,8 +96,7 @@ func initPolicy(p *linkedca.Policy) *linkedca.Policy {
 	}
 	if p.X509 == nil {
 		p.X509 = &linkedca.X509Policy{}
-		p.X509.AllowWildcardLiteral = false
-		p.X509.DisableSubjectCommonNameVerification = false
+		p.X509.AllowWildcardNames = false
 	}
 	if p.X509.Allow == nil {
 		p.X509.Allow = &linkedca.X509Names{}

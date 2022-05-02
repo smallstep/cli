@@ -13,17 +13,12 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 )
 
-var provisionerFilterFlag = cli.StringFlag{
-	Name:  "provisioner",
-	Usage: `The provisioner <name>`,
-}
-
-// DNSCommand returns the dns policy subcommand.
-func DNSCommand(ctx context.Context) cli.Command {
+// CommonNamesCommand returns the common names policy subcommand.
+func CommonNamesCommand(ctx context.Context) cli.Command {
 	return cli.Command{
-		Name:  "dns",
+		Name:  "cn",
 		Usage: "...",
-		UsageText: `**dns** <domain> [**--remove**]
+		UsageText: `**cn** <domain> [**--remove**]
 [**--provisioner**=<name>] [**--key-id**=<key-id>] [**--reference**=<reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
@@ -32,7 +27,7 @@ func DNSCommand(ctx context.Context) cli.Command {
 		Description: `**dns** command group provides facilities for ...`,
 		Action: command.InjectContext(
 			ctx,
-			dnsAction,
+			commonNamesAction,
 		),
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
@@ -54,13 +49,13 @@ func DNSCommand(ctx context.Context) cli.Command {
 	}
 }
 
-func dnsAction(ctx context.Context) (err error) {
+func commonNamesAction(ctx context.Context) (err error) {
 
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()
 	if len(args) == 0 {
-		return errors.New("please provide at least one domain")
+		return errors.New("please provide at least one name")
 	}
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -73,26 +68,19 @@ func dnsAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error retrieving policy: %w", err)
 	}
 
-	var dns []string
+	var commonNames []string
 
 	switch {
 	case policycontext.HasSSHHostPolicy(ctx):
-		switch {
-		case policycontext.HasAllow(ctx):
-			dns = policy.Ssh.Host.Allow.Dns
-		case policycontext.HasDeny(ctx):
-			dns = policy.Ssh.Host.Deny.Dns
-		default:
-			panic(errors.New("no allow nor deny context set"))
-		}
+		return errors.New("SSH host policy does not support Common Names")
 	case policycontext.HasSSHUserPolicy(ctx):
-		return errors.New("SSH user policy does not support DNS names")
+		return errors.New("SSH user policy does not support Common Names")
 	case policycontext.HasX509Policy(ctx):
 		switch {
 		case policycontext.HasAllow(ctx):
-			dns = policy.X509.Allow.Dns
+			commonNames = policy.X509.Allow.CommonNames
 		case policycontext.HasDeny(ctx):
-			dns = policy.X509.Deny.Dns
+			commonNames = policy.X509.Deny.CommonNames
 		default:
 			panic(errors.New("no allow nor deny context set"))
 		}
@@ -102,30 +90,23 @@ func dnsAction(ctx context.Context) (err error) {
 
 	if clictx.Bool("remove") {
 		for _, domain := range args {
-			dns = remove(domain, dns)
+			commonNames = remove(domain, commonNames)
 		}
 	} else {
-		dns = append(dns, args...)
+		commonNames = append(commonNames, args...)
 	}
 
 	switch {
 	case policycontext.HasSSHHostPolicy(ctx):
-		switch {
-		case policycontext.HasAllow(ctx):
-			policy.Ssh.Host.Allow.Dns = dns
-		case policycontext.HasDeny(ctx):
-			policy.Ssh.Host.Deny.Dns = dns
-		default:
-			panic(errors.New("no allow nor deny context set"))
-		}
+		return errors.New("SSH host policy does not support Common Names")
 	case policycontext.HasSSHUserPolicy(ctx):
-		return errors.New("SSH user policy does not support DNS names")
+		return errors.New("SSH user policy does not support Common Names")
 	case policycontext.HasX509Policy(ctx):
 		switch {
 		case policycontext.HasAllow(ctx):
-			policy.X509.Allow.Dns = dns
+			policy.X509.Allow.CommonNames = commonNames
 		case policycontext.HasDeny(ctx):
-			policy.X509.Deny.Dns = dns
+			policy.X509.Deny.CommonNames = commonNames
 		default:
 			panic(errors.New("no allow nor deny context set"))
 		}
