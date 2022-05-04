@@ -15,7 +15,7 @@ func removeCommand() cli.Command {
 		UsageText: `**step ca provisioner remove** <name>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]`,
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
@@ -34,6 +34,11 @@ func removeCommand() cli.Command {
 Remove provisioner by name:
 '''
 $ step ca provisioner remove acme
+'''
+
+Remove provisioner from a ca.json that is not in the default location:
+'''
+$ step ca provisioner remove acme --ca-config /path/to/ca.json
 '''
 `,
 	}

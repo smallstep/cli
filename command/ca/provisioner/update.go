@@ -31,14 +31,14 @@ func updateCommand() cli.Command {
 [**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 ACME
 
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**] [**--disable-eab**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 OIDC
 
@@ -50,21 +50,21 @@ OIDC
 [**--admin**=<email>]... [**--remove-admin**=<email>]...
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 X5C
 
 **step ca provisioner update** <name> **--x5c-root**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 Kubernetes Service Account
 
 **step ca provisioner update** <name> [**--public-key**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 IID (AWS/GCP/Azure)
 
@@ -77,96 +77,36 @@ IID (AWS/GCP/Azure)
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+
+ACME (ACME)
 
 **step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>]
 [**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 `,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "name",
-				Usage: `The new <name> for the provisioner.`,
-			},
-			x509TemplateFlag,
-			x509TemplateDataFlag,
-			sshTemplateFlag,
-			sshTemplateDataFlag,
-			x509MinDurFlag,
-			x509MaxDurFlag,
-			x509DefaultDurFlag,
-			sshUserMinDurFlag,
-			sshUserMaxDurFlag,
-			sshUserDefaultDurFlag,
-			sshHostMinDurFlag,
-			sshHostMaxDurFlag,
-			sshHostDefaultDurFlag,
-			disableRenewalFlag,
-			allowRenewalAfterExpiryFlag,
-			enableX509Flag,
-			enableSSHFlag,
+			nameFlag,
+			pubKeyFlag,
 
 			// JWK provisioner flags
-			cli.BoolFlag{
-				Name:  "create",
-				Usage: `Create the JWK key pair for the provisioner.`,
-			},
-			cli.StringFlag{
-				Name:  "private-key",
-				Usage: `The <file> containing the JWK private key.`,
-			},
-			cli.StringFlag{
-				Name:  "public-key",
-				Usage: `The <file> containing the JWK public key.`,
-			},
+			jwkCreateFlag,
+			jwkPrivKeyFlag,
 
 			// OIDC provisioner flags
-			cli.StringFlag{
-				Name:  "client-id",
-				Usage: `The <id> used to validate the audience in an OpenID Connect token.`,
-			},
-			cli.StringFlag{
-				Name:  "client-secret",
-				Usage: `The <secret> used to obtain the OpenID Connect tokens.`,
-			},
-			cli.StringFlag{
-				Name:  "listen-address",
-				Usage: `The callback <address> used in the OpenID Connect flow (e.g. \":10000\")`,
-			},
-			cli.StringFlag{
-				Name:  "configuration-endpoint",
-				Usage: `OpenID Connect configuration <url>.`,
-			},
-			cli.StringSliceFlag{
-				Name: "admin",
-				Usage: `The <email> of an admin user in an OpenID Connect provisioner, this user
-will not have restrictions in the certificates to sign. Use the
-'--admin' flag multiple times to configure multiple administrators.`,
-			},
-			cli.StringSliceFlag{
-				Name: "remove-admin",
-				Usage: `Remove the <email> of an admin user in an OpenID Connect provisioner, this user
-will not have restrictions in the certificates to sign. Use the
-'--admin' flag multiple times to configure multiple administrators.`,
-			},
-			cli.StringSliceFlag{
-				Name: "group",
-				Usage: `The <group> list used to validate the groups extenstion in an OpenID Connect token.
-Use the '--group' flag multiple times to configure multiple groups.`,
-			},
-			cli.StringFlag{
-				Name:  "tenant-id",
-				Usage: `The <tenant-id> used to replace the templatized {tenantid} in the OpenID Configuration.`,
-			},
+			oidcClientIDFlag,
+			oidcClientSecretFlag,
+			oidcListenAddressFlag,
+			oidcConfigEndpointFlag,
+			oidcAdminFlag,
+			oidcRemoveAdminFlag,
+			oidcGroupFlag,
+			oidcTenantIDFlag,
 
-			// X5C provisioner flags
-			cli.StringFlag{
-				Name: "x5c-root",
-				Usage: `Root certificate (chain) <file> used to validate the signature on X5C
-provisioning tokens.`,
-			},
+			// X5C Root Flag
+			nebulaRootFlag,
 
 			// Nebula provisioner flags
 			nebulaRootFlag,
@@ -185,6 +125,7 @@ provisioning tokens.`,
 
 			// Cloud provisioner flags
 			awsAccountFlag,
+			awsIIDRootsFlag,
 			removeAWSAccountFlag,
 			azureTenantFlag,
 			azureResourceGroupFlag,
@@ -198,9 +139,27 @@ provisioning tokens.`,
 			gcpProjectFlag,
 			removeGCPProjectFlag,
 			instanceAgeFlag,
-			iidRootsFlag,
 			disableCustomSANsFlag,
 			disableTOFUFlag,
+
+			// Claims
+			x509TemplateFlag,
+			x509TemplateDataFlag,
+			sshTemplateFlag,
+			sshTemplateDataFlag,
+			x509MinDurFlag,
+			x509MaxDurFlag,
+			x509DefaultDurFlag,
+			sshUserMinDurFlag,
+			sshUserMaxDurFlag,
+			sshUserDefaultDurFlag,
+			sshHostMinDurFlag,
+			sshHostMaxDurFlag,
+			sshHostDefaultDurFlag,
+			disableRenewalFlag,
+			allowRenewalAfterExpiryFlag,
+			//enableX509Flag,
+			enableSSHFlag,
 
 			flags.AdminCert,
 			flags.AdminKey,
@@ -244,6 +203,11 @@ step ca provisioner update jane@doe.com --public-key jwk.pub --private-key jwk.p
 Update a JWK provisioner to disable ssh provisioning:
 '''
 step ca provisioner update cicd --ssh=false
+'''
+
+Update a JWK provisioner and explicitly select the ca.json to modify:
+'''
+step ca provisioner update cicd --ssh=false --ca-config /path/to/ca.json
 '''
 
 Update an OIDC provisioner:
@@ -426,9 +390,10 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 		claims.X509 = &linkedca.X509Claims{}
 	}
 	xc := claims.X509
-	if ctx.IsSet("x509") {
-		claims.X509.Enabled = ctx.Bool("x509")
-	}
+	// TODO for the time being x509 is always enabled.
+	//if ctx.IsSet("x509") {
+	//	claims.X509.Enabled = ctx.Bool("x509")
+	//}
 	if xc.Durations == nil {
 		xc.Durations = &linkedca.Durations{}
 	}
