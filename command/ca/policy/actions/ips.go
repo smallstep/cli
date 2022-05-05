@@ -21,7 +21,7 @@ func IPCommand(ctx context.Context) cli.Command {
 		Name:  "ip",
 		Usage: "...",
 		UsageText: `**ip** <ip address> [**--remove**]
-[**--provisioner**=<name>] [**--key-id**=<key-id>] [**--reference**=<reference>]
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-reference**=<eab-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -33,8 +33,8 @@ func IPCommand(ctx context.Context) cli.Command {
 		),
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
-			flags.KeyID,
-			flags.Reference,
+			flags.EABKeyID,
+			flags.EABReference,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -79,7 +79,7 @@ func ipAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			ips = policy.Ssh.Host.Deny.Ips
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.HasSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support IP addresses or ranges")
@@ -90,7 +90,7 @@ func ipAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			ips = policy.X509.Deny.Ips
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")

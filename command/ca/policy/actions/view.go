@@ -21,7 +21,7 @@ func ViewCommand(ctx context.Context) cli.Command {
 		Name:  "view",
 		Usage: "view authority certificate issuance policy",
 		UsageText: `**step beta ca policy authority view**
-[**--provisioner**=<name>] [**--key-id**=<key-id>] [**--reference**=<reference>]
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-reference**=<eab-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -33,8 +33,8 @@ func ViewCommand(ctx context.Context) cli.Command {
 		),
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
-			flags.KeyID,
-			flags.Reference,
+			flags.EABKeyID,
+			flags.EABReference,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -51,8 +51,8 @@ func viewAction(ctx context.Context) (err error) {
 
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
-	reference := clictx.String("reference")
-	keyID := clictx.String("key-id")
+	reference := clictx.String("eab-reference")
+	keyID := clictx.String("eab-key-id")
 
 	client, err := cautils.NewAdminClient(clictx)
 	if err != nil {
@@ -76,7 +76,7 @@ func viewAction(ctx context.Context) (err error) {
 			return errs.RequiredFlag(clictx, "provisioner")
 		}
 		if reference == "" && keyID == "" {
-			return errs.RequiredOrFlag(clictx, "reference", "key-id")
+			return errs.RequiredOrFlag(clictx, "eab-reference", "eab-key-id")
 		}
 		policy, err = client.GetACMEPolicy(provisioner, reference, keyID)
 	default:

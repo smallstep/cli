@@ -20,7 +20,7 @@ func RemoveCommand(ctx context.Context) cli.Command {
 		Name:  "remove",
 		Usage: "remove authority certificate issuance policy",
 		UsageText: `**step beta ca policy authority remove** 
-[**--provisioner**=<name>] [**--key-id**=<key-id>] [**--reference**=<reference>]
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-ey-id>] [**--eab-reference**=<eab-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -32,8 +32,8 @@ func RemoveCommand(ctx context.Context) cli.Command {
 		),
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
-			flags.KeyID,
-			flags.Reference,
+			flags.EABKeyID,
+			flags.EABReference,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -50,8 +50,8 @@ func removeAction(ctx context.Context) (err error) {
 
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
-	reference := clictx.String("reference")
-	keyID := clictx.String("key-id")
+	reference := clictx.String("eab-reference")
+	keyID := clictx.String("eab-key-id")
 
 	client, err := cautils.NewAdminClient(clictx)
 	if err != nil {
@@ -71,7 +71,7 @@ func removeAction(ctx context.Context) (err error) {
 			return errs.RequiredFlag(clictx, "provisioner")
 		}
 		if reference == "" && keyID == "" {
-			return errs.RequiredOrFlag(clictx, "reference", "key-id")
+			return errs.RequiredOrFlag(clictx, "eab-reference", "eab-key-id")
 		}
 		err = client.RemoveACMEPolicy(provisioner, reference, keyID)
 	default:

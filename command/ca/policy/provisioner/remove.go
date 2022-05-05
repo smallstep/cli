@@ -1,6 +1,7 @@
 package provisioner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -14,7 +15,7 @@ import (
 )
 
 // removeCommand returns the provisioner policy remove subcommand.
-func removeCommand() cli.Command {
+func removeCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "remove",
 		Usage: "remove provisioner certificate issuance policy",

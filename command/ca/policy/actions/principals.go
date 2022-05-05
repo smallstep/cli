@@ -117,7 +117,7 @@ func principalAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			policy.Ssh.User.Deny.Principals = principals
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.HasX509Policy(ctx):
 		return errors.New("X.509 policy does not support principals")

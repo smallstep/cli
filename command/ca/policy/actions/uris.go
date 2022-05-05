@@ -79,7 +79,7 @@ func uriAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			uris = policy.X509.Deny.Uris
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")
@@ -105,7 +105,7 @@ func uriAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			policy.X509.Deny.Uris = uris
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")

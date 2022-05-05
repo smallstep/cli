@@ -1,11 +1,12 @@
 package policy
 
 import (
+	"context"
+
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/cli/command/ca/policy/acme"
 	"github.com/smallstep/cli/command/ca/policy/authority"
-	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/command/ca/policy/provisioner"
 )
 
@@ -17,9 +18,9 @@ func Command() cli.Command {
 		UsageText:   "**step beta ca policy** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step beta ca policy** command group provides facilities for managing certificate issuance policies.`,
 		Subcommands: cli.Commands{
-			authority.Command(policycontext.New()),
-			provisioner.Command(policycontext.New()),
-			acme.Command(policycontext.New()),
+			authority.Command(context.Background()),
+			provisioner.Command(context.Background()),
+			acme.Command(context.Background()),
 		},
 	}
 }

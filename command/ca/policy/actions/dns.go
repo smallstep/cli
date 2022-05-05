@@ -24,7 +24,7 @@ func DNSCommand(ctx context.Context) cli.Command {
 		Name:  "dns",
 		Usage: "...",
 		UsageText: `**dns** <domain> [**--remove**]
-[**--provisioner**=<name>] [**--key-id**=<key-id>] [**--reference**=<reference>]
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-reference**=<eab-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -36,8 +36,8 @@ func DNSCommand(ctx context.Context) cli.Command {
 		),
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
-			flags.KeyID,
-			flags.Reference,
+			flags.EABKeyID,
+			flags.EABReference,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -83,7 +83,7 @@ func dnsAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			dns = policy.Ssh.Host.Deny.Dns
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.HasSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support DNS names")
@@ -94,7 +94,7 @@ func dnsAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			dns = policy.X509.Deny.Dns
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")
@@ -116,7 +116,7 @@ func dnsAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			policy.Ssh.Host.Deny.Dns = dns
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.HasSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support DNS names")
@@ -127,7 +127,7 @@ func dnsAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			policy.X509.Deny.Dns = dns
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")

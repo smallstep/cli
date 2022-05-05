@@ -77,7 +77,7 @@ func emailAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			emails = policy.Ssh.User.Deny.Emails
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.HasX509Policy(ctx):
 		switch {
@@ -86,7 +86,7 @@ func emailAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			emails = policy.X509.Deny.Emails
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")
@@ -111,7 +111,7 @@ func emailAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			policy.Ssh.User.Deny.Emails = emails
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.HasX509Policy(ctx):
 		switch {
@@ -120,7 +120,7 @@ func emailAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			policy.X509.Deny.Emails = emails
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")

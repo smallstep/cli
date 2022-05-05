@@ -376,15 +376,15 @@ domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
 flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 	}
 
-	// Key is a cli.Flag that points to an ACME EAB Key ID
-	KeyID = cli.StringFlag{
-		Name:  "key-id",
+	// EABKeyID is a cli.Flag that points to an ACME EAB Key ID
+	EABKeyID = cli.StringFlag{
+		Name:  "eab-key-id",
 		Usage: "An ACME EAB Key ID",
 	}
 
-	// Reference is a cli.Flag that points to an ACME EAB Key Reference
-	Reference = cli.StringFlag{
-		Name:  "reference",
+	// EABReference is a cli.Flag that points to an ACME EAB Key Reference
+	EABReference = cli.StringFlag{
+		Name:  "eab-reference",
 		Usage: "An ACME EAB Key Reference",
 	}
 )

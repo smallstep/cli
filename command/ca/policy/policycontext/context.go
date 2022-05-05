@@ -9,16 +9,10 @@ type policyLevelContextKey struct{}
 type policyLevel int
 
 const (
-	_ policyLevel = iota
-	authorityPolicyLevel
+	authorityPolicyLevel policyLevel = iota + 1
 	provisionerPolicyLevel
 	acmePolicyLevel
 )
-
-// New is a helper that returns a new context.Context.
-func New() context.Context {
-	return context.Background()
-}
 
 // NewContextWithAuthorityPolicyLevel returns a new context.Context with
 // parent ctx and authority policy level set.
@@ -70,8 +64,7 @@ type policyConfigurationTypeContextKey struct{}
 type policyConfigurationType int
 
 const (
-	_ policyConfigurationType = iota
-	x509Policy
+	x509Policy policyConfigurationType = iota + 1
 	sshHostPolicy
 	sshUserPolicy
 )
@@ -80,6 +73,7 @@ func NewContextWithX509Policy(ctx context.Context) context.Context {
 	return context.WithValue(ctx, policyConfigurationTypeContextKey{}, x509Policy)
 }
 
+// HasX509Policy returns if the context.Context has X.509 policy set.
 func HasX509Policy(ctx context.Context) bool {
 	if ctx == nil {
 		return false
@@ -91,10 +85,12 @@ func HasX509Policy(ctx context.Context) bool {
 	return false
 }
 
+// NewContextWithSSHHostPolicy returns a context.Context with SSH host policy set.
 func NewContextWithSSHHostPolicy(ctx context.Context) context.Context {
 	return context.WithValue(ctx, policyConfigurationTypeContextKey{}, sshHostPolicy)
 }
 
+// HasSSHHostPolicy returns if the context.Context has SSH host policy set.
 func HasSSHHostPolicy(ctx context.Context) bool {
 	if ctx == nil {
 		return false
@@ -106,10 +102,12 @@ func HasSSHHostPolicy(ctx context.Context) bool {
 	return false
 }
 
+// NewContextWithSSHUserPolicy returns a context.Context with SSH user policy set.
 func NewContextWithSSHUserPolicy(ctx context.Context) context.Context {
 	return context.WithValue(ctx, policyConfigurationTypeContextKey{}, sshUserPolicy)
 }
 
+// HasSSHUserPolicy returns if context.Context has SSH user policy set.
 func HasSSHUserPolicy(ctx context.Context) bool {
 	if ctx == nil {
 		return false
@@ -126,15 +124,16 @@ type policyContextKey struct{}
 type policy int
 
 const (
-	_ policy = iota
-	allow
+	allow policy = iota + 1
 	deny
 )
 
+// NewContextWithAllow returns a context.Context with allow policy set.
 func NewContextWithAllow(ctx context.Context) context.Context {
 	return context.WithValue(ctx, policyContextKey{}, allow)
 }
 
+// HasAllow returns if the context.Context has allow set.
 func HasAllow(ctx context.Context) bool {
 	if ctx == nil {
 		return false
@@ -146,10 +145,12 @@ func HasAllow(ctx context.Context) bool {
 	return false
 }
 
+// NewContextWithDeny returns a context.Context with deny set.
 func NewContextWithDeny(ctx context.Context) context.Context {
 	return context.WithValue(ctx, policyContextKey{}, deny)
 }
 
+// HasDeny returns if context.Context has deny set.
 func HasDeny(ctx context.Context) bool {
 	if ctx == nil {
 		return false

@@ -23,8 +23,8 @@ func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*
 
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
-	reference := clictx.String("reference")
-	keyID := clictx.String("key-id")
+	reference := clictx.String("eab-reference")
+	keyID := clictx.String("eab-key-id")
 
 	switch {
 	case policycontext.HasAuthorityPolicyLevel(ctx):
@@ -39,7 +39,7 @@ func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*
 			return nil, errs.RequiredFlag(clictx, "provisioner")
 		}
 		if reference == "" && keyID == "" {
-			return nil, errs.RequiredOrFlag(clictx, "reference", "key-id")
+			return nil, errs.RequiredOrFlag(clictx, "eab-reference", "eab-key-id")
 		}
 		policy, err = client.GetACMEPolicy(provisioner, reference, keyID)
 	default:
@@ -132,13 +132,16 @@ func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.
 
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
-	reference := clictx.String("reference")
-	keyID := clictx.String("key-id")
+	reference := clictx.String("eab-reference")
+	keyID := clictx.String("eab-key-id")
 
 	var (
 		updatedPolicy *linkedca.Policy
 		err           error
 	)
+
+	// deduplicate values before sending them
+	policy.Deduplicate()
 
 	switch {
 	case policycontext.HasAuthorityPolicyLevel(ctx):
@@ -153,7 +156,7 @@ func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.
 			return nil, errs.RequiredFlag(clictx, "provisioner")
 		}
 		if reference == "" && keyID == "" {
-			return nil, errs.RequiredOrFlag(clictx, "reference", "key-id")
+			return nil, errs.RequiredOrFlag(clictx, "eab-reference", "eab-key-id")
 		}
 		updatedPolicy, err = client.UpdateACMEPolicy(provisioner, reference, keyID, policy)
 	default:

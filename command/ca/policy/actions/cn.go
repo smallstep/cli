@@ -19,7 +19,7 @@ func CommonNamesCommand(ctx context.Context) cli.Command {
 		Name:  "cn",
 		Usage: "...",
 		UsageText: `**cn** <domain> [**--remove**]
-[**--provisioner**=<name>] [**--key-id**=<key-id>] [**--reference**=<reference>]
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-reference**=<eab-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -31,8 +31,8 @@ func CommonNamesCommand(ctx context.Context) cli.Command {
 		),
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
-			flags.KeyID,
-			flags.Reference,
+			flags.EABKeyID,
+			flags.EABReference,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -82,15 +82,15 @@ func commonNamesAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			commonNames = policy.X509.Deny.CommonNames
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")
 	}
 
 	if clictx.Bool("remove") {
-		for _, domain := range args {
-			commonNames = remove(domain, commonNames)
+		for _, commonName := range args {
+			commonNames = remove(commonName, commonNames)
 		}
 	} else {
 		commonNames = append(commonNames, args...)
@@ -108,7 +108,7 @@ func commonNamesAction(ctx context.Context) (err error) {
 		case policycontext.HasDeny(ctx):
 			policy.X509.Deny.CommonNames = commonNames
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")

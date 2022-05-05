@@ -1,6 +1,7 @@
 package provisioner
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 )
 
 // Command returns the provisioner policy subcommand.
-func viewCommand() cli.Command {
+func viewCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "view",
 		Usage: "view provisioner certificate issuance policy",

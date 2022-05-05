@@ -11,15 +11,16 @@ import (
 
 // Command returns the policy subcommand.
 func allowCommand(ctx context.Context) cli.Command {
+	ctx = policycontext.NewContextWithAllow(ctx)
 	return cli.Command{
 		Name:        "allow",
-		Usage:       "manage SSH certificate issuance policies",
+		Usage:       "manage SSH host certificate issuance policies",
 		UsageText:   "**ssh host allow** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**ssh host allow** command group provides facilities for managing X.509 certificate issuance policies.`,
 		Subcommands: cli.Commands{
-			actions.DNSCommand(policycontext.NewContextWithAllow(ctx)),
-			actions.EmailCommand(policycontext.NewContextWithAllow(ctx)),
-			actions.PrincipalsCommand(policycontext.NewContextWithAllow(ctx)),
+			actions.DNSCommand(ctx),
+			actions.EmailCommand(ctx),
+			actions.PrincipalsCommand(ctx),
 		},
 	}
 }
