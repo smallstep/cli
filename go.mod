@@ -24,14 +24,14 @@ require (
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.2
 	go.step.sm/crypto v0.16.1
-	go.step.sm/linkedca v0.15.0
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+	go.step.sm/linkedca v0.16.0
+	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
 	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b
 	golang.org/x/sys v0.0.0-20220405052023-b1e9470b6e64
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/square/go-jose.v2 v2.6.0
-	software.sslmate.com/src/go-pkcs12 v0.0.0-20201103104416-57fc603b7f52
+	software.sslmate.com/src/go-pkcs12 v0.2.0
 )
 
 require (
