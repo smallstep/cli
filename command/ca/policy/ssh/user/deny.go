@@ -11,7 +11,7 @@ import (
 
 // denyCommand returns the policy subcommand.
 func denyCommand(ctx context.Context) cli.Command {
-	ctx = policycontext.NewContextWithDeny(ctx)
+	ctx = policycontext.WithDeny(ctx)
 	return cli.Command{
 		Name:        "deny",
 		Usage:       "manage SSH user certificate issuance policies",

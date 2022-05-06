@@ -72,22 +72,22 @@ func ipAction(ctx context.Context) (err error) {
 
 	var ips []string
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			ips = policy.Ssh.Host.Allow.Ips
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			ips = policy.Ssh.Host.Deny.Ips
 		default:
 			panic("no allow nor deny context set")
 		}
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support IP addresses or ranges")
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			ips = policy.X509.Allow.Ips
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			ips = policy.X509.Deny.Ips
 		default:
 			panic("no allow nor deny context set")
@@ -114,22 +114,22 @@ func ipAction(ctx context.Context) (err error) {
 	}
 
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.Ssh.Host.Allow.Ips = ips
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.Ssh.Host.Deny.Ips = ips
 		default:
 			panic(errors.New("no allow nor deny context set"))
 		}
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support IP addresses or ranges")
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.X509.Allow.Ips = ips
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.X509.Deny.Ips = ips
 		default:
 			panic(errors.New("no allow nor deny context set"))
@@ -143,9 +143,7 @@ func ipAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error updating policy: %w", err)
 	}
 
-	prettyPrint(updatedPolicy)
-
-	return nil
+	return prettyPrint(updatedPolicy)
 }
 
 func validate(ipOrCIDR string) error {

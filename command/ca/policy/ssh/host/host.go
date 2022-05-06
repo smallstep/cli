@@ -10,7 +10,7 @@ import (
 
 // Command returns the SSH host policy subcommand.
 func Command(ctx context.Context) cli.Command {
-	ctx = policycontext.NewContextWithSSHHostPolicy(ctx)
+	ctx = policycontext.WithSSHHostPolicy(ctx)
 	return cli.Command{
 		Name:        "host",
 		Usage:       "manage SSH host certificate issuance policies",

@@ -64,14 +64,14 @@ func viewAction(ctx context.Context) (err error) {
 	)
 
 	switch {
-	case policycontext.HasAuthorityPolicyLevel(ctx):
+	case policycontext.IsAuthorityPolicyLevel(ctx):
 		policy, err = client.GetAuthorityPolicy()
-	case policycontext.HasProvisionerPolicyLevel(ctx):
+	case policycontext.IsProvisionerPolicyLevel(ctx):
 		if provisioner == "" {
 			return errs.RequiredFlag(clictx, "provisioner")
 		}
 		policy, err = client.GetProvisionerPolicy(provisioner)
-	case policycontext.HasACMEPolicyLevel(ctx):
+	case policycontext.IsACMEPolicyLevel(ctx):
 		if provisioner == "" {
 			return errs.RequiredFlag(clictx, "provisioner")
 		}

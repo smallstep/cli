@@ -23,7 +23,7 @@ func PrincipalsCommand(ctx context.Context) cli.Command {
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
-		Description: `**dns** command group provides facilities for ...`,
+		Description: `**principal** command group provides facilities for ...`,
 		Action: command.InjectContext(
 			ctx,
 			principalAction,
@@ -40,7 +40,7 @@ func PrincipalsCommand(ctx context.Context) cli.Command {
 			flags.Context,
 			cli.BoolFlag{
 				Name:  "remove",
-				Usage: `removes the provided DNS names from the policy instead of adding them`,
+				Usage: `removes the provided Principals from the policy instead of adding them`,
 			},
 		},
 	}
@@ -68,25 +68,25 @@ func principalAction(ctx context.Context) (err error) {
 	var principals []string
 
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			principals = policy.Ssh.Host.Allow.Principals
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			principals = policy.Ssh.Host.Deny.Principals
 		default:
 			panic(errors.New("no allow nor deny context set"))
 		}
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			principals = policy.Ssh.User.Allow.Principals
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			principals = policy.Ssh.User.Deny.Principals
 		default:
 			panic(errors.New("no allow nor deny context set"))
 		}
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		return errors.New("X.509 policy does not support principals")
 	default:
 		panic("no SSH nor X.509 context set")
@@ -101,25 +101,25 @@ func principalAction(ctx context.Context) (err error) {
 	}
 
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.Ssh.Host.Allow.Principals = principals
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.Ssh.Host.Deny.Principals = principals
 		default:
 			panic(errors.New("no allow nor deny context set"))
 		}
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.Ssh.User.Allow.Principals = principals
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.Ssh.User.Deny.Principals = principals
 		default:
 			panic("no allow nor deny context set")
 		}
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		return errors.New("X.509 policy does not support principals")
 	default:
 		panic("no SSH nor X.509 context set")
@@ -130,7 +130,5 @@ func principalAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error updating policy: %w", err)
 	}
 
-	prettyPrint(updatedPolicy)
-
-	return nil
+	return prettyPrint(updatedPolicy)
 }

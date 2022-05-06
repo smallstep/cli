@@ -10,7 +10,7 @@ import (
 
 // Command returns the SSH user policy subcommand.
 func Command(ctx context.Context) cli.Command {
-	ctx = policycontext.NewContextWithSSHUserPolicy(ctx)
+	ctx = policycontext.WithSSHUserPolicy(ctx)
 	return cli.Command{
 		Name:        "user",
 		Usage:       "manage SSH user certificate issuance policies",

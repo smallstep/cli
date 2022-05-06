@@ -76,22 +76,22 @@ func dnsAction(ctx context.Context) (err error) {
 	var dns []string
 
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			dns = policy.Ssh.Host.Allow.Dns
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			dns = policy.Ssh.Host.Deny.Dns
 		default:
 			panic("no allow nor deny context set")
 		}
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support DNS names")
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			dns = policy.X509.Allow.Dns
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			dns = policy.X509.Deny.Dns
 		default:
 			panic("no allow nor deny context set")
@@ -109,22 +109,22 @@ func dnsAction(ctx context.Context) (err error) {
 	}
 
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.Ssh.Host.Allow.Dns = dns
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.Ssh.Host.Deny.Dns = dns
 		default:
 			panic("no allow nor deny context set")
 		}
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support DNS names")
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.X509.Allow.Dns = dns
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.X509.Deny.Dns = dns
 		default:
 			panic("no allow nor deny context set")
@@ -138,7 +138,5 @@ func dnsAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error updating policy: %w", err)
 	}
 
-	prettyPrint(updatedPolicy)
-
-	return nil
+	return prettyPrint(updatedPolicy)
 }

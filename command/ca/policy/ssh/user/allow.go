@@ -11,7 +11,7 @@ import (
 
 // allowCommand returns the policy subcommand.
 func allowCommand(ctx context.Context) cli.Command {
-	ctx = policycontext.NewContextWithAllow(ctx)
+	ctx = policycontext.WithAllow(ctx)
 	return cli.Command{
 		Name:        "allow",
 		Usage:       "manage SSH user certificate issuance policies",

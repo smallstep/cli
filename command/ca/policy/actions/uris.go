@@ -19,7 +19,7 @@ func URICommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "uri",
 		Usage: "...",
-		UsageText: `**uri** <domain> [**--remove**]
+		UsageText: `**uri** <uri domain> [**--remove**]
 [**--provisioner**=<name>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -68,15 +68,15 @@ func uriAction(ctx context.Context) (err error) {
 
 	var uris []string
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		return errors.New("SSH host policy does not support URIs")
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support URIs")
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			uris = policy.X509.Allow.Uris
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			uris = policy.X509.Deny.Uris
 		default:
 			panic("no allow nor deny context set")
@@ -94,15 +94,15 @@ func uriAction(ctx context.Context) (err error) {
 	}
 
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		return errors.New("SSH host policy does not support URIs")
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support URIs")
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.X509.Allow.Uris = uris
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.X509.Deny.Uris = uris
 		default:
 			panic("no allow nor deny context set")
@@ -116,7 +116,5 @@ func uriAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error updating policy: %w", err)
 	}
 
-	prettyPrint(updatedPolicy)
-
-	return nil
+	return prettyPrint(updatedPolicy)
 }

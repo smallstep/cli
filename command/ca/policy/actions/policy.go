@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,7 @@ import (
 
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/linkedca"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
@@ -27,14 +29,14 @@ func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*
 	keyID := clictx.String("eab-key-id")
 
 	switch {
-	case policycontext.HasAuthorityPolicyLevel(ctx):
+	case policycontext.IsAuthorityPolicyLevel(ctx):
 		policy, err = client.GetAuthorityPolicy()
-	case policycontext.HasProvisionerPolicyLevel(ctx):
+	case policycontext.IsProvisionerPolicyLevel(ctx):
 		if provisioner == "" {
 			return nil, errs.RequiredFlag(clictx, "provisioner")
 		}
 		policy, err = client.GetProvisionerPolicy(provisioner)
-	case policycontext.HasACMEPolicyLevel(ctx):
+	case policycontext.IsACMEPolicyLevel(ctx):
 		if provisioner == "" {
 			return nil, errs.RequiredFlag(clictx, "provisioner")
 		}
@@ -53,11 +55,11 @@ func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*
 			// send it to the CA.
 			newPolicy := newPolicy()
 			switch {
-			case policycontext.HasAuthorityPolicyLevel(ctx):
+			case policycontext.IsAuthorityPolicyLevel(ctx):
 				policy, err = client.CreateAuthorityPolicy(newPolicy)
-			case policycontext.HasProvisionerPolicyLevel(ctx):
+			case policycontext.IsProvisionerPolicyLevel(ctx):
 				policy, err = client.CreateProvisionerPolicy(provisioner, newPolicy)
-			case policycontext.HasACMEPolicyLevel(ctx):
+			case policycontext.IsACMEPolicyLevel(ctx):
 				policy, err = client.CreateACMEPolicy(provisioner, reference, keyID, newPolicy)
 			default:
 				panic("no context for policy creation set")
@@ -77,13 +79,14 @@ func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*
 }
 
 func remove(item string, items []string) []string {
-	newSlice := []string{}
-	for _, i := range items {
-		if i != item {
-			newSlice = append(newSlice, i)
+	var i int
+	for _, v := range items {
+		if item != v {
+			items[i] = v
+			i++
 		}
 	}
-	return newSlice
+	return items[:i]
 }
 
 func newPolicy() *linkedca.Policy {
@@ -144,14 +147,14 @@ func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.
 	policy.Deduplicate()
 
 	switch {
-	case policycontext.HasAuthorityPolicyLevel(ctx):
+	case policycontext.IsAuthorityPolicyLevel(ctx):
 		updatedPolicy, err = client.UpdateAuthorityPolicy(policy)
-	case policycontext.HasProvisionerPolicyLevel(ctx):
+	case policycontext.IsProvisionerPolicyLevel(ctx):
 		if provisioner == "" {
 			return nil, errs.RequiredFlag(clictx, "provisioner")
 		}
 		updatedPolicy, err = client.UpdateProvisionerPolicy(provisioner, policy)
-	case policycontext.HasACMEPolicyLevel(ctx):
+	case policycontext.IsACMEPolicyLevel(ctx):
 		if provisioner == "" {
 			return nil, errs.RequiredFlag(clictx, "provisioner")
 		}
@@ -170,11 +173,18 @@ func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.
 	return updatedPolicy, nil
 }
 
-func prettyPrint(policy *linkedca.Policy) {
-	b, err := json.MarshalIndent(policy, "", "   ")
+func prettyPrint(policy *linkedca.Policy) error {
+
+	b, err := protojson.Marshal(policy)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("error marshaling policy: %w", err)
+	}
+	var buf bytes.Buffer
+	if err := json.Indent(&buf, b, "", "   "); err != nil {
+		return fmt.Errorf("error indenting policy JSON representation: %w", err)
 	}
 
-	fmt.Println(string(b))
+	fmt.Println(buf.String())
+
+	return nil
 }

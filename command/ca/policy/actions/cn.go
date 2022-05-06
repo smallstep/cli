@@ -18,13 +18,13 @@ func CommonNamesCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "cn",
 		Usage: "...",
-		UsageText: `**cn** <domain> [**--remove**]
+		UsageText: `**cn** <name> [**--remove**]
 [**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-reference**=<eab-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
-		Description: `**dns** command group provides facilities for ...`,
+		Description: `**cn** command group provides facilities for ...`,
 		Action: command.InjectContext(
 			ctx,
 			commonNamesAction,
@@ -43,7 +43,7 @@ func CommonNamesCommand(ctx context.Context) cli.Command {
 			flags.Context,
 			cli.BoolFlag{
 				Name:  "remove",
-				Usage: `removes the provided DNS names from the policy instead of adding them`,
+				Usage: `removes the provided Common Names from the policy instead of adding them`,
 			},
 		},
 	}
@@ -71,15 +71,15 @@ func commonNamesAction(ctx context.Context) (err error) {
 	var commonNames []string
 
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		return errors.New("SSH host policy does not support Common Names")
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support Common Names")
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			commonNames = policy.X509.Allow.CommonNames
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			commonNames = policy.X509.Deny.CommonNames
 		default:
 			panic("no allow nor deny context set")
@@ -97,15 +97,15 @@ func commonNamesAction(ctx context.Context) (err error) {
 	}
 
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		return errors.New("SSH host policy does not support Common Names")
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support Common Names")
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.X509.Allow.CommonNames = commonNames
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.X509.Deny.CommonNames = commonNames
 		default:
 			panic("no allow nor deny context set")
@@ -119,7 +119,5 @@ func commonNamesAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error updating policy: %w", err)
 	}
 
-	prettyPrint(updatedPolicy)
-
-	return nil
+	return prettyPrint(updatedPolicy)
 }

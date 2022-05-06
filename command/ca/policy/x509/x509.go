@@ -9,7 +9,7 @@ import (
 
 // Command returns the policy subcommand.
 func Command(ctx context.Context) cli.Command {
-	ctx = policycontext.NewContextWithX509Policy(ctx)
+	ctx = policycontext.WithX509Policy(ctx)
 	return cli.Command{
 		Name:        "x509",
 		Usage:       "manage X.509 certificate issuance policies",

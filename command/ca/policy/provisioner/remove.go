@@ -11,6 +11,7 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/command"
 	"github.com/smallstep/cli/utils/cautils"
 )
 
@@ -25,7 +26,10 @@ func removeCommand(ctx context.Context) cli.Command {
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
 		Description: `**step beta ca policy provisioner remove** removes the full certificate issuance policy from the provisioner`,
-		Action:      cli.ActionFunc(removeAction),
+		Action: command.InjectContext(
+			ctx,
+			removeAction,
+		),
 		Flags: []cli.Flag{
 			flags.AdminCert,
 			flags.AdminKey,
@@ -39,16 +43,18 @@ func removeCommand(ctx context.Context) cli.Command {
 	}
 }
 
-func removeAction(ctx *cli.Context) (err error) {
+func removeAction(ctx context.Context) (err error) {
 
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	clictx := command.CLIContextFromContext(ctx)
+
+	if err := errs.NumberOfArguments(clictx, 1); err != nil {
 		return err
 	}
 
-	args := ctx.Args()
+	args := clictx.Args()
 	provisioner := args.Get(0)
 
-	client, err := cautils.NewAdminClient(ctx)
+	client, err := cautils.NewAdminClient(clictx)
 	if err != nil {
 		return fmt.Errorf("error creating admin client: %w", err)
 	}

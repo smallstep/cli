@@ -19,12 +19,12 @@ func EmailCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "email",
 		Usage: "...",
-		UsageText: `**email** <domain> [**--remove**]
+		UsageText: `**email** <email> [**--remove**]
 [**--provisioner**=<name>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
-		Description: `**dns** command group provides facilities for ...`,
+		Description: `**email** command group provides facilities for ...`,
 		Action: command.InjectContext(
 			ctx,
 			emailAction,
@@ -68,22 +68,22 @@ func emailAction(ctx context.Context) (err error) {
 
 	var emails []string
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		return errors.New("SSH host policy does not support emails")
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			emails = policy.Ssh.User.Allow.Emails
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			emails = policy.Ssh.User.Deny.Emails
 		default:
 			panic("no allow nor deny context set")
 		}
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			emails = policy.X509.Allow.Emails
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			emails = policy.X509.Deny.Emails
 		default:
 			panic("no allow nor deny context set")
@@ -102,22 +102,22 @@ func emailAction(ctx context.Context) (err error) {
 	}
 
 	switch {
-	case policycontext.HasSSHHostPolicy(ctx):
+	case policycontext.IsSSHHostPolicy(ctx):
 		return errors.New("SSH host policy does not support emails")
-	case policycontext.HasSSHUserPolicy(ctx):
+	case policycontext.IsSSHUserPolicy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.Ssh.User.Allow.Emails = emails
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.Ssh.User.Deny.Emails = emails
 		default:
 			panic("no allow nor deny context set")
 		}
-	case policycontext.HasX509Policy(ctx):
+	case policycontext.IsX509Policy(ctx):
 		switch {
-		case policycontext.HasAllow(ctx):
+		case policycontext.IsAllow(ctx):
 			policy.X509.Allow.Emails = emails
-		case policycontext.HasDeny(ctx):
+		case policycontext.IsDeny(ctx):
 			policy.X509.Deny.Emails = emails
 		default:
 			panic("no allow nor deny context set")
@@ -131,7 +131,5 @@ func emailAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error updating policy: %w", err)
 	}
 
-	prettyPrint(updatedPolicy)
-
-	return nil
+	return prettyPrint(updatedPolicy)
 }

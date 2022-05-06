@@ -14,49 +14,46 @@ const (
 	acmePolicyLevel
 )
 
-// NewContextWithAuthorityPolicyLevel returns a new context.Context with
+// WithAuthorityPolicyLevel returns a new context.Context with
 // parent ctx and authority policy level set.
-func NewContextWithAuthorityPolicyLevel(ctx context.Context) context.Context {
+func WithAuthorityPolicyLevel(ctx context.Context) context.Context {
 	return context.WithValue(ctx, policyLevelContextKey{}, authorityPolicyLevel)
 }
 
-// HasAuthorityPolicyLevel returns if the context.Context has authority policy level.
-func HasAuthorityPolicyLevel(ctx context.Context) bool {
-	return hasPolicyLevel(ctx, authorityPolicyLevel)
+// IsAuthorityPolicyLevel returns if the context.Context has authority policy level.
+func IsAuthorityPolicyLevel(ctx context.Context) bool {
+	return isPolicyLevel(ctx, authorityPolicyLevel)
 }
 
-// NewContextWithProvisionerPolicyLevel returns a new context.Context with
+// WithProvisionerPolicyLevel returns a new context.Context with
 // parent ctx and provisioner policy level set.
-func NewContextWithProvisionerPolicyLevel(ctx context.Context) context.Context {
+func WithProvisionerPolicyLevel(ctx context.Context) context.Context {
 	return context.WithValue(ctx, policyLevelContextKey{}, provisionerPolicyLevel)
 }
 
-// HasProvisionerPolicyLevel returns if the context.Context has provisioner policy level.
-func HasProvisionerPolicyLevel(ctx context.Context) bool {
-	return hasPolicyLevel(ctx, provisionerPolicyLevel)
+// IsProvisionerPolicyLevel returns if the context.Context has provisioner policy level.
+func IsProvisionerPolicyLevel(ctx context.Context) bool {
+	return isPolicyLevel(ctx, provisionerPolicyLevel)
 }
 
-// NewContextWithACMEPolicyLevel returns a new context.Context with
+// WithACMEPolicyLevel returns a new context.Context with
 // parent ctx and ACME account policy level set.
-func NewContextWithACMEPolicyLevel(ctx context.Context) context.Context {
+func WithACMEPolicyLevel(ctx context.Context) context.Context {
 	return context.WithValue(ctx, policyLevelContextKey{}, acmePolicyLevel)
 }
 
-// HasACMEPolicyLevel returns if the context.Context has ACME account policy level.
-func HasACMEPolicyLevel(ctx context.Context) bool {
-	return hasPolicyLevel(ctx, acmePolicyLevel)
+// IsACMEPolicyLevel returns if the context.Context has ACME account policy level.
+func IsACMEPolicyLevel(ctx context.Context) bool {
+	return isPolicyLevel(ctx, acmePolicyLevel)
 }
 
-// hasPolicyLevel checks if the context.Context has the specified policy level set.
-func hasPolicyLevel(ctx context.Context, level policyLevel) bool {
+// isPolicyLevel checks if the context.Context has the specified policy level set.
+func isPolicyLevel(ctx context.Context, level policyLevel) bool {
 	if ctx == nil {
 		return false
 	}
-	value := ctx.Value(policyLevelContextKey{})
-	if _, ok := value.(policyLevel); ok {
-		return value == level
-	}
-	return false
+	v, _ := ctx.Value(policyLevelContextKey{}).(policyLevel)
+	return v == level
 }
 
 type policyConfigurationTypeContextKey struct{}
@@ -64,100 +61,87 @@ type policyConfigurationTypeContextKey struct{}
 type policyConfigurationType int
 
 const (
-	x509Policy policyConfigurationType = iota + 1
-	sshHostPolicy
-	sshUserPolicy
+	x509PolicyType policyConfigurationType = iota + 1
+	sshHostPolicyType
+	sshUserPolicyType
 )
 
-func NewContextWithX509Policy(ctx context.Context) context.Context {
-	return context.WithValue(ctx, policyConfigurationTypeContextKey{}, x509Policy)
+// WithX509Policy returns a new context.Context with
+// parent ctx and X509 policy set.
+func WithX509Policy(ctx context.Context) context.Context {
+	return context.WithValue(ctx, policyConfigurationTypeContextKey{}, x509PolicyType)
 }
 
-// HasX509Policy returns if the context.Context has X.509 policy set.
-func HasX509Policy(ctx context.Context) bool {
+// IsX509Policy returns if the context.Context has X.509 policy set.
+func IsX509Policy(ctx context.Context) bool {
 	if ctx == nil {
 		return false
 	}
-	value := ctx.Value(policyConfigurationTypeContextKey{})
-	if _, ok := value.(policyConfigurationType); ok {
-		return value == x509Policy
-	}
-	return false
+	v, _ := ctx.Value(policyConfigurationTypeContextKey{}).(policyConfigurationType)
+	return v == x509PolicyType
 }
 
-// NewContextWithSSHHostPolicy returns a context.Context with SSH host policy set.
-func NewContextWithSSHHostPolicy(ctx context.Context) context.Context {
-	return context.WithValue(ctx, policyConfigurationTypeContextKey{}, sshHostPolicy)
+// WithSSHHostPolicy returns a context.Context with SSH host policy set.
+func WithSSHHostPolicy(ctx context.Context) context.Context {
+	return context.WithValue(ctx, policyConfigurationTypeContextKey{}, sshHostPolicyType)
 }
 
-// HasSSHHostPolicy returns if the context.Context has SSH host policy set.
-func HasSSHHostPolicy(ctx context.Context) bool {
+// IsSSHHostPolicy returns if the context.Context has SSH host policy set.
+func IsSSHHostPolicy(ctx context.Context) bool {
 	if ctx == nil {
 		return false
 	}
-	value := ctx.Value(policyConfigurationTypeContextKey{})
-	if _, ok := value.(policyConfigurationType); ok {
-		return value == sshHostPolicy
-	}
-	return false
+	v, _ := ctx.Value(policyConfigurationTypeContextKey{}).(policyConfigurationType)
+	return v == sshHostPolicyType
 }
 
-// NewContextWithSSHUserPolicy returns a context.Context with SSH user policy set.
-func NewContextWithSSHUserPolicy(ctx context.Context) context.Context {
-	return context.WithValue(ctx, policyConfigurationTypeContextKey{}, sshUserPolicy)
+// WithSSHUserPolicy returns a context.Context with SSH user policy set.
+func WithSSHUserPolicy(ctx context.Context) context.Context {
+	return context.WithValue(ctx, policyConfigurationTypeContextKey{}, sshUserPolicyType)
 }
 
-// HasSSHUserPolicy returns if context.Context has SSH user policy set.
-func HasSSHUserPolicy(ctx context.Context) bool {
+// IsSSHUserPolicy returns if context.Context has SSH user policy set.
+func IsSSHUserPolicy(ctx context.Context) bool {
 	if ctx == nil {
 		return false
 	}
-	value := ctx.Value(policyConfigurationTypeContextKey{})
-	if _, ok := value.(policyConfigurationType); ok {
-		return value == sshUserPolicy
-	}
-	return false
+	v, _ := ctx.Value(policyConfigurationTypeContextKey{}).(policyConfigurationType)
+	return v == sshUserPolicyType
 }
 
-type policyContextKey struct{}
+type policyTypeContextKey struct{}
 
-type policy int
+type policyType int
 
 const (
-	allow policy = iota + 1
-	deny
+	allowType policyType = iota + 1
+	denyType
 )
 
-// NewContextWithAllow returns a context.Context with allow policy set.
-func NewContextWithAllow(ctx context.Context) context.Context {
-	return context.WithValue(ctx, policyContextKey{}, allow)
+// WithAllow returns a context.Context with allow policy set.
+func WithAllow(ctx context.Context) context.Context {
+	return context.WithValue(ctx, policyTypeContextKey{}, allowType)
 }
 
-// HasAllow returns if the context.Context has allow set.
-func HasAllow(ctx context.Context) bool {
+// IsAllow returns if the context.Context has allow set.
+func IsAllow(ctx context.Context) bool {
 	if ctx == nil {
 		return false
 	}
-	value := ctx.Value(policyContextKey{})
-	if _, ok := value.(policy); ok {
-		return value == allow
-	}
-	return false
+	v, _ := ctx.Value(policyTypeContextKey{}).(policyType)
+	return v == allowType
 }
 
-// NewContextWithDeny returns a context.Context with deny set.
-func NewContextWithDeny(ctx context.Context) context.Context {
-	return context.WithValue(ctx, policyContextKey{}, deny)
+// WithDeny returns a context.Context with deny set.
+func WithDeny(ctx context.Context) context.Context {
+	return context.WithValue(ctx, policyTypeContextKey{}, denyType)
 }
 
-// HasDeny returns if context.Context has deny set.
-func HasDeny(ctx context.Context) bool {
+// IsDeny returns if context.Context has deny set.
+func IsDeny(ctx context.Context) bool {
 	if ctx == nil {
 		return false
 	}
-	value := ctx.Value(policyContextKey{})
-	if _, ok := value.(policy); ok {
-		return value == deny
-	}
-	return false
+	v, _ := ctx.Value(policyTypeContextKey{}).(policyType)
+	return v == denyType
 }

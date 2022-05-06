@@ -59,14 +59,14 @@ func removeAction(ctx context.Context) (err error) {
 	}
 
 	switch {
-	case policycontext.HasAuthorityPolicyLevel(ctx):
+	case policycontext.IsAuthorityPolicyLevel(ctx):
 		err = client.RemoveAuthorityPolicy()
-	case policycontext.HasProvisionerPolicyLevel(ctx):
+	case policycontext.IsProvisionerPolicyLevel(ctx):
 		if provisioner == "" {
 			return errs.RequiredFlag(clictx, "provisioner")
 		}
 		err = client.RemoveProvisionerPolicy(provisioner)
-	case policycontext.HasACMEPolicyLevel(ctx):
+	case policycontext.IsACMEPolicyLevel(ctx):
 		if provisioner == "" {
 			return errs.RequiredFlag(clictx, "provisioner")
 		}

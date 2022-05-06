@@ -13,7 +13,7 @@ import (
 
 // Command returns the authority policy subcommand.
 func Command(ctx context.Context) cli.Command {
-	ctx = policycontext.NewContextWithAuthorityPolicyLevel(ctx)
+	ctx = policycontext.WithAuthorityPolicyLevel(ctx)
 	return cli.Command{
 		Name:        "authority",
 		Usage:       "manage certificate issuance policies for authorities",

@@ -12,7 +12,7 @@ import (
 
 // Command returns the policy subcommand.
 func Command(ctx context.Context) cli.Command {
-	ctx = policycontext.NewContextWithProvisionerPolicyLevel(ctx)
+	ctx = policycontext.WithProvisionerPolicyLevel(ctx)
 	return cli.Command{
 		Name:        "provisioner",
 		Usage:       "manage certificate issuance policies for provisioners",

@@ -12,7 +12,7 @@ import (
 
 // Command returns the ACME account policy subcommand.
 func Command(ctx context.Context) cli.Command {
-	ctx = policycontext.NewContextWithACMEPolicyLevel(ctx)
+	ctx = policycontext.WithACMEPolicyLevel(ctx)
 	return cli.Command{
 		Name:        "acme",
 		Usage:       "manage certificate issuance policies for ACME accounts",
