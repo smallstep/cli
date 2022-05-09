@@ -384,7 +384,7 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 
 	// EABReference is a cli.Flag that points to an ACME EAB Key Reference
 	EABReference = cli.StringFlag{
-		Name:  "eab-reference",
+		Name:  "eab-key-reference",
 		Usage: "An ACME EAB Key Reference",
 	}
 )

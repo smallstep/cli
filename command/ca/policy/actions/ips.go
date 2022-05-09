@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 
 	"github.com/urfave/cli"
 
@@ -16,17 +15,81 @@ import (
 
 // Command returns the policy subcommand.
 func IPCommand(ctx context.Context) cli.Command {
-
+	commandName := policycontext.GetPrefixedCommandUsage(ctx, "ip")
 	return cli.Command{
 		Name:  "ip",
-		Usage: "...",
-		UsageText: `**ip** <ip address> [**--remove**]
-[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-reference**=<eab-reference>]
+		Usage: "add or remove ip addresses",
+		UsageText: fmt.Sprintf(`**%s** <ip address> [**--remove**]
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
-		Description: `**ip** command group provides facilities for ...`,
+[**--context**=<name>]`, commandName),
+		Description: fmt.Sprintf(`**%s** command manages IP addresses and ranges in policies
+
+## EXAMPLES	
+
+Allow IP address 127.0.0.1 in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 allow ip 127.0.0.1
+'''		
+
+Allow IP address range 10.0.0.0/24 in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 allow ip 10.0.0.0/24
+'''		
+
+Deny IP address 10.0.0.30 in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 deny ip 10.0.0.30
+'''		
+
+Remove IP address range 10.0.0.0/24 from being allowed in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 allow ip 10.0.0.0/24 --remove
+'''		
+
+Allow IP address range 10.10.0.0/24 in X.509 certificates on provisioner level
+'''
+$ step ca policy provisioner x509 allow ip 10.10.0.0/24 --provisioner my_provisioner
+'''		
+
+Deny IP address 10.10.0.50 in X.509 certificates on provisioner level
+'''
+$ step ca policy provisioner x509 deny ip 10.10.0.50 --provisioner my_provisioner
+'''		
+
+Remove IP address 10.10.0.50 from being denied in X.509 certificates on provisioner level
+'''
+$ step ca policy provisioner x509 deny ip 10.10.0.50 --provisioner my_provisioner --remove
+'''		
+
+Allow IP address range 10.20.0.0/24 in X.509 certificates on ACME account level by EAB key reference
+'''
+$ step ca policy provisioner x509 allow ip 10.10.0.0/24 --provisioner my_acme_provisioner --eab-key-reference my_ref
+'''		
+
+Deny IP address 10.20.0.70 in X.509 certificates on ACME account level by EAB key reference
+'''
+$ step ca policy provisioner x509 deny ip 10.20.0.70 --provisioner my_acme_provisioner --eab-key-reference my_ref
+'''		
+
+Remove IP address 10.20.0.70 from being denied in X.509 certificates on ACME account level by EAB key reference
+'''
+$ step ca policy provisioner x509 deny ip 10.20.0.70 --provisioner my_acme_provisioner --eab-key-reference my_ref --remove
+'''		
+
+Allow IP address range 192.168.0.0/24 in SSH host certificates on authority level
+'''
+$ step ca policy authority ssh host allow ip 192.168.0.0/24
+'''		
+
+Deny IP address 192.168.0.40 in SSH host certificates on authority level
+'''
+$ step ca policy authority ssh host deny ip 192.168.0.40
+'''		
+
+`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			ipAction,
@@ -98,17 +161,9 @@ func ipAction(ctx context.Context) (err error) {
 
 	if clictx.Bool("remove") {
 		for _, ip := range args {
-			if err := validate(ip); err != nil {
-				return err
-			}
 			ips = remove(ip, ips)
 		}
 	} else {
-		for _, ip := range args {
-			if err := validate(ip); err != nil {
-				return err
-			}
-		}
 		// add all new ips to the existing ips
 		ips = append(ips, args...)
 	}
@@ -121,7 +176,7 @@ func ipAction(ctx context.Context) (err error) {
 		case policycontext.IsDeny(ctx):
 			policy.Ssh.Host.Deny.Ips = ips
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.IsSSHUserPolicy(ctx):
 		return errors.New("SSH user policy does not support IP addresses or ranges")
@@ -132,7 +187,7 @@ func ipAction(ctx context.Context) (err error) {
 		case policycontext.IsDeny(ctx):
 			policy.X509.Deny.Ips = ips
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	default:
 		panic("no SSH nor X.509 context set")
@@ -144,14 +199,4 @@ func ipAction(ctx context.Context) (err error) {
 	}
 
 	return prettyPrint(updatedPolicy)
-}
-
-func validate(ipOrCIDR string) error {
-	if ip := net.ParseIP(ipOrCIDR); ip != nil {
-		return nil
-	}
-	if _, _, err := net.ParseCIDR(ipOrCIDR); err == nil {
-		return nil
-	}
-	return fmt.Errorf("%s is not a valid IP address or CIDR", ipOrCIDR)
 }

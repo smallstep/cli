@@ -14,9 +14,9 @@ func denyCommand(ctx context.Context) cli.Command {
 	ctx = policycontext.WithDeny(ctx)
 	return cli.Command{
 		Name:        "deny",
-		Usage:       "manage SSH host certificate issuance policies",
-		UsageText:   "**ssh host deny** <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**ssh host deny** command group provides facilities for managing SSH certificate issuance policies.`,
+		Usage:       "manage denied dSSH host certificate principals",
+		UsageText:   "**step ca policy ssh host deny** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step ca policy ssh host deny** command group provides facilities for managing SSH host certificate principals to be denied.`,
 		Subcommands: cli.Commands{
 			actions.DNSCommand(ctx),
 			actions.EmailCommand(ctx),

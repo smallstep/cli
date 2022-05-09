@@ -17,8 +17,8 @@ func Command(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:        "authority",
 		Usage:       "manage certificate issuance policies for authorities",
-		UsageText:   "**step beta ca policy authority** <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**step beta ca policy authority** command group provides facilities for managing certificate issuance policies for authorities.`,
+		UsageText:   "**step ca policy authority** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step ca policy authority** command group provides facilities for managing certificate issuance policies for authorities.`,
 		Subcommands: cli.Commands{
 			actions.ViewCommand(ctx),
 			actions.RemoveCommand(ctx),

@@ -14,8 +14,8 @@ func Command(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:        "user",
 		Usage:       "manage SSH user certificate issuance policies",
-		UsageText:   "**ssh user** <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**ssh user** command group provides facilities for managing SSH user certificate issuance policies.`,
+		UsageText:   "**step ca policy ssh user** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step ca policy ssh user** command group provides facilities for managing SSH user certificate issuance policies.`,
 		Subcommands: cli.Commands{
 			allowCommand(ctx),
 			denyCommand(ctx),

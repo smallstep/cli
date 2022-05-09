@@ -15,16 +15,34 @@ import (
 
 // CommonNamesCommand returns the common names policy subcommand.
 func CommonNamesCommand(ctx context.Context) cli.Command {
+	commandName := policycontext.GetPrefixedCommandUsage(ctx, "cn")
 	return cli.Command{
 		Name:  "cn",
-		Usage: "...",
-		UsageText: `**cn** <name> [**--remove**]
-[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-reference**=<eab-reference>]
+		Usage: "add or remove common names",
+		UsageText: fmt.Sprintf(`**%s** <name> [**--remove**]
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
-		Description: `**cn** command group provides facilities for ...`,
+[**--context**=<name>]`, commandName),
+		Description: fmt.Sprintf(`**%s** command manages common names in policies
+		
+
+## EXAMPLES	
+
+Allow "My CA Name" as Common Name in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 allow cn "My CA Name"
+'''	
+
+Allow www.example.com as Common Name in X.509 certificates on authority level.
+This can be used in case www.example.com is not allowed as a DNS SAN, but is 
+allowed to be used in the Common Name.
+'''
+$ step ca policy authority x509 allow cn www.example.com
+'''
+
+`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			commonNamesAction,

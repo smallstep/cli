@@ -80,6 +80,8 @@ $ step ca renew internal.crt internal.key \
 			rootComand(),
 			rootsCommand(),
 			federationCommand(),
+			acme.Command(),
+			policy.Command(),
 		},
 	}
 
@@ -169,8 +171,6 @@ commands may change, disappear, or be promoted to a different subcommand in the 
 		Subcommands: cli.Commands{
 			admin.Command(),
 			provisionerbeta.Command(),
-			acme.Command(),
-			policy.Command(),
 		},
 	}
 }

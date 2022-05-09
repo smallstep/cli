@@ -5,6 +5,7 @@ import (
 
 	"github.com/urfave/cli"
 
+	"github.com/smallstep/cli/command/ca/policy/actions"
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/command/ca/policy/ssh"
 	"github.com/smallstep/cli/command/ca/policy/x509"
@@ -16,13 +17,13 @@ func Command(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:        "provisioner",
 		Usage:       "manage certificate issuance policies for provisioners",
-		UsageText:   "**step beta ca policy provisioner** <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**step beta ca policy provisioner** command group provides facilities for managing certificate issuance policies for provisioners.`,
+		UsageText:   "**step ca policy provisioner** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step ca policy provisioner** command group provides facilities for managing certificate issuance policies for provisioners.`,
 		Subcommands: cli.Commands{
+			actions.ViewCommand(ctx),
+			actions.RemoveCommand(ctx),
 			x509.Command(ctx),
 			ssh.Command(ctx),
-			removeCommand(ctx),
-			viewCommand(ctx),
 		},
 	}
 }

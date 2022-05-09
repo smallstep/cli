@@ -15,16 +15,51 @@ import (
 
 // EmailCommand returns the x509 email subcommand
 func EmailCommand(ctx context.Context) cli.Command {
-
+	commandName := policycontext.GetPrefixedCommandUsage(ctx, "email")
 	return cli.Command{
 		Name:  "email",
-		Usage: "...",
-		UsageText: `**email** <email> [**--remove**]
+		Usage: "add or remove email addresses",
+		UsageText: fmt.Sprintf(`**%s** <email> [**--remove**]
 [**--provisioner**=<name>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
-		Description: `**email** command group provides facilities for ...`,
+[**--context**=<name>]`, commandName),
+		Description: fmt.Sprintf(`**%s** command manages email addresses and domains in policies
+		
+## EXAMPLES	
+
+Allow all email addresses for the example.com domain in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 allow email @example.com
+'''
+
+Remove the email addresses for the example.com domain in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 allow email @example.com --remove
+'''
+
+Deny badmail@example.com in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 deny email badmail@example.com
+'''
+
+Allow all email addresses for the example.com domain in X.509 certificates on provisioner level
+'''
+$ step ca policy provisioner x509 allow email @example.com --provisioner my_provisioner
+'''
+
+Allow all local parts for the example.com domain in SSH user certificates on provisioner level
+'''
+$ step ca policy provisioner ssh user allow email @example.com --provisioner my_provisioner
+'''
+
+Deny root@example.com domain in SSH user certificates on provisioner level
+'''
+$ step ca policy provisioner ssh user deny email @example.com --provisioner my_provisioner
+'''
+
+
+`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			emailAction,

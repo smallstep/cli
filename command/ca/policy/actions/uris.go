@@ -15,16 +15,40 @@ import (
 
 // Command returns the policy subcommand.
 func URICommand(ctx context.Context) cli.Command {
-
+	commandName := policycontext.GetPrefixedCommandUsage(ctx, "uri")
 	return cli.Command{
 		Name:  "uri",
-		Usage: "...",
-		UsageText: `**uri** <uri domain> [**--remove**]
+		Usage: "add or remove URI domains",
+		UsageText: fmt.Sprintf(`**%s** <uri domain> [**--remove**]
 [**--provisioner**=<name>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
-		Description: `**uri** command group provides facilities for ...`,
+[**--context**=<name>]`, commandName),
+		Description: fmt.Sprintf(`**%s** command manages URI domains in policies
+		
+## EXAMPLES	
+
+Allow all URI subdomains of "local" in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 allow uri "*.local"
+'''
+
+Deny URI badhost.local domain in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 deny uri badhost.local
+'''
+
+Remove badhost.local from denied URI domain names in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 deny uri badhost.local --remove
+'''
+
+Allow all URI subdomains of "example.com" in X.509 certificates on provisioner level
+'''
+$ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_provisioner
+'''
+		
+`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			uriAction,

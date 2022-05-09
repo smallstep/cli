@@ -15,15 +15,45 @@ import (
 
 // Command returns the principal policy subcommand.
 func PrincipalsCommand(ctx context.Context) cli.Command {
+	commandName := policycontext.GetPrefixedCommandUsage(ctx, "principal")
 	return cli.Command{
 		Name:  "principal",
-		Usage: "...",
-		UsageText: `**principal** <principal> [**--remove**]
+		Usage: "add or remove principals",
+		UsageText: fmt.Sprintf(`**%s** <principal> [**--remove**]
 [**--provisioner**=<name>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
-		Description: `**principal** command group provides facilities for ...`,
+[**--context**=<name>]`, commandName),
+		Description: fmt.Sprintf(`**%s** command manages principals in SSH policies
+		
+## EXAMPLES	
+
+Allow all principals in SSH host certificates on authority level
+'''
+$ step ca policy authority ssh host allow principal "*"
+'''
+
+Allow all principals in SSH user certificates on authority level
+'''
+$ step ca policy authority ssh user allow principal "*"
+'''
+
+Allow principal machine-name in SSH host certificates on provisioner level
+'''
+$ step ca policy provisioner ssh host allow principal machine-name --provisioner my_ssh_host_provisioner
+'''
+
+Allow principal user in SSH user certificates on provisioner level
+'''
+$ step ca policy provisioner ssh host allow principal user --provisioner my_ssh_user_provisioner
+'''
+
+Deny principal root in SSH user certificates on provisioner level
+'''
+$ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_user_provisioner
+'''
+
+`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			principalAction,
@@ -75,7 +105,7 @@ func principalAction(ctx context.Context) (err error) {
 		case policycontext.IsDeny(ctx):
 			principals = policy.Ssh.Host.Deny.Principals
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.IsSSHUserPolicy(ctx):
 		switch {
@@ -84,7 +114,7 @@ func principalAction(ctx context.Context) (err error) {
 		case policycontext.IsDeny(ctx):
 			principals = policy.Ssh.User.Deny.Principals
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.IsX509Policy(ctx):
 		return errors.New("X.509 policy does not support principals")
@@ -108,7 +138,7 @@ func principalAction(ctx context.Context) (err error) {
 		case policycontext.IsDeny(ctx):
 			policy.Ssh.Host.Deny.Principals = principals
 		default:
-			panic(errors.New("no allow nor deny context set"))
+			panic("no allow nor deny context set")
 		}
 	case policycontext.IsSSHUserPolicy(ctx):
 		switch {

@@ -16,16 +16,38 @@ import (
 
 // RemoveCommand returns the policy remove subcommand.
 func RemoveCommand(ctx context.Context) cli.Command {
+	commandName := policycontext.GetPrefixedCommandUsage(ctx, "remove")
 	return cli.Command{
 		Name:  "remove",
-		Usage: "remove authority certificate issuance policy",
-		UsageText: `**step beta ca policy authority remove** 
-[**--provisioner**=<name>] [**--eab-key-id**=<eab-ey-id>] [**--eab-reference**=<eab-reference>]
+		Usage: "remove certificate issuance policy",
+		UsageText: `**step ca policy authority remove** 
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-ey-id>] [**--eab-key-reference**=<eab-key-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
-		Description: `**step beta ca policy authority remove** removes the full certificate issuance policy from the authority`,
+		Description: fmt.Sprintf(`**%s** removes a certificate issuance policy.
+
+Remove the authority certificate issuance policy
+'''
+$ step ca policy authority remove
+'''
+
+Remove a provisioner certificate issuance policy
+'''
+$ step ca policy provisioner remove --provisioner my_provisioner
+'''
+
+Remove an ACME EAB certificate issuance policy by reference
+'''
+$ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-reference my_reference
+'''
+
+Remove an ACME EAB certificate issuance policy by EAB Key ID
+'''
+$ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-id "lUOTGwvFQADjk8nxsVufbhyTOwrFmvO2"
+'''
+`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			removeAction,
@@ -50,7 +72,7 @@ func removeAction(ctx context.Context) (err error) {
 
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
-	reference := clictx.String("eab-reference")
+	reference := clictx.String("eab-key-reference")
 	keyID := clictx.String("eab-key-id")
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -71,7 +93,7 @@ func removeAction(ctx context.Context) (err error) {
 			return errs.RequiredFlag(clictx, "provisioner")
 		}
 		if reference == "" && keyID == "" {
-			return errs.RequiredOrFlag(clictx, "eab-reference", "eab-key-id")
+			return errs.RequiredOrFlag(clictx, "eab-key-reference", "eab-key-id")
 		}
 		err = client.RemoveACMEPolicy(provisioner, reference, keyID)
 	default:

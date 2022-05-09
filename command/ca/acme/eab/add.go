@@ -5,11 +5,13 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
+	"go.step.sm/cli-utils/errs"
+
 	adminAPI "github.com/smallstep/certificates/authority/admin/api"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
 )
 
 func addCommand() cli.Command {
@@ -17,7 +19,7 @@ func addCommand() cli.Command {
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add ACME External Account Binding Key",
-		UsageText: `**step beta ca acme eab add** <provisioner> [<reference>]
+		UsageText: `**step ca acme eab add** <provisioner> [<reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -32,26 +34,26 @@ func addCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step beta ca acme eab add** adds ACME External Account Binding Key.
+		Description: `**step ca acme eab add** adds ACME External Account Binding Key.
 
 ## POSITIONAL ARGUMENTS
 
 <provisioner>
 : Name of the provisioner to which the ACME EAB key will be added
 
-<reference>
+<eab-key-reference>
 : (Optional) reference (from external system) for the key that will be added
 
 ## EXAMPLES
 
 Add an ACME External Account Binding Key without reference:
 '''
-$ step beta ca acme eab add my_acme_provisioner
+$ step ca acme eab add my_acme_provisioner
 '''
 
 Add an ACME External Account Binding Key with reference:
 '''
-$ step beta ca acme eab add my_acme_provisioner my_first_eab_key
+$ step ca acme eab add my_acme_provisioner my_first_eab_key
 '''`,
 	}
 }

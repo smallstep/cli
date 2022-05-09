@@ -7,14 +7,21 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/urfave/cli"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/linkedca"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/internal/command"
 )
+
+var provisionerFilterFlag = cli.StringFlag{
+	Name:  "provisioner",
+	Usage: `The provisioner <name>`,
+}
 
 func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*linkedca.Policy, error) {
 
@@ -25,7 +32,7 @@ func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*
 
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
-	reference := clictx.String("eab-reference")
+	reference := clictx.String("eab-key-reference")
 	keyID := clictx.String("eab-key-id")
 
 	switch {
@@ -41,7 +48,7 @@ func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*
 			return nil, errs.RequiredFlag(clictx, "provisioner")
 		}
 		if reference == "" && keyID == "" {
-			return nil, errs.RequiredOrFlag(clictx, "eab-reference", "eab-key-id")
+			return nil, errs.RequiredOrFlag(clictx, "eab-key-reference", "eab-key-id")
 		}
 		policy, err = client.GetACMEPolicy(provisioner, reference, keyID)
 	default:
@@ -135,7 +142,7 @@ func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.
 
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
-	reference := clictx.String("eab-reference")
+	reference := clictx.String("eab-key-reference")
 	keyID := clictx.String("eab-key-id")
 
 	var (
@@ -159,7 +166,7 @@ func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.
 			return nil, errs.RequiredFlag(clictx, "provisioner")
 		}
 		if reference == "" && keyID == "" {
-			return nil, errs.RequiredOrFlag(clictx, "eab-reference", "eab-key-id")
+			return nil, errs.RequiredOrFlag(clictx, "eab-key-reference", "eab-key-id")
 		}
 		updatedPolicy, err = client.UpdateACMEPolicy(provisioner, reference, keyID, policy)
 	default:

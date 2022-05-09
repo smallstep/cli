@@ -145,3 +145,42 @@ func IsDeny(ctx context.Context) bool {
 	v, _ := ctx.Value(policyTypeContextKey{}).(policyType)
 	return v == denyType
 }
+
+func GetPrefixedCommandUsage(ctx context.Context, commandName string) string {
+	usage := "step ca policy"
+
+	switch {
+	case IsAuthorityPolicyLevel(ctx):
+		usage = usage + " authority"
+	case IsProvisionerPolicyLevel(ctx):
+		usage = usage + " provisioner"
+	case IsACMEPolicyLevel(ctx):
+		usage = usage + " acme"
+	default:
+		panic("no policy level set")
+	}
+
+	switch {
+	case IsX509Policy(ctx):
+		usage = usage + " x509"
+	case IsSSHHostPolicy(ctx):
+		usage = usage + " ssh host"
+	case IsSSHUserPolicy(ctx):
+		usage = usage + " ssh user"
+	default:
+		// noop; not every command using policycontext needs this to be set
+		break
+	}
+
+	switch {
+	case IsAllow(ctx):
+		usage = usage + " allow"
+	case IsDeny(ctx):
+		usage = usage + " deny"
+	default:
+		// noop; not every command using policycontext needs this to be set
+		break
+	}
+
+	return usage + " " + commandName
+}

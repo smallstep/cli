@@ -13,23 +13,63 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 )
 
-var provisionerFilterFlag = cli.StringFlag{
-	Name:  "provisioner",
-	Usage: `The provisioner <name>`,
-}
-
 // DNSCommand returns the dns policy subcommand.
 func DNSCommand(ctx context.Context) cli.Command {
+	commandName := policycontext.GetPrefixedCommandUsage(ctx, "dns")
 	return cli.Command{
 		Name:  "dns",
-		Usage: "...",
-		UsageText: `**dns** <domain> [**--remove**]
-[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-reference**=<eab-reference>]
+		Usage: "add or remove DNS domains",
+		UsageText: fmt.Sprintf(`**%s** <domain> [**--remove**]
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
-		Description: `**dns** command group provides facilities for ...`,
+[**--context**=<name>]`, commandName),
+		Description: fmt.Sprintf(`**%s** command manages DNS domains in policies
+
+## EXAMPLES	
+
+Allow www.example.com DNS in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 allow dns www.example.com
+'''
+
+Allow all DNS subdomains of "local" in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 allow dns "*.local"
+'''
+
+Deny DNS badhost.local in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 deny dns "badhost.local"
+'''
+
+Remove badhost.local from denied DNS names in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 deny dns "badhost.local" --remove
+'''
+
+Allow all DNS subdomains of "example.com" in X.509 certificates on provisioner level
+'''
+$ step ca policy provisioner x509 allow dns "*.example.com" --provisioner my_provisioner
+'''
+
+Allow all DNS subdomains of "account1.acme.example.com" in X.509 certificates on ACME Account level
+'''
+$ step ca policy acme x509 allow dns "*.account1.acme.example.com" --provisioner my_acme_provisioner --reference account1
+'''
+
+Allow all DNS subdomains of "local" in SSH host certificates on authority level
+'''
+$ step ca policy authority ssh host allow dns "*.local"
+'''
+
+Deny badsshhost.local in SSH host certificates on authority level
+'''
+$ step ca policy authority ssh host allow dns "badsshhost.local"
+'''
+
+`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			dnsAction,

@@ -14,9 +14,9 @@ func allowCommand(ctx context.Context) cli.Command {
 	ctx = policycontext.WithAllow(ctx)
 	return cli.Command{
 		Name:        "allow",
-		Usage:       "manage SSH user certificate issuance policies",
-		UsageText:   "**ssh user allow** <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**ssh user allow** command group provides facilities for managing X.509 certificate issuance policies.`,
+		Usage:       "manage allowed SSH user certificate principals",
+		UsageText:   "**step ca policy ssh user allow** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step ca policy ssh user allow** command group provides facilities for managing SSH user certificate principals to be allowed.`,
 		Subcommands: cli.Commands{
 			actions.EmailCommand(ctx),
 			actions.PrincipalsCommand(ctx),

@@ -17,16 +17,41 @@ import (
 
 // ViewCommand returns the policy view subcommand
 func ViewCommand(ctx context.Context) cli.Command {
+	commandName := policycontext.GetPrefixedCommandUsage(ctx, "view")
 	return cli.Command{
 		Name:  "view",
-		Usage: "view authority certificate issuance policy",
-		UsageText: `**step beta ca policy authority view**
-[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-reference**=<eab-reference>]
+		Usage: "view current certificate issuance policy",
+		UsageText: `**step ca policy authority view**
+[**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
-		Description: `**step beta ca policy authority view** shows the authority policy.`,
+		Description: fmt.Sprintf(`**%s** shows the currently configured policy.
+		
+## EXAMPLES
+
+View the authority certificate issuance policy
+'''
+$ step ca policy authority view
+'''
+
+View a provisioner certificate issuance policy
+'''
+$ step ca policy provisioner view --provisioner my_provisioner
+'''
+
+View an ACME EAB certificate issuance policy by reference
+'''
+$ step ca policy acme view --provisioner my_acme_provisioner --eab-key-reference my_reference
+'''
+
+View an ACME EAB certificate issuance policy by EAB Key ID
+'''
+$ step ca policy acme view --provisioner my_acme_provisioner --eab-key-id "lUOTGwvFQADjk8nxsVufbhyTOwrFmvO2"
+'''
+
+`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			viewAction,
@@ -51,7 +76,7 @@ func viewAction(ctx context.Context) (err error) {
 
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
-	reference := clictx.String("eab-reference")
+	reference := clictx.String("eab-key-reference")
 	keyID := clictx.String("eab-key-id")
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -76,7 +101,7 @@ func viewAction(ctx context.Context) (err error) {
 			return errs.RequiredFlag(clictx, "provisioner")
 		}
 		if reference == "" && keyID == "" {
-			return errs.RequiredOrFlag(clictx, "eab-reference", "eab-key-id")
+			return errs.RequiredOrFlag(clictx, "eab-key-reference", "eab-key-id")
 		}
 		policy, err = client.GetACMEPolicy(provisioner, reference, keyID)
 	default:
