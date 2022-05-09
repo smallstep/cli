@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/flags"
@@ -60,6 +61,10 @@ $ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_u
 		),
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
+			cli.BoolFlag{
+				Name:  "remove",
+				Usage: `removes the provided Principals from the policy instead of adding them`,
+			},
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -68,10 +73,6 @@ $ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_u
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			cli.BoolFlag{
-				Name:  "remove",
-				Usage: `removes the provided Principals from the policy instead of adding them`,
-			},
 		},
 	}
 }
@@ -82,7 +83,7 @@ func principalAction(ctx context.Context) (err error) {
 
 	args := clictx.Args()
 	if len(args) == 0 {
-		return errors.New("please provide at least one principal")
+		return errs.TooFewArguments(clictx)
 	}
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -95,57 +96,24 @@ func principalAction(ctx context.Context) (err error) {
 		return err
 	}
 
-	var principals []string
+	shouldRemove := clictx.Bool("remove")
 
 	switch {
 	case policycontext.IsSSHHostPolicy(ctx):
 		switch {
 		case policycontext.IsAllow(ctx):
-			principals = policy.Ssh.Host.Allow.Principals
+			policy.Ssh.Host.Allow.Principals = addOrRemoveArguments(policy.Ssh.Host.Allow.Principals, args, shouldRemove)
 		case policycontext.IsDeny(ctx):
-			principals = policy.Ssh.Host.Deny.Principals
+			policy.Ssh.Host.Deny.Principals = addOrRemoveArguments(policy.Ssh.Host.Deny.Principals, args, shouldRemove)
 		default:
 			panic("no allow nor deny context set")
 		}
 	case policycontext.IsSSHUserPolicy(ctx):
 		switch {
 		case policycontext.IsAllow(ctx):
-			principals = policy.Ssh.User.Allow.Principals
+			policy.Ssh.User.Allow.Principals = addOrRemoveArguments(policy.Ssh.User.Allow.Principals, args, shouldRemove)
 		case policycontext.IsDeny(ctx):
-			principals = policy.Ssh.User.Deny.Principals
-		default:
-			panic("no allow nor deny context set")
-		}
-	case policycontext.IsX509Policy(ctx):
-		return errors.New("X.509 policy does not support principals")
-	default:
-		panic("no SSH nor X.509 context set")
-	}
-
-	if clictx.Bool("remove") {
-		for _, domain := range args {
-			principals = remove(domain, principals)
-		}
-	} else {
-		principals = append(principals, args...)
-	}
-
-	switch {
-	case policycontext.IsSSHHostPolicy(ctx):
-		switch {
-		case policycontext.IsAllow(ctx):
-			policy.Ssh.Host.Allow.Principals = principals
-		case policycontext.IsDeny(ctx):
-			policy.Ssh.Host.Deny.Principals = principals
-		default:
-			panic("no allow nor deny context set")
-		}
-	case policycontext.IsSSHUserPolicy(ctx):
-		switch {
-		case policycontext.IsAllow(ctx):
-			policy.Ssh.User.Allow.Principals = principals
-		case policycontext.IsDeny(ctx):
-			policy.Ssh.User.Deny.Principals = principals
+			policy.Ssh.User.Deny.Principals = addOrRemoveArguments(policy.Ssh.User.Deny.Principals, args, shouldRemove)
 		default:
 			panic("no allow nor deny context set")
 		}

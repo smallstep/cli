@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/flags"
@@ -66,6 +67,10 @@ $ step ca policy provisioner ssh user deny email @example.com --provisioner my_p
 		),
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
+			cli.BoolFlag{
+				Name:  "remove",
+				Usage: `removes the provided emails from the policy instead of adding them`,
+			},
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -74,10 +79,6 @@ $ step ca policy provisioner ssh user deny email @example.com --provisioner my_p
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			cli.BoolFlag{
-				Name:  "remove",
-				Usage: `removes the provided emails from the policy instead of adding them`,
-			},
 		},
 	}
 }
@@ -88,7 +89,7 @@ func emailAction(ctx context.Context) (err error) {
 
 	args := clictx.Args()
 	if len(args) == 0 {
-		return errors.New("please provide at least one email (domain)")
+		return errs.TooFewArguments(clictx)
 	}
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -101,40 +102,7 @@ func emailAction(ctx context.Context) (err error) {
 		return err
 	}
 
-	var emails []string
-	switch {
-	case policycontext.IsSSHHostPolicy(ctx):
-		return errors.New("SSH host policy does not support emails")
-	case policycontext.IsSSHUserPolicy(ctx):
-		switch {
-		case policycontext.IsAllow(ctx):
-			emails = policy.Ssh.User.Allow.Emails
-		case policycontext.IsDeny(ctx):
-			emails = policy.Ssh.User.Deny.Emails
-		default:
-			panic("no allow nor deny context set")
-		}
-	case policycontext.IsX509Policy(ctx):
-		switch {
-		case policycontext.IsAllow(ctx):
-			emails = policy.X509.Allow.Emails
-		case policycontext.IsDeny(ctx):
-			emails = policy.X509.Deny.Emails
-		default:
-			panic("no allow nor deny context set")
-		}
-	default:
-		panic("no SSH nor X.509 context set")
-	}
-
-	if clictx.Bool("remove") {
-		for _, email := range args {
-			emails = remove(email, emails)
-		}
-	} else {
-		// add all new emails to the existing emails
-		emails = append(emails, args...)
-	}
+	shouldRemove := clictx.Bool("remove")
 
 	switch {
 	case policycontext.IsSSHHostPolicy(ctx):
@@ -142,18 +110,18 @@ func emailAction(ctx context.Context) (err error) {
 	case policycontext.IsSSHUserPolicy(ctx):
 		switch {
 		case policycontext.IsAllow(ctx):
-			policy.Ssh.User.Allow.Emails = emails
+			policy.Ssh.User.Allow.Emails = addOrRemoveArguments(policy.Ssh.User.Allow.Emails, args, shouldRemove)
 		case policycontext.IsDeny(ctx):
-			policy.Ssh.User.Deny.Emails = emails
+			policy.Ssh.User.Deny.Emails = addOrRemoveArguments(policy.Ssh.User.Deny.Emails, args, shouldRemove)
 		default:
 			panic("no allow nor deny context set")
 		}
 	case policycontext.IsX509Policy(ctx):
 		switch {
 		case policycontext.IsAllow(ctx):
-			policy.X509.Allow.Emails = emails
+			policy.X509.Allow.Emails = addOrRemoveArguments(policy.X509.Allow.Emails, args, shouldRemove)
 		case policycontext.IsDeny(ctx):
-			policy.X509.Deny.Emails = emails
+			policy.X509.Deny.Emails = addOrRemoveArguments(policy.X509.Deny.Emails, args, shouldRemove)
 		default:
 			panic("no allow nor deny context set")
 		}

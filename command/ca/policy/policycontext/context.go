@@ -2,6 +2,7 @@ package policycontext
 
 import (
 	"context"
+	"errors"
 )
 
 type policyLevelContextKey struct{}
@@ -50,7 +51,7 @@ func IsACMEPolicyLevel(ctx context.Context) bool {
 // isPolicyLevel checks if the context.Context has the specified policy level set.
 func isPolicyLevel(ctx context.Context, level policyLevel) bool {
 	if ctx == nil {
-		return false
+		panic(errors.New("nil ctx passed"))
 	}
 	v, _ := ctx.Value(policyLevelContextKey{}).(policyLevel)
 	return v == level
@@ -75,7 +76,7 @@ func WithX509Policy(ctx context.Context) context.Context {
 // IsX509Policy returns if the context.Context has X.509 policy set.
 func IsX509Policy(ctx context.Context) bool {
 	if ctx == nil {
-		return false
+		panic(errors.New("nil ctx passed"))
 	}
 	v, _ := ctx.Value(policyConfigurationTypeContextKey{}).(policyConfigurationType)
 	return v == x509PolicyType
@@ -89,7 +90,7 @@ func WithSSHHostPolicy(ctx context.Context) context.Context {
 // IsSSHHostPolicy returns if the context.Context has SSH host policy set.
 func IsSSHHostPolicy(ctx context.Context) bool {
 	if ctx == nil {
-		return false
+		panic(errors.New("nil ctx passed"))
 	}
 	v, _ := ctx.Value(policyConfigurationTypeContextKey{}).(policyConfigurationType)
 	return v == sshHostPolicyType
@@ -103,7 +104,7 @@ func WithSSHUserPolicy(ctx context.Context) context.Context {
 // IsSSHUserPolicy returns if context.Context has SSH user policy set.
 func IsSSHUserPolicy(ctx context.Context) bool {
 	if ctx == nil {
-		return false
+		panic(errors.New("nil ctx passed"))
 	}
 	v, _ := ctx.Value(policyConfigurationTypeContextKey{}).(policyConfigurationType)
 	return v == sshUserPolicyType
@@ -126,7 +127,7 @@ func WithAllow(ctx context.Context) context.Context {
 // IsAllow returns if the context.Context has allow set.
 func IsAllow(ctx context.Context) bool {
 	if ctx == nil {
-		return false
+		panic(errors.New("nil ctx passed"))
 	}
 	v, _ := ctx.Value(policyTypeContextKey{}).(policyType)
 	return v == allowType
@@ -140,7 +141,7 @@ func WithDeny(ctx context.Context) context.Context {
 // IsDeny returns if context.Context has deny set.
 func IsDeny(ctx context.Context) bool {
 	if ctx == nil {
-		return false
+		panic(errors.New("nil ctx passed"))
 	}
 	v, _ := ctx.Value(policyTypeContextKey{}).(policyType)
 	return v == denyType

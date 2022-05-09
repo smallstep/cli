@@ -56,7 +56,7 @@ func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*
 	}
 
 	if err != nil {
-		var ae = new(ca.AdminClientError)
+		var ae *ca.AdminClientError
 		if errors.As(err, &ae) && ae.Type == "notFound" { // TODO: use constant?
 			// when a policy doesn't exist yet, create a new, empty policy and
 			// send it to the CA.
@@ -68,8 +68,6 @@ func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*
 				policy, err = client.CreateProvisionerPolicy(provisioner, newPolicy)
 			case policycontext.IsACMEPolicyLevel(ctx):
 				policy, err = client.CreateACMEPolicy(provisioner, reference, keyID, newPolicy)
-			default:
-				panic("no context for policy creation set")
 			}
 			if err != nil {
 				return nil, fmt.Errorf("error creating policy: %w", err)
@@ -98,6 +96,18 @@ func remove(item string, items []string) []string {
 
 func newPolicy() *linkedca.Policy {
 	return initPolicy(nil)
+}
+
+// addOrRemoveArguments adds or removes args to/from existingNames
+func addOrRemoveArguments(existingNames []string, args []string, shouldRemove bool) []string {
+	if shouldRemove {
+		for _, name := range args {
+			existingNames = remove(name, existingNames)
+		}
+	} else {
+		existingNames = append(existingNames, args...)
+	}
+	return existingNames
 }
 
 func initPolicy(p *linkedca.Policy) *linkedca.Policy {

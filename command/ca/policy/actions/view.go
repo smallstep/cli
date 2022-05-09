@@ -109,7 +109,7 @@ func viewAction(ctx context.Context) (err error) {
 	}
 
 	if err != nil {
-		var ae = new(ca.AdminClientError)
+		var ae *ca.AdminClientError
 		if errors.As(err, &ae) && ae.Type == "notFound" { // TODO: use constant?
 			fmt.Println("certificate issuance policy does not exist")
 			return nil

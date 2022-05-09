@@ -101,7 +101,7 @@ func removeAction(ctx context.Context) (err error) {
 	}
 
 	if err != nil {
-		var ae = new(ca.AdminClientError)
+		var ae *ca.AdminClientError
 		if errors.As(err, &ae) && ae.Type == "notFound" {
 			return errors.New("certificate issuance policy does not exist")
 		}

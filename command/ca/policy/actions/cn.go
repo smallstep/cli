@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/flags"
@@ -42,6 +43,17 @@ allowed to be used in the Common Name.
 $ step ca policy authority x509 allow cn www.example.com
 '''
 
+Remove www.example.com from allowed Common Names in X.509 certificates on authority level.
+'''
+$ step ca policy authority x509 allow cn www.example.com --remove
+'''
+
+Deny "My Bad CA Name" as Common Name in X.509 certificates on authority level
+'''
+$ step ca policy authority x509 deny cn "My Bad CA Name"
+'''	
+
+
 `, commandName),
 		Action: command.InjectContext(
 			ctx,
@@ -51,6 +63,10 @@ $ step ca policy authority x509 allow cn www.example.com
 			provisionerFilterFlag,
 			flags.EABKeyID,
 			flags.EABReference,
+			cli.BoolFlag{
+				Name:  "remove",
+				Usage: `removes the provided Common Names from the policy instead of adding them`,
+			},
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -59,10 +75,6 @@ $ step ca policy authority x509 allow cn www.example.com
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			cli.BoolFlag{
-				Name:  "remove",
-				Usage: `removes the provided Common Names from the policy instead of adding them`,
-			},
 		},
 	}
 }
@@ -73,7 +85,7 @@ func commonNamesAction(ctx context.Context) (err error) {
 
 	args := clictx.Args()
 	if len(args) == 0 {
-		return errors.New("please provide at least one name")
+		return errs.TooFewArguments(clictx)
 	}
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -86,7 +98,7 @@ func commonNamesAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error retrieving policy: %w", err)
 	}
 
-	var commonNames []string
+	shouldRemove := clictx.Bool("remove")
 
 	switch {
 	case policycontext.IsSSHHostPolicy(ctx):
@@ -96,35 +108,9 @@ func commonNamesAction(ctx context.Context) (err error) {
 	case policycontext.IsX509Policy(ctx):
 		switch {
 		case policycontext.IsAllow(ctx):
-			commonNames = policy.X509.Allow.CommonNames
+			policy.X509.Allow.CommonNames = addOrRemoveArguments(policy.X509.Allow.CommonNames, args, shouldRemove)
 		case policycontext.IsDeny(ctx):
-			commonNames = policy.X509.Deny.CommonNames
-		default:
-			panic("no allow nor deny context set")
-		}
-	default:
-		panic("no SSH nor X.509 context set")
-	}
-
-	if clictx.Bool("remove") {
-		for _, commonName := range args {
-			commonNames = remove(commonName, commonNames)
-		}
-	} else {
-		commonNames = append(commonNames, args...)
-	}
-
-	switch {
-	case policycontext.IsSSHHostPolicy(ctx):
-		return errors.New("SSH host policy does not support Common Names")
-	case policycontext.IsSSHUserPolicy(ctx):
-		return errors.New("SSH user policy does not support Common Names")
-	case policycontext.IsX509Policy(ctx):
-		switch {
-		case policycontext.IsAllow(ctx):
-			policy.X509.Allow.CommonNames = commonNames
-		case policycontext.IsDeny(ctx):
-			policy.X509.Deny.CommonNames = commonNames
+			policy.X509.Deny.CommonNames = addOrRemoveArguments(policy.X509.Deny.CommonNames, args, shouldRemove)
 		default:
 			panic("no allow nor deny context set")
 		}

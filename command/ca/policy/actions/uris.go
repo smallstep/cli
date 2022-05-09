@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/flags"
@@ -55,6 +56,10 @@ $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_pro
 		),
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
+			cli.BoolFlag{
+				Name:  "remove",
+				Usage: `removes the provided URIs from the policy instead of adding them`,
+			},
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -63,10 +68,6 @@ $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_pro
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			cli.BoolFlag{
-				Name:  "remove",
-				Usage: `removes the provided URIs from the policy instead of adding them`,
-			},
 		},
 	}
 }
@@ -77,7 +78,7 @@ func uriAction(ctx context.Context) (err error) {
 
 	args := clictx.Args()
 	if len(args) == 0 {
-		return errors.New("please provide at least one URI")
+		return errs.TooFewArguments(clictx)
 	}
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -90,32 +91,7 @@ func uriAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error retrieving policy: %w", err)
 	}
 
-	var uris []string
-	switch {
-	case policycontext.IsSSHHostPolicy(ctx):
-		return errors.New("SSH host policy does not support URIs")
-	case policycontext.IsSSHUserPolicy(ctx):
-		return errors.New("SSH user policy does not support URIs")
-	case policycontext.IsX509Policy(ctx):
-		switch {
-		case policycontext.IsAllow(ctx):
-			uris = policy.X509.Allow.Uris
-		case policycontext.IsDeny(ctx):
-			uris = policy.X509.Deny.Uris
-		default:
-			panic("no allow nor deny context set")
-		}
-	default:
-		panic("no SSH nor X.509 context set")
-	}
-
-	if clictx.Bool("remove") {
-		for _, uri := range args {
-			uris = remove(uri, uris)
-		}
-	} else {
-		uris = append(uris, args...)
-	}
+	shouldRemove := clictx.Bool("remove")
 
 	switch {
 	case policycontext.IsSSHHostPolicy(ctx):
@@ -125,9 +101,9 @@ func uriAction(ctx context.Context) (err error) {
 	case policycontext.IsX509Policy(ctx):
 		switch {
 		case policycontext.IsAllow(ctx):
-			policy.X509.Allow.Uris = uris
+			policy.X509.Allow.Uris = addOrRemoveArguments(policy.X509.Allow.Uris, args, shouldRemove)
 		case policycontext.IsDeny(ctx):
-			policy.X509.Deny.Uris = uris
+			policy.X509.Deny.Uris = addOrRemoveArguments(policy.X509.Deny.Uris, args, shouldRemove)
 		default:
 			panic("no allow nor deny context set")
 		}

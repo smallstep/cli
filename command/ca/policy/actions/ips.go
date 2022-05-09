@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/flags"
@@ -98,6 +99,10 @@ $ step ca policy authority ssh host deny ip 192.168.0.40
 			provisionerFilterFlag,
 			flags.EABKeyID,
 			flags.EABReference,
+			cli.BoolFlag{
+				Name:  "remove",
+				Usage: `removes the provided IPs from the policy instead of adding them`,
+			},
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -106,10 +111,6 @@ $ step ca policy authority ssh host deny ip 192.168.0.40
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			cli.BoolFlag{
-				Name:  "remove",
-				Usage: `removes the provided IPs from the policy instead of adding them`,
-			},
 		},
 	}
 }
@@ -120,7 +121,7 @@ func ipAction(ctx context.Context) (err error) {
 
 	args := clictx.Args()
 	if len(args) == 0 {
-		return errors.New("please provide at least one IP address or range")
+		return errs.TooFewArguments(clictx)
 	}
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -133,14 +134,15 @@ func ipAction(ctx context.Context) (err error) {
 		return err
 	}
 
-	var ips []string
+	shouldRemove := clictx.Bool("remove")
+
 	switch {
 	case policycontext.IsSSHHostPolicy(ctx):
 		switch {
 		case policycontext.IsAllow(ctx):
-			ips = policy.Ssh.Host.Allow.Ips
+			policy.Ssh.Host.Allow.Ips = addOrRemoveArguments(policy.Ssh.Host.Allow.Ips, args, shouldRemove)
 		case policycontext.IsDeny(ctx):
-			ips = policy.Ssh.Host.Deny.Ips
+			policy.Ssh.Host.Deny.Ips = addOrRemoveArguments(policy.Ssh.Host.Deny.Ips, args, shouldRemove)
 		default:
 			panic("no allow nor deny context set")
 		}
@@ -149,43 +151,9 @@ func ipAction(ctx context.Context) (err error) {
 	case policycontext.IsX509Policy(ctx):
 		switch {
 		case policycontext.IsAllow(ctx):
-			ips = policy.X509.Allow.Ips
+			policy.X509.Allow.Ips = addOrRemoveArguments(policy.X509.Allow.Ips, args, shouldRemove)
 		case policycontext.IsDeny(ctx):
-			ips = policy.X509.Deny.Ips
-		default:
-			panic("no allow nor deny context set")
-		}
-	default:
-		panic("no SSH nor X.509 context set")
-	}
-
-	if clictx.Bool("remove") {
-		for _, ip := range args {
-			ips = remove(ip, ips)
-		}
-	} else {
-		// add all new ips to the existing ips
-		ips = append(ips, args...)
-	}
-
-	switch {
-	case policycontext.IsSSHHostPolicy(ctx):
-		switch {
-		case policycontext.IsAllow(ctx):
-			policy.Ssh.Host.Allow.Ips = ips
-		case policycontext.IsDeny(ctx):
-			policy.Ssh.Host.Deny.Ips = ips
-		default:
-			panic("no allow nor deny context set")
-		}
-	case policycontext.IsSSHUserPolicy(ctx):
-		return errors.New("SSH user policy does not support IP addresses or ranges")
-	case policycontext.IsX509Policy(ctx):
-		switch {
-		case policycontext.IsAllow(ctx):
-			policy.X509.Allow.Ips = ips
-		case policycontext.IsDeny(ctx):
-			policy.X509.Deny.Ips = ips
+			policy.X509.Deny.Ips = addOrRemoveArguments(policy.X509.Deny.Ips, args, shouldRemove)
 		default:
 			panic("no allow nor deny context set")
 		}
