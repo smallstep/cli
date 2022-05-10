@@ -9,7 +9,7 @@ import (
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 )
 
-// Command returns the policy subcommand.
+// Command returns the deny subcommand.
 func denyCommand(ctx context.Context) cli.Command {
 	ctx = policycontext.WithDeny(ctx)
 	return cli.Command{

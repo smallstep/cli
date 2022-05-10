@@ -9,7 +9,7 @@ import (
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 )
 
-// allowCommand returns the policy subcommand.
+// allowCommand returns the SSH user allow subcommand.
 func allowCommand(ctx context.Context) cli.Command {
 	ctx = policycontext.WithAllow(ctx)
 	return cli.Command{

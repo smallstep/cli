@@ -9,7 +9,7 @@ import (
 	"github.com/smallstep/cli/command/ca/policy/ssh/user"
 )
 
-// Command returns the policy subcommand.
+// Command returns the ssh subcommand.
 func Command(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:        "ssh",
