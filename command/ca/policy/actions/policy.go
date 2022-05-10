@@ -99,7 +99,7 @@ func newPolicy() *linkedca.Policy {
 }
 
 // addOrRemoveArguments adds or removes args to/from existingNames
-func addOrRemoveArguments(existingNames []string, args []string, shouldRemove bool) []string {
+func addOrRemoveArguments(existingNames, args []string, shouldRemove bool) []string {
 	if shouldRemove {
 		for _, name := range args {
 			existingNames = remove(name, existingNames)

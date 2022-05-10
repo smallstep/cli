@@ -3,6 +3,8 @@ package policycontext
 import (
 	"context"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_hasPolicyLevel(t *testing.T) {
@@ -15,14 +17,6 @@ func Test_hasPolicyLevel(t *testing.T) {
 		args args
 		want bool
 	}{
-		{
-			name: "nil-context",
-			args: args{
-				ctx:   nil,
-				level: authorityPolicyLevel,
-			},
-			want: false,
-		},
 		{
 			name: "not-set",
 			args: args{
@@ -55,4 +49,10 @@ func Test_hasPolicyLevel(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_hasPolicyLevelPanics(t *testing.T) {
+	t.Parallel()
+	//nolint:staticcheck // explicit test for a nil context
+	assert.Panics(t, func() { isPolicyLevel(nil, authorityPolicyLevel) })
 }
