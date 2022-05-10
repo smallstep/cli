@@ -8,7 +8,6 @@ import (
 	"github.com/smallstep/cli/command/ca/policy/acme"
 	"github.com/smallstep/cli/command/ca/policy/authority"
 	"github.com/smallstep/cli/command/ca/policy/provisioner"
-	"github.com/smallstep/cli/internal/command"
 )
 
 // Command returns the policy subcommand.
