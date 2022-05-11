@@ -76,7 +76,7 @@ starting with a capital letter and no trailing period: *"Return error on wrong
 use of the Paginator"*, **NOT** *"returning some error."*
 
 Also, if your commit references one or more GitHub issues, always end your
-commit message body with *See #1234* or *Fixes #1234*.  Replace *1234* with the
+commit message body with *See #1234* or *Fixes #1234*. Replace *1234* with the
 GitHub issue ID. The last example will close the issue when the commit is
 merged into *master*.
 

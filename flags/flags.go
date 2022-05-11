@@ -375,6 +375,18 @@ domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
 		Usage: `The certificate identity. It is usually passed as a positional argument, but a
 flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 	}
+
+	// EABKeyID is a cli.Flag that points to an ACME EAB Key ID
+	EABKeyID = cli.StringFlag{
+		Name:  "eab-key-id",
+		Usage: "An ACME EAB Key ID",
+	}
+
+	// EABReference is a cli.Flag that points to an ACME EAB Key Reference
+	EABReference = cli.StringFlag{
+		Name:  "eab-key-reference",
+		Usage: "An ACME EAB Key Reference",
+	}
 )
 
 // ParseTimeOrDuration is a helper that returns the time or the current time

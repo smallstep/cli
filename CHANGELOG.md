@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased - 0.19.1] - DATE
 ### Added
+- Add commands for managing certificate issuance policies on authority, provisioner and ACME account level.
 ### Changed
 ### Deprecated
 ### Removed
