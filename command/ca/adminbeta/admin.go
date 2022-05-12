@@ -12,12 +12,17 @@ import (
 	"go.step.sm/linkedca"
 )
 
+func deprecationWarning() {
+	ui.Printf("The `step beta ...` prefix is deprecated and will be removed in a future release.")
+	ui.Printf("Please use `step ca admin ...` going forwards.")
+}
+
 // Command returns the jwk subcommand.
 func Command() cli.Command {
 	return cli.Command{
 		Name:      "admin",
 		Usage:     "create and manage the certificate authority admins",
-		UsageText: "**step ca admin** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "**step beta ca admin** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			listCommand(),
 			addCommand(),
@@ -27,6 +32,9 @@ func Command() cli.Command {
 		Description: `**step ca admin** command group provides facilities for managing the
 certificate authority admins.
 
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
+
 An admin is an entity that manages administrative resources (like authority
 configuration, provisioner configuration, and other admins) within a certificate
 authority.
@@ -35,22 +43,22 @@ authority.
 
 List the active admins:
 '''
-$ step ca admin list
+$ step beta ca admin list
 '''
 
 Add an admin:
 '''
-$ step ca admin add max@smallstep.com my-jwk-provisioner --super
+$ step beta ca admin add max@smallstep.com my-jwk-provisioner --super
 '''
 
 Update an admin:
 '''
-$ step ca admin update max@smallstep.com --super=false
+$ step beta ca admin update max@smallstep.com --super=false
 '''
 
 Remove an admin:
 '''
-$ step ca admin remove max@smallstep.com
+$ step beta ca admin remove max@smallstep.com
 '''`,
 	}
 }

@@ -18,7 +18,7 @@ func addCommand() cli.Command {
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add an admin to the CA configuration",
-		UsageText: `**step ca admin add** <subject> <provisioner> [**--super**]
+		UsageText: `**step beta ca admin add** <subject> <provisioner> [**--super**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]`,
@@ -36,7 +36,10 @@ func addCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step ca admin add** adds an admin to the CA configuration.
+		Description: `**step beta ca admin add** adds an admin to the CA configuration.
+
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
 
 ## POSITIONAL ARGUMENTS
 
@@ -50,18 +53,20 @@ func addCommand() cli.Command {
 
 Add regular Admin:
 '''
-$ step ca admin add max@smallstep.com google
+$ step beta ca admin add max@smallstep.com google
 '''
 
 Add SuperAdmin:
 '''
-$ step ca admin add max@smallstep.com google --super
+$ step beta ca admin add max@smallstep.com google --super
 '''
 `,
 	}
 }
 
 func addAction(ctx *cli.Context) (err error) {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}

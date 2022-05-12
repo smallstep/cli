@@ -1,6 +1,7 @@
-package admin
+package provisionerbeta
 
 import (
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
@@ -11,13 +12,12 @@ func removeCommand() cli.Command {
 	return cli.Command{
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
-		Usage:  "remove an admin from the CA configuration",
-		UsageText: `**step ca admin remove** <subject> [**--provisioner**=<name>]
+		Usage:  "remove a provisioner from the CA configuration",
+		UsageText: `**step beta ca provisioner remove** <name>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminProvisioner,
@@ -27,46 +27,35 @@ func removeCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step ca admin remove** removes an admin from the CA configuration.
+		Description: `**step beta ca provisioner remove** removes a provisioner from the CA configuration.
 
-## POSITIONAL ARGUMENTS
-
-<name>
-: The name of the admin to be removed.
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
 
 ## EXAMPLES
 
-Remove an admin:
+Remove provisioner by name:
 '''
-$ step ca admin remove max@smallstep.com
-'''
-
-Remove an admin with additional filtering by provisioner:
-'''
-$ step ca admin remove max@smallstep.com --provisioner admin-jwk
+$ step beta ca provisioner remove acme
 '''
 `,
 	}
 }
 
-func removeAction(ctx *cli.Context) error {
+func removeAction(ctx *cli.Context) (err error) {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
+
+	args := ctx.Args()
+	name := args.Get(0)
 
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	admins, err := client.GetAdmins()
-	if err != nil {
-		return err
-	}
-	adm, err := adminPrompt(ctx, client, admins)
-	if err != nil {
-		return err
-	}
-
-	return client.RemoveAdmin(adm.Id)
+	return client.RemoveProvisioner(ca.WithProvisionerName(name))
 }

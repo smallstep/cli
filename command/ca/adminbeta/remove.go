@@ -12,7 +12,7 @@ func removeCommand() cli.Command {
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove an admin from the CA configuration",
-		UsageText: `**step ca admin remove** <subject> [**--provisioner**=<name>]
+		UsageText: `**step beta ca admin remove** <subject> [**--provisioner**=<name>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]`,
@@ -27,7 +27,10 @@ func removeCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step ca admin remove** removes an admin from the CA configuration.
+		Description: `**step beta ca admin remove** removes an admin from the CA configuration.
+
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
 
 ## POSITIONAL ARGUMENTS
 
@@ -38,18 +41,20 @@ func removeCommand() cli.Command {
 
 Remove an admin:
 '''
-$ step ca admin remove max@smallstep.com
+$ step beta ca admin remove max@smallstep.com
 '''
 
 Remove an admin with additional filtering by provisioner:
 '''
-$ step ca admin remove max@smallstep.com --provisioner admin-jwk
+$ step beta ca admin remove max@smallstep.com --provisioner admin-jwk
 '''
 `,
 	}
 }
 
 func removeAction(ctx *cli.Context) error {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
