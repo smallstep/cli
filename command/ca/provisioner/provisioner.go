@@ -15,6 +15,7 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 	"go.step.sm/linkedca"
 )
 
@@ -109,6 +110,7 @@ func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 	case errors.Is(err, os.ErrNotExist):
 		return cautils.NewAdminClient(cliCtx)
 	case err == nil:
+		ui.Printf("Found ca.json: %s\n", cfgFile)
 		cfg, err := config.LoadConfiguration(cfgFile)
 		if err != nil {
 			return nil, fmt.Errorf("error loading configuration: %w", err)
@@ -119,7 +121,8 @@ func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 			}
 			return cautils.NewAdminClient(cliCtx)
 		}
-		return newAdminAPIDisabledClient(context.Background(), cfg, cfgFile)
+		ui.Printf("Loading client for provisioners stored in ca.json\n")
+		return newCaConfigClient(context.Background(), cfg, cfgFile)
 	default:
 		return nil, errs.FileError(err, cfgFile)
 	}

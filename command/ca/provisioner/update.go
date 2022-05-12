@@ -106,7 +106,7 @@ ACME (ACME)
 			oidcTenantIDFlag,
 
 			// X5C Root Flag
-			nebulaRootFlag,
+			x5cRootFlag,
 
 			// Nebula provisioner flags
 			nebulaRootFlag,

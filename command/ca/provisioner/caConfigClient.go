@@ -1,0 +1,218 @@
+package provisioner
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/pkg/errors"
+	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/certificates/authority/config"
+	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/ca"
+	"go.step.sm/cli-utils/ui"
+	"go.step.sm/linkedca"
+)
+
+// nodb implements the certificates/Admiclient interface with noops.
+type nodb struct{}
+
+func newNoDB() *nodb {
+	return &nodb{}
+}
+
+func (n *nodb) CreateProvisioner(ctx context.Context, prov *linkedca.Provisioner) error {
+	return nil
+}
+
+func (n *nodb) GetProvisioner(ctx context.Context, id string) (*linkedca.Provisioner, error) {
+	return nil, nil
+}
+
+func (n *nodb) GetProvisioners(ctx context.Context) ([]*linkedca.Provisioner, error) {
+	return nil, nil
+}
+
+func (n *nodb) UpdateProvisioner(ctx context.Context, prov *linkedca.Provisioner) error {
+	return nil
+}
+
+func (n *nodb) DeleteProvisioner(ctx context.Context, id string) error {
+	return nil
+}
+
+func (n *nodb) CreateAdmin(ctx context.Context, admin *linkedca.Admin) error {
+	return nil
+}
+
+func (n *nodb) GetAdmin(ctx context.Context, id string) (*linkedca.Admin, error) {
+	return nil, nil
+}
+
+func (n *nodb) GetAdmins(ctx context.Context) ([]*linkedca.Admin, error) {
+	return nil, nil
+}
+
+func (n *nodb) UpdateAdmin(ctx context.Context, prov *linkedca.Admin) error {
+	return nil
+}
+
+func (n *nodb) DeleteAdmin(ctx context.Context, id string) error {
+	return nil
+}
+
+type caConfigClient struct {
+	configFile string
+	ctx        context.Context
+	auth       *authority.Authority
+}
+
+func newCaConfigClient(ctx context.Context, cfg *config.Config, cfgFile string) (*caConfigClient, error) {
+	a, err := authority.New(cfg, authority.WithAdminDB(newNoDB()), authority.WithSkipInit())
+	if err != nil {
+		return nil, fmt.Errorf("error loading authority: %w", err)
+	}
+	client := &caConfigClient{
+		configFile: cfgFile,
+		ctx:        ctx,
+		auth:       a,
+	}
+	if err := client.auth.ReloadAdminResources(ctx); err != nil {
+		return nil, fmt.Errorf("error loading provisioners from config: %w", err)
+	}
+	return client, nil
+}
+
+func (client *caConfigClient) CreateProvisioner(prov *linkedca.Provisioner) (*linkedca.Provisioner, error) {
+	if err := client.auth.StoreProvisioner(client.ctx, prov); err != nil {
+		return nil, fmt.Errorf("error storing provisioner: %w", err)
+	}
+
+	if err := client.write(); err != nil {
+		return nil, err
+	}
+
+	return prov, nil
+}
+
+func (client *caConfigClient) GetProvisioner(opts ...ca.ProvisionerOption) (*linkedca.Provisioner, error) {
+	o := new(ca.ProvisionerOptions)
+	if err := o.Apply(opts); err != nil {
+		return nil, err
+	}
+
+	var (
+		err  error
+		prov provisioner.Interface
+	)
+
+	switch {
+	case o.Name != "":
+		prov, err = client.auth.LoadProvisionerByName(o.Name)
+	case o.ID != "":
+		prov, err = client.auth.LoadProvisionerByID(o.ID)
+	default:
+		return nil, errors.New("provisioner options must define either ID or Name to retrieve")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error loading provisioner: %w", err)
+	}
+
+	linkedcaProv, err := authority.ProvisionerToLinkedca(prov)
+	if err != nil {
+		return nil, fmt.Errorf("error converting provisioner interface to linkedca provisioner: %w", err)
+	}
+
+	return linkedcaProv, nil
+}
+
+func (client *caConfigClient) UpdateProvisioner(name string, prov *linkedca.Provisioner) error {
+	if err := client.auth.UpdateProvisioner(client.ctx, prov); err != nil {
+		return fmt.Errorf("error updating provisioner: %w", err)
+	}
+
+	if err := client.write(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (client *caConfigClient) RemoveProvisioner(opts ...ca.ProvisionerOption) error {
+	o := new(ca.ProvisionerOptions)
+	if err := o.Apply(opts); err != nil {
+		return err
+	}
+
+	var (
+		err  error
+		prov provisioner.Interface
+	)
+
+	switch {
+	case o.Name != "":
+		prov, err = client.auth.LoadProvisionerByName(o.Name)
+	case o.ID != "":
+		prov, err = client.auth.LoadProvisionerByID(o.ID)
+	default:
+		return errors.New("provisioner options must define either ID or Name to remove")
+	}
+
+	if err != nil {
+		return fmt.Errorf("error loading provisioner: %w", err)
+	}
+
+	if err := client.auth.RemoveProvisioner(client.ctx, prov.GetID()); err != nil {
+		return fmt.Errorf("error removing provisioner: %w", err)
+	}
+
+	if err := client.write(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (client *caConfigClient) GetProvisioners(opts ...ca.ProvisionerOption) (provisioner.List, error) {
+	o := new(ca.ProvisionerOptions)
+	if err := o.Apply(opts); err != nil {
+		return nil, err
+	}
+
+	if o.Limit == 0 {
+		o.Limit = 100
+	}
+
+	var (
+		cursor = o.Cursor
+		limit  = o.Limit
+		provs  = provisioner.List{}
+	)
+	for {
+		page, nextCursor, err := client.auth.GetProvisioners(cursor, limit)
+		if err != nil {
+			return nil, err
+		}
+		provs = append(provs, page...)
+		if nextCursor == "" {
+			return provs, nil
+		}
+		cursor = nextCursor
+	}
+}
+
+func (client *caConfigClient) write() error {
+	provs, err := client.GetProvisioners()
+	if err != nil {
+		return err
+	}
+	cfg := client.auth.GetConfig()
+	cfg.AuthorityConfig.Provisioners = provs
+	if err := cfg.Save(client.configFile); err != nil {
+		return err
+	}
+
+	ui.Println("Success! Your `step-ca` config has been updated. To pick up the new configuration SIGHUP (kill -1 <pid>) or restart the step-ca process.")
+
+	return nil
+}
