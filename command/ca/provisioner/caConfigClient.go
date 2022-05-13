@@ -2,7 +2,6 @@ package provisioner
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority"
@@ -69,7 +68,7 @@ type caConfigClient struct {
 func newCaConfigClient(ctx context.Context, cfg *config.Config, cfgFile string) (*caConfigClient, error) {
 	a, err := authority.New(cfg, authority.WithAdminDB(newNoDB()), authority.WithSkipInit())
 	if err != nil {
-		return nil, fmt.Errorf("error loading authority: %w", err)
+		return nil, errors.Wrapf(err, "error loading authority")
 	}
 	client := &caConfigClient{
 		configFile: cfgFile,
@@ -77,14 +76,14 @@ func newCaConfigClient(ctx context.Context, cfg *config.Config, cfgFile string) 
 		auth:       a,
 	}
 	if err := client.auth.ReloadAdminResources(ctx); err != nil {
-		return nil, fmt.Errorf("error loading provisioners from config: %w", err)
+		return nil, errors.Wrapf(err, "error loading provisioners from config")
 	}
 	return client, nil
 }
 
 func (client *caConfigClient) CreateProvisioner(prov *linkedca.Provisioner) (*linkedca.Provisioner, error) {
 	if err := client.auth.StoreProvisioner(client.ctx, prov); err != nil {
-		return nil, fmt.Errorf("error storing provisioner: %w", err)
+		return nil, errors.Wrapf(err, "error storing provisioner")
 	}
 
 	if err := client.write(); err != nil {
@@ -95,6 +94,47 @@ func (client *caConfigClient) CreateProvisioner(prov *linkedca.Provisioner) (*li
 }
 
 func (client *caConfigClient) GetProvisioner(opts ...ca.ProvisionerOption) (*linkedca.Provisioner, error) {
+	prov, err := client.loadProvisioner(opts...)
+	if err != nil {
+		return nil, err
+	}
+	linkedcaProv, err := authority.ProvisionerToLinkedca(prov)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error converting provisioner interface to linkedca provisioner")
+	}
+
+	return linkedcaProv, nil
+}
+
+func (client *caConfigClient) UpdateProvisioner(name string, prov *linkedca.Provisioner) error {
+	if err := client.auth.UpdateProvisioner(client.ctx, prov); err != nil {
+		return errors.Wrapf(err, "error updating provisioner")
+	}
+
+	if err := client.write(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (client *caConfigClient) RemoveProvisioner(opts ...ca.ProvisionerOption) error {
+	prov, err := client.loadProvisioner(opts...)
+	if err != nil {
+		return err
+	}
+	if err := client.auth.RemoveProvisioner(client.ctx, prov.GetID()); err != nil {
+		return errors.Wrapf(err, "error removing provisioner")
+	}
+
+	if err := client.write(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (client *caConfigClient) loadProvisioner(opts ...ca.ProvisionerOption) (provisioner.Interface, error) {
 	o := new(ca.ProvisionerOptions)
 	if err := o.Apply(opts); err != nil {
 		return nil, err
@@ -106,71 +146,15 @@ func (client *caConfigClient) GetProvisioner(opts ...ca.ProvisionerOption) (*lin
 	)
 
 	switch {
-	case o.Name != "":
-		prov, err = client.auth.LoadProvisionerByName(o.Name)
 	case o.ID != "":
 		prov, err = client.auth.LoadProvisionerByID(o.ID)
-	default:
-		return nil, errors.New("provisioner options must define either ID or Name to retrieve")
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("error loading provisioner: %w", err)
-	}
-
-	linkedcaProv, err := authority.ProvisionerToLinkedca(prov)
-	if err != nil {
-		return nil, fmt.Errorf("error converting provisioner interface to linkedca provisioner: %w", err)
-	}
-
-	return linkedcaProv, nil
-}
-
-func (client *caConfigClient) UpdateProvisioner(name string, prov *linkedca.Provisioner) error {
-	if err := client.auth.UpdateProvisioner(client.ctx, prov); err != nil {
-		return fmt.Errorf("error updating provisioner: %w", err)
-	}
-
-	if err := client.write(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (client *caConfigClient) RemoveProvisioner(opts ...ca.ProvisionerOption) error {
-	o := new(ca.ProvisionerOptions)
-	if err := o.Apply(opts); err != nil {
-		return err
-	}
-
-	var (
-		err  error
-		prov provisioner.Interface
-	)
-
-	switch {
 	case o.Name != "":
 		prov, err = client.auth.LoadProvisionerByName(o.Name)
-	case o.ID != "":
-		prov, err = client.auth.LoadProvisionerByID(o.ID)
 	default:
-		return errors.New("provisioner options must define either ID or Name to remove")
+		return nil, errors.New("provisioner options must define either ID or Name to remove")
 	}
 
-	if err != nil {
-		return fmt.Errorf("error loading provisioner: %w", err)
-	}
-
-	if err := client.auth.RemoveProvisioner(client.ctx, prov.GetID()); err != nil {
-		return fmt.Errorf("error removing provisioner: %w", err)
-	}
-
-	if err := client.write(); err != nil {
-		return err
-	}
-
-	return nil
+	return prov, errors.Wrapf(err, "erorr loading provisioner")
 }
 
 func (client *caConfigClient) GetProvisioners(opts ...ca.ProvisionerOption) (provisioner.List, error) {

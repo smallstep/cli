@@ -334,6 +334,7 @@ $ step beta ca provisioner add Amazon --type AWS \
 
 func addAction(ctx *cli.Context) (err error) {
 	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
