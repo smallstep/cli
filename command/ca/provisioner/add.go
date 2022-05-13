@@ -28,10 +28,12 @@ func addCommand() cli.Command {
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add a provisioner",
 		UsageText: `**step ca provisioner add** <name> **--type**=JWK [**--public-key**=<file>]
-[**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
+[**--private-key**=<file>] [**--no-private-key**] [**--create**] [**--password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+
+OIDC
 
 **step ca provisioner add** <name> **--type**=OIDC
 [**--client-id**=<id>] [**--client-secret**=<secret>]
@@ -41,26 +43,35 @@ func addCommand() cli.Command {
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
+X5C
 
 **step ca provisioner add** <name> **--type**=X5C **--x5c-root**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
+SSHPOP
+
 **step ca provisioner add** <name> **--type**=SSHPOP
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+
+Nebula
 
 **step ca provisioner add** <name> **--type**=Nebula **--nebula-root**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
+K8SSA
+
 **step ca provisioner add** <name> **--type**=K8SSA [**--public-key**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+
+IID
 
 **step ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
 [**--aws-account**=<id>] [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
@@ -71,10 +82,14 @@ func addCommand() cli.Command {
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
+ACME
+
 **step ca provisioner add** <name> **--type**=ACME [**--force-cn**] [**--require-eab**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+
+SCEP
 
 **step ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--min-public-key-length**=<length>]
@@ -89,6 +104,7 @@ func addCommand() cli.Command {
 			// JWK provisioner flags
 			jwkCreateFlag,
 			jwkPrivKeyFlag,
+			jwkNoPrivKeyFlag,
 
 			// OIDC provisioner flags
 			oidcClientIDFlag,
@@ -171,6 +187,11 @@ func addCommand() cli.Command {
 Create a JWK provisioner with newly generated keys and a template for x509 certificates:
 '''
 step ca provisioner add cicd --type JWK --create --x509-template ./templates/example.tpl
+'''
+
+Create a JWK provisioner with newly generated keys but do not store the private key with the provisioner:
+'''
+step ca provisioner add cicd --type JWK --create --no-private-key
 '''
 
 Create a JWK provisioner and explicitly select the configuration file to update:
@@ -397,6 +418,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		err      error
 		password string
 	)
+
 	if passwordFile := ctx.String("password-file"); len(passwordFile) > 0 {
 		password, err = utils.ReadStringPasswordFromFile(passwordFile)
 		if err != nil {
@@ -427,6 +449,10 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		if !ctx.IsSet("public-key") {
 			return nil, errs.RequiredWithFlagValue(ctx, "create", "false", "public-key")
 		}
+		if ctx.IsSet("private-key") && ctx.IsSet("no-private-key") {
+			return nil, errs.IncompatibleFlagWithFlag(ctx, "private-key", "no-private-key")
+		}
+
 		jwkFile := ctx.String("public-key")
 		jwk, err = jose.ParseKey(jwkFile)
 		if err != nil {
@@ -490,7 +516,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		PublicKey: jwkPubBytes,
 	}
 
-	if jwe != nil {
+	if jwe != nil && !ctx.Bool("no-private-key") {
 		jwePrivStr, err := jwe.CompactSerialize()
 		if err != nil {
 			return nil, errors.Wrap(err, "error serializing JWE")

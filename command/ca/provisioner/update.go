@@ -28,7 +28,7 @@ func updateCommand() cli.Command {
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update a provisioner",
 		UsageText: `**step ca provisioner update** <name> [**--public-key**=<file>]
-[**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
+[**--private-key**=<file>] [**--no-private-key**] [**--create**] [**--password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -59,7 +59,7 @@ X5C
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
-Kubernetes Service Account
+K8SSA (Kubernetes Service Account)
 
 **step ca provisioner update** <name> [**--public-key**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
@@ -79,7 +79,7 @@ IID (AWS/GCP/Azure)
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
-ACME (ACME)
+SCEP
 
 **step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>]
@@ -94,6 +94,7 @@ ACME (ACME)
 			// JWK provisioner flags
 			jwkCreateFlag,
 			jwkPrivKeyFlag,
+			jwkNoPrivKeyFlag,
 
 			// OIDC provisioner flags
 			oidcClientIDFlag,
@@ -185,14 +186,19 @@ Update a JWK provisioner with newly generated keys and a template for x509 certi
 step ca provisioner update cicd --create --x509-template ./templates/example.tpl
 '''
 
+Update a JWK provisioner with newly generated keys but do not store the private key with the provisioner:
+'''
+step ca provisioner update cicd --create --no-private-key
+'''
+
 Update a JWK provisioner by removing a previously set template:
 '''
-step ca provisioner update cicd --create --x509-template ""
+step ca provisioner update cicd --x509-template ""
 '''
 
 Update a JWK provisioner with duration claims:
 '''
-step ca provisioner update cicd --create --x509-min-dur 20m --x509-default-dur 48h --ssh-user-min-dur 17m --ssh-host-default-dur 16h
+step ca provisioner update cicd --x509-min-dur 20m --x509-default-dur 48h --ssh-user-min-dur 17m --ssh-host-default-dur 16h
 '''
 
 Update a JWK provisioner with existing keys:
@@ -203,6 +209,11 @@ step ca provisioner update jane@doe.com --public-key jwk.pub --private-key jwk.p
 Update a JWK provisioner to disable ssh provisioning:
 '''
 step ca provisioner update cicd --ssh=false
+'''
+
+Update a JWK provisioner by removing a previously cached private key:
+'''
+step ca provisioner update cicd --no-private-key
 '''
 
 Update a JWK provisioner and explicitly select the ca.json to modify:
@@ -481,6 +492,10 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 			return err
 		}
 	} else {
+		if ctx.IsSet("private-key") && ctx.IsSet("no-private-key") {
+			return errs.IncompatibleFlagWithFlag(ctx, "private-key", "no-private-key")
+		}
+
 		if ctx.IsSet("public-key") {
 			jwkFile := ctx.String("public-key")
 			jwk, err = jose.ParseKey(jwkFile)
@@ -546,7 +561,9 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.PublicKey = jwkPubBytes
 	}
 
-	if jwe != nil {
+	if ctx.Bool("no-private-key") {
+		details.EncryptedPrivateKey = nil
+	} else if jwe != nil {
 		jwePrivStr, err := jwe.CompactSerialize()
 		if err != nil {
 			return errors.Wrap(err, "error serializing JWE")

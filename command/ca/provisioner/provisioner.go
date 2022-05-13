@@ -455,6 +455,11 @@ provisioning tokens.`,
 		Name:  "private-key",
 		Usage: `The <file> containing the JWK private key.`,
 	}
+	jwkNoPrivKeyFlag = cli.BoolFlag{
+		Name:  "no-private-key",
+		Usage: `Do not store the encrypted private key with the provisioner.`,
+	}
+
 	// OIDC provisioner flags
 	oidcClientIDFlag = cli.StringFlag{
 		Name:  "client-id",
