@@ -1,4 +1,4 @@
-package admin
+package adminbeta
 
 import (
 	"github.com/smallstep/cli/flags"

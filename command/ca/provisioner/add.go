@@ -295,8 +295,15 @@ func addAction(ctx *cli.Context) (err error) {
 	if !ok {
 		return errs.InvalidFlagValue(ctx, "type", ctx.String("type"), "JWK, ACME, OIDC, SSHPOP, K8SSA, NEBULA, SCEP, AWS, GCP, AZURE")
 	}
-	if err := validateDurationFlags(ctx); err != nil {
-		return err
+
+	for _, flag := range []string{
+		"x509-min-dur", "x509-max-dur", "x509-default-dur",
+		"ssh-user-min-dur", "ssh-user-max-dur", "ssh-user-default-dur",
+		"ssh-host-min-dur", "ssh-host-max-dur", "ssh-host-default-dur",
+	} {
+		if err := validateDurationFlag(ctx, flag); err != nil {
+			return err
+		}
 	}
 
 	p := &linkedca.Provisioner{
@@ -467,7 +474,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			jwkFile = ctx.String("private-key")
 			b, err := os.ReadFile(jwkFile)
 			if err != nil {
-				return nil, errors.Wrapf(err, "error reading %s", jwkFile)
+				return nil, errs.FileError(err, jwkFile)
 			}
 
 			// Attempt to parse private key as Encrypted JSON.
@@ -478,9 +485,9 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			// Attempt to parse as decrypted private key.
 			jwe, err = jose.ParseEncrypted(string(b))
 			if err != nil {
-				privjwk, err := jose.ReadKey(jwkFile)
+				privjwk, err := jose.ParseKey(b, jose.WithFilename(jwkFile))
 				if err != nil {
-					return nil, errs.FileError(err, jwkFile)
+					return nil, err
 				}
 
 				if privjwk.IsPublic() {
@@ -488,11 +495,20 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 				}
 
 				// Encrypt JWK
-				opts := []jose.Option{}
+				var passbytes []byte
 				if ctx.IsSet("password-file") {
-					opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
+					passbytes, err = os.ReadFile(ctx.String("password-file"))
+					if err != nil {
+						return nil, errs.FileError(err, ctx.String("password-file"))
+					}
+				} else {
+					passbytes, err = ui.PromptPasswordGenerate("Please enter a password to encrypt the provisioner private key? [leave empty and we'll generate one]",
+						ui.WithValue(password))
+					if err != nil {
+						return nil, err
+					}
 				}
-				jwe, err = jose.EncryptJWK(privjwk, opts...)
+				jwe, err = jose.EncryptJWK(privjwk, passbytes)
 				if err != nil {
 					return nil, err
 				}

@@ -66,19 +66,23 @@ type caConfigClient struct {
 }
 
 func newCaConfigClient(ctx context.Context, cfg *config.Config, cfgFile string) (*caConfigClient, error) {
-	a, err := authority.New(cfg, authority.WithAdminDB(newNoDB()), authority.WithSkipInit())
+	provClxn := provisioner.NewCollection(provisioner.Audiences{})
+	for _, p := range cfg.AuthorityConfig.Provisioners {
+		if err := provClxn.Store(p); err != nil {
+			return nil, err
+		}
+	}
+	a, err := authority.New(cfg, authority.WithAdminDB(newNoDB()),
+		authority.WithSkipInit(), authority.WithProvisioners(provClxn))
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading authority")
 	}
-	client := &caConfigClient{
+
+	return &caConfigClient{
 		configFile: cfgFile,
 		ctx:        ctx,
 		auth:       a,
-	}
-	if err := client.auth.ReloadAdminResources(ctx); err != nil {
-		return nil, errors.Wrapf(err, "error loading provisioners from config")
-	}
-	return client, nil
+	}, nil
 }
 
 func (client *caConfigClient) CreateProvisioner(prov *linkedca.Provisioner) (*linkedca.Provisioner, error) {

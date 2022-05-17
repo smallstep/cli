@@ -4,6 +4,7 @@ import (
 	"github.com/smallstep/cli/command/ca/acme"
 	"github.com/smallstep/cli/command/ca/admin"
 	"github.com/smallstep/cli/command/ca/policy"
+	"github.com/smallstep/cli/command/ca/adminbeta"
 	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/smallstep/cli/command/ca/provisionerbeta"
 	"github.com/urfave/cli"

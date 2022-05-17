@@ -159,63 +159,13 @@ func removeElements(list, rems []string) []string {
 	return list
 }
 
-func validateDurationFlags(ctx *cli.Context) error {
-	if ctx.IsSet("x509-min-dur") {
-		x := ctx.String("x509-min-dur")
-		if _, err := time.ParseDuration(x); err != nil {
-			return errs.InvalidFlagValue(ctx, "x509-min-dur", x)
+func validateDurationFlag(ctx *cli.Context, name string) error {
+	if ctx.IsSet(name) {
+		if _, err := time.ParseDuration(ctx.String(name)); err != nil {
+			return errs.InvalidFlagValue(ctx, name, ctx.String(name), "")
 		}
 	}
-	if ctx.IsSet("x509-max-dur") {
-		x := ctx.String("x509-max-dur")
-		if _, err := time.ParseDuration(x); err != nil {
-			return errs.InvalidFlagValue(ctx, "x509-max-dur", x)
-		}
-	}
-	if ctx.IsSet("x509-default-dur") {
-		x := ctx.String("x509-default-dur")
-		if _, err := time.ParseDuration(x); err != nil {
-			return errs.InvalidFlagValue(ctx, "x509-default-dur", x)
-		}
-	}
-
-	if ctx.IsSet("ssh-user-min-dur") {
-		x := ctx.String("ssh-user-min-dur")
-		if _, err := time.ParseDuration(x); err != nil {
-			return errs.InvalidFlagValue(ctx, "ssh-user-min-dur", x)
-		}
-	}
-	if ctx.IsSet("ssh-user-max-dur") {
-		x := ctx.String("ssh-user-max-dur")
-		if _, err := time.ParseDuration(x); err != nil {
-			return errs.InvalidFlagValue(ctx, "ssh-user-max-dur", x)
-		}
-	}
-	if ctx.IsSet("ssh-user-default-dur") {
-		x := ctx.String("ssh-user-default-dur")
-		if _, err := time.ParseDuration(x); err != nil {
-			return errs.InvalidFlagValue(ctx, "ssh-user-default-dur", x)
-		}
-	}
-
-	if ctx.IsSet("ssh-host-min-dur") {
-		x := ctx.String("ssh-host-min-dur")
-		if _, err := time.ParseDuration(x); err != nil {
-			return errs.InvalidFlagValue(ctx, "ssh-host-min-dur", x)
-		}
-	}
-	if ctx.IsSet("ssh-host-max-dur") {
-		x := ctx.String("ssh-host-max-dur")
-		if _, err := time.ParseDuration(x); err != nil {
-			return errs.InvalidFlagValue(ctx, "ssh-host-max-dur", x)
-		}
-	}
-	if ctx.IsSet("ssh-host-default-dur") {
-		x := ctx.String("ssh-host-default-dur")
-		if _, err := time.ParseDuration(x); err != nil {
-			return errs.InvalidFlagValue(ctx, "ssh-host-default-dur", x)
-		}
-	}
+	return nil
 }
 
 var (

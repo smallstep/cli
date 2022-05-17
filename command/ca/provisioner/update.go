@@ -14,11 +14,11 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
 	"go.step.sm/linkedca"
 )
 
@@ -272,8 +272,14 @@ func updateAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	if err := validateDurationFlags(ctx); err != nil {
-		return err
+	for _, flag := range []string{
+		"x509-min-dur", "x509-max-dur", "x509-default-dur",
+		"ssh-user-min-dur", "ssh-user-max-dur", "ssh-user-default-dur",
+		"ssh-host-min-dur", "ssh-host-max-dur", "ssh-host-default-dur",
+	} {
+		if err := validateDurationFlag(ctx, flag); err != nil {
+			return err
+		}
 	}
 
 	args := ctx.Args()
@@ -503,7 +509,7 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 
 		if ctx.IsSet("public-key") {
 			jwkFile := ctx.String("public-key")
-			jwk, err = jose.ParseKey(jwkFile)
+			jwk, err = jose.ReadKey(jwkFile)
 			if err != nil {
 				return errs.FileError(err, jwkFile)
 			}
@@ -536,7 +542,7 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 			// Attempt to parse as decrypted private key.
 			jwe, err = jose.ParseEncrypted(string(b))
 			if err != nil {
-				privjwk, err := jose.ParseKey(jwkFile)
+				privjwk, err := jose.ParseKey(b)
 				if err != nil {
 					return errs.FileError(err, jwkFile)
 				}
@@ -546,11 +552,20 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 				}
 
 				// Encrypt JWK
-				opts := []jose.Option{}
+				var passbytes []byte
 				if ctx.IsSet("password-file") {
-					opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
+					passbytes, err = os.ReadFile(ctx.String("password-file"))
+					if err != nil {
+						return errs.FileError(err, ctx.String("password-file"))
+					}
+				} else {
+					passbytes, err = ui.PromptPasswordGenerate("Please enter a password to encrypt the provisioner private key? [leave empty and we'll generate one]",
+						ui.WithValue(password))
+					if err != nil {
+						return err
+					}
 				}
-				jwe, err = jose.EncryptJWK(privjwk, opts...)
+				jwe, err = jose.EncryptJWK(privjwk, passbytes)
 				if err != nil {
 					return err
 				}
