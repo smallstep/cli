@@ -159,6 +159,65 @@ func removeElements(list, rems []string) []string {
 	return list
 }
 
+func validateDurationFlags(ctx *cli.Context) error {
+	if ctx.IsSet("x509-min-dur") {
+		x := ctx.String("x509-min-dur")
+		if _, err := time.ParseDuration(x); err != nil {
+			return errs.InvalidFlagValue(ctx, "x509-min-dur", x)
+		}
+	}
+	if ctx.IsSet("x509-max-dur") {
+		x := ctx.String("x509-max-dur")
+		if _, err := time.ParseDuration(x); err != nil {
+			return errs.InvalidFlagValue(ctx, "x509-max-dur", x)
+		}
+	}
+	if ctx.IsSet("x509-default-dur") {
+		x := ctx.String("x509-default-dur")
+		if _, err := time.ParseDuration(x); err != nil {
+			return errs.InvalidFlagValue(ctx, "x509-default-dur", x)
+		}
+	}
+
+	if ctx.IsSet("ssh-user-min-dur") {
+		x := ctx.String("ssh-user-min-dur")
+		if _, err := time.ParseDuration(x); err != nil {
+			return errs.InvalidFlagValue(ctx, "ssh-user-min-dur", x)
+		}
+	}
+	if ctx.IsSet("ssh-user-max-dur") {
+		x := ctx.String("ssh-user-max-dur")
+		if _, err := time.ParseDuration(x); err != nil {
+			return errs.InvalidFlagValue(ctx, "ssh-user-max-dur", x)
+		}
+	}
+	if ctx.IsSet("ssh-user-default-dur") {
+		x := ctx.String("ssh-user-default-dur")
+		if _, err := time.ParseDuration(x); err != nil {
+			return errs.InvalidFlagValue(ctx, "ssh-user-default-dur", x)
+		}
+	}
+
+	if ctx.IsSet("ssh-host-min-dur") {
+		x := ctx.String("ssh-host-min-dur")
+		if _, err := time.ParseDuration(x); err != nil {
+			return errs.InvalidFlagValue(ctx, "ssh-host-min-dur", x)
+		}
+	}
+	if ctx.IsSet("ssh-host-max-dur") {
+		x := ctx.String("ssh-host-max-dur")
+		if _, err := time.ParseDuration(x); err != nil {
+			return errs.InvalidFlagValue(ctx, "ssh-host-max-dur", x)
+		}
+	}
+	if ctx.IsSet("ssh-host-default-dur") {
+		x := ctx.String("ssh-host-default-dur")
+		if _, err := time.ParseDuration(x); err != nil {
+			return errs.InvalidFlagValue(ctx, "ssh-host-default-dur", x)
+		}
+	}
+}
+
 var (
 	x509TemplateFlag = cli.StringFlag{
 		Name:  "x509-template",
@@ -313,12 +372,9 @@ containing one or more PEM formatted keys, if used with the K8SSA provisioner.`,
 		Usage: `Always set the common name in provisioned certificates.`,
 	}
 	requireEABFlag = cli.BoolFlag{
-		Name:  "require-eab",
-		Usage: `Require (and enable) External Account Binding for Account creation.`,
-	}
-	disableEABFlag = cli.BoolFlag{
-		Name:  "disable-eab",
-		Usage: `Disable External Account Binding for Account creation.`,
+		Name: "require-eab",
+		Usage: `Require (and enable) External Account Binding (EAB) for Account creation.
+If this flag is set to false, then disable EAB.`,
 	}
 
 	// SCEP provisioner flags
@@ -374,6 +430,10 @@ Use the flag multiple times to configure multiple resource groups`,
 		Name: "remove-azure-resource-group",
 		Usage: `Remove a Microsoft Azure resource group <name> used to validate the identity tokens.
 Use the flag multiple times to configure multiple resource groups`,
+	}
+	azureAudienceFlag = cli.StringFlag{
+		Name:  "azure-audience",
+		Usage: `The Microsoft Azure audience <name> used to validate the identity tokens.`,
 	}
 	azureSubscriptionIDFlag = cli.StringSliceFlag{
 		Name: "azure-subscription-id",

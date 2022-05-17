@@ -6,7 +6,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -14,11 +13,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
 	"go.step.sm/linkedca"
 )
 
@@ -76,7 +75,8 @@ IID
 **step ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
 [**--aws-account**=<id>] [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
-[**--instance-age**=<duration>] [**--iid-roots**=<file>]
+[**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
+[**--azure-object-id**=<id>] [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
@@ -138,6 +138,7 @@ SCEP
 			awsIIDRootsFlag,
 			azureTenantFlag,
 			azureResourceGroupFlag,
+			azureAudienceFlag,
 			azureSubscriptionIDFlag,
 			azureObjectIDFlag,
 			gcpServiceAccountFlag,
@@ -292,11 +293,15 @@ func addAction(ctx *cli.Context) (err error) {
 
 	typ, ok := linkedca.Provisioner_Type_value[strings.ToUpper(ctx.String("type"))]
 	if !ok {
-		return fmt.Errorf("unsupported provisioner type %s", ctx.String("type"))
+		return errs.InvalidFlagValue(ctx, "type", ctx.String("type"), "JWK, ACME, OIDC, SSHPOP, K8SSA, NEBULA, SCEP, AWS, GCP, AZURE")
+	}
+	if err := validateDurationFlags(ctx); err != nil {
+		return err
 	}
 
 	p := &linkedca.Provisioner{
 		Name: args.Get(0),
+		Type: linkedca.Provisioner_Type(typ),
 	}
 
 	// Read x509 template if passed
@@ -360,42 +365,29 @@ func addAction(ctx *cli.Context) (err error) {
 		AllowRenewalAfterExpiry: ctx.Bool("allow-renewal-after-expiry"),
 	}
 
-	switch linkedca.Provisioner_Type(typ) {
-	case linkedca.Provisioner_JWK:
-		p.Type = linkedca.Provisioner_JWK
-		p.Details, err = createJWKDetails(ctx)
+	switch p.Type {
 	case linkedca.Provisioner_ACME:
-		p.Type = linkedca.Provisioner_ACME
 		p.Details, err = createACMEDetails(ctx)
 	case linkedca.Provisioner_SSHPOP:
-		p.Type = linkedca.Provisioner_SSHPOP
 		p.Details, err = createSSHPOPDetails(ctx)
 	case linkedca.Provisioner_X5C:
-		p.Type = linkedca.Provisioner_X5C
 		p.Details, err = createX5CDetails(ctx)
 	case linkedca.Provisioner_K8SSA:
-		p.Type = linkedca.Provisioner_K8SSA
 		p.Details, err = createK8SSADetails(ctx)
 	case linkedca.Provisioner_OIDC:
-		p.Type = linkedca.Provisioner_OIDC
 		p.Details, err = createOIDCDetails(ctx)
 	case linkedca.Provisioner_AWS:
-		p.Type = linkedca.Provisioner_AWS
 		p.Details, err = createAWSDetails(ctx)
 	case linkedca.Provisioner_AZURE:
-		p.Type = linkedca.Provisioner_AZURE
 		p.Details, err = createAzureDetails(ctx)
 	case linkedca.Provisioner_GCP:
-		p.Type = linkedca.Provisioner_GCP
 		p.Details, err = createGCPDetails(ctx)
 	case linkedca.Provisioner_SCEP:
-		p.Type = linkedca.Provisioner_SCEP
 		p.Details, err = createSCEPDetails(ctx)
 	case linkedca.Provisioner_NEBULA:
-		p.Type = linkedca.Provisioner_NEBULA
 		p.Details, err = createNebulaDetails(ctx)
 	default:
-		return fmt.Errorf("unsupported provisioner type %s", ctx.String("type"))
+		p.Details, err = createJWKDetails(ctx)
 	}
 	if err != nil {
 		return err
@@ -454,7 +446,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		}
 
 		jwkFile := ctx.String("public-key")
-		jwk, err = jose.ParseKey(jwkFile)
+		jwk, err = jose.ReadKey(jwkFile)
 		if err != nil {
 			return nil, errs.FileError(err, jwkFile)
 		}
@@ -486,7 +478,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			// Attempt to parse as decrypted private key.
 			jwe, err = jose.ParseEncrypted(string(b))
 			if err != nil {
-				privjwk, err := jose.ParseKey(jwkFile)
+				privjwk, err := jose.ReadKey(jwkFile)
 				if err != nil {
 					return nil, errs.FileError(err, jwkFile)
 				}
@@ -714,6 +706,7 @@ func createAzureDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) 
 			Azure: &linkedca.AzureProvisioner{
 				TenantId:               tenantID,
 				ResourceGroups:         ctx.StringSlice("azure-resource-group"),
+				Audience:               ctx.String("azure-audience"),
 				SubscriptionIds:        ctx.StringSlice("azure-subscription-id"),
 				ObjectIds:              ctx.StringSlice("azure-object-id"),
 				DisableCustomSans:      ctx.Bool("disable-custom-sans"),

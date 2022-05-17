@@ -35,7 +35,7 @@ func updateCommand() cli.Command {
 
 ACME
 
-**step ca provisioner update** <name> [**--force-cn**] [**--require-eab**] [**--disable-eab**]
+**step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -72,8 +72,9 @@ IID (AWS/GCP/Azure)
 [**--aws-account**=<id>]... [**--remove-aws-account**=<id>]...
 [**--gcp-service-account**=<name>]... [**--remove-gcp-service-account**=<name>]...
 [**--gcp-project**=<name>]... [**--remove-gcp-project**=<name>]...
-[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>] [**--azure-subscription-id**=<id>] [**--azure-object-id**=<id>]
-[**--instance-age**=<duration>] [**--iid-roots**=<file>]
+[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
+[**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
+[**--azure-object-id**=<id>] [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
@@ -115,7 +116,6 @@ SCEP
 			// ACME provisioner flags
 			forceCNFlag,
 			requireEABFlag,
-			disableEABFlag,
 
 			// SCEP flags
 			scepChallengeFlag,
@@ -131,6 +131,7 @@ SCEP
 			azureTenantFlag,
 			azureResourceGroupFlag,
 			removeAzureResourceGroupFlag,
+			azureAudienceFlag,
 			azureSubscriptionIDFlag,
 			removeAzureSubscriptionIDFlag,
 			azureObjectIDFlag,
@@ -268,6 +269,10 @@ step ca provisioner update my_scep_provisioner --force-cn
 
 func updateAction(ctx *cli.Context) (err error) {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		return err
+	}
+
+	if err := validateDurationFlags(ctx); err != nil {
 		return err
 	}
 
@@ -583,16 +588,8 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("force-cn") {
 		details.ForceCn = ctx.Bool("force-cn")
 	}
-	requireEABSet := ctx.IsSet("require-eab")
-	disableEABSet := ctx.IsSet("disable-eab")
-	if requireEABSet && disableEABSet {
-		return errs.IncompatibleFlagWithFlag(ctx, "require-eab", "disable-eab")
-	}
-	if requireEABSet {
+	if ctx.IsSet("require-eab") {
 		details.RequireEab = ctx.Bool("require-eab")
-	}
-	if disableEABSet {
-		details.RequireEab = false
 	}
 	return nil
 }
@@ -782,6 +779,9 @@ func updateAzureDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 
 	if ctx.IsSet("azure-tenant") {
 		details.TenantId = ctx.String("azure-tenant")
+	}
+	if ctx.IsSet("azure-audience") {
+		details.Audience = ctx.String("azure-audience")
 	}
 	if ctx.IsSet("disable-custom-sans") {
 		details.DisableCustomSans = ctx.Bool("disable-custom-sans")
