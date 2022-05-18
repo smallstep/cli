@@ -19,7 +19,7 @@ body:
     id: steps
     attributes:
       label: Steps to Reproduce
-      description: Tell us how to reproduce this issue. 
+      description: Tell us how to reproduce this issue.
         Please provide a working demo, you can use [this template](https://plnkr.co/edit/XorWgI?p=preview) as a base.
       placeholder: These are the steps!
     validations:
@@ -30,7 +30,9 @@ body:
       label: Your Environment
       value: "* OS -
 
-        * Version -"
+* Version -"
+    validations:
+      required: true
   - type: textarea
     id: expected-behavior
     attributes:
@@ -56,7 +58,7 @@ body:
     id: contributing
     attributes:
       label: Contributing
-      value: "Vote on this issue by adding a 👍 reaction. 
+      value: "Vote on this issue by adding a 👍 reaction.
 
 To contribute a fix for this issue, leave a comment (and link to your pull request, if you've opened one already)."
     validations:
