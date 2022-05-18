@@ -29,9 +29,8 @@ body:
     attributes:
       label: Your Environment
       value: |
-             * OS -
-
-             * Version -
+             * OS
+             * Version
     validations:
       required: true
   - type: textarea
