@@ -28,9 +28,9 @@ body:
     id: your-env
     attributes:
       label: Your Environment
-      value: "* OS -
-
-* Version -"
+      value: |
+        * OS -
+        * Version -
     validations:
       required: true
   - type: textarea
