@@ -1,27 +1,63 @@
----
 name: Bug Report
-about: Create a report to help us improve
-title: ''
-labels: bug, needs triage
-assignees: ''
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Tell us how to reproduce this issue. 
+        Please provide a working demo, you can use [this template](https://plnkr.co/edit/XorWgI?p=preview) as a base.
+      placeholder: These are the steps!
+    validations:
+      required: true
+  - type: input
+    id: your-env
+    attributes:
+      label: Your Environment
+      value: "* OS -
 
----
+        * Version -"
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What happens instead?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here.
+    validations:
+      required: false
+  - type: textarea
+    id: contributing
+    attributes:
+      label: Contributing
+      value: "Vote on this issue by adding a 👍 reaction. 
 
-### Subject of the issue
-Describe your issue here.
-
-### Your environment
-* OS - 
-* Version - 
-
-### Steps to reproduce
-Tell us how to reproduce this issue. Please provide a working demo, you can use [this template](https://plnkr.co/edit/XorWgI?p=preview) as a base.
-
-### Expected behaviour
-Tell us what should happen
-
-### Actual behaviour
-Tell us what happens instead
-
-### Additional context
-Add any other context about the problem here.
+To contribute a fix for this issue, leave a comment (and link to your pull request, if you've opened one already)."
+    validations:
+      required: false
