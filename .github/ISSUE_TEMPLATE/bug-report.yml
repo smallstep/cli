@@ -29,8 +29,9 @@ body:
     attributes:
       label: Your Environment
       value: |
-        * OS -
-        * Version -
+             * OS -
+
+             * Version -
     validations:
       required: true
   - type: textarea
@@ -58,8 +59,8 @@ body:
     id: contributing
     attributes:
       label: Contributing
-      value: "Vote on this issue by adding a 👍 reaction.
-
-To contribute a fix for this issue, leave a comment (and link to your pull request, if you've opened one already)."
+      value: |
+             Vote on this issue by adding a 👍 reaction.
+             To contribute a fix for this issue, leave a comment (and link to your pull request, if you've opened one already).
     validations:
       required: false
