@@ -24,13 +24,13 @@ body:
       placeholder: These are the steps!
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: your-env
     attributes:
       label: Your Environment
       value: |
-             * OS
-             * Version
+             * OS -
+             * Version -
     validations:
       required: true
   - type: textarea
