@@ -12,7 +12,6 @@ body:
     attributes:
       label: Steps to Reproduce
       description: Tell us how to reproduce this issue.
-        Please provide a working demo, you can use [this template](https://plnkr.co/edit/XorWgI?p=preview) as a base.
       placeholder: These are the steps!
     validations:
       required: true
@@ -22,7 +21,7 @@ body:
       label: Your Environment
       value: |-
              * OS -
-             * Version -
+             * `step` CLI Version -
     validations:
       required: true
   - type: textarea
