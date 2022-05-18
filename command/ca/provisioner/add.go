@@ -11,13 +11,13 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 	"go.step.sm/linkedca"
 )
 
@@ -135,7 +135,6 @@ SCEP
 
 			// Cloud provisioner flags
 			awsAccountFlag,
-			awsIIDRootsFlag,
 			azureTenantFlag,
 			azureResourceGroupFlag,
 			azureAudienceFlag,
@@ -274,7 +273,7 @@ Create an AWS provisioner that will use a custom certificate to validate the ins
 identity documents:
 '''
 $ step ca provisioner add Amazon --type AWS \
-  --aws-account 123456789 --iid-roots $(step path)/certs/aws.crt
+  --aws-account 123456789
 '''`,
 	}
 }
@@ -294,16 +293,6 @@ func addAction(ctx *cli.Context) (err error) {
 	typ, ok := linkedca.Provisioner_Type_value[strings.ToUpper(ctx.String("type"))]
 	if !ok {
 		return errs.InvalidFlagValue(ctx, "type", ctx.String("type"), "JWK, ACME, OIDC, SSHPOP, K8SSA, NEBULA, SCEP, AWS, GCP, AZURE")
-	}
-
-	for _, flag := range []string{
-		"x509-min-dur", "x509-max-dur", "x509-default-dur",
-		"ssh-user-min-dur", "ssh-user-max-dur", "ssh-user-default-dur",
-		"ssh-host-min-dur", "ssh-host-max-dur", "ssh-host-default-dur",
-	} {
-		if err := validateDurationFlag(ctx, flag); err != nil {
-			return err
-		}
 	}
 
 	p := &linkedca.Provisioner{

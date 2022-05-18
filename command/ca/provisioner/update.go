@@ -12,13 +12,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 	"go.step.sm/linkedca"
 )
 
@@ -74,7 +74,7 @@ IID (AWS/GCP/Azure)
 [**--gcp-project**=<name>]... [**--remove-gcp-project**=<name>]...
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
-[**--azure-object-id**=<id>] [**--instance-age**=<duration>] [**--iid-roots**=<file>]
+[**--azure-object-id**=<id>] [**--instance-age**=<duration>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
@@ -126,7 +126,6 @@ SCEP
 
 			// Cloud provisioner flags
 			awsAccountFlag,
-			awsIIDRootsFlag,
 			removeAWSAccountFlag,
 			azureTenantFlag,
 			azureResourceGroupFlag,
@@ -270,16 +269,6 @@ step ca provisioner update my_scep_provisioner --force-cn
 func updateAction(ctx *cli.Context) (err error) {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
-	}
-
-	for _, flag := range []string{
-		"x509-min-dur", "x509-max-dur", "x509-default-dur",
-		"ssh-user-min-dur", "ssh-user-max-dur", "ssh-user-default-dur",
-		"ssh-host-min-dur", "ssh-host-max-dur", "ssh-host-default-dur",
-	} {
-		if err := validateDurationFlag(ctx, flag); err != nil {
-			return err
-		}
 	}
 
 	args := ctx.Args()
