@@ -28,7 +28,7 @@ body:
     id: your-env
     attributes:
       label: Your Environment
-      value: |
+      value: |-
              * OS -
              * Version -
     validations:
