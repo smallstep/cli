@@ -8,13 +8,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-// ActionFunc returns a cli.ActionFunc that stores the context.
-func ActionFunc(fn cli.ActionFunc) cli.ActionFunc {
-	return func(ctx *cli.Context) error {
-		return fn(ctx)
-	}
-}
-
 // FingerprintFormatFlag returns a flag for configuring the fingerprint format.
 func FingerprintFormatFlag(defaultFmt string) cli.StringFlag {
 	return cli.StringFlag{
