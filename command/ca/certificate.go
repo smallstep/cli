@@ -20,13 +20,15 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
-[**--token**=<token>]  [**--issuer**=<name>] [**--not-before**=<time|duration>]
-[**--not-after**=<time|duration>] [**--san**=<SAN>] [**--set**=<key=value>]
-[**--set-file**=<file>] [**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
+[**--token**=<token>]  [**--issuer**=<name>] [**--provisioner-password-file**=<file>]
+[**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
+[**--san**=<SAN>] [**--set**=<key=value>] [**--set-file**=<file>]
+[**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--bundle**]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
 [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--offline**] [**--password-file**] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -157,6 +159,7 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			flags.NotBefore,
 			flags.Force,
 			flags.Offline,
+			flags.PasswordFile,
 			consoleFlag,
 			flags.X5cCert,
 			flags.X5cKey,
