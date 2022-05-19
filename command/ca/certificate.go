@@ -75,6 +75,16 @@ files, certificates, and keys created with **step ca init**:
 $ step ca certificate --offline internal.example.com internal.crt internal.key
 '''
 
+Request a new certificate using the offline mode with additional flags to avoid
+console prompts:
+'''
+$ step ca certificate --offline \
+	--password-file ./pass.txt \
+	--provisioner foo \
+	--provisioner-password-file ./provisioner-pass.txt \
+	internal.example.com internal.crt internal.key
+'''
+
 Request a new certificate using an OIDC provisioner:
 '''
 $ step ca certificate --token $(step oauth --oidc --bare) joe@example.com joe.crt joe.key
