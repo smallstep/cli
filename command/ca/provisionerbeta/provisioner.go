@@ -12,8 +12,9 @@ import (
 )
 
 func deprecationWarning() {
-	ui.Printf("The `step beta ...` prefix is deprecated and will be removed in a future release.")
-	ui.Printf("Please use `step ca admin ...` going forwards.")
+	ui.Println("[WARNING] The `step beta ca provisioner` prefix is deprecated and will be removed in a future release.")
+	ui.Println("Please use `step ca provisioner` going forwards.")
+	ui.Println()
 }
 
 // Command returns the jwk subcommand.
@@ -33,7 +34,7 @@ func Command() cli.Command {
 certificate authority provisioners.
 
 WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
-Please use 'step ca admin ...' going forwards.
+Please use 'step ca provisioner ...' going forwards.
 
 A provisioner is an entity that controls provisioning credentials, which are
 used to generate provisioning tokens.

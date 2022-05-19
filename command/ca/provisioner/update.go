@@ -28,7 +28,7 @@ func updateCommand() cli.Command {
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update a provisioner",
 		UsageText: `**step ca provisioner update** <name> [**--public-key**=<file>]
-[**--private-key**=<file>] [**--no-private-key**] [**--create**] [**--password-file**=<file>]
+[**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -95,7 +95,6 @@ SCEP
 			// JWK provisioner flags
 			jwkCreateFlag,
 			jwkPrivKeyFlag,
-			jwkNoPrivKeyFlag,
 
 			// OIDC provisioner flags
 			oidcClientIDFlag,
@@ -186,11 +185,6 @@ Update a JWK provisioner with newly generated keys and a template for x509 certi
 step ca provisioner update cicd --create --x509-template ./templates/example.tpl
 '''
 
-Update a JWK provisioner with newly generated keys but do not store the private key with the provisioner:
-'''
-step ca provisioner update cicd --create --no-private-key
-'''
-
 Update a JWK provisioner by removing a previously set template:
 '''
 step ca provisioner update cicd --x509-template ""
@@ -213,7 +207,7 @@ step ca provisioner update cicd --ssh=false
 
 Update a JWK provisioner by removing a previously cached private key:
 '''
-step ca provisioner update cicd --no-private-key
+step ca provisioner update cicd --private-key=""
 '''
 
 Update a JWK provisioner and explicitly select the ca.json to modify:
@@ -473,8 +467,9 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 
 	var (
-		jwk *jose.JSONWebKey
-		jwe *jose.JSONWebEncryption
+		jwk              *jose.JSONWebKey
+		jwe              *jose.JSONWebEncryption
+		removePrivateKey bool
 	)
 	if ctx.Bool("create") {
 		if ctx.IsSet("public-key") {
@@ -492,10 +487,6 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 			return err
 		}
 	} else {
-		if ctx.IsSet("private-key") && ctx.IsSet("no-private-key") {
-			return errs.IncompatibleFlagWithFlag(ctx, "private-key", "no-private-key")
-		}
-
 		if ctx.IsSet("public-key") {
 			jwkFile := ctx.String("public-key")
 			jwk, err = jose.ReadKey(jwkFile)
@@ -516,7 +507,9 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 			}
 		}
 
-		if ctx.IsSet("private-key") {
+		if ctx.IsSet("private-key") && ctx.String("private-key") == "" {
+			removePrivateKey = true
+		} else if ctx.IsSet("private-key") {
 			jwkFile := ctx.String("private-key")
 			b, err := os.ReadFile(jwkFile)
 			if err != nil {
@@ -570,7 +563,7 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.PublicKey = jwkPubBytes
 	}
 
-	if ctx.Bool("no-private-key") {
+	if removePrivateKey {
 		details.EncryptedPrivateKey = nil
 	} else if jwe != nil {
 		jwePrivStr, err := jwe.CompactSerialize()

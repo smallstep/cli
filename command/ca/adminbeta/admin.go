@@ -13,8 +13,9 @@ import (
 )
 
 func deprecationWarning() {
-	ui.Printf("The `step beta ...` prefix is deprecated and will be removed in a future release.")
-	ui.Printf("Please use `step ca admin ...` going forwards.")
+	ui.Println("[WARNING] The `step beta ca admin` prefix is deprecated and will be removed in a future release.")
+	ui.Println("Please use `step ca admin` going forwards.")
+	ui.Println()
 }
 
 // Command returns the jwk subcommand.

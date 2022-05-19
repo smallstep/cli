@@ -27,7 +27,7 @@ func addCommand() cli.Command {
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add a provisioner",
 		UsageText: `**step ca provisioner add** <name> **--type**=JWK [**--public-key**=<file>]
-[**--private-key**=<file>] [**--no-private-key**] [**--create**] [**--password-file**=<file>]
+[**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -104,7 +104,6 @@ SCEP
 			// JWK provisioner flags
 			jwkCreateFlag,
 			jwkPrivKeyFlag,
-			jwkNoPrivKeyFlag,
 
 			// OIDC provisioner flags
 			oidcClientIDFlag,
@@ -187,11 +186,6 @@ SCEP
 Create a JWK provisioner with newly generated keys and a template for x509 certificates:
 '''
 step ca provisioner add cicd --type JWK --create --x509-template ./templates/example.tpl
-'''
-
-Create a JWK provisioner with newly generated keys but do not store the private key with the provisioner:
-'''
-step ca provisioner add cicd --type JWK --create --no-private-key
 '''
 
 Create a JWK provisioner and explicitly select the configuration file to update:
@@ -335,30 +329,46 @@ func addAction(ctx *cli.Context) (err error) {
 
 	p.Claims = &linkedca.Claims{
 		X509: &linkedca.X509Claims{
-			Durations: &linkedca.Durations{
-				Min:     ctx.String("x509-min-dur"),
-				Max:     ctx.String("x509-max-dur"),
-				Default: ctx.String("x509-default-dur"),
-			},
-			Enabled: true,
+			Durations: &linkedca.Durations{},
+			Enabled:   true,
 			// TODO: in the future we may add the ability to disable x509.
 			// Enabled: !(ctx.IsSet("x509") && !ctx.Bool("x509")),
 		},
 		Ssh: &linkedca.SSHClaims{
-			UserDurations: &linkedca.Durations{
-				Min:     ctx.String("ssh-user-min-dur"),
-				Max:     ctx.String("ssh-user-max-dur"),
-				Default: ctx.String("ssh-user-default-dur"),
-			},
-			HostDurations: &linkedca.Durations{
-				Min:     ctx.String("ssh-host-min-dur"),
-				Max:     ctx.String("ssh-host-max-dur"),
-				Default: ctx.String("ssh-host-default-dur"),
-			},
-			Enabled: !(ctx.IsSet("ssh") && !ctx.Bool("ssh")),
+			UserDurations: &linkedca.Durations{},
+			HostDurations: &linkedca.Durations{},
+			Enabled:       !(ctx.IsSet("ssh") && !ctx.Bool("ssh")),
 		},
 		DisableRenewal:          ctx.Bool("disable-renewal"),
 		AllowRenewalAfterExpiry: ctx.Bool("allow-renewal-after-expiry"),
+	}
+
+	if ctx.IsSet("x509-min-dur") {
+		p.Claims.X509.Durations.Min = ctx.String("x509-min-dur")
+	}
+	if ctx.IsSet("x509-max-dur") {
+		p.Claims.X509.Durations.Max = ctx.String("x509-max-dur")
+	}
+	if ctx.IsSet("x509-default-dur") {
+		p.Claims.X509.Durations.Default = ctx.String("x509-default-dur")
+	}
+	if ctx.IsSet("ssh-user-min-dur") {
+		p.Claims.Ssh.UserDurations.Min = ctx.String("ssh-user-min-dur")
+	}
+	if ctx.IsSet("ssh-user-max-dur") {
+		p.Claims.Ssh.UserDurations.Max = ctx.String("ssh-user-max-dur")
+	}
+	if ctx.IsSet("ssh-user-default-dur") {
+		p.Claims.Ssh.UserDurations.Default = ctx.String("ssh-user-default-dur")
+	}
+	if ctx.IsSet("ssh-host-min-dur") {
+		p.Claims.Ssh.HostDurations.Min = ctx.String("ssh-host-min-dur")
+	}
+	if ctx.IsSet("ssh-host-max-dur") {
+		p.Claims.Ssh.HostDurations.Max = ctx.String("ssh-host-max-dur")
+	}
+	if ctx.IsSet("ssh-host-default-dur") {
+		p.Claims.Ssh.HostDurations.Default = ctx.String("ssh-host-default-dur")
 	}
 
 	switch p.Type {
@@ -437,9 +447,6 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		if !ctx.IsSet("public-key") {
 			return nil, errs.RequiredWithFlagValue(ctx, "create", "false", "public-key")
 		}
-		if ctx.IsSet("private-key") && ctx.IsSet("no-private-key") {
-			return nil, errs.IncompatibleFlagWithFlag(ctx, "private-key", "no-private-key")
-		}
 
 		jwkFile := ctx.String("public-key")
 		jwk, err = jose.ReadKey(jwkFile)
@@ -513,7 +520,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		PublicKey: jwkPubBytes,
 	}
 
-	if jwe != nil && !ctx.Bool("no-private-key") {
+	if jwe != nil {
 		jwePrivStr, err := jwe.CompactSerialize()
 		if err != nil {
 			return nil, errors.Wrap(err, "error serializing JWE")
