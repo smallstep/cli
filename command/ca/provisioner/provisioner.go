@@ -159,15 +159,6 @@ func removeElements(list, rems []string) []string {
 	return list
 }
 
-func validateDurationFlag(ctx *cli.Context, name string) error {
-	if ctx.IsSet(name) {
-		if _, err := time.ParseDuration(ctx.String(name)); err != nil {
-			return errs.InvalidFlagValue(ctx, name, ctx.String(name), "")
-		}
-	}
-	return nil
-}
-
 var (
 	x509TemplateFlag = cli.StringFlag{
 		Name:  "x509-template",
@@ -466,10 +457,6 @@ provisioning tokens.`,
 	jwkPrivKeyFlag = cli.StringFlag{
 		Name:  "private-key",
 		Usage: `The <file> containing the JWK private key.`,
-	}
-	jwkNoPrivKeyFlag = cli.BoolFlag{
-		Name:  "no-private-key",
-		Usage: `Do not store the encrypted private key with the provisioner.`,
 	}
 
 	// OIDC provisioner flags

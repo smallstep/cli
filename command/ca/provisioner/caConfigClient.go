@@ -89,6 +89,8 @@ func newCaConfigClient(ctx context.Context, cfg *config.Config, cfgFile string) 
 		}
 	}
 	a, err := authority.New(cfg, authority.WithAdminDB(newNoDB()),
+		// TODO: WithProvisioners has been deprecated, temporarily do not lint this line.
+		// nolint:staticcheck,gocritic
 		authority.WithSkipInit(), authority.WithProvisioners(provClxn))
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading authority")
