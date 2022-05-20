@@ -1,12 +1,10 @@
-package provisionerbeta
+package provisioner
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"net/url"
@@ -14,16 +12,14 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
-	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 	"go.step.sm/linkedca"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func updateCommand() cli.Command {
@@ -31,22 +27,22 @@ func updateCommand() cli.Command {
 		Name:   "update",
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update a provisioner",
-		UsageText: `**step beta ca provisioner update** <name> [**--public-key**=<file>]
+		UsageText: `**step ca provisioner update** <name> [**--public-key**=<file>]
 [**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 ACME
 
-**step beta ca provisioner update** <name> [**--force-cn**] [**--require-eab**] [**--disable-eab**]
+**step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 OIDC
 
-**step beta ca provisioner update** <name>
+**step ca provisioner update** <name>
 [**--client-id**=<id>] [**--client-secret**=<secret>]
 [**--configuration-endpoint**=<url>] [**--listen-address=<address>]
 [**--domain**=<domain>] [**--remove-domain**=<domain>]
@@ -54,39 +50,99 @@ OIDC
 [**--admin**=<email>]... [**--remove-admin**=<email>]...
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 X5C
 
-**step beta ca provisioner update** <name> **--x5c-root**=<file>
+**step ca provisioner update** <name> **--x5c-root**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
-Kubernetes Service Account
+K8SSA (Kubernetes Service Account)
 
-**step beta ca provisioner update** <name> [**--public-key**=<file>]
+**step ca provisioner update** <name> [**--public-key**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 IID (AWS/GCP/Azure)
 
-**step beta ca provisioner update** <name>
+**step ca provisioner update** <name>
 [**--aws-account**=<id>]... [**--remove-aws-account**=<id>]...
 [**--gcp-service-account**=<name>]... [**--remove-gcp-service-account**=<name>]...
 [**--gcp-project**=<name>]... [**--remove-gcp-project**=<name>]...
-[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>] [**--azure-subscription-id**=<id>] [**--azure-object-id**=<id>]
-[**--instance-age**=<duration>] [**--iid-roots**=<file>]
+[**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
+[**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
+[**--azure-object-id**=<id>] [**--instance-age**=<duration>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]`,
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+
+SCEP
+
+**step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
+[**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>]
+[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+`,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "name",
-				Usage: `The new <name> for the provisioner.`,
-			},
+			nameFlag,
+			pubKeyFlag,
+
+			// JWK provisioner flags
+			jwkCreateFlag,
+			jwkPrivKeyFlag,
+
+			// OIDC provisioner flags
+			oidcClientIDFlag,
+			oidcClientSecretFlag,
+			oidcListenAddressFlag,
+			oidcConfigEndpointFlag,
+			oidcAdminFlag,
+			oidcRemoveAdminFlag,
+			oidcGroupFlag,
+			oidcTenantIDFlag,
+
+			// X5C Root Flag
+			x5cRootFlag,
+
+			// Nebula provisioner flags
+			nebulaRootFlag,
+
+			// ACME provisioner flags
+			forceCNFlag,
+			requireEABFlag,
+
+			// SCEP flags
+			scepChallengeFlag,
+			scepCapabilitiesFlag,
+			scepIncludeRootFlag,
+			scepMinimumPublicKeyLengthFlag,
+			scepEncryptionAlgorithmIdentifierFlag,
+
+			// Cloud provisioner flags
+			awsAccountFlag,
+			removeAWSAccountFlag,
+			azureTenantFlag,
+			azureResourceGroupFlag,
+			removeAzureResourceGroupFlag,
+			azureAudienceFlag,
+			azureSubscriptionIDFlag,
+			removeAzureSubscriptionIDFlag,
+			azureObjectIDFlag,
+			removeAzureObjectIDFlag,
+			gcpServiceAccountFlag,
+			removeGCPServiceAccountFlag,
+			gcpProjectFlag,
+			removeGCPProjectFlag,
+			instanceAgeFlag,
+			disableCustomSANsFlag,
+			disableTOFUFlag,
+
+			// Claims
 			x509TemplateFlag,
 			x509TemplateDataFlag,
 			sshTemplateFlag,
@@ -102,102 +158,8 @@ IID (AWS/GCP/Azure)
 			sshHostDefaultDurFlag,
 			disableRenewalFlag,
 			allowRenewalAfterExpiryFlag,
-			enableX509Flag,
+			//enableX509Flag,
 			enableSSHFlag,
-
-			// JWK provisioner flags
-			cli.BoolFlag{
-				Name:  "create",
-				Usage: `Create the JWK key pair for the provisioner.`,
-			},
-			cli.StringFlag{
-				Name:  "private-key",
-				Usage: `The <file> containing the JWK private key.`,
-			},
-			cli.StringFlag{
-				Name:  "public-key",
-				Usage: `The <file> containing the JWK public key.`,
-			},
-
-			// OIDC provisioner flags
-			cli.StringFlag{
-				Name:  "client-id",
-				Usage: `The <id> used to validate the audience in an OpenID Connect token.`,
-			},
-			cli.StringFlag{
-				Name:  "client-secret",
-				Usage: `The <secret> used to obtain the OpenID Connect tokens.`,
-			},
-			cli.StringFlag{
-				Name:  "listen-address",
-				Usage: `The callback <address> used in the OpenID Connect flow (e.g. \":10000\")`,
-			},
-			cli.StringFlag{
-				Name:  "configuration-endpoint",
-				Usage: `OpenID Connect configuration <url>.`,
-			},
-			cli.StringSliceFlag{
-				Name: "admin",
-				Usage: `The <email> of an admin user in an OpenID Connect provisioner, this user
-will not have restrictions in the certificates to sign. Use the
-'--admin' flag multiple times to configure multiple administrators.`,
-			},
-			cli.StringSliceFlag{
-				Name: "remove-admin",
-				Usage: `Remove the <email> of an admin user in an OpenID Connect provisioner, this user
-will not have restrictions in the certificates to sign. Use the
-'--admin' flag multiple times to configure multiple administrators.`,
-			},
-			cli.StringSliceFlag{
-				Name: "group",
-				Usage: `The <group> list used to validate the groups extenstion in an OpenID Connect token.
-Use the '--group' flag multiple times to configure multiple groups.`,
-			},
-			cli.StringFlag{
-				Name:  "tenant-id",
-				Usage: `The <tenant-id> used to replace the templatized {tenantid} in the OpenID Configuration.`,
-			},
-
-			// X5C provisioner flags
-			cli.StringFlag{
-				Name: "x5c-root",
-				Usage: `Root certificate (chain) <file> used to validate the signature on X5C
-provisioning tokens.`,
-			},
-
-			// Nebula provisioner flags
-			nebulaRootFlag,
-
-			// ACME provisioner flags
-			forceCNFlag,
-			requireEABFlag,
-			disableEABFlag,
-
-			// SCEP flags
-			scepChallengeFlag,
-			scepCapabilitiesFlag,
-			scepIncludeRootFlag,
-			scepMinimumPublicKeyLengthFlag,
-			scepEncryptionAlgorithmIdentifierFlag,
-
-			// Cloud provisioner flags
-			awsAccountFlag,
-			removeAWSAccountFlag,
-			azureTenantFlag,
-			azureResourceGroupFlag,
-			removeAzureResourceGroupFlag,
-			azureSubscriptionIDFlag,
-			removeAzureSubscriptionIDFlag,
-			azureObjectIDFlag,
-			removeAzureObjectIDFlag,
-			gcpServiceAccountFlag,
-			removeGCPServiceAccountFlag,
-			gcpProjectFlag,
-			removeGCPProjectFlag,
-			instanceAgeFlag,
-			iidRootsFlag,
-			disableCustomSANsFlag,
-			disableTOFUFlag,
 
 			flags.AdminCert,
 			flags.AdminKey,
@@ -207,11 +169,9 @@ provisioning tokens.`,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
+			flags.CaConfig,
 		},
 		Description: `**step ca provisioner update** updates a provisioner in the CA configuration.
-
-WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
-Please use 'step ca admin ...' going forwards.
 
 ## POSITIONAL ARGUMENTS
 
@@ -222,72 +182,85 @@ Please use 'step ca admin ...' going forwards.
 
 Update a JWK provisioner with newly generated keys and a template for x509 certificates:
 '''
-step beta ca provisioner update cicd --create --x509-template ./templates/example.tpl
+step ca provisioner update cicd --create --x509-template ./templates/example.tpl
+'''
+
+Update a JWK provisioner by removing a previously set template:
+'''
+step ca provisioner update cicd --x509-template ""
 '''
 
 Update a JWK provisioner with duration claims:
 '''
-step beta ca provisioner update cicd --create --x509-min-dur 20m --x509-default-dur 48h --ssh-user-min-dur 17m --ssh-host-default-dur 16h
+step ca provisioner update cicd --x509-min-dur 20m --x509-default-dur 48h --ssh-user-min-dur 17m --ssh-host-default-dur 16h
 '''
 
 Update a JWK provisioner with existing keys:
 '''
-step beta ca provisioner update jane@doe.com --public-key jwk.pub --private-key jwk.priv
+step ca provisioner update jane@doe.com --public-key jwk.pub --private-key jwk.priv
 '''
 
 Update a JWK provisioner to disable ssh provisioning:
 '''
-step beta ca provisioner update cicd --ssh=false
+step ca provisioner update cicd --ssh=false
+'''
+
+Update a JWK provisioner by removing a previously cached private key:
+'''
+step ca provisioner update cicd --private-key=""
+'''
+
+Update a JWK provisioner and explicitly select the ca.json to modify:
+'''
+step ca provisioner update cicd --ssh=false --ca-config /path/to/ca.json
 '''
 
 Update an OIDC provisioner:
 '''
-step beta ca provisioner update Google \
+step ca provisioner update Google \
 	--configuration-endpoint https://accounts.google.com/.well-known/openid-configuration
 '''
 
 Update an X5C provisioner:
 '''
-step beta ca provisioner update x5c --x5c-root x5c_ca.crt
+step ca provisioner update x5c --x5c-root x5c_ca.crt
 '''
 
 Update an ACME provisioner:
 '''
-step beta ca provisioner update acme --force-cn --require-eab
+step ca provisioner update acme --force-cn --require-eab
 '''
 
 Update an K8SSA provisioner:
 '''
-step beta ca provisioner update kube --public-key key.pub --x509-min-duration 30m
+step ca provisioner update kube --public-key key.pub --x509-min-duration 30m
 '''
 
 Update an Azure provisioner:
 '''
-$ step beta ca provisioner update Azure \
+$ step ca provisioner update Azure \
   --azure-resource-group identity --azure-resource-group accounting
 '''
 
 Update a GCP provisioner:
 '''
-$ step beta ca provisioner update Google \
+$ step ca provisioner update Google \
   --disable-custom-sans --gcp-project internal --remove-gcp-project public
 '''
 
 Update an AWS provisioner:
 '''
-$ step beta ca provisioner update Amazon --disable-custom-sans --disable-trust-on-first-use
+$ step ca provisioner update Amazon --disable-custom-sans --disable-trust-on-first-use
 '''
 
 Update a SCEP provisioner:
 '''
-step beta ca provisioner update my_scep_provisioner --force-cn
+step ca provisioner update my_scep_provisioner --force-cn
 '''`,
 	}
 }
 
 func updateAction(ctx *cli.Context) (err error) {
-	deprecationWarning()
-
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
@@ -295,8 +268,7 @@ func updateAction(ctx *cli.Context) (err error) {
 	args := ctx.Args()
 	name := args[0]
 
-	// Create online client
-	client, err := cautils.NewAdminClient(ctx)
+	client, err := newCRUDClient(ctx, ctx.String("ca-config"))
 	if err != nil {
 		return err
 	}
@@ -347,16 +319,6 @@ func updateAction(ctx *cli.Context) (err error) {
 	if err := client.UpdateProvisioner(name, p); err != nil {
 		return err
 	}
-
-	var buf bytes.Buffer
-	b, err := protojson.Marshal(p)
-	if err != nil {
-		return err
-	}
-	if err := json.Indent(&buf, b, "", "  "); err != nil {
-		return err
-	}
-	fmt.Println(buf.String())
 
 	return nil
 }
@@ -433,9 +395,10 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 		claims.X509 = &linkedca.X509Claims{}
 	}
 	xc := claims.X509
-	if ctx.IsSet("x509") {
-		claims.X509.Enabled = ctx.Bool("x509")
-	}
+	// TODO for the time being x509 is always enabled.
+	//if ctx.IsSet("x509") {
+	//	claims.X509.Enabled = ctx.Bool("x509")
+	//}
 	if xc.Durations == nil {
 		xc.Durations = &linkedca.Durations{}
 	}
@@ -504,8 +467,9 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 
 	var (
-		jwk *jose.JSONWebKey
-		jwe *jose.JSONWebEncryption
+		jwk              *jose.JSONWebKey
+		jwe              *jose.JSONWebEncryption
+		removePrivateKey bool
 	)
 	if ctx.Bool("create") {
 		if ctx.IsSet("public-key") {
@@ -525,7 +489,7 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	} else {
 		if ctx.IsSet("public-key") {
 			jwkFile := ctx.String("public-key")
-			jwk, err = jose.ParseKey(jwkFile)
+			jwk, err = jose.ReadKey(jwkFile)
 			if err != nil {
 				return errs.FileError(err, jwkFile)
 			}
@@ -543,7 +507,9 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 			}
 		}
 
-		if ctx.IsSet("private-key") {
+		if ctx.IsSet("private-key") && ctx.String("private-key") == "" {
+			removePrivateKey = true
+		} else if ctx.IsSet("private-key") {
 			jwkFile := ctx.String("private-key")
 			b, err := os.ReadFile(jwkFile)
 			if err != nil {
@@ -558,7 +524,7 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 			// Attempt to parse as decrypted private key.
 			jwe, err = jose.ParseEncrypted(string(b))
 			if err != nil {
-				privjwk, err := jose.ParseKey(jwkFile)
+				privjwk, err := jose.ParseKey(b)
 				if err != nil {
 					return errs.FileError(err, jwkFile)
 				}
@@ -568,11 +534,20 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 				}
 
 				// Encrypt JWK
-				opts := []jose.Option{}
+				var passbytes []byte
 				if ctx.IsSet("password-file") {
-					opts = append(opts, jose.WithPasswordFile(ctx.String("password-file")))
+					passbytes, err = os.ReadFile(ctx.String("password-file"))
+					if err != nil {
+						return errs.FileError(err, ctx.String("password-file"))
+					}
+				} else {
+					passbytes, err = ui.PromptPasswordGenerate("Please enter a password to encrypt the provisioner private key? [leave empty and we'll generate one]",
+						ui.WithValue(password))
+					if err != nil {
+						return err
+					}
 				}
-				jwe, err = jose.EncryptJWK(privjwk, opts...)
+				jwe, err = jose.EncryptJWK(privjwk, passbytes)
 				if err != nil {
 					return err
 				}
@@ -588,7 +563,9 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.PublicKey = jwkPubBytes
 	}
 
-	if jwe != nil {
+	if removePrivateKey {
+		details.EncryptedPrivateKey = nil
+	} else if jwe != nil {
 		jwePrivStr, err := jwe.CompactSerialize()
 		if err != nil {
 			return errors.Wrap(err, "error serializing JWE")
@@ -608,16 +585,8 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("force-cn") {
 		details.ForceCn = ctx.Bool("force-cn")
 	}
-	requireEABSet := ctx.IsSet("require-eab")
-	disableEABSet := ctx.IsSet("disable-eab")
-	if requireEABSet && disableEABSet {
-		return errs.IncompatibleFlagWithFlag(ctx, "require-eab", "disable-eab")
-	}
-	if requireEABSet {
+	if ctx.IsSet("require-eab") {
 		details.RequireEab = ctx.Bool("require-eab")
-	}
-	if disableEABSet {
-		details.RequireEab = false
 	}
 	return nil
 }
@@ -807,6 +776,9 @@ func updateAzureDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 
 	if ctx.IsSet("azure-tenant") {
 		details.TenantId = ctx.String("azure-tenant")
+	}
+	if ctx.IsSet("azure-audience") {
+		details.Audience = ctx.String("azure-audience")
 	}
 	if ctx.IsSet("disable-custom-sans") {
 		details.DisableCustomSans = ctx.Bool("disable-custom-sans")

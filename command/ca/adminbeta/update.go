@@ -1,4 +1,4 @@
-package admin
+package adminbeta
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func updateCommand() cli.Command {
 		Name:   "update",
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update an admin",
-		UsageText: `**step ca admin update** <subject> [**--super**] [**--provisioner**=<name>]
+		UsageText: `**step beta ca admin update** <subject> [**--super**] [**--provisioner**=<name>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]`,
@@ -37,7 +37,10 @@ func updateCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step ca admin update** updates an admin.
+		Description: `**step beta ca admin update** updates an admin.
+
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
 
 ## POSITIONAL ARGUMENTS
 
@@ -48,23 +51,25 @@ func updateCommand() cli.Command {
 
 Add super-admin privileges to an admin:
 '''
-$ step ca admin update max@smallstep.com --super
+$ step beta ca admin update max@smallstep.com --super
 '''
 
 Specify admin by provisioner:
 '''
-$ step ca admin update max@smallstep.com --super --provisioner devops-jwk
+$ step beta ca admin update max@smallstep.com --super --provisioner devops-jwk
 '''
 
 Remove super-admin privileges from an admin:
 '''
-$ step ca admin update max@smallstep.com --super=false
+$ step beta ca admin update max@smallstep.com --super=false
 '''
 `,
 	}
 }
 
 func updateAction(ctx *cli.Context) error {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}

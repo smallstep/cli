@@ -18,6 +18,9 @@ import (
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
+	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 
 	// Enabled commands
 	_ "github.com/smallstep/cli/command/base64"
@@ -97,6 +100,14 @@ func main() {
 		go func() {
 			log.Println(http.ListenAndServe(debugProfAddr, nil))
 		}()
+	}
+
+	// Define default prompters for go.step.sm
+	pemutil.PromptPassword = func(msg string) ([]byte, error) {
+		return ui.PromptPassword(msg)
+	}
+	jose.PromptPassword = func(msg string) ([]byte, error) {
+		return ui.PromptPassword(msg)
 	}
 
 	if err := app.Run(os.Args); err != nil {

@@ -238,6 +238,9 @@ provisioning tokens.`,
 		},
 		Description: `**step ca provisioner add** adds a provisioner to the CA configuration.
 
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
+
 ## POSITIONAL ARGUMENTS
 
 <name>
@@ -330,6 +333,8 @@ $ step beta ca provisioner add Amazon --type AWS \
 }
 
 func addAction(ctx *cli.Context) (err error) {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}

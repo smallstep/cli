@@ -34,17 +34,21 @@ func getCommand() cli.Command {
 		},
 		Description: `**step beta ca provisioner get** gets a provisioner from the CA configuration.
 
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
+
 ## EXAMPLES
 
 Get a provisioner by name:
 '''
 $ step beta ca provisioner get acme
-'''
-`,
+'''`,
 	}
 }
 
 func getAction(ctx *cli.Context) (err error) {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}

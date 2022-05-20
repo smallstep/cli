@@ -1,4 +1,4 @@
-package admin
+package adminbeta
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ func listCommand() cli.Command {
 		Name:   "list",
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all admins in the CA configuration",
-		UsageText: `**step ca admin list** [**--super**] [**--provisioner**=<name>]
+		UsageText: `**step beta ca admin list** [**--super**] [**--provisioner**=<name>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]`,
@@ -36,39 +36,44 @@ func listCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step ca admin list** lists all admins in the CA configuration.
+		Description: `**step beta ca admin list** lists all admins in the CA configuration.
+
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
 
 ## EXAMPLES
 
 List all admins:
 '''
-$ step ca admin list
+$ step beta ca admin list
 '''
 
 List only super-admins:
 '''
-$ step ca admin list --super
+$ step beta ca admin list --super
 '''
 
 List only admins without super-admin privileges:
 '''
-$ step ca admin list --super=false
+$ step beta ca admin list --super=false
 '''
 
 List all admins associated with a given provisioner:
 '''
-$ step ca admin list --provisioner admin-jwk
+$ step beta ca admin list --provisioner admin-jwk
 '''
 
 List only super-admins associated with a given provisioner:
 '''
-$ step ca admin list --super --provisioner admin-jwk
+$ step beta ca admin list --super --provisioner admin-jwk
 '''
 `,
 	}
 }
 
 func listAction(ctx *cli.Context) (err error) {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 0); err != nil {
 		return err
 	}

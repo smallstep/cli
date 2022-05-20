@@ -8,7 +8,14 @@ import (
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
 )
+
+func deprecationWarning() {
+	ui.Println("[WARNING] The `step beta ca provisioner` prefix is deprecated and will be removed in a future release.")
+	ui.Println("Please use `step ca provisioner` going forwards.")
+	ui.Println()
+}
 
 // Command returns the jwk subcommand.
 func Command() cli.Command {
@@ -25,6 +32,9 @@ func Command() cli.Command {
 		},
 		Description: `**step beta ca provisioner** command group provides facilities for managing the
 certificate authority provisioners.
+
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca provisioner ...' going forwards.
 
 A provisioner is an entity that controls provisioning credentials, which are
 used to generate provisioning tokens.
@@ -208,11 +218,11 @@ var (
 		Name: "encryption-algorithm-identifier",
 		Usage: `The <id> for the SCEP encryption algorithm to use.
 		Valid values are 0 - 4, inclusive. The values correspond to:
-		0: DES-CBC, 
+		0: DES-CBC,
 		1: AES-128-CBC,
-		2: AES-256-CBC, 
-		3: AES-128-GCM, 
-		4: AES-256-GCM. 
+		2: AES-256-CBC,
+		3: AES-128-GCM,
+		4: AES-256-GCM.
 		Defaults to DES-CBC (0) for legacy clients.`,
 	}
 
