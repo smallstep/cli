@@ -25,7 +25,7 @@ require (
 	go.step.sm/cli-utils v0.7.2
 	go.step.sm/crypto v0.16.2
 	go.step.sm/linkedca v0.16.1
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
 	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b
 	golang.org/x/sys v0.0.0-20220405052023-b1e9470b6e64
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
