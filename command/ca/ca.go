@@ -3,8 +3,8 @@ package ca
 import (
 	"github.com/smallstep/cli/command/ca/acme"
 	"github.com/smallstep/cli/command/ca/admin"
-	"github.com/smallstep/cli/command/ca/policy"
 	"github.com/smallstep/cli/command/ca/adminbeta"
+	"github.com/smallstep/cli/command/ca/policy"
 	"github.com/smallstep/cli/command/ca/provisioner"
 	"github.com/smallstep/cli/command/ca/provisionerbeta"
 	"github.com/urfave/cli"
@@ -79,12 +79,9 @@ $ step ca renew internal.crt internal.key \
 			rootComand(),
 			rootsCommand(),
 			federationCommand(),
-<<<<<<< HEAD
 			acme.Command(),
 			policy.Command(),
-=======
 			admin.Command(),
->>>>>>> 8497d03 (beta deprecation)
 		},
 	}
 
