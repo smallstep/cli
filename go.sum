@@ -947,8 +947,8 @@ github.com/slackhq/nebula v1.5.2/go.mod h1:xaCM6wqbFk/NRmmUe1bv88fWBm3a1UioXJVIp
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1/1fApl1A+9VcBk+9dcqGfnePY87LY=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
-github.com/smallstep/certificates v0.19.1-0.20220506171134-65090daac3d7 h1:5tQi9lp+HqVAx+8fZ8lMlnoPTu3siTL0ue4opGG5yNw=
-github.com/smallstep/certificates v0.19.1-0.20220506171134-65090daac3d7/go.mod h1:6nHwvdMjnVUiJ+fePztVLgOCSk80mMkq9rlj6xxYB5E=
+github.com/smallstep/certificates v0.19.1-0.20220520055359-f8148071fb98 h1:/TdrZz1t4a5B1i19lSxNDmxQpbvWeUoAprF+Bt+k61Y=
+github.com/smallstep/certificates v0.19.1-0.20220520055359-f8148071fb98/go.mod h1:ZPWNFc4tMj5KinX8FG59P09p01HZ05KvFV21HcGVlvM=
 github.com/smallstep/certinfo v1.7.0 h1:1VzGgeSFLdXO242mRUkJu02epXV6E9uawjhPH0H2LzA=
 github.com/smallstep/certinfo v1.7.0/go.mod h1:QRjP6s+cuishA6cdB//RX357ysYGz/QxlpWGyWjnfII=
 github.com/smallstep/nosql v0.4.0 h1:Go3WYwttUuvwqMtFiiU4g7kBIlY+hR0bIZAqVdakQ3M=
@@ -1136,8 +1136,8 @@ go.step.sm/cli-utils v0.7.0/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/
 go.step.sm/cli-utils v0.7.2 h1:kUNNhGRWAad3bLkhvbLjVr3Dqs5DgxCZQcUspWaQCIQ=
 go.step.sm/cli-utils v0.7.2/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/E=
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
-go.step.sm/crypto v0.16.1 h1:4mnZk21cSxyMGxsEpJwZKKvJvDu1PN09UVrWWFNUBdk=
-go.step.sm/crypto v0.16.1/go.mod h1:3G0yQr5lQqfEG0CMYz8apC/qMtjLRQlzflL2AxkcN+g=
+go.step.sm/crypto v0.16.2 h1:Pr9aazTwWBBZNogUsOqhOrPSdwAa9pPs+lMB602lnDA=
+go.step.sm/crypto v0.16.2/go.mod h1:1WkTOTY+fOX/RY4TnZREp6trQAsBHRQ7nu6QJBiNQF8=
 go.step.sm/linkedca v0.16.1 h1:CdbMV5SjnlRsgeYTXaaZmQCkYIgJq8BOzpewri57M2k=
 go.step.sm/linkedca v0.16.1/go.mod h1:W59ucS4vFpuR0g4PtkGbbtXAwxbDEnNCg+ovkej1ANM=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=

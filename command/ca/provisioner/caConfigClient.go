@@ -59,6 +59,22 @@ func (n *nodb) DeleteAdmin(ctx context.Context, id string) error {
 	return nil
 }
 
+func (n *nodb) CreateAuthorityPolicy(ctx context.Context, policy *linkedca.Policy) error {
+	return nil
+}
+
+func (n *nodb) GetAuthorityPolicy(ctx context.Context) (*linkedca.Policy, error) {
+	return nil, nil
+}
+
+func (n *nodb) UpdateAuthorityPolicy(ctx context.Context, policy *linkedca.Policy) error {
+	return nil
+}
+
+func (n *nodb) DeleteAuthorityPolicy(ctx context.Context) error {
+	return nil
+}
+
 type caConfigClient struct {
 	configFile string
 	ctx        context.Context
