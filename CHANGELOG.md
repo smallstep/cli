@@ -6,14 +6,13 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 0.19.1] - DATE
+## [0.20.0] - 2022-05-26
 ### Added
 - Add commands for managing certificate issuance policies on authority, provisioner and ACME account level.
-### Changed
+- Admin API enabled functionality for `step beta ca provisioner` and `step beta ca admin`.
 ### Deprecated
-### Removed
-### Fixed
-### Security
+- step beta ca provisioner [add|remove|update] -> functionality moved to step ca provisioner [add|remove|update]
+- step beta ca admin [add|remove|update] -> functionality moved to step ca admin [add|remove|update]
 
 ## [0.19.0] - 2022-04-19
 ### Added
