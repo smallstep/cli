@@ -40,7 +40,7 @@ func listAction(ctx *cli.Context) error {
 		fmt.Printf("▶ %s\n", cur.Name)
 	}
 
-	for _, v := range cs.List() {
+	for _, v := range cs.ListAlphabetical() {
 		if cur != nil && v.Name == cur.Name {
 			continue
 		}
