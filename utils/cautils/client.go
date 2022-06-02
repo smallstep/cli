@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"net/http"
 	"os"
 	"time"
 
@@ -16,35 +15,16 @@ import (
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
+	caclient "github.com/smallstep/cli/utils/cautils/client"
+	"github.com/smallstep/cli/utils/sansutils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 )
 
-// CaClient is the interface implemented by a client used to sign, renew, revoke
-// certificates among other things.
-type CaClient interface {
-	Sign(req *api.SignRequest) (*api.SignResponse, error)
-	Renew(tr http.RoundTripper) (*api.SignResponse, error)
-	Revoke(req *api.RevokeRequest, tr http.RoundTripper) (*api.RevokeResponse, error)
-	Rekey(req *api.RekeyRequest, tr http.RoundTripper) (*api.SignResponse, error)
-	SSHSign(req *api.SSHSignRequest) (*api.SSHSignResponse, error)
-	SSHRenew(req *api.SSHRenewRequest) (*api.SSHRenewResponse, error)
-	SSHRekey(req *api.SSHRekeyRequest) (*api.SSHRekeyResponse, error)
-	SSHRevoke(req *api.SSHRevokeRequest) (*api.SSHRevokeResponse, error)
-	SSHRoots() (*api.SSHRootsResponse, error)
-	SSHFederation() (*api.SSHRootsResponse, error)
-	SSHConfig(req *api.SSHConfigRequest) (*api.SSHConfigResponse, error)
-	SSHCheckHost(principal string, token string) (*api.SSHCheckPrincipalResponse, error)
-	SSHGetHosts() (*api.SSHGetHostsResponse, error)
-	SSHBastion(req *api.SSHBastionRequest) (*api.SSHBastionResponse, error)
-	Version() (*api.VersionResponse, error)
-	GetRootCAs() *x509.CertPool
-}
-
 // NewClient returns a client of an online or offline CA. Requires the flags
 // `offline`, `ca-config`, `ca-url`, and `root`.
-func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
+func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (caclient.CaClient, error) {
 	if ctx.Bool("offline") {
 		caConfig := ctx.String("ca-config")
 		if caConfig == "" {
@@ -52,7 +32,6 @@ func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
 		}
 		return NewOfflineCA(ctx, caConfig)
 	}
-
 	caURL, err := flags.ParseCaURL(ctx)
 	if err != nil {
 		return nil, err
@@ -126,7 +105,7 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 			return nil, err
 		}
 
-		dnsNames, ips, emails, uris := splitSANs([]string{subject})
+		dnsNames, ips, emails, uris := sansutils.Split([]string{subject})
 		template := &x509.CertificateRequest{
 			Subject: pkix.Name{
 				CommonName: subject,

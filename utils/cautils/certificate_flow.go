@@ -7,7 +7,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"net"
 	"net/url"
 	"os"
 	"strings"
@@ -20,10 +19,11 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils"
+	caclient "github.com/smallstep/cli/utils/cautils/client"
+	"github.com/smallstep/cli/utils/sansutils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
@@ -31,7 +31,7 @@ import (
 
 // CertificateFlow manages the flow to retrieve a new certificate.
 type CertificateFlow struct {
-	offlineCA *OfflineCA
+	offlineCA *OfflineCA // TODO(hs): make this an offline.CA
 	offline   bool
 }
 
@@ -42,29 +42,33 @@ var sharedContext = struct {
 
 // NewCertificateFlow initializes a cli flow to get a new certificate.
 func NewCertificateFlow(ctx *cli.Context) (*CertificateFlow, error) {
-	var err error
-	var offlineClient *OfflineCA
 
-	offline := ctx.Bool("offline")
-	if offline {
+	// TODO(hs): fix offline NewCertificateFlow; this one's a bit messy in terms of import (cycle), it seems
+
+	var err error
+	var offlineCA *OfflineCA
+
+	isOffline := ctx.Bool("offline")
+	if isOffline {
 		caConfig := ctx.String("ca-config")
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		offlineClient, err = NewOfflineCA(ctx, caConfig)
+		offlineCA, err = NewOfflineCA(ctx, caConfig) // TODO(hs): use offline.New() or something similar
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return &CertificateFlow{
-		offlineCA: offlineClient,
-		offline:   offline,
+		offlineCA: offlineCA,
+		offline:   isOffline,
 	}, nil
 }
 
 // GetClient returns the client used to send requests to the CA.
-func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.ClientOption) (CaClient, error) {
+func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.ClientOption) (caclient.CaClient, error) {
+
 	if f.offline {
 		return f.offlineCA, nil
 	}
@@ -107,6 +111,7 @@ func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.
 // validity values will be used). The token is generated either with the offline
 // token flow or the online mode.
 func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans []string) (string, error) {
+
 	if f.offline {
 		return f.offlineCA.GenerateToken(ctx, SignType, subject, sans, time.Time{}, time.Time{}, provisioner.TimeDuration{}, provisioner.TimeDuration{})
 	}
@@ -140,6 +145,7 @@ func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 // GenerateSSHToken generates a token used to authorize the sign of an SSH
 // certificate.
 func (f *CertificateFlow) GenerateSSHToken(ctx *cli.Context, subject string, typ int, principals []string, validAfter, validBefore provisioner.TimeDuration) (string, error) {
+
 	if f.offline {
 		return f.offlineCA.GenerateToken(ctx, typ, subject, principals, time.Time{}, time.Time{}, validAfter, validBefore)
 	}
@@ -242,7 +248,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		return nil, nil, err
 	}
 
-	dnsNames, ips, emails, uris := splitSANs(sans, jwt.Payload.SANs)
+	dnsNames, ips, emails, uris := sansutils.Split(sans, jwt.Payload.SANs)
 	switch jwt.Payload.Type() {
 	case token.AWS:
 		doc := jwt.Payload.Amazon.InstanceIdentityDocument
@@ -254,7 +260,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips, emails, uris = splitSANs(defaultSANs)
+			dnsNames, ips, emails, uris = sansutils.Split(defaultSANs)
 		}
 	case token.GCP:
 		ce := jwt.Payload.Google.ComputeEngine
@@ -266,7 +272,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips, emails, uris = splitSANs(defaultSANs)
+			dnsNames, ips, emails, uris = sansutils.Split(defaultSANs)
 		}
 	case token.Azure:
 		if len(ips) == 0 && len(dnsNames) == 0 {
@@ -276,7 +282,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 			if !sharedContext.DisableCustomSANs {
 				defaultSANs = append(defaultSANs, subject)
 			}
-			dnsNames, ips, emails, uris = splitSANs(defaultSANs)
+			dnsNames, ips, emails, uris = sansutils.Split(defaultSANs)
 		}
 	case token.OIDC:
 		// If no sans are given using the --san flag, and the subject argument
@@ -299,7 +305,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 					uris = append(uris, iss)
 				}
 			} else {
-				dnsNames, ips, emails, uris = splitSANs([]string{subject})
+				dnsNames, ips, emails, uris = sansutils.Split([]string{subject})
 			}
 		}
 	case token.K8sSA:
@@ -335,20 +341,4 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 		CsrPEM: api.CertificateRequest{CertificateRequest: cr},
 		OTT:    tok,
 	}, pk, nil
-}
-
-// splitSANs unifies the SAN collections passed as arguments and returns a list
-// of DNS names, a list of IP addresses, and a list of emails.
-func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email []string, uris []*url.URL) {
-	m := make(map[string]bool)
-	var unique []string
-	for _, sans := range args {
-		for _, san := range sans {
-			if ok := m[san]; !ok && san != "" {
-				m[san] = true
-				unique = append(unique, san)
-			}
-		}
-	}
-	return x509util.SplitSANs(unique)
 }

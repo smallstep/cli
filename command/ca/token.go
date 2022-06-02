@@ -215,6 +215,7 @@ func tokenAction(ctx *cli.Context) error {
 	subject := ctx.Args().Get(0)
 	outputFile := ctx.String("output-file")
 	offline := ctx.Bool("offline")
+
 	// x.509 flags
 	sans := ctx.StringSlice("san")
 	isRevoke := ctx.Bool("revoke")
@@ -305,18 +306,18 @@ func tokenAction(ctx *cli.Context) error {
 	var token string
 	if offline {
 		token, err = cautils.OfflineTokenFlow(ctx, typ, subject, sans, notBefore, notAfter, certNotBefore, certNotAfter)
-		if err != nil {
-			return err
-		}
 	} else {
 		token, err = cautils.NewTokenFlow(ctx, typ, subject, sans, caURL, root, notBefore, notAfter, certNotBefore, certNotAfter)
-		if err != nil {
-			return err
-		}
 	}
+
+	if err != nil {
+		return err
+	}
+
 	if len(outputFile) > 0 {
 		return utils.WriteFile(outputFile, []byte(token), 0600)
 	}
+
 	fmt.Println(token)
 	return nil
 }

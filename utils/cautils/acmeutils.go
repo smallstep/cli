@@ -24,6 +24,7 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
+	"github.com/smallstep/cli/utils/sansutils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
@@ -270,7 +271,7 @@ func finalizeOrder(ac *ca.ACMEClient, o *acme.Order, csr *x509.CertificateReques
 }
 
 func validateSANsForACME(sans []string) ([]string, []net.IP, error) {
-	dnsNames, ips, emails, uris := splitSANs(sans)
+	dnsNames, ips, emails, uris := sansutils.Split(sans)
 	if len(emails) > 0 || len(uris) > 0 {
 		return nil, nil, errors.New("Email Address and URI SANs are not supported for ACME flow")
 	}
