@@ -81,14 +81,7 @@ IID (AWS/GCP/Azure)
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]
-
-**step beta ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>] 
-[**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>] 
-[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>] 
-[**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>] 
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
-`,
+[**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "name",
@@ -108,6 +101,7 @@ IID (AWS/GCP/Azure)
 			sshHostMaxDurFlag,
 			sshHostDefaultDurFlag,
 			disableRenewalFlag,
+			allowRenewalAfterExpiryFlag,
 			enableX509Flag,
 			enableSSHFlag,
 
@@ -216,6 +210,9 @@ provisioning tokens.`,
 		},
 		Description: `**step ca provisioner update** updates a provisioner in the CA configuration.
 
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
+
 ## POSITIONAL ARGUMENTS
 
 <name>
@@ -289,6 +286,8 @@ step beta ca provisioner update my_scep_provisioner --force-cn
 }
 
 func updateAction(ctx *cli.Context) (err error) {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
@@ -424,6 +423,9 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 	}
 	if ctx.IsSet("disable-renewal") {
 		p.Claims.DisableRenewal = ctx.Bool("disable-renewal")
+	}
+	if ctx.IsSet("allow-renewal-after-expiry") {
+		p.Claims.AllowRenewalAfterExpiry = ctx.Bool("allow-renewal-after-expiry")
 	}
 	claims := p.Claims
 

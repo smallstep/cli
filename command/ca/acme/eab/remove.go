@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
+	"go.step.sm/cli-utils/errs"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
 )
 
 func removeCommand() cli.Command {
@@ -15,7 +17,7 @@ func removeCommand() cli.Command {
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove an ACME EAB Key from the CA",
-		UsageText: `**step beta ca acme eab remove** <provisioner> <key_id>
+		UsageText: `**step ca acme eab remove** <provisioner> <eab-key-id>
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -30,21 +32,21 @@ func removeCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step beta ca acme eab remove** removes an ACME EAB Key from the CA.
+		Description: `**step ca acme eab remove** removes an ACME EAB Key from the CA.
 
 ## POSITIONAL ARGUMENTS
 
 <provisioner>
 : Name of the provisioner to remove an ACME EAB key for
 
-<key_id>
+<eab-key-id>
 : The ACME EAB Key ID to remove
 
 ## EXAMPLES
 
 Remove ACME EAB Key with Key ID "zFGdKC1sHmNf3Wsx3OujY808chxwEdmr" from my_acme_provisioner:
 '''
-$ step beta ca acme eab remove my_acme_provisioner zFGdKC1sHmNf3Wsx3OujY808chxwEdmr
+$ step ca acme eab remove my_acme_provisioner zFGdKC1sHmNf3Wsx3OujY808chxwEdmr
 '''
 `,
 	}

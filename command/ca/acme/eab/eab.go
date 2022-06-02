@@ -7,10 +7,12 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
+	"go.step.sm/linkedca"
+
 	"github.com/smallstep/certificates/authority/admin"
 	"github.com/smallstep/certificates/ca"
-	"github.com/urfave/cli"
-	"go.step.sm/linkedca"
 )
 
 type cliEAK struct {
@@ -44,30 +46,30 @@ func Command() cli.Command {
 	return cli.Command{
 		Name:      "eab",
 		Usage:     "create and manage ACME External Account Binding Keys",
-		UsageText: "**step beta ca acme eab** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "**step ca acme eab** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			listCommand(),
 			addCommand(),
 			removeCommand(),
 		},
-		Description: `**step beta ca acme eab** command group provides facilities for managing ACME 
+		Description: `**step ca acme eab** command group provides facilities for managing ACME 
 		External Account Binding Keys.
 
 ## EXAMPLES
 
 List the active ACME External Account Binding Keys:
 '''
-$ step beta ca acme eab list <provisioner>
+$ step ca acme eab list my_provisioner
 '''
 
 Add an ACME External Account Binding Key:
 '''
-$ step beta ca acme eab add provisioner_name some_name_or_reference
+$ step ca acme eab add my_provisioner my_reference
 '''
 
 Remove an ACME External Account Binding Key:
 '''
-$ step beta ca acme eab remove key_id
+$ step ca acme eab remove my_provisioner my_key_id
 '''
 `,
 	}

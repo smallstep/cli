@@ -78,6 +78,11 @@ func NewOfflineCA(ctx *cli.Context, configFile string) (*OfflineCA, error) {
 	return offlineInstance, nil
 }
 
+// GetCaURL returns the configured CA url.
+func (c *OfflineCA) GetCaURL() string {
+	return "https://" + c.config.DNSNames[0]
+}
+
 // GetRootCAs return the cert pool for the ca, as it's an offline ca, a pool is
 // not required and it always returns nil.
 func (c *OfflineCA) GetRootCAs() *x509.CertPool {
@@ -143,6 +148,8 @@ func (c *OfflineCA) Audience(tokType int) string {
 		return fmt.Sprintf("https://%s/ssh/revoke", toHostname(c.config.DNSNames[0]))
 	case SSHRekeyType:
 		return fmt.Sprintf("https://%s/ssh/rekey", toHostname(c.config.DNSNames[0]))
+	case RenewType:
+		return fmt.Sprintf("https://%s/renew", toHostname(c.config.DNSNames[0]))
 	default:
 		return fmt.Sprintf("https://%s/sign", toHostname(c.config.DNSNames[0]))
 	}
@@ -224,6 +231,31 @@ func (c *OfflineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 	}
 	// renew cert using authority
 	certChain, err := c.authority.Renew(peer)
+	if err != nil {
+		return nil, err
+	}
+	certChainPEM := certChainToPEM(certChain)
+	var caPEM api.Certificate
+	if len(certChainPEM) > 1 {
+		caPEM = certChainPEM[1]
+	}
+	return &api.SignResponse{
+		ServerPEM:    certChainPEM[0],
+		CaPEM:        caPEM,
+		CertChainPEM: certChainPEM,
+		TLSOptions:   c.authority.GetTLSOptions(),
+	}, nil
+}
+
+// RenewWithToken is a wrapper on top of certificates AuthorizeRenew and Renew
+// method. It returns an api.SignResponse with the requested certificate and the
+// intermediate.
+func (c *OfflineCA) RenewWithToken(ott string) (*api.SignResponse, error) {
+	cert, err := c.authority.AuthorizeRenewToken(context.Background(), ott)
+	if err != nil {
+		return nil, err
+	}
+	certChain, err := c.authority.Renew(cert)
 	if err != nil {
 		return nil, err
 	}
@@ -506,6 +538,11 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string,
 	// Use ca.json configuration for the root and audience
 	root := c.Root()
 	audience := c.Audience(tokType)
+
+	// All provisioners use the same type of tokens to do a X.509 renewal.
+	if tokType == RenewType {
+		return generateRenewToken(ctx, audience, subject)
+	}
 
 	// Get provisioner to use
 	provisioners := c.Provisioners()

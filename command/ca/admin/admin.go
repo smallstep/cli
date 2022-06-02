@@ -17,7 +17,7 @@ func Command() cli.Command {
 	return cli.Command{
 		Name:      "admin",
 		Usage:     "create and manage the certificate authority admins",
-		UsageText: "**step beta ca admin** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		UsageText: "**step ca admin** <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Subcommands: cli.Commands{
 			listCommand(),
 			addCommand(),
@@ -35,22 +35,22 @@ authority.
 
 List the active admins:
 '''
-$ step beta ca admin list
+$ step ca admin list
 '''
 
 Add an admin:
 '''
-$ step beta ca admin add max@smallstep.com my-jwk-provisioner --super
+$ step ca admin add max@smallstep.com my-jwk-provisioner --super
 '''
 
 Update an admin:
 '''
-$ step beta ca admin update max@smallstep.com --super=false
+$ step ca admin update max@smallstep.com --super=false
 '''
 
 Remove an admin:
 '''
-$ step beta ca admin remove max@smallstep.com
+$ step ca admin remove max@smallstep.com
 '''`,
 	}
 }

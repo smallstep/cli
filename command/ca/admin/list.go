@@ -17,7 +17,7 @@ func listCommand() cli.Command {
 		Name:   "list",
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all admins in the CA configuration",
-		UsageText: `**step beta ca admin list** [**--super**] [**--provisioner**=<name>]
+		UsageText: `**step ca admin list** [**--super**] [**--provisioner**=<name>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]`,
@@ -36,33 +36,33 @@ func listCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step beta ca admin list** lists all admins in the CA configuration.
+		Description: `**step ca admin list** lists all admins in the CA configuration.
 
 ## EXAMPLES
 
 List all admins:
 '''
-$ step beta ca admin list
+$ step ca admin list
 '''
 
 List only super-admins:
 '''
-$ step beta ca admin list --super
+$ step ca admin list --super
 '''
 
 List only admins without super-admin privileges:
 '''
-$ step beta ca admin list --super=false
+$ step ca admin list --super=false
 '''
 
 List all admins associated with a given provisioner:
 '''
-$ step beta ca admin list --provisioner admin-jwk
+$ step ca admin list --provisioner admin-jwk
 '''
 
 List only super-admins associated with a given provisioner:
 '''
-$ step beta ca admin list --super --provisioner admin-jwk
+$ step ca admin list --super --provisioner admin-jwk
 '''
 `,
 	}

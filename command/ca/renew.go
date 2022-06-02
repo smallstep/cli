@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -259,12 +260,8 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	leaf := cert.Leaf
 
-	if leaf.NotAfter.Before(time.Now()) {
-		return errors.New("cannot renew an expired certificate")
-	}
-	cvp := leaf.NotAfter.Sub(leaf.NotBefore)
+	cvp := cert.Leaf.NotAfter.Sub(cert.Leaf.NotBefore)
 	if renewPeriod > 0 && renewPeriod >= cvp {
 		return errors.Errorf("flag '--renew-period' must be within (lower than) the certificate "+
 			"validity period; renew-period=%v, cert-validity-period=%v", renewPeriod, cvp)
@@ -283,14 +280,14 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if isDaemon {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
-		next := utils.NextRenewDuration(leaf, expiresIn, renewPeriod)
+		next := utils.NextRenewDuration(cert.Leaf, expiresIn, renewPeriod)
 		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew)
 	}
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
 		jitter := rand.Int63n(int64(expiresIn / 20))
-		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
+		if d := time.Until(cert.Leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
 			return nil
 		}
@@ -337,6 +334,7 @@ func runExecCmd(execCmd string) error {
 }
 
 func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile string) (*renewerPkg.Renewer, error) {
+
 	if len(cert.Certificate) == 0 {
 		return nil, errors.New("error loading certificate: certificate chain is empty")
 	}
@@ -349,14 +347,16 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
-			Certificates:             []tls.Certificate{cert},
 			RootCAs:                  rootCAs,
 			PreferServerCipherSuites: true,
 		},
 	}
 
-	var client caclient.CaClient
+	if time.Now().Before(cert.Leaf.NotAfter) {
+		tr.TLSClientConfig.Certificates = []tls.Certificate{cert}
+	}
 
+	var client caclient.CaClient
 	isOffline := ctx.Bool("offline")
 	if isOffline {
 		caConfig := ctx.String("ca-config")
@@ -374,7 +374,12 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 		}
 	}
 
-	return renewerPkg.New(client, tr, cert.PrivateKey, isOffline), nil
+	u, err := url.Parse(client.GetCaURL())
+	if err != nil {
+		return nil, errors.Errorf("error parsing CA URL: %s", client.GetCaURL())
+	}
+
+	return renewerPkg.New(client, tr, cert.PrivateKey, isOffline, cert, u), nil
 }
 
 func tlsLoadX509KeyPair(certFile, keyFile, passFile string) (tls.Certificate, error) {

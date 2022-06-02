@@ -18,7 +18,7 @@ func addCommand() cli.Command {
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add an admin to the CA configuration",
-		UsageText: `**step beta ca admin add** <subject> <provisioner> [**--super**]
+		UsageText: `**step ca admin add** <subject> <provisioner> [**--super**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]`,
@@ -36,7 +36,7 @@ func addCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step beta ca admin add** adds an admin to the CA configuration.
+		Description: `**step ca admin add** adds an admin to the CA configuration.
 
 ## POSITIONAL ARGUMENTS
 
@@ -50,12 +50,12 @@ func addCommand() cli.Command {
 
 Add regular Admin:
 '''
-$ step beta ca admin add max@smallstep.com google
+$ step ca admin add max@smallstep.com google
 '''
 
 Add SuperAdmin:
 '''
-$ step beta ca admin add max@smallstep.com google --super
+$ step ca admin add max@smallstep.com google --super
 '''
 `,
 	}

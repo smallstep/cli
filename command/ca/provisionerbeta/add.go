@@ -141,6 +141,7 @@ func addCommand() cli.Command {
 			sshHostMaxDurFlag,
 			sshHostDefaultDurFlag,
 			disableRenewalFlag,
+			allowRenewalAfterExpiryFlag,
 			enableX509Flag,
 			enableSSHFlag,
 
@@ -237,6 +238,9 @@ provisioning tokens.`,
 		},
 		Description: `**step ca provisioner add** adds a provisioner to the CA configuration.
 
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
+
 ## POSITIONAL ARGUMENTS
 
 <name>
@@ -329,6 +333,8 @@ $ step beta ca provisioner add Amazon --type AWS \
 }
 
 func addAction(ctx *cli.Context) (err error) {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}
@@ -404,7 +410,8 @@ func addAction(ctx *cli.Context) (err error) {
 			},
 			Enabled: !(ctx.IsSet("ssh") && !ctx.Bool("ssh")),
 		},
-		DisableRenewal: ctx.Bool("disable-renewal"),
+		DisableRenewal:          ctx.Bool("disable-renewal"),
+		AllowRenewalAfterExpiry: ctx.Bool("allow-renewal-after-expiry"),
 	}
 
 	switch linkedca.Provisioner_Type(typ) {

@@ -1,6 +1,7 @@
 package x509util
 
 import (
+	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
@@ -17,7 +18,8 @@ import (
 
 // Fingerprint returns the SHA-256 fingerprint of the certificate.
 func Fingerprint(cert *x509.Certificate) string {
-	return EncodedFingerprint(cert, HexFingerprint)
+	h, _ := EncodedFingerprint(cert, HexFingerprint, false, false)
+	return h
 }
 
 // FingerprintEncoding represents the fingerprint encoding type.
@@ -38,10 +40,19 @@ const (
 	EmojiFingerprint = FingerprintEncoding(fingerprint.EmojiFingerprint)
 )
 
-// EncodedFingerprint returns an encoded the SHA-256 fingerprint of the certificate. Defaults to hex encoding
-func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding) string {
+// EncodedFingerprint returns an encoded fingerprint of the certificate.
+// Defaults to hex encoding and SHA-256.
+func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding,
+	sha1Mode bool, insecure bool) (string, error) {
+	if sha1Mode {
+		if !insecure {
+			return "", errors.New("sha1 requires '--insecure' flag")
+		}
+		sum := sha1.Sum(cert.Raw)
+		return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding))), nil
+	}
 	sum := sha256.Sum256(cert.Raw)
-	return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding)))
+	return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding))), nil
 }
 
 // SplitSANs splits a slice of Subject Alternative Names into slices of

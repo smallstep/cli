@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -24,14 +25,18 @@ type Renewer struct {
 	transport *http.Transport
 	key       crypto.PrivateKey
 	offline   bool
+	cert      tls.Certificate
+	caURL     *url.URL
 }
 
-func New(client caclient.CaClient, tr *http.Transport, key crypto.PrivateKey, offline bool) *Renewer {
+func New(client caclient.CaClient, tr *http.Transport, key crypto.PrivateKey, offline bool, cert tls.Certificate, caURL *url.URL) *Renewer {
 	return &Renewer{
 		client:    client,
 		transport: tr,
 		key:       key,
 		offline:   offline,
+		cert:      cert,
+		caURL:     caURL,
 	}
 }
 

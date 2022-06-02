@@ -7,11 +7,12 @@ import (
 	"os/exec"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/errs"
+
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
 )
 
 func listCommand() cli.Command {
@@ -19,7 +20,7 @@ func listCommand() cli.Command {
 		Name:   "list",
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all ACME External Account Binding Keys",
-		UsageText: `**step beta ca acme eab list** <provisioner> [<reference>]
+		UsageText: `**step ca acme eab list** <provisioner> [<eab-key-reference>]
 [**--limit**=<number>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -36,7 +37,7 @@ func listCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step beta ca acme eab list** lists all ACME External Account Binding (EAB) Keys.
+		Description: `**step ca acme eab list** lists all ACME External Account Binding (EAB) Keys.
 
 Output will go to stdout by default. If many EAB keys are stored in the ACME provisioner, output will be sent to $PAGER (when set). 
 
@@ -45,7 +46,7 @@ Output will go to stdout by default. If many EAB keys are stored in the ACME pro
 <provisioner>
 : Name of the provisioner to list ACME EAB keys for
 
-<reference>
+<eab-key-reference>
 : (Optional) reference (from external system) for the key to be listed
 
 
@@ -53,12 +54,12 @@ Output will go to stdout by default. If many EAB keys are stored in the ACME pro
 
 List all ACME External Account Binding Keys:
 '''
-$ step beta ca acme eab list my_acme_provisioner
+$ step ca acme eab list my_acme_provisioner
 '''
 
 Show ACME External Account Binding Key with specific reference:
 '''
-$ step beta ca acme eab list my_acme_provisioner my_reference
+$ step ca acme eab list my_acme_provisioner my_reference
 '''
 `,
 	}

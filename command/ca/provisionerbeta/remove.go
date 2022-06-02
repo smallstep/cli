@@ -29,6 +29,9 @@ func removeCommand() cli.Command {
 		},
 		Description: `**step beta ca provisioner remove** removes a provisioner from the CA configuration.
 
+WARNING: The 'beta' prefix is deprecated and will be removed in a future release.
+Please use 'step ca admin ...' going forwards.
+
 ## EXAMPLES
 
 Remove provisioner by name:
@@ -40,6 +43,8 @@ $ step beta ca provisioner remove acme
 }
 
 func removeAction(ctx *cli.Context) (err error) {
+	deprecationWarning()
+
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
 	}

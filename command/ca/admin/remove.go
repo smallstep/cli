@@ -12,7 +12,7 @@ func removeCommand() cli.Command {
 		Name:   "remove",
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove an admin from the CA configuration",
-		UsageText: `**step beta ca admin remove** <subject> [**--provisioner**=<name>]
+		UsageText: `**step ca admin remove** <subject> [**--provisioner**=<name>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]`,
@@ -27,7 +27,7 @@ func removeCommand() cli.Command {
 			flags.Root,
 			flags.Context,
 		},
-		Description: `**step beta ca admin remove** removes an admin from the CA configuration.
+		Description: `**step ca admin remove** removes an admin from the CA configuration.
 
 ## POSITIONAL ARGUMENTS
 
@@ -38,12 +38,12 @@ func removeCommand() cli.Command {
 
 Remove an admin:
 '''
-$ step beta ca admin remove max@smallstep.com
+$ step ca admin remove max@smallstep.com
 '''
 
 Remove an admin with additional filtering by provisioner:
 '''
-$ step beta ca admin remove max@smallstep.com --provisioner admin-jwk
+$ step ca admin remove max@smallstep.com --provisioner admin-jwk
 '''
 `,
 	}
