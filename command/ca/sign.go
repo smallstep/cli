@@ -28,7 +28,7 @@ func signCertificateCommand() cli.Command {
 [**--acme**=<uri>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
 [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
-[**--k8ssa-token-path**=<file>]
+[**--k8ssa-token-path**=<file>] [**--offline**] [**--password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
@@ -58,6 +58,12 @@ Sign a new certificate using the offline mode, requires the configuration
 files, certificates, and keys created with **step ca init**:
 '''
 $ step ca sign --offline internal internal.csr internal.crt
+'''
+
+Sign a new certificate using the offline mode with additional flag to avoid
+console prompts:
+'''
+$ step ca sign --offline --password-file ./pass.txt internal internal.csr internal.crt
 '''
 
 Sign a new certificate using an X5C provisioner:
@@ -117,6 +123,7 @@ $ step ca sign foo.csr foo.crt \
 			flags.TemplateSetFile,
 			flags.Force,
 			flags.Offline,
+			flags.PasswordFile,
 			consoleFlag,
 			flags.X5cCert,
 			flags.X5cKey,
