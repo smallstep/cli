@@ -182,7 +182,7 @@ func createAction(ctx *cli.Context) (err error) {
 		}
 	} else {
 		var pass []byte
-		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key", ui.WithValue(password))
+		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key", ui.WithValue(password), ui.WithValidateNotEmpty())
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}
