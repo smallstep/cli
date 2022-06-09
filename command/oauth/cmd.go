@@ -771,7 +771,7 @@ type identifyDeviceResponse struct {
 	VerificationURI string `json:"verification_uri"`
 	// NOTE Google returns `verification_url` which is incorrect
 	// according to the spec (https://datatracker.ietf.org/doc/html/rfc8628#section-3.2)
-	// but we'll try to accomodate for that here.
+	// but we'll try to accommodate for that here.
 	VerificationURL         string `json:"verification_url"`
 	VerificationURIComplete string `json:"verification_uri_complete"`
 	ExpiresIn               int    `json:"expires_in"`
@@ -838,39 +838,43 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
 	data.Set("device_code", idr.DeviceCode)
 
-	var tok token
+	var tok *token
 	for {
-		resp, err := http.PostForm(o.tokenEndpoint, data)
+		tok, err = o.deviceAuthzTokenPoll(data)
 		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		defer resp.Body.Close()
-		b, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		isTokenReceived := false
-		tok = token{}
-
-		switch {
-		case resp.StatusCode == http.StatusOK:
-			if err := json.NewDecoder(bytes.NewReader(b)).Decode(&tok); err != nil {
-				return nil, errors.WithStack(err)
-			}
-			isTokenReceived = true
-		case resp.StatusCode >= http.StatusBadRequest && resp.StatusCode < http.StatusInternalServerError:
-			time.Sleep(time.Duration(idr.Interval) * time.Second)
-		default:
-			return nil, errors.New(string(b))
-		}
-
-		if isTokenReceived {
+			return nil, err
+		} else if tok != nil {
 			break
 		}
+		time.Sleep(time.Duration(idr.Interval) * time.Second)
 	}
 
-	return &tok, nil
+	return tok, nil
+}
+
+func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
+	resp, err := http.PostForm(o.tokenEndpoint, data)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	switch {
+	case resp.StatusCode == http.StatusOK:
+		tok := token{}
+		if err := json.NewDecoder(bytes.NewReader(b)).Decode(&tok); err != nil {
+			return nil, errors.WithStack(err)
+		}
+		return &tok, nil
+	case resp.StatusCode >= http.StatusBadRequest && resp.StatusCode < http.StatusInternalServerError:
+		return nil, nil
+	default:
+		return nil, errors.New(string(b))
+	}
 }
 
 // DoTwoLeggedAuthorization performs two-legged OAuth using the jwt-bearer
