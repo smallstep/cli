@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
@@ -141,6 +142,11 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
   --provider https://example.org
 '''
 
+Use the Device Authorization Grant flow for input constrained clients:
+'''
+$ step oauth --client-id my-client-id --client-secret my-client-secret --device
+'''
+
 Use additional authentication parameters:
 '''
 $ step oauth --client-id my-client-id --client-secret my-client-secret \
@@ -157,8 +163,18 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 				Usage: "Email to authenticate",
 			},
 			cli.BoolFlag{
-				Name:  "console, c",
-				Usage: "Complete the flow while remaining only inside the terminal",
+				Name: "console, c",
+				Usage: `Complete the flow while remaining only inside the terminal.
+
+NOTE: This flag instructs the CLI to retrieve a token using the Out Of Band flow,
+which has been deprecated. In an upcoming release this flag will be updated to
+use the Device Authorization Grant flow (https://datatracker.ietf.org/doc/html/rfc8628#section-3.2).
+Please use the '--device' flag to use the new flow in the interim.`,
+			},
+			cli.BoolFlag{
+				Name: "device",
+				Usage: `Complete the flow using the Device Authorization Grant
+(https://datatracker.ietf.org/doc/html/rfc8628#section-3.2) flow`,
 			},
 			cli.StringFlag{
 				Name:  "client-id",
@@ -175,6 +191,10 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 			cli.StringFlag{
 				Name:  "authorization-endpoint",
 				Usage: "OAuth Authorization Endpoint",
+			},
+			cli.StringFlag{
+				Name:  "device-authorization-endpoint",
+				Usage: "OAuth Device Authorization Endpoint",
 			},
 			cli.StringFlag{
 				Name:  "token-endpoint",
@@ -264,10 +284,15 @@ OpenID standard defines the following values, but your provider may support some
 }
 
 func oauthCmd(c *cli.Context) error {
+	if c.Bool("console") && c.Bool("device") {
+		return errs.MutuallyExclusiveFlags(c, "console", "device")
+	}
+
 	opts := &options{
 		Provider:            c.String("provider"),
 		Email:               c.String("email"),
 		Console:             c.Bool("console"),
+		Device:              c.Bool("device"),
 		Implicit:            c.Bool("implicit"),
 		CallbackListener:    c.String("listen"),
 		CallbackListenerURL: c.String("listen-url"),
@@ -300,6 +325,7 @@ func oauthCmd(c *cli.Context) error {
 	}
 
 	authzEp := ""
+	deviceAuthzEp := ""
 	tokenEp := ""
 	if c.IsSet("authorization-endpoint") {
 		if !c.IsSet("token-endpoint") {
@@ -307,6 +333,14 @@ func oauthCmd(c *cli.Context) error {
 		}
 		opts.Provider = ""
 		authzEp = c.String("authorization-endpoint")
+		tokenEp = c.String("token-endpoint")
+	}
+	if c.IsSet("device-authorization-endpoint") {
+		if !c.IsSet("token-endpoint") {
+			return errors.New("flag '--device-authorization-endpoint' requires flag '--token-endpoint'")
+		}
+		opts.Provider = ""
+		deviceAuthzEp = c.String("device-authorization-endpoint")
 		tokenEp = c.String("token-endpoint")
 	}
 
@@ -370,7 +404,7 @@ func oauthCmd(c *cli.Context) error {
 		authParams.Add(k, v)
 	}
 
-	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt, authParams, opts)
+	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp, scope, prompt, authParams, opts)
 	if err != nil {
 		return err
 	}
@@ -385,6 +419,8 @@ func oauthCmd(c *cli.Context) error {
 		}
 	case opts.Console:
 		tok, err = o.DoManualAuthorization()
+	case opts.Device:
+		tok, err = o.DoDeviceAuthorization()
 	default:
 		tok, err = o.DoLoopbackAuthorization()
 	}
@@ -422,6 +458,7 @@ type options struct {
 	Provider            string
 	Email               string
 	Console             bool
+	Device              bool
 	Implicit            bool
 	CallbackListener    string
 	CallbackListenerURL string
@@ -462,6 +499,7 @@ type oauth struct {
 	redirectURI         string
 	tokenEndpoint       string
 	authzEndpoint       string
+	deviceAuthzEndpoint string
 	userInfoEndpoint    string // For testing
 	state               string
 	codeChallenge       string
@@ -477,7 +515,7 @@ type oauth struct {
 	tokCh               chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt string, authParams url.Values, opts *options) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp, scope, prompt string, authParams url.Values, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -502,6 +540,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 			scope:               scope,
 			prompt:              prompt,
 			authzEndpoint:       "https://accounts.google.com/o/oauth2/v2/auth",
+			deviceAuthzEndpoint: "https://oauth2.googleapis.com/device/code",
 			tokenEndpoint:       "https://www.googleapis.com/oauth2/v4/token",
 			userInfoEndpoint:    "https://www.googleapis.com/oauth2/v3/userinfo",
 			loginHint:           opts.Email,
@@ -520,22 +559,45 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 		}, nil
 	default:
 		userinfoEp := ""
-		if authzEp == "" && tokenEp == "" {
-			d, err := disco(provider)
-			if err != nil {
-				return nil, err
-			}
+		if opts.Device {
+			if deviceAuthzEp == "" && tokenEp == "" {
+				d, err := disco(provider)
+				if err != nil {
+					return nil, err
+				}
 
-			if _, ok := d["authorization_endpoint"]; !ok {
-				return nil, errors.New("missing 'authorization_endpoint' in provider metadata")
+				if _, ok := d["device_authorization_endpoint"]; !ok {
+					return nil, errors.New("missing 'device_authorization_endpoint' in provider metadata")
+				}
+				if _, ok := d["token_endpoint"]; !ok {
+					return nil, errors.New("missing 'token_endpoint' in provider metadata")
+				}
+				deviceAuthzEp = d["device_authorization_endpoint"].(string)
+				tokenEp = d["token_endpoint"].(string)
+				userinfoEp = d["token_endpoint"].(string)
 			}
-			if _, ok := d["token_endpoint"]; !ok {
-				return nil, errors.New("missing 'token_endpoint' in provider metadata")
+		} else {
+			if authzEp == "" && tokenEp == "" {
+				d, err := disco(provider)
+				if err != nil {
+					return nil, err
+				}
+
+				if _, ok := d["authorization_endpoint"]; !ok {
+					return nil, errors.New("missing 'authorization_endpoint' in provider metadata")
+				}
+				if _, ok := d["token_endpoint"]; !ok {
+					return nil, errors.New("missing 'token_endpoint' in provider metadata")
+				}
+				if _, ok := d["device_authorization_endpoint"]; !ok {
+					return nil, errors.New("missing 'token_endpoint' in provider metadata")
+				}
+				authzEp = d["authorization_endpoint"].(string)
+				tokenEp = d["token_endpoint"].(string)
+				userinfoEp = d["token_endpoint"].(string)
 			}
-			authzEp = d["authorization_endpoint"].(string)
-			tokenEp = d["token_endpoint"].(string)
-			userinfoEp = d["token_endpoint"].(string)
 		}
+
 		return &oauth{
 			provider:            provider,
 			clientID:            clientID,
@@ -543,6 +605,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 			scope:               scope,
 			prompt:              prompt,
 			authzEndpoint:       authzEp,
+			deviceAuthzEndpoint: deviceAuthzEp,
 			tokenEndpoint:       tokenEp,
 			userInfoEndpoint:    userinfoEp,
 			loginHint:           opts.Email,
@@ -700,6 +763,114 @@ func (o *oauth) DoManualAuthorization() (*token, error) {
 		return nil, errors.Errorf("Error exchanging authorization code: %s. %s", tok.Err, tok.ErrDesc)
 	}
 	return tok, nil
+}
+
+type identifyDeviceResponse struct {
+	DeviceCode      string `json:"device_code"`
+	UserCode        string `json:"user_code"`
+	VerificationURI string `json:"verification_uri"`
+	// NOTE Google returns `verification_url` which is incorrect
+	// according to the spec (https://datatracker.ietf.org/doc/html/rfc8628#section-3.2)
+	// but we'll try to accomodate for that here.
+	VerificationURL         string `json:"verification_url"`
+	VerificationURIComplete string `json:"verification_uri_complete"`
+	ExpiresIn               int    `json:"expires_in"`
+	Interval                int    `json:"interval"`
+}
+
+// DoDeviceAuthorization gets a token from the IDP using the OAuth 2.0
+// Device Authorization Grant. https://datatracker.ietf.org/doc/html/rfc8628
+func (o *oauth) DoDeviceAuthorization() (*token, error) {
+	// Identify the Device
+	data := url.Values{}
+	data.Set("client_id", o.clientID)
+	data.Set("client_secret", o.clientSecret)
+	data.Set("scope", o.scope)
+
+	resp, err := http.PostForm(o.deviceAuthzEndpoint, data)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 {
+		var e struct {
+			Error string
+		}
+		if err := json.NewDecoder(bytes.NewReader(b)).Decode(&e); err != nil {
+			return nil, errors.Wrapf(err, "could not parse http body: %s", string(b))
+		}
+	}
+
+	var idr identifyDeviceResponse
+	if err := json.NewDecoder(bytes.NewReader(b)).Decode(&idr); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	switch {
+	case idr.VerificationURI != "":
+		break
+	case idr.VerificationURL != "":
+		// NOTE this is a hack for Google, because their API returns the attribute
+		// 'verification_url` rather than `verification_uri`.
+		idr.VerificationURI = idr.VerificationURL
+	default:
+		return nil, errors.Errorf("device code response from server missing 'verification_uri' parameter. http body response: %s", string(b))
+	}
+
+	fmt.Fprintln(os.Stderr, "Go to the following website:")
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, idr.VerificationURI)
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "and enter the activation code below:")
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, idr.UserCode)
+	fmt.Fprintln(os.Stderr)
+
+	// Poll the Token endpoint until the user completes the flow.
+	data = url.Values{}
+	data.Set("client_id", o.clientID)
+	data.Set("client_secret", o.clientSecret)
+	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
+	data.Set("device_code", idr.DeviceCode)
+
+	var tok token
+	for {
+		resp, err := http.PostForm(o.tokenEndpoint, data)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		defer resp.Body.Close()
+		b, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		isTokenReceived := false
+		tok = token{}
+
+		switch {
+		case resp.StatusCode == http.StatusOK:
+			if err := json.NewDecoder(bytes.NewReader(b)).Decode(&tok); err != nil {
+				return nil, errors.WithStack(err)
+			}
+			isTokenReceived = true
+		case resp.StatusCode >= http.StatusBadRequest && resp.StatusCode < http.StatusInternalServerError:
+			time.Sleep(time.Duration(idr.Interval) * time.Second)
+		default:
+			return nil, errors.New(string(b))
+		}
+
+		if isTokenReceived {
+			break
+		}
+	}
+
+	return &tok, nil
 }
 
 // DoTwoLeggedAuthorization performs two-legged OAuth using the jwt-bearer
