@@ -860,7 +860,7 @@ func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
 	defer resp.Body.Close()
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.WithWrap(err, "error reading HTTP response body from /token endpoint")
+		return nil, errors.Wrap(err, "error reading HTTP response body from /token endpoint")
 	}
 
 	switch {
