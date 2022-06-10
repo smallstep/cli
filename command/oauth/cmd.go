@@ -813,7 +813,7 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 
 	switch {
 	case idr.VerificationURI != "":
-		break
+		// do nothing
 	case idr.VerificationURL != "":
 		// NOTE this is a hack for Google, because their API returns the attribute
 		// 'verification_url` rather than `verification_uri`.
@@ -840,13 +840,13 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 
 	var tok *token
 	for {
+		time.Sleep(time.Duration(idr.Interval) * time.Second)
 		tok, err = o.deviceAuthzTokenPoll(data)
 		if err != nil {
 			return nil, err
 		} else if tok != nil {
 			break
 		}
-		time.Sleep(time.Duration(idr.Interval) * time.Second)
 	}
 
 	return tok, nil
@@ -855,19 +855,19 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
 	resp, err := http.PostForm(o.tokenEndpoint, data)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Wrap(err, "error doing POST to /token endpoint")
 	}
 	defer resp.Body.Close()
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.WithWrap(err, "error reading HTTP response body from /token endpoint")
 	}
 
 	switch {
 	case resp.StatusCode == http.StatusOK:
 		tok := token{}
 		if err := json.NewDecoder(bytes.NewReader(b)).Decode(&tok); err != nil {
-			return nil, errors.WithStack(err)
+			return nil, errors.Wrap(err, "error parsing JSON /token response")
 		}
 		return &tok, nil
 	case resp.StatusCode >= http.StatusBadRequest && resp.StatusCode < http.StatusInternalServerError:
