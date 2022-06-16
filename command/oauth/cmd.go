@@ -841,11 +841,11 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 	return tok, nil
 }
 
-func openBrowserIfAsked(o *oauth, url string) {
+func openBrowserIfAsked(o *oauth, u string) {
 	reader := bufio.NewReader(os.Stdin)
 	reader.ReadString('\n')
 
-	exec.OpenInBrowser(url, o.browser)
+	exec.OpenInBrowser(u, o.browser)
 }
 
 func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
