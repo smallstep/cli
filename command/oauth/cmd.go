@@ -579,15 +579,17 @@ func newOauth(provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp,
 
 			if _, ok := d["device_authorization_endpoint"]; !ok && opts.Device {
 				return nil, errors.New("missing 'device_authorization_endpoint' in provider metadata")
+			} else if ok {
+				deviceAuthzEp = d["device_authorization_endpoint"].(string)
 			}
 			if _, ok := d["authorization_endpoint"]; !ok && !opts.Device {
 				return nil, errors.New("missing 'authorization_endpoint' in provider metadata")
+			} else if ok {
+				authzEp = d["authorization_endpoint"].(string)
 			}
 			if _, ok := d["token_endpoint"]; !ok {
 				return nil, errors.New("missing 'token_endpoint' in provider metadata")
 			}
-			deviceAuthzEp = d["device_authorization_endpoint"].(string)
-			authzEp = d["authorization_endpoint"].(string)
 			tokenEp = d["token_endpoint"].(string)
 			userinfoEp = d["token_endpoint"].(string)
 		}
