@@ -144,6 +144,12 @@ challenge validation requests.`,
 		Usage: "Complete the flow while remaining inside the terminal",
 	}
 
+	deviceFlag = cli.BoolFlag{
+		Name: "device",
+		Usage: `Complete the flow using the Device Authorization Grant
+(https://datatracker.ietf.org/doc/html/rfc8628#section-3.2) flow`,
+	}
+
 	fingerprintFlag = cli.StringFlag{
 		Name:  "fingerprint",
 		Usage: "The <fingerprint> of the targeted root certificate.",

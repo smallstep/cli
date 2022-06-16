@@ -124,6 +124,9 @@ func generateOIDCToken(ctx *cli.Context, p *provisioner.OIDC) (string, error) {
 	if ctx.Bool("console") {
 		args = append(args, "--console")
 	}
+	if ctx.Bool("device") {
+		args = append(args, "--device")
+	}
 	if p.ListenAddress != "" && os.Getenv("STEP_LISTEN") == "" {
 		args = append(args, "--listen", p.ListenAddress)
 	}

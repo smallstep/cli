@@ -49,6 +49,7 @@ const (
 
 	defaultDeviceAuthzClientID          = "1087160488420-1u0jqoulmv3mfomfh6fhkfs4vk4bdjih.apps.googleusercontent.com"
 	defaultDeviceAuthzClientNotSoSecret = "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"
+	defaultDeviceAuthzInterval          = 5
 
 	// The URN for getting verification token offline
 	oobCallbackUrn = "urn:ietf:wg:oauth:2.0:oob"
@@ -782,7 +783,7 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 
 	resp, err := http.PostForm(o.deviceAuthzEndpoint, data)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Wrap(err, "http failure to identify device")
 	}
 	defer resp.Body.Close()
 	b, err := io.ReadAll(resp.Body)
@@ -801,7 +802,7 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 
 	var idr identifyDeviceResponse
 	if err := json.NewDecoder(bytes.NewReader(b)).Decode(&idr); err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Wrap(err, "failure decoding device authz response to JWON")
 	}
 
 	switch {
@@ -813,6 +814,10 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 		idr.VerificationURI = idr.VerificationURL
 	default:
 		return nil, errors.Errorf("device code response from server missing 'verification_uri' parameter. http body response: %s", string(b))
+	}
+
+	if idr.Interval <= 0 {
+		idr.Interval = defaultDeviceAuthzInterval
 	}
 
 	fmt.Fprintf(os.Stderr, "Visit %s and enter the code: (press 'ENTER' to open default browser)\n", idr.VerificationURI)
@@ -828,17 +833,21 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 	data.Set("device_code", idr.DeviceCode)
 
 	var tok *token
+	t := time.NewTimer(time.Duration(idr.ExpiresIn) * time.Second)
+	defer t.Stop()
 	for {
-		time.Sleep(time.Duration(idr.Interval) * time.Second)
-		tok, err = o.deviceAuthzTokenPoll(data)
-		if err != nil {
-			return nil, err
-		} else if tok != nil {
-			break
+		select {
+		case <-time.After(time.Duration(idr.Interval) * time.Second):
+			tok, err = o.deviceAuthzTokenPoll(data)
+			if err != nil {
+				return nil, err
+			} else if tok != nil {
+				return tok, nil
+			}
+		case <-t.C:
+			return nil, errors.New("device authorization grant expired")
 		}
 	}
-
-	return tok, nil
 }
 
 func openBrowserIfAsked(o *oauth, u string) {

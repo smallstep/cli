@@ -27,7 +27,7 @@ func signCertificateCommand() cli.Command {
 [**--set**=<key=value>] [**--set-file**=<file>]
 [**--acme**=<uri>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
-[**--x5c-cert**=<file>] [**--x5c-key**=<file>]
+[**--device**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
 [**--k8ssa-token-path**=<file>] [**--offline**] [**--password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
@@ -125,6 +125,7 @@ $ step ca sign foo.csr foo.crt \
 			flags.Offline,
 			flags.PasswordFile,
 			consoleFlag,
+			deviceFlag,
 			flags.X5cCert,
 			flags.X5cKey,
 			flags.NebulaCert,
