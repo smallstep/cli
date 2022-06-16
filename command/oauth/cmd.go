@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"crypto/x509"
@@ -45,6 +46,9 @@ import (
 const (
 	defaultClientID          = "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com"
 	defaultClientNotSoSecret = "udTrOT3gzrO7W9fDPgZQLfYJ"
+
+	defaultDeviceAuthzClientID          = "1087160488420-1u0jqoulmv3mfomfh6fhkfs4vk4bdjih.apps.googleusercontent.com"
+	defaultDeviceAuthzClientNotSoSecret = "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"
 
 	// The URN for getting verification token offline
 	oobCallbackUrn = "urn:ietf:wg:oauth:2.0:oob"
@@ -308,17 +312,22 @@ func oauthCmd(c *cli.Context) error {
 	}
 
 	var clientID, clientSecret string
-	if opts.Implicit {
+	switch {
+	case opts.Implicit:
 		if !c.Bool("insecure") {
 			return errs.RequiredInsecureFlag(c, "implicit")
 		}
 		if !c.IsSet("client-id") {
 			return errs.RequiredWithFlag(c, "implicit", "client-id")
 		}
-	} else {
+	case opts.Device:
+		clientID = defaultDeviceAuthzClientID
+		clientSecret = defaultDeviceAuthzClientNotSoSecret
+	default:
 		clientID = defaultClientID
 		clientSecret = defaultClientNotSoSecret
 	}
+
 	if c.IsSet("client-id") {
 		clientID = c.String("client-id")
 		clientSecret = c.String("client-secret")
@@ -559,43 +568,27 @@ func newOauth(provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp,
 		}, nil
 	default:
 		userinfoEp := ""
-		if opts.Device {
-			if deviceAuthzEp == "" && tokenEp == "" {
-				d, err := disco(provider)
-				if err != nil {
-					return nil, err
-				}
 
-				if _, ok := d["device_authorization_endpoint"]; !ok {
-					return nil, errors.New("missing 'device_authorization_endpoint' in provider metadata")
-				}
-				if _, ok := d["token_endpoint"]; !ok {
-					return nil, errors.New("missing 'token_endpoint' in provider metadata")
-				}
-				deviceAuthzEp = d["device_authorization_endpoint"].(string)
-				tokenEp = d["token_endpoint"].(string)
-				userinfoEp = d["token_endpoint"].(string)
+		if (opts.Device && deviceAuthzEp == "" && tokenEp == "") ||
+			(!opts.Device && authzEp == "" && tokenEp == "") {
+			d, err := disco(provider)
+			if err != nil {
+				return nil, err
 			}
-		} else {
-			if authzEp == "" && tokenEp == "" {
-				d, err := disco(provider)
-				if err != nil {
-					return nil, err
-				}
 
-				if _, ok := d["authorization_endpoint"]; !ok {
-					return nil, errors.New("missing 'authorization_endpoint' in provider metadata")
-				}
-				if _, ok := d["token_endpoint"]; !ok {
-					return nil, errors.New("missing 'token_endpoint' in provider metadata")
-				}
-				if _, ok := d["device_authorization_endpoint"]; !ok {
-					return nil, errors.New("missing 'token_endpoint' in provider metadata")
-				}
-				authzEp = d["authorization_endpoint"].(string)
-				tokenEp = d["token_endpoint"].(string)
-				userinfoEp = d["token_endpoint"].(string)
+			if _, ok := d["device_authorization_endpoint"]; !ok && opts.Device {
+				return nil, errors.New("missing 'device_authorization_endpoint' in provider metadata")
 			}
+			if _, ok := d["authorization_endpoint"]; !ok && !opts.Device {
+				return nil, errors.New("missing 'authorization_endpoint' in provider metadata")
+			}
+			if _, ok := d["token_endpoint"]; !ok {
+				return nil, errors.New("missing 'token_endpoint' in provider metadata")
+			}
+			deviceAuthzEp = d["device_authorization_endpoint"].(string)
+			authzEp = d["authorization_endpoint"].(string)
+			tokenEp = d["token_endpoint"].(string)
+			userinfoEp = d["token_endpoint"].(string)
 		}
 
 		return &oauth{
@@ -822,14 +815,10 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 		return nil, errors.Errorf("device code response from server missing 'verification_uri' parameter. http body response: %s", string(b))
 	}
 
-	fmt.Fprintln(os.Stderr, "Go to the following website:")
-	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, idr.VerificationURI)
-	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "and enter the activation code below:")
-	fmt.Fprintln(os.Stderr)
+	fmt.Fprintf(os.Stderr, "Visit %s and enter the code: (press 'ENTER' to open default browser)\n", idr.VerificationURI)
 	fmt.Fprintln(os.Stderr, idr.UserCode)
-	fmt.Fprintln(os.Stderr)
+
+	go openBrowserIfAsked(o, idr.VerificationURI)
 
 	// Poll the Token endpoint until the user completes the flow.
 	data = url.Values{}
@@ -850,6 +839,13 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 	}
 
 	return tok, nil
+}
+
+func openBrowserIfAsked(o *oauth, url string) {
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
+
+	exec.OpenInBrowser(url, o.browser)
 }
 
 func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
