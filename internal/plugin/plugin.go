@@ -9,7 +9,7 @@ import (
 	"go.step.sm/cli-utils/step"
 )
 
-const kmsPlugin = "step-kms-plugin"
+// const kmsPlugin = "step-kms-plugin"
 
 // LookPath searches for an executable named step-<name>-plugin in the $(step
 // path)/plugins directory or in the directories named by the PATH environment
