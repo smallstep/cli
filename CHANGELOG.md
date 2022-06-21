@@ -6,6 +6,26 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+### TEMPLATE -- do not alter or remove
+---
+## [x.y.z] - UNKNOWN
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+---
+
+## [0.21.0] - UNKNOWN
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+- Added back --domain and --remove-domain flags to provisioner CRUD
+### Security
+
 ## [0.20.0] - 2022-05-26
 ### Added
 - Add commands for managing certificate issuance policies on authority, provisioner and ACME account level.
