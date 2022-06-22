@@ -330,7 +330,7 @@ Create an intermediate certificate using <step-kms-plugin>:
 $ step kms create \
   --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
   'pkcs11:id=4001;object=intermediate-key'
-$ stepv certificate create \
+$ step certificate create \
   --profile intermediate-ca \
   --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
   --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
