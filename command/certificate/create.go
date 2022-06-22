@@ -7,14 +7,15 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
 )
 
@@ -400,6 +401,7 @@ the **--ca** flag.`,
 			flags.KTY,
 			flags.Size,
 			flags.Curve,
+			flags.KMSUri,
 			flags.Force,
 			flags.Subtle,
 			cli.BoolFlag{
@@ -655,7 +657,10 @@ func createAction(ctx *cli.Context) error {
 }
 
 func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error) {
-	keyFile := ctx.String("key")
+	var (
+		kms     = ctx.String("kms")
+		keyFile = ctx.String("key")
+	)
 
 	// Validate key parameters and generate key pair
 	if keyFile == "" {
@@ -663,7 +668,7 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 		if err != nil {
 			return nil, nil, err
 		}
-		pub, priv, err := keys.GenerateKeyPair(kty, crv, size)
+		pub, priv, err := keyutil.GenerateKeyPair(kty, crv, size)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -684,19 +689,17 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 		return nil, nil, errs.IncompatibleFlag(ctx, "key", "size")
 	}
 
-	ops := []pemutil.Options{}
+	opts := []pemutil.Options{}
 	passFile := ctx.String("password-file")
 	if passFile != "" {
-		ops = append(ops, pemutil.WithPasswordFile(passFile))
+		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
-	v, err := pemutil.Read(keyFile, ops...)
+
+	signer, err := cryptoutil.CreateSigner(kms, keyFile, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
-	signer, ok := v.(crypto.Signer)
-	if !ok {
-		return nil, nil, errors.Errorf("file %s does not contain a valid private key", keyFile)
-	}
+
 	return signer.Public(), signer, nil
 }
 
@@ -709,6 +712,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 		caKey    = ctx.String("ca-key")
 		profile  = ctx.String("profile")
 		template = ctx.String("template")
+		kms      = ctx.String("kms")
 	)
 
 	// Check required flags when profile is used.
@@ -754,17 +758,14 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 
 	// Parse --ca-key as a crypto.Signer.
 	passFile := ctx.String("ca-password-file")
-	ops := []pemutil.Options{}
+	opts := []pemutil.Options{}
 	if passFile != "" {
-		ops = append(ops, pemutil.WithPasswordFile(passFile))
+		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
-	key, err := pemutil.Read(caKey, ops...)
+
+	signer, err := cryptoutil.CreateSigner(kms, caKey, opts...)
 	if err != nil {
 		return nil, nil, err
-	}
-	signer, ok := key.(crypto.Signer)
-	if !ok {
-		return nil, nil, errors.Errorf("invalid value '%s' for flag '--ca-key': file is not a valid private key", caKey)
 	}
 
 	return cert, signer, nil
