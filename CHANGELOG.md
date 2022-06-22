@@ -17,14 +17,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Security
 ---
 
-## [0.21.0] - UNKNOWN
-### Added
-### Changed
-### Deprecated
-### Removed
+## [Unreleased]
 ### Fixed
 - Added back --domain and --remove-domain flags to provisioner CRUD
-### Security
 
 ## [0.20.0] - 2022-05-26
 ### Added
