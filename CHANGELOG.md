@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### TEMPLATE -- do not alter or remove
 ---
-## [x.y.z] - UNKNOWN
+## [x.y.z] - aaaa-bb-cc
 ### Added
 ### Changed
 ### Deprecated
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Security
 ---
 
-## [Unreleased]
+## [Unreleased] 
 ### Fixed
 - Added back --domain and --remove-domain flags to provisioner CRUD
 
