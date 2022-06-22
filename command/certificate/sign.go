@@ -1,7 +1,6 @@
 package certificate
 
 import (
-	"bytes"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -110,8 +110,17 @@ $ cat coyote.tpl
 }
 $ step certificate create --csr coyote@acme.corp coyote.csr coyote.key
 $ step certificate sign --template coyote.tpl coyote.csr issuer.crt issuer.key
-'''`,
+'''
+
+Sign a CSR using <step-kms-plugin>:
+'''
+$ step certificate sign \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  leaf.csr issuer.crt 'pkcs11:id=4001'
+'''
+`,
 		Flags: []cli.Flag{
+			flags.KMSUri,
 			cli.StringFlag{
 				Name:  "profile",
 				Value: profileLeaf,
@@ -188,24 +197,21 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	ops := []pemutil.Options{}
+	opts := []pemutil.Options{}
 	passFile := ctx.String("password-file")
 	if passFile == "" {
-		ops = append(ops, pemutil.WithPasswordPrompt(
+		opts = append(opts, pemutil.WithPasswordPrompt(
 			fmt.Sprintf("Please enter the password to decrypt %s", keyFile),
 			func(s string) ([]byte, error) {
 				return ui.PromptPassword(s)
 			}))
 	} else {
-		ops = append(ops, pemutil.WithPasswordFile(passFile))
+		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
-	key, err := pemutil.Read(keyFile, ops...)
+
+	signer, err := cryptoutil.CreateSigner(ctx.String("kms"), keyFile, opts...)
 	if err != nil {
 		return err
-	}
-	signer, ok := key.(crypto.Signer)
-	if !ok {
-		return errors.Errorf("key in %s does not satisfy the crypto.Signer interface", keyFile)
 	}
 	if err := validateIssuerKey(issuers[0], signer); err != nil {
 		return err
@@ -322,27 +328,27 @@ func signAction(ctx *cli.Context) error {
 func validateIssuerKey(crt *x509.Certificate, signer crypto.Signer) error {
 	switch pub := crt.PublicKey.(type) {
 	case *rsa.PublicKey:
-		priv, ok := signer.(*rsa.PrivateKey)
+		pk, ok := signer.Public().(*rsa.PublicKey)
 		if !ok {
 			return errors.New("private key type does not match issuer public key type")
 		}
-		if pub.N.Cmp(priv.N) != 0 {
+		if !pub.Equal(pk) {
 			return errors.New("private key does not match issuer public key")
 		}
 	case *ecdsa.PublicKey:
-		priv, ok := signer.(*ecdsa.PrivateKey)
+		pk, ok := signer.Public().(*ecdsa.PublicKey)
 		if !ok {
 			return errors.New("private key type does not match issuer public key type")
 		}
-		if pub.X.Cmp(priv.X) != 0 || pub.Y.Cmp(priv.Y) != 0 {
+		if !pub.Equal(pk) {
 			return errors.New("private key does not match issuer public key")
 		}
 	case ed25519.PublicKey:
-		priv, ok := signer.(ed25519.PrivateKey)
+		pk, ok := signer.Public().(ed25519.PublicKey)
 		if !ok {
 			return errors.New("private key type does not match issuer public key type")
 		}
-		if !bytes.Equal(priv.Public().(ed25519.PublicKey), pub) {
+		if !pub.Equal(pk) {
 			return errors.New("private key does not match issuer public key")
 		}
 	default:
