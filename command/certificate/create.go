@@ -41,7 +41,7 @@ func createCommand() cli.Command {
 		Action: command.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt-file> <key-file>
-[**--csr**] [**--profile**=<profile>] [**--template**=<file>]
+[**--kms**=<uri>] [**--csr**] [**--profile**=<profile>] [**--template**=<file>]
 [**--not-before**=<duration>] [**--not-after**=<duration>]
 [**--password-file**=<file>] [**--ca**=<issuer-cert>]
 [**--ca-key**=<issuer-key>] [**--ca-password-file**=<file>]
@@ -311,8 +311,35 @@ $ cat csr.tpl
 }
 $ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
   "Wile E. Coyote" coyote.csr coyote.key
-'''`,
+'''
+
+Create a root certificate using <step-kms-plugin>:
+'''
+$ step kms create \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  'pkcs11:id=4000;object=root-key'
+$ step certificate create \
+  --profile root-ca \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --key 'pkcs11:id=4000' \
+  'KMS Root' root_ca.crt
+'''
+
+Create an intermediate certificate using <step-kms-plugin>:
+'''
+$ step kms create \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  'pkcs11:id=4001;object=intermediate-key'
+$ stepv certificate create \
+  --profile intermediate-ca \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
+  --key 'pkcs11:id=4001' \
+  'My KMS Intermediate' intermediate_ca.crt
+'''
+`,
 		Flags: []cli.Flag{
+			flags.KMSUri,
 			cli.BoolFlag{
 				Name:  "csr",
 				Usage: `Generate a certificate signing request (CSR) instead of a certificate.`,
@@ -401,7 +428,6 @@ the **--ca** flag.`,
 			flags.KTY,
 			flags.Size,
 			flags.Curve,
-			flags.KMSUri,
 			flags.Force,
 			flags.Subtle,
 			cli.BoolFlag{
