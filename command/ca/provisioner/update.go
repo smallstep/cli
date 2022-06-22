@@ -103,6 +103,8 @@ SCEP
 			oidcConfigEndpointFlag,
 			oidcAdminFlag,
 			oidcRemoveAdminFlag,
+			oidcDomainFlag,
+			oidcRemoveDomainFlag,
 			oidcGroupFlag,
 			oidcTenantIDFlag,
 
