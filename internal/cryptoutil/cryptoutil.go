@@ -30,6 +30,12 @@ func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, err
 	return newKMSSigner(kms, name)
 }
 
+// IsKMSSigner returns true if the given signer uses the step-kms-plugin signer.
+func IsKMSSigner(signer crypto.Signer) (ok bool) {
+	_, ok = signer.(*kmsSigner)
+	return
+}
+
 type kmsSigner struct {
 	crypto.PublicKey
 	name     string
