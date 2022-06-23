@@ -726,6 +726,11 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 		return nil, nil, err
 	}
 
+	// Make sure we can sign X509 certificates with it.
+	if !cryptoutil.IsX509Signer(signer) {
+		return nil, nil, errs.InvalidFlagValueMsg(ctx, "key", keyFile, "the given key cannot sign X509 certificates")
+	}
+
 	return signer.Public(), signer, nil
 }
 
@@ -792,6 +797,11 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	signer, err := cryptoutil.CreateSigner(kms, caKey, opts...)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// Make sure we can sign X509 certificates with it.
+	if !cryptoutil.IsX509Signer(signer) {
+		return nil, nil, errs.InvalidFlagValueMsg(ctx, "ca-key", caKey, "the given key cannot sign X509 certificates")
 	}
 
 	return cert, signer, nil

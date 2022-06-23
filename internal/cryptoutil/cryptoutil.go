@@ -2,11 +2,14 @@ package cryptoutil
 
 import (
 	"crypto"
+	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/rsa"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"os/exec"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/internal/plugin"
@@ -34,6 +37,26 @@ func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, err
 func IsKMSSigner(signer crypto.Signer) (ok bool) {
 	_, ok = signer.(*kmsSigner)
 	return
+}
+
+// IsX509Signer returns true if the given signer is supported by Go's
+// crypto/x509 package to sign sign X509 certificates. This methods true for
+// ECDSA, RSA and Ed25519 keys, but if the kms is `sshagentkms:` it will only
+// return true for Ed25519 keys.
+func IsX509Signer(signer crypto.Signer) bool {
+	pub := signer.Public()
+	if ks, ok := signer.(*kmsSigner); ok {
+		if strings.HasPrefix(strings.ToLower(ks.kms), "sshagentkms:") {
+			_, ok = pub.(ed25519.PublicKey)
+			return ok
+		}
+	}
+	switch pub.(type) {
+	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey:
+		return true
+	default:
+		return false
+	}
 }
 
 type kmsSigner struct {

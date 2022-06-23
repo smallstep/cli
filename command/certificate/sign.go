@@ -213,6 +213,9 @@ func signAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	if !cryptoutil.IsX509Signer(signer) {
+		return errors.Errorf("the key %q cannot be used to sign X509 certificates", keyFile)
+	}
 	if err := validateIssuerKey(issuers[0], signer); err != nil {
 		return err
 	}
