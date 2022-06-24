@@ -26,9 +26,9 @@ func certificateCommand() cli.Command {
 [**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--bundle**]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
-[**--device**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>]
-[**--k8ssa-token-path**=<file>] [**--offline**] [**--password-file**]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]
+[**--offline**] [**--password-file**] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
 ## POSITIONAL ARGUMENTS
@@ -171,7 +171,6 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			flags.Offline,
 			flags.PasswordFile,
 			consoleFlag,
-			deviceFlag,
 			flags.X5cCert,
 			flags.X5cKey,
 			flags.NebulaCert,

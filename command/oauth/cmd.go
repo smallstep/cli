@@ -101,7 +101,7 @@ companies such as Amazon, Google, Facebook, Microsoft and Twitter to permit the
 users to share information about their accounts with third party applications or
 websites. Learn more at https://en.wikipedia.org/wiki/OAuth.
 
-This command by default performs he authorization flow with a preconfigured
+This command by default performs the authorization flow with a preconfigured
 Google application, but a custom one can be set combining the flags
 **--client-id**, **--client-secret**, and **--provider**. The provider value
 must be set to the OIDC discovery document (.well-known/openid-configuration)
@@ -147,11 +147,6 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
   --provider https://example.org
 '''
 
-Use the Device Authorization Grant flow for input constrained clients:
-'''
-$ step oauth --client-id my-client-id --client-secret my-client-secret --device
-'''
-
 Use additional authentication parameters:
 '''
 $ step oauth --client-id my-client-id --client-secret my-client-secret \
@@ -171,15 +166,10 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 				Name: "console, c",
 				Usage: `Complete the flow while remaining only inside the terminal.
 
-NOTE: This flag instructs the CLI to retrieve a token using the Out Of Band flow,
-which has been deprecated. In an upcoming release this flag will be updated to
-use the Device Authorization Grant flow (https://datatracker.ietf.org/doc/html/rfc8628#section-3.2).
-Please use the '--device' flag to use the new flow in the interim.`,
-			},
-			cli.BoolFlag{
-				Name: "device",
-				Usage: `Complete the flow using the Device Authorization Grant
-(https://datatracker.ietf.org/doc/html/rfc8628#section-3.2) flow`,
+NOTE: This flag will continue to use the Out of Band (OOB) flow for Google OAuth clients
+until Oct 3, 2022 when the OOB flow will be shut off. All other OAuth clients
+will default to using the Device Authorization Grant flow
+(https://datatracker.ietf.org/doc/html/rfc8628#section-3.2).`,
 			},
 			cli.StringFlag{
 				Name:  "client-id",
@@ -289,15 +279,10 @@ OpenID standard defines the following values, but your provider may support some
 }
 
 func oauthCmd(c *cli.Context) error {
-	if c.Bool("console") && c.Bool("device") {
-		return errs.MutuallyExclusiveFlags(c, "console", "device")
-	}
-
 	opts := &options{
 		Provider:            c.String("provider"),
 		Email:               c.String("email"),
 		Console:             c.Bool("console"),
-		Device:              c.Bool("device"),
 		Implicit:            c.Bool("implicit"),
 		CallbackListener:    c.String("listen"),
 		CallbackListenerURL: c.String("listen-url"),
@@ -312,6 +297,11 @@ func oauthCmd(c *cli.Context) error {
 		return errors.New("flag '--client-id' required with '--provider'")
 	}
 
+	_, isDeviceFlow := os.LookupEnv("DEVICE")
+	if c.Bool("console") && !(opts.Provider == "google" || strings.Contains(opts.Provider, "google.com")) {
+		isDeviceFlow = true
+	}
+
 	var clientID, clientSecret string
 	switch {
 	case opts.Implicit:
@@ -321,7 +311,7 @@ func oauthCmd(c *cli.Context) error {
 		if !c.IsSet("client-id") {
 			return errs.RequiredWithFlag(c, "implicit", "client-id")
 		}
-	case opts.Device:
+	case isDeviceFlow:
 		clientID = defaultDeviceAuthzClientID
 		clientSecret = defaultDeviceAuthzClientNotSoSecret
 	default:
@@ -427,10 +417,10 @@ func oauthCmd(c *cli.Context) error {
 		} else {
 			tok, err = o.DoTwoLeggedAuthorization(issuer)
 		}
+	case opts.Console && isDeviceFlow:
+		tok, err = o.DoDeviceAuthorization()
 	case opts.Console:
 		tok, err = o.DoManualAuthorization()
-	case opts.Device:
-		tok, err = o.DoDeviceAuthorization()
 	default:
 		tok, err = o.DoLoopbackAuthorization()
 	}
