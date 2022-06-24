@@ -186,7 +186,7 @@ until Oct 3, 2022 when the OOB flow will be shut off. All other OAuth clients
 will default to using the Device Authorization Grant flow
 (https://datatracker.ietf.org/doc/html/rfc8628#section-3.2).`,
 			},
-			cli.BoolFlag{
+			cli.StringFlag{
 				Name: "console-flow",
 				Usage: `The alternative OAuth <flow> to use for input constrained devices.
 
