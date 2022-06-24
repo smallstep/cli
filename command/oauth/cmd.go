@@ -149,12 +149,17 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 
 Use the Device Authorization Grant flow for input constrained clients:
 '''
-$ step oauth --client-id my-client-id --client-secret my-client-secret --device
+$ step oauth --client-id my-client-id --client-secret my-client-secret --console-flow device
 '''
 
 Use the Out Of Band flow for input constrained clients:
 '''
-$ step oauth --client-id my-client-id --client-secret my-client-secret --oob
+$ step oauth --client-id my-client-id --client-secret my-client-secret --console-flow oob
+'''
+
+Use the default OAuth flow for input constrained clients:
+'''
+$ step oauth --client-id my-client-id --client-secret my-client-secret --console
 '''
 
 Use additional authentication parameters:
