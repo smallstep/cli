@@ -147,6 +147,16 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
   --provider https://example.org
 '''
 
+Use the Device Authorization Grant flow for input constrained clients:
+'''
+$ step oauth --client-id my-client-id --client-secret my-client-secret --device
+'''
+
+Use the Out Of Band flow for input constrained clients:
+'''
+$ step oauth --client-id my-client-id --client-secret my-client-secret --oob
+'''
+
 Use additional authentication parameters:
 '''
 $ step oauth --client-id my-client-id --client-secret my-client-secret \
@@ -170,6 +180,19 @@ NOTE: This flag will continue to use the Out of Band (OOB) flow for Google OAuth
 until Oct 3, 2022 when the OOB flow will be shut off. All other OAuth clients
 will default to using the Device Authorization Grant flow
 (https://datatracker.ietf.org/doc/html/rfc8628#section-3.2).`,
+			},
+			cli.BoolFlag{
+				Name: "console-flow",
+				Usage: `The alternative OAuth <flow> to use for input constrained devices.
+
+		: <console-flow> is a case-insensitive string and must be one of:
+
+			**device**
+			:  Use the Device Authorization Grant
+(https://datatracker.ietf.org/doc/html/rfc8628#section-3.2) flow
+
+			**oob**
+			:  Use the Out of Band (OOB) flow`,
 			},
 			cli.StringFlag{
 				Name:  "client-id",
@@ -297,9 +320,25 @@ func oauthCmd(c *cli.Context) error {
 		return errors.New("flag '--client-id' required with '--provider'")
 	}
 
-	_, isDeviceFlow := os.LookupEnv("DEVICE")
-	if c.Bool("console") && !(opts.Provider == "google" || strings.Contains(opts.Provider, "google.com")) {
+	if c.Bool("oob") && c.Bool("device") {
+		return errs.MutuallyExclusiveFlags(c, "oob", "device")
+	}
+
+	isOOBFlow, isDeviceFlow := false, false
+	consoleFlowInput := c.String("console-flow")
+	switch {
+	case strings.EqualFold(consoleFlowInput, "device"):
 		isDeviceFlow = true
+	case strings.EqualFold(consoleFlowInput, "oob"):
+		isOOBFlow = true
+	case c.IsSet("console-flow"):
+		return errs.InvalidFlagValue(c, "console-flow", consoleFlowInput, "device, oob")
+	case c.Bool("console"):
+		if opts.Provider == "google" || strings.HasPrefix(opts.Provider, "https://accounts.google.com") {
+			isOOBFlow = true
+		} else {
+			isDeviceFlow = true
+		}
 	}
 
 	var clientID, clientSecret string
@@ -417,9 +456,9 @@ func oauthCmd(c *cli.Context) error {
 		} else {
 			tok, err = o.DoTwoLeggedAuthorization(issuer)
 		}
-	case opts.Console && isDeviceFlow:
+	case isDeviceFlow:
 		tok, err = o.DoDeviceAuthorization()
-	case opts.Console:
+	case isOOBFlow:
 		tok, err = o.DoManualAuthorization()
 	default:
 		tok, err = o.DoLoopbackAuthorization()
