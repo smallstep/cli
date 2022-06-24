@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ---
 
 ## [Unreleased] 
+### Added 
+- Device Authorization Grant flow for input constrained devices needing OAuth
+credentials from a non-Google OIDC provider. Users with Google providers can 
+force the Device Authorization Grant flow (rather than the default OOB flow)
+by setting the environment variable `DEVICE=1`.
 ### Fixed
 - Added back --domain and --remove-domain flags to provisioner CRUD
 
