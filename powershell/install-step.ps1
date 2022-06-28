@@ -7,7 +7,6 @@ mkdir $install_dir >$null
 # Determine filename to download
 $response = Invoke-Webrequest -Uri "https://api.github.com/repos/smallstep/cli/releases/latest" -UseBasicParsing
 $release = $response | ConvertFrom-Json
-$step_version = $release.tag_name.Substring(1)
 
 # Download the binary and uninstall script
 echo ""
