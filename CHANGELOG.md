@@ -23,7 +23,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 credentials. `--console-flow` flag in `step oauth` for selecting which 
 alternative OAuth flow to use.
 ### Fixed
-- Added back --domain and --remove-domain flags to provisioner CRUD
+- Added back --domain and --remove-domain flags to provisioner CRUD.
+### Removed
+- The `beta` prefix for remote provisioner and admin management.
 
 ## [0.20.0] - 2022-05-26
 ### Added
