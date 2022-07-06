@@ -382,7 +382,8 @@ func oauthCmd(c *cli.Context) error {
 	case c.IsSet("console-flow"):
 		return errs.InvalidFlagValue(c, "console-flow", consoleFlowInput, "device, oob")
 	case c.Bool("console"):
-		if opts.Provider == "google" || strings.HasPrefix(opts.Provider, "https://accounts.google.com") {
+		oobDeprecationDate := time.Date(2022, time.October, 3, 0, 0, 0, 0, time.UTC)
+		if time.Now().Before(oobDeprecationDate) && (opts.Provider == "google" || strings.HasPrefix(opts.Provider, "https://accounts.google.com")) {
 			isOOBFlow = true
 			opts.ConsoleFlow = oobConsoleFlow
 		} else {
