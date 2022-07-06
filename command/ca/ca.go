@@ -3,10 +3,8 @@ package ca
 import (
 	"github.com/smallstep/cli/command/ca/acme"
 	"github.com/smallstep/cli/command/ca/admin"
-	"github.com/smallstep/cli/command/ca/adminbeta"
 	"github.com/smallstep/cli/command/ca/policy"
 	"github.com/smallstep/cli/command/ca/provisioner"
-	"github.com/smallstep/cli/command/ca/provisionerbeta"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 )
@@ -169,8 +167,6 @@ func BetaCommand() cli.Command {
 		Description: `**step beta ca** enables beta access to new step-ca APIs. These
 commands may change, disappear, or be promoted to a different subcommand in the future.`,
 		Subcommands: cli.Commands{
-			adminbeta.Command(),
-			provisionerbeta.Command(),
 			acme.Command(),
 		},
 	}
