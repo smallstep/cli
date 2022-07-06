@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ---
 
 ## [Unreleased] 
+### Added 
+- Device Authorization Grant flow for input constrained devices needing OAuth
+credentials. `--console-flow` flag in `step oauth` for selecting which 
+alternative OAuth flow to use.
 ### Fixed
 - Added back --domain and --remove-domain flags to provisioner CRUD
 
