@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Security
 ---
 
-## [Unreleased] 
+## [0.21.0] - 2022-07-06 
 ### Added 
 - Device Authorization Grant flow for input constrained devices needing OAuth
 credentials. `--console-flow` flag in `step oauth` for selecting which 
