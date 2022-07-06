@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ---
 
 ## [Unreleased] 
+### Added
+- Initial support for `step` plugins. A plugin is an executable file named with
+  the format step-`name`-plugin, located in the `$PATH` or the
+  `$STEPPATH/plugins` directory. These plugins will be executed using `step
+  name`.
+- Integration of [`step-kms-plugin`](https://github.com/smallstep/step-kms-plugin)
+  on `step certificate create` and `step certificate sign`.
 ### Fixed
 - Added back --domain and --remove-domain flags to provisioner CRUD
 
