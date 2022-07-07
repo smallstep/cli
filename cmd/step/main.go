@@ -99,8 +99,7 @@ func main() {
 			}
 			return cli.ShowCommandHelp(ctx, args.First())
 		}
-		_ = cli.ShowAppHelp(ctx)
-		return nil
+		return cli.ShowAppHelp(ctx)
 	}
 
 	// All non-successful output should be written to stderr
