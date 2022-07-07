@@ -1,6 +1,8 @@
 package oauth
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
@@ -44,6 +46,11 @@ import (
 const (
 	defaultClientID          = "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com"
 	defaultClientNotSoSecret = "udTrOT3gzrO7W9fDPgZQLfYJ"
+
+	defaultDeviceAuthzClientID          = "1087160488420-1u0jqoulmv3mfomfh6fhkfs4vk4bdjih.apps.googleusercontent.com"
+	defaultDeviceAuthzClientNotSoSecret = "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"
+	defaultDeviceAuthzInterval          = 5
+	defaultDeviceAuthzExpiresIn         = time.Minute * 5
 
 	// The URN for getting verification token offline
 	oobCallbackUrn = "urn:ietf:wg:oauth:2.0:oob"
@@ -95,7 +102,7 @@ companies such as Amazon, Google, Facebook, Microsoft and Twitter to permit the
 users to share information about their accounts with third party applications or
 websites. Learn more at https://en.wikipedia.org/wiki/OAuth.
 
-This command by default performs he authorization flow with a preconfigured
+This command by default performs the authorization flow with a preconfigured
 Google application, but a custom one can be set combining the flags
 **--client-id**, **--client-secret**, and **--provider**. The provider value
 must be set to the OIDC discovery document (.well-known/openid-configuration)
@@ -141,6 +148,21 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
   --provider https://example.org
 '''
 
+Use the Device Authorization Grant flow for input constrained clients:
+'''
+$ step oauth --client-id my-client-id --client-secret my-client-secret --console-flow device
+'''
+
+Use the Out Of Band flow for input constrained clients:
+'''
+$ step oauth --client-id my-client-id --client-secret my-client-secret --console-flow oob
+'''
+
+Use the default OAuth flow for input constrained clients:
+'''
+$ step oauth --client-id my-client-id --client-secret my-client-secret --console
+'''
+
 Use additional authentication parameters:
 '''
 $ step oauth --client-id my-client-id --client-secret my-client-secret \
@@ -157,8 +179,26 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 				Usage: "Email to authenticate",
 			},
 			cli.BoolFlag{
-				Name:  "console, c",
-				Usage: "Complete the flow while remaining only inside the terminal",
+				Name: "console, c",
+				Usage: `Complete the flow while remaining only inside the terminal.
+
+NOTE: This flag will continue to use the Out of Band (OOB) flow for Google OAuth clients
+until Oct 3, 2022 when the OOB flow will be shut off. All other OAuth clients
+will default to using the Device Authorization Grant flow
+(https://datatracker.ietf.org/doc/html/rfc8628#section-3.2).`,
+			},
+			cli.StringFlag{
+				Name: "console-flow",
+				Usage: `The alternative OAuth <flow> to use for input constrained devices.
+
+		: <console-flow> is a case-insensitive string and must be one of:
+
+			**device**
+			:  Use the Device Authorization Grant
+(https://datatracker.ietf.org/doc/html/rfc8628#section-3.2) flow
+
+			**oob**
+			:  Use the Out of Band (OOB) flow`,
 			},
 			cli.StringFlag{
 				Name:  "client-id",
@@ -175,6 +215,10 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 			cli.StringFlag{
 				Name:  "authorization-endpoint",
 				Usage: "OAuth Authorization Endpoint",
+			},
+			cli.StringFlag{
+				Name:  "device-authorization-endpoint",
+				Usage: "OAuth Device Authorization Endpoint",
 			},
 			cli.StringFlag{
 				Name:  "token-endpoint",
@@ -263,6 +307,48 @@ OpenID standard defines the following values, but your provider may support some
 	command.Register(cmd)
 }
 
+type consoleFlow int
+
+const (
+	oobConsoleFlow consoleFlow = iota
+	deviceConsoleFlow
+)
+
+type options struct {
+	Provider            string
+	Email               string
+	Console             bool
+	ConsoleFlow         consoleFlow
+	Implicit            bool
+	CallbackListener    string
+	CallbackListenerURL string
+	CallbackPath        string
+	TerminalRedirect    string
+	Browser             string
+}
+
+// Validate validates the options.
+func (o *options) Validate() error {
+	if o.Provider != "google" && !strings.HasPrefix(o.Provider, "https://") {
+		return errors.New("use a valid provider: google")
+	}
+	if o.CallbackListener != "" {
+		if _, _, err := net.SplitHostPort(o.CallbackListener); err != nil {
+			return errors.Wrapf(err, "invalid value '%s' for flag '--listen'", o.CallbackListener)
+		}
+	}
+	if o.CallbackListenerURL != "" {
+		u, err := url.Parse(o.CallbackListenerURL)
+		if err != nil || u.Scheme == "" {
+			return errors.Wrapf(err, "invalid value '%s' for flag '--listen-url'", o.CallbackListenerURL)
+		}
+		if u.Path != "" {
+			o.CallbackPath = u.Path
+		}
+	}
+	return nil
+}
+
 func oauthCmd(c *cli.Context) error {
 	opts := &options{
 		Provider:            c.String("provider"),
@@ -282,24 +368,54 @@ func oauthCmd(c *cli.Context) error {
 		return errors.New("flag '--client-id' required with '--provider'")
 	}
 
+	isOOBFlow, isDeviceFlow := false, false
+	consoleFlowInput := c.String("console-flow")
+	switch {
+	case strings.EqualFold(consoleFlowInput, "device"):
+		opts.Console = true
+		opts.ConsoleFlow = deviceConsoleFlow
+		isDeviceFlow = true
+	case strings.EqualFold(consoleFlowInput, "oob"):
+		opts.Console = true
+		opts.ConsoleFlow = oobConsoleFlow
+		isOOBFlow = true
+	case c.IsSet("console-flow"):
+		return errs.InvalidFlagValue(c, "console-flow", consoleFlowInput, "device, oob")
+	case c.Bool("console"):
+		oobDeprecationDate := time.Date(2022, time.October, 3, 0, 0, 0, 0, time.UTC)
+		if time.Now().Before(oobDeprecationDate) && (opts.Provider == "google" || strings.HasPrefix(opts.Provider, "https://accounts.google.com")) {
+			isOOBFlow = true
+			opts.ConsoleFlow = oobConsoleFlow
+		} else {
+			isDeviceFlow = true
+			opts.ConsoleFlow = deviceConsoleFlow
+		}
+	}
+
 	var clientID, clientSecret string
-	if opts.Implicit {
+	switch {
+	case opts.Implicit:
 		if !c.Bool("insecure") {
 			return errs.RequiredInsecureFlag(c, "implicit")
 		}
 		if !c.IsSet("client-id") {
 			return errs.RequiredWithFlag(c, "implicit", "client-id")
 		}
-	} else {
+	case isDeviceFlow:
+		clientID = defaultDeviceAuthzClientID
+		clientSecret = defaultDeviceAuthzClientNotSoSecret
+	default:
 		clientID = defaultClientID
 		clientSecret = defaultClientNotSoSecret
 	}
+
 	if c.IsSet("client-id") {
 		clientID = c.String("client-id")
 		clientSecret = c.String("client-secret")
 	}
 
 	authzEp := ""
+	deviceAuthzEp := ""
 	tokenEp := ""
 	if c.IsSet("authorization-endpoint") {
 		if !c.IsSet("token-endpoint") {
@@ -307,6 +423,14 @@ func oauthCmd(c *cli.Context) error {
 		}
 		opts.Provider = ""
 		authzEp = c.String("authorization-endpoint")
+		tokenEp = c.String("token-endpoint")
+	}
+	if c.IsSet("device-authorization-endpoint") {
+		if !c.IsSet("token-endpoint") {
+			return errors.New("flag '--device-authorization-endpoint' requires flag '--token-endpoint'")
+		}
+		opts.Provider = ""
+		deviceAuthzEp = c.String("device-authorization-endpoint")
 		tokenEp = c.String("token-endpoint")
 	}
 
@@ -370,7 +494,7 @@ func oauthCmd(c *cli.Context) error {
 		authParams.Add(k, v)
 	}
 
-	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt, authParams, opts)
+	o, err := newOauth(opts.Provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp, scope, prompt, authParams, opts)
 	if err != nil {
 		return err
 	}
@@ -383,7 +507,9 @@ func oauthCmd(c *cli.Context) error {
 		} else {
 			tok, err = o.DoTwoLeggedAuthorization(issuer)
 		}
-	case opts.Console:
+	case isDeviceFlow:
+		tok, err = o.DoDeviceAuthorization()
+	case isOOBFlow:
 		tok, err = o.DoManualAuthorization()
 	default:
 		tok, err = o.DoLoopbackAuthorization()
@@ -418,40 +544,6 @@ func oauthCmd(c *cli.Context) error {
 	return nil
 }
 
-type options struct {
-	Provider            string
-	Email               string
-	Console             bool
-	Implicit            bool
-	CallbackListener    string
-	CallbackListenerURL string
-	CallbackPath        string
-	TerminalRedirect    string
-	Browser             string
-}
-
-// Validate validates the options.
-func (o *options) Validate() error {
-	if o.Provider != "google" && !strings.HasPrefix(o.Provider, "https://") {
-		return errors.New("use a valid provider: google")
-	}
-	if o.CallbackListener != "" {
-		if _, _, err := net.SplitHostPort(o.CallbackListener); err != nil {
-			return errors.Wrapf(err, "invalid value '%s' for flag '--listen'", o.CallbackListener)
-		}
-	}
-	if o.CallbackListenerURL != "" {
-		u, err := url.Parse(o.CallbackListenerURL)
-		if err != nil || u.Scheme == "" {
-			return errors.Wrapf(err, "invalid value '%s' for flag '--listen-url'", o.CallbackListenerURL)
-		}
-		if u.Path != "" {
-			o.CallbackPath = u.Path
-		}
-	}
-	return nil
-}
-
 type oauth struct {
 	provider            string
 	clientID            string
@@ -462,6 +554,7 @@ type oauth struct {
 	redirectURI         string
 	tokenEndpoint       string
 	authzEndpoint       string
+	deviceAuthzEndpoint string
 	userInfoEndpoint    string // For testing
 	state               string
 	codeChallenge       string
@@ -477,7 +570,7 @@ type oauth struct {
 	tokCh               chan *token
 }
 
-func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt string, authParams url.Values, opts *options) (*oauth, error) {
+func newOauth(provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp, scope, prompt string, authParams url.Values, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
 		return nil, err
@@ -502,6 +595,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 			scope:               scope,
 			prompt:              prompt,
 			authzEndpoint:       "https://accounts.google.com/o/oauth2/v2/auth",
+			deviceAuthzEndpoint: "https://oauth2.googleapis.com/device/code",
 			tokenEndpoint:       "https://www.googleapis.com/oauth2/v4/token",
 			userInfoEndpoint:    "https://www.googleapis.com/oauth2/v3/userinfo",
 			loginHint:           opts.Email,
@@ -520,22 +614,33 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 		}, nil
 	default:
 		userinfoEp := ""
-		if authzEp == "" && tokenEp == "" {
+
+		isDeviceFlow := opts.Console && opts.ConsoleFlow == deviceConsoleFlow
+
+		if (isDeviceFlow && deviceAuthzEp == "" && tokenEp == "") ||
+			(!isDeviceFlow && authzEp == "" && tokenEp == "") {
 			d, err := disco(provider)
 			if err != nil {
 				return nil, err
 			}
 
-			if _, ok := d["authorization_endpoint"]; !ok {
-				return nil, errors.New("missing 'authorization_endpoint' in provider metadata")
+			if v, ok := d["device_authorization_endpoint"].(string); !ok && isDeviceFlow {
+				return nil, errors.New("missing or invalid 'device_authorization_endpoint' in provider metadata")
+			} else if ok {
+				deviceAuthzEp = v
 			}
-			if _, ok := d["token_endpoint"]; !ok {
-				return nil, errors.New("missing 'token_endpoint' in provider metadata")
+			if v, ok := d["authorization_endpoint"].(string); !ok && !isDeviceFlow {
+				return nil, errors.New("missing or invalid 'authorization_endpoint' in provider metadata")
+			} else if ok {
+				authzEp = v
 			}
-			authzEp = d["authorization_endpoint"].(string)
-			tokenEp = d["token_endpoint"].(string)
-			userinfoEp = d["token_endpoint"].(string)
+			v, ok := d["token_endpoint"].(string)
+			if !ok {
+				return nil, errors.New("missing or invalid 'token_endpoint' in provider metadata")
+			}
+			tokenEp, userinfoEp = v, v
 		}
+
 		return &oauth{
 			provider:            provider,
 			clientID:            clientID,
@@ -543,6 +648,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, tokenEp, scope, prompt 
 			scope:               scope,
 			prompt:              prompt,
 			authzEndpoint:       authzEp,
+			deviceAuthzEndpoint: deviceAuthzEp,
 			tokenEndpoint:       tokenEp,
 			userInfoEndpoint:    userinfoEp,
 			loginHint:           opts.Email,
@@ -700,6 +806,135 @@ func (o *oauth) DoManualAuthorization() (*token, error) {
 		return nil, errors.Errorf("Error exchanging authorization code: %s. %s", tok.Err, tok.ErrDesc)
 	}
 	return tok, nil
+}
+
+type identifyDeviceResponse struct {
+	DeviceCode      string `json:"device_code"`
+	UserCode        string `json:"user_code"`
+	VerificationURI string `json:"verification_uri"`
+	// NOTE Google returns `verification_url` which is incorrect
+	// according to the spec (https://datatracker.ietf.org/doc/html/rfc8628#section-3.2)
+	// but we'll try to accommodate for that here.
+	VerificationURL         string `json:"verification_url"`
+	VerificationURIComplete string `json:"verification_uri_complete"`
+	ExpiresIn               int    `json:"expires_in"`
+	Interval                int    `json:"interval"`
+}
+
+// DoDeviceAuthorization gets a token from the IDP using the OAuth 2.0
+// Device Authorization Grant. https://datatracker.ietf.org/doc/html/rfc8628
+func (o *oauth) DoDeviceAuthorization() (*token, error) {
+	// Identify the Device
+	data := url.Values{}
+	data.Set("client_id", o.clientID)
+	data.Set("client_secret", o.clientSecret)
+	data.Set("scope", o.scope)
+
+	resp, err := http.PostForm(o.deviceAuthzEndpoint, data)
+	if err != nil {
+		return nil, errors.Wrap(err, "http failure to identify device")
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 {
+		var e struct {
+			Error string
+		}
+		if err := json.NewDecoder(bytes.NewReader(b)).Decode(&e); err != nil {
+			return nil, errors.Wrapf(err, "could not parse http body: %s", string(b))
+		}
+	}
+
+	var idr identifyDeviceResponse
+	if err := json.NewDecoder(bytes.NewReader(b)).Decode(&idr); err != nil {
+		return nil, errors.Wrap(err, "failure decoding device authz response to JWON")
+	}
+
+	switch {
+	case idr.VerificationURI != "":
+		// do nothing
+	case idr.VerificationURL != "":
+		// NOTE this is a hack for Google, because their API returns the attribute
+		// 'verification_url` rather than `verification_uri`.
+		idr.VerificationURI = idr.VerificationURL
+	default:
+		return nil, errors.Errorf("device code response from server missing 'verification_uri' parameter. http body response: %s", string(b))
+	}
+
+	if idr.Interval <= 0 {
+		idr.Interval = defaultDeviceAuthzInterval
+	}
+
+	fmt.Fprintf(os.Stderr, "Visit %s and enter the code: (press 'ENTER' to open default browser)\n", idr.VerificationURI)
+	fmt.Fprintln(os.Stderr, idr.UserCode)
+
+	go openBrowserIfAsked(o, idr.VerificationURI)
+
+	// Poll the Token endpoint until the user completes the flow.
+	data = url.Values{}
+	data.Set("client_id", o.clientID)
+	data.Set("client_secret", o.clientSecret)
+	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
+	data.Set("device_code", idr.DeviceCode)
+
+	endPollIn := defaultDeviceAuthzExpiresIn
+	if idr.ExpiresIn > 0 {
+		expiresIn := time.Duration(idr.ExpiresIn) * time.Second
+		if expiresIn < endPollIn {
+			endPollIn = expiresIn
+		}
+	}
+
+	t := time.NewTimer(endPollIn)
+	defer t.Stop()
+	for {
+		select {
+		case <-time.After(time.Duration(idr.Interval) * time.Second):
+			if tok, err := o.deviceAuthzTokenPoll(data); err != nil {
+				return nil, err
+			} else if tok != nil {
+				return tok, nil
+			}
+		case <-t.C:
+			return nil, errors.New("device authorization grant expired")
+		}
+	}
+}
+
+func openBrowserIfAsked(o *oauth, u string) {
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
+
+	exec.OpenInBrowser(u, o.browser)
+}
+
+func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
+	resp, err := http.PostForm(o.tokenEndpoint, data)
+	if err != nil {
+		return nil, errors.Wrap(err, "error doing POST to /token endpoint")
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "error reading HTTP response body from /token endpoint")
+	}
+
+	switch {
+	case resp.StatusCode == http.StatusOK:
+		tok := token{}
+		if err := json.NewDecoder(bytes.NewReader(b)).Decode(&tok); err != nil {
+			return nil, errors.Wrap(err, "error parsing JSON /token response")
+		}
+		return &tok, nil
+	case resp.StatusCode >= http.StatusBadRequest && resp.StatusCode < http.StatusInternalServerError:
+		return nil, nil
+	default:
+		return nil, errors.New(string(b))
+	}
 }
 
 // DoTwoLeggedAuthorization performs two-legged OAuth using the jwt-bearer
