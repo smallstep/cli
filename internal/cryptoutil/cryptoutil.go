@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/smallstep/cli/internal/plugin"
 	"go.step.sm/crypto/pemutil"
 )
@@ -130,7 +129,7 @@ func (s *kmsSigner) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) 
 		case crypto.SHA512:
 			args = append(args, "--alg", "SHA512")
 		default:
-			return nil, errors.Errorf("unsupported hash function %q", opts.HashFunc().String())
+			return nil, fmt.Errorf("unsupported hash function %q", opts.HashFunc().String())
 		}
 	}
 	args = append(args, s.key)
