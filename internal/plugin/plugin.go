@@ -31,3 +31,13 @@ func Run(ctx *cli.Context, file string) error {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
+// GetURL returns the project or the download URL of a well-known plugin.
+func GetURL(name string) string {
+	switch name {
+	case "kms":
+		return "https://github.com/smallstep/step-kms-plugin"
+	default:
+		return ""
+	}
+}

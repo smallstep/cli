@@ -93,11 +93,14 @@ func main() {
 	// Action runs on `step` or `step <command>` if the command is not enabled.
 	app.Action = func(ctx *cli.Context) error {
 		args := ctx.Args()
-		if args.Present() {
-			if file, err := plugin.LookPath(args.First()); err == nil {
+		if name := args.First(); name != "" {
+			if file, err := plugin.LookPath(name); err == nil {
 				return plugin.Run(ctx, file)
 			}
-			return cli.ShowCommandHelp(ctx, args.First())
+			if u := plugin.GetURL(name); u != "" {
+				return fmt.Errorf("The plugin %q is not it in your system.\nDownload it from %s", name, u)
+			}
+			return cli.ShowCommandHelp(ctx, name)
 		}
 		return cli.ShowAppHelp(ctx)
 	}
