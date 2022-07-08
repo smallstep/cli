@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Security
 ---
 
+## [Unreleased] 
+### Added
+- Initial support for `step` plugins. A plugin is an executable file named with
+  the format step-`name`-plugin, located in the `$PATH` or the
+  `$STEPPATH/plugins` directory. These plugins will be executed using `step
+  name`.
+- Integration of [`step-kms-plugin`](https://github.com/smallstep/step-kms-plugin)
+  on `step certificate create` and `step certificate sign`.
+
 ## [0.21.0] - 2022-07-06 
 ### Added 
 - Device Authorization Grant flow for input constrained devices needing OAuth

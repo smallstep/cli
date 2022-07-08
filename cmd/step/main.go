@@ -13,6 +13,7 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command/version"
+	"github.com/smallstep/cli/internal/plugin"
 	"github.com/smallstep/cli/usage"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
@@ -88,6 +89,21 @@ func main() {
 		Name:  "config",
 		Usage: "path to the config file to use for CLI flags",
 	})
+
+	// Action runs on `step` or `step <command>` if the command is not enabled.
+	app.Action = func(ctx *cli.Context) error {
+		args := ctx.Args()
+		if name := args.First(); name != "" {
+			if file, err := plugin.LookPath(name); err == nil {
+				return plugin.Run(ctx, file)
+			}
+			if u := plugin.GetURL(name); u != "" {
+				return fmt.Errorf("The plugin %q is not it in your system.\nDownload it from %s", name, u)
+			}
+			return cli.ShowCommandHelp(ctx, name)
+		}
+		return cli.ShowAppHelp(ctx)
+	}
 
 	// All non-successful output should be written to stderr
 	app.Writer = os.Stdout
