@@ -456,7 +456,7 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 
 func (r *renewer) Renew(outFile string) (resp *api.SignResponse, err error) {
 	if !r.mtls || time.Now().After(r.cert.Leaf.NotAfter) {
-		resp, err = r.RenewAfterExpiry(r.cert)
+		resp, err = r.RenewWithToken(r.cert)
 	} else {
 		resp, err = r.client.Renew(r.transport)
 	}
@@ -593,9 +593,10 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 	}
 }
 
-// RenewAfterExpiry creates an authorization token with the given certificate
-// and attempts to renew the expired certificate.
-func (r *renewer) RenewAfterExpiry(cert tls.Certificate) (*api.SignResponse, error) {
+// RenewWithToken creates an authorization token with the given certificate and
+// attempts to renew the given certificate. It can be used to renew expired
+// certificates.
+func (r *renewer) RenewWithToken(cert tls.Certificate) (*api.SignResponse, error) {
 	claims, err := token.NewClaims(
 		token.WithAudience(r.caURL.ResolveReference(&url.URL{Path: "/renew"}).String()),
 		token.WithIssuer("step-ca-client/1.0"),
