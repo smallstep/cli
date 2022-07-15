@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   name`.
 - Integration of [`step-kms-plugin`](https://github.com/smallstep/step-kms-plugin)
   on `step certificate create` and `step certificate sign`.
+- Add the certificate signature to `step ssh inspect` output.
+- Add the `--mtls=false` flag to force the token authorization flow on `step ca
+  renew`.
 
 ## [0.21.0] - 2022-07-06 
 ### Added 
