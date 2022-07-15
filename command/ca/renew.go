@@ -43,7 +43,7 @@ func renewCertificateCommand() cli.Command {
 		Action: command.ActionFunc(renewCertificateAction),
 		Usage:  "renew a certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
-[**--password-file**=<file>] [**--out**=<file>] [**--expires-in**=<duration>]
+[**--mtls**] [**--password-file**=<file>] [**--out**=<file>] [**--expires-in**=<duration>]
 [**--force**] [**--pid**=<int>] [**--pid-file**=<file>] [**--signal**=<int>]
 [**--exec**=<string>] [**--daemon**] [**--renew-period**=<duration>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
@@ -61,6 +61,10 @@ fixed period can be set with the **--renew-period** flag.
 
 The **--daemon** flag can be combined with **--pid**, **--signal**, or **--exec**
 to provide certificate reloads on your services.
+
+The renew command uses mTLS to get the new certificate, but in deployments where
+step-ca is behind a proxy, mTLS might not be possible. To circumvent that, use
+**--mtls=false** to force the token authorization flow.
 
 ## POSITIONAL ARGUMENTS
 
@@ -86,6 +90,11 @@ $ step ca renew --out renewed.crt internal.crt internal.key
 Renew a certificate forcing the overwrite of the previous certificate:
 '''
 $ step ca renew --force internal.crt internal.key
+'''
+
+Renew a certificate using the token flow instead of mTLS:
+'''
+$ step ca renew --mtls=false --force internal.crt internal.key
 '''
 
 Renew a certificate providing the <--ca-url> and <--root> flags:
@@ -134,6 +143,11 @@ files, certificates, and keys created with **step ca init**:
 $ step ca renew --offline internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
+			cli.BoolTFlag{
+				Name: "mtls",
+				Usage: `Use mTLS to renew a certificate. Use --mtls=false to force the token
+authorization flow instead.`,
+			},
 			flags.CaConfig,
 			flags.Force,
 			flags.Offline,
@@ -188,6 +202,7 @@ Requires the **--daemon** flag. The <duration> is a sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "1.5h", or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
+			flags.Token,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
@@ -379,6 +394,7 @@ type renewer struct {
 	offline   bool
 	cert      tls.Certificate
 	caURL     *url.URL
+	mtls      bool
 }
 
 func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile string) (*renewer, error) {
@@ -433,11 +449,12 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 		offline:   offline,
 		cert:      cert,
 		caURL:     u,
+		mtls:      ctx.Bool("mtls"),
 	}, nil
 }
 
 func (r *renewer) Renew(outFile string) (resp *api.SignResponse, err error) {
-	if time.Now().After(r.cert.Leaf.NotAfter) {
+	if !r.mtls || time.Now().After(r.cert.Leaf.NotAfter) {
 		resp, err = r.RenewAfterExpiry(r.cert)
 	} else {
 		resp, err = r.client.Renew(r.transport)
