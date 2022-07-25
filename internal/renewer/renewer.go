@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"log"
 	"net/http"
@@ -15,6 +16,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/jose"
+	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils"
 	caclient "github.com/smallstep/cli/utils/cautils/client"
 	"go.step.sm/cli-utils/errs"
@@ -27,9 +30,10 @@ type Renewer struct {
 	offline   bool
 	cert      tls.Certificate
 	caURL     *url.URL
+	mtls      bool
 }
 
-func New(client caclient.CaClient, tr *http.Transport, key crypto.PrivateKey, offline bool, cert tls.Certificate, caURL *url.URL) *Renewer {
+func New(client caclient.CaClient, tr *http.Transport, key crypto.PrivateKey, offline bool, cert tls.Certificate, caURL *url.URL, useMTLS bool) *Renewer {
 	return &Renewer{
 		client:    client,
 		transport: tr,
@@ -37,11 +41,16 @@ func New(client caclient.CaClient, tr *http.Transport, key crypto.PrivateKey, of
 		offline:   offline,
 		cert:      cert,
 		caURL:     caURL,
+		mtls:      useMTLS,
 	}
 }
 
-func (r *Renewer) Renew(outFile string) (*api.SignResponse, error) {
-	resp, err := r.client.Renew(r.transport)
+func (r *Renewer) Renew(outFile string) (resp *api.SignResponse, err error) {
+	if !r.mtls || time.Now().After(r.cert.Leaf.NotAfter) {
+		resp, err = r.RenewWithToken(r.cert)
+	} else {
+		resp, err = r.client.Renew(r.transport)
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "error renewing certificate")
 	}
@@ -137,4 +146,39 @@ func (r *Renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod tim
 	next := utils.NextRenewDuration(resp.ServerPEM.Certificate, expiresIn, renewPeriod)
 	Info.Printf("%s certificate renewed, next in %s", resp.ServerPEM.Certificate.Subject.CommonName, next.Round(time.Second))
 	return next, nil
+}
+
+// RenewWithToken creates an authorization token with the given certificate and
+// attempts to renew the given certificate. It can be used to renew expired
+// certificates.
+func (r *Renewer) RenewWithToken(cert tls.Certificate) (*api.SignResponse, error) {
+	claims, err := token.NewClaims(
+		token.WithAudience(r.caURL.ResolveReference(&url.URL{Path: "/renew"}).String()),
+		token.WithIssuer("step-ca-client/1.0"),
+		token.WithSubject(cert.Leaf.Subject.CommonName),
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating authorization token")
+	}
+	var x5c []string
+	for _, b := range cert.Certificate {
+		x5c = append(x5c, base64.StdEncoding.EncodeToString(b))
+	}
+	if claims.ExtraHeaders == nil {
+		claims.ExtraHeaders = make(map[string]interface{})
+	}
+	claims.ExtraHeaders[jose.X5cInsecureKey] = x5c
+
+	tok, err := claims.Sign("", cert.PrivateKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "error signing authorization token")
+	}
+
+	// Remove existing certificate from the transport. And close keep-alive
+	// connections. When daemon is used we don't want to re-use the connection
+	// that did not include a certificate.
+	r.transport.TLSClientConfig.Certificates = nil
+	defer r.transport.CloseIdleConnections()
+
+	return r.client.RenewWithToken(tok)
 }

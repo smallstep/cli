@@ -111,7 +111,7 @@ SCEP
 			oidcListenAddressFlag,
 			oidcConfigEndpointFlag,
 			oidcAdminFlag,
-			oidcRemoveAdminFlag,
+			oidcDomainFlag,
 			oidcGroupFlag,
 			oidcTenantIDFlag,
 

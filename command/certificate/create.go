@@ -7,14 +7,15 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
 )
 
@@ -40,7 +41,7 @@ func createCommand() cli.Command {
 		Action: command.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt-file> <key-file>
-[**--csr**] [**--profile**=<profile>] [**--template**=<file>]
+[**--kms**=<uri>] [**--csr**] [**--profile**=<profile>] [**--template**=<file>]
 [**--not-before**=<duration>] [**--not-after**=<duration>]
 [**--password-file**=<file>] [**--ca**=<issuer-cert>]
 [**--ca-key**=<issuer-key>] [**--ca-password-file**=<file>]
@@ -310,8 +311,35 @@ $ cat csr.tpl
 }
 $ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
   "Wile E. Coyote" coyote.csr coyote.key
-'''`,
+'''
+
+Create a root certificate using <step-kms-plugin>:
+'''
+$ step kms create \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  'pkcs11:id=4000;object=root-key'
+$ step certificate create \
+  --profile root-ca \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --key 'pkcs11:id=4000' \
+  'KMS Root' root_ca.crt
+'''
+
+Create an intermediate certificate using <step-kms-plugin>:
+'''
+$ step kms create \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  'pkcs11:id=4001;object=intermediate-key'
+$ step certificate create \
+  --profile intermediate-ca \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
+  --key 'pkcs11:id=4001' \
+  'My KMS Intermediate' intermediate_ca.crt
+'''
+`,
 		Flags: []cli.Flag{
+			flags.KMSUri,
 			cli.BoolFlag{
 				Name:  "csr",
 				Usage: `Generate a certificate signing request (CSR) instead of a certificate.`,
@@ -636,7 +664,7 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	// Save key and certificate request
-	if keyFile != "" {
+	if keyFile != "" && !cryptoutil.IsKMSSigner(priv) {
 		if err := savePrivateKey(ctx, keyFile, priv, noPass); err != nil {
 			return err
 		}
@@ -655,7 +683,10 @@ func createAction(ctx *cli.Context) error {
 }
 
 func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error) {
-	keyFile := ctx.String("key")
+	var (
+		kms     = ctx.String("kms")
+		keyFile = ctx.String("key")
+	)
 
 	// Validate key parameters and generate key pair
 	if keyFile == "" {
@@ -663,7 +694,7 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 		if err != nil {
 			return nil, nil, err
 		}
-		pub, priv, err := keys.GenerateKeyPair(kty, crv, size)
+		pub, priv, err := keyutil.GenerateKeyPair(kty, crv, size)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -684,19 +715,22 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 		return nil, nil, errs.IncompatibleFlag(ctx, "key", "size")
 	}
 
-	ops := []pemutil.Options{}
+	opts := []pemutil.Options{}
 	passFile := ctx.String("password-file")
 	if passFile != "" {
-		ops = append(ops, pemutil.WithPasswordFile(passFile))
+		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
-	v, err := pemutil.Read(keyFile, ops...)
+
+	signer, err := cryptoutil.CreateSigner(kms, keyFile, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
-	signer, ok := v.(crypto.Signer)
-	if !ok {
-		return nil, nil, errors.Errorf("file %s does not contain a valid private key", keyFile)
+
+	// Make sure we can sign X509 certificates with it.
+	if !cryptoutil.IsX509Signer(signer) {
+		return nil, nil, errs.InvalidFlagValueMsg(ctx, "key", keyFile, "the given key cannot sign X509 certificates")
 	}
+
 	return signer.Public(), signer, nil
 }
 
@@ -709,6 +743,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 		caKey    = ctx.String("ca-key")
 		profile  = ctx.String("profile")
 		template = ctx.String("template")
+		kms      = ctx.String("kms")
 	)
 
 	// Check required flags when profile is used.
@@ -754,17 +789,19 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 
 	// Parse --ca-key as a crypto.Signer.
 	passFile := ctx.String("ca-password-file")
-	ops := []pemutil.Options{}
+	opts := []pemutil.Options{}
 	if passFile != "" {
-		ops = append(ops, pemutil.WithPasswordFile(passFile))
+		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
-	key, err := pemutil.Read(caKey, ops...)
+
+	signer, err := cryptoutil.CreateSigner(kms, caKey, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
-	signer, ok := key.(crypto.Signer)
-	if !ok {
-		return nil, nil, errors.Errorf("invalid value '%s' for flag '--ca-key': file is not a valid private key", caKey)
+
+	// Make sure we can sign X509 certificates with it.
+	if !cryptoutil.IsX509Signer(signer) {
+		return nil, nil, errs.InvalidFlagValueMsg(ctx, "ca-key", caKey, "the given key cannot sign X509 certificates")
 	}
 
 	return cert, signer, nil

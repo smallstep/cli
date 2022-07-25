@@ -379,13 +379,18 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 	// EABKeyID is a cli.Flag that points to an ACME EAB Key ID
 	EABKeyID = cli.StringFlag{
 		Name:  "eab-key-id",
-		Usage: "An ACME EAB Key ID",
+		Usage: "An ACME EAB Key ID.",
 	}
 
 	// EABReference is a cli.Flag that points to an ACME EAB Key Reference
 	EABReference = cli.StringFlag{
 		Name:  "eab-key-reference",
-		Usage: "An ACME EAB Key Reference",
+		Usage: "An ACME EAB Key Reference.",
+	}
+
+	KMSUri = cli.StringFlag{
+		Name:  "kms",
+		Usage: "The <uri> to configure a Cloud KMS or an HSM.",
 	}
 )
 

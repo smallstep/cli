@@ -113,8 +113,7 @@ func helpAction(ctx *cli.Context) error {
 		return cli.NewExitError(fmt.Sprintf("No help topic for '%s %s'", ctx.App.Name, strings.Join(args, " ")), 3)
 	}
 
-	cli.ShowAppHelp(ctx)
-	return nil
+	return cli.ShowAppHelp(ctx)
 }
 
 // createParentCommand returns a command representation of the app.

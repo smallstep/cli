@@ -394,7 +394,7 @@ Use the flag multiple times to configure multiple object IDs`,
 	removeAzureObjectIDFlag = cli.StringSliceFlag{
 		Name: "remove-azure-object-id",
 		Usage: `Remove a Microsoft Azure AD object <id> used to validate the identity tokens.
-Use the flag multiple times to configure multiple object IDs`,
+Use the flag multiple times to remove multiple object IDs`,
 	}
 	gcpServiceAccountFlag = cli.StringSliceFlag{
 		Name: "gcp-service-account",
@@ -404,7 +404,7 @@ Use the flag multiple times to configure multiple service accounts.`,
 	removeGCPServiceAccountFlag = cli.StringSliceFlag{
 		Name: "remove-gcp-service-account",
 		Usage: `Remove a Google service account <email> or <id> used to validate the identity tokens.
-Use the flag multiple times to configure multiple service accounts.`,
+Use the flag multiple times to remove multiple service accounts.`,
 	}
 	gcpProjectFlag = cli.StringSliceFlag{
 		Name: "gcp-project",
@@ -414,7 +414,7 @@ Use the flag multiple times to configure multiple projects`,
 	removeGCPProjectFlag = cli.StringSliceFlag{
 		Name: "remove-gcp-project",
 		Usage: `Remove a Google project <id> used to validate the identity tokens.
-Use the flag multiple times to configure multiple projects`,
+Use the flag multiple times to remove multiple projects`,
 	}
 	instanceAgeFlag = cli.DurationFlag{
 		Name: "instance-age",
@@ -486,7 +486,17 @@ will not have restrictions in the certificates to sign. Use the
 		Name: "remove-admin",
 		Usage: `Remove the <email> of an admin user in an OpenID Connect provisioner, this user
 will not have restrictions in the certificates to sign. Use the
-'--admin' flag multiple times to configure multiple administrators.`,
+'--remove-admin' flag multiple times to remove multiple administrators.`,
+	}
+	oidcDomainFlag = cli.StringSliceFlag{
+		Name: "domain",
+		Usage: `The <domain> used to validate the email claim in an OpenID Connect provisioner.
+Use the '--domain' flag multiple times to configure multiple domains.`,
+	}
+	oidcRemoveDomainFlag = cli.StringSliceFlag{
+		Name: "remove-domain",
+		Usage: `Remove the <domain> used to validate the email claim in an OpenID Connect provisioner.
+Use the '--remove-domain' flag multiple times to remove multiple domains.`,
 	}
 	oidcGroupFlag = cli.StringSliceFlag{
 		Name: "group",

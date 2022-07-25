@@ -35,7 +35,7 @@ func renewCertificateCommand() cli.Command {
 		Action: command.ActionFunc(renewCertificateAction),
 		Usage:  "renew a certificate",
 		UsageText: `**step ca renew** <crt-file> <key-file>
-[**--password-file**=<file>] [**--out**=<file>] [**--expires-in**=<duration>]
+[**--mtls**] [**--password-file**=<file>] [**--out**=<file>] [**--expires-in**=<duration>]
 [**--force**] [**--pid**=<int>] [**--pid-file**=<file>] [**--signal**=<int>]
 [**--exec**=<string>] [**--daemon**] [**--renew-period**=<duration>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
@@ -53,6 +53,12 @@ fixed period can be set with the **--renew-period** flag.
 
 The **--daemon** flag can be combined with **--pid**, **--signal**, or **--exec**
 to provide certificate reloads on your services.
+
+The renew command uses mTLS (by default) to authenticate to the step-ca API.
+However, there are scenarios where mTLS is not an option - step-ca is behind a
+proxy or the leaf certificate is not configured to do client authentication. To
+circumvent the default mTLS authentication use **--mtls=false** to force a flow that
+uses X5C token based authentication.
 
 ## POSITIONAL ARGUMENTS
 
@@ -78,6 +84,11 @@ $ step ca renew --out renewed.crt internal.crt internal.key
 Renew a certificate forcing the overwrite of the previous certificate:
 '''
 $ step ca renew --force internal.crt internal.key
+'''
+
+Renew a certificate using the token flow instead of mTLS:
+'''
+$ step ca renew --mtls=false --force internal.crt internal.key
 '''
 
 Renew a certificate providing the <--ca-url> and <--root> flags:
@@ -126,6 +137,11 @@ files, certificates, and keys created with **step ca init**:
 $ step ca renew --offline internal.crt internal.key
 '''`,
 		Flags: []cli.Flag{
+			cli.BoolTFlag{
+				Name: "mtls",
+				Usage: `Use mTLS to renew a certificate. Use --mtls=false to force the token
+authorization flow instead.`,
+			},
 			flags.CaConfig,
 			flags.Force,
 			flags.Offline,
@@ -379,7 +395,7 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 		return nil, errors.Errorf("error parsing CA URL: %s", client.GetCaURL())
 	}
 
-	return renewerPkg.New(client, tr, cert.PrivateKey, isOffline, cert, u), nil
+	return renewerPkg.New(client, tr, cert.PrivateKey, isOffline, cert, u, ctx.Bool("mtls")), nil
 }
 
 func tlsLoadX509KeyPair(certFile, keyFile, passFile string) (tls.Certificate, error) {

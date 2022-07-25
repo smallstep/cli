@@ -948,8 +948,8 @@ github.com/slackhq/nebula v1.5.2/go.mod h1:xaCM6wqbFk/NRmmUe1bv88fWBm3a1UioXJVIp
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1/1fApl1A+9VcBk+9dcqGfnePY87LY=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
-github.com/smallstep/certificates v0.20.0 h1:i9nxswqi4W+4XzIiM2LYhOhaN6LXNGXhRCwXtg6jUvQ=
-github.com/smallstep/certificates v0.20.0/go.mod h1:QlIuU3l25qxeWTo19VviZq/CKhRFtJt75RoTEUh9pbY=
+github.com/smallstep/certificates v0.21.0 h1:RdzGph8pwPZ3RJwnJ6T+HrnHJswJNhX8skoJ4Cc/lxM=
+github.com/smallstep/certificates v0.21.0/go.mod h1:QlIuU3l25qxeWTo19VviZq/CKhRFtJt75RoTEUh9pbY=
 github.com/smallstep/certinfo v1.7.0 h1:1VzGgeSFLdXO242mRUkJu02epXV6E9uawjhPH0H2LzA=
 github.com/smallstep/certinfo v1.7.0/go.mod h1:QRjP6s+cuishA6cdB//RX357ysYGz/QxlpWGyWjnfII=
 github.com/smallstep/nosql v0.4.0 h1:Go3WYwttUuvwqMtFiiU4g7kBIlY+hR0bIZAqVdakQ3M=
@@ -1134,8 +1134,6 @@ go.opentelemetry.io/otel/trace v0.20.0/go.mod h1:6GjCW8zgDjwGHGa6GkyeB8+/5vjT16g
 go.opentelemetry.io/proto/otlp v0.7.0 h1:rwOQPCuKAKmwGKq2aVNnYIibI6wnV7EvzgfTCzcdGg8=
 go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqeYNgFYFoEGnI=
 go.step.sm/cli-utils v0.7.0/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/E=
-go.step.sm/cli-utils v0.7.2 h1:kUNNhGRWAad3bLkhvbLjVr3Dqs5DgxCZQcUspWaQCIQ=
-go.step.sm/cli-utils v0.7.2/go.mod h1:Ur6bqA/yl636kCUJbp30J7Unv5JJ226eW2KqXPDwF/E=
 go.step.sm/cli-utils v0.7.3 h1:IA12IaiXVCI18yOFVQuvMpyvjL8wuwUn1yO+KhAVAr0=
 go.step.sm/cli-utils v0.7.3/go.mod h1:RJRwbBLqzs5nrepQLAV9FuT3fVpWz66tKzLIB7Izpfk=
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
