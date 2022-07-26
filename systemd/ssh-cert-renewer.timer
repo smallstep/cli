@@ -1,7 +1,6 @@
 [Unit]
-Description=Timer for Smallstep SSH Certificate Renewal for the %I host certificate
+Description=Timer for Smallstep certificate renewal of the SSH host certificate
 Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
-PartOf=step-ssh-cert-renewer.target
 
 [Timer]
 Persistent=true
