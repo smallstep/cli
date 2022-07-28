@@ -39,6 +39,7 @@ $ step completion bash >> ~/.bash_completion
 			}
 			fmt.Println("bash")
 			fmt.Println("zsh")
+			fmt.Println("fish")
 		},
 	}
 
@@ -102,6 +103,8 @@ func Completion(ctx *cli.Context) error {
 		fmt.Print(bash)
 	case "zsh":
 		fmt.Print(zsh)
+	case "fish":
+		fmt.Print(ctx.App.ToFishCompletion())
 	default:
 		return errors.Errorf("unsupported shell %s", shell)
 	}
