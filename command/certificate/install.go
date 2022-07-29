@@ -91,7 +91,7 @@ func uninstallCommand() cli.Command {
 		UsageText: `**step certificate uninstall** <crt-file>
 [**--prefix**=<name>] [**--all**]
 [**--java**] [**--firefox**] [**--no-system**]`,
-		Description: `**step certificate install** uninstalls a root certificate from the system
+		Description: `**step certificate uninstall** uninstalls a root certificate from the system
 truststore.
 
 Java and Firefox truststores are also supported via the respective flags.
