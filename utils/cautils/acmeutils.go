@@ -2,18 +2,28 @@ package cautils
 
 import (
 	"context"
+	"crypto"
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
+	"log"
+	"math/big"
 	"net"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	stdacme "golang.org/x/crypto/acme"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/acme"
@@ -27,6 +37,11 @@ import (
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+
+	"github.com/fxamacker/cbor/v2"
+	"github.com/google/go-attestation/attest"
+	x509ext "github.com/google/go-attestation/x509"
+	"github.com/google/go-tpm-tools/simulator"
 )
 
 func startHTTPServer(addr, token, keyAuth string) *http.Server {
@@ -151,7 +166,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 	}
 	ui.Printf(" .") // Indicates passage of time.
 
-	if err := ac.ValidateChallenge(ch.URL); err != nil {
+	if err := ac.ValidateChallenge(ch.URL, nil); err != nil {
 		ui.Printf(" Error!\n\n")
 		mode.Cleanup()
 		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
@@ -188,6 +203,200 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 	return nil
 }
 
+func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string) error {
+	// TODO: identifier for permanent-identifier handled differently? Can we provide just whatever we want and is that secure?
+	// The permanent-identifier should probably be more like a hardware identifier specific to the device, not just any hostname or IP.
+	// The hardware identifier (e.g. serial) should then be mapped to something else that is more useful for a server cert, like a
+	// hostname. Or is it more like a device can request a hostname and the attestation can be used to verify that the device is
+	// actually what it says it's saying and allowed to request that specific hostname?
+
+	// 1. Prepare the mode to be ran
+	// 2. Validate the challenge
+	// 3. Get the challenge?
+	// 4. Perform cleanup
+
+	ui.Printf("Using Standalone Mode Device Attestation challenge to validate `%s`", identifier)
+
+	// ch is the chal := authz.Challenges[0]
+	// Generate the certificate key, include the ACME key authorization in the
+	// the TPM certification data.
+	tpm, ak, akCert, err := tpmInit(identifier)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// data, err := keyAuthDigest(ac.Key.Public(), ch.Token)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	config := &attest.KeyConfig{
+		Algorithm: attest.ECDSA,
+		Size:      256,
+		//QualifyingData: data, // TODO(hs): where did this property go?
+	}
+	certKey, err := tpm.NewKey(ak, config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Generate the WebAuthn attestation statement.
+	payload, err := attestationStatement(certKey, akCert)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req := struct {
+		AttObj string `json:"attObj"`
+	}{
+		AttObj: base64.RawURLEncoding.EncodeToString(payload),
+	}
+
+	if err := ac.ValidateChallenge(ch.URL, req); err != nil {
+		ui.Printf(" Error!\n\n")
+		//mode.Cleanup()
+		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
+	}
+	var (
+		isValid = false
+		vch     *acme.Challenge
+		//err     error
+	)
+	time.Sleep(time.Second) // brief sleep to allow server time to validate challenge.
+	for attempts := 0; attempts < 10; attempts++ {
+		vch, err = ac.GetChallenge(ch.URL)
+		if err != nil {
+			ui.Printf(" Error!\n\n")
+			//mode.Cleanup()
+			return errors.Wrapf(err, "error retrieving ACME Challenge at %s", ch.URL)
+		}
+		if vch.Status == "valid" {
+			isValid = true
+			break
+		}
+		ui.Printf(".")
+		time.Sleep(5 * time.Second)
+	}
+	if !isValid {
+		ui.Printf(" Error!\n\n")
+		//mode.Cleanup()
+		return errors.Errorf("Unable to validate challenge: %+v", vch)
+	}
+	// if err := mode.Cleanup(); err != nil {
+	// 	return err
+	// }
+	ui.Printf(" done!\n")
+
+	return nil
+}
+
+func akCert(ak *attest.AK, identifier string) ([]byte, error) {
+	akRootKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+	akRootTemplate := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+	}
+	permID := x509ext.PermanentIdentifier{
+		IdentifierValue: identifier,
+		Assigner:        asn1.ObjectIdentifier{0, 1, 2, 3, 4},
+	}
+	san := &x509ext.SubjectAltName{
+		PermanentIdentifiers: []x509ext.PermanentIdentifier{
+			permID,
+		},
+	}
+	ext, err := x509ext.MarshalSubjectAltName(san)
+	if err != nil {
+		return nil, err
+	}
+	akTemplate := &x509.Certificate{
+		SerialNumber:    big.NewInt(2),
+		ExtraExtensions: []pkix.Extension{ext},
+	}
+	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, ak.AttestationParameters().Public)
+	if err != nil {
+		return nil, err
+	}
+	akCert, err := x509.CreateCertificate(rand.Reader, akTemplate, akRootTemplate, akPub.Public, akRootKey)
+	if err != nil {
+		return nil, err
+	}
+	return akCert, nil
+}
+
+type AttestationObject struct {
+	Format       string                 `json:"fmt"`
+	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
+}
+
+func attestationStatement(key *attest.Key, akCert []byte) ([]byte, error) {
+	params := key.CertificationParameters()
+
+	obj := &AttestationObject{
+		Format: "tpm", // TODO: `tpm` is the value used in WebAuthn for generic TPM attestation; is that what we want in `step` CLI too?
+		AttStatement: map[string]interface{}{
+			"ver":      "2.0",
+			"alg":      int64(-257), // AlgRS256
+			"x5c":      []interface{}{akCert},
+			"sig":      params.CreateSignature,
+			"certInfo": params.CreateAttestation,
+			"pubArea":  params.Public,
+		},
+	}
+	b, err := cbor.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+type simulatorChannel struct {
+	io.ReadWriteCloser
+}
+
+func (simulatorChannel) MeasurementLog() ([]byte, error) {
+	return nil, errors.New("not implemented")
+}
+
+// Default to not using the TPM simulator
+var UseSimulator bool = false
+
+func tpmInit(identifier string) (*attest.TPM, *attest.AK, []byte, error) {
+	config := &attest.OpenConfig{}
+	useSimulator := &UseSimulator
+	if *useSimulator {
+		sim, err := simulator.Get() // TODO(hs): remove simulator support? Would be nice if we don't have to rely on it, except for tests
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		config.CommandChannel = simulatorChannel{sim}
+	}
+	tpm, err := attest.OpenTPM(config)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	ak, err := tpm.NewAK(nil)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	akCert, err := akCert(ak, identifier)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return tpm, ak, akCert, nil
+}
+
+// Borrowed from:
+// https://github.com/golang/crypto/blob/master/acme/acme.go#L748
+func keyAuthDigest(pub crypto.PublicKey, token string) ([]byte, error) {
+	th, err := stdacme.JWKThumbprint(pub)
+	if err != nil {
+		return nil, err
+	}
+	digest := sha256.Sum256([]byte(fmt.Sprintf("%s.%s", token, th)))
+	return digest[:], err
+}
+
 func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
 	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
@@ -202,9 +411,16 @@ func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
 
 		chValidated := false
 		for _, ch := range az.Challenges {
-			// TODO: Allow other types of challenges (not just http).
+			// TODO: Allow other types of challenges (not just http); at least TLS-ALPN-01
 			if ch.Type == "http-01" {
 				if err := serveAndValidateHTTPChallenge(ctx, ac, ch, ident); err != nil {
+					return err
+				}
+				chValidated = true
+				break
+			}
+			if ch.Type == "device-attest-01" {
+				if err := validatePermanentIdentifierChallenge(ctx, ac, ch, ident); err != nil {
 					return err
 				}
 				chValidated = true
@@ -422,6 +638,14 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		})
 	}
 
+	permanentIdentifiers := af.ctx.StringSlice("permanent-identifier")
+	for _, pi := range permanentIdentifiers {
+		idents = append(idents, acme.Identifier{
+			Type:  "permanent-identifier",
+			Value: pi,
+		})
+	}
+
 	var (
 		orderPayload []byte
 		clientOps    []ca.ClientOption
@@ -532,6 +756,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			return nil, errors.Wrap(err, "error generating private key")
 		}
 
+		// prepare the certificate request
 		_csr := &x509.CertificateRequest{
 			Subject: pkix.Name{
 				CommonName: af.subject,
@@ -539,6 +764,27 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			DNSNames:    dnsNames,
 			IPAddresses: ips,
 		}
+
+		// process PermanentIdentifiers and add them to the certificate request
+		permanentIdentifiers := af.ctx.StringSlice("permanent-identifier")
+		if len(permanentIdentifiers) > 0 {
+			san := &x509ext.SubjectAltName{
+				PermanentIdentifiers: []x509ext.PermanentIdentifier{},
+			}
+			for _, identifier := range permanentIdentifiers {
+				permID := x509ext.PermanentIdentifier{
+					IdentifierValue: identifier,
+					Assigner:        asn1.ObjectIdentifier{0, 1, 2, 3, 4},
+				}
+				san.PermanentIdentifiers = append(san.PermanentIdentifiers, permID)
+			}
+			ext, err := x509ext.MarshalSubjectAltName(san)
+			if err != nil {
+				return nil, err
+			}
+			_csr.ExtraExtensions = []pkix.Extension{ext}
+		}
+
 		var csrBytes []byte
 		csrBytes, err = x509.CreateCertificateRequest(rand.Reader, _csr, af.priv)
 		if err != nil {
