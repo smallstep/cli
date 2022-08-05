@@ -23,8 +23,6 @@ import (
 	"strings"
 	"time"
 
-	stdacme "golang.org/x/crypto/acme"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/acme"
 	acmeAPI "github.com/smallstep/certificates/acme/api"
@@ -224,14 +222,33 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 	if err != nil {
 		log.Fatal(err)
 	}
-	// data, err := keyAuthDigest(ac.Key.Public(), ch.Token)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+
+	info, err := tpm.Info()
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO(hs): remove this output
+	ui.Printf("\nTPM INFO:")
+	ui.Printf("\nversion: %d", info.Version)
+	ui.Printf("\ninterface: %d", info.Interface)
+	ui.Printf("\nmanufacturer: %s", info.Manufacturer)
+	ui.Printf("\nvendor info: %s", info.VendorInfo)
+	ui.Printf("\nfirmware version: %d.%d\n", info.FirmwareVersionMajor, info.FirmwareVersionMinor)
+
+	data, err := keyAuthDigest(ac.Key, ch.Token)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	config := &attest.KeyConfig{
-		Algorithm: attest.ECDSA,
-		Size:      256,
-		//QualifyingData: data, // TODO(hs): where did this property go?
+		//Algorithm: attest.ECDSA,
+		//Size:      256,
+		// TODO(hs): I had to change this to RSA to make the AK key and the cert key type check out with each other. Check if this is indeed required.
+		// TODO(hs): with attest.RSA, I get an error when decoding the public key on server side:  panic: parsing public key: missing rsa signature scheme. Not sure where that has to be added ATM.
+		Algorithm:      attest.RSA,
+		Size:           2048, // TODO(hs): 4096 didn't work on my TPM? Look into why that's the case. Returned a TPM error; RCValue = 0x04;  value is out of range or is not correct for the context
+		QualifyingData: data,
 	}
 	certKey, err := tpm.NewKey(ak, config)
 	if err != nil {
@@ -293,6 +310,10 @@ func akCert(ak *attest.AK, identifier string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// akRootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	akRootTemplate := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
 	}
@@ -388,11 +409,18 @@ func tpmInit(identifier string) (*attest.TPM, *attest.AK, []byte, error) {
 
 // Borrowed from:
 // https://github.com/golang/crypto/blob/master/acme/acme.go#L748
-func keyAuthDigest(pub crypto.PublicKey, token string) ([]byte, error) {
-	th, err := stdacme.JWKThumbprint(pub)
-	if err != nil {
-		return nil, err
-	}
+func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
+	th, err := jwk.Thumbprint(crypto.SHA256) // TODO(hs): verify this is the correct thumbprint
+	// jwk, err := jwkEncode(pub)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// b := sha256.Sum256([]byte(jwk))
+	// return base64.RawURLEncoding.EncodeToString(b[:]), nil
+	// th, err := stdacme.JWKThumbprint(pub)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	digest := sha256.Sum256([]byte(fmt.Sprintf("%s.%s", token, th)))
 	return digest[:], err
 }

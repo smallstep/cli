@@ -211,6 +211,8 @@ github.com/boombuler/barcode v1.0.1 h1:NDBbPmhS+EqABEs5Kg3n/5ZNjy73Pz7SIV+KCeqyX
 github.com/boombuler/barcode v1.0.1/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/brandonweeks/crypto v0.16.2-0.20220531234114-45e4f06ca16b h1:2LG/ZFGop1MUA8rLJW3bUvCZYxJuldg/scfMD6edJsE=
 github.com/brandonweeks/crypto v0.16.2-0.20220531234114-45e4f06ca16b/go.mod h1:IG7hQp/rlwLK6hB6bfwvtccJwxxKrKbI//o1tVP3UPk=
+github.com/brandonweeks/go-attestation v0.0.0-20220602235615-164122a1d59b h1:jj5iczrQ41s4DNN8m5UHQFX4RiTgL2gzkyVgU2xZQTY=
+github.com/brandonweeks/go-attestation v0.0.0-20220602235615-164122a1d59b/go.mod h1:kA3RhI4h6nMuXW85izOMUNfDza/Yyd4tzRFiCHTkZbw=
 github.com/caarlos0/ctrlc v1.0.0/go.mod h1:CdXpj4rmq0q/1Eb44M9zi2nKB0QraNKuRGYGrrHhcQw=
 github.com/campoy/unique v0.0.0-20180121183637-88950e537e7e/go.mod h1:9IOqJGCPMSc6E5ydlp5NIonxObaeu/Iub/X03EKPVYo=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
