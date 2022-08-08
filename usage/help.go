@@ -12,11 +12,12 @@ var HelpCommandAction = cli.ActionFunc(helpAction)
 
 // HelpCommand overwrites default urfvafe/cli help command to support one or
 // multiple subcommands like:
-//   step help
-//   step help crypto
-//   step help crypto jwt
-//   step help crypto jwt sign
-//   ...
+//
+//	step help
+//	step help crypto
+//	step help crypto jwt
+//	step help crypto jwt sign
+//	...
 func HelpCommand() cli.Command {
 	return cli.Command{
 		Name:      "help",
@@ -132,13 +133,13 @@ func createParentCommand(ctx *cli.Context) cli.Command {
 
 // createCliApp is re-implementation of urfave/cli method (in command.go):
 //
-//   func (c Command) startApp(ctx *Context) error
+//	func (c Command) startApp(ctx *Context) error
 //
 // It lets us show the subcommands when help is executed like:
 //
-//   step help foo
-//   step help foo bar
-//   ...
+//	step help foo
+//	step help foo bar
+//	...
 func createCliApp(ctx *cli.Context, cmd cli.Command) *cli.App {
 	app := cli.NewApp()
 	app.Metadata = ctx.App.Metadata

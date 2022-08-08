@@ -17,10 +17,11 @@ import (
 )
 
 // ProxyCommand replaces %%, %h, %p, and %r in the given command.
-//  %%  A literal `%`.
-//  %h  The remote hostname.
-//  %p  The remote port.
-//  %r  The remote username.
+//
+//	%%  A literal `%`.
+//	%h  The remote hostname.
+//	%p  The remote port.
+//	%r  The remote username.
 func ProxyCommand(cmd, user, host, port string) string {
 	cmd = strings.ReplaceAll(cmd, "%%", "%")
 	cmd = strings.ReplaceAll(cmd, "%h", host)

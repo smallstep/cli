@@ -303,8 +303,8 @@ func getProvisionerPasswordOption(ctx *cli.Context) jose.Option {
 //     that private key.
 //  2. No private key was given on the command line. We'll need to use the
 //     provided provisioner to load a signing key.
-//    a) Offline-mode: load the JWK directly from the provisioner in the CA-config.
-//    b) Online-mode: get the provisioner private key from the CA.
+//     a) Offline-mode: load the JWK directly from the provisioner in the CA-config.
+//     b) Online-mode: get the provisioner private key from the CA.
 func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jose.JSONWebKey, kid string, err error) {
 	var opts []jose.Option
 	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
