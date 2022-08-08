@@ -191,14 +191,13 @@ will default to using the Device Authorization Grant flow
 				Name: "console-flow",
 				Usage: `The alternative OAuth <flow> to use for input constrained devices.
 
-		: <console-flow> is a case-insensitive string and must be one of:
+: <console-flow> is a case-insensitive string and must be one of:
 
-			**device**
-			:  Use the Device Authorization Grant
-(https://datatracker.ietf.org/doc/html/rfc8628#section-3.2) flow
+    **device**
+    :  Use the Device Authorization Grant (https://datatracker.ietf.org/doc/html/rfc8628#section-3.2) flow
 
-			**oob**
-			:  Use the Out of Band (OOB) flow`,
+    **oob**
+    :  Use the Out of Band (OOB) flow`,
 			},
 			cli.StringFlag{
 				Name:  "client-id",
