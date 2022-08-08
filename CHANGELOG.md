@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   renew`.
 ### Changed
 - Support two latest versions of Go (1.18, 1.19)
+- `step ca revoke <serial>` requires either a base 10 serial number or a value
+with a prefix indicating the appropriate base.
 
 ## [0.21.0] - 2022-07-06 
 ### Added 
