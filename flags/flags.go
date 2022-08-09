@@ -465,9 +465,9 @@ func ParseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
 }
 
 // ParseCaURL gets and parses the ca-url from the command context.
-//  - Require non-empty value.
-//  - Prepend an 'https' scheme if the URL does not have a scheme.
-//  - Error if the URL scheme is not implicitly or explicitly 'https'.
+//   - Require non-empty value.
+//   - Prepend an 'https' scheme if the URL does not have a scheme.
+//   - Error if the URL scheme is not implicitly or explicitly 'https'.
 func ParseCaURL(ctx *cli.Context) (string, error) {
 	caURL := ctx.String("ca-url")
 	if caURL == "" && !ctx.Bool("offline") {
@@ -479,9 +479,9 @@ func ParseCaURL(ctx *cli.Context) (string, error) {
 
 // ParseCaURLIfExists gets and parses the ca-url from the command context, if
 // one is present.
-//  - Allow empty value.
-//  - Prepend an 'https' scheme if the URL does not have a scheme.
-//  - Error if the URL scheme is not implicitly or explicitly 'https'.
+//   - Allow empty value.
+//   - Prepend an 'https' scheme if the URL does not have a scheme.
+//   - Error if the URL scheme is not implicitly or explicitly 'https'.
 func ParseCaURLIfExists(ctx *cli.Context) (string, error) {
 	caURL := ctx.String("ca-url")
 	if caURL == "" {

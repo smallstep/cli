@@ -312,11 +312,11 @@ func hashFile(h hash.Hash, filename string) ([]byte, error) {
 
 // hashDir creates a hash of a directory adding the following data to the
 // hash:
-//   1. Add directory mode bits to the hash
-//   2. For each file/directory in directory:
+//  1. Add directory mode bits to the hash
+//  2. For each file/directory in directory:
 //     2.1 If file: add file mode bits and sum
 //     2.2 If directory: do hashDir and add sum
-//   3. return sum
+//  3. return sum
 func hashDir(hc hashConstructor, dirname string) ([]byte, error) {
 	// ReadDir returns the entries sorted by filename
 	dirEntries, err := os.ReadDir(dirname)
