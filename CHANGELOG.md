@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add the certificate signature to `step ssh inspect` output.
 - Add the `--mtls=false` flag to force the token authorization flow on `step ca
   renew`.
+### Changed
+- Support two latest versions of Go (1.18, 1.19)
+- `step ca revoke <serial>` requires either a base 10 serial number or a value
+with a prefix indicating the appropriate base.
 
 ## [0.21.0] - 2022-07-06 
 ### Added 
