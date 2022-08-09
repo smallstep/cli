@@ -185,8 +185,9 @@ func NewIdentityTokenFlow(ctx *cli.Context, caURL, root string) (string, error) 
 }
 
 // OfflineTokenFlow generates a provisioning token using either
-//   1. static configuration from ca.json (created with `step ca init`)
-//   2. input from command line flags
+//  1. static configuration from ca.json (created with `step ca init`)
+//  2. input from command line flags
+//
 // These two options are mutually exclusive and priority is given to ca.json.
 func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
 	caConfig := ctx.String("ca-config")

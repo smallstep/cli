@@ -26,11 +26,12 @@ var urlPrefixes = map[string]uint16{
 // If the address does not contain a port then default to port 443.
 //
 // Params
-//   *addr*:       can be a host (e.g. smallstep.com) or an IP (e.g. 127.0.0.1)
-//   *serverName*: use a specific Server Name Indication (e.g. smallstep.com)
-//   *roots*:      a file, a directory, or a comma-separated list of files.
-//   *insecure*:   do not verify that the server's certificate has been signed by
-//                 a trusted root
+//
+//	*addr*:       can be a host (e.g. smallstep.com) or an IP (e.g. 127.0.0.1)
+//	*serverName*: use a specific Server Name Indication (e.g. smallstep.com)
+//	*roots*:      a file, a directory, or a comma-separated list of files.
+//	*insecure*:   do not verify that the server's certificate has been signed by
+//	              a trusted root
 func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509.Certificate, error) {
 	var (
 		err     error
