@@ -263,12 +263,11 @@ func revokeCertificateAction(ctx *cli.Context) error {
 			return err
 		}
 
-		_serial := new(big.Int)
-		_serial, ok := _serial.SetString(serial, 0)
+		sn, ok := new(big.Int).SetString(serial, 0)
 		if !ok {
 			return fmt.Errorf("'%s' is not a valid serial number - use a base 10 representation or add a prefix indicating the base", serial)
 		}
-		serial = _serial.String()
+		serial = sn.String()
 		if token == "" {
 			// No token and no cert/key pair - so generate a token.
 			token, err = flow.GenerateToken(ctx, &serial)
