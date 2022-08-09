@@ -149,8 +149,7 @@ func findSectionEnd(h, s string) int {
 }
 
 // Convert some stuff that we can't easily write in help files because
-//
-//	backticks and raw strings don't mix:
+// backticks and raw strings don't mix:
 //
 // - "<foo>" to "`foo`"
 // - "”'" to "```"
