@@ -1,6 +1,7 @@
 package cautils
 
 import (
+	"bytes"
 	"context"
 	"crypto"
 	"crypto/rand"
@@ -28,7 +29,9 @@ import (
 	acmeAPI "github.com/smallstep/certificates/acme/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
+	"github.com/smallstep/certinfo"
 	"github.com/smallstep/cli/crypto/keys"
+	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
@@ -201,7 +204,36 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 	return nil
 }
 
-func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string) error {
+// TODO(hs): all required?
+type AttestationParameters struct {
+	Public                  []byte `json:"public"`
+	UseTCSDActivationFormat bool   `json:"useTCSDActivationFormat"`
+	CreateData              []byte `json:"createData"`
+	CreateAttestation       []byte `json:"createAttestation"`
+	CreateSignature         []byte `json:"createSignature"`
+}
+
+type AttestationRequest struct {
+	TPMVersion   attest.TPMVersion     `json:"version"`
+	EKs          []string              `json:"eks"` // TODO(hs): rename to eks
+	AK           string                `json:"ak"`  // TODO(hs): do we want this in the request?
+	AttestParams AttestationParameters `json:"params"`
+}
+
+type AttestationResponse struct {
+	Credential []byte `json:"credential"`
+	Secret     []byte `json:"secret"` // encrypted secret
+}
+
+type SecretRequest struct {
+	Secret []byte `json:"secret"` // decrypted secret
+}
+
+type SecretResponse struct {
+	CertificateChain []string `json:"chain"` // TODO(hs): determine type to be consistent with e.g. ACME or other usages of sending chains from the CA to client
+}
+
+func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 	// TODO: identifier for permanent-identifier handled differently? Can we provide just whatever we want and is that secure?
 	// The permanent-identifier should probably be more like a hardware identifier specific to the device, not just any hostname or IP.
 	// The hardware identifier (e.g. serial) should then be mapped to something else that is more useful for a server cert, like a
@@ -225,7 +257,7 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 
 	info, err := tpm.Info()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	// TODO(hs): remove this output
@@ -235,6 +267,148 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 	ui.Printf("\nmanufacturer: %s", info.Manufacturer)
 	ui.Printf("\nvendor info: %s", info.VendorInfo)
 	ui.Printf("\nfirmware version: %d.%d\n", info.FirmwareVersionMajor, info.FirmwareVersionMinor)
+
+	eks, err := tpm.EKs()
+	if err != nil {
+		log.Fatal(err)
+	}
+	var encodedEKs []string
+	var ekData []byte
+	for _, ek := range eks {
+		fmt.Println(ek.CertificateURL)
+		block, err := pemutil.Serialize(ek.Certificate)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ekData = append(ekData, pem.EncodeToMemory(block)...)
+		encodedEKs = append(encodedEKs, base64.RawURLEncoding.EncodeToString(ek.Certificate.Raw)) // TODO(hs): or use PEM format? While this is not ACME, we might use the methods ACME RFCs use to communicate CSRs/Certs?
+	}
+
+	ui.Printf("EK Certificate:\n")
+	ui.Printf("%s\n", string(ekData))
+
+	encodedAK := base64.RawURLEncoding.EncodeToString(akCert)
+
+	attestParams := ak.AttestationParameters()
+
+	// TODO: to be loaded later; maybe persist them to file too?
+	// akBytes, err := ak.Marshal()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// TODO: perform challenge/response with the Privacy/Attestation CA
+	// TODO: should the request include nonce? Or token? Or the KeyAuthDigest? Combination/All?
+	// TODO: should this include a CSR?
+	ar := AttestationRequest{
+		TPMVersion: info.Version,
+		EKs:        encodedEKs,
+		AttestParams: AttestationParameters{
+			Public:                  attestParams.Public,
+			UseTCSDActivationFormat: attestParams.UseTCSDActivationFormat,
+			CreateData:              attestParams.CreateData,
+			CreateAttestation:       attestParams.CreateAttestation,
+			CreateSignature:         attestParams.CreateSignature,
+		},
+		AK: encodedAK,
+	}
+
+	body, err := json.Marshal(ar)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tpmAttestationCABaseURL := ctx.String("attestation-ca-url")
+	if tpmAttestationCABaseURL == "" { // TODO(hs): move this check earlier in the process?
+		log.Fatal(errors.New("--attestation-ca-url must be provided"))
+	}
+
+	attestURL := tpmAttestationCABaseURL + "/attest"
+	req, err := http.NewRequest(http.MethodPost, attestURL, bytes.NewReader(body))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO(hs): implement a client, similar to the caClient and acmeClient, that use sane defaults and
+	// automatically use the CA root as trust anchor.
+	client := http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			Proxy:           http.ProxyFromEnvironment,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // quick hack; don't verify TLS for now
+		},
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var attResp AttestationResponse
+	if err := json.NewDecoder(resp.Body).Decode(&attResp); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(fmt.Sprintf("%#+v", attResp))
+
+	// TODO: ensure that decoding the response results in the right data, e.g. []byte slice that was sent
+	// otherwise we need to do our own encoding (e.g. to string). That might be the best way, anyway.
+	encryptedCredentials := attest.EncryptedCredential{
+		Credential: attResp.Credential,
+		Secret:     attResp.Secret,
+	}
+
+	// TODO: load the AK, if it was persisted outside of the TPM. In the POC we have it in memory, so no need to do that.
+
+	// activate the credential
+	secret, err := ak.ActivateCredential(tpm, encryptedCredentials)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sr := SecretRequest{
+		Secret: secret,
+	}
+
+	body, err = json.Marshal(sr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	secretURL := tpmAttestationCABaseURL + "/secret"
+	req, err = http.NewRequest(http.MethodPost, secretURL, bytes.NewReader(body))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resp, err = client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var secretResp SecretResponse
+	if err := json.NewDecoder(resp.Body).Decode(&secretResp); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(fmt.Sprintf("%#+v", secretResp))
+	akChain := [][]byte{}
+	for _, c := range secretResp.CertificateChain {
+		certBytes, err := base64.RawURLEncoding.DecodeString(c)
+		if err != nil {
+			log.Fatal(err)
+		}
+		cert, err := x509.ParseCertificate(certBytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		info, err := certinfo.CertificateText(cert)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(info)
+		akChain = append(akChain, certBytes)
+	}
 
 	data, err := keyAuthDigest(ac.Key, ch.Token)
 	if err != nil {
@@ -255,19 +429,23 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 		log.Fatal(err)
 	}
 
+	// passing the TPM key to the ACME flow, so that it can be used
+	// TODO(hs): this is a bit of a hack that needs some refactoring
+	af.tpmKey = certKey
+
 	// Generate the WebAuthn attestation statement.
-	payload, err := attestationStatement(certKey, akCert)
+	payload, err := attestationStatement(certKey, akCert, akChain...)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	req := struct {
+	challengeBody := struct {
 		AttObj string `json:"attObj"`
 	}{
 		AttObj: base64.RawURLEncoding.EncodeToString(payload),
 	}
 
-	if err := ac.ValidateChallenge(ch.URL, req); err != nil {
+	if err := ac.ValidateChallenge(ch.URL, challengeBody); err != nil {
 		ui.Printf(" Error!\n\n")
 		//mode.Cleanup()
 		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
@@ -306,6 +484,7 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 }
 
 func akCert(ak *attest.AK, identifier string) ([]byte, error) {
+	// TODO(hs): took this from example; shouldn't this be generated inside the TPM?
 	akRootKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
@@ -338,10 +517,12 @@ func akCert(ak *attest.AK, identifier string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// TODO(hs): use x509util.CreateCertificate?
 	akCert, err := x509.CreateCertificate(rand.Reader, akTemplate, akRootTemplate, akPub.Public, akRootKey)
 	if err != nil {
 		return nil, err
 	}
+
 	return akCert, nil
 }
 
@@ -350,15 +531,17 @@ type AttestationObject struct {
 	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
 }
 
-func attestationStatement(key *attest.Key, akCert []byte) ([]byte, error) {
+// TODO(hs): the lonely akCert can be removed
+func attestationStatement(key *attest.Key, akCert []byte, akChain ...[]byte) ([]byte, error) {
 	params := key.CertificationParameters()
 
 	obj := &AttestationObject{
 		Format: "tpm", // TODO: `tpm` is the value used in WebAuthn for generic TPM attestation; is that what we want in `step` CLI too?
 		AttStatement: map[string]interface{}{
-			"ver":      "2.0",
-			"alg":      int64(-257), // AlgRS256
-			"x5c":      []interface{}{akCert},
+			"ver": "2.0",
+			"alg": int64(-257), // AlgRS256
+			//"x5c":      []interface{}{akCert},
+			"x5c":      akChain,
 			"sig":      params.CreateSignature,
 			"certInfo": params.CreateAttestation,
 			"pubArea":  params.Public,
@@ -392,6 +575,7 @@ func tpmInit(identifier string) (*attest.TPM, *attest.AK, []byte, error) {
 		}
 		config.CommandChannel = simulatorChannel{sim}
 	}
+	// TODO(hs): OpenTPM should only be called once for every CLI invocation, but potentially multiple TPM operations
 	tpm, err := attest.OpenTPM(config)
 	if err != nil {
 		return nil, nil, nil, err
@@ -425,7 +609,7 @@ func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
 	return digest[:], err
 }
 
-func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
+func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order, af *acmeFlow) error {
 	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
 		if err != nil {
@@ -448,7 +632,7 @@ func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
 				break
 			}
 			if ch.Type == "device-attest-01" {
-				if err := validatePermanentIdentifierChallenge(ctx, ac, ch, ident); err != nil {
+				if err := validatePermanentIdentifierChallenge(ctx, ac, ch, ident, af); err != nil {
 					return err
 				}
 				chValidated = true
@@ -561,6 +745,7 @@ type acmeFlow struct {
 	provisionerName string
 	csr             *x509.CertificateRequest
 	priv            interface{}
+	tpmKey          *attest.Key
 	subject         string
 	sans            []string
 	acmeDir         string
@@ -769,7 +954,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		return nil, errors.Wrapf(err, "error creating new ACME order")
 	}
 
-	if err := authorizeOrder(af.ctx, ac, o); err != nil {
+	if err := authorizeOrder(af.ctx, ac, o, af); err != nil {
 		return nil, err
 	}
 
@@ -779,9 +964,22 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		if err != nil {
 			return nil, err
 		}
-		af.priv, err = keys.GenerateKey(kty, crv, size)
-		if err != nil {
-			return nil, errors.Wrap(err, "error generating private key")
+
+		var signer interface{}
+		if af.tpmKey == nil {
+			af.priv, err = keys.GenerateKey(kty, crv, size)
+			if err != nil {
+				return nil, errors.Wrap(err, "error generating private key")
+			}
+			signer = af.priv
+		} else {
+			// TODO(hs): when using the TPM backed key, the key is generated in the authorize
+			// flow. That doesn't respect the CLI flags for `kty`, `curve` nor `size`. We may want
+			// to do that for consistency. Probably needs some additional input checking.
+			signer, err = af.tpmKey.Private(af.tpmKey.Public())
+			if err != nil {
+				return nil, errors.Wrap(err, "error getting TPM private key")
+			}
 		}
 
 		// prepare the certificate request
@@ -814,7 +1012,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		}
 
 		var csrBytes []byte
-		csrBytes, err = x509.CreateCertificateRequest(rand.Reader, _csr, af.priv)
+		csrBytes, err = x509.CreateCertificateRequest(rand.Reader, _csr, signer)
 		if err != nil {
 			return nil, errors.Wrap(err, "error creating certificate request")
 		}

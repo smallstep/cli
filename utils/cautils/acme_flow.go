@@ -29,11 +29,18 @@ func ACMECreateCertFlow(ctx *cli.Context, provisionerName string) error {
 	}
 	ui.PrintSelected("Certificate", certFile)
 
-	_, err = pemutil.Serialize(af.priv, pemutil.ToFile(keyFile, 0600))
-	if err != nil {
-		return errors.WithStack(err)
+	if af.tpmKey == nil {
+		_, err = pemutil.Serialize(af.priv, pemutil.ToFile(keyFile, 0600))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		ui.PrintSelected("Private Key", keyFile)
+	} else {
+		// TODO(hs): this should be improved; show info how to use this private key
+		_ = af.tpmKey.Public()
+		ui.PrintSelected("Private Key", "stored in TPM")
 	}
-	ui.PrintSelected("Private Key", keyFile)
+
 	return nil
 }
 

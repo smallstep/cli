@@ -158,6 +158,11 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 				Usage: `Add a 'permanent-identifier' to the certificate request
 Use the '--permanent-identifier' flag multiple times to set more than one.`,
 			},
+			cli.StringFlag{
+				Name:  "attestation-ca-url",
+				Usage: "The base url of the attestation CA to use",
+				Value: "https://192.168.0.186:2443/tpmattest/tpm01", // TODO(hs): remove default value
+			},
 			flags.TemplateSet,
 			flags.TemplateSetFile,
 			flags.CaConfig,
