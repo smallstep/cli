@@ -14,7 +14,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/slackhq/nebula v1.5.2
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.21.0
+	github.com/smallstep/certificates v0.21.1-0.20220816232119-713dfad88496
 	github.com/smallstep/certinfo v1.7.0
 	github.com/smallstep/truststore v0.11.0
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
@@ -24,7 +24,7 @@ require (
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.3
 	go.step.sm/crypto v0.17.2
-	go.step.sm/linkedca v0.16.1
+	go.step.sm/linkedca v0.18.0
 	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
@@ -85,7 +85,7 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/fullstorydev/grpcurl v1.8.2 // indirect
-	github.com/go-chi/chi v4.0.2+incompatible // indirect
+	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
@@ -157,7 +157,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/newrelic/go-agent v2.15.0+incompatible // indirect
+	github.com/newrelic/go-agent/v3 v3.18.0 // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
