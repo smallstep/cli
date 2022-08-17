@@ -14,7 +14,6 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/cas/apiv1"
-	"github.com/smallstep/certificates/kms"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
@@ -28,6 +27,7 @@ import (
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/kms"
 )
 
 func initCommand() cli.Command {
@@ -400,7 +400,7 @@ func initAction(ctx *cli.Context) (err error) {
 		if kmsName != "" {
 			var rootURI, intermediateURI, sshHostURI, sshUserURI string
 			keyManager, err = kms.New(context.Background(), kms.Options{
-				Type: kmsName,
+				Type: kms.Type(kmsName),
 			})
 			if err != nil {
 				return err
