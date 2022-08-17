@@ -37,7 +37,8 @@ func signCommand() cli.Command {
 		Action: cli.ActionFunc(signAction),
 		Usage:  "sign a certificate signing request (CSR)",
 		UsageText: `**step certificate sign** <csr-file> <crt-file> <key-file>
-[**--profile**=<profile>] [**--template**=<file>]
+[**--profile**=<profile>] [**--template**=<file>] 
+[**--set**=<key=value>] [**--set-file**=<file>]
 [**--password-file**=<file>] [**--path-len**=<maximum>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--bundle**]`,
@@ -112,6 +113,37 @@ $ step certificate create --csr coyote@acme.corp coyote.csr coyote.key
 $ step certificate sign --template coyote.tpl coyote.csr issuer.crt issuer.key
 '''
 
+Sign a CSR using a template and allow configuring the subject using the
+**--set** and **--set-file** flags.
+'''
+$ cat rocket.tpl
+{
+	"subject": {
+		"country": {{ toJson .Insecure.User.country }},
+		"organization": {{ toJson .Insecure.User.organization }},
+		"organizationalUnit": {{ toJson .Insecure.User.organizationUnit }},
+		"commonName": {{toJson .Subject.CommonName }}
+	},
+	"sans": {{ toJson .SANs }},
+{{- if typeIs "*rsa.PublicKey" .Insecure.CR.PublicKey }}
+	"keyUsage": ["keyEncipherment", "digitalSignature"],
+{{- else }}
+	"keyUsage": ["digitalSignature"],
+{{- end }}
+	"extKeyUsage": ["serverAuth", "clientAuth"]
+}
+$ cat organization.json
+{
+	"country": "US",
+	"organization": "Acme Corporation",
+	"organizationUnit": "HQ"
+}
+$ step certificate create --csr rocket.acme.corp rocket.csr rocket.key
+$ step certificate sign --template rocket.tpl \
+  --set-file organization.json --set organizationUnit=Engineering \
+  rocket.csr issuer.crt issuer.key
+'''
+
 Sign a CSR using <step-kms-plugin>:
 '''
 $ step certificate sign \
@@ -139,10 +171,9 @@ $ step certificate sign \
     **csr**
     :  Signs a x.509 certificate without modifying the CSR.`,
 			},
-			cli.StringFlag{
-				Name:  "template",
-				Usage: `The certificate template <file>, a JSON representation of the certificate to create.`,
-			},
+			flags.Template,
+			flags.TemplateSet,
+			flags.TemplateSetFile,
 			flags.PasswordFile,
 			cli.StringFlag{
 				Name: "not-before",
@@ -234,12 +265,19 @@ func signAction(ctx *cli.Context) error {
 
 	// Read template if passed. If not use a template depending on the profile.
 	var template string
+	var userData map[string]interface{}
 	if templateFile != "" {
 		b, err := utils.ReadFile(templateFile)
 		if err != nil {
 			return err
 		}
 		template = string(b)
+
+		// Parse --set and --set-file
+		userData, err = flags.GetTemplateData(ctx)
+		if err != nil {
+			return err
+		}
 	} else {
 		switch profile {
 		case profileLeaf:
@@ -290,6 +328,7 @@ func signAction(ctx *cli.Context) error {
 
 	// Create certificate template from csr.
 	data := createTemplateData(csr, maxPathLen)
+	data.SetUserData(userData)
 	tpl, err := x509util.NewCertificate(csr, x509util.WithTemplate(template, data))
 	if err != nil {
 		return err
