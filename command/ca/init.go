@@ -23,7 +23,7 @@ import (
 	"github.com/urfave/cli"
 
 	// Enable azurekms
-	_ "github.com/smallstep/certificates/kms/azurekms"
+	_ "go.step.sm/crypto/kms/azurekms"
 
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"

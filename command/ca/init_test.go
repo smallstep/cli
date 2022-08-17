@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	_ "github.com/smallstep/certificates/kms/azurekms"
+	_ "go.step.sm/crypto/kms/azurekms"
 )
 
 func Test_processDNSValue(t *testing.T) {
