@@ -41,7 +41,8 @@ func createCommand() cli.Command {
 		Action: command.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt-file> <key-file>
-[**--kms**=<uri>] [**--csr**] [**--profile**=<profile>] [**--template**=<file>]
+[**--kms**=<uri>] [**--csr**] [**--profile**=<profile>]
+[**--template**=<file>] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--not-before**=<duration>] [**--not-after**=<duration>]
 [**--password-file**=<file>] [**--ca**=<issuer-cert>]
 [**--ca-key**=<issuer-key>] [**--ca-password-file**=<file>]
@@ -263,12 +264,16 @@ $ step certificate create --template root.tpl \
 '''
 
 Create an intermediate certificate using the previous root. This intermediate
-will be able to sign also new intermediate certificates:
+will be able to sign also new intermediate certificates. We will also make the
+subject configurable using the **--set** and **--set-file** flags.
 '''
 $ cat intermediate.tpl
 {
 	"subject": {
-		"commonName": "Acme Corporation Intermediate CA"
+		"country": {{ toJson .Insecure.User.country }},
+		"organization": {{ toJson .Insecure.User.organization }},
+		"organizationalUnit": {{ toJson .Insecure.User.organizationUnit }},
+		"commonName": {{toJson .Subject.CommonName }}
 	},
 	"keyUsage": ["certSign", "crlSign"],
 	"basicConstraints": {
@@ -276,8 +281,15 @@ $ cat intermediate.tpl
 		"maxPathLen": 1
 	}
 }
+$ cat organization.json
+{
+	"country": "US",
+	"organization": "Acme Corporation",
+	"organizationUnit": "HQ"
+}
 $ step certificate create --template intermediate.tpl \
   --ca root_ca.crt --ca-key root_ca_key \
+  --set-file organization.json --set organizationUnit=Engineering \
   "Acme Corporation Intermediate CA" intermediate_ca.crt intermediate_ca_key
 '''
 
@@ -367,10 +379,9 @@ $ step certificate create \
 	This profile requires the **--subtle** flag because the use of self-signed leaf
 	certificates is discouraged unless absolutely necessary.`,
 			},
-			cli.StringFlag{
-				Name:  "template",
-				Usage: `The certificate template <file>, a JSON representation of the certificate to create.`,
-			},
+			flags.Template,
+			flags.TemplateSet,
+			flags.TemplateSetFile,
 			cli.StringFlag{
 				Name: "password-file",
 				Usage: `The <file> to the file containing the password to
@@ -494,6 +505,12 @@ func createAction(ctx *cli.Context) error {
 		template = string(b)
 	}
 
+	// Parse --set and --set-file
+	userData, err := flags.GetTemplateData(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Read or generate key pair
 	pub, priv, err := parseOrCreateKey(ctx)
 	if err != nil {
@@ -536,6 +553,7 @@ func createAction(ctx *cli.Context) error {
 
 		// Create certificate request
 		data := x509util.CreateTemplateData(subject, sans)
+		data.SetUserData(userData)
 		csr, err := x509util.NewCertificateRequest(priv, x509util.WithTemplate(template, data))
 		if err != nil {
 			return err
@@ -620,6 +638,7 @@ func createAction(ctx *cli.Context) error {
 
 	// Create X.509 certificate
 	templateData := x509util.CreateTemplateData(subject, sans)
+	templateData.SetUserData(userData)
 	certificate, err := x509util.NewCertificate(cr, x509util.WithTemplate(template, templateData))
 	if err != nil {
 		return err
