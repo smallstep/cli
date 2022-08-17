@@ -11,6 +11,7 @@ import (
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli/command/ca/provisioner/webhook"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
@@ -31,6 +32,7 @@ func Command() cli.Command {
 			addCommand(),
 			updateCommand(),
 			removeCommand(),
+			webhook.Command(),
 		},
 		Description: `**step ca provisioner** command group provides facilities for managing the
 certificate authority provisioners.
