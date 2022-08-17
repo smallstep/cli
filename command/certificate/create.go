@@ -263,9 +263,10 @@ $ step certificate create --template root.tpl \
   "Acme Corporation Root CA" root_ca.crt root_ca_key
 '''
 
-Create an intermediate certificate using the previous root. This intermediate
-will be able to sign also new intermediate certificates. We will also make the
-subject configurable using the **--set** and **--set-file** flags.
+Create an intermediate certificate using the previous root. By extending the
+maxPathLen we are enabling this intermediate sign leaf and intermediate
+certificates. We will also make the subject configurable using the **--set** and
+**--set-file** flags.
 '''
 $ cat intermediate.tpl
 {
