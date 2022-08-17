@@ -41,6 +41,7 @@ import (
 	_ "github.com/smallstep/certificates/cas/cloudcas"
 	_ "github.com/smallstep/certificates/cas/softcas"
 	_ "github.com/smallstep/certificates/cas/stepcas"
+	_ "github.com/smallstep/certificates/cas/vaultcas"
 
 	// Profiling and debugging
 	_ "net/http/pprof"
