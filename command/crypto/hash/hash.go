@@ -1,8 +1,8 @@
 package hash
 
 import (
-	"crypto/md5"
-	"crypto/sha1"
+	"crypto/md5"  // nolint:gosec // md5 can only be used with --insecure flag
+	"crypto/sha1" // nolint:gosec // sha1 is being used to calculate a hash, not a key
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/subtle"
@@ -273,6 +273,7 @@ func compareAction(ctx *cli.Context) error {
 func getHash(ctx *cli.Context, alg string, insecure bool) (hashConstructor, error) {
 	switch strings.ToLower(alg) {
 	case "sha", "sha1":
+		// nolint:gosec // sha1 is being used to calculate a hash, not a key.
 		return sha1.New, nil
 	case "sha224":
 		return sha256.New224, nil

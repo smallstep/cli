@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/crypto/fingerprint"
 	"github.com/smallstep/cli/crypto/pemutil"

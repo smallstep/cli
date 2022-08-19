@@ -160,6 +160,7 @@ func ParseKey(filename string, opts ...Option) (*JSONWebKey, error) {
 // ReadJWKSet reads a JWK Set from a URL or filename. URLs must start with "https://".
 func ReadJWKSet(filename string) ([]byte, error) {
 	if strings.HasPrefix(filename, "https://") {
+		// nolint:gosec // This tainted URL is not considered a security risk.
 		resp, err := http.Get(filename)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error retrieving %s", filename)

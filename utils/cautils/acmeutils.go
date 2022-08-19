@@ -30,7 +30,10 @@ import (
 )
 
 func startHTTPServer(addr, token, keyAuth string) *http.Server {
-	srv := &http.Server{Addr: addr}
+	srv := &http.Server{
+		Addr:              addr,
+		ReadHeaderTimeout: 15 * time.Second,
+	}
 
 	http.HandleFunc(fmt.Sprintf("/.well-known/acme-challenge/%s", token), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/octet-stream")
@@ -117,7 +120,7 @@ func (wm *webrootMode) Run() error {
 		return errors.Wrapf(err, "error checking for directory %s", wm.dir)
 	}
 
-	// Use 0755 and 0644 (rather than 0700 and 0600) for directory and file
+	// NOTE: Use 0755 and 0644 (rather than 0700 and 0600) for directory and file
 	// respectively because the process running the file server, and therefore
 	// reading/serving the file, may be owned by a different user than
 	// the one running the `step` command that will write the file.
@@ -128,6 +131,7 @@ func (wm *webrootMode) Run() error {
 		}
 	}
 
+	// nolint:gosec // See note above.
 	return errors.Wrapf(os.WriteFile(fmt.Sprintf("%s/%s", chPath, wm.token), []byte(keyAuth), 0644),
 		"error writing key authorization file %s", chPath+wm.token)
 }
@@ -390,7 +394,12 @@ func (af *acmeFlow) getClientTruststoreOption(mergeRootCAs bool) (ca.ClientOptio
 			return nil, errors.New("failed to append local root ca to system cert pool")
 		}
 
-		return ca.WithTransport(&http.Transport{TLSClientConfig: &tls.Config{RootCAs: rootCAs}}), nil
+		return ca.WithTransport(&http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs:    rootCAs,
+				MinVersion: tls.VersionTLS12,
+			},
+		}), nil
 	}
 
 	// Use local Root CA only

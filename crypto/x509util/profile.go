@@ -4,7 +4,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha1"
+	"crypto/sha1" // nolint:gosec // sha1 is being used to calculate an identifier, not a key.
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -57,7 +57,7 @@ var (
 	// DefaultTLSMinVersion default minimum version of TLS.
 	DefaultTLSMinVersion = TLSVersion(1.2)
 	// DefaultTLSMaxVersion default maximum version of TLS.
-	DefaultTLSMaxVersion = TLSVersion(1.2)
+	DefaultTLSMaxVersion = TLSVersion(1.3)
 	// DefaultTLSRenegotiation default TLS connection renegotiation policy.
 	DefaultTLSRenegotiation = false // Never regnegotiate.
 	// DefaultTLSCipherSuites specifies default step ciphersuite(s).
@@ -67,18 +67,19 @@ var (
 	}
 	// ApprovedTLSCipherSuites smallstep approved ciphersuites.
 	ApprovedTLSCipherSuites = CipherSuites{
-		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
-		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+		// AEADs w/ ECDHE
 		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
-		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
-		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
 		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
 		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
 		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+
+		// CBC w/ ECDHE
+		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
 	}
 
 	// oidExtensionCTPoison is the OID for the certificate transparency poison
@@ -519,6 +520,7 @@ func generateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 	if _, err = asn1.Unmarshal(b, &info); err != nil {
 		return nil, errors.Wrap(err, "error unmarshaling public key")
 	}
+	// nolint:gosec // sha1 is being used to calculate an identifier, not a key.
 	hash := sha1.Sum(info.SubjectPublicKey.Bytes)
 	return hash[:], nil
 }

@@ -41,9 +41,6 @@ import (
 	_ "github.com/smallstep/certificates/cas/cloudcas"
 	_ "github.com/smallstep/certificates/cas/softcas"
 	_ "github.com/smallstep/certificates/cas/stepcas"
-
-	// Profiling and debugging
-	_ "net/http/pprof"
 )
 
 // Version is set by an LDFLAG at build time representing the git tag or commit

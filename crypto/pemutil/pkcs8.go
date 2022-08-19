@@ -3,11 +3,11 @@ package pemutil
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/des"
+	"crypto/des" // nolint:gosec // des is only being used for decryption, not encryption.
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
-	"crypto/sha1"
+	"crypto/sha1" // nolint:gosec // sha1 is only being used for decryption, not encryption.
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -115,15 +115,19 @@ type rfc1423Algo struct {
 // rfc1423Algos holds a slice of the possible ways to encrypt a PEM
 // block. The ivSize numbers were taken from the OpenSSL source.
 var rfc1423Algos = []rfc1423Algo{{
-	cipher:     x509.PEMCipherDES,
-	name:       "DES-CBC",
+	cipher: x509.PEMCipherDES,
+	name:   "DES-CBC",
+	// nolint:gosec // des is only being used for decryption, not encryption.
+	// Maintain support for legacy keys.
 	cipherFunc: des.NewCipher,
 	keySize:    8,
 	blockSize:  des.BlockSize,
 	identifier: oidDESCBC,
 }, {
-	cipher:     x509.PEMCipher3DES,
-	name:       "DES-EDE3-CBC",
+	cipher: x509.PEMCipher3DES,
+	name:   "DES-EDE3-CBC",
+	// nolint:gosec // des is only being used for decryption, not encryption.
+	// Maintain support for legacy keys.
 	cipherFunc: des.NewTripleDESCipher,
 	keySize:    24,
 	blockSize:  des.BlockSize,
@@ -288,7 +292,7 @@ func MarshalPKCS8PrivateKey(key interface{}) ([]byte, error) {
 // key derived using PBKDF2 over the given password.
 func DecryptPEMBlock(block *pem.Block, password []byte) ([]byte, error) {
 	if block.Headers["Proc-Type"] == "4,ENCRYPTED" {
-		//nolint
+		// nolint
 		return x509.DecryptPEMBlock(block, password)
 	}
 
@@ -350,9 +354,13 @@ func DecryptPKCS8PrivateKey(data, password []byte) ([]byte, error) {
 	// DES, TripleDES
 	case encParam.EncryAlgo.Equal(oidDESCBC):
 		symkey = pbkdf2.Key(password, salt, iter, 8, keyHash)
+		// nolint:gosec // des is only being used for decryption, not encryption.
+		// Maintain support for legacy keys.
 		block, err = des.NewCipher(symkey)
 	case encParam.EncryAlgo.Equal(oidD3DESCBC):
 		symkey = pbkdf2.Key(password, salt, iter, 24, keyHash)
+		// nolint:gosec // des is only being used for decryption, not encryption.
+		// Maintain support for legacy keys.
 		block, err = des.NewTripleDESCipher(symkey)
 	default:
 		return nil, errors.Errorf("unsupported encrypted PEM: unknown algorithm %v", encParam.EncryAlgo)

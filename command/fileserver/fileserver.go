@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -121,6 +122,7 @@ func fileServerAction(ctx *cli.Context) error {
 		tlsConfig = &tls.Config{
 			ClientCAs:  pool,
 			ClientAuth: tls.RequireAndVerifyClientCert,
+			MinVersion: tls.VersionTLS13,
 		}
 	}
 
@@ -130,8 +132,9 @@ func fileServerAction(ctx *cli.Context) error {
 	}
 
 	srv := &http.Server{
-		Handler:   http.FileServer(http.Dir(root)),
-		TLSConfig: tlsConfig,
+		Handler:           http.FileServer(http.Dir(root)),
+		TLSConfig:         tlsConfig,
+		ReadHeaderTimeout: 15 * time.Second,
 	}
 	if cert != "" && key != "" {
 		fmt.Printf("Serving HTTPS at %s ...\n", l.Addr().String())

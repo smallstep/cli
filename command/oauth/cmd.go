@@ -45,17 +45,18 @@ import (
 // available here https://cloud.google.com/sdk/docs/quickstarts
 const (
 	defaultClientID          = "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com"
-	defaultClientNotSoSecret = "udTrOT3gzrO7W9fDPgZQLfYJ"
+	defaultClientNotSoSecret = "udTrOT3gzrO7W9fDPgZQLfYJ" // nolint:gosec // This is a client meant for open source testing. The client has no security access or roles.
 
 	defaultDeviceAuthzClientID          = "1087160488420-1u0jqoulmv3mfomfh6fhkfs4vk4bdjih.apps.googleusercontent.com"
-	defaultDeviceAuthzClientNotSoSecret = "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"
-	defaultDeviceAuthzInterval          = 5
-	defaultDeviceAuthzExpiresIn         = time.Minute * 5
+	defaultDeviceAuthzClientNotSoSecret = "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" // nolint:gosec // This is a client meant for open source testing. The client has no security access or roles.
+
+	defaultDeviceAuthzInterval  = 5
+	defaultDeviceAuthzExpiresIn = time.Minute * 5
 
 	// The URN for getting verification token offline
 	oobCallbackUrn = "urn:ietf:wg:oauth:2.0:oob"
 	// The URN for token request grant type jwt-bearer
-	jwtBearerUrn = "urn:ietf:params:oauth:grant-type:jwt-bearer"
+	jwtBearerUrn = "urn:ietf:params:oauth:grant-type:jwt-bearer" // nolint:gosec // This is a resource identifier (not a secret).
 )
 
 type token struct {
@@ -712,7 +713,10 @@ func (o *oauth) NewServer() (*httptest.Server, error) {
 	}
 	srv := &httptest.Server{
 		Listener: l,
-		Config:   &http.Server{Handler: o},
+		Config: &http.Server{
+			Handler:           o,
+			ReadHeaderTimeout: 15 * time.Second,
+		},
 	}
 	srv.Start()
 
@@ -1192,6 +1196,8 @@ func (o *oauth) Exchange(tokenEndpoint, code string) (*token, error) {
 	data.Set("grant_type", "authorization_code")
 	data.Set("code_verifier", o.codeChallenge)
 
+	// nolint:gosec // Tainted url deemed acceptable. Not used to store any
+	// backend data.
 	resp, err := http.PostForm(tokenEndpoint, data)
 	if err != nil {
 		return nil, errors.WithStack(err)

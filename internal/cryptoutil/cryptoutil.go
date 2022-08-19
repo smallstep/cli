@@ -87,6 +87,7 @@ func newKMSSigner(kms, key string) (crypto.Signer, error) {
 	args = append(args, key)
 
 	// Get public key
+	// nolint:gosec // arguments controlled by step.
 	cmd := exec.Command(name, args...)
 	out, err := cmd.Output()
 	if err != nil {
@@ -134,6 +135,7 @@ func (s *kmsSigner) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) 
 	}
 	args = append(args, s.key)
 
+	// nolint:gosec // arguments controlled by step.
 	cmd := exec.Command(s.name, args...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

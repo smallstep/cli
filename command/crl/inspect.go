@@ -135,7 +135,8 @@ func inspectAction(ctx *cli.Context) error {
 			return err
 		}
 		tlsConfig = &tls.Config{
-			RootCAs: pool,
+			RootCAs:    pool,
+			MinVersion: tls.VersionTLS12,
 		}
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.TLSClientConfig = tlsConfig

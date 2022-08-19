@@ -219,6 +219,9 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 	}
 
 	// Using public PKI
+	// nolint:gosec // Variadic URL is considered safe here for the following reasons:
+	//  1) The input is from the command line, rather than a web form or publicly available API.
+	//  2) The command is expected to be used on a client, rather than a privileged backend host.
 	resp, err := http.Get(apiEndpoint)
 	if err != nil {
 		return errors.Wrap(err, "error getting authority data")

@@ -127,6 +127,7 @@ func OpenInBrowser(url, browser string) error {
 // Step executes step with the given commands and returns the standard output.
 func Step(args ...string) ([]byte, error) {
 	var stdout bytes.Buffer
+	// nolint:gosec // arguments controlled by step.
 	cmd := exec.Command(os.Args[0], args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
