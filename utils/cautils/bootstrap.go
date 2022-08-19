@@ -226,6 +226,7 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 	if err != nil {
 		return errors.Wrap(err, "error getting authority data")
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		if resp.StatusCode == http.StatusNotFound {
 			return errors.New("error getting authority data: authority not found")

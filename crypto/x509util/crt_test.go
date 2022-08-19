@@ -58,7 +58,7 @@ func mustParseCertificate(t *testing.T, filename string) *x509.Certificate {
 	if err != nil {
 		t.Fatalf("failed to read %s: %v", filename, err)
 	}
-	block, rest := pem.Decode([]byte(pemData))
+	block, rest := pem.Decode(pemData)
 	if block == nil || len(rest) > 0 {
 		t.Fatalf("failed to decode PEM in %s", filename)
 	}

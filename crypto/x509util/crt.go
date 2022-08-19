@@ -68,8 +68,8 @@ func SplitSANs(sans []string) (dnsNames []string, ips []net.IP, emails []string,
 	if sans == nil {
 		return
 	}
-	for _, san := range sans {
 
+	for _, san := range sans {
 		//nolint:gocritic // avoid ifelse -> switch statement linter suggestion
 		if ip := net.ParseIP(san); ip != nil {
 			ips = append(ips, ip)

@@ -206,28 +206,48 @@ linters:
     #
     ## disabled by default
     #
+    - asasalint # Check for pass []any as any in variadic func(...any)
+    - asciicheck # Simple linter to check that your code does not contain non-ASCII identifiers
+    - bidichk # Checks for dangerous unicode character sequences
+    - bodyclose # checks whether HTTP response body is closed successfully
+    - contextcheck # check the function whether use a non-inherited context
+    - durationcheck # check for two durations multiplied together
+    - errname # Checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error.
+    - errorlint # errorlint is a linter for that can be used to find code that will cause problems with the error wrapping scheme introduced in Go 1.13.
+    - execinquery # execinquery is a linter about query string checker in Query function which reads your Go src files and warning it finds
+    - exportloopref # checks for pointers to enclosing loop variables
+    - decorder # check declaration order and count of types, constants, variables and functions
     - gocritic # Provides diagnostics that check for bugs, performance and style issues.
+    - goheader # Checks if file header matches to pattern
     - goimports # In addition to fixing imports, goimports also formats your code in the same style as gofmt.
+    - gomoddirectives # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod.
+    - gomodguard # Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
+    - goprintffuncname # Checks that printf-like functions are named with f at the end
+    - gosec # Inspects source code for security problems
+    - makezero # Finds slice declarations with non-zero initial length
     - misspell # Finds commonly misspelled English words in comments
+    - nilerr # Finds the code that returns nil even if it checks that the error is not nil.
+    - nilnil # Checks that there is no simultaneous return of nil error and an invalid value.
     - nolintlint # Reports ill-formed or insufficient nolint directives
+    - nosprintfhostport # Checks for misuse of Sprintf to construct a host with port in a URL.
+    - predeclared # find code that shadows one of Go's predeclared identifiers
+    - promlinter # Check Prometheus metrics naming via promlint
     - revive # Fast, configurable, extensible, flexible, and beautiful linter for Go. Drop-in replacement of golint.
+    - rowserrcheck # checks whether Err of rows is checked successfully
+    - sqlclosecheck # Checks that sql.Rows and sql.Stmt are closed.
+    - stylecheck # Stylecheck is a replacement for golint
+    - tenv # tenv is analyzer that detects using os.Setenv instead of t.Setenv since Go1.17
+    - tparallel # tparallel detects inappropriate usage of t.Parallel() method in your Go test codes
+    - unconvert # Remove unnecessary type conversions
+    - wastedassign # wastedassign finds wasted assignment statements.
+    - whitespace # Tool for detection of leading and trailing whitespace
     #
     ## Consider Enabling
     #
-    #- asasalint # Check for pass []any as any in variadic func(...any)
-    #- asciicheck # Simple linter to check that your code does not contain non-ASCII identifiers
-    #- bidichk # Checks for dangerous unicode character sequences
-    #- bodyclose # checks whether HTTP response body is closed successfully
-    #- contextcheck # check the function whether use a non-inherited context
     #- cyclop # checks function and package cyclomatic complexity
     #- dupl # Tool for code clone detection
-    #- durationcheck # check for two durations multiplied together
     #- errcheck # Errcheck is a program for checking for unchecked errors in go programs. These unchecked errors can be critical bugs in some cases
-    #- errname # Checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error.
-    #- errorlint # errorlint is a linter for that can be used to find code that will cause problems with the error wrapping scheme introduced in Go 1.13.
-    #- execinquery # execinquery is a linter about query string checker in Query function which reads your Go src files and warning it finds
     #- exhaustive # check exhaustiveness of enum switch statements
-    #- exportloopref # checks for pointers to enclosing loop variables
     #- forbidigo # Forbids identifiers
     #- funlen # Tool for detection of long functions
     #- gochecknoglobals # check that no global variables exist
@@ -237,38 +257,17 @@ linters:
     #- gocyclo # Computes and checks the cyclomatic complexity of functions
     #- godot # Check if comments end in a period
     #- gomnd # An analyzer to detect magic numbers.
-    #- gomoddirectives # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod.
-    #- gomodguard # Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
-    #- goprintffuncname # Checks that printf-like functions are named with f at the end
     #- lll # Reports long lines
-    #- makezero # Finds slice declarations with non-zero initial length
     #- nakedret # Finds naked returns in functions greater than a specified function length
     #- nestif # Reports deeply nested if statements
-    #- nilerr # Finds the code that returns nil even if it checks that the error is not nil.
-    #- nilnil # Checks that there is no simultaneous return of nil error and an invalid value.
     #- noctx # noctx finds sending http request without context.Context
     #- nonamedreturns # Reports all named returns
-    #- nosprintfhostport # Checks for misuse of Sprintf to construct a host with port in a URL.
-    #- predeclared # find code that shadows one of Go's predeclared identifiers
-    #- promlinter # Check Prometheus metrics naming via promlint
-    #- rowserrcheck # checks whether Err of rows is checked successfully
-    #- sqlclosecheck # Checks that sql.Rows and sql.Stmt are closed.
-    #- stylecheck # Stylecheck is a replacement for golint
-    #- tenv # tenv is analyzer that detects using os.Setenv instead of t.Setenv since Go1.17
     #- testpackage # linter that makes you use a separate _test package
-    #- tparallel # tparallel detects inappropriate usage of t.Parallel() method in your Go test codes
-    #- unconvert # Remove unnecessary type conversions
     #- unparam # Reports unused function parameters
-    #- wastedassign # wastedassign finds wasted assignment statements.
-    #- whitespace # Tool for detection of leading and trailing whitespace
-    #- wrapcheck # Checks that errors returned from external packages are wrapped
-    ## you may want to enable
-    #- decorder # check declaration order and count of types, constants, variables and functions
+    #- wrapcheck # Checks that errors returned from external packages are wrapped you may want to enable
     #- exhaustruct # Checks if all structure fields are initialized
-    #- goheader # Checks is file header matches to pattern
     #- ireturn # Accept Interfaces, Return Concrete Types
     #- prealloc # [premature optimization, but can be used in some cases] Finds slice declarations that could potentially be preallocated
-    #- varnamelen # [great idea, but too many false positives] checks that the length of a variable's name matches its scope
     #
     ## disabled
     #
@@ -298,6 +297,7 @@ linters:
     #- interfacer # [deprecated] Linter that suggests narrower interface types
     #- maligned # [deprecated, replaced by govet fieldalignment] Tool to detect Go structs that would take less memory if their fields were sorted
     #- scopelint # [deprecated, replaced by exportloopref] Scopelint checks for unpinned variables in go programs
+    #- varnamelen # [great idea, but too many false positives] checks that the length of a variable's name matches its scope
 
 issues:
   # Maximum count of issues with the same text.
@@ -330,3 +330,4 @@ issues:
         - noctx
         - nolintlint
         - wrapcheck
+        - whitespace

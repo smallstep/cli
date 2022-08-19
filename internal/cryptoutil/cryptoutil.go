@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rsa"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -67,8 +68,9 @@ type kmsSigner struct {
 // exitError returns the error displayed on stderr after running the given
 // command.
 func exitError(cmd *exec.Cmd, err error) error {
-	if e, ok := err.(*exec.ExitError); ok {
-		return fmt.Errorf("command %q failed with:\n%s", cmd.String(), e.Stderr)
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return fmt.Errorf("command %q failed with:\n%s", cmd.String(), ee.Stderr)
 	}
 	return fmt.Errorf("command %q failed with: %w", cmd.String(), err)
 }
@@ -87,7 +89,6 @@ func newKMSSigner(kms, key string) (crypto.Signer, error) {
 	args = append(args, key)
 
 	// Get public key
-	//nolint:gosec // arguments controlled by step.
 	cmd := exec.Command(name, args...)
 	out, err := cmd.Output()
 	if err != nil {

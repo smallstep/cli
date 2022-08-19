@@ -115,19 +115,15 @@ type rfc1423Algo struct {
 // rfc1423Algos holds a slice of the possible ways to encrypt a PEM
 // block. The ivSize numbers were taken from the OpenSSL source.
 var rfc1423Algos = []rfc1423Algo{{
-	cipher: x509.PEMCipherDES,
-	name:   "DES-CBC",
-	//nolint:gosec // des is only being used for decryption, not encryption.
-	// Maintain support for legacy keys.
+	cipher:     x509.PEMCipherDES,
+	name:       "DES-CBC",
 	cipherFunc: des.NewCipher,
 	keySize:    8,
 	blockSize:  des.BlockSize,
 	identifier: oidDESCBC,
 }, {
-	cipher: x509.PEMCipher3DES,
-	name:   "DES-EDE3-CBC",
-	//nolint:gosec // des is only being used for decryption, not encryption.
-	// Maintain support for legacy keys.
+	cipher:     x509.PEMCipher3DES,
+	name:       "DES-EDE3-CBC",
 	cipherFunc: des.NewTripleDESCipher,
 	keySize:    24,
 	blockSize:  des.BlockSize,

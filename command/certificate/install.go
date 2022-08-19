@@ -165,12 +165,12 @@ func installAction(ctx *cli.Context) error {
 	}
 
 	if err := truststore.InstallFile(filename, opts...); err != nil {
-		switch err := err.(type) {
-		case *truststore.CmdError:
-			return errors.Errorf("failed to execute \"%s\" failed with: %s", strings.Join(err.Cmd().Args, " "), err.Err())
-		default:
-			return errors.Wrapf(err, "failed to install %s", filename)
+		var truststoreErr *truststore.CmdError
+		if errors.As(err, &truststoreErr) {
+			return errors.Errorf("failed to execute \"%s\" failed with: %s",
+				strings.Join(truststoreErr.Cmd().Args, " "), truststoreErr.Err())
 		}
+		return errors.Wrapf(err, "failed to install %s", filename)
 	}
 
 	fmt.Printf("Certificate %s has been installed.\n", filename)
@@ -196,12 +196,12 @@ func uninstallAction(ctx *cli.Context) error {
 	}
 
 	if err := truststore.UninstallFile(filename, opts...); err != nil {
-		switch err := err.(type) {
-		case *truststore.CmdError:
-			return errors.Errorf("failed to execute \"%s\" failed with: %s", strings.Join(err.Cmd().Args, " "), err.Err())
-		default:
-			return errors.Wrapf(err, "failed to uninstall %s", filename)
+		var truststoreErr *truststore.CmdError
+		if errors.As(err, &truststoreErr) {
+			return errors.Errorf("failed to execute \"%s\" failed with: %s",
+				strings.Join(truststoreErr.Cmd().Args, " "), truststoreErr.Err())
 		}
+		return errors.Wrapf(err, "failed to uninstall %s", filename)
 	}
 
 	fmt.Printf("Certificate %s has been removed.\n", filename)

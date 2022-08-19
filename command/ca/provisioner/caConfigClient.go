@@ -24,6 +24,7 @@ func (n *nodb) CreateProvisioner(ctx context.Context, prov *linkedca.Provisioner
 }
 
 func (n *nodb) GetProvisioner(ctx context.Context, id string) (*linkedca.Provisioner, error) {
+	//nolint:nilnil // nodb is a noop interface.
 	return nil, nil
 }
 
@@ -44,6 +45,7 @@ func (n *nodb) CreateAdmin(ctx context.Context, admin *linkedca.Admin) error {
 }
 
 func (n *nodb) GetAdmin(ctx context.Context, id string) (*linkedca.Admin, error) {
+	//nolint:nilnil // nodb is a noop interface.
 	return nil, nil
 }
 
@@ -64,6 +66,7 @@ func (n *nodb) CreateAuthorityPolicy(ctx context.Context, policy *linkedca.Polic
 }
 
 func (n *nodb) GetAuthorityPolicy(ctx context.Context) (*linkedca.Policy, error) {
+	//nolint:nilnil // nodb is a noop interface.
 	return nil, nil
 }
 

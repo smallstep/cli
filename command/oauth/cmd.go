@@ -900,11 +900,13 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 	for {
 		select {
 		case <-time.After(time.Duration(idr.Interval) * time.Second):
-			if tok, err := o.deviceAuthzTokenPoll(data); err != nil {
+			tok, err := o.deviceAuthzTokenPoll(data)
+			if errors.Is(err, errHTTPToken) {
+				continue
+			} else if err != nil {
 				return nil, err
-			} else if tok != nil {
-				return tok, nil
 			}
+			return tok, nil
 		case <-t.C:
 			return nil, errors.New("device authorization grant expired")
 		}
@@ -917,6 +919,8 @@ func openBrowserIfAsked(o *oauth, u string) {
 
 	exec.OpenInBrowser(u, o.browser)
 }
+
+var errHTTPToken = errors.New("bad request; token not returned")
 
 func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
 	resp, err := http.PostForm(o.tokenEndpoint, data)
@@ -937,7 +941,7 @@ func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
 		}
 		return &tok, nil
 	case resp.StatusCode >= http.StatusBadRequest && resp.StatusCode < http.StatusInternalServerError:
-		return nil, nil
+		return nil, errHTTPToken
 	default:
 		return nil, errors.New(string(b))
 	}
@@ -987,7 +991,7 @@ func (o *oauth) DoTwoLeggedAuthorization(issuer string) (*token, error) {
 
 	// Construct the POST request to fetch the OAuth token.
 	params := url.Values{
-		"assertion":  []string{string(raw)},
+		"assertion":  []string{raw},
 		"grant_type": []string{jwtBearerUrn},
 	}
 
@@ -1048,7 +1052,7 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 		return nil, errors.Wrapf(err, "error serializing JWT")
 	}
 
-	tok := &token{string(raw), "", "", 3600, "Bearer", "", ""}
+	tok := &token{raw, "", "", 3600, "Bearer", "", ""}
 	return tok, nil
 }
 
@@ -1101,7 +1105,7 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if o.terminalRedirect != "" {
-		http.Redirect(w, req, o.terminalRedirect, 302)
+		http.Redirect(w, req, o.terminalRedirect, http.StatusFound)
 	} else {
 		o.success(w)
 	}
@@ -1123,7 +1127,7 @@ func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if o.terminalRedirect != "" {
-			http.Redirect(w, req, o.terminalRedirect, 302)
+			http.Redirect(w, req, o.terminalRedirect, http.StatusFound)
 		} else {
 			o.success(w)
 		}

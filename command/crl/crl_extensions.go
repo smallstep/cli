@@ -92,7 +92,7 @@ func (e *Extension) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.json)
 }
 
-func (e *Extension) AddDetail(format string, args ...interface{}) {
+func (e *Extension) AddDetailf(format string, args ...interface{}) {
 	e.Details = append(e.Details, fmt.Sprintf(format, args...))
 }
 
@@ -102,7 +102,7 @@ func newExtension(e pkix.Extension) Extension {
 	case e.Id.Equal(oidExtensionReasonCode):
 		ext.Name = "X509v3 CRL Reason Code:"
 		value := parseReasonCode(e.Value)
-		ext.AddDetail(value)
+		ext.AddDetailf(value)
 		ext.json = map[string]interface{}{
 			"crl_reason_code": value,
 		}
@@ -111,12 +111,12 @@ func newExtension(e pkix.Extension) Extension {
 		ext.Name = "X509v3 CRL Number:"
 		var n *big.Int
 		if _, err := asn1.Unmarshal(e.Value, &n); err == nil {
-			ext.AddDetail(n.String())
+			ext.AddDetailf(n.String())
 			ext.json = map[string]interface{}{
 				"crl_number": n.String(),
 			}
 		} else {
-			ext.AddDetail(sanitizeBytes(e.Value))
+			ext.AddDetailf(sanitizeBytes(e.Value))
 			ext.json = map[string]interface{}{
 				"crl_number": e.Value,
 			}
@@ -133,25 +133,25 @@ func newExtension(e pkix.Extension) Extension {
 			for _, b := range v.ID {
 				s += fmt.Sprintf(":%02X", b)
 			}
-			ext.AddDetail("keyid" + s)
+			ext.AddDetailf("keyid" + s)
 		} else {
-			ext.AddDetail(sanitizeBytes(e.Value))
+			ext.AddDetailf(sanitizeBytes(e.Value))
 		}
 	case e.Id.Equal(oidExtensionIssuingDistributionPoint):
 		ext.Name = "X509v3 Issuing Distribution Point:"
 
 		var v distributionPoint
 		if _, err := asn1.Unmarshal(e.Value, &v); err != nil {
-			ext.AddDetail(sanitizeBytes(e.Value))
+			ext.AddDetailf(sanitizeBytes(e.Value))
 			ext.json = map[string]interface{}{
 				"issuing_distribution_point": e.Value,
 			}
 		} else {
 			names := v.FullNames()
 			if len(names) > 0 {
-				ext.AddDetail("Full Name:")
+				ext.AddDetailf("Full Name:")
 				for _, n := range names {
-					ext.AddDetail("    " + n)
+					ext.AddDetailf("    " + n)
 				}
 			}
 			js := map[string]interface{}{
@@ -161,19 +161,19 @@ func newExtension(e pkix.Extension) Extension {
 			// Only one of this should be set to true. But for inspect we
 			// will allow more than one.
 			if v.OnlyContainsUserCerts {
-				ext.AddDetail("Only User Certificates")
+				ext.AddDetailf("Only User Certificates")
 				js["only_user_certificates"] = true
 			}
 			if v.OnlyContainsCACerts {
-				ext.AddDetail("Only CA Certificates")
+				ext.AddDetailf("Only CA Certificates")
 				js["only_ca_certificates"] = true
 			}
 			if v.OnlyContainsAttributeCerts {
-				ext.AddDetail("Only Attribute Certificates")
+				ext.AddDetailf("Only Attribute Certificates")
 				js["only_attribute_certificates"] = true
 			}
 			if len(v.OnlySomeReasons.Bytes) > 0 {
-				ext.AddDetail("Reasons: %x", v.OnlySomeReasons.Bytes)
+				ext.AddDetailf("Reasons: %x", v.OnlySomeReasons.Bytes)
 				js["only_some_reasons"] = v.OnlySomeReasons.Bytes
 			}
 
@@ -183,7 +183,7 @@ func newExtension(e pkix.Extension) Extension {
 		}
 	default:
 		ext.Name = e.Id.String()
-		ext.AddDetail(sanitizeBytes(e.Value))
+		ext.AddDetailf(sanitizeBytes(e.Value))
 		ext.json = map[string]interface{}{
 			ext.Name: e.Value,
 		}

@@ -38,7 +38,6 @@ func CLIContextFromContext(ctx context.Context) *cli.Context {
 // the cli.Context added to the Context.
 func wrap(fn func(context.Context) error, middleware ...func(context.Context) (context.Context, error)) cli.ActionFunc {
 	return func(clictx *cli.Context) error {
-
 		ctx := context.Background()
 
 		// apply middleware to the new context

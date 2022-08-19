@@ -45,6 +45,7 @@ func Decrypt(prompt string, data []byte, opts ...Option) ([]byte, error) {
 
 	enc, err := jose.ParseEncrypted(string(data))
 	if err != nil {
+		//nolint:nilerr // function returns the raw data if the format is not valid.
 		return data, nil
 	}
 

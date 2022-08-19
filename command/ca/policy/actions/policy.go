@@ -24,7 +24,6 @@ var provisionerFilterFlag = cli.StringFlag{
 }
 
 func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*linkedca.Policy, error) {
-
 	var (
 		policy *linkedca.Policy
 		err    error
@@ -149,7 +148,6 @@ func initPolicy(p *linkedca.Policy) *linkedca.Policy {
 }
 
 func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.Policy) (*linkedca.Policy, error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
 	reference := clictx.String("eab-key-reference")
@@ -191,7 +189,6 @@ func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.
 }
 
 func prettyPrint(policy *linkedca.Policy) error {
-
 	b, err := protojson.Marshal(policy)
 	if err != nil {
 		return fmt.Errorf("error marshaling policy: %w", err)

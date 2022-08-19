@@ -27,17 +27,17 @@ func CommonNamesCommand(ctx context.Context) cli.Command {
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** command manages common names in policies
-		
 
-## EXAMPLES	
+
+## EXAMPLES
 
 Allow "My CA Name" as Common Name in X.509 certificates on authority level
 '''
 $ step ca policy authority x509 allow cn "My CA Name"
-'''	
+'''
 
 Allow www.example.com as Common Name in X.509 certificates on authority level.
-This can be used in case www.example.com is not allowed as a DNS SAN, but is 
+This can be used in case www.example.com is not allowed as a DNS SAN, but is
 allowed to be used in the Common Name.
 '''
 $ step ca policy authority x509 allow cn www.example.com
@@ -51,7 +51,7 @@ $ step ca policy authority x509 allow cn www.example.com --remove
 Deny "My Bad CA Name" as Common Name in X.509 certificates on authority level
 '''
 $ step ca policy authority x509 deny cn "My Bad CA Name"
-'''	
+'''
 
 
 `, commandName),
@@ -80,7 +80,6 @@ $ step ca policy authority x509 deny cn "My Bad CA Name"
 }
 
 func commonNamesAction(ctx context.Context) (err error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -28,8 +29,11 @@ func Command(command string) *exec.Cmd {
 
 // ExitError converts an error to an exec.ExitError.
 func ExitError(err error) (*exec.ExitError, bool) {
-	v, ok := err.(*exec.ExitError)
-	return v, ok
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return ee, true
+	}
+	return nil, false
 }
 
 // Output executes a shell command and returns output from stdout.

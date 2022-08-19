@@ -8,8 +8,8 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 )
 
+// AllowWildcardsAction updates the policy to allow wildcard names.
 func AllowWildcardsAction(ctx context.Context) (err error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -32,8 +32,8 @@ func AllowWildcardsAction(ctx context.Context) (err error) {
 	return prettyPrint(updatedPolicy)
 }
 
+// DenyWildcardsAction updates the policy to deny wildcard names.
 func DenyWildcardsAction(ctx context.Context) (err error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 
 	client, err := cautils.NewAdminClient(clictx)

@@ -164,10 +164,8 @@ func ExtractReadAt(reader io.ReaderAt, l int, off int64) ([]byte, error) {
 	buff := make([]byte, l)
 
 	read, err := reader.ReadAt(buff, off)
-	if err != nil {
-		if err != io.EOF {
-			return nil, err
-		}
+	if err != nil && !errors.Is(err, io.EOF) {
+		return nil, err
 	}
 
 	if read != len(buff) {

@@ -298,7 +298,6 @@ func WithCTPoison() WithOption {
 		})
 		return nil
 	}
-
 }
 
 // newProfile initializes the given profile.

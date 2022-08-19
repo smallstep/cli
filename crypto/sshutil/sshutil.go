@@ -2,7 +2,7 @@ package sshutil
 
 import (
 	"crypto"
-	//nolint:gosec,staticcheck // Maintain support for deprecated algorithms.
+	//nolint:staticcheck // Maintain support for deprecated algorithms.
 	"crypto/dsa"
 	"crypto/ecdsa"
 	"crypto/ed25519"

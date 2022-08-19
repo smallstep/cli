@@ -213,6 +213,7 @@ func inspectAction(ctx *cli.Context) error {
 		if resp.StatusCode >= 400 {
 			return errors.Errorf("error downloading crl: status code %d", resp.StatusCode)
 		}
+		defer resp.Body.Close()
 		b, err = io.ReadAll(resp.Body)
 		if err != nil {
 			return errors.Wrap(err, "error downloading crl")

@@ -306,7 +306,7 @@ func requestPty(session *ssh.Session, h, w int, modes ssh.TerminalModes) (err er
 	}
 	for _, t := range terms {
 		if err = session.RequestPty(t, h, w, modes); err == nil {
-			return
+			return nil
 		}
 	}
 	return errors.Wrap(err, "error getting pseudo terminal")

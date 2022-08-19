@@ -179,7 +179,6 @@ func needsRenewalAction(ctx *cli.Context) error {
 	}
 
 	for _, cert := range certs {
-
 		remainingValidity := time.Until(cert.NotAfter)
 
 		if isPercent {

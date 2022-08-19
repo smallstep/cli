@@ -143,7 +143,7 @@ func fileServerAction(ctx *cli.Context) error {
 		fmt.Printf("Serving HTTP at %s...\n", l.Addr().String())
 		err = srv.Serve(l)
 	}
-	if err != nil && err != http.ErrServerClosed {
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return errors.Wrap(err, "file server failed")
 	}
 

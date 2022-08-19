@@ -171,6 +171,7 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 			roots, err = client.SSHFederation()
 		}
 		if err != nil {
+			//nolint:errorlint // not a specific error
 			if e, ok := err.(statusCoder); ok && e.StatusCode() == http.StatusNotFound {
 				return errors.New("step certificates is not configured with SSH support")
 			}
