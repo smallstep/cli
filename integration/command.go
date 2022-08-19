@@ -59,11 +59,9 @@ type CLICommand struct {
 }
 
 // CLIOutput represents the output from executing a CLICommand.
-// nolint:unused,gocritic
 type CLIOutput struct {
-	stdout   string
-	stderr   string
-	combined string
+	//nolint:unused // ignore unused field
+	stdout, stderr, combined string
 }
 
 // NewCLICommand generates a new CLICommand.

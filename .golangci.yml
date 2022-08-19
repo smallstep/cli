@@ -7,7 +7,6 @@ run:
     - pkg
 
 
-
 # This file contains only configs which differ from defaults.
 # All possible options can be found here https://github.com/golangci/golangci-lint/blob/master/.golangci.reference.yml
 linters-settings:
@@ -193,7 +192,8 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-      ## enabled by default
+    ## enabled by default
+    #
     - deadcode # Finds unused code
     - gosimple # Linter for Go source code that specializes in simplifying a code
     - govet # Vet examines Go source code and reports suspicious constructs, such as Printf calls whose arguments do not align with the format string
@@ -203,14 +203,17 @@ linters:
     - typecheck # Like the front-end of a Go compiler, parses and type-checks Go code
     - unused # Checks Go code for unused constants, variables, functions and types
     - varcheck # Finds unused global variables and constants
+    #
     ## disabled by default
+    #
     - gocritic # Provides diagnostics that check for bugs, performance and style issues.
-    - gofmt # [replaced by goimports] Gofmt checks whether code was gofmt-ed. By default this tool runs with -s option to check for code simplification
     - goimports # In addition to fixing imports, goimports also formats your code in the same style as gofmt.
     - misspell # Finds commonly misspelled English words in comments
+    - nolintlint # Reports ill-formed or insufficient nolint directives
     - revive # Fast, configurable, extensible, flexible, and beautiful linter for Go. Drop-in replacement of golint.
-
+    #
     ## Consider Enabling
+    #
     #- asasalint # Check for pass []any as any in variadic func(...any)
     #- asciicheck # Simple linter to check that your code does not contain non-ASCII identifiers
     #- bidichk # Checks for dangerous unicode character sequences
@@ -244,7 +247,6 @@ linters:
     #- nilerr # Finds the code that returns nil even if it checks that the error is not nil.
     #- nilnil # Checks that there is no simultaneous return of nil error and an invalid value.
     #- noctx # noctx finds sending http request without context.Context
-    #- nolintlint # Reports ill-formed or insufficient nolint directives
     #- nonamedreturns # Reports all named returns
     #- nosprintfhostport # Checks for misuse of Sprintf to construct a host with port in a URL.
     #- predeclared # find code that shadows one of Go's predeclared identifiers
@@ -269,6 +271,7 @@ linters:
     #- varnamelen # [great idea, but too many false positives] checks that the length of a variable's name matches its scope
     #
     ## disabled
+    #
     #- containedctx # containedctx is a linter that detects struct contained context.Context field
     #- depguard # [replaced by gomodguard] Go linter that checks if package imports are in a list of acceptable packages
     #- dogsled # Checks assignments with too many blank identifiers (e.g. x, _, _, _, := f())
@@ -277,6 +280,7 @@ linters:
     #- gci # Gci controls golang package import order and makes it always deterministic.
     #- godox # Tool for detection of FIXME, TODO and other comment keywords
     #- goerr113 # [too strict] Golang linter to check the errors handling expressions
+    #- gofmt # [replaced by goimports] Gofmt checks whether code was gofmt-ed. By default this tool runs with -s option to check for code simplification
     #- gofumpt # [replaced by goimports, gofumports is not available yet] Gofumpt checks whether code was gofumpt-ed.
     #- grouper # An analyzer to analyze expression groups.
     #- ifshort # Checks that your code uses short syntax for if-statements whenever possible
@@ -324,4 +328,5 @@ issues:
         - goconst
         - gosec
         - noctx
+        - nolintlint
         - wrapcheck

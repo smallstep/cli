@@ -121,7 +121,7 @@ func htmlHelpAction(ctx *cli.Context) error {
 
 	// css style
 	cssFile := path.Join(dir, "style.css")
-	// nolint:gosec // Written file contains nothing sensitive.
+	//nolint:gosec // Written file contains nothing sensitive.
 	if err := os.WriteFile(cssFile, []byte(css), 0666); err != nil {
 		return errs.FileError(err, cssFile)
 	}

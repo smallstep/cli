@@ -315,7 +315,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 
 	// Do not rekey if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
-		// nolint:gosec // The random number below is not being used for crypto.
+		//nolint:gosec // The random number below is not being used for crypto.
 		jitter := rand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not rekeyed: expires in %s\n", d.Round(time.Second))

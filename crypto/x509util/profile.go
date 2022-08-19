@@ -4,7 +4,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha1" // nolint:gosec // sha1 is being used to calculate an identifier, not a key.
+	"crypto/sha1" //nolint:gosec // sha1 is being used to calculate an identifier, not a key.
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -520,7 +520,7 @@ func generateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 	if _, err = asn1.Unmarshal(b, &info); err != nil {
 		return nil, errors.Wrap(err, "error unmarshaling public key")
 	}
-	// nolint:gosec // sha1 is being used to calculate an identifier, not a key.
+	//nolint:gosec // sha1 is being used to calculate an identifier, not a key.
 	hash := sha1.Sum(info.SubjectPublicKey.Bytes)
 	return hash[:], nil
 }

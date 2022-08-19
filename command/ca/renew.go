@@ -315,7 +315,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
-		// nolint:gosec // The random number below is not being used for crypto.
+		//nolint:gosec // The random number below is not being used for crypto.
 		jitter := rand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(cert.Leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
@@ -349,10 +349,10 @@ func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Durat
 	case d <= 0:
 		return 0
 	case d < period/20:
-		// nolint:gosec // The random number below is not being used for crypto.
+		//nolint:gosec // The random number below is not being used for crypto.
 		return time.Duration(rand.Int63n(int64(d)))
 	default:
-		// nolint:gosec // The random number below is not being used for crypto.
+		//nolint:gosec // The random number below is not being used for crypto.
 		n := rand.Int63n(int64(period / 20))
 		d -= time.Duration(n)
 		return d
@@ -384,7 +384,7 @@ func runExecCmd(execCmd string) error {
 		return nil
 	}
 	parts := strings.Split(execCmd, " ")
-	// nolint:gosec // arguments controlled by step.
+	//nolint:gosec // arguments controlled by step.
 	cmd := exec.Command(parts[0], parts[1:]...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout

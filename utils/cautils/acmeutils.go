@@ -131,7 +131,7 @@ func (wm *webrootMode) Run() error {
 		}
 	}
 
-	// nolint:gosec // See note above.
+	//nolint:gosec // See note above.
 	return errors.Wrapf(os.WriteFile(fmt.Sprintf("%s/%s", chPath, wm.token), []byte(keyAuth), 0644),
 		"error writing key authorization file %s", chPath+wm.token)
 }
