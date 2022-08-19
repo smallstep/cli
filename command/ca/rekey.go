@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/smallstep/cli/crypto/keys"
@@ -169,12 +168,7 @@ flag.`,
 has been rekeyed. By default the the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},
-			cli.IntFlag{
-				Name: "signal",
-				Usage: `The signal <number> to send to the selected PID, so it can reload the
-configuration and load the new certificate. Default value is SIGHUP (1)`,
-				Value: int(syscall.SIGHUP),
-			},
+			flags.Signal,
 			cli.StringFlag{
 				Name:  "exec",
 				Usage: "The <command> to run after the certificate has been rekeyed.",
@@ -309,7 +303,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	if isDaemon {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
-		next := nextRenewDuration(leaf, expiresIn, rekeyPeriod)
+		next := utils.NextRenewDuration(leaf, expiresIn, rekeyPeriod)
 		return renewer.Daemon(outCert, next, expiresIn, rekeyPeriod, afterRekey)
 	}
 

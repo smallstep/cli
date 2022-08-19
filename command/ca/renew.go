@@ -1,35 +1,27 @@
 package ca
 
 import (
-	"crypto"
-	cryptoRand "crypto/rand"
 	"crypto/tls"
-	"crypto/x509"
-	"encoding/base64"
-	"encoding/pem"
-	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
-	"github.com/smallstep/cli/token"
+	"github.com/smallstep/cli/internal/offline"
+	renewerPkg "github.com/smallstep/cli/internal/renewer"
 	"github.com/smallstep/cli/utils"
-	"github.com/smallstep/cli/utils/cautils"
+	caclient "github.com/smallstep/cli/utils/cautils/client"
 	"github.com/smallstep/cli/utils/sysutils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
@@ -180,12 +172,7 @@ flag.`,
 has been renewed. By default the the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},
-			cli.IntFlag{
-				Name: "signal",
-				Usage: `The signal <number> to send to the selected PID, so it can reload the
-configuration and load the new certificate. Default value is SIGHUP (1)`,
-				Value: int(syscall.SIGHUP),
-			},
+			flags.Signal,
 			cli.StringFlag{
 				Name:  "exec",
 				Usage: "The <command> to run after the certificate has been renewed.",
@@ -309,7 +296,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if isDaemon {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
-		next := nextRenewDuration(cert.Leaf, expiresIn, renewPeriod)
+		next := utils.NextRenewDuration(cert.Leaf, expiresIn, renewPeriod)
 		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew)
 	}
 
@@ -328,32 +315,6 @@ func renewCertificateAction(ctx *cli.Context) error {
 
 	ui.Printf("Your certificate has been saved in %s.\n", outFile)
 	return afterRenew()
-}
-
-func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Duration) time.Duration {
-	if renewPeriod > 0 {
-		// Renew now if it will be expired in renewPeriod
-		if (time.Until(leaf.NotAfter) - renewPeriod) <= 0 {
-			return 0
-		}
-		return renewPeriod
-	}
-
-	period := leaf.NotAfter.Sub(leaf.NotBefore)
-	if expiresIn == 0 {
-		expiresIn = period / 3
-	}
-
-	switch d := time.Until(leaf.NotAfter) - expiresIn; {
-	case d <= 0:
-		return 0
-	case d < period/20:
-		return time.Duration(rand.Int63n(int64(d)))
-	default:
-		n := rand.Int63n(int64(period / 20))
-		d -= time.Duration(n)
-		return d
-	}
 }
 
 func getAfterRenewFunc(pid, signum int, execCmd string) func() error {
@@ -388,17 +349,8 @@ func runExecCmd(execCmd string) error {
 	return cmd.Run()
 }
 
-type renewer struct {
-	client    cautils.CaClient
-	transport *http.Transport
-	key       crypto.PrivateKey
-	offline   bool
-	cert      tls.Certificate
-	caURL     *url.URL
-	mtls      bool
-}
+func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile string) (*renewerPkg.Renewer, error) {
 
-func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile string) (*renewer, error) {
 	if len(cert.Certificate) == 0 {
 		return nil, errors.New("error loading certificate: certificate chain is empty")
 	}
@@ -420,14 +372,14 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 		tr.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
 
-	var client cautils.CaClient
-	offline := ctx.Bool("offline")
-	if offline {
+	var client caclient.CaClient
+	isOffline := ctx.Bool("offline")
+	if isOffline {
 		caConfig := ctx.String("ca-config")
 		if caConfig == "" {
 			return nil, errs.InvalidFlagValue(ctx, "ca-config", "", "")
 		}
-		client, err = cautils.NewOfflineCA(ctx, caConfig)
+		client, err = offline.New(ctx, caConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -443,189 +395,7 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 		return nil, errors.Errorf("error parsing CA URL: %s", client.GetCaURL())
 	}
 
-	return &renewer{
-		client:    client,
-		transport: tr,
-		key:       cert.PrivateKey,
-		offline:   offline,
-		cert:      cert,
-		caURL:     u,
-		mtls:      ctx.Bool("mtls"),
-	}, nil
-}
-
-func (r *renewer) Renew(outFile string) (resp *api.SignResponse, err error) {
-	if !r.mtls || time.Now().After(r.cert.Leaf.NotAfter) {
-		resp, err = r.RenewWithToken(r.cert)
-	} else {
-		resp, err = r.client.Renew(r.transport)
-	}
-	if err != nil {
-		return nil, errors.Wrap(err, "error renewing certificate")
-	}
-
-	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
-		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
-	}
-	var data []byte
-	for _, certPEM := range resp.CertChainPEM {
-		pemblk, err := pemutil.Serialize(certPEM.Certificate)
-		if err != nil {
-			return nil, errors.Wrap(err, "error serializing certificate PEM")
-		}
-		data = append(data, pem.EncodeToMemory(pemblk)...)
-	}
-	if err := utils.WriteFile(outFile, data, 0600); err != nil {
-		return nil, errs.FileError(err, outFile)
-	}
-
-	return resp, nil
-}
-
-func (r *renewer) Rekey(priv interface{}, outCert, outKey string, writePrivateKey bool) (*api.SignResponse, error) {
-	csrBytes, err := x509.CreateCertificateRequest(cryptoRand.Reader, &x509.CertificateRequest{}, priv)
-	if err != nil {
-		return nil, err
-	}
-	csr, err := x509.ParseCertificateRequest(csrBytes)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := r.client.Rekey(&api.RekeyRequest{CsrPEM: api.NewCertificateRequest(csr)}, r.transport)
-	if err != nil {
-		return nil, errors.Wrap(err, "error rekeying certificate")
-	}
-	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
-		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
-	}
-	var data []byte
-	for _, certPEM := range resp.CertChainPEM {
-		pemblk, err := pemutil.Serialize(certPEM.Certificate)
-		if err != nil {
-			return nil, errors.Wrap(err, "error serializing certificate PEM")
-		}
-		data = append(data, pem.EncodeToMemory(pemblk)...)
-	}
-	if err := utils.WriteFile(outCert, data, 0600); err != nil {
-		return nil, errs.FileError(err, outCert)
-	}
-	if writePrivateKey {
-		_, err = pemutil.Serialize(priv, pemutil.ToFile(outKey, 0600))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return resp, nil
-}
-
-// RenewAndPrepareNext renews the cert and prepares the cert for it's next renewal.
-// NOTE: this function logs each time the certificate is successfully renewed.
-func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod time.Duration) (time.Duration, error) {
-	const durationOnErrors = 1 * time.Minute
-	Info := log.New(os.Stdout, "INFO: ", log.LstdFlags)
-
-	resp, err := r.Renew(outFile)
-	if err != nil {
-		return durationOnErrors, err
-	}
-
-	x509Chain, err := pemutil.ReadCertificateBundle(outFile)
-	if err != nil {
-		return durationOnErrors, errs.Wrap(err, "error reading certificate chain")
-	}
-	x509ChainBytes := make([][]byte, len(x509Chain))
-	for i, c := range x509Chain {
-		x509ChainBytes[i] = c.Raw
-	}
-
-	cert := tls.Certificate{
-		Certificate: x509ChainBytes,
-		PrivateKey:  r.key,
-		Leaf:        x509Chain[0],
-	}
-	if len(cert.Certificate) == 0 {
-		return durationOnErrors, errors.New("error loading certificate: certificate chain is empty")
-	}
-
-	// Prepare next transport
-	r.cert = cert
-	r.transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
-
-	// Get next renew duration
-	next := nextRenewDuration(resp.ServerPEM.Certificate, expiresIn, renewPeriod)
-	Info.Printf("%s certificate renewed, next in %s", resp.ServerPEM.Certificate.Subject.CommonName, next.Round(time.Second))
-	return next, nil
-}
-
-func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Duration, afterRenew func() error) error {
-	// Loggers
-	Info := log.New(os.Stdout, "INFO: ", log.LstdFlags)
-	Error := log.New(os.Stderr, "ERROR: ", log.LstdFlags)
-
-	// Daemon loop
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer signal.Stop(signals)
-
-	Info.Printf("first renewal in %s", next.Round(time.Second))
-	var err error
-	for {
-		select {
-		case sig := <-signals:
-			switch sig {
-			case syscall.SIGHUP:
-				if next, err = r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
-					Error.Println(err)
-				} else if err := afterRenew(); err != nil {
-					Error.Println(err)
-				}
-			case syscall.SIGINT, syscall.SIGTERM:
-				return nil
-			}
-		case <-time.After(next):
-			if next, err = r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
-				Error.Println(err)
-			} else if err := afterRenew(); err != nil {
-				Error.Println(err)
-			}
-		}
-	}
-}
-
-// RenewWithToken creates an authorization token with the given certificate and
-// attempts to renew the given certificate. It can be used to renew expired
-// certificates.
-func (r *renewer) RenewWithToken(cert tls.Certificate) (*api.SignResponse, error) {
-	claims, err := token.NewClaims(
-		token.WithAudience(r.caURL.ResolveReference(&url.URL{Path: "/renew"}).String()),
-		token.WithIssuer("step-ca-client/1.0"),
-		token.WithSubject(cert.Leaf.Subject.CommonName),
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "error creating authorization token")
-	}
-	var x5c []string
-	for _, b := range cert.Certificate {
-		x5c = append(x5c, base64.StdEncoding.EncodeToString(b))
-	}
-	if claims.ExtraHeaders == nil {
-		claims.ExtraHeaders = make(map[string]interface{})
-	}
-	claims.ExtraHeaders[jose.X5cInsecureKey] = x5c
-
-	tok, err := claims.Sign("", cert.PrivateKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "error signing authorization token")
-	}
-
-	// Remove existing certificate from the transport. And close keep-alive
-	// connections. When daemon is used we don't want to re-use the connection
-	// that did not include a certificate.
-	r.transport.TLSClientConfig.Certificates = nil
-	defer r.transport.CloseIdleConnections()
-
-	return r.client.RenewWithToken(tok)
+	return renewerPkg.New(client, tr, cert.PrivateKey, isOffline, cert, u, ctx.Bool("mtls")), nil
 }
 
 func tlsLoadX509KeyPair(certFile, keyFile, passFile string) (tls.Certificate, error) {
