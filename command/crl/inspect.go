@@ -135,7 +135,8 @@ func inspectAction(ctx *cli.Context) error {
 			return err
 		}
 		tlsConfig = &tls.Config{
-			RootCAs: pool,
+			RootCAs:    pool,
+			MinVersion: tls.VersionTLS12,
 		}
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.TLSClientConfig = tlsConfig
@@ -209,6 +210,7 @@ func inspectAction(ctx *cli.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "error downloading crl")
 		}
+		defer resp.Body.Close()
 		if resp.StatusCode >= 400 {
 			return errors.Errorf("error downloading crl: status code %d", resp.StatusCode)
 		}

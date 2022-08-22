@@ -44,17 +44,21 @@ import (
 // Google is also distributing the client ID and secret on the cloud SDK
 // available here https://cloud.google.com/sdk/docs/quickstarts
 const (
-	defaultClientID          = "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com"
+	defaultClientID = "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com"
+	//nolint:gosec // This is a client meant for open source testing. The client has no security access or roles.
 	defaultClientNotSoSecret = "udTrOT3gzrO7W9fDPgZQLfYJ"
 
-	defaultDeviceAuthzClientID          = "1087160488420-1u0jqoulmv3mfomfh6fhkfs4vk4bdjih.apps.googleusercontent.com"
+	defaultDeviceAuthzClientID = "1087160488420-1u0jqoulmv3mfomfh6fhkfs4vk4bdjih.apps.googleusercontent.com"
+	//nolint:gosec // This is a client meant for open source testing. The client has no security access or roles.
 	defaultDeviceAuthzClientNotSoSecret = "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"
-	defaultDeviceAuthzInterval          = 5
-	defaultDeviceAuthzExpiresIn         = time.Minute * 5
+
+	defaultDeviceAuthzInterval  = 5
+	defaultDeviceAuthzExpiresIn = time.Minute * 5
 
 	// The URN for getting verification token offline
 	oobCallbackUrn = "urn:ietf:wg:oauth:2.0:oob"
 	// The URN for token request grant type jwt-bearer
+	//nolint:gosec // This is a resource identifier (not a secret).
 	jwtBearerUrn = "urn:ietf:params:oauth:grant-type:jwt-bearer"
 )
 
@@ -712,7 +716,10 @@ func (o *oauth) NewServer() (*httptest.Server, error) {
 	}
 	srv := &httptest.Server{
 		Listener: l,
-		Config:   &http.Server{Handler: o},
+		Config: &http.Server{
+			Handler:           o,
+			ReadHeaderTimeout: 15 * time.Second,
+		},
 	}
 	srv.Start()
 
@@ -893,11 +900,13 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 	for {
 		select {
 		case <-time.After(time.Duration(idr.Interval) * time.Second):
-			if tok, err := o.deviceAuthzTokenPoll(data); err != nil {
+			tok, err := o.deviceAuthzTokenPoll(data)
+			if errors.Is(err, errHTTPToken) {
+				continue
+			} else if err != nil {
 				return nil, err
-			} else if tok != nil {
-				return tok, nil
 			}
+			return tok, nil
 		case <-t.C:
 			return nil, errors.New("device authorization grant expired")
 		}
@@ -910,6 +919,8 @@ func openBrowserIfAsked(o *oauth, u string) {
 
 	exec.OpenInBrowser(u, o.browser)
 }
+
+var errHTTPToken = errors.New("bad request; token not returned")
 
 func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
 	resp, err := http.PostForm(o.tokenEndpoint, data)
@@ -930,7 +941,7 @@ func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
 		}
 		return &tok, nil
 	case resp.StatusCode >= http.StatusBadRequest && resp.StatusCode < http.StatusInternalServerError:
-		return nil, nil
+		return nil, errHTTPToken
 	default:
 		return nil, errors.New(string(b))
 	}
@@ -980,7 +991,7 @@ func (o *oauth) DoTwoLeggedAuthorization(issuer string) (*token, error) {
 
 	// Construct the POST request to fetch the OAuth token.
 	params := url.Values{
-		"assertion":  []string{string(raw)},
+		"assertion":  []string{raw},
 		"grant_type": []string{jwtBearerUrn},
 	}
 
@@ -1041,7 +1052,7 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 		return nil, errors.Wrapf(err, "error serializing JWT")
 	}
 
-	tok := &token{string(raw), "", "", 3600, "Bearer", "", ""}
+	tok := &token{raw, "", "", 3600, "Bearer", "", ""}
 	return tok, nil
 }
 
@@ -1094,7 +1105,7 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if o.terminalRedirect != "" {
-		http.Redirect(w, req, o.terminalRedirect, 302)
+		http.Redirect(w, req, o.terminalRedirect, http.StatusFound)
 	} else {
 		o.success(w)
 	}
@@ -1116,7 +1127,7 @@ func (o *oauth) implicitHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if o.terminalRedirect != "" {
-			http.Redirect(w, req, o.terminalRedirect, 302)
+			http.Redirect(w, req, o.terminalRedirect, http.StatusFound)
 		} else {
 			o.success(w)
 		}
@@ -1192,6 +1203,8 @@ func (o *oauth) Exchange(tokenEndpoint, code string) (*token, error) {
 	data.Set("grant_type", "authorization_code")
 	data.Set("code_verifier", o.codeChallenge)
 
+	//nolint:gosec // Tainted url deemed acceptable. Not used to store any
+	// backend data.
 	resp, err := http.PostForm(tokenEndpoint, data)
 	if err != nil {
 		return nil, errors.WithStack(err)

@@ -14,7 +14,7 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 )
 
-// Command returns the policy subcommand.
+// URICommand returns the policy subcommand.
 func URICommand(ctx context.Context) cli.Command {
 	commandName := policycontext.GetPrefixedCommandUsage(ctx, "uri")
 	return cli.Command{
@@ -26,8 +26,8 @@ func URICommand(ctx context.Context) cli.Command {
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** command manages URI domains in policies
-		
-## EXAMPLES	
+
+## EXAMPLES
 
 Allow all URI subdomains of "local" in X.509 certificates on authority level
 '''
@@ -48,7 +48,7 @@ Allow all URI subdomains of "example.com" in X.509 certificates on provisioner l
 '''
 $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_provisioner
 '''
-		
+
 `, commandName),
 		Action: command.InjectContext(
 			ctx,
@@ -73,7 +73,6 @@ $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_pro
 }
 
 func uriAction(ctx context.Context) (err error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

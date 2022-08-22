@@ -1,7 +1,9 @@
 package hash
 
 import (
+	//nolint:gosec // md5 can only be used with --insecure flag
 	"crypto/md5"
+	//nolint:gosec // sha1 is being used to calculate a hash, not a key
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"

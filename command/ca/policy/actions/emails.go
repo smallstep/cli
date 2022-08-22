@@ -26,8 +26,8 @@ func EmailCommand(ctx context.Context) cli.Command {
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** command manages email addresses and domains in policies
-		
-## EXAMPLES	
+
+## EXAMPLES
 
 Allow all email addresses for the example.com domain in X.509 certificates on authority level
 '''
@@ -84,7 +84,6 @@ $ step ca policy provisioner ssh user deny email @example.com --provisioner my_p
 }
 
 func emailAction(ctx context.Context) (err error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

@@ -46,7 +46,10 @@ func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509
 	if _, _, err := net.SplitHostPort(addr); err != nil {
 		addr = net.JoinHostPort(addr, "443")
 	}
-	tlsConfig := &tls.Config{RootCAs: rootCAs}
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		RootCAs:    rootCAs,
+	}
 	if insecure {
 		tlsConfig.InsecureSkipVerify = true
 	}

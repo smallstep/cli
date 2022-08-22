@@ -28,7 +28,7 @@ func DNSCommand(ctx context.Context) cli.Command {
 [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** command manages DNS domains in policies
 
-## EXAMPLES	
+## EXAMPLES
 
 Allow www.example.com DNS in X.509 certificates on authority level
 '''
@@ -96,7 +96,6 @@ $ step ca policy authority ssh host allow dns "badsshhost.local"
 }
 
 func dnsAction(ctx context.Context) (err error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

@@ -4,7 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
-	"crypto/sha1"
+	"crypto/sha1" //nolint:gosec // sha1 is being used to calculate an identifier, not a key.
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
@@ -88,6 +88,7 @@ func ValidateX5T(certFile string, key interface{}) (string, error) {
 	}
 	// x5t is the base64 URL encoded SHA1 thumbprint
 	// (see https://tools.ietf.org/html/rfc7515#section-4.1.7)
+	//nolint:gosec // sha1 is used to calculate an identifier, not a key.
 	fingerprint := sha1.Sum(certs[0].Raw)
 	return base64.URLEncoding.EncodeToString(fingerprint[:]), nil
 }

@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"reflect"
 	"regexp"
@@ -41,9 +39,6 @@ import (
 	_ "github.com/smallstep/certificates/cas/cloudcas"
 	_ "github.com/smallstep/certificates/cas/softcas"
 	_ "github.com/smallstep/certificates/cas/stepcas"
-
-	// Profiling and debugging
-	_ "net/http/pprof"
 )
 
 // Version is set by an LDFLAG at build time representing the git tag or commit
@@ -98,6 +93,7 @@ func main() {
 				return plugin.Run(ctx, file)
 			}
 			if u := plugin.GetURL(name); u != "" {
+				//nolint:stylecheck // this is a top level error - capitalization is ok
 				return fmt.Errorf("The plugin %q is not it in your system.\nDownload it from %s", name, u)
 			}
 			return cli.ShowCommandHelp(ctx, name)
@@ -109,15 +105,6 @@ func main() {
 	app.Writer = os.Stdout
 	app.ErrWriter = os.Stderr
 
-	// Start the golang debug logger if environment variable is set.
-	// See https://golang.org/pkg/net/http/pprof/
-	debugProfAddr := os.Getenv("STEP_PROF_ADDR")
-	if debugProfAddr != "" {
-		go func() {
-			log.Println(http.ListenAndServe(debugProfAddr, nil))
-		}()
-	}
-
 	// Define default prompters for go.step.sm
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {
 		return ui.PromptPassword(msg)
@@ -127,6 +114,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
+		//nolint:errorlint // not a specific error
 		if fe, ok := err.(errs.FriendlyError); ok {
 			if os.Getenv("STEPDEBUG") == "1" {
 				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, fe.Message())
@@ -141,8 +129,7 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 			}
 		}
-		// ignore exitAfterDefer error because the defer is required for recovery.
-		// nolint:gocritic
+		//nolint:gocritic // ignore exitAfterDefer error because the defer is required for recovery.
 		os.Exit(1)
 	}
 }

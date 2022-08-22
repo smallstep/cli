@@ -584,7 +584,7 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string,
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
 	case *provisioner.ACME: // Return an error with the provisioner ID.
-		return "", &ErrACMEToken{p.GetName()}
+		return "", &ACMETokenError{p.GetName()}
 	default: // Default is assumed to be a standard JWT.
 		jwkP, ok := p.(*provisioner.JWK)
 		if !ok {

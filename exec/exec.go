@@ -127,6 +127,7 @@ func OpenInBrowser(url, browser string) error {
 // Step executes step with the given commands and returns the standard output.
 func Step(args ...string) ([]byte, error) {
 	var stdout bytes.Buffer
+	//nolint:gosec // arguments controlled by step.
 	cmd := exec.Command(os.Args[0], args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
@@ -175,8 +176,7 @@ func run(name string, arg ...string) (*exec.Cmd, chan int, error) {
 
 func getExitStatus(cmd *exec.Cmd) int {
 	if cmd.ProcessState != nil {
-		// ignore single conditional in switch warning
-		// nolint:gocritic
+		//nolint:gocritic // ignore single conditional in switch warning
 		switch sys := cmd.ProcessState.Sys().(type) {
 		case syscall.WaitStatus:
 			return sys.ExitStatus()
@@ -209,8 +209,7 @@ func signalHandler(cmd *exec.Cmd, exitCh chan int) {
 		case sig := <-signals:
 			cmd.Process.Signal(sig)
 		case code := <-exitCh:
-			// ignore exitAfterDefer error - defer is required for recovery.
-			// nolint:gocritic
+			//nolint:gocritic // ignore exitAfterDefer error - defer is required for recovery.
 			os.Exit(code)
 		}
 	}

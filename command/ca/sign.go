@@ -185,13 +185,11 @@ func signCertificateAction(ctx *cli.Context) error {
 		}
 		sans := mergeSans(ctx, csr)
 		if tok, err = flow.GenerateToken(ctx, csr.Subject.CommonName, sans); err != nil {
-			switch k := err.(type) {
-			// Use the ACME flow with the step certificate authority.
-			case *cautils.ErrACMEToken:
-				return cautils.ACMESignCSRFlow(ctx, csr, crtFile, k.Name)
-			default:
-				return err
+			var acmeTokenErr *cautils.ACMETokenError
+			if errors.As(err, &acmeTokenErr) {
+				return cautils.ACMESignCSRFlow(ctx, csr, crtFile, acmeTokenErr.Name)
 			}
+			return err
 		}
 	}
 

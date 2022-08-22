@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -66,69 +65,6 @@ func WithCertificate(cert *ssh.Certificate, priv interface{}) ShellOption {
 func WithAddUser(user string, cert *ssh.Certificate, priv interface{}) ShellOption {
 	return func(s *Shell) error {
 		return errors.New("not yet implemented")
-	}
-}
-
-// WithBastion forward the connection through the given bastion address.
-func WithBastion(user, address, command string) ShellOption {
-	return func(s *Shell) error {
-		s.dialer = func(callback ssh.HostKeyCallback) (*ssh.Client, error) {
-			// Connect to bastion
-			bastion, err := ssh.Dial("tcp", address, &ssh.ClientConfig{
-				User:            user,
-				Auth:            s.authMethods,
-				HostKeyCallback: callback,
-			})
-			if err != nil {
-				return nil, errors.Wrapf(err, "error connecting %s", address)
-			}
-			// Connect from bastion to final destination
-			conn, err := bastion.Dial("tcp", s.address)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error connecting %s", s.address)
-			}
-			c, chans, reqs, err := ssh.NewClientConn(conn, s.address, &ssh.ClientConfig{
-				User:            s.user,
-				Auth:            s.authMethods,
-				HostKeyCallback: callback,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return ssh.NewClient(c, chans, reqs), nil
-		}
-		return nil
-	}
-}
-
-// WithProxyCommand forwards the connection through the given command
-func WithProxyCommand(command string) ShellOption {
-	return func(s *Shell) error {
-		s.dialer = func(callback ssh.HostKeyCallback) (*ssh.Client, error) {
-			host, port, err := net.SplitHostPort(s.address)
-			if err != nil {
-				return nil, errors.Wrap(err, "error parsing address")
-			}
-			pr, pw := net.Pipe()
-			args := strings.Fields(ProxyCommand(command, s.user, host, port))
-			cmd := exec.Command(args[0], args[1:]...)
-			cmd.Stdin = pw
-			cmd.Stdout = pw
-			cmd.Stderr = os.Stderr
-			if err := cmd.Start(); err != nil {
-				return nil, errors.Wrap(err, "error running proxy command")
-			}
-			c, chans, reqs, err := ssh.NewClientConn(pr, s.address, &ssh.ClientConfig{
-				User:            s.user,
-				Auth:            s.authMethods,
-				HostKeyCallback: callback,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return ssh.NewClient(c, chans, reqs), nil
-		}
-		return nil
 	}
 }
 
@@ -370,7 +306,7 @@ func requestPty(session *ssh.Session, h, w int, modes ssh.TerminalModes) (err er
 	}
 	for _, t := range terms {
 		if err = session.RequestPty(t, h, w, modes); err == nil {
-			return
+			return nil
 		}
 	}
 	return errors.Wrap(err, "error getting pseudo terminal")

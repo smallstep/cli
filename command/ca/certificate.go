@@ -216,13 +216,11 @@ func certificateAction(ctx *cli.Context) error {
 			return cautils.ACMECreateCertFlow(ctx, "")
 		}
 		if tok, err = flow.GenerateToken(ctx, subject, sans); err != nil {
-			switch k := err.(type) {
-			// Use the ACME flow with the step certificate authority.
-			case *cautils.ErrACMEToken:
-				return cautils.ACMECreateCertFlow(ctx, k.Name)
-			default:
-				return err
+			var acmeTokenErr *cautils.ACMETokenError
+			if errors.As(err, &acmeTokenErr) {
+				return cautils.ACMECreateCertFlow(ctx, acmeTokenErr.Name)
 			}
+			return err
 		}
 	}
 

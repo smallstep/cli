@@ -220,7 +220,9 @@ func ParseOpenSSHPrivateKey(key []byte, opts ...Options) (crypto.PrivateKey, err
 			return nil, errors.Errorf("error decoding key: unsupported elliptic curve %s", key.Curve)
 		}
 
+		//nolint: gocritic // ignore capitalization
 		N := curve.Params().N
+		//nolint: gocritic // ignore capitalization
 		X, Y := elliptic.Unmarshal(curve, key.Pub)
 		if X == nil || Y == nil {
 			return nil, errors.New("error decoding key: failed to unmarshal public key")
@@ -307,6 +309,7 @@ func SerializeOpenSSHPrivateKey(key crypto.PrivateKey, opts ...Options) (*pem.Bl
 
 	switch k := key.(type) {
 	case *rsa.PrivateKey:
+		//nolint: gocritic // ignore capitalization
 		E := new(big.Int).SetInt64(int64(k.PublicKey.E))
 		// Marshal public key:
 		// E and N are in reversed order in the public and private key.

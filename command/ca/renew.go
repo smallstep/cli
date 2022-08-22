@@ -315,6 +315,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
+		//nolint:gosec // The random number below is not being used for crypto.
 		jitter := rand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(cert.Leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not renewed: expires in %s\n", d.Round(time.Second))
@@ -348,8 +349,10 @@ func nextRenewDuration(leaf *x509.Certificate, expiresIn, renewPeriod time.Durat
 	case d <= 0:
 		return 0
 	case d < period/20:
+		//nolint:gosec // The random number below is not being used for crypto.
 		return time.Duration(rand.Int63n(int64(d)))
 	default:
+		//nolint:gosec // The random number below is not being used for crypto.
 		n := rand.Int63n(int64(period / 20))
 		d -= time.Duration(n)
 		return d
@@ -381,6 +384,7 @@ func runExecCmd(execCmd string) error {
 		return nil
 	}
 	parts := strings.Split(execCmd, " ")
+	//nolint:gosec // arguments controlled by step.
 	cmd := exec.Command(parts[0], parts[1:]...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -413,6 +417,7 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 		TLSClientConfig: &tls.Config{
 			RootCAs:                  rootCAs,
 			PreferServerCipherSuites: true,
+			MinVersion:               tls.VersionTLS12,
 		},
 	}
 
@@ -523,7 +528,7 @@ func (r *renewer) Rekey(priv interface{}, outCert, outKey string, writePrivateKe
 // NOTE: this function logs each time the certificate is successfully renewed.
 func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod time.Duration) (time.Duration, error) {
 	const durationOnErrors = 1 * time.Minute
-	Info := log.New(os.Stdout, "INFO: ", log.LstdFlags)
+	infoLog := log.New(os.Stdout, "INFO: ", log.LstdFlags)
 
 	resp, err := r.Renew(outFile)
 	if err != nil {
@@ -554,21 +559,21 @@ func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod tim
 
 	// Get next renew duration
 	next := nextRenewDuration(resp.ServerPEM.Certificate, expiresIn, renewPeriod)
-	Info.Printf("%s certificate renewed, next in %s", resp.ServerPEM.Certificate.Subject.CommonName, next.Round(time.Second))
+	infoLog.Printf("%s certificate renewed, next in %s", resp.ServerPEM.Certificate.Subject.CommonName, next.Round(time.Second))
 	return next, nil
 }
 
 func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Duration, afterRenew func() error) error {
 	// Loggers
-	Info := log.New(os.Stdout, "INFO: ", log.LstdFlags)
-	Error := log.New(os.Stderr, "ERROR: ", log.LstdFlags)
+	infoLog := log.New(os.Stdout, "INFO: ", log.LstdFlags)
+	errLog := log.New(os.Stderr, "ERROR: ", log.LstdFlags)
 
 	// Daemon loop
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer signal.Stop(signals)
 
-	Info.Printf("first renewal in %s", next.Round(time.Second))
+	infoLog.Printf("first renewal in %s", next.Round(time.Second))
 	var err error
 	for {
 		select {
@@ -576,18 +581,18 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 			switch sig {
 			case syscall.SIGHUP:
 				if next, err = r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
-					Error.Println(err)
+					errLog.Println(err)
 				} else if err := afterRenew(); err != nil {
-					Error.Println(err)
+					errLog.Println(err)
 				}
 			case syscall.SIGINT, syscall.SIGTERM:
 				return nil
 			}
 		case <-time.After(next):
 			if next, err = r.RenewAndPrepareNext(outFile, expiresIn, renewPeriod); err != nil {
-				Error.Println(err)
+				errLog.Println(err)
 			} else if err := afterRenew(); err != nil {
-				Error.Println(err)
+				errLog.Println(err)
 			}
 		}
 	}

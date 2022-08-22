@@ -463,6 +463,7 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 				RootCAs:                  rootCAs,
 				PreferServerCipherSuites: true,
 				Certificates:             []tls.Certificate{cert},
+				MinVersion:               tls.VersionTLS12,
 			},
 		}
 	}

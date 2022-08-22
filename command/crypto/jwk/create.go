@@ -536,7 +536,7 @@ func createAction(ctx *cli.Context) (err error) {
 
 			rcpt = jose.Recipient{
 				Algorithm:  jose.PBES2_HS256_A128KW,
-				Key:        []byte(key),
+				Key:        key,
 				PBES2Count: pbkdf2Iterations,
 				PBES2Salt:  salt,
 			}

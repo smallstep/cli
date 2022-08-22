@@ -25,6 +25,7 @@ func LookPath(name string) (string, error) {
 // it to complete.
 func Run(ctx *cli.Context, file string) error {
 	args := ctx.Args()
+	//nolint:gosec // arguments controlled by step.
 	cmd := exec.Command(file, args[1:]...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
