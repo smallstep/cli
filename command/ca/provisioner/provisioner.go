@@ -115,12 +115,18 @@ func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error loading configuration: %w", err)
 		}
+
 		if cfg.AuthorityConfig.EnableAdmin {
 			if len(cfg.AuthorityConfig.Provisioners) > 0 {
 				return nil, errors.New("when 'enableAdmin' attribute set to 'true', provisioners list in ca.json must be empty")
 			}
 			return cautils.NewAdminClient(cliCtx)
 		}
+
+		// Assume the ca.json is already valid to avoid enabling all the
+		// features present in step-ca to just modify the provisioners.
+		cfg.SkipValidation = true
+
 		ui.Println()
 		return newCaConfigClient(context.Background(), cfg, cfgFile)
 	default:
