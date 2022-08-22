@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"reflect"
 	"regexp"
@@ -106,15 +104,6 @@ func main() {
 	// All non-successful output should be written to stderr
 	app.Writer = os.Stdout
 	app.ErrWriter = os.Stderr
-
-	// Start the golang debug logger if environment variable is set.
-	// See https://golang.org/pkg/net/http/pprof/
-	debugProfAddr := os.Getenv("STEP_PROF_ADDR")
-	if debugProfAddr != "" {
-		go func() {
-			log.Println(http.ListenAndServe(debugProfAddr, nil))
-		}()
-	}
 
 	// Define default prompters for go.step.sm
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {

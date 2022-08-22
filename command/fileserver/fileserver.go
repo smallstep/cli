@@ -122,7 +122,7 @@ func fileServerAction(ctx *cli.Context) error {
 		tlsConfig = &tls.Config{
 			ClientCAs:  pool,
 			ClientAuth: tls.RequireAndVerifyClientCert,
-			MinVersion: tls.VersionTLS13,
+			MinVersion: tls.VersionTLS12,
 		}
 	}
 

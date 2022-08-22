@@ -419,6 +419,8 @@ func Serialize(in interface{}, opts ...Options) (*pem.Block, error) {
 		} else {
 			var err error
 			//nolint:staticcheck // not being used for cryptographic purposes.
+			// EncryptPEMBlock is considered unsafe. As we haven't moved to
+			// pkcs8 by default, this is the only option.
 			p, err = x509.EncryptPEMBlock(rand.Reader, p.Type, p.Bytes, ctx.password, DefaultEncCipher)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to serialize to PEM")
