@@ -222,7 +222,6 @@ linters:
     - goimports # In addition to fixing imports, goimports also formats your code in the same style as gofmt.
     - gomoddirectives # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod.
     - gomodguard # Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
-    - goprintffuncname # Checks that printf-like functions are named with f at the end
     - gosec # Inspects source code for security problems
     - makezero # Finds slice declarations with non-zero initial length
     - misspell # Finds commonly misspelled English words in comments
@@ -257,6 +256,7 @@ linters:
     #- gocyclo # Computes and checks the cyclomatic complexity of functions
     #- godot # Check if comments end in a period
     #- gomnd # An analyzer to detect magic numbers.
+    #- goprintffuncname # Checks that printf-like functions are named with f at the end - usefulness is dubious.
     #- lll # Reports long lines
     #- nakedret # Finds naked returns in functions greater than a specified function length
     #- nestif # Reports deeply nested if statements
