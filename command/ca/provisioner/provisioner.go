@@ -124,7 +124,7 @@ func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 		}
 
 		// Assume the ca.json is already valid to avoid enabling all the
-		// features present in step-ca to just modify the provisioners.
+		// features present in step-ca just to modify the provisioners.
 		cfg.SkipValidation = true
 
 		ui.Println()
