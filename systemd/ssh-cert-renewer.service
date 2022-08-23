@@ -1,5 +1,5 @@
 [Unit]
-Description=Smallstep certificate renewal for the local SSH host certificate
+Description=Renew the local SSH host certificate
 After=network-online.target
 Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
 StartLimitIntervalSec=0

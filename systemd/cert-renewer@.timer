@@ -1,5 +1,5 @@
 [Unit]
-Description=Timer for Certificate renewal timer for %I
+Description=Timer for certificate renewal of %I
 Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
 PartOf=cert-renewer.target
 

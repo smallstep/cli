@@ -1,2 +1,2 @@
 [Unit]
-Description=Target to restart all parts of the Smallstep Certificate Renewal
+Description=Target to restart all certificate renewers

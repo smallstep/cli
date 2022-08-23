@@ -1,5 +1,5 @@
 [Unit]
-Description=Timer for Smallstep certificate renewal of the SSH host certificate
+Description=Timer to renew the local SSH host certificate
 Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
 
 [Timer]
