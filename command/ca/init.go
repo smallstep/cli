@@ -131,6 +131,30 @@ Use the '--dns' flag multiple times to configure multiple DNS names.`,
 	the following format <azurekms:name=key-name;vault=vault-name>.`,
 			},
 			cli.StringFlag{
+				Name: "kms-root",
+				Usage: `The kms <URI> used to generate the root certificate key. Examples are:
+	**azurekms**
+	:  azurekms:name=my-root-key;vault=my-vault`,
+			},
+			cli.StringFlag{
+				Name: "kms-intermediate",
+				Usage: `The kms <URI> used to generate the intermediate certificate key. Examples are:
+	**azurekms**
+	:  azurekms:name=my-intermediate-key;vault=my-vault`,
+			},
+			cli.StringFlag{
+				Name: "kms-ssh-host",
+				Usage: `The kms <URI> used to generate the key used to sign SSH host certificates. Examples are:
+	**azurekms**
+	:  azurekms:name=my-host-key;vault=my-vault`,
+			},
+			cli.StringFlag{
+				Name: "kms-ssh-user",
+				Usage: `The kms <URI> used to generate the key used to sign SSH user certificates. Examples are:
+	**azurekms**
+	:  azurekms:name=my-user-key;vault=my-vault`,
+			},
+			cli.StringFlag{
 				Name: "issuer",
 				Usage: `The registration authority issuer <url> to use.
 
@@ -416,28 +440,32 @@ func initAction(ctx *cli.Context) (err error) {
 			}
 
 			if rootKey == nil {
-				ui.Println("What URI would you like to use for the root certificate key?")
-				rootURI, err = ui.Prompt("(e.g. azurekms:name=my-root-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
+				ui.Println("What URI would you like to use for the root certificate key?", ui.WithValue(ctx.String("kms-root")))
+				rootURI, err = ui.Prompt("(e.g. azurekms:name=my-root-key;vault=my-vault)",
+					ui.WithValidateFunc(validateFunc), ui.WithValue(ctx.String("kms-root")))
 				if err != nil {
 					return err
 				}
 			}
 
-			ui.Println("What URI would you like to use for the intermediate certificate key?")
-			intermediateURI, err = ui.Prompt("(e.g. azurekms:name=my-intermediate-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
+			ui.Println("What URI would you like to use for the intermediate certificate key?", ui.WithValue(ctx.String("kms-intermediate")))
+			intermediateURI, err = ui.Prompt("(e.g. azurekms:name=my-intermediate-key;vault=my-vault)",
+				ui.WithValidateFunc(validateFunc), ui.WithValue(ctx.String("kms-intermediate")))
 			if err != nil {
 				return err
 			}
 
 			if ctx.Bool("ssh") {
-				ui.Println("What URI would you like to use for the SSH host key?")
-				sshHostURI, err = ui.Prompt("(e.g. azurekms:name=my-host-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
+				ui.Println("What URI would you like to use for the SSH host key?", ui.WithValue(ctx.String("kms-ssh-host")))
+				sshHostURI, err = ui.Prompt("(e.g. azurekms:name=my-host-key;vault=my-vault)",
+					ui.WithValidateFunc(validateFunc), ui.WithValue(ctx.String("kms-ssh-host")))
 				if err != nil {
 					return err
 				}
 
-				ui.Println("What URI would you like to use for the SSH user key?")
-				sshUserURI, err = ui.Prompt("(e.g. azurekms:name=my-user-key;vault=my-vault)", ui.WithValidateFunc(validateFunc))
+				ui.Println("What URI would you like to use for the SSH user key?", ui.WithValue(ctx.String("kms-ssh-user")))
+				sshUserURI, err = ui.Prompt("(e.g. azurekms:name=my-user-key;vault=my-vault)",
+					ui.WithValidateFunc(validateFunc), ui.WithValue(ctx.String("kms-ssh-user")))
 				if err != nil {
 					return err
 				}
