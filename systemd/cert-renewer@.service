@@ -3,6 +3,7 @@ Description=Certificate renewer for %I
 After=network-online.target
 Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
 StartLimitIntervalSec=0
+PartOf=cert-renewer.target
 
 [Service]
 Type=oneshot
