@@ -581,9 +581,9 @@ Use the '--group' flag multiple times to configure multiple groups.`,
 	}
 
 	// X5C provisioner flags
-	x5cRootFlag = cli.StringFlag{
-		Name: "x5c-root",
-		Usage: `Root certificate (chain) <file> used to validate the signature on X5C
+	x5cRootsFlag = cli.StringFlag{
+		Name: "x5c-roots",
+		Usage: `PEM-formatted root certificate(s) <file> used to validate the signature on X5C
 provisioning tokens.`,
 	}
 )
