@@ -14,7 +14,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/slackhq/nebula v1.5.2
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.21.1-0.20220822211950-dd6f59b53879
+	github.com/smallstep/certificates v0.22.0
 	github.com/smallstep/certinfo v1.7.0
 	github.com/smallstep/truststore v0.11.0
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
@@ -137,6 +137,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
