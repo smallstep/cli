@@ -18,6 +18,7 @@ func InjectContext(injectedCtx context.Context, fn func(context.Context) error, 
 		},
 	}
 	injectedMiddleware = append(injectedMiddleware, middleware...)
+	//nolint:contextcheck // context is injected in fn
 	return wrap(fn, injectedMiddleware...)
 }
 
