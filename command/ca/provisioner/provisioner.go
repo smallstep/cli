@@ -314,21 +314,61 @@ disable ssh use '--ssh=false'.`,
 containing one or more PEM formatted keys, if used with the K8SSA provisioner.`,
 	}
 
+	// ACME and SCEP provisioner flags
 	forceCNFlag = cli.BoolFlag{
 		Name:  "force-cn",
 		Usage: `Always set the common name in provisioned certificates.`,
 	}
-	requireEABFlag = cli.BoolFlag{
+
+	challengeFlag = cli.StringSliceFlag{
+		Name: "challenge",
+		Usage: `With a SCEP provisioner is the <challenge> to use as a shared secret between a
+client and the CA.
+
+With an ACME provisioner, this flag specifies the <challenge> or challenges to
+enable. Use the flag multiple times to configure multiple challenges.
+
+The supported ACME challenges are:
+
+**http-01**
+: With the HTTP challenge, the client in an ACME transaction proves its control
+over a domain name by proving that it can provision HTTP resources on a server
+accessible under that domain name.
+
+**dns-01**
+: With the DNS challenge, the client can prove control of a domain by
+provisioning a TXT resource record containing a designated value for a specific
+validation domain name.
+
+**tls-alpn-01**
+: With the TLS with Application-Layer Protocol Negotiation (TLS ALPN) challenge,
+the client can prove control over a domain name by configuring a TLS server to
+respond to specific connection attempts using the ALPN extension with
+identifying information.
+
+**device-attest-01**
+: With the device attestation challenge, the client can prove control over a
+permanent identifier of a device by providing an attestation statement
+containing the identifier of the device.
+
+If the provisioner has no challenges configured, http-01, dns-01 and tls-alpn-01
+will be automatically enabled.`,
+	}
+
+	removeACMEChallengeFlag = cli.StringSliceFlag{
+		Name: "remove-acme-challenge",
+		Usage: `Remove an ACME <challenge> from the list configured in the provisioner.
+Use the flag multiple times to remove multiple challenges.`,
+	}
+
+	// ACME provisioner flags
+	acmeRequireEABFlag = cli.BoolFlag{
 		Name: "require-eab",
 		Usage: `Require (and enable) External Account Binding (EAB) for Account creation.
 If this flag is set to false, then disable EAB.`,
 	}
 
 	// SCEP provisioner flags
-	scepChallengeFlag = cli.StringFlag{
-		Name:  "challenge",
-		Usage: `The SCEP <challenge> to use as a shared secret between a client and the CA`,
-	}
 	scepCapabilitiesFlag = cli.StringSliceFlag{
 		Name:  "capabilities",
 		Usage: `The SCEP <capabilities> to advertise`,

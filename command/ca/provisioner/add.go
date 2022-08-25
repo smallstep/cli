@@ -12,6 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/sliceutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -84,7 +85,8 @@ IID
 
 ACME
 
-**step ca provisioner add** <name> **--type**=ACME [**--force-cn**] [**--require-eab**]
+**step ca provisioner add** <name> **--type**=ACME
+[**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -122,11 +124,13 @@ SCEP
 			nebulaRootFlag,
 
 			// ACME provisioner flags
+			acmeRequireEABFlag,
+
+			// ACME and SCEP provisioner flags
 			forceCNFlag,
-			requireEABFlag,
+			challengeFlag,
 
 			// SCEP provisioner flags
-			scepChallengeFlag,
 			scepCapabilitiesFlag,
 			scepIncludeRootFlag,
 			scepMinimumPublicKeyLengthFlag,
@@ -292,6 +296,11 @@ func addAction(ctx *cli.Context) (err error) {
 	p := &linkedca.Provisioner{
 		Name: args.Get(0),
 		Type: linkedca.Provisioner_Type(typ),
+	}
+
+	// Validate challenge flag on scep and acme
+	if err := validateChallengeFlag(ctx, p.Type); err != nil {
+		return err
 	}
 
 	// Read x509 template if passed
@@ -541,6 +550,7 @@ func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			ACME: &linkedca.ACMEProvisioner{
 				ForceCn:    ctx.Bool("force-cn"),
 				RequireEab: ctx.Bool("require-eab"),
+				Challenges: sliceutil.RemoveDuplicates(acmeChallengeToLinkedca(ctx.StringSlice("challenge"))),
 			},
 		},
 	}, nil
@@ -748,11 +758,16 @@ func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	var challenge string
+	// We have already validated that at most 1 is provided.
+	if v := ctx.StringSlice("challenge"); len(v) > 0 {
+		challenge = v[0]
+	}
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_SCEP{
 			SCEP: &linkedca.SCEPProvisioner{
 				ForceCn:                       ctx.Bool("force-cn"),
-				Challenge:                     ctx.String("challenge"),
+				Challenge:                     challenge,
 				Capabilities:                  ctx.StringSlice("capabilities"),
 				MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
 				IncludeRoot:                   ctx.Bool("include-root"),
@@ -760,4 +775,50 @@ func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			},
 		},
 	}, nil
+}
+
+func validateChallengeFlag(ctx *cli.Context, typ linkedca.Provisioner_Type) error {
+	switch typ {
+	case linkedca.Provisioner_ACME:
+		for _, v := range ctx.StringSlice("challenge") {
+			switch strings.ToLower(v) {
+			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01":
+			default:
+				return errs.InvalidFlagValue(ctx, "challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
+			}
+		}
+		for _, v := range ctx.StringSlice("remove-acme-challenge") {
+			switch strings.ToLower(v) {
+			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01":
+			default:
+				return errs.InvalidFlagValue(ctx, "remove-acme-challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
+			}
+		}
+
+	case linkedca.Provisioner_SCEP:
+		if len(ctx.StringSlice("challenge")) > 1 {
+			return errors.New("provisioner type 'SCEP' does not support multiple '--challenge' flags")
+		}
+	}
+	return nil
+}
+
+// acmeChallengeToLinkedca returns the linkedca challenge types on the challenge
+// flag. It won't fail or add unsupported flags, the function assumes they
+// options have been previously validated.
+func acmeChallengeToLinkedca(challenges []string) []linkedca.ACMEProvisioner_ChallengeType {
+	var ret []linkedca.ACMEProvisioner_ChallengeType
+	for _, v := range challenges {
+		switch strings.ToLower(v) {
+		case "http-01":
+			ret = append(ret, linkedca.ACMEProvisioner_HTTP_01)
+		case "dns-01":
+			ret = append(ret, linkedca.ACMEProvisioner_DNS_01)
+		case "tls-alpn-01":
+			ret = append(ret, linkedca.ACMEProvisioner_TLS_ALPN_O1)
+		case "device-attest-01":
+			ret = append(ret, linkedca.ACMEProvisioner_DEVICE_ATTEST_01)
+		}
+	}
+	return ret
 }
