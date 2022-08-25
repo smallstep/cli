@@ -22,8 +22,8 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/urfave/cli v1.22.5
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
-	go.step.sm/cli-utils v0.7.3
-	go.step.sm/crypto v0.17.3
+	go.step.sm/cli-utils v0.7.4
+	go.step.sm/crypto v0.18.0
 	go.step.sm/linkedca v0.18.0
 	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
