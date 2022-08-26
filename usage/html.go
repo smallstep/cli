@@ -18,6 +18,7 @@ func httpHelpAction(ctx *cli.Context) error {
 	}
 
 	fmt.Printf("Serving HTTP on %s ...\n", addr)
+	//nolint:gosec // this is a local help server
 	return http.ListenAndServe(addr, &htmlHelpHandler{
 		cliApp: ctx.App,
 	})

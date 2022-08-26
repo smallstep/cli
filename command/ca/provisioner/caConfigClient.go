@@ -91,6 +91,7 @@ func newCaConfigClient(ctx context.Context, cfg *config.Config, cfgFile string) 
 			return nil, err
 		}
 	}
+	//nolint:contextcheck // no context for backward compatibility
 	a, err := authority.New(cfg, authority.WithAdminDB(newNoDB()),
 		//nolint:staticcheck // TODO: WithProvisioners has been deprecated, temporarily do not lint this line.
 		authority.WithSkipInit(), authority.WithProvisioners(provClxn))
