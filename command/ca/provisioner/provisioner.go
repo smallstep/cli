@@ -355,14 +355,14 @@ If the provisioner has no challenges configured, http-01, dns-01 and tls-alpn-01
 will be automatically enabled.`,
 	}
 
-	removeACMEChallengeFlag = cli.StringSliceFlag{
-		Name: "remove-acme-challenge",
+	removeChallengeFlag = cli.StringSliceFlag{
+		Name: "remove-challenge",
 		Usage: `Remove an ACME <challenge> from the list configured in the provisioner.
 Use the flag multiple times to remove multiple challenges.`,
 	}
 
 	// ACME provisioner flags
-	acmeRequireEABFlag = cli.BoolFlag{
+	requireEABFlag = cli.BoolFlag{
 		Name: "require-eab",
 		Usage: `Require (and enable) External Account Binding (EAB) for Account creation.
 If this flag is set to false, then disable EAB.`,

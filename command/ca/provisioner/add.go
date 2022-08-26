@@ -124,7 +124,7 @@ SCEP
 			nebulaRootFlag,
 
 			// ACME provisioner flags
-			acmeRequireEABFlag,
+			requireEABFlag,
 
 			// ACME and SCEP provisioner flags
 			forceCNFlag,
@@ -787,11 +787,11 @@ func validateChallengeFlag(ctx *cli.Context, typ linkedca.Provisioner_Type) erro
 				return errs.InvalidFlagValue(ctx, "challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
 			}
 		}
-		for _, v := range ctx.StringSlice("remove-acme-challenge") {
+		for _, v := range ctx.StringSlice("remove-challenge") {
 			switch strings.ToLower(v) {
 			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01":
 			default:
-				return errs.InvalidFlagValue(ctx, "remove-acme-challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
+				return errs.InvalidFlagValue(ctx, "remove-challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
 			}
 		}
 

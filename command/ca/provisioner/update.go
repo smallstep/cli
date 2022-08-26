@@ -37,7 +37,7 @@ func updateCommand() cli.Command {
 ACME
 
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
-[**--challenge**=<challenge>] [**--remove-acme-challenge**=<challenge>]
+[**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -117,12 +117,10 @@ SCEP
 			nebulaRootFlag,
 
 			// ACME provisioner flags
-			acmeRequireEABFlag,
-			removeACMEChallengeFlag,
-
-			// ACME and SCEP provisioner flags
-			forceCNFlag,
-			challengeFlag,
+			requireEABFlag,      // ACME
+			forceCNFlag,         // ACME + SCEP
+			challengeFlag,       // ACME + SCEP
+			removeChallengeFlag, // ACME
 
 			// SCEP flags
 			scepCapabilitiesFlag,
@@ -600,15 +598,15 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("require-eab") {
 		details.RequireEab = ctx.Bool("require-eab")
 	}
-	if ctx.IsSet("remove-acme-challenge") {
-		values := acmeChallengeToLinkedca(ctx.StringSlice("remove-acme-challenge"))
+	if ctx.IsSet("remove-challenge") {
+		values := acmeChallengeToLinkedca(ctx.StringSlice("remove-challenge"))
 		details.Challenges = sliceutil.RemoveValues(details.Challenges, values)
 	}
 	if ctx.IsSet("challenge") {
 		values := acmeChallengeToLinkedca(ctx.StringSlice("challenge"))
 		details.Challenges = append(details.Challenges, values...)
 	}
-	if ctx.IsSet("challenge") || ctx.IsSet("remove-acme-challenge") {
+	if ctx.IsSet("challenge") || ctx.IsSet("remove-challenge") {
 		details.Challenges = sliceutil.RemoveDuplicates(details.Challenges)
 	}
 	return nil
