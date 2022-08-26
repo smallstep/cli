@@ -24,7 +24,7 @@ require (
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.4
 	go.step.sm/crypto v0.18.0
-	go.step.sm/linkedca v0.18.0
+	go.step.sm/linkedca v0.18.1-0.20220824000236-47827c8eb300
 	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d

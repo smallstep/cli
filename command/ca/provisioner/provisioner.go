@@ -322,7 +322,7 @@ containing one or more PEM formatted keys, if used with the K8SSA provisioner.`,
 
 	challengeFlag = cli.StringSliceFlag{
 		Name: "challenge",
-		Usage: `With a SCEP provisioner is the <challenge> to use as a shared secret between a
+		Usage: `With a SCEP provisioner the <challenge> is a shared secret between a
 client and the CA.
 
 With an ACME provisioner, this flag specifies the <challenge> or challenges to

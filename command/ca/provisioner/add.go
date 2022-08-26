@@ -804,7 +804,7 @@ func validateChallengeFlag(ctx *cli.Context, typ linkedca.Provisioner_Type) erro
 }
 
 // acmeChallengeToLinkedca returns the linkedca challenge types on the challenge
-// flag. It won't fail or add unsupported flags, the function assumes they
+// flag. It won't fail or add unsupported flags, the function assumes the
 // options have been previously validated.
 func acmeChallengeToLinkedca(challenges []string) []linkedca.ACMEProvisioner_ChallengeType {
 	var ret []linkedca.ACMEProvisioner_ChallengeType
