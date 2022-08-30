@@ -16,6 +16,11 @@ import (
 	"go.step.sm/crypto/pemutil"
 )
 
+type Attestor interface {
+	Public() crypto.PublicKey
+	Attest() ([]byte, error)
+}
+
 // CreateSigner reads a key from a file with a given name or creates a signer
 // with the given kms and name uri.
 func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, error) {
@@ -30,6 +35,12 @@ func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, err
 		return nil, fmt.Errorf("file %s does not contain a valid private key", name)
 	}
 
+	return newKMSSigner(kms, name)
+}
+
+// CreateAttestor creates an attestor that will use `step-kms-plugin` with the
+// given kms and uri.
+func CreateAttestor(kms, name string) (Attestor, error) {
 	return newKMSSigner(kms, name)
 }
 
@@ -76,7 +87,7 @@ func exitError(cmd *exec.Cmd, err error) error {
 }
 
 // newKMSSigner creates a signer using `step-kms-plugin` as the signer.
-func newKMSSigner(kms, key string) (crypto.Signer, error) {
+func newKMSSigner(kms, key string) (*kmsSigner, error) {
 	name, err := plugin.LookPath("kms")
 	if err != nil {
 		return nil, err
@@ -151,4 +162,22 @@ func (s *kmsSigner) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) 
 		return nil, exitError(cmd, err)
 	}
 	return base64.StdEncoding.DecodeString(string(out))
+}
+
+// Attest returns an attestation certificate using the `step-kms-plugin attest`
+// command.
+func (s *kmsSigner) Attest() ([]byte, error) {
+	args := []string{"attest"}
+	if s.kms != "" {
+		args = append(args, "--kms", s.kms)
+	}
+	args = append(args, s.key)
+
+	//nolint:gosec // arguments controlled by step.
+	cmd := exec.Command(s.name, args...)
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, exitError(cmd, err)
+	}
+	return out, nil
 }

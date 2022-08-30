@@ -25,7 +25,7 @@ require (
 	go.step.sm/cli-utils v0.7.4
 	go.step.sm/crypto v0.18.0
 	go.step.sm/linkedca v0.18.1-0.20220824000236-47827c8eb300
-	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
+	golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
@@ -81,6 +81,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v0.3.0-java // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/fullstorydev/grpcurl v1.8.2 // indirect
+	github.com/fxamacker/cbor/v2 v2.4.0 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
@@ -149,6 +150,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/weppos/publicsuffix-go v0.4.0 // indirect
+	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.0 // indirect
@@ -194,8 +196,9 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-// replace github.com/smallstep/certificates => ../certificates
-// replace github.com/smallstep/certinfo => ../certinfo
+replace github.com/smallstep/certificates => ../certificates
+replace github.com/smallstep/certinfo => ../certinfo
+
 // replace go.step.sm/linkedca => ../linkedca
 // replace go.step.sm/cli-utils => ../cli-utils
 // replace go.step.sm/crypto => ../crypto

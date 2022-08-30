@@ -2,10 +2,16 @@ package cautils
 
 import (
 	"context"
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -15,18 +21,21 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/acme"
 	acmeAPI "github.com/smallstep/certificates/acme/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 )
 
 func startHTTPServer(addr, token, keyAuth string) *http.Server {
@@ -193,6 +202,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 }
 
 func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
+	attest := (ctx.String("attest") != "")
 	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
 		if err != nil {
@@ -207,8 +217,15 @@ func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
 		chValidated := false
 		for _, ch := range az.Challenges {
 			// TODO: Allow other types of challenges (not just http).
-			if ch.Type == "http-01" {
+			if ch.Type == "http-01" && !attest {
 				if err := serveAndValidateHTTPChallenge(ctx, ac, ch, ident); err != nil {
+					return err
+				}
+				chValidated = true
+				break
+			}
+			if ch.Type == "device-attest-01" && attest {
+				if err := doDeviceAttestation(ctx, ac, ch, ident); err != nil {
 					return err
 				}
 				chValidated = true
@@ -285,6 +302,169 @@ func validateSANsForACME(sans []string) ([]string, []net.IP, error) {
 		}
 	}
 	return dnsNames, ips, nil
+}
+
+func createNewOrderRequest(ctx *cli.Context, acmeDir, subject string, sans []string) (interface{}, []string, []net.IP, error) {
+	dnsNames, ips, err := validateSANsForACME(sans)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	var idents []acme.Identifier
+	for _, dns := range dnsNames {
+		idents = append(idents, acme.Identifier{
+			Type:  "dns",
+			Value: dns,
+		})
+	}
+	for _, ip := range ips {
+		idents = append(idents, acme.Identifier{
+			Type:  "ip",
+			Value: ip.String(),
+		})
+	}
+
+	if strings.Contains(acmeDir, "letsencrypt") {
+		// LetsEncrypt does not support NotBefore and NotAfter attributes in
+		// orders.
+		if ctx.IsSet("not-before") || ctx.IsSet("not-after") {
+			return nil, nil, nil, errors.New(
+				"LetsEncrypt public CA does not support NotBefore/NotAfter attributes for certificates. " +
+					"Instead, each certificate has a default lifetime of 3 months.",
+			)
+		}
+
+		// LetsEncrypt requires that the Common Name of the Certificate also be
+		// represented as a DNSName in the SAN extension, and therefore must be
+		// authorized as part of the ACME order.
+		hasSubject := false
+		for _, n := range idents {
+			if n.Value == subject {
+				hasSubject = true
+			}
+		}
+
+		if !hasSubject {
+			dnsNames = append(dnsNames, subject)
+			idents = append(idents, acme.Identifier{
+				Type:  "dns",
+				Value: subject,
+			})
+		}
+
+		return struct {
+			Identifiers []acme.Identifier
+		}{Identifiers: idents}, dnsNames, ips, nil
+	}
+
+	// parse times or durations
+	nbf, naf, err := flags.ParseTimeDuration(ctx)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// check if the list of identifiers for which to request a certificate
+	// already contains the subject
+	hasSubject := false
+	for _, n := range idents {
+		if n.Value == subject {
+			hasSubject = true
+		}
+	}
+
+	// if the subject is not yet included in the slice of identifiers, it is
+	// added to either the DNS names or IP addresses slice and the corresponding
+	// type of identifier is added to the slice of identifiers.
+	if !hasSubject {
+		if ip := net.ParseIP(subject); ip != nil {
+			ips = append(ips, ip)
+			idents = append(idents, acme.Identifier{
+				Type:  "ip",
+				Value: ip.String(),
+			})
+		} else {
+			dnsNames = append(dnsNames, subject)
+			idents = append(idents, acme.Identifier{
+				Type:  "dns",
+				Value: subject,
+			})
+		}
+	}
+
+	return acmeAPI.NewOrderRequest{
+		Identifiers: idents,
+		NotAfter:    naf.Time(),
+		NotBefore:   nbf.Time(),
+	}, dnsNames, ips, nil
+}
+
+type attestationPayload struct {
+	AttObj string `json:"attObj"`
+}
+
+type attestationObject struct {
+	Format       string                 `json:"fmt"`
+	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
+}
+
+func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string) error {
+	attestor, err := cryptoutil.CreateAttestor("", "yubikey:slot-id=9c")
+	if err != nil {
+		return err
+	}
+	pemData, err := attestor.Attest()
+	if err != nil {
+		return err
+	}
+	certs, err := pemutil.ParseCertificateBundle(pemData)
+	if err != nil {
+		return err
+	}
+
+	var alg int64
+	switch k := certs[0].PublicKey.(type) {
+	case *ecdsa.PublicKey:
+		if k.Curve != elliptic.P256() {
+			return fmt.Errorf("unsupported elliptic curve %s", k.Curve)
+		}
+		alg = -7 // ES256
+	case *rsa.PublicKey:
+		alg = -257 // RS256
+	case ed25519.PublicKey:
+		alg = -8 // EdDSA
+	default:
+		return fmt.Errorf("unsupported public key type %T", k)
+	}
+
+	x5c := make([][]byte, len(certs))
+	for i, c := range certs {
+		x5c[i] = c.Raw
+	}
+
+	obj := &attestationObject{
+		Format: "step",
+		AttStatement: map[string]interface{}{
+			"ver": "2.0",
+			"alg": alg,
+			"x5c": x5c,
+			// "sig":      params.CreateSignature,
+			// "certInfo": params.CreateAttestation,
+			// "pubArea":  params.Public,
+		},
+	}
+
+	b, err := cbor.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	payload, err := json.Marshal(attestationPayload{
+		AttObj: base64.RawURLEncoding.EncodeToString(b),
+	})
+	if err != nil {
+		return fmt.Errorf("error marshaling payload: %w", err)
+	}
+	return ac.ValidateWithPayload(ch.URL, payload)
 }
 
 type acmeFlowOp func(*acmeFlow) error
@@ -412,64 +592,18 @@ func (af *acmeFlow) getClientTruststoreOption(mergeRootCAs bool) (ca.ClientOptio
 }
 
 func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
-	dnsNames, ips, err := validateSANsForACME(af.sans)
-	if err != nil {
-		return nil, err
-	}
-
-	var idents []acme.Identifier
-	for _, dns := range dnsNames {
-		idents = append(idents, acme.Identifier{
-			Type:  "dns",
-			Value: dns,
-		})
-	}
-	for _, ip := range ips {
-		idents = append(idents, acme.Identifier{
-			Type:  "ip",
-			Value: ip.String(),
-		})
-	}
-
 	var (
-		orderPayload []byte
-		clientOps    []ca.ClientOption
+		err             error
+		newOrderRequest interface{}
+		dnsNames        []string
+		ips             []net.IP
 	)
 
-	ops, err := af.getClientTruststoreOption(af.ctx.IsSet("acme"))
-	if err != nil {
-		return nil, err
-	}
-
-	clientOps = append(clientOps, ops)
-
-	if strings.Contains(af.acmeDir, "letsencrypt") {
-		// LetsEncrypt does not support NotBefore and NotAfter attributes in orders.
-		if af.ctx.IsSet("not-before") || af.ctx.IsSet("not-after") {
-			return nil, errors.New("LetsEncrypt public CA does not support NotBefore/NotAfter " +
-				"attributes for certificates. Instead, each certificate has a default lifetime of 3 months.")
-		}
-		// LetsEncrypt requires that the Common Name of the Certificate also be
-		// represented as a DNSName in the SAN extension, and therefore must be
-		// authorized as part of the ACME order.
-		hasSubject := false
-		for _, n := range idents {
-			if n.Value == af.subject {
-				hasSubject = true
-			}
-		}
-		if !hasSubject {
-			dnsNames = append(dnsNames, af.subject)
-			idents = append(idents, acme.Identifier{
-				Type:  "dns",
-				Value: af.subject,
-			})
-		}
-		orderPayload, err = json.Marshal(struct {
-			Identifiers []acme.Identifier
-		}{Identifiers: idents})
+	attestationURI := af.ctx.String("attest")
+	if attestationURI == "" {
+		newOrderRequest, dnsNames, ips, err = createNewOrderRequest(af.ctx, af.acmeDir, af.subject, af.sans)
 		if err != nil {
-			return nil, errors.Wrap(err, "error marshaling new letsencrypt order request")
+			return nil, err
 		}
 	} else {
 		// parse times or durations
@@ -478,45 +612,28 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			return nil, err
 		}
 
-		// check if the list of identifiers for which to
-		// request a certificate already contains the subject
-		hasSubject := false
-		for _, n := range idents {
-			if n.Value == af.subject {
-				hasSubject = true
-			}
-		}
-		// if the subject is not yet included in the slice
-		// of identifiers, it is added to either the DNS names
-		// or IP addresses slice and the corresponding type of
-		// identifier is added to the slice of identifers.
-		if !hasSubject {
-			if ip := net.ParseIP(af.subject); ip != nil {
-				ips = append(ips, ip)
-				idents = append(idents, acme.Identifier{
-					Type:  "ip",
-					Value: ip.String(),
-				})
-			} else {
-				dnsNames = append(dnsNames, af.subject)
-				idents = append(idents, acme.Identifier{
-					Type:  "dns",
-					Value: af.subject,
-				})
-			}
-		}
-		nor := acmeAPI.NewOrderRequest{
-			Identifiers: idents,
-			NotAfter:    naf.Time(),
-			NotBefore:   nbf.Time(),
-		}
-		orderPayload, err = json.Marshal(nor)
-		if err != nil {
-			return nil, errors.Wrap(err, "error marshaling new order request")
+		// We currently do not accept other SANs with attestation certificates.
+		newOrderRequest = acmeAPI.NewOrderRequest{
+			Identifiers: []acme.Identifier{{
+				Type:  "permanent-identifier",
+				Value: af.subject,
+			}},
+			NotBefore: nbf.Time(),
+			NotAfter:  naf.Time(),
 		}
 	}
 
-	ac, err := ca.NewACMEClient(af.acmeDir, af.ctx.StringSlice("contact"), clientOps...)
+	orderPayload, err := json.Marshal(newOrderRequest)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshaling order request")
+	}
+
+	ops, err := af.getClientTruststoreOption(af.ctx.IsSet("acme"))
+	if err != nil {
+		return nil, err
+	}
+
+	ac, err := ca.NewACMEClient(af.acmeDir, af.ctx.StringSlice("contact"), ops)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error initializing ACME client with server %s", af.acmeDir)
 	}
@@ -531,25 +648,39 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	}
 
 	if af.csr == nil {
-		insecure := af.ctx.Bool("insecure")
-		kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, insecure, "kty", "curve", "size")
-		if err != nil {
-			return nil, err
-		}
-		af.priv, err = keys.GenerateKey(kty, crv, size)
-		if err != nil {
-			return nil, errors.Wrap(err, "error generating private key")
+		var signer crypto.Signer
+		var template *x509.CertificateRequest
+		if attestationURI == "" {
+			insecure := af.ctx.Bool("insecure")
+			kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, insecure, "kty", "curve", "size")
+			if err != nil {
+				return nil, err
+			}
+			signer, err = keyutil.GenerateSigner(kty, crv, size)
+			if err != nil {
+				return nil, errors.Wrap(err, "error generating private key")
+			}
+			af.priv = signer
+			template = &x509.CertificateRequest{
+				Subject: pkix.Name{
+					CommonName: af.subject,
+				},
+				DNSNames:    dnsNames,
+				IPAddresses: ips,
+			}
+		} else {
+			signer, err = cryptoutil.CreateSigner(attestationURI, attestationURI)
+			if err != nil {
+				return nil, err
+			}
+			template = &x509.CertificateRequest{
+				Subject: pkix.Name{
+					CommonName: af.subject,
+				},
+			}
 		}
 
-		_csr := &x509.CertificateRequest{
-			Subject: pkix.Name{
-				CommonName: af.subject,
-			},
-			DNSNames:    dnsNames,
-			IPAddresses: ips,
-		}
-		var csrBytes []byte
-		csrBytes, err = x509.CreateCertificateRequest(rand.Reader, _csr, af.priv)
+		csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, signer)
 		if err != nil {
 			return nil, errors.Wrap(err, "error creating certificate request")
 		}

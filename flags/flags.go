@@ -398,6 +398,11 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 		Name:  "kms",
 		Usage: "The <uri> to configure a Cloud KMS or an HSM.",
 	}
+
+	Attest = cli.StringFlag{
+		Name:  "attest",
+		Usage: "The KMS <uri> used for attestation.",
+	}
 )
 
 // ParseTimeOrDuration is a helper that returns the time or the current time
