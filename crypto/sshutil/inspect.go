@@ -20,12 +20,19 @@ type CertificateInspect struct {
 	KeyFingerprint        string
 	SigningKeyAlgo        string
 	SigningKeyFingerprint string
+	Signature             Signature
 	Serial                uint64
 	ValidAfter            time.Time
 	ValidBefore           time.Time
 	Principals            []string
 	CriticalOptions       map[string]string
 	Extensions            map[string]string
+}
+
+type Signature struct {
+	Type  string
+	Value []byte
+	Rest  []byte `json:",omitempty"`
 }
 
 // InspectCertificate returns a CertificateInspect with the properties of the
@@ -65,12 +72,17 @@ func InspectCertificate(cert *ssh.Certificate) (*CertificateInspect, error) {
 		KeyFingerprint:        sum,
 		SigningKeyAlgo:        sigAlgo,
 		SigningKeyFingerprint: sigSum,
-		Serial:                cert.Serial,
-		ValidAfter:            validAfter,
-		ValidBefore:           validBefore,
-		Principals:            cert.ValidPrincipals,
-		CriticalOptions:       cert.CriticalOptions,
-		Extensions:            cert.Extensions,
+		Signature: Signature{
+			Type:  cert.Signature.Format,
+			Value: cert.Signature.Blob,
+			Rest:  cert.Signature.Rest,
+		},
+		Serial:          cert.Serial,
+		ValidAfter:      validAfter,
+		ValidBefore:     validBefore,
+		Principals:      cert.ValidPrincipals,
+		CriticalOptions: cert.CriticalOptions,
+		Extensions:      cert.Extensions,
 	}, nil
 }
 

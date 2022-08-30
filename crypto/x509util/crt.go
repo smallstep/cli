@@ -1,6 +1,7 @@
 package x509util
 
 import (
+	//nolint:gosec // sha1 is being used to calculate an identifier, not a key.
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/x509"
@@ -48,6 +49,7 @@ func EncodedFingerprint(cert *x509.Certificate, encoding FingerprintEncoding,
 		if !insecure {
 			return "", errors.New("sha1 requires '--insecure' flag")
 		}
+		//nolint:gosec // sha1 is being used to calculate an identifier, not a key.
 		sum := sha1.Sum(cert.Raw)
 		return fingerprint.Fingerprint(sum[:], fingerprint.WithEncoding(fingerprint.Encoding(encoding))), nil
 	}
@@ -66,9 +68,9 @@ func SplitSANs(sans []string) (dnsNames []string, ips []net.IP, emails []string,
 	if sans == nil {
 		return
 	}
+
 	for _, san := range sans {
-		// avoid ifelse -> switch statement linter suggestion
-		// nolint:gocritic
+		//nolint:gocritic // avoid ifelse -> switch statement linter suggestion
 		if ip := net.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
 		} else if u, err := url.Parse(san); err == nil && u.Scheme != "" {

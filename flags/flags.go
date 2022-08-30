@@ -356,16 +356,22 @@ domain name 'certs.example-team.ca.smallstep.com' the value would be 'certs'.`,
 		Usage: `TLS Server Name Indication that should be sent to request a specific certificate from the server.`,
 	}
 
+	// Template is a cli.Flag used to set the template file to use.
+	Template = cli.StringFlag{
+		Name:  "template",
+		Usage: `The certificate template <file>, a JSON representation of the certificate to create.`,
+	}
+
 	// TemplateSet is a cli.Flag used to send key-value pairs to the ca.
 	TemplateSet = cli.StringSliceFlag{
 		Name:  "set",
-		Usage: "The <key=value> pair with template data variables to send to the CA. Use the **--set** flag multiple times to add multiple variables.",
+		Usage: "The <key=value> pair with template data variables. Use the **--set** flag multiple times to add multiple variables.",
 	}
 
 	// TemplateSetFile is a cli.Flag used to send a JSON file to the CA.
 	TemplateSetFile = cli.StringFlag{
 		Name:  "set-file",
-		Usage: "The JSON <file> with the template data to send to the CA.",
+		Usage: "The JSON <file> with the template data variables.",
 	}
 
 	// Identity is a cli.Flag used to be able to define the identity argument in
@@ -379,13 +385,18 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 	// EABKeyID is a cli.Flag that points to an ACME EAB Key ID
 	EABKeyID = cli.StringFlag{
 		Name:  "eab-key-id",
-		Usage: "An ACME EAB Key ID",
+		Usage: "An ACME EAB Key ID.",
 	}
 
 	// EABReference is a cli.Flag that points to an ACME EAB Key Reference
 	EABReference = cli.StringFlag{
 		Name:  "eab-key-reference",
-		Usage: "An ACME EAB Key Reference",
+		Usage: "An ACME EAB Key Reference.",
+	}
+
+	KMSUri = cli.StringFlag{
+		Name:  "kms",
+		Usage: "The <uri> to configure a Cloud KMS or an HSM.",
 	}
 )
 
@@ -424,6 +435,19 @@ func ParseTimeDuration(ctx *cli.Context) (notBefore, notAfter api.TimeDuration, 
 // ParseTemplateData parses the set and and set-file flags and returns a json
 // message to be used in certificate templates.
 func ParseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
+	data, err := GetTemplateData(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(data) == 0 {
+		return nil, nil
+	}
+	return json.Marshal(data)
+}
+
+// GetTemplateData parses the set and set-file flags and returns a map to be
+// used in certificate templates.
+func GetTemplateData(ctx *cli.Context) (map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	if path := ctx.String("set-file"); path != "" {
 		b, err := utils.ReadFile(path)
@@ -452,17 +476,13 @@ func ParseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
 		}
 	}
 
-	if len(data) == 0 {
-		return nil, nil
-	}
-
-	return json.Marshal(data)
+	return data, nil
 }
 
 // ParseCaURL gets and parses the ca-url from the command context.
-//  - Require non-empty value.
-//  - Prepend an 'https' scheme if the URL does not have a scheme.
-//  - Error if the URL scheme is not implicitly or explicitly 'https'.
+//   - Require non-empty value.
+//   - Prepend an 'https' scheme if the URL does not have a scheme.
+//   - Error if the URL scheme is not implicitly or explicitly 'https'.
 func ParseCaURL(ctx *cli.Context) (string, error) {
 	caURL := ctx.String("ca-url")
 	if caURL == "" && !ctx.Bool("offline") {
@@ -474,9 +494,9 @@ func ParseCaURL(ctx *cli.Context) (string, error) {
 
 // ParseCaURLIfExists gets and parses the ca-url from the command context, if
 // one is present.
-//  - Allow empty value.
-//  - Prepend an 'https' scheme if the URL does not have a scheme.
-//  - Error if the URL scheme is not implicitly or explicitly 'https'.
+//   - Allow empty value.
+//   - Prepend an 'https' scheme if the URL does not have a scheme.
+//   - Error if the URL scheme is not implicitly or explicitly 'https'.
 func ParseCaURLIfExists(ctx *cli.Context) (string, error) {
 	caURL := ctx.String("ca-url")
 	if caURL == "" {

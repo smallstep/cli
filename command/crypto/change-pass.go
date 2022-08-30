@@ -87,9 +87,9 @@ $ step crypto change-pass key.jwk --out new-key.jwk
 }
 
 // changePassAction does the following:
-//   1. decrypts a private key (if necessary)
-//   2. encrypts the key using a new password
-//   3. writes the encrypted key to the original file
+//  1. decrypts a private key (if necessary)
+//  2. encrypts the key using a new password
+//  3. writes the encrypted key to the original file
 func changePassAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err

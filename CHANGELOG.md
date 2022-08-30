@@ -18,8 +18,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ---
 
 ## [Unreleased] 
+### Added
+- Initial support for `step` plugins. A plugin is an executable file named with
+  the format step-`name`-plugin, located in the `$PATH` or the
+  `$STEPPATH/plugins` directory. These plugins will be executed using `step
+  name`.
+- Integration of [`step-kms-plugin`](https://github.com/smallstep/step-kms-plugin)
+  on `step certificate create` and `step certificate sign`.
+- Add the certificate signature to `step ssh inspect` output.
+- Add the `--mtls=false` flag to force the token authorization flow on `step ca
+  renew`.
+- Add the `--set` and `--set-file` flag to `step certificate create` and
+`step certificate sign` commands.
+### Changed
+- Support two latest versions of Go (1.18, 1.19)
+- `step ca revoke <serial>` requires either a base 10 serial number or a value
+with a prefix indicating the appropriate base.
+
+## [0.21.0] - 2022-07-06 
+### Added 
+- Device Authorization Grant flow for input constrained devices needing OAuth
+credentials. `--console-flow` flag in `step oauth` for selecting which 
+alternative OAuth flow to use.
 ### Fixed
-- Added back --domain and --remove-domain flags to provisioner CRUD
+- Added back --domain and --remove-domain flags to provisioner CRUD.
+### Removed
+- The `beta` prefix for remote provisioner and admin management.
 
 ## [0.20.0] - 2022-05-26
 ### Added

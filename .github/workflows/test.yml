@@ -7,39 +7,17 @@ on:
     branches:
     - "**"
   pull_request:
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
-  lintTestBuild:
-    name: Lint, Test, Build
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        go: [ '1.17', '1.18' ]
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go }}
-      -
-        name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: 'v1.45.2'
-          args: --timeout=30m
-      -
-        name: Test, Build
-        id: lintTestBuild
-        run: V=1 make ci
-      -
-        name: Codecov
-        uses: codecov/codecov-action@v1.2.1
-        if: matrix.go == '1.18'
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.out # optional
-          name: codecov-umbrella # optional
-          fail_ci_if_error: true # optional (default = false)
+  lint:
+    uses: smallstep/workflows/.github/workflows/goLint.yml@main
+
+  test:
+    needs: lint
+    uses: smallstep/workflows/.github/workflows/goTest.yml@main
+
+  build:
+    needs: test
+    uses: smallstep/workflows/.github/workflows/goBuild.yml@main

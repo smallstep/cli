@@ -41,7 +41,6 @@ func Bcrypt(password []byte) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	if err != nil {
 		return "", errors.Wrap(err, "error deriving password")
-
 	}
 	return string(hash), nil
 }

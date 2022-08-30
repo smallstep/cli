@@ -210,7 +210,6 @@ func TestRead(t *testing.T) {
 						err := rsa.VerifyPKCS1v15(k, crypto.SHA256, digest, signature)
 						assert.NoError(t, err)
 					}
-
 				} else {
 					t.Errorf("key for %s does not satisfies the crypto.Signer interface", fn)
 				}
@@ -366,7 +365,6 @@ func TestParsePEM(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestSerialize(t *testing.T) {

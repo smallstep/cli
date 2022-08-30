@@ -18,6 +18,7 @@ func httpHelpAction(ctx *cli.Context) error {
 	}
 
 	fmt.Printf("Serving HTTP on %s ...\n", addr)
+	//nolint:gosec // this is a local help server
 	return http.ListenAndServe(addr, &htmlHelpHandler{
 		cliApp: ctx.App,
 	})
@@ -121,6 +122,7 @@ func htmlHelpAction(ctx *cli.Context) error {
 
 	// css style
 	cssFile := path.Join(dir, "style.css")
+	//nolint:gosec // Written file contains nothing sensitive.
 	if err := os.WriteFile(cssFile, []byte(css), 0666); err != nil {
 		return errs.FileError(err, cssFile)
 	}
@@ -219,11 +221,9 @@ func (h *htmlHelpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	last := len(args) - 1
 	lastName := args[last]
 	subcmd := ctx.App.Commands
-	parent := createParentCommand(ctx)
 	for _, name := range args[:last] {
 		for _, cmd := range subcmd {
 			if cmd.HasName(name) {
-				parent = cmd
 				subcmd = cmd.Subcommands
 				break
 			}
@@ -235,7 +235,6 @@ func (h *htmlHelpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			continue
 		}
 		cmd.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args, " "))
-		parent.HelpName = fmt.Sprintf("%s %s", ctx.App.HelpName, strings.Join(args[:last], " "))
 
 		ctx.Command = cmd
 		if len(cmd.Subcommands) == 0 {

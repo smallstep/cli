@@ -221,24 +221,20 @@ func verifyAction(ctx *cli.Context) error {
 
 	claims := jose.Claims{}
 	if err := tok.Claims(publicKey(jwk), &claims); err != nil {
-		switch err {
-		case jose.ErrCryptoFailure:
+		if errors.Is(err, jose.ErrCryptoFailure) {
 			return errors.New("validation failed: invalid signature")
-		default:
-			return errors.Wrap(err, "claim verify failed")
 		}
+		return errors.Wrap(err, "claim verify failed")
 	}
 
 	// Check exp and nbf presence
 	// There's no need to do the verification again.
 	var tClaims timeClaims
 	if err := tok.UnsafeClaimsWithoutVerification(&tClaims); err != nil {
-		switch err {
-		case jose.ErrCryptoFailure:
+		if errors.Is(err, jose.ErrCryptoFailure) {
 			return errors.New("validation failed: invalid signature")
-		default:
-			return errors.Wrap(err, "claim verify failed")
 		}
+		return errors.Wrap(err, "claim verify failed")
 	}
 
 	expected := jose.Expected{Issuer: iss}

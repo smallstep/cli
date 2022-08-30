@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
+	"math/big"
 	"net/http"
 	"os"
 	"strconv"
@@ -260,6 +262,12 @@ func revokeCertificateAction(ctx *cli.Context) error {
 		if err := errs.NumberOfArguments(ctx, 1); err != nil {
 			return err
 		}
+
+		sn, ok := new(big.Int).SetString(serial, 0)
+		if !ok {
+			return fmt.Errorf("'%s' is not a valid serial number - use a base 10 representation or add a prefix indicating the base", serial)
+		}
+		serial = sn.String()
 		if token == "" {
 			// No token and no cert/key pair - so generate a token.
 			token, err = flow.GenerateToken(ctx, &serial)
@@ -455,6 +463,7 @@ func (f *revokeFlow) Revoke(ctx *cli.Context, serial, token string) error {
 				RootCAs:                  rootCAs,
 				PreferServerCipherSuites: true,
 				Certificates:             []tls.Certificate{cert},
+				MinVersion:               tls.VersionTLS12,
 			},
 		}
 	}

@@ -233,9 +233,9 @@ func rwLockKeySet(filename string) (jwks *jose.JSONWebKeySet, writeFunc func(boo
 
 	// non-blocking exclusive lock
 	err = sysutils.FileLock(fd)
-	switch err {
-	case nil: // continue
-	case syscall.EWOULDBLOCK:
+	switch {
+	case err == nil: // continue
+	case errors.Is(err, syscall.EWOULDBLOCK):
 		f.Close()
 		err = errors.Errorf("error reading %s: file is locked", filename)
 		return

@@ -14,7 +14,7 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 )
 
-// Command returns the principal policy subcommand.
+// PrincipalsCommand returns the principal policy subcommand.
 func PrincipalsCommand(ctx context.Context) cli.Command {
 	commandName := policycontext.GetPrefixedCommandUsage(ctx, "principal")
 	return cli.Command{
@@ -26,8 +26,8 @@ func PrincipalsCommand(ctx context.Context) cli.Command {
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** command manages principals in SSH policies
-		
-## EXAMPLES	
+
+## EXAMPLES
 
 Allow all principals in SSH host certificates on authority level
 '''
@@ -78,7 +78,6 @@ $ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_u
 }
 
 func principalAction(ctx context.Context) (err error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()
@@ -118,7 +117,7 @@ func principalAction(ctx context.Context) (err error) {
 			panic("no allow nor deny context set")
 		}
 	case policycontext.IsX509Policy(ctx):
-		return errors.New("X.509 policy does not support principals")
+		return errors.New("the X.509 policy does not support principals")
 	default:
 		panic("no SSH nor X.509 context set")
 	}

@@ -167,7 +167,6 @@ func TestStringReadPasswordFromFile(t *testing.T) {
 }
 
 func TestReadInput(t *testing.T) {
-
 	type args struct {
 		prompt string
 	}
