@@ -15,8 +15,8 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/slackhq/nebula v1.5.2
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.22.0
-	github.com/smallstep/certinfo v1.7.0
+	github.com/smallstep/certificates v0.21.1-0.20220831183607-45af68b244e6
+	github.com/smallstep/certinfo v1.7.1-0.20220829191224-1576e58354d8
 	github.com/smallstep/truststore v0.11.0
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
@@ -195,10 +195,8 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace github.com/smallstep/certificates => ../certificates
-
-replace github.com/smallstep/certinfo => ../certinfo
-
+// replace github.com/smallstep/certificates => ../certificates
+// replace github.com/smallstep/certinfo => ../certinfo
 // replace go.step.sm/linkedca => ../linkedca
 // replace go.step.sm/cli-utils => ../cli-utils
 // replace go.step.sm/crypto => ../crypto
