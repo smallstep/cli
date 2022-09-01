@@ -473,7 +473,7 @@ func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 
 	// step format is based on the "packed" format described in
 	// https://w3c.github.io/webauthn/#sctn-attestation but with the authData
-	// omited as described in the device-attest-01 RFC.
+	// omitted as described in the device-attest-01 RFC.
 	obj := &attestationObject{
 		Format: "step",
 		AttStatement: map[string]interface{}{
