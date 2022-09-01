@@ -17,7 +17,7 @@ import (
 )
 
 type Attestor interface {
-	Public() crypto.PublicKey
+	crypto.Signer
 	Attest() ([]byte, error)
 }
 

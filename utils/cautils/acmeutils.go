@@ -8,6 +8,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -408,7 +409,7 @@ type attestationObject struct {
 }
 
 func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string) error {
-	attestor, err := cryptoutil.CreateAttestor("", "yubikey:slot-id=9c")
+	attestor, err := cryptoutil.CreateAttestor("", ctx.String("attest"))
 	if err != nil {
 		return err
 	}
@@ -416,24 +417,53 @@ func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	if err != nil {
 		return err
 	}
-	certs, err := pemutil.ParseCertificateBundle(pemData)
+
+	data, err := acme.KeyAuthorization(ch.Token, ac.Key)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error generating ACME key authorization")
 	}
 
 	var alg int64
-	switch k := certs[0].PublicKey.(type) {
+	var digest []byte
+	var opts crypto.SignerOpts
+	switch k := attestor.Public().(type) {
 	case *ecdsa.PublicKey:
 		if k.Curve != elliptic.P256() {
 			return fmt.Errorf("unsupported elliptic curve %s", k.Curve)
 		}
 		alg = -7 // ES256
+		opts = crypto.SHA256
+		sum := sha256.Sum256([]byte(data))
+		digest = sum[:]
 	case *rsa.PublicKey:
+		// TODO(mariano): support for PS256 (-37)
 		alg = -257 // RS256
+		opts = crypto.SHA256
+		sum := sha256.Sum256([]byte(data))
+		digest = sum[:]
 	case ed25519.PublicKey:
 		alg = -8 // EdDSA
+		opts = crypto.Hash(0)
+		digest = []byte(data)
 	default:
 		return fmt.Errorf("unsupported public key type %T", k)
+	}
+
+	// Sign proves possession of private key. Per recommendation at
+	// https://w3c.github.io/webauthn/#sctn-signature-attestation-types, we use
+	// CBOR to encode the signature.
+	sig, err := attestor.Sign(rand.Reader, digest, opts)
+	if err != nil {
+		return errors.Wrap(err, "error signing key authorization")
+	}
+	sig, err = cbor.Marshal(sig)
+	if err != nil {
+		return errors.Wrap(err, "error marshaling signature")
+	}
+
+	certs, err := pemutil.ParseCertificateBundle(pemData)
+	if err != nil {
+		return err
 	}
 
 	x5c := make([][]byte, len(certs))
@@ -441,15 +471,15 @@ func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		x5c[i] = c.Raw
 	}
 
+	// step format is based on the "packed" format described in
+	// https://w3c.github.io/webauthn/#sctn-attestation but with the authData
+	// omited as described in the device-attest-01 RFC.
 	obj := &attestationObject{
 		Format: "step",
 		AttStatement: map[string]interface{}{
-			"ver": "2.0",
 			"alg": alg,
+			"sig": sig,
 			"x5c": x5c,
-			// "sig":      params.CreateSignature,
-			// "certInfo": params.CreateAttestation,
-			// "pubArea":  params.Public,
 		},
 	}
 
