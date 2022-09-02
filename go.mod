@@ -17,7 +17,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/slackhq/nebula v1.5.2
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.22.0
+	github.com/smallstep/certificates v0.21.1-0.20220901231813-e75e7e7cd6f7
 	github.com/smallstep/certinfo v1.7.0
 	github.com/smallstep/truststore v0.11.0
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
@@ -26,8 +26,8 @@ require (
 	github.com/urfave/cli v1.22.5
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.4
-	go.step.sm/crypto v0.18.0
-	go.step.sm/linkedca v0.18.0
+	go.step.sm/crypto v0.19.0
+	go.step.sm/linkedca v0.18.1-0.20220824000236-47827c8eb300
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
@@ -199,8 +199,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace github.com/smallstep/certificates => ../../certificates6
-
+// replace github.com/smallstep/certificates => ../../certificates6
 // replace github.com/smallstep/certinfo => ../certinfo
 // replace go.step.sm/linkedca => ../linkedca
 // replace go.step.sm/cli-utils => ../cli-utils

@@ -171,7 +171,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 	}
 	ui.Printf(" .") // Indicates passage of time.
 
-	if err := ac.ValidateChallenge(ch.URL, nil); err != nil {
+	if err := ac.ValidateChallenge(ch.URL); err != nil {
 		ui.Printf(" Error!\n\n")
 		mode.Cleanup()
 		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
@@ -438,7 +438,7 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 	af.tpmKey = certKey
 
 	// Generate the WebAuthn attestation statement.
-	payload, err := attestationStatement(certKey, akCert, akChain...)
+	attStmt, err := attestationStatement(certKey, akCert, akChain...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -446,10 +446,15 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 	challengeBody := struct {
 		AttObj string `json:"attObj"`
 	}{
-		AttObj: base64.RawURLEncoding.EncodeToString(payload),
+		AttObj: base64.RawURLEncoding.EncodeToString(attStmt),
 	}
 
-	if err := ac.ValidateChallenge(ch.URL, challengeBody); err != nil {
+	payload, err := json.Marshal(challengeBody)
+	if err != nil {
+		return errors.Wrapf(err, "error marshaling challenge body")
+	}
+
+	if err := ac.ValidateWithPayload(ch.URL, payload); err != nil {
 		ui.Printf(" Error!\n\n")
 		//mode.Cleanup()
 		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
