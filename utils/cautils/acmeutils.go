@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"log"
 	"math/big"
 	"net"
@@ -42,7 +41,6 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/google/go-attestation/attest"
 	x509ext "github.com/google/go-attestation/x509"
-	"github.com/google/go-tpm-tools/simulator"
 )
 
 func startHTTPServer(addr, token, keyAuth string) *http.Server {
@@ -353,8 +351,6 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 		log.Fatal(err)
 	}
 
-	fmt.Println(fmt.Sprintf("%#+v", attResp))
-
 	// TODO: ensure that decoding the response results in the right data, e.g. []byte slice that was sent
 	// otherwise we need to do our own encoding (e.g. to string). That might be the best way, anyway.
 	encryptedCredentials := attest.EncryptedCredential{
@@ -395,7 +391,6 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 		log.Fatal(err)
 	}
 
-	fmt.Println(fmt.Sprintf("%#+v", secretResp))
 	akChain := [][]byte{}
 	for _, c := range secretResp.CertificateChain {
 		certBytes, err := base64.RawURLEncoding.DecodeString(c)
@@ -438,7 +433,7 @@ func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, c
 	af.tpmKey = certKey
 
 	// Generate the WebAuthn attestation statement.
-	attStmt, err := attestationStatement(certKey, akCert, akChain...)
+	attStmt, err := attestationStatement(certKey, akChain...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -540,16 +535,14 @@ type AttestationObject struct {
 	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
 }
 
-// TODO(hs): the lonely akCert can be removed
-func attestationStatement(key *attest.Key, akCert []byte, akChain ...[]byte) ([]byte, error) {
+func attestationStatement(key *attest.Key, akChain ...[]byte) ([]byte, error) {
 	params := key.CertificationParameters()
 
 	obj := &AttestationObject{
-		Format: "tpm", // TODO: `tpm` is the value used in WebAuthn for generic TPM attestation; is that what we want in `step` CLI too?
+		Format: "tpm", // TODO(hs): `tpm` is the value used in WebAuthn for generic TPM attestation; is that what we want in `step` CLI too?
 		AttStatement: map[string]interface{}{
-			"ver": "2.0",
-			"alg": int64(-257), // AlgRS256
-			//"x5c":      []interface{}{akCert},
+			"ver":      "2.0",
+			"alg":      int64(-257), // AlgRS256
 			"x5c":      akChain,
 			"sig":      params.CreateSignature,
 			"certInfo": params.CreateAttestation,
@@ -563,27 +556,11 @@ func attestationStatement(key *attest.Key, akCert []byte, akChain ...[]byte) ([]
 	return b, nil
 }
 
-type simulatorChannel struct {
-	io.ReadWriteCloser
-}
-
-func (simulatorChannel) MeasurementLog() ([]byte, error) {
-	return nil, errors.New("not implemented")
-}
-
-// Default to not using the TPM simulator
-var UseSimulator bool = false
-
 func tpmInit(identifier string) (*attest.TPM, *attest.AK, []byte, error) {
-	config := &attest.OpenConfig{}
-	useSimulator := &UseSimulator
-	if *useSimulator {
-		sim, err := simulator.Get() // TODO(hs): remove simulator support? Would be nice if we don't have to rely on it, except for tests
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		config.CommandChannel = simulatorChannel{sim}
+	config := &attest.OpenConfig{
+		TPMVersion: attest.TPMVersion20,
 	}
+
 	// TODO(hs): OpenTPM should only be called once for every CLI invocation, but potentially multiple TPM operations
 	tpm, err := attest.OpenTPM(config)
 	if err != nil {
