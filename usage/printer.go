@@ -58,6 +58,7 @@ func markdownHelpPrinter(w io.Writer, templ, parent string, data interface{}) {
 
 	var frontMatterTemplate = `---
 layout: auto-doc
+category: reference
 title: {{.Data.HelpName}}
 menu:
   docs:
