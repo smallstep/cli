@@ -1066,8 +1066,8 @@ go.opentelemetry.io/otel/trace v0.20.0 h1:1DL6EXUdcg95gukhuRRvLDO/4X5THh/5dIV52l
 go.opentelemetry.io/otel/trace v0.20.0/go.mod h1:6GjCW8zgDjwGHGa6GkyeB8+/5vjT16gUEi0Nf1iBdgw=
 go.opentelemetry.io/proto/otlp v0.7.0 h1:rwOQPCuKAKmwGKq2aVNnYIibI6wnV7EvzgfTCzcdGg8=
 go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqeYNgFYFoEGnI=
-go.step.sm/cli-utils v0.7.4 h1:oI7PStZqlvjPZ0u2EB4lN7yZ4R3ShTotdGL/L84Oorg=
-go.step.sm/cli-utils v0.7.4/go.mod h1:taSsY8haLmXoXM3ZkywIyRmVij/4Aj0fQbNTlJvv71I=
+go.step.sm/cli-utils v0.7.5 h1:jyp6X8k8mN1B0uWJydTid0C++8tQhm2kaaAdXKQQzdk=
+go.step.sm/cli-utils v0.7.5/go.mod h1:taSsY8haLmXoXM3ZkywIyRmVij/4Aj0fQbNTlJvv71I=
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
 go.step.sm/crypto v0.18.0 h1:saD/tMG7uKJmUIPyOyudidVTHPnozTU02CDd+oqwKn0=
 go.step.sm/crypto v0.18.0/go.mod h1:qZ+pNU1nV+THwP7TPTNCRMRr9xrRURhETTAK7U5psfw=
