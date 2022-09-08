@@ -1252,7 +1252,6 @@ func (o *oauth) success(w http.ResponseWriter) {
 	w.Write([]byte(`</p>`))
 	w.Write([]byte(`</body>`))
 	w.Write([]byte(`</html>`))
-
 }
 
 func (o *oauth) badRequest(w http.ResponseWriter, msg string) {
