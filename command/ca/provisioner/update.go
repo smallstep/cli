@@ -38,6 +38,7 @@ ACME
 
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
 [**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
+[**--attestation-format**=<format>] [**--remove-attestation-format**=<format>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -117,10 +118,12 @@ SCEP
 			nebulaRootFlag,
 
 			// ACME provisioner flags
-			requireEABFlag,      // ACME
-			forceCNFlag,         // ACME + SCEP
-			challengeFlag,       // ACME + SCEP
-			removeChallengeFlag, // ACME
+			requireEABFlag,              // ACME
+			forceCNFlag,                 // ACME + SCEP
+			challengeFlag,               // ACME + SCEP
+			removeChallengeFlag,         // ACME
+			attestationFormatFlag,       // ACME
+			removeAttestationFormatFlag, // ACME
 
 			// SCEP flags
 			scepCapabilitiesFlag,
@@ -608,6 +611,17 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 	if ctx.IsSet("challenge") || ctx.IsSet("remove-challenge") {
 		details.Challenges = sliceutil.RemoveDuplicates(details.Challenges)
+	}
+	if ctx.IsSet("remove-attestation-format") {
+		values := acmeAttestationFormatToLinkedca(ctx.StringSlice("remove-attestation-format"))
+		details.AttestationFormats = sliceutil.RemoveValues(details.AttestationFormats, values)
+	}
+	if ctx.IsSet("attestation-format") {
+		values := acmeAttestationFormatToLinkedca(ctx.StringSlice("attestation-format"))
+		details.AttestationFormats = append(details.AttestationFormats, values...)
+	}
+	if ctx.IsSet("attestation-format") || ctx.IsSet("remove-attestation-format") {
+		details.AttestationFormats = sliceutil.RemoveDuplicates(details.AttestationFormats)
 	}
 	return nil
 }

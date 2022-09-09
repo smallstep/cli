@@ -33,6 +33,14 @@ func addCommand() cli.Command {
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
+ACME
+
+**step ca provisioner add** <name> **--type**=ACME
+[**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>] [**--attestation-format**=<format>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+
 OIDC
 
 **step ca provisioner add** <name> **--type**=OIDC
@@ -83,14 +91,6 @@ IID
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
-ACME
-
-**step ca provisioner add** <name> **--type**=ACME
-[**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
-
 SCEP
 
 **step ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
@@ -124,11 +124,10 @@ SCEP
 			nebulaRootFlag,
 
 			// ACME provisioner flags
-			requireEABFlag,
-
-			// ACME and SCEP provisioner flags
-			forceCNFlag,
-			challengeFlag,
+			requireEABFlag,        // ACME
+			forceCNFlag,           // ACME + SCEP
+			challengeFlag,         // ACME + SCEP
+			attestationFormatFlag, // ACME
 
 			// SCEP provisioner flags
 			scepCapabilitiesFlag,
@@ -300,6 +299,10 @@ func addAction(ctx *cli.Context) (err error) {
 
 	// Validate challenge flag on scep and acme
 	if err := validateChallengeFlag(ctx, p.Type); err != nil {
+		return err
+	}
+	// Validate attestation format flag on acme
+	if err := validateAttestationFormatFlag(ctx, p.Type); err != nil {
 		return err
 	}
 
@@ -550,7 +553,12 @@ func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			ACME: &linkedca.ACMEProvisioner{
 				ForceCn:    ctx.Bool("force-cn"),
 				RequireEab: ctx.Bool("require-eab"),
-				Challenges: sliceutil.RemoveDuplicates(acmeChallengeToLinkedca(ctx.StringSlice("challenge"))),
+				Challenges: sliceutil.RemoveDuplicates(
+					acmeChallengeToLinkedca(ctx.StringSlice("challenge")),
+				),
+				AttestationFormats: sliceutil.RemoveDuplicates(
+					acmeAttestationFormatToLinkedca(ctx.StringSlice("attestation-format")),
+				),
 			},
 		},
 	}, nil
@@ -803,6 +811,26 @@ func validateChallengeFlag(ctx *cli.Context, typ linkedca.Provisioner_Type) erro
 	return nil
 }
 
+func validateAttestationFormatFlag(ctx *cli.Context, typ linkedca.Provisioner_Type) error {
+	if typ == linkedca.Provisioner_ACME {
+		for _, v := range ctx.StringSlice("attestation-format") {
+			switch strings.ToLower(v) {
+			case "apple", "step", "tpm":
+			default:
+				return errs.InvalidFlagValue(ctx, "attestation-format", v, "apple, step and tpm")
+			}
+		}
+		for _, v := range ctx.StringSlice("remove-attestation-format") {
+			switch strings.ToLower(v) {
+			case "apple", "step", "tpm":
+			default:
+				return errs.InvalidFlagValue(ctx, "remove-attestation-format", v, "apple, step and tpm")
+			}
+		}
+	}
+	return nil
+}
+
 // acmeChallengeToLinkedca returns the linkedca challenge types on the challenge
 // flag. It won't fail or add unsupported flags, the function assumes the
 // options have been previously validated.
@@ -818,6 +846,24 @@ func acmeChallengeToLinkedca(challenges []string) []linkedca.ACMEProvisioner_Cha
 			ret = append(ret, linkedca.ACMEProvisioner_TLS_ALPN_O1)
 		case "device-attest-01":
 			ret = append(ret, linkedca.ACMEProvisioner_DEVICE_ATTEST_01)
+		}
+	}
+	return ret
+}
+
+// acmeAttestationFormatToLinkedca returns the linkedca attestation format types
+// for the attestation-format flag. It won't fail or add unsupported flags, the
+// function assumes the options have been previously validated.
+func acmeAttestationFormatToLinkedca(formats []string) []linkedca.ACMEProvisioner_AttestationFormatType {
+	var ret []linkedca.ACMEProvisioner_AttestationFormatType
+	for _, v := range formats {
+		switch strings.ToLower(v) {
+		case "apple":
+			ret = append(ret, linkedca.ACMEProvisioner_APPLE)
+		case "step":
+			ret = append(ret, linkedca.ACMEProvisioner_STEP)
+		case "tpm":
+			ret = append(ret, linkedca.ACMEProvisioner_TPM)
 		}
 	}
 	return ret

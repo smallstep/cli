@@ -368,6 +368,32 @@ Use the flag multiple times to remove multiple challenges.`,
 If this flag is set to false, then disable EAB.`,
 	}
 
+	attestationFormatFlag = cli.StringSliceFlag{
+		Name: "attestation-format",
+		Usage: `Enable an ACME attestation statement <format> in the provisioner. Use the flag
+multiple times to configure multiple challenges.
+
+The supported ACME attestation formats are:
+
+**apple**
+: With the apple format, Apple devices can use the device-attest-01 challenge to
+get a new certificate.
+
+**step**
+: With the step format, devices like YubiKeys that can generate an attestation
+certificate can use the device-attest-01 challenge to get a new certificate.
+
+**tpm**
+: With the tpm format, devices with TPMs can use the device-attest-01 challenge
+to get a new certificate.`,
+	}
+
+	removeAttestationFormatFlag = cli.StringSliceFlag{
+		Name: "remove-attestation-format",
+		Usage: `Remove an ACME attestation statement <format> from the list configured in the provisioner.
+Use the flag multiple times to remove multiple formats.`,
+	}
+
 	// SCEP provisioner flags
 	scepCapabilitiesFlag = cli.StringSliceFlag{
 		Name:  "capabilities",
