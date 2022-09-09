@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/sliceutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -36,6 +37,7 @@ func updateCommand() cli.Command {
 ACME
 
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
+[**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -115,11 +117,12 @@ SCEP
 			nebulaRootFlag,
 
 			// ACME provisioner flags
-			forceCNFlag,
-			requireEABFlag,
+			requireEABFlag,      // ACME
+			forceCNFlag,         // ACME + SCEP
+			challengeFlag,       // ACME + SCEP
+			removeChallengeFlag, // ACME
 
 			// SCEP flags
-			scepChallengeFlag,
 			scepCapabilitiesFlag,
 			scepIncludeRootFlag,
 			scepMinimumPublicKeyLengthFlag,
@@ -277,6 +280,11 @@ func updateAction(ctx *cli.Context) (err error) {
 
 	p, err := client.GetProvisioner(ca.WithProvisionerName(name))
 	if err != nil {
+		return err
+	}
+
+	// Validate challenge flag on scep and acme
+	if err := validateChallengeFlag(ctx, p.Type); err != nil {
 		return err
 	}
 
@@ -589,6 +597,17 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 	if ctx.IsSet("require-eab") {
 		details.RequireEab = ctx.Bool("require-eab")
+	}
+	if ctx.IsSet("remove-challenge") {
+		values := acmeChallengeToLinkedca(ctx.StringSlice("remove-challenge"))
+		details.Challenges = sliceutil.RemoveValues(details.Challenges, values)
+	}
+	if ctx.IsSet("challenge") {
+		values := acmeChallengeToLinkedca(ctx.StringSlice("challenge"))
+		details.Challenges = append(details.Challenges, values...)
+	}
+	if ctx.IsSet("challenge") || ctx.IsSet("remove-challenge") {
+		details.Challenges = sliceutil.RemoveDuplicates(details.Challenges)
 	}
 	return nil
 }
