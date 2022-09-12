@@ -41,7 +41,7 @@ func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, err
 }
 
 // CreateAttestor creates an attestor that will use `step-kms-plugin` with the
-// given kms and uri.
+// given kms and name.
 func CreateAttestor(kms, name string) (Attestor, error) {
 	return newKMSSigner(kms, name)
 }
