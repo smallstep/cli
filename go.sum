@@ -891,8 +891,8 @@ github.com/slackhq/nebula v1.5.2/go.mod h1:xaCM6wqbFk/NRmmUe1bv88fWBm3a1UioXJVIp
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1/1fApl1A+9VcBk+9dcqGfnePY87LY=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
-github.com/smallstep/certificates v0.22.2-0.20220912233041-df975122a0da h1:Y0iP/MZpdl1bpt7D2WYnwa8te8+k0vDcyYQ5tRKLjbI=
-github.com/smallstep/certificates v0.22.2-0.20220912233041-df975122a0da/go.mod h1:e5p/JQ4oT3IArpw1WA5BB86TBE6s6IaIiqnTx7JwRrk=
+github.com/smallstep/certificates v0.23.0-rc.1 h1:FeGs+dgCqe3vutl5Fkm8ZdwApOwvHT3UJaAcgB6U8vM=
+github.com/smallstep/certificates v0.23.0-rc.1/go.mod h1:e5p/JQ4oT3IArpw1WA5BB86TBE6s6IaIiqnTx7JwRrk=
 github.com/smallstep/certinfo v1.8.1 h1:M6z2uUtK6MVva0E7ZIzev9I/3mZl6Sfvvk4DiNob/s0=
 github.com/smallstep/certinfo v1.8.1/go.mod h1:rRIcDFvXO8nrxnmqhrLrhOwiFtJ4iMRa9naNnZXcNU8=
 github.com/smallstep/nosql v0.4.0 h1:Go3WYwttUuvwqMtFiiU4g7kBIlY+hR0bIZAqVdakQ3M=
