@@ -4,7 +4,7 @@ BINNAME?=step
 # Set V to 1 for verbose output from the Makefile
 Q=$(if $V,,@)
 PREFIX?=
-SRC=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
+SRC=$(shell find . -type f -name '*.go')
 GOOS_OVERRIDE ?=
 CGO_OVERRIDE ?= CGO_ENABLED=0
 OUTPUT_ROOT=output/
@@ -16,9 +16,9 @@ OUTPUT_ROOT=output/
 #########################################
 
 bootstra%:
-	# Using a released version of golangci-lint to take into account custom replacements in their go.mod
-	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.49
+	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.49.0
 	$Q go install golang.org/x/vuln/cmd/govulncheck@latest
+	$Q go install gotest.tools/gotestsum@v1.8.1
 
 .PHONY: bootstra%
 
@@ -60,9 +60,12 @@ generate:
 # Test
 #########################################
 test:
-	$Q $(CGO_OVERRIDE) go test -short -coverprofile=coverage.out ./...
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) gotestsum -- -coverprofile=coverage.out -short -covermode=atomic ./...
 
-.PHONY: test
+race:
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) gotestsum -- -race ./...
+
+.PHONY: test race
 
 integrate: integration
 
