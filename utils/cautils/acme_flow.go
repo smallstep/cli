@@ -29,11 +29,16 @@ func ACMECreateCertFlow(ctx *cli.Context, provisionerName string) error {
 	}
 	ui.PrintSelected("Certificate", certFile)
 
-	_, err = pemutil.Serialize(af.priv, pemutil.ToFile(keyFile, 0600))
-	if err != nil {
-		return errors.WithStack(err)
+	// We won't have a private key with attestation certificates
+	if af.priv != nil {
+		_, err = pemutil.Serialize(af.priv, pemutil.ToFile(keyFile, 0600))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		ui.PrintSelected("Private Key", keyFile)
+	} else if v := ctx.String("attestation-uri"); v != "" {
+		ui.PrintSelected("Private Key", v)
 	}
-	ui.PrintSelected("Private Key", keyFile)
 	return nil
 }
 

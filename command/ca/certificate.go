@@ -167,6 +167,7 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			flags.Size,
 			flags.NotAfter,
 			flags.NotBefore,
+			flags.AttestationURI,
 			flags.Force,
 			flags.Offline,
 			flags.PasswordFile,
@@ -186,8 +187,13 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 }
 
 func certificateAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 3); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 2, 3); err != nil {
 		return err
+	}
+
+	// Allow two arguments with the attestation uri.
+	if ctx.NArg() == 2 && ctx.String("attestation-uri") == "" {
+		return errs.TooFewArguments(ctx)
 	}
 
 	args := ctx.Args()
