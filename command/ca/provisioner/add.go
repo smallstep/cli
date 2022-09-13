@@ -817,14 +817,14 @@ func validateAttestationFormatFlag(ctx *cli.Context, typ linkedca.Provisioner_Ty
 			switch strings.ToLower(v) {
 			case "apple", "step", "tpm":
 			default:
-				return errs.InvalidFlagValue(ctx, "attestation-format", v, "apple, step and tpm")
+				return errs.InvalidFlagValue(ctx, "attestation-format", v, "apple, step, and tpm")
 			}
 		}
 		for _, v := range ctx.StringSlice("remove-attestation-format") {
 			switch strings.ToLower(v) {
 			case "apple", "step", "tpm":
 			default:
-				return errs.InvalidFlagValue(ctx, "remove-attestation-format", v, "apple, step and tpm")
+				return errs.InvalidFlagValue(ctx, "remove-attestation-format", v, "apple, step, and tpm")
 			}
 		}
 	}
@@ -852,8 +852,8 @@ func acmeChallengeToLinkedca(challenges []string) []linkedca.ACMEProvisioner_Cha
 }
 
 // acmeAttestationFormatToLinkedca returns the linkedca attestation format types
-// for the attestation-format flag. It won't fail or add unsupported flags, the
-// function assumes the options have been previously validated.
+// for the attestation-format flag. This function assumes the inputs have been
+// previously validated.
 func acmeAttestationFormatToLinkedca(formats []string) []linkedca.ACMEProvisioner_AttestationFormatType {
 	var ret []linkedca.ACMEProvisioner_AttestationFormatType
 	for _, v := range formats {
