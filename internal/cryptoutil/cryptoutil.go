@@ -16,7 +16,7 @@ import (
 	"go.step.sm/crypto/pemutil"
 )
 
-// Attestor is the interface implemented by step-kms-plugin using the key, sign
+// Attestor is the interface implemented by step-kms-plugin using the key, sign,
 // and attest commands.
 type Attestor interface {
 	crypto.Signer
