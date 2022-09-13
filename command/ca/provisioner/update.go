@@ -291,6 +291,11 @@ func updateAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
+	// Validate attestation format flag on acme
+	if err := validateAttestationFormatFlag(ctx, p.Type); err != nil {
+		return err
+	}
+
 	if ctx.IsSet("name") {
 		p.Name = ctx.String("name")
 	}
