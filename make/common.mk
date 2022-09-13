@@ -17,7 +17,8 @@ OUTPUT_ROOT=output/
 
 bootstra%:
 	# Using a released version of golangci-lint to take into account custom replacements in their go.mod
-	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.48
+	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.49
+	$Q go install golang.org/x/vuln/cmd/govulncheck@latest
 
 .PHONY: bootstra%
 
@@ -80,6 +81,7 @@ fmt:
 lint: SHELL:=/bin/bash
 lint:
 	$Q LOG_LEVEL=error golangci-lint run --config <(curl -s https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml) --timeout=30m
+	$Q govulncheck ./...
 
 .PHONY: fmt lint
 

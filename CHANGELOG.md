@@ -17,7 +17,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Security
 ---
 
-## [Unreleased] 
+## [Unreleased]
+### Added
+- Added support for SUSE13 and upwards for `step certificate install`
+
+## [0.22.0] - 2022-08-25
 ### Added
 - Initial support for `step` plugins. A plugin is an executable file named with
   the format step-`name`-plugin, located in the `$PATH` or the

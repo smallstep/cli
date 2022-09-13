@@ -897,8 +897,8 @@ github.com/smallstep/certinfo v1.8.1 h1:M6z2uUtK6MVva0E7ZIzev9I/3mZl6Sfvvk4DiNob
 github.com/smallstep/certinfo v1.8.1/go.mod h1:rRIcDFvXO8nrxnmqhrLrhOwiFtJ4iMRa9naNnZXcNU8=
 github.com/smallstep/nosql v0.4.0 h1:Go3WYwttUuvwqMtFiiU4g7kBIlY+hR0bIZAqVdakQ3M=
 github.com/smallstep/nosql v0.4.0/go.mod h1:yKZT5h7cdIVm6wEKM9+jN5dgK80Hljpuy8HNsnI7Gzo=
-github.com/smallstep/truststore v0.11.0 h1:JUTkQ4oHr40jHTS/A2t0usEhteMWG+45CDD2iJA/dIk=
-github.com/smallstep/truststore v0.11.0/go.mod h1:HwHKRcBi0RUxxw1LYDpTRhYC4jZUuxPpkHdVonlkoDM=
+github.com/smallstep/truststore v0.12.0 h1:973Aa6fA7Ob/GCxqziosDzkQq6tV0Le6IUe4sikyW+U=
+github.com/smallstep/truststore v0.12.0/go.mod h1:HwHKRcBi0RUxxw1LYDpTRhYC4jZUuxPpkHdVonlkoDM=
 github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71 h1:q0IDrQpquiWcU1nJmjwEremPwG+pT2AAGsDatPgg3Kw=
 github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71/go.mod h1:+F24VU3UCxfVFvvqgm5jNUFQOm/L6ed13ImwWGFgg/g=
 github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f h1:mZxeNDk2+xg4eTEuR4y6z2+i6HBvcWjtdscDiUmBRzc=
@@ -1070,8 +1070,8 @@ go.opentelemetry.io/otel/trace v0.20.0 h1:1DL6EXUdcg95gukhuRRvLDO/4X5THh/5dIV52l
 go.opentelemetry.io/otel/trace v0.20.0/go.mod h1:6GjCW8zgDjwGHGa6GkyeB8+/5vjT16gUEi0Nf1iBdgw=
 go.opentelemetry.io/proto/otlp v0.7.0 h1:rwOQPCuKAKmwGKq2aVNnYIibI6wnV7EvzgfTCzcdGg8=
 go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqeYNgFYFoEGnI=
-go.step.sm/cli-utils v0.7.4 h1:oI7PStZqlvjPZ0u2EB4lN7yZ4R3ShTotdGL/L84Oorg=
-go.step.sm/cli-utils v0.7.4/go.mod h1:taSsY8haLmXoXM3ZkywIyRmVij/4Aj0fQbNTlJvv71I=
+go.step.sm/cli-utils v0.7.5 h1:jyp6X8k8mN1B0uWJydTid0C++8tQhm2kaaAdXKQQzdk=
+go.step.sm/cli-utils v0.7.5/go.mod h1:taSsY8haLmXoXM3ZkywIyRmVij/4Aj0fQbNTlJvv71I=
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
 go.step.sm/crypto v0.19.0 h1:WxjUDeTDpuPZ1IR3v6c4jc6WdlQlS5IYYQBhfnG5uW0=
 go.step.sm/crypto v0.19.0/go.mod h1:qZ+pNU1nV+THwP7TPTNCRMRr9xrRURhETTAK7U5psfw=
