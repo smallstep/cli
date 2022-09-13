@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support for configuring ACME devices-attest-01 challenges.
 - Added support for ACME device-attest-01 challenges with YubiKeys.
 - Added support for SUSE13 and upwards for `step certificate install`
+### Changed
+- New OAuth success page with color
 
 ## [0.22.0] - 2022-08-25
 ### Added
