@@ -203,7 +203,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 }
 
 func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
-	attest := (ctx.String("attest") != "")
+	isAttest := (ctx.String("attest") != "")
 	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
 		if err != nil {
@@ -218,14 +218,14 @@ func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
 		chValidated := false
 		for _, ch := range az.Challenges {
 			// TODO: Allow other types of challenges (not just http).
-			if ch.Type == "http-01" && !attest {
+			if ch.Type == "http-01" && !isAttest {
 				if err := serveAndValidateHTTPChallenge(ctx, ac, ch, ident); err != nil {
 					return err
 				}
 				chValidated = true
 				break
 			}
-			if ch.Type == "device-attest-01" && attest {
+			if ch.Type == "device-attest-01" && isAttest {
 				if err := doDeviceAttestation(ctx, ac, ch, ident); err != nil {
 					return err
 				}
