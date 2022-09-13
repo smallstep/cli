@@ -63,6 +63,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
+          check-latest: true
       -
         name: Configure Go
         id: configure_go
@@ -107,6 +108,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
+          check-latest: true
       -
         name: Install cosign
         uses: sigstore/cosign-installer@v1.1.0
@@ -143,6 +145,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
+          check-latest: true
       -
         name: Build
         id: build
@@ -185,6 +188,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
+          check-latest: true
       -
         name: Build
         id: build
