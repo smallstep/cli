@@ -815,7 +815,7 @@ func acmeChallengeToLinkedca(challenges []string) []linkedca.ACMEProvisioner_Cha
 		case "dns-01":
 			ret = append(ret, linkedca.ACMEProvisioner_DNS_01)
 		case "tls-alpn-01":
-			ret = append(ret, linkedca.ACMEProvisioner_TLS_ALPN_O1)
+			ret = append(ret, linkedca.ACMEProvisioner_TLS_ALPN_01)
 		case "device-attest-01":
 			ret = append(ret, linkedca.ACMEProvisioner_DEVICE_ATTEST_01)
 		}

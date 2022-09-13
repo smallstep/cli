@@ -891,10 +891,10 @@ github.com/slackhq/nebula v1.5.2/go.mod h1:xaCM6wqbFk/NRmmUe1bv88fWBm3a1UioXJVIp
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1/1fApl1A+9VcBk+9dcqGfnePY87LY=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
-github.com/smallstep/certificates v0.22.2-0.20220908202628-b2119e9f2c68 h1:s5S1IZJM4hgK78d/QQov2Vx3Re5GBbb+r4mIaCo7iJk=
-github.com/smallstep/certificates v0.22.2-0.20220908202628-b2119e9f2c68/go.mod h1:rGaw/vJYWunycyCMNu2Pq2XHVjtRNMdNO3U1gOSOfcQ=
-github.com/smallstep/certinfo v1.7.0 h1:1VzGgeSFLdXO242mRUkJu02epXV6E9uawjhPH0H2LzA=
-github.com/smallstep/certinfo v1.7.0/go.mod h1:QRjP6s+cuishA6cdB//RX357ysYGz/QxlpWGyWjnfII=
+github.com/smallstep/certificates v0.22.2-0.20220912233041-df975122a0da h1:Y0iP/MZpdl1bpt7D2WYnwa8te8+k0vDcyYQ5tRKLjbI=
+github.com/smallstep/certificates v0.22.2-0.20220912233041-df975122a0da/go.mod h1:e5p/JQ4oT3IArpw1WA5BB86TBE6s6IaIiqnTx7JwRrk=
+github.com/smallstep/certinfo v1.8.1 h1:M6z2uUtK6MVva0E7ZIzev9I/3mZl6Sfvvk4DiNob/s0=
+github.com/smallstep/certinfo v1.8.1/go.mod h1:rRIcDFvXO8nrxnmqhrLrhOwiFtJ4iMRa9naNnZXcNU8=
 github.com/smallstep/nosql v0.4.0 h1:Go3WYwttUuvwqMtFiiU4g7kBIlY+hR0bIZAqVdakQ3M=
 github.com/smallstep/nosql v0.4.0/go.mod h1:yKZT5h7cdIVm6wEKM9+jN5dgK80Hljpuy8HNsnI7Gzo=
 github.com/smallstep/truststore v0.12.0 h1:973Aa6fA7Ob/GCxqziosDzkQq6tV0Le6IUe4sikyW+U=
@@ -1075,8 +1075,8 @@ go.step.sm/cli-utils v0.7.5/go.mod h1:taSsY8haLmXoXM3ZkywIyRmVij/4Aj0fQbNTlJvv71
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
 go.step.sm/crypto v0.19.0 h1:WxjUDeTDpuPZ1IR3v6c4jc6WdlQlS5IYYQBhfnG5uW0=
 go.step.sm/crypto v0.19.0/go.mod h1:qZ+pNU1nV+THwP7TPTNCRMRr9xrRURhETTAK7U5psfw=
-go.step.sm/linkedca v0.18.1-0.20220908140115-147cf75c525d h1:grL/lXVzdUc51Aa2exEsRJl+Q9eaUwHc31heb/ims58=
-go.step.sm/linkedca v0.18.1-0.20220908140115-147cf75c525d/go.mod h1:qSuYlIIhvPmA2+DSSS03E2IXhbXWTLW61Xh9zDQJ3VM=
+go.step.sm/linkedca v0.19.0-rc.1 h1:8XcQvanelK1g0ijl5/itmmAIsqD2QSMHGqcWzJwwJCU=
+go.step.sm/linkedca v0.19.0-rc.1/go.mod h1:G35baT7Qnh6VsRCjzSfi5xsYw0ERrU+I1aIuZswMBeA=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.5.0/go.mod h1:sABNBOSYdrvTF6hTgEIbc7YasKWGhgEQZyfxyTvoXHQ=
@@ -1123,8 +1123,9 @@ golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e/go.mod h1:GvvjBRRGRdwPK5y
 golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
-golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29 h1:tkVvjkPTB7pnW3jnid7kNyAMPVWllTNOf/qKDze4p9o=
 golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
+golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d h1:3qF+Z8Hkrw9sOhrFHti9TlB1Hkac1x+DNRkv0XQiFjo=
+golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190306152737-a1d7652674e8/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190510132918-efd6b22b2522/go.mod h1:ZjyILWgesfNpC6sMxTJOJm9Kp84zZh5NQWvqDGG3Qr8=
