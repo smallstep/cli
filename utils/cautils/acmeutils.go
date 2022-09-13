@@ -203,7 +203,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 }
 
 func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
-	isAttest := (ctx.String("attest") != "")
+	isAttest := (ctx.String("attestation-uri") != "")
 	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
 		if err != nil {
@@ -409,7 +409,7 @@ type attestationObject struct {
 }
 
 func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string) error {
-	attestor, err := cryptoutil.CreateAttestor("", ctx.String("attest"))
+	attestor, err := cryptoutil.CreateAttestor("", ctx.String("attestation-uri"))
 	if err != nil {
 		return err
 	}
@@ -629,7 +629,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		ips             []net.IP
 	)
 
-	attestationURI := af.ctx.String("attest")
+	attestationURI := af.ctx.String("attestation-uri")
 	if attestationURI == "" {
 		newOrderRequest, dnsNames, ips, err = createNewOrderRequest(af.ctx, af.acmeDir, af.subject, af.sans)
 		if err != nil {

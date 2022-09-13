@@ -399,8 +399,8 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 		Usage: "The <uri> to configure a Cloud KMS or an HSM.",
 	}
 
-	Attest = cli.StringFlag{
-		Name:  "attest",
+	AttestationURI = cli.StringFlag{
+		Name:  "attestation-uri",
 		Usage: "The KMS <uri> used for attestation.",
 	}
 )

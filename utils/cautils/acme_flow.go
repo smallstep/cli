@@ -36,7 +36,7 @@ func ACMECreateCertFlow(ctx *cli.Context, provisionerName string) error {
 			return errors.WithStack(err)
 		}
 		ui.PrintSelected("Private Key", keyFile)
-	} else if v := ctx.String("attest"); v != "" {
+	} else if v := ctx.String("attestation-uri"); v != "" {
 		ui.PrintSelected("Private Key", v)
 	}
 	return nil
