@@ -1248,7 +1248,7 @@ func (o *oauth) success(w http.ResponseWriter) {
 	w.Write([]byte(`</svg>`))
 	w.Write([]byte(`</div>`))
 	w.Write([]byte(`<p style='font-size: 20px;'>`))
-	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br/>OAuth Request Successful. Look for the token on the command line`))
+	w.Write([]byte(`<strong style='font-size: 28px; color: #000;'>Success</strong><br/>OAuth Request Successful.<br/>Look for the token on the command line.`))
 	w.Write([]byte(`</p>`))
 	w.Write([]byte(`</body>`))
 	w.Write([]byte(`</html>`))
