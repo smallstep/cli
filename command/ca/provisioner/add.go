@@ -53,7 +53,7 @@ OIDC
 
 X5C
 
-**step ca provisioner add** <name> **--type**=X5C **--x5c-root**=<file>
+**step ca provisioner add** <name> **--type**=X5C **--x5c-roots**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -118,7 +118,7 @@ SCEP
 			oidcTenantIDFlag,
 
 			// X5C provisioner flags
-			x5cRootFlag,
+			x5cRootsFlag,
 
 			// Nebula provisioner flags
 			nebulaRootFlag,
@@ -216,7 +216,7 @@ step ca provisioner add Google --type OIDC --ssh \
 
 Create an X5C provisioner:
 '''
-step ca provisioner add x5c --type X5C --x5c-root x5c_ca.crt
+step ca provisioner add x5c --type X5C --x5c-roots x5c_ca.crt
 '''
 
 Create an ACME provisioner:
@@ -573,9 +573,9 @@ func createSSHPOPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error)
 }
 
 func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
-	x5cRootFile := ctx.String("x5c-root")
+	x5cRootFile := ctx.String("x5c-roots")
 	if x5cRootFile == "" {
-		return nil, errs.RequiredWithFlagValue(ctx, "type", "x5c", "x5c-root")
+		return nil, errs.RequiredWithFlagValue(ctx, "type", "x5c", "x5c-roots")
 	}
 
 	roots, err := pemutil.ReadCertificateBundle(x5cRootFile)

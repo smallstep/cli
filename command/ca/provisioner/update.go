@@ -57,7 +57,7 @@ OIDC
 
 X5C
 
-**step ca provisioner update** <name> **--x5c-root**=<file>
+**step ca provisioner update** <name> **--x5c-roots**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -112,7 +112,7 @@ SCEP
 			oidcTenantIDFlag,
 
 			// X5C Root Flag
-			x5cRootFlag,
+			x5cRootsFlag,
 
 			// Nebula provisioner flags
 			nebulaRootFlag,
@@ -231,7 +231,7 @@ step ca provisioner update Google \
 
 Update an X5C provisioner:
 '''
-step ca provisioner update x5c --x5c-root x5c_ca.crt
+step ca provisioner update x5c --x5c-roots x5c_ca.crt
 '''
 
 Update an ACME provisioner:
@@ -641,8 +641,8 @@ func updateX5CDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		return errors.New("error casting details to X5C type")
 	}
 	details := data.X5C
-	if ctx.IsSet("x5c-root") {
-		x5cRootFile := ctx.String("x5c-root")
+	if ctx.IsSet("x5c-roots") {
+		x5cRootFile := ctx.String("x5c-roots")
 		roots, err := pemutil.ReadCertificateBundle(x5cRootFile)
 		if err != nil {
 			return errors.Wrapf(err, "error loading X5C Root certificates from %s", x5cRootFile)
