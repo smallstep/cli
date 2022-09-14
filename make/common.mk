@@ -59,6 +59,7 @@ generate:
 #########################################
 # Test
 #########################################
+
 test:
 	$Q $(CGO_OVERRIDE) $(GOFLAGS) gotestsum -- -coverprofile=coverage.out -short -covermode=atomic ./...
 
