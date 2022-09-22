@@ -71,7 +71,7 @@ race:
 integrate: integration
 
 integration: bin/$(BINNAME)
-	$Q $(CGO_OVERRIDE) go test -tags=integration ./integration/...
+	$Q $(CGO_OVERRIDE) gotestsum -- -tags=integration ./integration/...
 
 .PHONY: integrate integration
 
