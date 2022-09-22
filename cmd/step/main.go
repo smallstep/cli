@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"github.com/smallstep/cli/usage"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
@@ -114,12 +114,14 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		//nolint:errorlint // not a specific error
-		if fe, ok := err.(errs.FriendlyError); ok {
+		var messenger interface {
+			Message() string
+		}
+		if errors.As(err, &messenger) {
 			if os.Getenv("STEPDEBUG") == "1" {
-				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, fe.Message())
+				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, messenger.Message())
 			} else {
-				fmt.Fprintln(os.Stderr, fe.Message())
+				fmt.Fprintln(os.Stderr, messenger.Message())
 				fmt.Fprintln(os.Stderr, "Re-run with STEPDEBUG=1 for more info.")
 			}
 		} else {

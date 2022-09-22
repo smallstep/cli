@@ -106,10 +106,6 @@ times to set multiple variables.`,
 	}
 }
 
-type statusCoder interface {
-	StatusCode() int
-}
-
 func configAction(ctx *cli.Context) (recoverErr error) {
 	team := ctx.String("team")
 	isHost := ctx.Bool("host")
@@ -171,8 +167,10 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 			roots, err = client.SSHFederation()
 		}
 		if err != nil {
-			//nolint:errorlint // not a specific error
-			if e, ok := err.(statusCoder); ok && e.StatusCode() == http.StatusNotFound {
+			var statusCoder interface {
+				StatusCode() int
+			}
+			if errors.As(err, &statusCoder) && statusCoder.StatusCode() == http.StatusNotFound {
 				return errors.New("step certificates is not configured with SSH support")
 			}
 			return errors.Wrap(err, "error getting ssh public keys")
