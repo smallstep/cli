@@ -200,6 +200,10 @@ Cloud.`,
 				Name:  "remote-administration",
 				Usage: `Enable Remote Administration. Defaults to false.`,
 			},
+			cli.BoolFlag{
+				Name:  "acme",
+				Usage: `Create a default ACME provisioner. Defaults to false.`,
+			},
 			flags.ContextProfile,
 			flags.ContextAuthority,
 			flags.HiddenNoContext,
@@ -224,6 +228,7 @@ func initAction(ctx *cli.Context) (err error) {
 	noDB := ctx.Bool("no-db")
 	helm := ctx.Bool("helm")
 	enableRemoteAdministration := ctx.Bool("remote-administration")
+	addDefaultACMEProvisioner := ctx.Bool("acme")
 
 	switch {
 	case root != "" && key == "":
@@ -250,6 +255,9 @@ func initAction(ctx *cli.Context) (err error) {
 	case enableRemoteAdministration && noDB:
 		// remote administration (Admin API) requires a database configuration
 		return errs.IncompatibleFlagWithFlag(ctx, "remote-administration", "no-db")
+	case addDefaultACMEProvisioner && noDB:
+		// ACME functionality requires a database configuration
+		return errs.IncompatibleFlagWithFlag(ctx, "acme", "no-db")
 	}
 
 	var password string
@@ -587,6 +595,11 @@ func initAction(ctx *cli.Context) (err error) {
 		// admin called `step` to be created for the default provisioner when the PKI is saved.
 		if enableRemoteAdministration {
 			pkiOpts = append(pkiOpts, pki.WithAdmin())
+		}
+
+		// add a default ACME provisioner named `acme`
+		if addDefaultACMEProvisioner {
+			pkiOpts = append(pkiOpts, pki.WithACME())
 		}
 	}
 
