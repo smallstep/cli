@@ -196,6 +196,10 @@ Cloud.`,
 				Name:  "context",
 				Usage: `The <name> of the context for the new authority.`,
 			},
+			cli.BoolFlag{
+				Name:  "remote-administration",
+				Usage: `Enable Remote Administration. Defaults to false.`,
+			},
 			flags.ContextProfile,
 			flags.ContextAuthority,
 			flags.HiddenNoContext,
@@ -219,6 +223,7 @@ func initAction(ctx *cli.Context) (err error) {
 	pkiOnly := ctx.Bool("pki")
 	noDB := ctx.Bool("no-db")
 	helm := ctx.Bool("helm")
+	enableRemoteAdministration := ctx.Bool("remote-administration")
 
 	switch {
 	case root != "" && key == "":
@@ -242,6 +247,9 @@ func initAction(ctx *cli.Context) (err error) {
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "no-db")
 	case pkiOnly && helm:
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "helm")
+	case enableRemoteAdministration && noDB:
+		// remote administration (Admin API) requires a database configuration
+		return errs.IncompatibleFlagWithFlag(ctx, "remote-administration", "no-db")
 	}
 
 	var password string
@@ -572,6 +580,13 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 		if helm {
 			pkiOpts = append(pkiOpts, pki.WithHelm())
+		}
+
+		// enable the admin API if the `--remote-administration` flag is provided. This will
+		// also result in the default provisioner being stored in the database and a default
+		// admin called `step` to be created for the default provisioner when the PKI is saved.
+		if enableRemoteAdministration {
+			pkiOpts = append(pkiOpts, pki.WithAdmin())
 		}
 	}
 
