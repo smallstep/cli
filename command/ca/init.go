@@ -41,7 +41,8 @@ func initCommand() cli.Command {
 [**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
 [**--provisioner-password-file**=<file>] [**--password-file**=<file>]
 [**--ra**=<type>] [**--kms**=<type>] [**--with-ca-url**=<url>] [**--no-db**]
-[**--context**=<name>] [**--profile**=<name>] [**--authority**=<name>]`,
+[**--remote-administration**] [**--acme**] [**--context**=<name>] 
+[**--profile**=<name>] [**--authority**=<name>]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
 		Flags: []cli.Flag{
@@ -427,6 +428,13 @@ func initAction(ctx *cli.Context) (err error) {
 			ui.Println()
 			return nil
 		}
+		// When initializing a linked CA, providing the --acme flag doesn't currently
+		// result in the default ACME provisioner being added. We may want to support this
+		// for ease of use, but this seems to require a bit of refactoring when generating
+		// the full CA configuration with DB initialization.
+		if deploymentType != pki.StandaloneDeployment && addDefaultACMEProvisioner {
+			return fmt.Errorf("adding a default ACME provisioner by providing the --acme flag is not supported with deployment type %q", deploymentType.String())
+		}
 
 		ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
 		name, err = ui.Prompt("(e.g. Smallstep)", ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
@@ -597,8 +605,9 @@ func initAction(ctx *cli.Context) (err error) {
 			pkiOpts = append(pkiOpts, pki.WithAdmin())
 		}
 
-		// add a default ACME provisioner named `acme`
-		if addDefaultACMEProvisioner {
+		// add a default ACME provisioner named `acme` if `--acme` flag is provided
+		// and configuring a standalone CA.
+		if addDefaultACMEProvisioner && deploymentType == pki.StandaloneDeployment {
 			pkiOpts = append(pkiOpts, pki.WithACME())
 		}
 	}
