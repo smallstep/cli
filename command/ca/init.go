@@ -41,7 +41,7 @@ func initCommand() cli.Command {
 [**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
 [**--provisioner-password-file**=<file>] [**--password-file**=<file>]
 [**--ra**=<type>] [**--kms**=<type>] [**--with-ca-url**=<url>] [**--no-db**]
-[**--remote-administration**] [**--acme**] [**--context**=<name>] 
+[**--remote-management**] [**--acme**] [**--context**=<name>] 
 [**--profile**=<name>] [**--authority**=<name>]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
@@ -198,8 +198,8 @@ Cloud.`,
 				Usage: `The <name> of the context for the new authority.`,
 			},
 			cli.BoolFlag{
-				Name:  "remote-administration",
-				Usage: `Enable Remote Administration. Defaults to false.`,
+				Name:  "remote-management",
+				Usage: `Enable Remote Management. Defaults to false.`,
 			},
 			cli.BoolFlag{
 				Name:  "acme",
@@ -228,7 +228,7 @@ func initAction(ctx *cli.Context) (err error) {
 	pkiOnly := ctx.Bool("pki")
 	noDB := ctx.Bool("no-db")
 	helm := ctx.Bool("helm")
-	enableRemoteAdministration := ctx.Bool("remote-administration")
+	enableRemoteManagement := ctx.Bool("remote-management")
 	addDefaultACMEProvisioner := ctx.Bool("acme")
 
 	switch {
@@ -253,9 +253,9 @@ func initAction(ctx *cli.Context) (err error) {
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "no-db")
 	case pkiOnly && helm:
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "helm")
-	case enableRemoteAdministration && noDB:
-		// remote administration (Admin API) requires a database configuration
-		return errs.IncompatibleFlagWithFlag(ctx, "remote-administration", "no-db")
+	case enableRemoteManagement && noDB:
+		// remote management via the Admin API requires a database configuration
+		return errs.IncompatibleFlagWithFlag(ctx, "remote-management", "no-db")
 	case addDefaultACMEProvisioner && noDB:
 		// ACME functionality requires a database configuration
 		return errs.IncompatibleFlagWithFlag(ctx, "acme", "no-db")
@@ -598,10 +598,10 @@ func initAction(ctx *cli.Context) (err error) {
 			pkiOpts = append(pkiOpts, pki.WithHelm())
 		}
 
-		// enable the admin API if the `--remote-administration` flag is provided. This will
+		// enable the admin API if the `--remote-management` flag is provided. This will
 		// also result in the default provisioner being stored in the database and a default
 		// admin called `step` to be created for the default provisioner when the PKI is saved.
-		if enableRemoteAdministration {
+		if enableRemoteManagement {
 			pkiOpts = append(pkiOpts, pki.WithAdmin())
 		}
 
