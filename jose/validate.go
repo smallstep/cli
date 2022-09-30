@@ -11,8 +11,8 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -34,11 +34,11 @@ func ValidateSSHPOP(certFile string, key interface{}) (string, error) {
 	if !ok {
 		return "", errors.New("error casting ssh public key to ssh certificate")
 	}
-	pubkey, err := keys.ExtractKey(cert)
+	pubkey, err := keyutil.ExtractKey(cert)
 	if err != nil {
 		return "", errors.Wrap(err, "error extracting public key from ssh public key interface")
 	}
-	if err = keys.VerifyPair(pubkey, key); err != nil {
+	if err = keyutil.VerifyPair(pubkey, key); err != nil {
 		return "", errors.Wrap(err, "error verifying ssh key pair")
 	}
 
@@ -54,7 +54,7 @@ func validateX5(certFile string, key interface{}) ([]*x509.Certificate, error) {
 		return nil, errors.Wrap(err, "error reading certificate chain from file")
 	}
 
-	if err = keys.VerifyPair(certs[0].PublicKey, key); err != nil {
+	if err = keyutil.VerifyPair(certs[0].PublicKey, key); err != nil {
 		return nil, errors.Wrap(err, "error verifying certificate and key")
 	}
 

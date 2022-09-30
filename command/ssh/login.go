@@ -8,7 +8,6 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
@@ -16,6 +15,7 @@ import (
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -170,7 +170,7 @@ func loginAction(ctx *cli.Context) error {
 	}
 
 	// Generate keypair
-	pub, priv, err := keys.GenerateDefaultKeyPair()
+	pub, priv, err := keyutil.GenerateDefaultKeyPair()
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func loginAction(ctx *cli.Context) error {
 	var sshAuPubBytes []byte
 	var auPub, auPriv interface{}
 	if isAddUser {
-		auPub, auPriv, err = keys.GenerateDefaultKeyPair()
+		auPub, auPriv, err = keyutil.GenerateDefaultKeyPair()
 		if err != nil {
 			return err
 		}

@@ -10,17 +10,16 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
-
-	"github.com/pkg/errors"
+	"go.step.sm/crypto/pemutil"
 )
 
 type bootstrapAPIResponse struct {

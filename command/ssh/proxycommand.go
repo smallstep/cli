@@ -13,7 +13,6 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
@@ -21,6 +20,7 @@ import (
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/keyutil"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -176,7 +176,7 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 	}
 
 	// Generate keypair
-	pub, priv, err := keys.GenerateDefaultKeyPair()
+	pub, priv, err := keyutil.GenerateDefaultKeyPair()
 	if err != nil {
 		return err
 	}

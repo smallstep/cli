@@ -15,10 +15,10 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/keys"
 	"github.com/smallstep/cli/utils"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -297,7 +297,7 @@ func ParseKey(b []byte, opts ...Options) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return keys.ExtractKey(k)
+	return keyutil.ExtractKey(k)
 }
 
 // Read returns the key or certificate encoded in the given PEM file.

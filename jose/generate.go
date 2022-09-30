@@ -12,9 +12,9 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/randutil"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/randutil"
 )
 
 const (

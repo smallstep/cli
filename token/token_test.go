@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/jose"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/randutil"
 )
 
 func TestClaims_Set(t *testing.T) {

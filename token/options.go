@@ -10,8 +10,8 @@ import (
 
 	"github.com/pkg/errors"
 	nebula "github.com/slackhq/nebula/cert"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/jose"
+	"go.step.sm/crypto/pemutil"
 )
 
 // Options is a function that set claims.

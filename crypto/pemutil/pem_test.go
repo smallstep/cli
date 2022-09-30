@@ -19,7 +19,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
-	"github.com/smallstep/cli/crypto/keys"
+	"go.step.sm/crypto/keyutil"
 )
 
 type keyType int
@@ -382,59 +382,59 @@ func TestSerialize(t *testing.T) {
 		},
 		"RSA Private Key success": {
 			in: func() (interface{}, error) {
-				return keys.GenerateKey("RSA", "", 1024)
+				return keyutil.GenerateKey("RSA", "", 1024)
 			},
 		},
 		"RSA Public Key success": {
 			in: func() (interface{}, error) {
-				pub, _, err := keys.GenerateKeyPair("RSA", "", 1024)
+				pub, _, err := keyutil.GenerateKeyPair("RSA", "", 1024)
 				return pub, err
 			},
 		},
 		"EC Private Key success": {
 			in: func() (interface{}, error) {
-				return keys.GenerateKey("EC", "P-256", 0)
+				return keyutil.GenerateKey("EC", "P-256", 0)
 			},
 		},
 		"EC Private Key success - encrypt input data": {
 			in: func() (interface{}, error) {
-				return keys.GenerateKey("EC", "P-256", 0)
+				return keyutil.GenerateKey("EC", "P-256", 0)
 			},
 			pass: "pass",
 		},
 		"EC Public Key success": {
 			in: func() (interface{}, error) {
-				pub, _, err := keys.GenerateKeyPair("EC", "P-256", 0)
+				pub, _, err := keyutil.GenerateKeyPair("EC", "P-256", 0)
 				return pub, err
 			},
 		},
 		"OKP Private Key success": {
 			in: func() (interface{}, error) {
-				return keys.GenerateKey("OKP", "Ed25519", 0)
+				return keyutil.GenerateKey("OKP", "Ed25519", 0)
 			},
 		},
 		"OKP Public Key success": {
 			in: func() (interface{}, error) {
-				pub, _, err := keys.GenerateKeyPair("OKP", "Ed25519", 0)
+				pub, _, err := keyutil.GenerateKeyPair("OKP", "Ed25519", 0)
 				return pub, err
 			},
 		},
 		"propagate open key out file error": {
 			in: func() (interface{}, error) {
-				return keys.GenerateKey("EC", "P-256", 0)
+				return keyutil.GenerateKey("EC", "P-256", 0)
 			},
 			file: "./fakeDir/test.key",
 			err:  errors.New("open ./fakeDir/test.key failed: no such file or directory"),
 		},
 		"ToFile Success (EC Private Key unencrypted)": {
 			in: func() (interface{}, error) {
-				return keys.GenerateKey("EC", "P-256", 0)
+				return keyutil.GenerateKey("EC", "P-256", 0)
 			},
 			file: "./test.key",
 		},
 		"ToFile Success (EC Private Key encrypted)": {
 			in: func() (interface{}, error) {
-				return keys.GenerateKey("EC", "P-256", 0)
+				return keyutil.GenerateKey("EC", "P-256", 0)
 			},
 			pass: "pass",
 			file: "./test.key",

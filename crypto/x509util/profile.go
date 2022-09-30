@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/utils"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 )
 
 // Cribbed directly from golang src crypto/x509/x509.go
@@ -130,7 +130,7 @@ func GenerateKeyPair(kty, crv string, size int) WithOption {
 // GenerateDefaultKeyPair generates a new public/private key pair using the
 // default values and sets them in the given profile.
 func GenerateDefaultKeyPair(p Profile) error {
-	pub, priv, err := keys.GenerateDefaultKeyPair()
+	pub, priv, err := keyutil.GenerateDefaultKeyPair()
 	if err != nil {
 		return err
 	}
@@ -414,7 +414,7 @@ func (b *base) DefaultDuration() time.Duration {
 }
 
 func (b *base) GenerateKeyPair(kty, crv string, size int) error {
-	pub, priv, err := keys.GenerateKeyPair(kty, crv, size)
+	pub, priv, err := keyutil.GenerateKeyPair(kty, crv, size)
 	if err != nil {
 		return err
 	}
@@ -424,7 +424,7 @@ func (b *base) GenerateKeyPair(kty, crv string, size int) error {
 }
 
 func (b *base) GenerateDefaultKeyPair() error {
-	pub, priv, err := keys.GenerateDefaultKeyPair()
+	pub, priv, err := keyutil.GenerateDefaultKeyPair()
 	if err != nil {
 		return err
 	}

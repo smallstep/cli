@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
+	"go.step.sm/crypto/pemutil"
 )
 
 // Identity contains a public/private x509 certificate/key pair.

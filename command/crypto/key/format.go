@@ -11,13 +11,13 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/pemutil"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -342,7 +342,9 @@ func convertToPEM(ctx *cli.Context, key interface{}) (b []byte, err error) {
 			if passFile := ctx.String("password-file"); passFile != "" {
 				opts = append(opts, pemutil.WithPasswordFile(passFile))
 			} else {
-				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key"))
+				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
+					return ui.PromptPassword(s, ui.WithValidateNotEmpty())
+				}))
 			}
 		default:
 			return nil, errors.Errorf("unsupported key type %T", key)
@@ -360,20 +362,20 @@ func convertToDER(ctx *cli.Context, key interface{}) (b []byte, err error) {
 	switch k := key.(type) {
 	case *rsa.PrivateKey:
 		if ctx.Bool("pkcs8") {
-			b, err = pemutil.MarshalPKCS8PrivateKey(key)
+			b, err = x509.MarshalPKCS8PrivateKey(key)
 		} else {
 			b = x509.MarshalPKCS1PrivateKey(k)
 		}
 	case *ecdsa.PrivateKey:
 		if ctx.Bool("pkcs8") {
-			b, err = pemutil.MarshalPKCS8PrivateKey(key)
+			b, err = x509.MarshalPKCS8PrivateKey(key)
 		} else {
 			b, err = x509.MarshalECPrivateKey(k)
 		}
 	case ed25519.PrivateKey: // always PKCS#8
-		b, err = pemutil.MarshalPKCS8PrivateKey(key)
+		b, err = x509.MarshalPKCS8PrivateKey(key)
 	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey: // always PKIX
-		b, err = pemutil.MarshalPKIXPublicKey(key)
+		b, err = x509.MarshalPKIXPublicKey(key)
 	default:
 		return nil, errors.Errorf("unsupported key type %T", key)
 	}
@@ -396,7 +398,9 @@ func convertToSSH(ctx *cli.Context, key interface{}) ([]byte, error) {
 			if passFile := ctx.String("password-file"); passFile != "" {
 				opts = append(opts, pemutil.WithPasswordFile(passFile))
 			} else {
-				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key"))
+				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
+					return ui.PromptPassword(s, ui.WithValidateNotEmpty())
+				}))
 			}
 		}
 		block, err := pemutil.Serialize(key, opts...)

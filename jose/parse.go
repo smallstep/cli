@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/pemutil"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
