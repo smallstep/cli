@@ -7,15 +7,14 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/urfave/cli"
-
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
+	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/pemutil"
 )
 
 func changePassCommand() cli.Command {

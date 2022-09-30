@@ -12,18 +12,17 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/command"
 	"github.com/smallstep/cli/crypto/fingerprint"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
-	libcommand "go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/pemutil"
 	"golang.org/x/crypto/ssh"
 )
 
 func fingerprintCommand() cli.Command {
 	return cli.Command{
 		Name:      "fingerprint",
-		Action:    libcommand.ActionFunc(fingerprintAction),
+		Action:    cli.ActionFunc(fingerprintAction),
 		Usage:     `print the fingerprint of a public key`,
 		UsageText: `**step crypto key fingerprint** <key-file>`,
 		Description: `**step crypto key fingerprint** prints the fingerprint of a public key. The

@@ -9,17 +9,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/utils"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 )
 
 func rekeyCertificateCommand() cli.Command {
@@ -329,7 +328,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		priv, err = keys.GenerateKey(kty, crv, size)
+		priv, err = keyutil.GenerateKey(kty, crv, size)
 		if err != nil {
 			return err
 		}

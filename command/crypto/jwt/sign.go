@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/randutil"
 )
 
 func signCommand() cli.Command {

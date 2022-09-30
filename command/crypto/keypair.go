@@ -2,8 +2,6 @@ package crypto
 
 import (
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
@@ -11,6 +9,8 @@ import (
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 )
 
 func createKeyPairCommand() cli.Command {
@@ -157,7 +157,7 @@ func createAction(ctx *cli.Context) (err error) {
 			return err
 		}
 
-		pub, priv, err = keys.GenerateKeyPair(kty, crv, size)
+		pub, priv, err = keyutil.GenerateKeyPair(kty, crv, size)
 		if err != nil {
 			return err
 		}

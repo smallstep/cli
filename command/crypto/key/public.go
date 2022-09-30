@@ -4,7 +4,6 @@ import (
 	"encoding/pem"
 	"os"
 
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
@@ -12,6 +11,7 @@ import (
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 )
 
 func publicCommand() cli.Command {

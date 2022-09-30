@@ -16,7 +16,6 @@ import (
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 	"golang.org/x/crypto/ssh"
@@ -25,13 +24,13 @@ import (
 func formatCommand() cli.Command {
 	return cli.Command{
 		Name:      "format",
-		Action:    command.ActionFunc(formatAction),
+		Action:    cli.ActionFunc(formatAction),
 		Usage:     `reformat a public or private key`,
 		UsageText: `**step crypto key format** <key-file> [**--out**=<file>]`,
 		Description: `**step crypto key format** prints or writes the key in
 a different format.
 
-By default PEM formated keys will be converted to DER with the following rules:
+By default PEM formatted keys will be converted to DER with the following rules:
 
  * ECDSA, RSA, AND Ed25519 public keys will use the DER-encoded PKIX format.
  * ECDSA, AND RSA private keys will use the ASN.1, DER format.
