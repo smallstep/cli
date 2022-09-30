@@ -36,7 +36,8 @@ func addCommand() cli.Command {
 ACME
 
 **step ca provisioner add** <name> **--type**=ACME
-[**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>] [**--attestation-format**=<format>]
+[**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>]
+[**--attestation-format**=<format>] [**--attestation-roots**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -128,6 +129,7 @@ SCEP
 			forceCNFlag,           // ACME + SCEP
 			challengeFlag,         // ACME + SCEP
 			attestationFormatFlag, // ACME
+			attestationRootsFlag,  // ACME
 
 			// SCEP provisioner flags
 			scepCapabilitiesFlag,
@@ -227,6 +229,11 @@ step ca provisioner add acme --type ACME
 Create an ACME provisioner, forcing a CN and requiring EAB:
 '''
 step ca provisioner add acme --type ACME --force-cn --require-eab
+'''
+
+Create an ACME provisioner for device attestation:
+'''
+step ca provisioner add attestation --type ACME --challenge device-attest-01
 '''
 
 Create an K8SSA provisioner:
@@ -548,6 +555,10 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	attestationRoots, err := parseCACertificates(ctx.StringSlice("attestation-roots"))
+	if err != nil {
+		return nil, err
+	}
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_ACME{
 			ACME: &linkedca.ACMEProvisioner{
@@ -559,6 +570,7 @@ func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 				AttestationFormats: sliceutil.RemoveDuplicates(
 					acmeAttestationFormatToLinkedca(ctx.StringSlice("attestation-format")),
 				),
+				AttestationRoots: attestationRoots,
 			},
 		},
 	}, nil
@@ -867,4 +879,25 @@ func acmeAttestationFormatToLinkedca(formats []string) []linkedca.ACMEProvisione
 		}
 	}
 	return ret
+}
+
+func parseCACertificates(filenames []string) ([][]byte, error) {
+	var pemCerts [][]byte
+	for _, name := range filenames {
+		certs, err := pemutil.ReadCertificateBundle(name)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading certificates from %s", name)
+		}
+
+		for _, cert := range certs {
+			if !cert.IsCA || cert.KeyUsage&x509.KeyUsageCertSign == 0 {
+				return nil, errors.Errorf("certificate with common name %q is not a valid CA", cert.Subject.CommonName)
+			}
+			pemCerts = append(pemCerts, pem.EncodeToMemory(&pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: cert.Raw,
+			}))
+		}
+	}
+	return pemCerts, nil
 }

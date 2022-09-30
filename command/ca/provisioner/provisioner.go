@@ -388,6 +388,12 @@ certificate can use the device-attest-01 challenge to get a new certificate.
 to get a new certificate.`,
 	}
 
+	attestationRootsFlag = cli.StringSliceFlag{
+		Name: "attestation-roots",
+		Usage: `PEM-formatted root certificate(s) <file> used to validate the attestation
+certificates. Use the flag multiple times to read from multiple files.`,
+	}
+
 	removeAttestationFormatFlag = cli.StringSliceFlag{
 		Name: "remove-attestation-format",
 		Usage: `Remove an ACME attestation statement <format> from the list configured in the provisioner.
