@@ -20,16 +20,14 @@ jobs:
       vversion: ${{ steps.extract-tag.outputs.VVERSION }}
       is_prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
     steps:
-      -
-        name: Extract Tag Names
+      - name: Extract Tag Names
         id: extract-tag
         run: |
           VVERSION=${GITHUB_REF#refs/tags/}
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "::set-output name=VVERSION::${VVERSION}"
           echo "::set-output name=VERSION::${VERSION}"
-      -
-        name: Is Pre-release
+      - name: Is Pre-release
         id: is_prerelease
         run: |
           set +e
@@ -37,8 +35,7 @@ jobs:
           OUT=$?
           if [ $OUT -eq 0 ]; then IS_PRERELEASE=true; else IS_PRERELEASE=false; fi
           echo "::set-output name=IS_PRERELEASE::${IS_PRERELEASE}"
-      -
-        name: Create Release
+      - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -54,39 +51,32 @@ jobs:
     runs-on: ubuntu-latest
     needs: create_release
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      -
-        name: Set up Go
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
           check-latest: true
-      -
-        name: Configure Go
+      - name: Configure Go
         id: configure_go
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-      -
-        name: Install cosign
-        uses: sigstore/cosign-installer@v1.1.0
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v2
         with:
-          cosign-release: 'v1.1.0'
-      -
-        name: Write cosign key to disk
+          cosign-release: 'v1.12.1'
+      - name: Write cosign key to disk
         id: write_key
         run: echo "${{ secrets.COSIGN_KEY }}" > "/tmp/cosign.key"
-      -
-        name: Get Release Date
+      - name: Get Release Date
         id: release_date
         run: |
           RELEASE_DATE=$(date +"%y-%m-%d")
           echo "::set-output name=RELEASE_DATE::${RELEASE_DATE}"
-      -
-        name: Run GoReleaser
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3
         with:
           version: 'latest'
@@ -101,26 +91,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: ci
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
           check-latest: true
-      -
-        name: Install cosign
-        uses: sigstore/cosign-installer@v1.1.0
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v2
         with:
           cosign-release: 'v1.1.0'
-      -
-        name: Write cosign key to disk
+      - name: Write cosign key to disk
         id: write_key
         run: echo "${{ secrets.COSIGN_KEY }}" > "/tmp/cosign.key"
-      -
-        name: Build
+      - name: Build
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
@@ -138,17 +123,14 @@ jobs:
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
           check-latest: true
-      -
-        name: Build
+      - name: Build
         id: build
         run: |
           PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
@@ -162,8 +144,7 @@ jobs:
           cp ./output/binary/darwin-amd64/bin/step ./.releases/step_latest_darwin_amd64
           cp ./output/binary/windows-amd64/bin/step ./.releases/step_${{ needs.create_release.outputs.version }}_windows.exe
           cp ./output/binary/windows-amd64/bin/step ./.releases/step_latest_windows.exe
-      -
-        name: Upload s3
+      - name: Upload s3
         id: upload-s3
         uses: jakejarvis/s3-sync-action@v0.5.1
         with:
@@ -181,28 +162,23 @@ jobs:
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
           check-latest: true
-      -
-        name: Build
+      - name: Build
         id: build
         run: V=1 make build
-      -
-        name: Checkout Docs
+      - name: Checkout Docs
         uses: actions/checkout@master
         with:
           repository: smallstep/docs
           token: ${{ secrets.PAT }}
           path: './docs'
-      -
-        name: Update Reference
+      - name: Update Reference
         id: update_refrence
         run: |
           ./bin/step help --markdown ./docs/src/pages/docs/step-cli/reference
@@ -210,8 +186,7 @@ jobs:
           git config user.email "eng@smallstep.com"
           git config user.name "Github Action CI"
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
-      -
-        name: Push changes
+      - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.PAT }}
