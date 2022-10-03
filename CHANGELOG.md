@@ -22,8 +22,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support for configuring ACME device-attest-01 challenges.
 - Added support for ACME device-attest-01 challenges with YubiKeys.
 - Added support for SUSE13 and upwards for `step certificate install`.
+- Added support for printing [Sigstore](https://www.sigstore.dev/) certificate details to `step certificate inspect`
 ### Changed
 - New OAuth success page with color.
+- Added `x5c-roots` as alias for `x5c-root` flag.
 
 ## [0.22.0] - 2022-08-25
 ### Added
