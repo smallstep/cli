@@ -8,6 +8,9 @@ on:
     - "master"
   pull_request:
   workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -17,6 +20,5 @@ jobs:
   ci:
     uses: smallstep/workflows/.github/workflows/goCI.yml@main
     with:
-      run-gitleaks: true
       run-codeql: true
     secrets: inherit
