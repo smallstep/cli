@@ -99,7 +99,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@v2
         with:
-          cosign-release: 'v1.1.0'
+          cosign-release: 'v1.12.1'
       - name: Write cosign key to disk
         id: write_key
         run: echo "${{ secrets.COSIGN_KEY }}" > "/tmp/cosign.key"
