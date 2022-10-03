@@ -18,7 +18,7 @@ func updateCommand() cli.Command {
 		UsageText: `**step ca provisioner webhook update** <name> **--provisioner**=<name>
 [**--url**=<url>] [**--kind**=<kind>] [**--bearer-token**=<token>]
 [**--basic-auth-username**=<username>] [**--basic-auth-password**=<password>]
-[**--disable-tls-client-auth**]
+[**--disable-tls-client-auth**]  [**--cert-type**=<cert-type>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
