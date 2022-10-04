@@ -3,12 +3,12 @@ package crypto
 import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/pemutil"
 )
@@ -135,7 +135,7 @@ func createAction(ctx *cli.Context) (err error) {
 		}
 
 		var jwk *jose.JSONWebKey
-		jwk, err = jose.ParseKey(fromJWK)
+		jwk, err = jose.ReadKey(fromJWK)
 		if err != nil {
 			return err
 		}

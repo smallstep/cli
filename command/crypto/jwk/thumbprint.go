@@ -9,8 +9,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/jose"
 	"github.com/urfave/cli"
+	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
 )
 
 func thumbprintCommand() cli.Command {
@@ -35,7 +36,9 @@ func thumbprintAction(ctx *cli.Context) error {
 
 	jwk := new(jose.JSONWebKey)
 	// Attempt to decrypt if encrypted
-	if b, err = jose.Decrypt("Please enter the password to decrypt your private JWK", b); err != nil {
+	if b, err = jose.Decrypt(b, jose.WithPasswordPrompter("Please enter the password to decrypt your private JWK", func(s string) ([]byte, error) {
+		return ui.PromptPassword(s)
+	})); err != nil {
 		return err
 	}
 

@@ -8,9 +8,9 @@ import (
 	"go.step.sm/cli-utils/ui"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/jose"
 )
 
 func decryptCommand() cli.Command {
@@ -103,9 +103,9 @@ func decryptAction(ctx *cli.Context) error {
 	var jwk *jose.JSONWebKey
 	switch {
 	case key != "":
-		jwk, err = jose.ParseKey(key, options...)
+		jwk, err = jose.ReadKey(key, options...)
 	case jwks != "":
-		jwk, err = jose.ParseKeySet(jwks, options...)
+		jwk, err = jose.ReadKeySet(jwks, options...)
 	case isPBES2:
 		pbes2Key, err = ui.PromptPassword("Please enter the password to decrypt the content encryption key")
 	default:

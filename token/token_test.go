@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smallstep/cli/jose"
+	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/randutil"
 )

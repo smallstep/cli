@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smallstep/cli/jose"
+	"go.step.sm/crypto/jose"
 )
 
 func TestOptions(t *testing.T) {

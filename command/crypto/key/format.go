@@ -12,11 +12,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 	"golang.org/x/crypto/ssh"
 )
@@ -308,11 +308,15 @@ func isJWK(in []byte) bool {
 func parseJWK(ctx *cli.Context, b []byte) (interface{}, error) {
 	// Decrypt key if encrypted.
 	if _, err := jose.ParseEncrypted(string(b)); err == nil {
-		var opts []jose.Option
+		opts := []jose.Option{
+			jose.WithPasswordPrompter("Please enter the password to decrypt the key", func(s string) ([]byte, error) {
+				return ui.PromptPassword(s)
+			}),
+		}
 		if passFile := ctx.String("password-file"); passFile != "" {
 			opts = append(opts, jose.WithPasswordFile(passFile))
 		}
-		b, err = jose.Decrypt("Please enter the password to decrypt the key", b, opts...)
+		b, err = jose.Decrypt(b, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -414,23 +418,30 @@ func convertToSSH(ctx *cli.Context, key interface{}) ([]byte, error) {
 }
 
 func convertToJWK(ctx *cli.Context, key interface{}) ([]byte, error) {
-	jwk := &jose.JSONWebKey{Key: key}
+	b, err := json.Marshal(&jose.JSONWebKey{Key: key})
+	if err != nil {
+		return nil, err
+	}
+
 	switch key.(type) {
 	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey:
-		return json.Marshal(jwk)
+		return b, nil
 	case *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
-		if !ctx.Bool("no-password") {
-			var opts []jose.Option
-			if passFile := ctx.String("password-file"); passFile != "" {
-				opts = append(opts, jose.WithPasswordFile(passFile))
-			}
-			jwe, err := jose.EncryptJWK(jwk, opts...)
-			if err != nil {
-				return nil, err
-			}
-			return []byte(jwe.FullSerialize()), nil
+		if ctx.Bool("no-password") {
+			return b, nil
 		}
-		return json.Marshal(jwk)
+
+		opts := []jose.Option{
+			jose.WithContentType("jwk+json"),
+		}
+		if passFile := ctx.String("password-file"); passFile != "" {
+			opts = append(opts, jose.WithPasswordFile(passFile))
+		}
+		jwe, err := jose.Encrypt(b, opts...)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(jwe.FullSerialize()), nil
 	default:
 		return nil, errors.Errorf("unsupported key type %T", key)
 	}
