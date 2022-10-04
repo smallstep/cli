@@ -1,14 +1,17 @@
 package certificate
 
 import (
+	"crypto"
 	"crypto/x509"
 	"fmt"
 
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/crypto/x509util"
+	//nolint:gosec // support for sha1 fingerprints
+	_ "crypto/sha1"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/pemutil"
 )
 
@@ -80,7 +83,7 @@ authenticity of the remote server.
 debugging invalid certificates remotely.`,
 			},
 			flags.ServerName,
-			command.FingerprintFormatFlag("hex"),
+			flags.FingerprintFormatFlag("hex"),
 			cli.BoolFlag{
 				Name:  "sha1",
 				Usage: `Use the SHA-1 hash algorithm to hash the certificate. Requires **--insecure** flag.`,
@@ -105,7 +108,11 @@ func fingerprintAction(ctx *cli.Context) error {
 		useSHA1    = ctx.Bool("sha1")
 	)
 
-	encoding, err := command.GetFingerprintEncoding(format)
+	if useSHA1 && !insecure {
+		return errs.RequiredInsecureFlag(ctx, "sha")
+	}
+
+	encoding, err := flags.ParseFingerprintFormat(format)
 	if err != nil {
 		return err
 	}
@@ -129,8 +136,12 @@ func fingerprintAction(ctx *cli.Context) error {
 		certs = certs[:1]
 	}
 
+	hash := crypto.SHA256
+	if useSHA1 {
+		hash = crypto.SHA1
+	}
 	for i, crt := range certs {
-		fp, err := x509util.EncodedFingerprint(crt, x509util.FingerprintEncoding(encoding), useSHA1, insecure)
+		fp, err := fingerprint.New(crt.Raw, hash, encoding)
 		if err != nil {
 			return err
 		}

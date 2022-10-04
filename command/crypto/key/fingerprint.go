@@ -9,12 +9,15 @@ import (
 	"fmt"
 	"os"
 
+	//nolint:gosec // support for sha1 fingerprints
+	_ "crypto/sha1"
+
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/command"
-	"github.com/smallstep/cli/crypto/fingerprint"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/pemutil"
 	"golang.org/x/crypto/ssh"
 )
@@ -101,7 +104,7 @@ $ step crypto key fingerprint --password-file pass.txt priv.pem
 				Name:  "raw",
 				Usage: "Print the raw bytes instead of the fingerprint. These bytes can be piped to a different hash command.",
 			},
-			command.FingerprintFormatFlag(""),
+			flags.FingerprintFormatFlag(""),
 		},
 	}
 }
@@ -143,7 +146,7 @@ func fingerprintAction(ctx *cli.Context) error {
 		format = defaultFmt
 	}
 
-	encoding, err := command.GetFingerprintEncoding(format)
+	encoding, err := flags.ParseFingerprintFormat(format)
 	if err != nil {
 		return err
 	}
@@ -198,12 +201,12 @@ func fingerprintAction(ctx *cli.Context) error {
 		return nil
 	}
 
-	fp := fingerprint.Fingerprint(b,
-		fingerprint.WithPrefix(prefix),
-		fingerprint.WithHash(hash),
-		fingerprint.WithEncoding(encoding),
-	)
-	fmt.Println(fp)
+	fp, err := fingerprint.New(b, hash, encoding)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(prefix + fp)
 	return nil
 }
 
