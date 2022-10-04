@@ -5,6 +5,7 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/linkedca"
@@ -16,9 +17,9 @@ func updateCommand() cli.Command {
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update a webhook attached to a provisioner",
 		UsageText: `**step ca provisioner webhook update** <name> **--provisioner**=<name>
-[**--url**=<url>] [**--kind**=<kind>] [**--bearer-token**=<token>]
-[**--basic-auth-username**=<username>] [**--basic-auth-password**=<password>]
-[**--disable-tls-client-auth**]  [**--cert-type**=<cert-type>]
+[**--url**=<url>] [**--kind**=<kind>] [**--bearer-token-file**=<filename>]
+[**--basic-auth-username**=<username>] [**--basic-auth-password-file**=<filename>]
+[**--disable-tls-client-auth**] [**--cert-type**=<cert-type>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
@@ -27,9 +28,9 @@ func updateCommand() cli.Command {
 			provisionerFlag,
 			urlFlag,
 			kindFlag,
-			bearerTokenFlag,
+			bearerTokenFileFlag,
 			basicAuthUsernameFlag,
-			basicAuthPasswordFlag,
+			basicAuthPasswordFileFlag,
 			disableTLSClientAuthFlag,
 			certTypeFlag,
 
@@ -59,12 +60,12 @@ step ca provisioner webhook update my_webhook --provisioner my_provisioner --url
 
 Configure a webhook to send a bearer token to the server:
 '''
-step ca provisioner webhook update my_webhook --provisioner my_provisioner --bearer-token abc123xyz
+step ca provisioner webhook update my_webhook --provisioner my_provisioner --bearer-token-file token.txt
 '''
 
 Change the password sent to the webhook with basic authentication:
 '''
-step ca provisioner webhook update my_webhook --provisioner my_provisioner --basic-auth-password my_pass
+step ca provisioner webhook update my_webhook --provisioner my_provisioner --basic-auth-password-file my_pass.txt
 '''
 
 Configure the webhook to be called only when signing x509 certificates, not SSH certificates:
@@ -116,13 +117,17 @@ func updateAction(ctx *cli.Context) (err error) {
 		wh.Url = ctx.String("url")
 	}
 
-	if ctx.IsSet("bearer-token") {
+	if ctx.IsSet("bearer-token-file") {
+		bearerTkn, err := utils.ReadStringPasswordFromFile(ctx.String("bearer-token-file"))
+		if err != nil {
+			return err
+		}
 		wh.Auth = &linkedca.Webhook_BearerToken{
 			BearerToken: &linkedca.BearerToken{
-				BearerToken: ctx.String("bearer-token"),
+				BearerToken: bearerTkn,
 			},
 		}
-	} else if ctx.IsSet("basic-auth-username") || ctx.IsSet("basic-auth-password") {
+	} else if ctx.IsSet("basic-auth-username") || ctx.IsSet("basic-auth-password-file") {
 		wba, _ := wh.GetAuth().(*linkedca.Webhook_BasicAuth)
 		if wba == nil {
 			wba = &linkedca.Webhook_BasicAuth{
@@ -136,8 +141,12 @@ func updateAction(ctx *cli.Context) (err error) {
 		if ctx.IsSet("basic-auth-username") {
 			wba.BasicAuth.Username = ctx.String("basic-auth-username")
 		}
-		if ctx.IsSet("basic-auth-password") {
-			wba.BasicAuth.Password = ctx.String("basic-auth-password")
+		if ctx.IsSet("basic-auth-password-file") {
+			password, err := utils.ReadStringPasswordFromFile(ctx.String("basic-auth-password-file"))
+			if err != nil {
+				return err
+			}
+			wba.BasicAuth.Password = password
 		}
 		wh.Auth = wba
 	}

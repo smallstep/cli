@@ -67,16 +67,16 @@ var (
 		Name:  "kind",
 		Usage: `The kind of webhook. Default is ENRICHING.`,
 	}
-	bearerTokenFlag = cli.StringFlag{
-		Name:  "bearer-token",
+	bearerTokenFileFlag = cli.StringFlag{
+		Name:  "bearer-token-file",
 		Usage: `The token to be set in the Authorization header of the request to the webhook server.`,
 	}
 	basicAuthUsernameFlag = cli.StringFlag{
 		Name:  "basic-auth-username",
 		Usage: `The username portion of the Authorization header of the request to the webhook server when using basic authentication.`,
 	}
-	basicAuthPasswordFlag = cli.StringFlag{
-		Name:  "basic-auth-password",
+	basicAuthPasswordFileFlag = cli.StringFlag{
+		Name:  "basic-auth-password-file",
 		Usage: `The password porition of the Authorization header of the request to the webhook server when using basic authentication.`,
 	}
 	disableTLSClientAuthFlag = cli.BoolFlag{

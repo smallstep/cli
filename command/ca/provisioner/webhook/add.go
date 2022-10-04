@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/linkedca"
@@ -16,8 +17,8 @@ func addCommand() cli.Command {
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add a webhook to a provisioner",
 		UsageText: `**step ca provisioner webhook add** <name> **--provisioner**=<name>
-[**--url**=<url>] [**--kind**=<kind>] [**--bearer-token**=<token>]
-[**--basic-auth-username**=<username>] [**--basic-auth-password**=<password>]
+[**--url**=<url>] [**--kind**=<kind>] [**--bearer-token-file**=<filename>]
+[**--basic-auth-username**=<username>] [**--basic-auth-password-file**=<filename>]
 [**--disable-tls-client-auth**] [**--cert-type**=<cert-type>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
@@ -26,9 +27,9 @@ func addCommand() cli.Command {
 			provisionerFlag,
 			urlFlag,
 			kindFlag,
-			bearerTokenFlag,
+			bearerTokenFileFlag,
 			basicAuthUsernameFlag,
-			basicAuthPasswordFlag,
+			basicAuthPasswordFileFlag,
 			disableTLSClientAuthFlag,
 			certTypeFlag,
 
@@ -60,12 +61,12 @@ step ca provisioner webhook add my_webhook --provisioner my_provisioner --url ht
 
 Create a webhook with a bearer token:
 '''
-step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com --bearer-token abc123xyz
+step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com --bearer-token-file token.txt
 '''
 
 Create a webhook with basic authentication:
 '''
-step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com --basic-auth-username user --basic-auth-password pass
+step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com --basic-auth-username user --basic-auth-password-file pass.txt
 '''
 
 Create a webhook that will never send a client certificate to the webhook server:
@@ -100,17 +101,28 @@ func addAction(ctx *cli.Context) (err error) {
 		Kind: kind,
 	}
 
-	if ctx.IsSet("bearer-token") {
+	if ctx.IsSet("bearer-token-file") {
+		bearerTkn, err := utils.ReadStringPasswordFromFile(ctx.String("bearer-token-file"))
+		if err != nil {
+			return err
+		}
 		wh.Auth = &linkedca.Webhook_BearerToken{
 			BearerToken: &linkedca.BearerToken{
-				BearerToken: ctx.String("bearer-token"),
+				BearerToken: bearerTkn,
 			},
 		}
-	} else if ctx.IsSet("basic-auth-username") || ctx.IsSet("basic-auth-password") {
+	} else if ctx.IsSet("basic-auth-username") || ctx.IsSet("basic-auth-password-file") {
+		var password string
+		if ctx.IsSet("basic-auth-password-file") {
+			password, err = utils.ReadStringPasswordFromFile(ctx.String("basic-auth-password-file"))
+			if err != nil {
+				return err
+			}
+		}
 		wh.Auth = &linkedca.Webhook_BasicAuth{
 			BasicAuth: &linkedca.BasicAuth{
 				Username: ctx.String("basic-auth-username"),
-				Password: ctx.String("basic-auth-password"),
+				Password: password,
 			},
 		}
 	}
