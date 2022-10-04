@@ -90,7 +90,7 @@ func TestClaims_Sign(t *testing.T) {
 		key interface{}
 	}
 
-	rsaKey, err := pemutil.Read("../crypto/pemutil/testdata/openssl.rsa2048.pem")
+	rsaKey, err := pemutil.Read("testdata/openssl.rsa2048.pem")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,12 +186,12 @@ func TestGenerateKeyID(t *testing.T) {
 		priv interface{}
 	}
 
-	rsaKey, err := pemutil.Read("../crypto/pemutil/testdata/openssl.rsa1024.pem")
+	rsaKey, err := pemutil.Read("testdata/openssl.rsa1024.pem")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	esKey, err := pemutil.Read("../crypto/pemutil/testdata/openssl.p256.pem")
+	esKey, err := pemutil.Read("testdata/openssl.p256.pem")
 	if err != nil {
 		t.Fatal(err)
 	}
