@@ -80,7 +80,7 @@ jobs:
           version: 'latest'
           args: release --rm-dist
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_PAT }}
           COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
           RELEASE_DATE: ${{ steps.release_date.outputs.RELEASE_DATE }}
 
@@ -174,7 +174,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: smallstep/docs
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.DOCS_PAT }}
           path: './docs'
       - name: Update Reference
         id: update_refrence
@@ -187,7 +187,7 @@ jobs:
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
-          github_token: ${{ secrets.PAT }}
+          github_token: ${{ secrets.DOCS_PAT }}
           branch: 'main'
           directory: './docs'
           repository: 'smallstep/docs'
