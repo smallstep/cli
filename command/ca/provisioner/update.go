@@ -39,9 +39,9 @@ ACME
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
 [**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
 [**--attestation-format**=<format>] [**--remove-attestation-format**=<format>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 OIDC
 
@@ -124,6 +124,7 @@ SCEP
 			removeChallengeFlag,         // ACME
 			attestationFormatFlag,       // ACME
 			removeAttestationFormatFlag, // ACME
+			attestationRootsFlag,        // ACME
 
 			// SCEP flags
 			scepCapabilitiesFlag,
@@ -627,6 +628,13 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 	if ctx.IsSet("attestation-format") || ctx.IsSet("remove-attestation-format") {
 		details.AttestationFormats = sliceutil.RemoveDuplicates(details.AttestationFormats)
+	}
+	if ctx.IsSet("attestation-roots") {
+		attestationRoots, err := parseCACertificates(ctx.StringSlice("attestation-roots"))
+		if err != nil {
+			return err
+		}
+		details.AttestationRoots = attestationRoots
 	}
 	return nil
 }
