@@ -322,7 +322,7 @@ func parseJWK(ctx *cli.Context, b []byte) (interface{}, error) {
 	// Parse decrypted key
 	var jwk jose.JSONWebKey
 	if err := json.Unmarshal(b, &jwk); err != nil {
-		return nil, errors.Wrap(err, "error unmarshalling key")
+		return nil, errors.Wrap(err, "error unmarshaling key")
 	}
 	if jwk.Key == nil {
 		return nil, errors.New("error parsing key: not found")

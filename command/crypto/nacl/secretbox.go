@@ -188,7 +188,7 @@ func secretboxOpenAction(ctx *cli.Context) error {
 	copy(n[:], nonce)
 	copy(k[:], key)
 
-	// Fixme: if we prepend the nonce in the seal we can use use rawInput[24:]
+	// Fixme: if we prepend the nonce in the seal we can use rawInput[24:]
 	// as the message and rawInput[:24] as the nonce instead of requiring one.
 	raw, ok := secretbox.Open(nil, rawInput, &n, &k)
 	if !ok {

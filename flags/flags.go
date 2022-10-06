@@ -437,7 +437,7 @@ func ParseTimeDuration(ctx *cli.Context) (notBefore, notAfter api.TimeDuration, 
 	return
 }
 
-// ParseTemplateData parses the set and and set-file flags and returns a json
+// ParseTemplateData parses the set and set-file flags and returns a json
 // message to be used in certificate templates.
 func ParseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
 	data, err := GetTemplateData(ctx)

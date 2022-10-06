@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	// ScryptMaxCost the the maximum value for ln. Maximum is set to avoid
+	// ScryptMaxCost the maximum value for ln. Maximum is set to avoid
 	// panics due to not enough memory errors. Memory used is ~4*32*(2^ln)*r
 	// bytes.
 	ScryptMaxCost = 20

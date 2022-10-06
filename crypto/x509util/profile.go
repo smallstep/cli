@@ -59,7 +59,7 @@ var (
 	// DefaultTLSMaxVersion default maximum version of TLS.
 	DefaultTLSMaxVersion = TLSVersion(1.3)
 	// DefaultTLSRenegotiation default TLS connection renegotiation policy.
-	DefaultTLSRenegotiation = false // Never regnegotiate.
+	DefaultTLSRenegotiation = false // Never renegotiate.
 	// DefaultTLSCipherSuites specifies default step ciphersuite(s).
 	DefaultTLSCipherSuites = CipherSuites{
 		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
@@ -504,7 +504,7 @@ type subjectPublicKeyInfo struct {
 	SubjectPublicKey asn1.BitString
 }
 
-// generateSubjectKeyID generates the key identifier according the the RFC 5280
+// generateSubjectKeyID generates the key identifier according the RFC 5280
 // section 4.2.1.2.
 //
 // The keyIdentifier is composed of the 160-bit SHA-1 hash of the value of the

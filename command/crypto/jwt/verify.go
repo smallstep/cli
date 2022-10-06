@@ -146,7 +146,7 @@ func verifyAction(ctx *cli.Context) error {
 		kid = tok.Headers[0].KeyID
 	}
 
-	// Validate subtled
+	// Validate subtle
 	isSubtle := ctx.Bool("subtle")
 	iss := ctx.String("iss")
 	aud := ctx.String("aud")
@@ -263,7 +263,7 @@ func validateClaimsWithLeeway(ctx *cli.Context, c jose.Claims, e jose.Expected, 
 
 	// we're not currently checking the subject
 	if e.Subject != "" && e.Subject != c.Subject {
-		ers = append(ers, "invalid subject subject (sub)")
+		ers = append(ers, "invalid subject (sub)")
 	}
 
 	// we're not currently checking the id

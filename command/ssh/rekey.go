@@ -30,7 +30,7 @@ func rekeyCommand() cli.Command {
 [**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
 		Description: `**step ssh rekey** command generates a new SSH Certificate and key using
-an existing SSH Cerfificate and key pair to authenticate and templatize the
+an existing SSH Certificate and key pair to authenticate and templatize the
 request. It writes the new certificate to disk - either overwriting
 <ssh-cert> or using new files when the **--out**=<file> flag is used.
 

@@ -177,7 +177,7 @@ flag.`,
 			cli.StringFlag{
 				Name: "pid-file",
 				Usage: `The <file> from which to read the process id that will be signaled after the certificate
-has been renewed. By default the the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
+has been renewed. By default the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},
 			cli.IntFlag{

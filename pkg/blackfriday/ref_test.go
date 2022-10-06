@@ -42,7 +42,7 @@ func TestReference(t *testing.T) {
 		"Ordered and unordered lists",
 		"Strong and em together",
 		"Tabs",
-		"Tidyness",
+		"Tidiness",
 	}
 	doTestsReference(t, files, 0)
 }
@@ -70,7 +70,7 @@ func TestReference_EXTENSION_NO_EMPTY_LINE_BEFORE_BLOCK(t *testing.T) {
 		"Ordered and unordered lists",
 		"Strong and em together",
 		"Tabs",
-		"Tidyness",
+		"Tidiness",
 	}
 	doTestsReference(t, files, NoEmptyLineBeforeBlock)
 }
@@ -103,7 +103,7 @@ func BenchmarkReference(b *testing.B) {
 		"Ordered and unordered lists",
 		"Strong and em together",
 		"Tabs",
-		"Tidyness",
+		"Tidiness",
 	}
 	var tests []string
 	for _, basename := range files {
