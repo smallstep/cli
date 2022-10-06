@@ -8,6 +8,9 @@ on:
 
 jobs:
   ci:
+    permissions:
+      actions: read
+      security-events: write
     uses: smallstep/cli/.github/workflows/ci.yml@master
     secrets: inherit
 
