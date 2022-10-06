@@ -169,7 +169,7 @@ release:
     - 📦 [step-cli_{{ .Version }}_amd64.deb](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_amd64.deb)
     - 📦 [step-cli_{{ .Version }}_amd64.rpm](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_amd64.rpm)
 
-    #### OSX Darwin
+    #### macOS Darwin
 
     - 📦 [step_darwin_{{ .Version }}_amd64.tar.gz](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_darwin_{{ .Version }}_amd64.tar.gz)
     - 📦 [step_darwin_{{ .Version }}_arm64.tar.gz](https://dl.step.sm/gh-release/cli/gh-release-header/{{ .Tag }}/step_darwin_{{ .Version }}_arm64.tar.gz)
@@ -212,7 +212,7 @@ release:
   # Defaults to false.
   #disable: true
 
-  # You can add extra pre-existing files to the release.
+  # You can add extra preexisting files to the release.
   # The filename on the release will be the last part of the path (base). If
   # another file with the same name exists, the latest one found will be used.
   # Defaults to empty.

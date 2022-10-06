@@ -16,7 +16,7 @@ import (
 	"go.step.sm/cli-utils/ui"
 )
 
-func rootComand() cli.Command {
+func rootCommand() cli.Command {
 	return cli.Command{
 		Name:   "root",
 		Action: command.ActionFunc(rootAction),

@@ -578,7 +578,7 @@ Use the '--remove-domain' flag multiple times to remove multiple domains.`,
 	}
 	oidcGroupFlag = cli.StringSliceFlag{
 		Name: "group",
-		Usage: `The <group> list used to validate the groups extenstion in an OpenID Connect token.
+		Usage: `The <group> list used to validate the groups extension in an OpenID Connect token.
 Use the '--group' flag multiple times to configure multiple groups.`,
 	}
 	oidcTenantIDFlag = cli.StringFlag{

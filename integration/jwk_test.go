@@ -236,7 +236,7 @@ func (j JWKTest) checkPubPriv(t *testing.T, m map[string]interface{}) {
 		}
 
 		k, ok := m["k"]
-		assert.True(t, ok, "JWK with \"kty\" of \"oct\" should have \"k\" paramater (key)")
+		assert.True(t, ok, "JWK with \"kty\" of \"oct\" should have \"k\" parameter (key)")
 
 		// Check `k` is correct size
 		checkSizeBytes(k.(string), 32)

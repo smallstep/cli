@@ -39,7 +39,7 @@ var (
 // Returns the public key as a JWK and the private key as an encrypted JWE.
 func GenerateDefaultKeyPair(pass []byte) (*JSONWebKey, *JSONWebEncryption, error) {
 	if len(pass) == 0 {
-		return nil, nil, errors.New("step-jose: password cannot be empty when encryptying a JWK")
+		return nil, nil, errors.New("step-jose: password cannot be empty when encrypting a JWK")
 	}
 
 	// Generate the OTT key

@@ -105,7 +105,7 @@ func encode(input []byte, encoding Encoding) string {
 	}
 }
 
-// Decode decods a fingerprint to the raw bytes.
+// Decode decodes a fingerprint to the raw bytes.
 func Decode(input string, opts ...Option) ([]byte, error) {
 	o := apply(opts)
 	input = strings.TrimPrefix(input, o.prefix)

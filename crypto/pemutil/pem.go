@@ -459,7 +459,7 @@ func ParseDER(b []byte) (interface{}, error) {
 	return key, nil
 }
 
-// ParseSSH parses parses a public key from an authorized_keys file used in
+// ParseSSH parses a public key from an authorized_keys file used in
 // OpenSSH according to the sshd(8) manual page.
 func ParseSSH(b []byte) (interface{}, error) {
 	key, _, _, _, err := ssh.ParseAuthorizedKey(b)

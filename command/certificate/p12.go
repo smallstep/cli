@@ -149,7 +149,7 @@ func p12Action(ctx *cli.Context) error {
 
 		// The first certificate in the bundle will be our server cert
 		x509Cert := x509CertBundle[0]
-		// Any remaning certs will be intermediates for the server
+		// Any remaining certs will be intermediates for the server
 		x509CAs = append(x509CAs, x509CertBundle[1:]...)
 
 		pkcs12Data, err = pkcs12.Encode(rand.Reader, key, x509Cert, x509CAs, password)

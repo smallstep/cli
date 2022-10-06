@@ -30,7 +30,7 @@ func revokeCommand() cli.Command {
 [**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
 
-		Description: `**step ssh revoke** command revokes an SSH Cerfificate
+		Description: `**step ssh revoke** command revokes an SSH Certificate
 using [step certificates](https://github.com/smallstep/certificates).
 
 ## POSITIONAL ARGUMENTS

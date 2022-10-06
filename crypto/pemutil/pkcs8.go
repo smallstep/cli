@@ -24,7 +24,7 @@ import (
 const PBKDF2SaltSize = 16
 
 // PBKDF2Iterations is the default number of iterations for PBKDF2, 100k
-// iterations. Nist recommends at least 10k, 1Passsword uses 100k.
+// iterations. Nist recommends at least 10k, 1Password uses 100k.
 const PBKDF2Iterations = 100000
 
 // pkcs8 reflects an ASN.1, PKCS#8 PrivateKey. See
@@ -72,13 +72,13 @@ type pbes2Params struct {
 	EncryptionScheme  pbkdf2Encs
 }
 
-type encryptedlAlgorithmIdentifier struct {
+type encryptedAlgorithmIdentifier struct {
 	Algorithm  asn1.ObjectIdentifier
 	Parameters pbes2Params
 }
 
 type encryptedPrivateKeyInfo struct {
-	Algo       encryptedlAlgorithmIdentifier
+	Algo       encryptedAlgorithmIdentifier
 	PrivateKey []byte
 }
 
@@ -240,7 +240,7 @@ func ParsePKIXPublicKey(derBytes []byte) (pub interface{}, err error) {
 
 // MarshalPKIXPublicKey serializes a public key to DER-encoded PKIX format. The
 // following key types are supported: *rsa.PublicKey, *ecdsa.PublicKey,
-// ed25519.Publickey. Unsupported key types result in an error.
+// ed25519.PublicKey. Unsupported key types result in an error.
 func MarshalPKIXPublicKey(pub interface{}) ([]byte, error) {
 	switch p := pub.(type) {
 	case *rsa.PublicKey, *ecdsa.PublicKey:
@@ -371,7 +371,7 @@ func DecryptPKCS8PrivateKey(data, password []byte) ([]byte, error) {
 	return encryptedKey, nil
 }
 
-// EncryptPKCS8PrivateKey returns a PEM block holding the given PKCS#8 encroded
+// EncryptPKCS8PrivateKey returns a PEM block holding the given PKCS#8 encoded
 // private key, encrypted with the specified algorithm and a PBKDF2 derived key
 // from the given password.
 func EncryptPKCS8PrivateKey(rand io.Reader, data, password []byte, alg x509.PEMCipher) (*pem.Block, error) {
@@ -409,7 +409,7 @@ func EncryptPKCS8PrivateKey(rand io.Reader, data, password []byte, alg x509.PEMC
 
 	// Build encrypted ans1 data
 	pki := encryptedPrivateKeyInfo{
-		Algo: encryptedlAlgorithmIdentifier{
+		Algo: encryptedAlgorithmIdentifier{
 			Algorithm: oidPBES2,
 			Parameters: pbes2Params{
 				KeyDerivationFunc: pbkdf2Algorithms{
