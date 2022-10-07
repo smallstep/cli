@@ -33,7 +33,7 @@ func certificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "certificate",
 		Action: command.ActionFunc(certificateAction),
-		Usage:  "sign a SSH certificate using the the SSH CA",
+		Usage:  "sign a SSH certificate using the SSH CA",
 		UsageText: `**step ssh certificate** <key-id> <key-file>
 [**--host**] [--**host-id**] [**--sign**] [**--principal**=<string>]
 [**--password-file**=<file>] [**--provisioner-password-file**=<file>]

@@ -110,7 +110,7 @@ func (j JWTSignTest) test(t *testing.T, name string) string {
 	var jwt string
 	t.Run(name, func(t *testing.T) {
 		// Beware. This is fragile as hell. Ugh. If the output or prompt for the
-		// jwt sign cubcommand changes this will need to change too.
+		// jwt sign subcommand changes this will need to change too.
 		if j.jwk.password != "" {
 			cmd, err := gexpect.Spawn(j.command.cmd())
 			assert.FatalError(t, err)
@@ -694,7 +694,7 @@ func TestCryptoJWT(t *testing.T) {
 			jwt = mkossljwt(t, `{"typ": "JWT", "alg": "RS384"}`, `{"iss": "foo", "sub": "bar"}`, fmt.Sprintf("<(echo -en %q)", pem))
 			tst.verify.setFlag("iss", "foo").setFlag("aud", "bar").setFlag("alg", "RS384").fail(t, "wrong-alg", jwt, "alg RS384 does not match the alg on testdata-tmp/jwt-jwk-RSA-pub.json\n")
 
-			// We don't currently support JSON Serialization, Flattened JSON Serialzation, or multiple signatures
+			// We don't currently support JSON Serialization, Flattened JSON Serialization, or multiple signatures
 			// TODO: Right now these are parse failures. They should probably parse correctly and give more helpful error messages.
 			vtst := NewJWTVerifyTest(JWK{"testdata/rsa2048.pub", "testdata/rsa2048.pem", "", true, false}).setFlag("iss", "foo").setFlag("aud", "bar").setFlag("alg", "RS256")
 			jwtb, _ := os.ReadFile("testdata/jwt-json-serialization.json")
@@ -713,7 +713,7 @@ func TestCryptoJWT(t *testing.T) {
 			t.Run("nbf", func(t *testing.T) {
 				tst := mkjwt(jwkec)
 				jwt := tst.nbf(extraTime).sign.test(t, "sign")
-				tst.verify.fail(t, "verify-tosoon", jwt, "validation failed: token not valid yet (nbf)\n")
+				tst.verify.fail(t, "verify-too-soon", jwt, "validation failed: token not valid yet (nbf)\n")
 				time.Sleep(extraTime)
 				tst.verify.test(t, "verify-succeed", jwt)
 				if t.Failed() {

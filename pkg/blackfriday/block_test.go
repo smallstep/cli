@@ -733,8 +733,8 @@ func TestOrderedList(t *testing.T) {
 		"1. List\n\n          code block with spaces\n",
 		"<ol>\n<li><p>List</p>\n\n<pre><code>  code block with spaces\n</code></pre></li>\n</ol>\n",
 
-		"1. List\n    * Mixted list\n",
-		"<ol>\n<li>List\n\n<ul>\n<li>Mixted list</li>\n</ul></li>\n</ol>\n",
+		"1. List\n    * Mixed list\n",
+		"<ol>\n<li>List\n\n<ul>\n<li>Mixed list</li>\n</ul></li>\n</ol>\n",
 
 		"1. List\n * Mixed list\n",
 		"<ol>\n<li>List\n\n<ul>\n<li>Mixed list</li>\n</ul></li>\n</ol>\n",
@@ -876,8 +876,8 @@ func TestPreformattedHtml(t *testing.T) {
 		"<div>\nAnything here\n  </div>\n",
 		"<div>\nAnything here\n  </div>\n",
 
-		"<div>\nThis is *not* &proceessed\n</div>\n",
-		"<div>\nThis is *not* &proceessed\n</div>\n",
+		"<div>\nThis is *not* &processed\n</div>\n",
+		"<div>\nThis is *not* &processed\n</div>\n",
 
 		"<faketag>\n  Something\n</faketag>\n",
 		"<p><faketag>\n  Something\n</faketag></p>\n",
@@ -1369,8 +1369,8 @@ func TestOrderedList_EXTENSION_NO_EMPTY_LINE_BEFORE_BLOCK(t *testing.T) {
 		"1. List\n\n          code block with spaces\n",
 		"<ol>\n<li><p>List</p>\n\n<pre><code>  code block with spaces\n</code></pre></li>\n</ol>\n",
 
-		"1. List\n    * Mixted list\n",
-		"<ol>\n<li>List\n\n<ul>\n<li>Mixted list</li>\n</ul></li>\n</ol>\n",
+		"1. List\n    * Mixed list\n",
+		"<ol>\n<li>List\n\n<ul>\n<li>Mixed list</li>\n</ul></li>\n</ol>\n",
 
 		"1. List\n * Mixed list\n",
 		"<ol>\n<li>List\n\n<ul>\n<li>Mixed list</li>\n</ul></li>\n</ol>\n",

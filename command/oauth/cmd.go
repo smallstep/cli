@@ -857,7 +857,7 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 
 	var idr identifyDeviceResponse
 	if err := json.NewDecoder(bytes.NewReader(b)).Decode(&idr); err != nil {
-		return nil, errors.Wrap(err, "failure decoding device authz response to JWON")
+		return nil, errors.Wrap(err, "failure decoding device authz response to JSON")
 	}
 
 	switch {

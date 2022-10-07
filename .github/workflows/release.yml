@@ -47,7 +47,7 @@ jobs:
           prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
   goreleaser:
-    name: Upload Assets to Github w/ goreleaser
+    name: Upload Assets to GitHub w/ goreleaser
     runs-on: ubuntu-latest
     needs: create_release
     steps:
@@ -80,7 +80,7 @@ jobs:
           version: 'latest'
           args: release --rm-dist
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_PAT }}
           COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
           RELEASE_DATE: ${{ steps.release_date.outputs.RELEASE_DATE }}
 
@@ -174,20 +174,20 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: smallstep/docs
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.DOCS_PAT }}
           path: './docs'
       - name: Update Reference
-        id: update_refrence
+        id: update_reference
         run: |
           ./bin/step help --markdown ./docs/src/pages/docs/step-cli/reference
           cd ./docs
           git config user.email "eng@smallstep.com"
-          git config user.name "Github Action CI"
+          git config user.name "GitHub Action CI"
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
-          github_token: ${{ secrets.PAT }}
+          github_token: ${{ secrets.DOCS_PAT }}
           branch: 'main'
           directory: './docs'
           repository: 'smallstep/docs'

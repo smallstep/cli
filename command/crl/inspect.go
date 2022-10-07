@@ -266,7 +266,7 @@ func inspectAction(ctx *cli.Context) error {
 type CRL struct {
 	Version             int                  `json:"version"`
 	SignatureAlgorithm  SignatureAlgorithm   `json:"signature_algorithm"`
-	Issuer              DistinguisedName     `json:"issuer"`
+	Issuer              DistinguishedName    `json:"issuer"`
 	ThisUpdate          time.Time            `json:"this_update"`
 	NextUpdate          time.Time            `json:"next_update"`
 	RevokedCertificates []RevokedCertificate `json:"revoked_certificates"`
@@ -417,8 +417,8 @@ type Signature struct {
 	Reason             string             `json:"reason,omitempty"`
 }
 
-// DistinguisedName is the JSON representation of the CRL issuer.
-type DistinguisedName struct {
+// DistinguishedName is the JSON representation of the CRL issuer.
+type DistinguishedName struct {
 	Country            []string                 `json:"country,omitempty"`
 	Organization       []string                 `json:"organization,omitempty"`
 	OrganizationalUnit []string                 `json:"organizational_unit,omitempty"`
@@ -433,7 +433,7 @@ type DistinguisedName struct {
 }
 
 // String returns the one line representation of the distinguished name.
-func (d DistinguisedName) String() string {
+func (d DistinguishedName) String() string {
 	var parts []string
 	for _, dn := range d.raw {
 		v := strings.ReplaceAll(pkix.RDNSequence{dn}.String(), "\\,", ",")
@@ -442,7 +442,7 @@ func (d DistinguisedName) String() string {
 	return strings.Join(parts, " ")
 }
 
-func newDistinguishedName(seq pkix.RDNSequence) DistinguisedName {
+func newDistinguishedName(seq pkix.RDNSequence) DistinguishedName {
 	var n pkix.Name
 	n.FillFromRDNSequence(&seq)
 
@@ -463,7 +463,7 @@ func newDistinguishedName(seq pkix.RDNSequence) DistinguisedName {
 		}
 	}
 
-	return DistinguisedName{
+	return DistinguishedName{
 		Country:            n.Country,
 		Organization:       n.Organization,
 		OrganizationalUnit: n.OrganizationalUnit,

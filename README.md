@@ -27,7 +27,7 @@ Step CLI's command groups illustrate its wide-ranging uses:
 
 - [`step certificate`](https://smallstep.com/docs/step-cli/reference/certificate/): Work with X.509 (TLS/HTTPS) certificates.
   - Create, revoke, validate, lint, and bundle X.509 certificates.
-  - Install (and remove) X.509 certificates into your system's (and brower's) trust store.
+  - Install (and remove) X.509 certificates into your system's (and browser's) trust store.
   - Validate certificate deployment and renewal status for automation
   - Create key pairs (RSA, ECDSA, EdDSA) and certificate signing requests (CSRs)
   - [Sign CSRs](https://smallstep.com/docs/step-cli/reference/certificate/sign/)

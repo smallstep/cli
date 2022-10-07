@@ -344,7 +344,7 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 
 		jwk = new(jose.JSONWebKey)
 		if err := json.Unmarshal(decrypted, jwk); err != nil {
-			return nil, "", errors.Wrap(err, "error unmarshalling provisioning key")
+			return nil, "", errors.Wrap(err, "error unmarshaling provisioning key")
 		}
 	} else {
 		// Get private key from given key file

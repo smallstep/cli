@@ -72,13 +72,13 @@ options must match unless the **--subtle** flag is also passed.
     :  ECDH-ES using Concat KDF and CEK wrapped with "A256KW
 
     **A128GCMKW**
-    :  Key wrappiung with AES GCM using 128-bit key
+    :  Key wrapping with AES GCM using 128-bit key
 
     **A192GCMKW**
-    :  Key wrappiung with AES GCM using 192-bit key
+    :  Key wrapping with AES GCM using 192-bit key
 
     **A256GCMKW** (default for oct keys)
-    :  Key wrappiung with AES GCM using 256-bit key
+    :  Key wrapping with AES GCM using 256-bit key
 
     **PBES2-HS256+A128KW**
     :  PBES2 with HMAC SHA-256 and "A128KW" wrapping
