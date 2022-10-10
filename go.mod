@@ -16,7 +16,7 @@ require (
 	github.com/slackhq/nebula v1.6.1
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.23.0-rc.1.0.20220929232133-6fe0fc852a84
-	github.com/smallstep/certinfo v1.9.0
+	github.com/smallstep/certinfo v1.9.1
 	github.com/smallstep/truststore v0.12.0
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
@@ -24,7 +24,7 @@ require (
 	github.com/urfave/cli v1.22.10
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.5
-	go.step.sm/crypto v0.20.0
+	go.step.sm/crypto v0.21.0
 	go.step.sm/linkedca v0.19.0-rc.2
 	golang.org/x/crypto v0.0.0-20220919173607-35f4265a4bc0
 	golang.org/x/net v0.0.0-20220927171203-f486391704dc
