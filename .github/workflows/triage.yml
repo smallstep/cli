@@ -26,17 +26,11 @@ jobs:
   add-to-project:
     name: Add to Triage Project
     runs-on: ubuntu-latest
+    env: 
+      HAS_TRIAGE_PAT: ${{ secrets.TRIAGE_PAT != '' }}
+    if: env.HAS_TRIAGE_PAT == 'true'
     steps:
-      - id: check
-        env:
-          HAS_TRIAGE_PAT: ${{ secrets.TRIAGE_PAT != '' }}
-        shell: bash
-        if: env.HAS_TRIAGE_PAT == 'true'
-        run: |
-          echo '::set-output name=triage::1'
-
       - uses: actions/add-to-project@v0.3.0
-        if: steps.check.outputs.triage
         with:
           project-url: https://github.com/orgs/smallstep/projects/94
           github-token: ${{ secrets.TRIAGE_PAT }}
