@@ -15,16 +15,16 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/ca/identity"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/ssh"
 )
@@ -372,7 +372,7 @@ func certificateAction(ctx *cli.Context) error {
 		}
 	} else {
 		// Generate keypair
-		pub, priv, err = keys.GenerateDefaultKeyPair()
+		pub, priv, err = keyutil.GenerateDefaultKeyPair()
 		if err != nil {
 			return err
 		}
@@ -387,7 +387,7 @@ func certificateAction(ctx *cli.Context) error {
 	var sshAuPubBytes []byte
 	var auPub, auPriv interface{}
 	if isAddUser {
-		auPub, auPriv, err = keys.GenerateDefaultKeyPair()
+		auPub, auPriv, err = keyutil.GenerateDefaultKeyPair()
 		if err != nil {
 			return err
 		}
@@ -426,7 +426,9 @@ func certificateAction(ctx *cli.Context) error {
 		case passwordFile != "":
 			opts = append(opts, pemutil.WithPasswordFile(passwordFile))
 		default:
-			opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key"))
+			opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
+				return ui.PromptPassword(s, ui.WithValidateNotEmpty())
+			}))
 		}
 		_, err = pemutil.Serialize(priv, opts...)
 		if err != nil {

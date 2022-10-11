@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/jose"
 )
 
 func verifyCommand() cli.Command {
@@ -141,9 +141,9 @@ func verifyAction(ctx *cli.Context) error {
 	var jwk *jose.JSONWebKey
 	switch {
 	case key != "":
-		jwk, err = jose.ParseKey(key, options...)
+		jwk, err = jose.ReadKey(key, options...)
 	case jwks != "":
-		jwk, err = jose.ParseKeySet(jwks, options...)
+		jwk, err = jose.ReadKeySet(jwks, options...)
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwks")
 	}

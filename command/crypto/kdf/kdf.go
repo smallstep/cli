@@ -3,9 +3,8 @@ package kdf
 import (
 	"fmt"
 
-	"github.com/smallstep/cli/crypto/kdf"
-
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/internal/kdf"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"

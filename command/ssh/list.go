@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/sshutil"
+	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	libsshutil "go.step.sm/crypto/sshutil"
 )
 
 func listCommand() cli.Command {
@@ -89,7 +90,7 @@ func listAction(ctx *cli.Context) error {
 	} else {
 		for _, k := range keys {
 			if ctx.NArg() == 0 || k.Comment == subject {
-				s, err := sshutil.Fingerprint([]byte(k.String()))
+				s, err := libsshutil.FormatFingerprint([]byte(k.String()), libsshutil.DefaultFingerprint)
 				if err != nil {
 					return err
 				}

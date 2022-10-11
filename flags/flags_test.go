@@ -12,6 +12,7 @@ import (
 
 	"github.com/smallstep/assert"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/fingerprint"
 )
 
 func TestParseCaURL(t *testing.T) {
@@ -189,5 +190,43 @@ func TestParseTemplateData_missing(t *testing.T) {
 	_, err := ParseTemplateData(cli.NewContext(app, set, nil))
 	if err == nil {
 		t.Errorf("ParseTemplateData() error = %v, wantErr true", err)
+	}
+}
+
+func TestParseFingerprintFormat(t *testing.T) {
+	type args struct {
+		format string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    fingerprint.Encoding
+		wantErr bool
+	}{
+		{"hex", args{"hex"}, fingerprint.HexFingerprint, false},
+		{"base64", args{"base64"}, fingerprint.Base64Fingerprint, false},
+		{"base64url", args{"base64url"}, fingerprint.Base64URLFingerprint, false},
+		{"base64-url", args{"base64-url"}, fingerprint.Base64URLFingerprint, false},
+		{"base64urlraw", args{"base64urlraw"}, fingerprint.Base64RawURLFingerprint, false},
+		{"base64url-raw", args{"base64url-raw"}, fingerprint.Base64RawURLFingerprint, false},
+		{"base64-url-raw", args{"base64-url-raw"}, fingerprint.Base64RawURLFingerprint, false},
+		{"base64raw", args{"base64raw"}, fingerprint.Base64RawFingerprint, false},
+		{"base64-raw", args{"base64-raw"}, fingerprint.Base64RawFingerprint, false},
+		{"emoji", args{"emoji"}, fingerprint.EmojiFingerprint, false},
+		{"emojisum", args{"emojisum"}, fingerprint.EmojiFingerprint, false},
+		{"unknown", args{"unknown"}, 0, true},
+		{"empty", args{""}, 0, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseFingerprintFormat(tt.args.format)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseFingerprintFormat() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseFingerprintFormat() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

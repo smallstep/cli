@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/x509util"
+	"go.step.sm/crypto/x509util"
 )
 
 var urlPrefixes = map[string]uint16{

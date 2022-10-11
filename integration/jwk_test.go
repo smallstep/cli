@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/smallstep/assert"
-	"github.com/smallstep/cli/crypto/randutil"
+	"go.step.sm/crypto/randutil"
 	jose "gopkg.in/square/go-jose.v2"
 )
 

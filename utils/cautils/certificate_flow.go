@@ -18,15 +18,15 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 )
 
 // CertificateFlow manages the flow to retrieve a new certificate.
@@ -237,7 +237,7 @@ func (f *CertificateFlow) CreateSignRequest(ctx *cli.Context, tok, subject strin
 	if err != nil {
 		return nil, nil, err
 	}
-	pk, err := keys.GenerateKey(kty, crv, size)
+	pk, err := keyutil.GenerateKey(kty, crv, size)
 	if err != nil {
 		return nil, nil, err
 	}
