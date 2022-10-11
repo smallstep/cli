@@ -6,5 +6,8 @@ on:
 
 jobs:
   code-scan:
+    permissions:
+      actions: read
+      security-events: write
     uses: smallstep/workflows/.github/workflows/code-scan.yml@main
     secrets: inherit

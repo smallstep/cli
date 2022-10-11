@@ -4,24 +4,31 @@ on:
   issues:
     types:
       - opened
+      - reopened
   pull_request_target:
     types:
       - opened
+      - reopened
 
 jobs:
 
   label:
+    permissions:
+      pull-requests: write
     name: Label PR
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_target'
     steps:
-    - uses: actions/labeler@v3.0.2
+    - uses: actions/labeler@v4.0.2
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
   add-to-project:
     name: Add to Triage Project
     runs-on: ubuntu-latest
+    env: 
+      HAS_TRIAGE_PAT: ${{ secrets.TRIAGE_PAT != '' }}
+    if: env.HAS_TRIAGE_PAT == 'true'
     steps:
       - uses: actions/add-to-project@v0.3.0
         with:
