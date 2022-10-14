@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/flags"
@@ -16,7 +17,7 @@ func updateCommand() cli.Command {
 		Name:   "update",
 		Action: cli.ActionFunc(updateAction),
 		Usage:  "update a webhook attached to a provisioner",
-		UsageText: `**step ca provisioner webhook update** <name> **--provisioner**=<name>
+		UsageText: `**step ca provisioner webhook update** <provisioner_name> <webhook_name>
 [**--url**=<url>] [**--kind**=<kind>] [**--bearer-token-file**=<filename>]
 [**--basic-auth-username**=<username>] [**--basic-auth-password-file**=<filename>]
 [**--disable-tls-client-auth**] [**--cert-type**=<cert-type>]
@@ -25,7 +26,6 @@ func updateCommand() cli.Command {
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			// General webhook flags
-			provisionerFlag,
 			urlFlag,
 			kindFlag,
 			bearerTokenFileFlag,
@@ -48,42 +48,45 @@ func updateCommand() cli.Command {
 
 ## POSITIONAL ARGUMENTS
 
-<name>
+<provisioner_name>
+: The name of the provisioner.
+
+<webhook_name>
 : The name of the webhook.
 
 ## EXAMPLES
 
 Change a webhook's url:
 '''
-step ca provisioner webhook update my_webhook --provisioner my_provisioner --url https://example.com
+step ca provisioner webhook update my_provisioner my_webhook --url https://example.com
 '''
 
 Configure a webhook to send a bearer token to the server:
 '''
-step ca provisioner webhook update my_webhook --provisioner my_provisioner --bearer-token-file token.txt
+step ca provisioner webhook update my_provisioner my_webhook --bearer-token-file token.txt
 '''
 
 Change the password sent to the webhook with basic authentication:
 '''
-step ca provisioner webhook update my_webhook --provisioner my_provisioner --basic-auth-password-file my_pass.txt
+step ca provisioner webhook update my_provisioner my_webhook --basic-auth-password-file my_pass.txt
 '''
 
 Configure the webhook to be called only when signing x509 certificates, not SSH certificates:
 '''
-step ca provisioner webhook update my_webhook --provisioner my_provisioner --cert-type X509
+step ca provisioner webhook update my_provisioner my_webhook --cert-type X509
 '''
 `,
 	}
 }
 
 func updateAction(ctx *cli.Context) (err error) {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
 
 	args := ctx.Args()
 
-	provisionerName := ctx.String("provisioner")
+	provisionerName := args.Get(0)
 
 	client, err := newCRUDClient(ctx, ctx.String("ca-config"))
 	if err != nil {
@@ -96,13 +99,13 @@ func updateAction(ctx *cli.Context) (err error) {
 	}
 	var wh *linkedca.Webhook
 	for _, pwh := range prov.Webhooks {
-		if pwh.Name == args.Get(0) {
+		if pwh.Name == args.Get(1) {
 			wh = pwh
 			break
 		}
 	}
 	if wh == nil {
-		return errors.New("provisioner does not have a webhook with that name")
+		return fmt.Errorf("provisioner %q does not have a webhook with the name %q", provisionerName, args.Get(1))
 	}
 
 	if ctx.IsSet("kind") {
@@ -158,7 +161,7 @@ func updateAction(ctx *cli.Context) (err error) {
 	if ctx.IsSet("cert-type") {
 		certType, ok := linkedca.Webhook_CertType_value[ctx.String("cert-type")]
 		if !ok {
-			return errors.New("invalid cert-type")
+			return errs.InvalidFlagValue(ctx, "cert-type", ctx.String("cert-type"), "ALL, X509, and SSH")
 		}
 		wh.CertType = linkedca.Webhook_CertType(certType)
 	}

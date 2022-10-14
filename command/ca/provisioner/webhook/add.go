@@ -1,7 +1,6 @@
 package webhook
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/smallstep/cli/flags"
@@ -16,7 +15,7 @@ func addCommand() cli.Command {
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add a webhook to a provisioner",
-		UsageText: `**step ca provisioner webhook add** <name> **--provisioner**=<name>
+		UsageText: `**step ca provisioner webhook add** <provisioner_name> <webhook_name>
 [**--url**=<url>] [**--kind**=<kind>] [**--bearer-token-file**=<filename>]
 [**--basic-auth-username**=<username>] [**--basic-auth-password-file**=<filename>]
 [**--disable-tls-client-auth**] [**--cert-type**=<cert-type>]
@@ -24,7 +23,6 @@ func addCommand() cli.Command {
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
-			provisionerFlag,
 			urlFlag,
 			kindFlag,
 			bearerTokenFileFlag,
@@ -49,46 +47,49 @@ The command will print the webhook ID and secret that must be used to verify all
 
 ## POSITIONAL ARGUMENTS
 
-<name>
+<provisioner_name>
+: The name of the provisioner.
+
+<webhook_name>
 : The name of the webhook.
 
 ## EXAMPLES
 
 Create a webhook without an Authorization header:
 '''
-step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com
+step ca provisioner webhook add my_provisioner my_webhook --url https://example.com
 '''
 
 Create a webhook with a bearer token:
 '''
-step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com --bearer-token-file token.txt
+step ca provisioner webhook add my_provisioner my_webhook --url https://example.com --bearer-token-file token.txt
 '''
 
 Create a webhook with basic authentication:
 '''
-step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com --basic-auth-username user --basic-auth-password-file pass.txt
+step ca provisioner webhook add my_provisioner my_webhook --url https://example.com --basic-auth-username user --basic-auth-password-file pass.txt
 '''
 
 Create a webhook that will never send a client certificate to the webhook server:
 '''
-step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com --disable-tls-client-auth
+step ca provisioner webhook add my_provisioner my_webhook --url https://example.com --disable-tls-client-auth
 '''
 
 Create a webhook that will only be called when signing x509 certificates:
 '''
-step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com --cert-type X509
+step ca provisioner webhook add my_provisioner my_webhook --url https://example.com --cert-type X509
 '''
 `}
 }
 
 func addAction(ctx *cli.Context) (err error) {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.NumberOfArguments(ctx, 2); err != nil {
 		return err
 	}
 
-	provisionerName := ctx.String("provisioner")
-
 	args := ctx.Args()
+
+	provisionerName := args.Get(0)
 
 	kind := linkedca.Webhook_Kind(linkedca.Webhook_Kind_value[ctx.String("kind")])
 	if kind == linkedca.Webhook_NO_KIND {
@@ -96,7 +97,7 @@ func addAction(ctx *cli.Context) (err error) {
 	}
 
 	wh := &linkedca.Webhook{
-		Name: args.Get(0),
+		Name: args.Get(1),
 		Url:  ctx.String("url"),
 		Kind: kind,
 	}
@@ -134,7 +135,7 @@ func addAction(ctx *cli.Context) (err error) {
 	if ctx.IsSet("cert-type") {
 		certType, ok := linkedca.Webhook_CertType_value[ctx.String("cert-type")]
 		if !ok {
-			return errors.New("invalid cert-type")
+			return errs.InvalidFlagValue(ctx, "cert-type", ctx.String("cert-type"), "ALL, X509, and SSH")
 		}
 		wh.CertType = linkedca.Webhook_CertType(certType)
 	} else {

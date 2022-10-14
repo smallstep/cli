@@ -37,28 +37,23 @@ Implementations of webhook servers must conform to the step-ca documentation at 
 
 Add a new webhook to a provisioner:
 '''
-step ca provisioner webhook add my_webhook --provisioner my_provisioner --url https://example.com
+step ca provisioner webhook add my_provisioner my_webhook --url https://example.com
 '''
 
 Change a webhook's url:
 '''
-step ca provisioner webhook update my_webhook --provisioner my_provisioner --url https://example.com
+step ca provisioner webhook update my_provisioner my_webhook --url https://example.com
 '''
 
 Remove a webhook:
 '''
-step ca provisioner webhook remove my_webhook --provisioner my_provisioner
+step ca provisioner webhook remove my_provisioner my_webhook
 '''
 		`,
 	}
 }
 
 var (
-	provisionerFlag = cli.StringFlag{
-		Name:     "provisioner",
-		Usage:    `The name of the provisioner the webhook is attached to.`,
-		Required: true,
-	}
 	urlFlag = cli.StringFlag{
 		Name:  "url",
 		Usage: `The url of the webhook server.`,
@@ -114,9 +109,6 @@ func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 			return nil, fmt.Errorf("error loading configuration: %w", err)
 		}
 		if cfg.AuthorityConfig.EnableAdmin {
-			if len(cfg.AuthorityConfig.Provisioners) > 0 {
-				return nil, errors.New("when 'enableAdmin' attribute set to 'true', provisioners list in ca.json must be empty")
-			}
 			return cautils.NewAdminClient(cliCtx)
 		}
 		return nil, errors.New("the admin API must be enabled to use webhooks")
