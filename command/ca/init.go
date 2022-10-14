@@ -205,6 +205,7 @@ Cloud.`,
 				Name:  "acme",
 				Usage: `Create a default ACME provisioner. Defaults to false.`,
 			},
+			flags.AdminSubject,
 			flags.ContextProfile,
 			flags.ContextAuthority,
 			flags.HiddenNoContext,
@@ -230,6 +231,7 @@ func initAction(ctx *cli.Context) (err error) {
 	helm := ctx.Bool("helm")
 	enableRemoteManagement := ctx.Bool("remote-management")
 	addDefaultACMEProvisioner := ctx.Bool("acme")
+	firstSuperAdminSubject := ctx.String("admin-subject")
 
 	switch {
 	case root != "" && key == "":
@@ -259,6 +261,9 @@ func initAction(ctx *cli.Context) (err error) {
 	case addDefaultACMEProvisioner && noDB:
 		// ACME functionality requires a database configuration
 		return errs.IncompatibleFlagWithFlag(ctx, "acme", "no-db")
+	case firstSuperAdminSubject != "" && helm:
+		// providing the first super admin subject is not (yet) supported with Helm output
+		return errs.IncompatibleFlagWithFlag(ctx, "admin-subject", "helm")
 	}
 
 	var password string
@@ -564,10 +569,10 @@ func initAction(ctx *cli.Context) (err error) {
 			return err
 		}
 
-		var provisioner string
 		// Only standalone deployments will create an initial provisioner.
 		// Linked or hosted deployments will use an OIDC token as the first
 		// deployment.
+		var provisioner string
 		if deploymentType == pki.StandaloneDeployment {
 			ui.Println("What would you like to name the CA's first provisioner?", ui.WithValue(ctx.String("provisioner")))
 			provisioner, err = ui.Prompt("(e.g. you@smallstep.com)",
@@ -584,7 +589,10 @@ func initAction(ctx *cli.Context) (err error) {
 			pki.WithDeploymentType(deploymentType),
 		)
 		if deploymentType == pki.StandaloneDeployment {
-			pkiOpts = append(pkiOpts, pki.WithProvisioner(provisioner))
+			pkiOpts = append(pkiOpts,
+				pki.WithProvisioner(provisioner),
+				pki.WithFirstSuperAdminSubject(firstSuperAdminSubject),
+			)
 		}
 		if deploymentType == pki.LinkedDeployment {
 			pkiOpts = append(pkiOpts, pki.WithAdmin())
@@ -600,13 +608,14 @@ func initAction(ctx *cli.Context) (err error) {
 
 		// enable the admin API if the `--remote-management` flag is provided. This will
 		// also result in the default provisioner being stored in the database and a default
-		// admin called `step` to be created for the default provisioner when the PKI is saved.
+		// admin (called `step` by default, but can be named with --admin-subject) to be
+		// created for the default provisioner when the PKI is saved.
 		if enableRemoteManagement {
 			pkiOpts = append(pkiOpts, pki.WithAdmin())
 		}
 
 		// add a default ACME provisioner named `acme` if `--acme` flag is provided
-		// and configuring a standalone CA.
+		// and configuring a standalone CA. Not yet supported for linked deployments.
 		if addDefaultACMEProvisioner && deploymentType == pki.StandaloneDeployment {
 			pkiOpts = append(pkiOpts, pki.WithACME())
 		}
