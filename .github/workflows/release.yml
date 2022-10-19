@@ -8,6 +8,10 @@ on:
 
 jobs:
   ci:
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     uses: smallstep/cli/.github/workflows/ci.yml@master
     secrets: inherit
 
@@ -47,7 +51,7 @@ jobs:
           prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
   goreleaser:
-    name: Upload Assets to Github w/ goreleaser
+    name: Upload Assets to GitHub w/ goreleaser
     runs-on: ubuntu-latest
     needs: create_release
     steps:
@@ -176,13 +180,27 @@ jobs:
           repository: smallstep/docs
           token: ${{ secrets.DOCS_PAT }}
           path: './docs'
+      - name: Setup bot SSH signing key
+        uses: webfactory/ssh-agent@v0.5.3
+        env:
+          HAS_SSH_PRIVATE_KEY: ${{ secrets.STEP_TRAVIS_CI_GH_PRIVATE_SIGNING_KEY != '' }}
+        if: ${{ env.HAS_SSH_PRIVATE_KEY == 'true' }}
+        with:
+          ssh-private-key: |
+            ${{ secrets.STEP_TRAVIS_CI_GH_PRIVATE_SIGNING_KEY }}
       - name: Update Reference
-        id: update_refrence
+        id: update_reference
         run: |
           ./bin/step help --markdown ./docs/src/pages/docs/step-cli/reference
           cd ./docs
-          git config user.email "eng@smallstep.com"
-          git config user.name "Github Action CI"
+          git config user.email "eng+ci@smallstep.com"
+          git config user.name "step-travis-ci"
+
+          # Configure GH commit signing key.
+          git config --global commit.gpgsign true
+          git config --global gpg.format ssh
+          git config --global user.signingkey "${{ secrets.STEP_TRAVIS_CI_GH_PUBLIC_SIGNING_KEY }}"
+
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0

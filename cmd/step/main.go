@@ -14,6 +14,7 @@ import (
 	"github.com/smallstep/cli/command/version"
 	"github.com/smallstep/cli/internal/plugin"
 	"github.com/smallstep/cli/usage"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/step"
@@ -105,7 +106,8 @@ func main() {
 	app.Writer = os.Stdout
 	app.ErrWriter = os.Stderr
 
-	// Define default prompters for go.step.sm
+	// Define default file writers and prompters for go.step.sm/crypto
+	pemutil.WriteFile = utils.WriteFile
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {
 		return ui.PromptPassword(msg)
 	}

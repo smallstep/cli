@@ -12,7 +12,7 @@ OnCalendar=*:1/15
 ; Always run the timer on time.
 AccuracySec=1us
 
-; Add jitter to prevent a "thundering hurd" of simultaneous certificate renewals.
+; Add jitter to prevent a "thundering herd" of simultaneous certificate renewals.
 RandomizedDelaySec=5m
 
 [Install]

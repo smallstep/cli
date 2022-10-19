@@ -10,12 +10,12 @@ import (
 	"github.com/smallstep/certificates/ca"
 	caErrs "github.com/smallstep/certificates/errs"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/jose"
 )
 
 func checkHostCommand() cli.Command {
@@ -84,7 +84,7 @@ func checkHostAction(ctx *cli.Context) error {
 
 		if id != nil {
 			// Get private key from given key file.
-			jwk, err := jose.ParseKey(id.Key)
+			jwk, err := jose.ReadKey(id.Key)
 			if err != nil {
 				return debugErr(errors.Wrap(err, "error parsing x5c key from identity file"))
 			}

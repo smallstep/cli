@@ -9,14 +9,14 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/errs"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -199,7 +199,7 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 		}
 
 		// Generate SSH Keys
-		pub, priv, err := keys.GenerateDefaultKeyPair()
+		pub, priv, err := keyutil.GenerateDefaultKeyPair()
 		if err != nil {
 			return fail(err)
 		}

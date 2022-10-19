@@ -11,27 +11,26 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 	"golang.org/x/crypto/ssh"
 )
 
 func formatCommand() cli.Command {
 	return cli.Command{
 		Name:      "format",
-		Action:    command.ActionFunc(formatAction),
+		Action:    cli.ActionFunc(formatAction),
 		Usage:     `reformat a public or private key`,
 		UsageText: `**step crypto key format** <key-file> [**--out**=<file>]`,
 		Description: `**step crypto key format** prints or writes the key in
 a different format.
 
-By default PEM formated keys will be converted to DER with the following rules:
+By default PEM formatted keys will be converted to DER with the following rules:
 
  * ECDSA, RSA, AND Ed25519 public keys will use the DER-encoded PKIX format.
  * ECDSA, AND RSA private keys will use the ASN.1, DER format.
@@ -309,11 +308,15 @@ func isJWK(in []byte) bool {
 func parseJWK(ctx *cli.Context, b []byte) (interface{}, error) {
 	// Decrypt key if encrypted.
 	if _, err := jose.ParseEncrypted(string(b)); err == nil {
-		var opts []jose.Option
+		opts := []jose.Option{
+			jose.WithPasswordPrompter("Please enter the password to decrypt the key", func(s string) ([]byte, error) {
+				return ui.PromptPassword(s)
+			}),
+		}
 		if passFile := ctx.String("password-file"); passFile != "" {
 			opts = append(opts, jose.WithPasswordFile(passFile))
 		}
-		b, err = jose.Decrypt("Please enter the password to decrypt the key", b, opts...)
+		b, err = jose.Decrypt(b, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -322,7 +325,7 @@ func parseJWK(ctx *cli.Context, b []byte) (interface{}, error) {
 	// Parse decrypted key
 	var jwk jose.JSONWebKey
 	if err := json.Unmarshal(b, &jwk); err != nil {
-		return nil, errors.Wrap(err, "error unmarshalling key")
+		return nil, errors.Wrap(err, "error unmarshaling key")
 	}
 	if jwk.Key == nil {
 		return nil, errors.New("error parsing key: not found")
@@ -343,7 +346,9 @@ func convertToPEM(ctx *cli.Context, key interface{}) (b []byte, err error) {
 			if passFile := ctx.String("password-file"); passFile != "" {
 				opts = append(opts, pemutil.WithPasswordFile(passFile))
 			} else {
-				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key"))
+				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
+					return ui.PromptPassword(s, ui.WithValidateNotEmpty())
+				}))
 			}
 		default:
 			return nil, errors.Errorf("unsupported key type %T", key)
@@ -361,20 +366,20 @@ func convertToDER(ctx *cli.Context, key interface{}) (b []byte, err error) {
 	switch k := key.(type) {
 	case *rsa.PrivateKey:
 		if ctx.Bool("pkcs8") {
-			b, err = pemutil.MarshalPKCS8PrivateKey(key)
+			b, err = x509.MarshalPKCS8PrivateKey(key)
 		} else {
 			b = x509.MarshalPKCS1PrivateKey(k)
 		}
 	case *ecdsa.PrivateKey:
 		if ctx.Bool("pkcs8") {
-			b, err = pemutil.MarshalPKCS8PrivateKey(key)
+			b, err = x509.MarshalPKCS8PrivateKey(key)
 		} else {
 			b, err = x509.MarshalECPrivateKey(k)
 		}
 	case ed25519.PrivateKey: // always PKCS#8
-		b, err = pemutil.MarshalPKCS8PrivateKey(key)
+		b, err = x509.MarshalPKCS8PrivateKey(key)
 	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey: // always PKIX
-		b, err = pemutil.MarshalPKIXPublicKey(key)
+		b, err = x509.MarshalPKIXPublicKey(key)
 	default:
 		return nil, errors.Errorf("unsupported key type %T", key)
 	}
@@ -397,7 +402,9 @@ func convertToSSH(ctx *cli.Context, key interface{}) ([]byte, error) {
 			if passFile := ctx.String("password-file"); passFile != "" {
 				opts = append(opts, pemutil.WithPasswordFile(passFile))
 			} else {
-				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key"))
+				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
+					return ui.PromptPassword(s, ui.WithValidateNotEmpty())
+				}))
 			}
 		}
 		block, err := pemutil.Serialize(key, opts...)
@@ -411,23 +418,30 @@ func convertToSSH(ctx *cli.Context, key interface{}) ([]byte, error) {
 }
 
 func convertToJWK(ctx *cli.Context, key interface{}) ([]byte, error) {
-	jwk := &jose.JSONWebKey{Key: key}
+	b, err := json.Marshal(&jose.JSONWebKey{Key: key})
+	if err != nil {
+		return nil, err
+	}
+
 	switch key.(type) {
 	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey:
-		return json.Marshal(jwk)
+		return b, nil
 	case *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
-		if !ctx.Bool("no-password") {
-			var opts []jose.Option
-			if passFile := ctx.String("password-file"); passFile != "" {
-				opts = append(opts, jose.WithPasswordFile(passFile))
-			}
-			jwe, err := jose.EncryptJWK(jwk, opts...)
-			if err != nil {
-				return nil, err
-			}
-			return []byte(jwe.FullSerialize()), nil
+		if ctx.Bool("no-password") {
+			return b, nil
 		}
-		return json.Marshal(jwk)
+
+		opts := []jose.Option{
+			jose.WithContentType("jwk+json"),
+		}
+		if passFile := ctx.String("password-file"); passFile != "" {
+			opts = append(opts, jose.WithPasswordFile(passFile))
+		}
+		jwe, err := jose.Encrypt(b, opts...)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(jwe.FullSerialize()), nil
 	default:
 		return nil, errors.Errorf("unsupported key type %T", key)
 	}

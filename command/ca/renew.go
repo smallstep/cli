@@ -23,10 +23,7 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
@@ -35,6 +32,9 @@ import (
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 )
 
 func renewCertificateCommand() cli.Command {
@@ -177,7 +177,7 @@ flag.`,
 			cli.StringFlag{
 				Name: "pid-file",
 				Usage: `The <file> from which to read the process id that will be signaled after the certificate
-has been renewed. By default the the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
+has been renewed. By default the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},
 			cli.IntFlag{

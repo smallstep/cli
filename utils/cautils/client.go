@@ -13,12 +13,12 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 )
 
 // CaClient is the interface implemented by a client used to sign, renew, revoke
@@ -139,7 +139,7 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 			URIs:           uris,
 		}
 
-		adminKey, err = keys.GenerateDefaultKey()
+		adminKey, err = keyutil.GenerateDefaultKey()
 		if err != nil {
 			return nil, err
 		}

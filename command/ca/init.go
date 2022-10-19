@@ -15,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
@@ -25,6 +24,7 @@ import (
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/kms"
+	"go.step.sm/crypto/pemutil"
 
 	// Enable azurekms
 	_ "go.step.sm/crypto/kms/azurekms"

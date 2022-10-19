@@ -79,8 +79,8 @@ required, and ensuring they're printed out as a part of the `step help` or
 `step <command> -h` flow. If you need to add a different type of annotation to
 document an argument just add it to the `usage.Argument` struct!
 
-When you add a flag, look into the pre-existing ones inside the `flags`
-package. Could you use one of the pre-existing flags in order to reduce
+When you add a flag, look into the preexisting ones inside the `flags`
+package. Could you use one of the preexisting flags in order to reduce
 duplication? If not, make sure to add a flag so it could be used in future!
 
 The `errs` package contains functionality for defining and working with errors
