@@ -17,15 +17,15 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 	"golang.org/x/crypto/ocsp"
 )
 
@@ -126,7 +126,7 @@ $ step ca revoke --offline 308893286343609293989051180431574390766
 '''
 
 Revoke a certificate in offline mode using --cert and --key (the cert/key pair
-will be validated against the root and intermediate certifcates configured in
+will be validated against the root and intermediate certificates configured in
 the step CA):
 '''
 $ step ca revoke --offline --cert foo.crt --key foo.key

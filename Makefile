@@ -91,7 +91,7 @@ define BUNDLE
 	# $(2) -- Binary Output Dir Name
 	# $(3) -- Step Platform Name
 	# $(4) -- Step Binary Architecture
-	# $(5) -- Step Binary Name (For Windows Comaptibility)
+	# $(5) -- Step Binary Name (For Windows Compatibility)
 	$(q) ./make/bundle.sh $(1) "$(BINARY_OUTPUT)$(2)" "$(RELEASE)" "$(VERSION)" "$(3)" "$(4)" "$(5)"
 endef
 

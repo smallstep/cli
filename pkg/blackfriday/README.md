@@ -163,7 +163,7 @@ Extensions
 In addition to the standard markdown syntax, this package
 implements the following extensions:
 
-*   **Intra-word emphasis supression**. The `_` character is
+*   **Intra-word emphasis suppression**. The `_` character is
     commonly used inside words when discussing code, so having
     markdown interpret it as an emphasis command is usually the
     wrong thing. Blackfriday lets you treat all emphasis markers as
@@ -233,7 +233,7 @@ implements the following extensions:
 
 *   **Smart fractions**, where anything that looks like a fraction
     is translated into suitable HTML (instead of just a few special
-    cases like most smartypant processors). For example, `4/5`
+    cases like most smartypants processors). For example, `4/5`
     becomes `<sup>4</sup>&frasl;<sub>5</sub>`, which renders as
     <sup>4</sup>&frasl;<sub>5</sub>.
 

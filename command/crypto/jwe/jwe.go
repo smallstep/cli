@@ -39,7 +39,7 @@ parts:
 * Ciphertext: the ciphertext value resulting produced from authenticated
   encryption of the plaintext with additional authenticated data
 
-* Authentication Tag: value resulting fromthe authenticated encryption of
+* Authentication Tag: value resulting from the authenticated encryption of
   the plaintext with additional authenticated data
 
 ## What's with encrypted key?

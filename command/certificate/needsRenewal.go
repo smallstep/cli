@@ -7,12 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/smallstep/cli/flags"
-
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/pemutil"
 )
 
 const defaultPercentUsedThreshold = 66

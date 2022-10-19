@@ -5,11 +5,11 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
 )
 
 func encryptCommand() cli.Command {
@@ -72,13 +72,13 @@ options must match unless the **--subtle** flag is also passed.
     :  ECDH-ES using Concat KDF and CEK wrapped with "A256KW
 
     **A128GCMKW**
-    :  Key wrappiung with AES GCM using 128-bit key
+    :  Key wrapping with AES GCM using 128-bit key
 
     **A192GCMKW**
-    :  Key wrappiung with AES GCM using 192-bit key
+    :  Key wrapping with AES GCM using 192-bit key
 
     **A256GCMKW** (default for oct keys)
-    :  Key wrappiung with AES GCM using 256-bit key
+    :  Key wrapping with AES GCM using 256-bit key
 
     **PBES2-HS256+A128KW**
     :  PBES2 with HMAC SHA-256 and "A128KW" wrapping
@@ -220,9 +220,9 @@ func encryptAction(ctx *cli.Context) error {
 	var jwk *jose.JSONWebKey
 	switch {
 	case key != "":
-		jwk, err = jose.ParseKey(key, options...)
+		jwk, err = jose.ReadKey(key, options...)
 	case jwks != "":
-		jwk, err = jose.ParseKeySet(jwks, options...)
+		jwk, err = jose.ReadKeySet(jwks, options...)
 	case isPBES2:
 		pbes2Key, err = ui.PromptPassword("Please enter the password to encrypt the content encryption key")
 	default:

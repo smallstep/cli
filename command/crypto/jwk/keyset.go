@@ -8,10 +8,11 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils/sysutils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
 )
 
 func keysetCommand() cli.Command {
@@ -129,7 +130,9 @@ func keysetAddAction(ctx *cli.Context) error {
 	}
 
 	// Attempt to parse an encrypted file
-	if b, err = jose.Decrypt("Please enter the password to decrypt JWK", b); err != nil {
+	if b, err = jose.Decrypt(b, jose.WithPasswordPrompter("Please enter the password to decrypt JWK", func(s string) ([]byte, error) {
+		return ui.PromptPassword(s)
+	})); err != nil {
 		return err
 	}
 

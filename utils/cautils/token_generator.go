@@ -13,8 +13,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
@@ -22,6 +20,8 @@ import (
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/randutil"
 	"go.step.sm/crypto/x25519"
 )
 
@@ -344,7 +344,7 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 
 		jwk = new(jose.JSONWebKey)
 		if err := json.Unmarshal(decrypted, jwk); err != nil {
-			return nil, "", errors.Wrap(err, "error unmarshalling provisioning key")
+			return nil, "", errors.Wrap(err, "error unmarshaling provisioning key")
 		}
 	} else {
 		// Get private key from given key file
