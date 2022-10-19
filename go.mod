@@ -15,7 +15,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/slackhq/nebula v1.6.1
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.23.0-rc.1.0.20220929232133-6fe0fc852a84
+	github.com/smallstep/certificates v0.23.0-rc.1.0.20221003132420-9b02b0329324
 	github.com/smallstep/certinfo v1.9.1
 	github.com/smallstep/truststore v0.12.0
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
@@ -183,14 +183,13 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
-	golang.org/x/text v0.3.8-0.20211004125949-5bd84dd9b33b // indirect
+	golang.org/x/text v0.3.8-0.20211105212822-18b340fc7af2 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/api v0.98.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220929141241-1ce7b20da813 // indirect
 	google.golang.org/grpc v1.49.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -198,3 +197,11 @@ require (
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
+
+// replace github.com/smallstep/certificates => ../certificates
+
+// replace github.com/smallstep/certinfo => ../certinfo
+// replace go.step.sm/linkedca => ../linkedca
+
+// replace go.step.sm/cli-utils => ../cli-utils
+// replace go.step.sm/crypto => ../crypto
