@@ -264,6 +264,10 @@ func initAction(ctx *cli.Context) (err error) {
 	case firstSuperAdminSubject != "" && helm:
 		// providing the first super admin subject is not (yet) supported with Helm output
 		return errs.IncompatibleFlagWithFlag(ctx, "admin-subject", "helm")
+	case firstSuperAdminSubject != "" && !enableRemoteManagement:
+		// providing the first super admin subject only works with DB-backed provisioners,
+		// thus remote management should be enabled.
+		return errs.IncompatibleFlagWithFlag(ctx, "admin-subject", "remote-management")
 	}
 
 	var password string
