@@ -270,6 +270,13 @@ be stored in the 'x5c' header.`,
 be stored in the 'x5c' header.`,
 	}
 
+	// X5cChain is a cli.Flag used to pass the intermediate chain certificates corresponding to the x5c-cert
+	// that is used to sign the token.
+	X5cChain = cli.StringSliceFlag{
+		Name:  "x5c-chain",
+		Usage: `Certificate <file>, in PEM format`,
+	}
+
 	// X5cInsecure is a cli.Flag used to set the JWT header x5cInsecure instead
 	// of x5c when --x5c-cert is used.
 	X5cInsecure = cli.BoolFlag{

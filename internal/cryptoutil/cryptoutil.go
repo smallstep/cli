@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -38,6 +39,42 @@ func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, err
 	}
 
 	return newKMSSigner(kms, name)
+}
+
+// LoadCertificateFromKMS returns a x509.Certificate from a kms or file
+func LoadCertificateFromKMS(kms, certPath string) ([]*x509.Certificate, error) {
+	if kms == "" {
+		s, err := pemutil.ReadCertificateBundle(certPath)
+		if err != nil {
+			return nil, fmt.Errorf("file %s does not contain a valid certificate: %w", certPath, err)
+		}
+		return s, nil
+	}
+
+	name, err := plugin.LookPath("kms")
+	if err != nil {
+		return nil, err
+	}
+
+	args := []string{"certificate"}
+	if kms != "" {
+		args = append(args, "--kms", kms)
+	}
+	args = append(args, certPath)
+
+	// Get public key
+	cmd := exec.Command(name, args...)
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, exitError(cmd, err)
+	}
+
+	cert, err := pemutil.ParseCertificateBundle(out)
+	if err != nil {
+		return nil, err
+	}
+
+	return cert, nil
 }
 
 // CreateAttestor creates an attestor that will use `step-kms-plugin` with the
@@ -127,7 +164,7 @@ func (s *kmsSigner) Public() crypto.PublicKey {
 }
 
 // Sign implements crypto.Signer using the `step-kms-plugin`.
-func (s *kmsSigner) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) (signature []byte, err error) {
+func (s *kmsSigner) Sign(_ io.Reader, digest []byte, opts crypto.SignerOpts) (signature []byte, err error) {
 	args := []string{"sign", "--format", "base64"}
 	if s.kms != "" {
 		args = append(args, "--kms", s.kms)

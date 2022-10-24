@@ -124,9 +124,14 @@ func DefaultClaims() *Claims {
 
 // GenerateKeyID returns the SHA256 of a public key.
 func GenerateKeyID(priv interface{}) (string, error) {
-	pub, err := keyutil.PublicKey(priv)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating kid")
+	if signer, ok := priv.(jose.OpaqueSigner); ok {
+		return jose.Thumbprint(signer.Public())
+	} else {
+		pub, err := keyutil.PublicKey(priv)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating kid")
+		}
+
+		return jose.Thumbprint(&jose.JSONWebKey{Key: pub})
 	}
-	return jose.Thumbprint(&jose.JSONWebKey{Key: pub})
 }

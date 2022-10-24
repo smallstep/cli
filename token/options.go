@@ -3,6 +3,7 @@ package token
 import (
 	"bytes"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"os"
@@ -178,6 +179,18 @@ func WithX5CFile(certFile string, key interface{}) Options {
 	}
 }
 
+// WithX5CCerts returns a Options that sets the header x5c claims from a cert in memory
+func WithX5CCerts(certs []*x509.Certificate, key interface{}) Options {
+	return func(c *Claims) error {
+		certStrs, err := jose.ValidateX5C(certs, key)
+		if err != nil {
+			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
+		}
+		c.SetHeader("x5c", certStrs)
+		return nil
+	}
+}
+
 var pemCertPrefix = []byte("-----BEGIN")
 
 // WithNebulaCert returns a Options that sets the nebula header.
@@ -218,6 +231,18 @@ func WithX5CInsecureFile(certFile string, key interface{}) Options {
 		if err != nil {
 			return err
 		}
+		certStrs, err := jose.ValidateX5C(certs, key)
+		if err != nil {
+			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
+		}
+		c.SetHeader(jose.X5cInsecureKey, certStrs)
+		return nil
+	}
+}
+
+// WithX5CInsecureCerts returns a Options that sets the header x5cAllowInvalid claims using the cert in memory
+func WithX5CInsecureCerts(certs []*x509.Certificate, key interface{}) Options {
+	return func(c *Claims) error {
 		certStrs, err := jose.ValidateX5C(certs, key)
 		if err != nil {
 			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")

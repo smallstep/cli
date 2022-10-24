@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/smallstep/cli/internal/cryptoutil"
 	"os"
 	"strings"
 	"time"
@@ -161,6 +162,9 @@ func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) 
 func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttrs tokenAttrs) (string, error) {
 	x5cCertFile := ctx.String("x5c-cert")
 	x5cKeyFile := ctx.String("x5c-key")
+	x5cChainFiles := ctx.StringSlice("x5c-chain")
+	kmsURI := ctx.String("kms")
+
 	if x5cCertFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "X5C", "x5c-cert")
 	}
@@ -168,25 +172,58 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "X5C", "x5c-key")
 	}
 
-	// Get private key from given key file
-	var opts []jose.Option
-	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
-		opts = append(opts, passOpt)
-	}
-	jwk, err := jose.ReadKey(x5cKeyFile, opts...)
-	if err != nil {
-		return "", err
-	}
+	var jwk *jose.JSONWebKey
+	var err error
 
+	if kmsURI != "" {
+		var opts []pemutil.Options
+		var kmsSigner crypto.Signer
+		kmsSigner, err = cryptoutil.CreateSigner(ctx.String("kms"), x5cKeyFile, opts...)
+		if err != nil {
+			return "", err
+		}
+
+		joseSigner := jose.NewOpaqueSigner(&kmsSigner)
+
+		jwk = &jose.JSONWebKey{
+			Key:       joseSigner,
+			KeyID:     x5cKeyFile,
+			Algorithm: string(joseSigner.Algs()[0]),
+		}
+	} else {
+		// Get private key from given key file
+		var opts []jose.Option
+		if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
+			opts = append(opts, passOpt)
+		}
+		jwk, err = jose.ReadKey(x5cKeyFile, opts...)
+		if err != nil {
+			return "", err
+		}
+	}
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
 		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetIDForToken()), tokAttrs.root,
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
 
 	var tokenOpts []token.Options
+	x5cCerts, err := cryptoutil.LoadCertificateFromKMS(kmsURI, x5cCertFile)
+	if err != nil {
+		return "", fmt.Errorf("could not load x5c certificate: %w", err)
+	}
+
+	for _, chainPath := range x5cChainFiles {
+		x5cChainCerts, err := cryptoutil.LoadCertificateFromKMS(kmsURI, chainPath)
+		if err != nil {
+			return "", fmt.Errorf("could not load x5c chain certificate %s: %w", chainPath, err)
+		} else {
+			x5cCerts = append(x5cCerts, x5cChainCerts...)
+		}
+	}
+
 	if ctx.Bool("x5c-insecure") {
-		tokenOpts = append(tokenOpts, token.WithX5CInsecureFile(x5cCertFile, jwk.Key))
+		tokenOpts = append(tokenOpts, token.WithX5CInsecureCerts(x5cCerts, jwk.Key))
 	} else {
-		tokenOpts = append(tokenOpts, token.WithX5CFile(x5cCertFile, jwk.Key))
+		tokenOpts = append(tokenOpts, token.WithX5CCerts(x5cCerts, jwk.Key))
 	}
 
 	switch tokType {
