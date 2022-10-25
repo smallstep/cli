@@ -595,7 +595,7 @@ func initAction(ctx *cli.Context) (err error) {
 		if deploymentType == pki.StandaloneDeployment {
 			pkiOpts = append(pkiOpts,
 				pki.WithProvisioner(provisioner),
-				pki.WithFirstSuperAdminSubject(firstSuperAdminSubject),
+				pki.WithSuperAdminSubject(firstSuperAdminSubject),
 			)
 		}
 		if deploymentType == pki.LinkedDeployment {
