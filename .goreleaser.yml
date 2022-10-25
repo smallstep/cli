@@ -125,7 +125,7 @@ signs:
 - cmd: cosign
   signature: "${artifact}.sig"
   certificate: "${artifact}.pem"
-  args: ["sign-blob", "--oidc-issuer=https://token.actions.githubusercontent.com", "--output-signature=${signature}", "${artifact}"]
+  args: ["sign-blob", "--oidc-issuer=https://token.actions.githubusercontent.com", "--output-certificate=${certificate}", "--output-signature=${signature}", "${artifact}"]
   artifacts: all
 
 snapshot:
@@ -193,7 +193,7 @@ release:
 
     ```
     cosign verify-blob \
-      -key https://raw.githubusercontent.com/smallstep/cli/master/cosign.pub \
+      -cert ~/Download/step_darwin_{{ .Version }}_amd64.tar.gz.pem \
       -signature ~/Downloads/step_darwin_{{ .Version }}_amd64.tar.gz.sig
       ~/Downloads/step_darwin_{{ .Version }}_amd64.tar.gz
     ```
