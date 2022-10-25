@@ -183,7 +183,7 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/api v0.100.0 // indirect
@@ -197,3 +197,11 @@ require (
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
+
+// replace github.com/smallstep/certificates => ../certificates
+
+// replace github.com/smallstep/certinfo => ../certinfo
+// replace go.step.sm/linkedca => ../linkedca
+
+// replace go.step.sm/cli-utils => ../cli-utils
+// replace go.step.sm/crypto => ../crypto
