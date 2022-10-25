@@ -29,8 +29,8 @@ jobs:
         run: |
           VVERSION=${GITHUB_REF#refs/tags/}
           VERSION=${GITHUB_REF#refs/tags/v}
-          echo "::set-output name=VVERSION::${VVERSION}"
-          echo "::set-output name=VERSION::${VERSION}"
+          echo "VVERSION=${VVERSION}" >> ${GITHUB_OUTPUT}
+          echo "VERSION=${VERSION}" >> ${GITHUB_OUTPUT}
       - name: Is Pre-release
         id: is_prerelease
         run: |
@@ -38,7 +38,7 @@ jobs:
           echo ${{ github.ref }} | grep "\-rc.*"
           OUT=$?
           if [ $OUT -eq 0 ]; then IS_PRERELEASE=true; else IS_PRERELEASE=false; fi
-          echo "::set-output name=IS_PRERELEASE::${IS_PRERELEASE}"
+          echo "IS_PRERELEASE=${IS_PRERELEASE}" >> ${GITHUB_OUTPUT}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -54,6 +54,9 @@ jobs:
     name: Upload Assets to GitHub w/ goreleaser
     runs-on: ubuntu-latest
     needs: create_release
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -69,15 +72,12 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@v2
         with:
-          cosign-release: 'v1.12.1'
-      - name: Write cosign key to disk
-        id: write_key
-        run: echo "${{ secrets.COSIGN_KEY }}" > "/tmp/cosign.key"
+          cosign-release: 'v1.13.1'
       - name: Get Release Date
         id: release_date
         run: |
           RELEASE_DATE=$(date +"%y-%m-%d")
-          echo "::set-output name=RELEASE_DATE::${RELEASE_DATE}"
+          echo "RELEASE_DATE=${RELEASE_DATE}" >> $GITHUB_ENV
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3
         with:
@@ -85,13 +85,16 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASER_PAT }}
-          COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
-          RELEASE_DATE: ${{ steps.release_date.outputs.RELEASE_DATE }}
+          RELEASE_DATE: ${RELEASE_DATE}
+          COSIGN_EXPERIMENTAL: 1
 
   build_upload_docker:
     name: Build & Upload Docker Images
     runs-on: ubuntu-latest
     needs: ci
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -103,10 +106,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@v2
         with:
-          cosign-release: 'v1.12.1'
-      - name: Write cosign key to disk
-        id: write_key
-        run: echo "${{ secrets.COSIGN_KEY }}" > "/tmp/cosign.key"
+          cosign-release: 'v1.13.1'
       - name: Build
         id: build
         run: |
@@ -115,7 +115,7 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
+          COSIGN_EXPERIMENTAL: 1
 
 # All jobs below this are for full releases (non release candidates e.g. *-rc.*)
 
