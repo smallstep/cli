@@ -55,7 +55,7 @@ define DOCKER_BUILDX
 	# $(1) -- Image Tag
 	# $(2) -- Push (empty is no push | --push will push to dockerhub)
 	docker buildx build . --progress plain -t $(DOCKER_IMAGE_NAME):$(1) -f docker/Dockerfile --platform="$(DOCKER_PLATFORMS)" $(2)
-	echo -n "$(COSIGN_PWD)" | cosign sign -key /tmp/cosign.key -r $(DOCKER_IMAGE_NAME):$(1)
+	COSIGN_EXPERIMENTAL=1 cosign sign -r $(DOCKER_IMAGE_NAME):$(1)
 endef
 
 # For non-master builds don't build the docker containers.
