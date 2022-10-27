@@ -124,6 +124,7 @@ jobs:
         run: |
           echo "TAGS=${{ env.TAGS }},${{ env.DOCKER_IMAGE }}:latest" >> ${GITHUB_ENV}
       - name: Build and push
+        id: build-and-push
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -133,7 +134,6 @@ jobs:
           platforms: linux/amd64,linux/386,linux/arm,linux/arm64
       - name: Cosign
         id: cosign
-        continue-on-error: true
         run: |
           cosign sign ${{ env.DOCKER_IMAGE }}@${{ steps.build-and-push.outputs.digest }}
         env:
