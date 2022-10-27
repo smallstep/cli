@@ -25,7 +25,7 @@ endif
 	mkdir -p $$HOME/.docker/cli-plugins
 
 	test -f $$HOME/.docker/cli-plugins/docker-buildx || \
-		(wget -q -O $$HOME/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.$(DOCKER_CLIENT_OS)-amd64 && \
+		(wget -q -O $$HOME/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.9.1/buildx-v0.9.1.$(DOCKER_CLIENT_OS)-amd64 && \
 		chmod +x $$HOME/.docker/cli-plugins/docker-buildx)
 
 	docker buildx create --use --name mybuilder --platform="$(DOCKER_PLATFORMS)" || true
@@ -54,7 +54,7 @@ docker-login:
 define DOCKER_BUILDX
 	# $(1) -- Image Tag
 	# $(2) -- Push (empty is no push | --push will push to dockerhub)
-	docker buildx build . --progress plain -t $(DOCKER_IMAGE_NAME):$(1) -f docker/Dockerfile --platform="$(DOCKER_PLATFORMS)" $(2)
+	docker buildx build . --metadata-file docker-buildx-metadata_$(1).out --progress plain -t $(DOCKER_IMAGE_NAME):$(1) -f docker/Dockerfile --platform="$(DOCKER_PLATFORMS)" $(2)
 endef
 
 # For non-master builds don't build the docker containers.
