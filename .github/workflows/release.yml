@@ -73,10 +73,16 @@ jobs:
       - name: Write cosign key to disk
         id: write_key
         run: echo "${{ secrets.COSIGN_KEY }}" > "/tmp/cosign.key"
+      - 
+        name: Get current time
+        id: time
+        uses: nanzm/get-time-action@master
+        with:
+          format: 'YYYY-MM-DD'
       - name: Get Release Date
         id: release_date
         run: |
-          RELEASE_DATE=$(date +"%y-%m-%d")
+          RELEASE_DATE=${{ steps.time.outputs.time }}
           echo "::set-output name=RELEASE_DATE::${RELEASE_DATE}"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3
