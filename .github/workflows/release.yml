@@ -117,11 +117,14 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       - name: Cosign
         id: cosign
+        continue-on-error: true
         run: |
           DIGEST=$(docker images --digests --format "{{.Digest}}" smallstep/step-cli | head -n 1 | tr -d '[:space:]')
           cosign sign -r smallstep/step-cli@${DIGEST}
         env:
           COSIGN_EXPERIMENTAL: 1
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
 # All jobs below this are for full releases (non release candidates e.g. *-rc.*)
 
