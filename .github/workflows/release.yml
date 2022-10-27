@@ -17,7 +17,7 @@ jobs:
 
   create_release:
     name: Create Release
-    needs: ci
+      #needs: ci
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.extract-tag.outputs.VERSION }}
