@@ -206,13 +206,13 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
 
 	var tokenOpts []token.Options
-	x5cCerts, err := cryptoutil.LoadCertificateFromKMS(kmsURI, x5cCertFile)
+	x5cCerts, err := cryptoutil.LoadCertificate(kmsURI, x5cCertFile)
 	if err != nil {
 		return "", fmt.Errorf("could not load x5c certificate: %w", err)
 	}
 
 	for _, chainPath := range x5cChainFiles {
-		x5cChainCerts, err := cryptoutil.LoadCertificateFromKMS(kmsURI, chainPath)
+		x5cChainCerts, err := cryptoutil.LoadCertificate(kmsURI, chainPath)
 		if err != nil {
 			return "", fmt.Errorf("could not load x5c chain certificate %s: %w", chainPath, err)
 		} else {

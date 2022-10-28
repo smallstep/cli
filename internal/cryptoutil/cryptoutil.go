@@ -41,8 +41,8 @@ func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, err
 	return newKMSSigner(kms, name)
 }
 
-// LoadCertificateFromKMS returns a x509.Certificate from a kms or file
-func LoadCertificateFromKMS(kms, certPath string) ([]*x509.Certificate, error) {
+// LoadCertificate returns a x509.Certificate from a kms or file
+func LoadCertificate(kms, certPath string) ([]*x509.Certificate, error) {
 	if kms == "" {
 		s, err := pemutil.ReadCertificateBundle(certPath)
 		if err != nil {
