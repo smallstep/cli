@@ -102,7 +102,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    uses: smallstep/cli/.github/workflows/docker-buildx-push.yml@max/docker
+    uses: smallstep/workflows/.github/workflows/docker-buildx-push.yml@max/docker
     with:
       platforms: linux/amd64,linux/386,linux/arm,linux/arm64
       tags: ${{ needs.create_release.outputs.docker_tags }}
