@@ -42,7 +42,7 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "VVERSION=${VVERSION}" >> ${GITHUB_OUTPUT}
           echo "VERSION=${VERSION}" >> ${GITHUB_OUTPUT}
-          echo "DOCKER_TAGS=${{ env.DOCKER_IMAGE }}:${{ steps.is_prerelease.outputs.version }}" >> ${GITHUB_ENV}
+          echo "DOCKER_TAGS=${{ env.DOCKER_IMAGE }}:${VERSION}" >> ${GITHUB_ENV}
       - name: Add Latest Tag
         if: steps.is_prerelease.outputs.IS_PRERELEASE == 'false'
         run: |
