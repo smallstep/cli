@@ -1,0 +1,33 @@
+[Unit]
+Description=Renew the local SSH host certificate
+After=network-online.target
+Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+User=root
+
+; This is designed for the Ed25519 key, but you could use the ECDSA key.
+; ECDSA has been supported since OpenSSH 5.7 (2011) and Ed25519 since OpenSSH 6.5 (2014).
+Environment=STEPPATH=/etc/step \
+            CERT_LOCATION=/etc/ssh/ssh_host_ed25519_key-cert.pub \
+            KEY_LOCATION=/etc/ssh/ssh_host_ed25519_key
+
+; ExecCondition checks if the certificate is ready for renewal,
+; based on the exit status of the command.
+; (In systemd <242, you can use ExecStartPre= here.)
+ExecCondition=/usr/bin/step ssh needs-renewal ${CERT_LOCATION}
+
+; ExecStart renews the certificate, if ExecStartPre was successful.
+ExecStart=/usr/bin/step ssh renew --force ${CERT_LOCATION} ${KEY_LOCATION}
+
+; Try to reload or restart the systemd service that relies on this cert-renewer
+; If the relying service doesn't exist, forge ahead.
+; (In systemd <229, use `reload-or-try-restart` instead of `try-reload-or-restart`)
+; 
+; NOTE: Some systems use sshd.service; others use ssh.service. Change this as needed:
+ExecStartPost=/usr/bin/env sh -c "! systemctl --quiet is-enabled sshd.service || systemctl try-reload-or-restart sshd"
+
+[Install]
+WantedBy=multi-user.target

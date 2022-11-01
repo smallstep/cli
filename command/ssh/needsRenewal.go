@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/sshutil"
+	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -21,7 +21,7 @@ func needsRenewalCommand() cli.Command {
 		Name:      "needs-renewal",
 		Action:    cli.ActionFunc(needsRenewalAction),
 		Usage:     `Check if an SSH certificate needs to be renewed`,
-		UsageText: `**step ssh needs-renewal** <crt-file or hostname> [**--expires-in**=<percent|duration>]`,
+		UsageText: `**step ssh needs-renewal** <crt-file> [**--expires-in**=<percent|duration>]`,
 		Description: `**step ssh needs-renewal** returns '0' if the SSH certificate needs
 to be renewed based on it's remaining lifetime. Returns '1' if the SSH certificate is
 within it's validity lifetime bounds and does not need to be renewed. Returns
@@ -31,7 +31,7 @@ adjusted using the '--expires-in' flag.
 
 ## POSITIONAL ARGUMENTS
 
-<cert-file or hostname>
+<cert-file>
 :  The path to an SSH certificate.
 
 ## EXIT CODES

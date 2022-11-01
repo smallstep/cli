@@ -6,11 +6,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certinfo"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/pemutil"
 )
 
 func installCommand() cli.Command {
@@ -43,17 +43,17 @@ Install a certificate in all the supported truststores:
 $ step certificate install --all root-ca.pem
 '''
 
-Install a certificate in Firefox and the system trustore:
+Install a certificate in Firefox and the system truststore:
 '''
 $ step certificate install --firefox root--ca.pem
 '''
 
-Install a certificate in Java and the system trustore:
+Install a certificate in Java and the system truststore:
 '''
 $ step certificate install --java root-ca.pem
 '''
 
-Install a certificate in Firefox, Java, but not in the system trustore:
+Install a certificate in Firefox, Java, but not in the system truststore:
 '''
 $ step certificate install --firefox --java --no-system root-ca.pem
 '''`,
@@ -91,7 +91,7 @@ func uninstallCommand() cli.Command {
 		UsageText: `**step certificate uninstall** <crt-file>
 [**--prefix**=<name>] [**--all**]
 [**--java**] [**--firefox**] [**--no-system**]`,
-		Description: `**step certificate install** uninstalls a root certificate from the system
+		Description: `**step certificate uninstall** uninstalls a root certificate from the system
 truststore.
 
 Java and Firefox truststores are also supported via the respective flags.
@@ -113,12 +113,12 @@ Uninstall a certificate from all the supported truststores:
 $ step certificate uninstall --all root-ca.pem
 '''
 
-Uninstall a certificate from Firefox and the system trustore:
+Uninstall a certificate from Firefox and the system truststore:
 '''
 $ step certificate uninstall --firefox root--ca.pem
 '''
 
-Uninstall a certificate infrom Java and the system trustore:
+Uninstall a certificate from Java and the system truststore:
 '''
 $ step certificate uninstall --java root-ca.pem
 '''
@@ -165,12 +165,12 @@ func installAction(ctx *cli.Context) error {
 	}
 
 	if err := truststore.InstallFile(filename, opts...); err != nil {
-		switch err := err.(type) {
-		case *truststore.CmdError:
-			return errors.Errorf("failed to execute \"%s\" failed with: %s", strings.Join(err.Cmd().Args, " "), err.Err())
-		default:
-			return errors.Wrapf(err, "failed to install %s", filename)
+		var truststoreErr *truststore.CmdError
+		if errors.As(err, &truststoreErr) {
+			return errors.Errorf("failed to execute \"%s\" failed with: %s",
+				strings.Join(truststoreErr.Cmd().Args, " "), truststoreErr.Err())
 		}
+		return errors.Wrapf(err, "failed to install %s", filename)
 	}
 
 	fmt.Printf("Certificate %s has been installed.\n", filename)
@@ -196,12 +196,12 @@ func uninstallAction(ctx *cli.Context) error {
 	}
 
 	if err := truststore.UninstallFile(filename, opts...); err != nil {
-		switch err := err.(type) {
-		case *truststore.CmdError:
-			return errors.Errorf("failed to execute \"%s\" failed with: %s", strings.Join(err.Cmd().Args, " "), err.Err())
-		default:
-			return errors.Wrapf(err, "failed to uninstall %s", filename)
+		var truststoreErr *truststore.CmdError
+		if errors.As(err, &truststoreErr) {
+			return errors.Errorf("failed to execute \"%s\" failed with: %s",
+				strings.Join(truststoreErr.Cmd().Args, " "), truststoreErr.Err())
 		}
+		return errors.Wrapf(err, "failed to uninstall %s", filename)
 	}
 
 	fmt.Printf("Certificate %s has been removed.\n", filename)

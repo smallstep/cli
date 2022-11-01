@@ -1,13 +1,18 @@
 package flags
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/smallstep/assert"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/fingerprint"
 )
 
 func TestParseCaURL(t *testing.T) {
@@ -105,6 +110,122 @@ func Test_parseCaURL(t *testing.T) {
 				assert.HasPrefix(t, err.Error(), tc.err.Error())
 			} else if assert.Nil(t, tc.err, fmt.Sprintf("expected error <%s> but got nil", tc.err)) {
 				assert.Equals(t, ret, tc.ret)
+			}
+		})
+	}
+}
+
+func TestParseTemplateData(t *testing.T) {
+	tempDir := t.TempDir()
+	write := func(t *testing.T, data []byte) string {
+		f, err := os.CreateTemp(tempDir, "parseTemplateData")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = f.Write(data)
+		if err1 := f.Close(); err1 != nil && err == nil {
+			t.Fatal(err1)
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		return f.Name()
+	}
+
+	type args struct {
+		setData     []string
+		setFileData []byte
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    json.RawMessage
+		wantErr bool
+	}{
+		{"ok nil", args{nil, nil}, nil, false},
+		{"ok set", args{[]string{"foo=bar"}, nil}, []byte(`{"foo":"bar"}`), false},
+		{"ok set empty", args{[]string{"foo="}, nil}, []byte(`{"foo":""}`), false},
+		{"ok set int", args{[]string{"foo=123"}, nil}, []byte(`{"foo":123}`), false},
+		{"ok set int string", args{[]string{`foo="123"`}, nil}, []byte(`{"foo":"123"}`), false},
+		{"ok set object", args{[]string{`foo={"foo":"bar"}`}, nil}, []byte(`{"foo":{"foo":"bar"}}`), false},
+		{"ok set multiple", args{[]string{"foo=bar", "bar=123", "zar={}"}, nil}, []byte(`{"bar":123,"foo":"bar","zar":{}}`), false},
+		{"ok set overwrite", args{[]string{"foo=bar1", "foo=bar2"}, nil}, []byte(`{"foo":"bar2"}`), false},
+		{"ok set-file", args{nil, []byte(`{"foo":"bar","bar":123,"zar":{}}`)}, []byte(`{"bar":123,"foo":"bar","zar":{}}`), false},
+		{"ok set and set-file", args{[]string{"foo=bar-set", "bar=123"}, []byte(`{"foo":"bar-file","zar":{"foo":"bar"}}`)}, []byte(`{"bar":123,"foo":"bar-set","zar":{"foo":"bar"}}`), false},
+		{"fail set", args{[]string{"foo"}, nil}, nil, true},
+		{"fail set-file json", args{nil, []byte(`{"foo":"bar}`)}, nil, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app := &cli.App{}
+			set := flag.NewFlagSet(t.Name(), 0)
+
+			if tt.args.setData != nil {
+				value := cli.StringSlice(tt.args.setData)
+				set.Var(&value, "set", "")
+			}
+			if tt.args.setFileData != nil {
+				fileName := write(t, tt.args.setFileData)
+				set.String("set-file", fileName, "")
+			}
+
+			got, err := ParseTemplateData(cli.NewContext(app, set, nil))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseTemplateData() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseTemplateData() = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseTemplateData_missing(t *testing.T) {
+	tempDir := t.TempDir()
+	app := &cli.App{}
+	set := flag.NewFlagSet(t.Name(), 0)
+	set.String("set-file", filepath.Join(tempDir, "missing"), "")
+
+	_, err := ParseTemplateData(cli.NewContext(app, set, nil))
+	if err == nil {
+		t.Errorf("ParseTemplateData() error = %v, wantErr true", err)
+	}
+}
+
+func TestParseFingerprintFormat(t *testing.T) {
+	type args struct {
+		format string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    fingerprint.Encoding
+		wantErr bool
+	}{
+		{"hex", args{"hex"}, fingerprint.HexFingerprint, false},
+		{"base64", args{"base64"}, fingerprint.Base64Fingerprint, false},
+		{"base64url", args{"base64url"}, fingerprint.Base64URLFingerprint, false},
+		{"base64-url", args{"base64-url"}, fingerprint.Base64URLFingerprint, false},
+		{"base64urlraw", args{"base64urlraw"}, fingerprint.Base64RawURLFingerprint, false},
+		{"base64url-raw", args{"base64url-raw"}, fingerprint.Base64RawURLFingerprint, false},
+		{"base64-url-raw", args{"base64-url-raw"}, fingerprint.Base64RawURLFingerprint, false},
+		{"base64raw", args{"base64raw"}, fingerprint.Base64RawFingerprint, false},
+		{"base64-raw", args{"base64-raw"}, fingerprint.Base64RawFingerprint, false},
+		{"emoji", args{"emoji"}, fingerprint.EmojiFingerprint, false},
+		{"emojisum", args{"emojisum"}, fingerprint.EmojiFingerprint, false},
+		{"unknown", args{"unknown"}, 0, true},
+		{"empty", args{""}, 0, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseFingerprintFormat(tt.args.format)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseFingerprintFormat() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseFingerprintFormat() = %v, want %v", got, tt.want)
 			}
 		})
 	}

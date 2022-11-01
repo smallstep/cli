@@ -286,7 +286,7 @@ func boxOpenAction(ctx *cli.Context) error {
 	copy(pb[:], pub)
 	copy(pv[:], priv)
 
-	// Fixme: if we prepend the nonce in the seal we can use use rawInput[24:]
+	// Fixme: if we prepend the nonce in the seal we can use rawInput[24:]
 	// as the message and rawInput[:24] as the nonce instead of requiring one.
 	raw, ok := box.Open(nil, rawInput, &n, &pb, &pv)
 	if !ok {

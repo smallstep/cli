@@ -8,20 +8,20 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/randutil"
 )
 
 const (
 	// 128-bit salt
 	pbkdf2SaltSize = 16
-	// 100k iterations. Nist recommends at least 10k, 1Passsword uses 100k.
+	// 100k iterations. Nist recommends at least 10k, 1Password uses 100k.
 	pbkdf2Iterations = 100000
 )
 
@@ -47,7 +47,7 @@ All flags are optional. Defaults are suitable for most use cases.
 ## POSITIONAL ARGUMENTS
 
 <public-jwk-file>
-:  Path to which the the public JWK should be written
+:  Path to which the public JWK should be written
 
 <private-jwk-file>
 :  Path to which the (JWE encrypted) private JWK should be written
@@ -536,7 +536,7 @@ func createAction(ctx *cli.Context) (err error) {
 
 			rcpt = jose.Recipient{
 				Algorithm:  jose.PBES2_HS256_A128KW,
-				Key:        []byte(key),
+				Key:        key,
 				PBES2Count: pbkdf2Iterations,
 				PBES2Salt:  salt,
 			}

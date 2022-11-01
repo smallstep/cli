@@ -6,6 +6,55 @@ for all release notes for step cli and certificates.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+### TEMPLATE -- do not alter or remove
+---
+## [x.y.z] - aaaa-bb-cc
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+---
+
+## [Unreleased]
+### Added
+- Added support for configuring ACME device-attest-01 challenges.
+- Added support for ACME device-attest-01 challenges with YubiKeys.
+- Added support for SUSE13 and upwards for `step certificate install`.
+- Added support for printing [Sigstore](https://www.sigstore.dev/) certificate details to `step certificate inspect`
+### Changed
+- New OAuth success page with color.
+- Added `x5c-roots` as alias for `x5c-root` flag.
+
+## [0.22.0] - 2022-08-25
+### Added
+- Initial support for `step` plugins. A plugin is an executable file named with
+  the format step-`name`-plugin, located in the `$PATH` or the
+  `$STEPPATH/plugins` directory. These plugins will be executed using `step
+  name`.
+- Integration of [`step-kms-plugin`](https://github.com/smallstep/step-kms-plugin)
+  on `step certificate create` and `step certificate sign`.
+- Add the certificate signature to `step ssh inspect` output.
+- Add the `--mtls=false` flag to force the token authorization flow on `step ca
+  renew`.
+- Add the `--set` and `--set-file` flag to `step certificate create` and
+`step certificate sign` commands.
+### Changed
+- Support two latest versions of Go (1.18, 1.19)
+- `step ca revoke <serial>` requires either a base 10 serial number or a value
+with a prefix indicating the appropriate base.
+
+## [0.21.0] - 2022-07-06 
+### Added 
+- Device Authorization Grant flow for input constrained devices needing OAuth
+credentials. `--console-flow` flag in `step oauth` for selecting which 
+alternative OAuth flow to use.
+### Fixed
+- Added back --domain and --remove-domain flags to provisioner CRUD.
+### Removed
+- The `beta` prefix for remote provisioner and admin management.
+
 ## [0.20.0] - 2022-05-26
 ### Added
 - Add commands for managing certificate issuance policies on authority, provisioner and ACME account level.
@@ -114,11 +163,11 @@ to the value of provisioner-password-file flag.
 
 ## [0.0.2]
 ### Added
-- `--bundle` flag to cert/inspect for inpecting all the full chain or bundle
+- `--bundle` flag to cert/inspect for inspecting all the full chain or bundle
 given a path. Default behavior is unchanged; only inspect the first (leaf)
 certificate.
 - distribution.md with documentation on how to create releases.
-- travis build and upload artifacts to Github Releases on tagged pushes.
+- travis build and upload artifacts to GitHub Releases on tagged pushes.
 - logging of invalid http requests to the oauth server
 ### Changed
 - default PEM format encryption alg AES128 -> AES256

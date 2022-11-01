@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -28,8 +29,11 @@ func Command(command string) *exec.Cmd {
 
 // ExitError converts an error to an exec.ExitError.
 func ExitError(err error) (*exec.ExitError, bool) {
-	v, ok := err.(*exec.ExitError)
-	return v, ok
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return ee, true
+	}
+	return nil, false
 }
 
 // Output executes a shell command and returns output from stdout.
@@ -50,7 +54,7 @@ func WithStdin(command string, r io.Reader) ([]byte, error) {
 	return cmd.Output()
 }
 
-// CLICommand repreents a command-line command to execute.
+// CLICommand represents a command-line command to execute.
 type CLICommand struct {
 	command   string
 	arguments string
@@ -59,11 +63,9 @@ type CLICommand struct {
 }
 
 // CLIOutput represents the output from executing a CLICommand.
-// nolint:unused,gocritic
 type CLIOutput struct {
-	stdout   string
-	stderr   string
-	combined string
+	//nolint:unused // ignore unused field
+	stdout, stderr, combined string
 }
 
 // NewCLICommand generates a new CLICommand.

@@ -16,10 +16,10 @@ import (
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/crypto/x509util"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -584,7 +584,7 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string,
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())
 	case *provisioner.ACME: // Return an error with the provisioner ID.
-		return "", &ErrACMEToken{p.GetName()}
+		return "", &ACMETokenError{p.GetName()}
 	default: // Default is assumed to be a standard JWT.
 		jwkP, ok := p.(*provisioner.JWK)
 		if !ok {

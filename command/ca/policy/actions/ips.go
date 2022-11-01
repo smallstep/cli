@@ -14,7 +14,7 @@ import (
 	"github.com/smallstep/cli/utils/cautils"
 )
 
-// Command returns the policy subcommand.
+// IPCommand returns the policy subcommand.
 func IPCommand(ctx context.Context) cli.Command {
 	commandName := policycontext.GetPrefixedCommandUsage(ctx, "ip")
 	return cli.Command{
@@ -28,67 +28,67 @@ func IPCommand(ctx context.Context) cli.Command {
 [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** command manages IP addresses and ranges in policies
 
-## EXAMPLES	
+## EXAMPLES
 
 Allow IP address 127.0.0.1 in X.509 certificates on authority level
 '''
 $ step ca policy authority x509 allow ip 127.0.0.1
-'''		
+'''
 
 Allow IP address range 10.0.0.0/24 in X.509 certificates on authority level
 '''
 $ step ca policy authority x509 allow ip 10.0.0.0/24
-'''		
+'''
 
 Deny IP address 10.0.0.30 in X.509 certificates on authority level
 '''
 $ step ca policy authority x509 deny ip 10.0.0.30
-'''		
+'''
 
 Remove IP address range 10.0.0.0/24 from being allowed in X.509 certificates on authority level
 '''
 $ step ca policy authority x509 allow ip 10.0.0.0/24 --remove
-'''		
+'''
 
 Allow IP address range 10.10.0.0/24 in X.509 certificates on provisioner level
 '''
 $ step ca policy provisioner x509 allow ip 10.10.0.0/24 --provisioner my_provisioner
-'''		
+'''
 
 Deny IP address 10.10.0.50 in X.509 certificates on provisioner level
 '''
 $ step ca policy provisioner x509 deny ip 10.10.0.50 --provisioner my_provisioner
-'''		
+'''
 
 Remove IP address 10.10.0.50 from being denied in X.509 certificates on provisioner level
 '''
 $ step ca policy provisioner x509 deny ip 10.10.0.50 --provisioner my_provisioner --remove
-'''		
+'''
 
 Allow IP address range 10.20.0.0/24 in X.509 certificates on ACME account level by EAB key reference
 '''
 $ step ca policy provisioner x509 allow ip 10.10.0.0/24 --provisioner my_acme_provisioner --eab-key-reference my_ref
-'''		
+'''
 
 Deny IP address 10.20.0.70 in X.509 certificates on ACME account level by EAB key reference
 '''
 $ step ca policy provisioner x509 deny ip 10.20.0.70 --provisioner my_acme_provisioner --eab-key-reference my_ref
-'''		
+'''
 
 Remove IP address 10.20.0.70 from being denied in X.509 certificates on ACME account level by EAB key reference
 '''
 $ step ca policy provisioner x509 deny ip 10.20.0.70 --provisioner my_acme_provisioner --eab-key-reference my_ref --remove
-'''		
+'''
 
 Allow IP address range 192.168.0.0/24 in SSH host certificates on authority level
 '''
 $ step ca policy authority ssh host allow ip 192.168.0.0/24
-'''		
+'''
 
 Deny IP address 192.168.0.40 in SSH host certificates on authority level
 '''
 $ step ca policy authority ssh host deny ip 192.168.0.40
-'''		
+'''
 
 `, commandName),
 		Action: command.InjectContext(
@@ -116,7 +116,6 @@ $ step ca policy authority ssh host deny ip 192.168.0.40
 }
 
 func ipAction(ctx context.Context) (err error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

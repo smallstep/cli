@@ -11,6 +11,7 @@ import (
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli/command/ca/provisioner/webhook"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
@@ -31,6 +32,7 @@ func Command() cli.Command {
 			addCommand(),
 			updateCommand(),
 			removeCommand(),
+			webhook.Command(),
 		},
 		Description: `**step ca provisioner** command group provides facilities for managing the
 certificate authority provisioners.
@@ -115,12 +117,18 @@ func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error loading configuration: %w", err)
 		}
+
 		if cfg.AuthorityConfig.EnableAdmin {
 			if len(cfg.AuthorityConfig.Provisioners) > 0 {
 				return nil, errors.New("when 'enableAdmin' attribute set to 'true', provisioners list in ca.json must be empty")
 			}
 			return cautils.NewAdminClient(cliCtx)
 		}
+
+		// Assume the ca.json is already valid to avoid enabling all the
+		// features present in step-ca just to modify the provisioners.
+		cfg.SkipValidation = true
+
 		ui.Println()
 		return newCaConfigClient(context.Background(), cfg, cfgFile)
 	default:
@@ -308,21 +316,93 @@ disable ssh use '--ssh=false'.`,
 containing one or more PEM formatted keys, if used with the K8SSA provisioner.`,
 	}
 
+	// ACME and SCEP provisioner flags
 	forceCNFlag = cli.BoolFlag{
 		Name:  "force-cn",
 		Usage: `Always set the common name in provisioned certificates.`,
 	}
+
+	challengeFlag = cli.StringSliceFlag{
+		Name: "challenge",
+		Usage: `With a SCEP provisioner the <challenge> is a shared secret between a
+client and the CA.
+
+With an ACME provisioner, this flag specifies the <challenge> or challenges to
+enable. Use the flag multiple times to configure multiple challenges.
+
+The supported ACME challenges are:
+
+**http-01**
+: With the HTTP challenge, the client in an ACME transaction proves its control
+over a domain name by proving that it can provision HTTP resources on a server
+accessible under that domain name.
+
+**dns-01**
+: With the DNS challenge, the client can prove control of a domain by
+provisioning a TXT resource record containing a designated value for a specific
+validation domain name.
+
+**tls-alpn-01**
+: With the TLS with Application-Layer Protocol Negotiation (TLS ALPN) challenge,
+the client can prove control over a domain name by configuring a TLS server to
+respond to specific connection attempts using the ALPN extension with
+identifying information.
+
+**device-attest-01**
+: With the device attestation challenge, the client can prove control over a
+permanent identifier of a device by providing an attestation statement
+containing the identifier of the device.
+
+If the provisioner has no challenges configured, http-01, dns-01 and tls-alpn-01
+will be automatically enabled.`,
+	}
+
+	removeChallengeFlag = cli.StringSliceFlag{
+		Name: "remove-challenge",
+		Usage: `Remove an ACME <challenge> from the list configured in the provisioner.
+Use the flag multiple times to remove multiple challenges.`,
+	}
+
+	// ACME provisioner flags
 	requireEABFlag = cli.BoolFlag{
 		Name: "require-eab",
 		Usage: `Require (and enable) External Account Binding (EAB) for Account creation.
 If this flag is set to false, then disable EAB.`,
 	}
 
-	// SCEP provisioner flags
-	scepChallengeFlag = cli.StringFlag{
-		Name:  "challenge",
-		Usage: `The SCEP <challenge> to use as a shared secret between a client and the CA`,
+	attestationFormatFlag = cli.StringSliceFlag{
+		Name: "attestation-format",
+		Usage: `Enable an ACME attestation statement <format> in the provisioner. Use the flag
+multiple times to configure multiple challenges.
+
+The supported ACME attestation formats are:
+
+**apple**
+: With the apple format, Apple devices can use the device-attest-01 challenge to
+get a new certificate.
+
+**step**
+: With the step format, devices like YubiKeys that can generate an attestation
+certificate can use the device-attest-01 challenge to get a new certificate.
+
+**tpm**
+: With the tpm format, devices with TPMs can use the device-attest-01 challenge
+to get a new certificate.`,
 	}
+
+	attestationRootsFlag = cli.StringSliceFlag{
+		Name: "attestation-roots",
+		Usage: `PEM-formatted root certificate(s) <file> used to validate the attestation
+certificates. Use the flag multiple times to read from multiple files.`,
+	}
+
+	removeAttestationFormatFlag = cli.StringSliceFlag{
+		Name: "remove-attestation-format",
+		Usage: `Remove an ACME attestation statement <format> from the list configured in the provisioner.
+Use the flag multiple times to remove multiple formats.`,
+	}
+
+	// SCEP provisioner flags
 	scepCapabilitiesFlag = cli.StringSliceFlag{
 		Name:  "capabilities",
 		Usage: `The SCEP <capabilities> to advertise`,
@@ -394,7 +474,7 @@ Use the flag multiple times to configure multiple object IDs`,
 	removeAzureObjectIDFlag = cli.StringSliceFlag{
 		Name: "remove-azure-object-id",
 		Usage: `Remove a Microsoft Azure AD object <id> used to validate the identity tokens.
-Use the flag multiple times to configure multiple object IDs`,
+Use the flag multiple times to remove multiple object IDs`,
 	}
 	gcpServiceAccountFlag = cli.StringSliceFlag{
 		Name: "gcp-service-account",
@@ -404,7 +484,7 @@ Use the flag multiple times to configure multiple service accounts.`,
 	removeGCPServiceAccountFlag = cli.StringSliceFlag{
 		Name: "remove-gcp-service-account",
 		Usage: `Remove a Google service account <email> or <id> used to validate the identity tokens.
-Use the flag multiple times to configure multiple service accounts.`,
+Use the flag multiple times to remove multiple service accounts.`,
 	}
 	gcpProjectFlag = cli.StringSliceFlag{
 		Name: "gcp-project",
@@ -414,7 +494,7 @@ Use the flag multiple times to configure multiple projects`,
 	removeGCPProjectFlag = cli.StringSliceFlag{
 		Name: "remove-gcp-project",
 		Usage: `Remove a Google project <id> used to validate the identity tokens.
-Use the flag multiple times to configure multiple projects`,
+Use the flag multiple times to remove multiple projects`,
 	}
 	instanceAgeFlag = cli.DurationFlag{
 		Name: "instance-age",
@@ -486,11 +566,21 @@ will not have restrictions in the certificates to sign. Use the
 		Name: "remove-admin",
 		Usage: `Remove the <email> of an admin user in an OpenID Connect provisioner, this user
 will not have restrictions in the certificates to sign. Use the
-'--admin' flag multiple times to configure multiple administrators.`,
+'--remove-admin' flag multiple times to remove multiple administrators.`,
+	}
+	oidcDomainFlag = cli.StringSliceFlag{
+		Name: "domain",
+		Usage: `The <domain> used to validate the email claim in an OpenID Connect provisioner.
+Use the '--domain' flag multiple times to configure multiple domains.`,
+	}
+	oidcRemoveDomainFlag = cli.StringSliceFlag{
+		Name: "remove-domain",
+		Usage: `Remove the <domain> used to validate the email claim in an OpenID Connect provisioner.
+Use the '--remove-domain' flag multiple times to remove multiple domains.`,
 	}
 	oidcGroupFlag = cli.StringSliceFlag{
 		Name: "group",
-		Usage: `The <group> list used to validate the groups extenstion in an OpenID Connect token.
+		Usage: `The <group> list used to validate the groups extension in an OpenID Connect token.
 Use the '--group' flag multiple times to configure multiple groups.`,
 	}
 	oidcTenantIDFlag = cli.StringFlag{
@@ -499,9 +589,9 @@ Use the '--group' flag multiple times to configure multiple groups.`,
 	}
 
 	// X5C provisioner flags
-	x5cRootFlag = cli.StringFlag{
-		Name: "x5c-root",
-		Usage: `Root certificate (chain) <file> used to validate the signature on X5C
+	x5cRootsFlag = cli.StringFlag{
+		Name: "x5c-roots, x5c-root",
+		Usage: `PEM-formatted root certificate(s) <file> used to validate the signature on X5C
 provisioning tokens.`,
 	}
 )

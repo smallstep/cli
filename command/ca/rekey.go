@@ -9,17 +9,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/utils"
-
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 )
 
 func rekeyCertificateCommand() cli.Command {
@@ -166,7 +165,7 @@ flag.`,
 			cli.StringFlag{
 				Name: "pid-file",
 				Usage: `The <file> from which to read the process id that will be signaled after the certificate
-has been rekeyed. By default the the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
+has been rekeyed. By default the SIGHUP (1) signal will be used, but this can be configured with the **--signal**
 flag.`,
 			},
 			cli.IntFlag{
@@ -315,6 +314,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 
 	// Do not rekey if (cert.notAfter - now) > (expiresIn + jitter)
 	if expiresIn > 0 {
+		//nolint:gosec // The random number below is not being used for crypto.
 		jitter := rand.Int63n(int64(expiresIn / 20))
 		if d := time.Until(leaf.NotAfter); d > expiresIn+time.Duration(jitter) {
 			ui.Printf("certificate not rekeyed: expires in %s\n", d.Round(time.Second))
@@ -328,7 +328,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		priv, err = keys.GenerateKey(kty, crv, size)
+		priv, err = keyutil.GenerateKey(kty, crv, size)
 		if err != nil {
 			return err
 		}

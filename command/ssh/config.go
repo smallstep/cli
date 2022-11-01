@@ -12,8 +12,8 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/templates"
-	"github.com/smallstep/cli/crypto/sshutil"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
@@ -106,10 +106,6 @@ times to set multiple variables.`,
 	}
 }
 
-type statusCoder interface {
-	StatusCode() int
-}
-
 func configAction(ctx *cli.Context) (recoverErr error) {
 	team := ctx.String("team")
 	isHost := ctx.Bool("host")
@@ -171,7 +167,10 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 			roots, err = client.SSHFederation()
 		}
 		if err != nil {
-			if e, ok := err.(statusCoder); ok && e.StatusCode() == http.StatusNotFound {
+			var statusCoder interface {
+				StatusCode() int
+			}
+			if errors.As(err, &statusCoder) && statusCoder.StatusCode() == http.StatusNotFound {
 				return errors.New("step certificates is not configured with SSH support")
 			}
 			return errors.Wrap(err, "error getting ssh public keys")

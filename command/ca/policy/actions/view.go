@@ -28,7 +28,7 @@ func ViewCommand(ctx context.Context) cli.Command {
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** shows the currently configured policy.
-		
+
 ## EXAMPLES
 
 View the authority certificate issuance policy
@@ -73,7 +73,6 @@ $ step ca policy acme view --provisioner my_acme_provisioner --eab-key-id "lUOTG
 }
 
 func viewAction(ctx context.Context) (err error) {
-
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
 	reference := clictx.String("eab-key-reference")

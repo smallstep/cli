@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/jose"
 )
 
 func verifyCommand() cli.Command {
@@ -146,7 +146,7 @@ func verifyAction(ctx *cli.Context) error {
 		kid = tok.Headers[0].KeyID
 	}
 
-	// Validate subtled
+	// Validate subtle
 	isSubtle := ctx.Bool("subtle")
 	iss := ctx.String("iss")
 	aud := ctx.String("aud")
@@ -187,9 +187,9 @@ func verifyAction(ctx *cli.Context) error {
 	var jwk *jose.JSONWebKey
 	switch {
 	case key != "":
-		jwk, err = jose.ParseKey(key, options...)
+		jwk, err = jose.ReadKey(key, options...)
 	case jwks != "":
-		jwk, err = jose.ParseKeySet(jwks, options...)
+		jwk, err = jose.ReadKeySet(jwks, options...)
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwks")
 	}
@@ -221,24 +221,20 @@ func verifyAction(ctx *cli.Context) error {
 
 	claims := jose.Claims{}
 	if err := tok.Claims(publicKey(jwk), &claims); err != nil {
-		switch err {
-		case jose.ErrCryptoFailure:
+		if errors.Is(err, jose.ErrCryptoFailure) {
 			return errors.New("validation failed: invalid signature")
-		default:
-			return errors.Wrap(err, "claim verify failed")
 		}
+		return errors.Wrap(err, "claim verify failed")
 	}
 
 	// Check exp and nbf presence
 	// There's no need to do the verification again.
 	var tClaims timeClaims
 	if err := tok.UnsafeClaimsWithoutVerification(&tClaims); err != nil {
-		switch err {
-		case jose.ErrCryptoFailure:
+		if errors.Is(err, jose.ErrCryptoFailure) {
 			return errors.New("validation failed: invalid signature")
-		default:
-			return errors.Wrap(err, "claim verify failed")
 		}
+		return errors.Wrap(err, "claim verify failed")
 	}
 
 	expected := jose.Expected{Issuer: iss}
@@ -267,7 +263,7 @@ func validateClaimsWithLeeway(ctx *cli.Context, c jose.Claims, e jose.Expected, 
 
 	// we're not currently checking the subject
 	if e.Subject != "" && e.Subject != c.Subject {
-		ers = append(ers, "invalid subject subject (sub)")
+		ers = append(ers, "invalid subject (sub)")
 	}
 
 	// we're not currently checking the id

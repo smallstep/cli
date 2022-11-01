@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/token"
 	"github.com/stretchr/testify/assert"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 )
 
 func withFixedTime(tok *Token, t time.Time) {
@@ -77,7 +77,7 @@ func TestToken_SignedString(t *testing.T) {
 		key    interface{}
 	}
 
-	rsaKey, err := pemutil.Read("../../crypto/pemutil/testdata/openssl.rsa1024.pem")
+	rsaKey, err := pemutil.Read("../testdata/openssl.rsa1024.pem")
 	if err != nil {
 		t.Fatal(err)
 	}

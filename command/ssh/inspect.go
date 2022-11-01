@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/sshutil"
+	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
@@ -110,7 +110,7 @@ func inspectAction(ctx *cli.Context) error {
 		fmt.Println(name + ":")
 		fmt.Printf("%8sType: %s %s certificate\n", space, inspect.KeyName, inspect.Type)
 		fmt.Printf("%8sPublic key: %s-CERT %s\n", space, inspect.KeyAlgo, inspect.KeyFingerprint)
-		fmt.Printf("%8sSigning CA: %s %s\n", space, inspect.SigningKeyAlgo, inspect.SigningKeyFingerprint)
+		fmt.Printf("%8sSigning CA: %s %s (using %s)\n", space, inspect.SigningKeyAlgo, inspect.SigningKeyFingerprint, inspect.Signature.Type)
 		fmt.Printf("%8sKey ID: \"%s\"\n", space, inspect.KeyID)
 		fmt.Printf("%8sSerial: %d\n", space, inspect.Serial)
 		fmt.Printf("%8sValid: %s\n", space, inspect.Validity())
@@ -141,6 +141,18 @@ func inspectAction(ctx *cli.Context) error {
 				fmt.Printf("%16s%s %v\n", space, k, v)
 			}
 		}
+		fmt.Printf("%8sSignature:", space)
+		for i, b := range cert.Signature.Blob {
+			if (i % 16) == 0 {
+				fmt.Printf("\n%16s", space)
+			}
+			fmt.Printf("%02x", b)
+			if i != len(cert.Signature.Blob)-1 {
+				fmt.Print(":")
+			}
+		}
+		fmt.Println()
+
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")

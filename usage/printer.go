@@ -58,6 +58,7 @@ func markdownHelpPrinter(w io.Writer, templ, parent string, data interface{}) {
 
 	var frontMatterTemplate = `---
 layout: auto-doc
+category: reference
 title: {{.Data.HelpName}}
 menu:
   docs:
@@ -149,9 +150,10 @@ func findSectionEnd(h, s string) int {
 }
 
 // Convert some stuff that we can't easily write in help files because
-//  backticks and raw strings don't mix:
+// backticks and raw strings don't mix:
+//
 // - "<foo>" to "`foo`"
-// - "'''" to "```"
+// - "”'" to "```"
 func markdownify(r *bytes.Buffer) string {
 	const escapeByte = byte('\\')
 	var last byte

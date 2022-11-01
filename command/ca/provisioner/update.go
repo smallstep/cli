@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/sliceutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -36,9 +37,11 @@ func updateCommand() cli.Command {
 ACME
 
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
+[**--attestation-format**=<format>] [**--remove-attestation-format**=<format>]
+[**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 OIDC
 
@@ -54,7 +57,7 @@ OIDC
 
 X5C
 
-**step ca provisioner update** <name> **--x5c-root**=<file>
+**step ca provisioner update** <name> **--x5c-roots**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -103,21 +106,27 @@ SCEP
 			oidcConfigEndpointFlag,
 			oidcAdminFlag,
 			oidcRemoveAdminFlag,
+			oidcDomainFlag,
+			oidcRemoveDomainFlag,
 			oidcGroupFlag,
 			oidcTenantIDFlag,
 
 			// X5C Root Flag
-			x5cRootFlag,
+			x5cRootsFlag,
 
 			// Nebula provisioner flags
 			nebulaRootFlag,
 
 			// ACME provisioner flags
-			forceCNFlag,
-			requireEABFlag,
+			requireEABFlag,              // ACME
+			forceCNFlag,                 // ACME + SCEP
+			challengeFlag,               // ACME + SCEP
+			removeChallengeFlag,         // ACME
+			attestationFormatFlag,       // ACME
+			removeAttestationFormatFlag, // ACME
+			attestationRootsFlag,        // ACME
 
 			// SCEP flags
-			scepChallengeFlag,
 			scepCapabilitiesFlag,
 			scepIncludeRootFlag,
 			scepMinimumPublicKeyLengthFlag,
@@ -223,7 +232,7 @@ step ca provisioner update Google \
 
 Update an X5C provisioner:
 '''
-step ca provisioner update x5c --x5c-root x5c_ca.crt
+step ca provisioner update x5c --x5c-roots x5c_ca.crt
 '''
 
 Update an ACME provisioner:
@@ -275,6 +284,16 @@ func updateAction(ctx *cli.Context) (err error) {
 
 	p, err := client.GetProvisioner(ca.WithProvisionerName(name))
 	if err != nil {
+		return err
+	}
+
+	// Validate challenge flag on scep and acme
+	if err := validateChallengeFlag(ctx, p.Type); err != nil {
+		return err
+	}
+
+	// Validate attestation format flag on acme
+	if err := validateAttestationFormatFlag(ctx, p.Type); err != nil {
 		return err
 	}
 
@@ -588,6 +607,35 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("require-eab") {
 		details.RequireEab = ctx.Bool("require-eab")
 	}
+	if ctx.IsSet("remove-challenge") {
+		values := acmeChallengeToLinkedca(ctx.StringSlice("remove-challenge"))
+		details.Challenges = sliceutil.RemoveValues(details.Challenges, values)
+	}
+	if ctx.IsSet("challenge") {
+		values := acmeChallengeToLinkedca(ctx.StringSlice("challenge"))
+		details.Challenges = append(details.Challenges, values...)
+	}
+	if ctx.IsSet("challenge") || ctx.IsSet("remove-challenge") {
+		details.Challenges = sliceutil.RemoveDuplicates(details.Challenges)
+	}
+	if ctx.IsSet("remove-attestation-format") {
+		values := acmeAttestationFormatToLinkedca(ctx.StringSlice("remove-attestation-format"))
+		details.AttestationFormats = sliceutil.RemoveValues(details.AttestationFormats, values)
+	}
+	if ctx.IsSet("attestation-format") {
+		values := acmeAttestationFormatToLinkedca(ctx.StringSlice("attestation-format"))
+		details.AttestationFormats = append(details.AttestationFormats, values...)
+	}
+	if ctx.IsSet("attestation-format") || ctx.IsSet("remove-attestation-format") {
+		details.AttestationFormats = sliceutil.RemoveDuplicates(details.AttestationFormats)
+	}
+	if ctx.IsSet("attestation-roots") {
+		attestationRoots, err := parseCACertificates(ctx.StringSlice("attestation-roots"))
+		if err != nil {
+			return err
+		}
+		details.AttestationRoots = attestationRoots
+	}
 	return nil
 }
 
@@ -601,8 +649,8 @@ func updateX5CDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		return errors.New("error casting details to X5C type")
 	}
 	details := data.X5C
-	if ctx.IsSet("x5c-root") {
-		x5cRootFile := ctx.String("x5c-root")
+	if ctx.IsSet("x5c-roots") {
+		x5cRootFile := ctx.String("x5c-roots")
 		roots, err := pemutil.ReadCertificateBundle(x5cRootFile)
 		if err != nil {
 			return errors.Wrapf(err, "error loading X5C Root certificates from %s", x5cRootFile)

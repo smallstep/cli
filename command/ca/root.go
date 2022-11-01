@@ -8,15 +8,15 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/pemutil"
 )
 
-func rootComand() cli.Command {
+func rootCommand() cli.Command {
 	return cli.Command{
 		Name:   "root",
 		Action: command.ActionFunc(rootAction),

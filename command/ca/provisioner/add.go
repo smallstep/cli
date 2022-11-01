@@ -12,6 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/sliceutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -32,6 +33,15 @@ func addCommand() cli.Command {
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
+ACME
+
+**step ca provisioner add** <name> **--type**=ACME
+[**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>]
+[**--attestation-format**=<format>] [**--attestation-roots**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
+[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+
 OIDC
 
 **step ca provisioner add** <name> **--type**=OIDC
@@ -44,7 +54,7 @@ OIDC
 
 X5C
 
-**step ca provisioner add** <name> **--type**=X5C **--x5c-root**=<file>
+**step ca provisioner add** <name> **--type**=X5C **--x5c-roots**=<file>
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -82,13 +92,6 @@ IID
 [**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
-ACME
-
-**step ca provisioner add** <name> **--type**=ACME [**--force-cn**] [**--require-eab**]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
-
 SCEP
 
 **step ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
@@ -111,22 +114,24 @@ SCEP
 			oidcListenAddressFlag,
 			oidcConfigEndpointFlag,
 			oidcAdminFlag,
-			oidcRemoveAdminFlag,
+			oidcDomainFlag,
 			oidcGroupFlag,
 			oidcTenantIDFlag,
 
 			// X5C provisioner flags
-			x5cRootFlag,
+			x5cRootsFlag,
 
 			// Nebula provisioner flags
 			nebulaRootFlag,
 
 			// ACME provisioner flags
-			forceCNFlag,
-			requireEABFlag,
+			requireEABFlag,        // ACME
+			forceCNFlag,           // ACME + SCEP
+			challengeFlag,         // ACME + SCEP
+			attestationFormatFlag, // ACME
+			attestationRootsFlag,  // ACME
 
 			// SCEP provisioner flags
-			scepChallengeFlag,
 			scepCapabilitiesFlag,
 			scepIncludeRootFlag,
 			scepMinimumPublicKeyLengthFlag,
@@ -213,7 +218,7 @@ step ca provisioner add Google --type OIDC --ssh \
 
 Create an X5C provisioner:
 '''
-step ca provisioner add x5c --type X5C --x5c-root x5c_ca.crt
+step ca provisioner add x5c --type X5C --x5c-roots x5c_ca.crt
 '''
 
 Create an ACME provisioner:
@@ -224,6 +229,11 @@ step ca provisioner add acme --type ACME
 Create an ACME provisioner, forcing a CN and requiring EAB:
 '''
 step ca provisioner add acme --type ACME --force-cn --require-eab
+'''
+
+Create an ACME provisioner for device attestation:
+'''
+step ca provisioner add attestation --type ACME --challenge device-attest-01
 '''
 
 Create an K8SSA provisioner:
@@ -292,6 +302,15 @@ func addAction(ctx *cli.Context) (err error) {
 	p := &linkedca.Provisioner{
 		Name: args.Get(0),
 		Type: linkedca.Provisioner_Type(typ),
+	}
+
+	// Validate challenge flag on scep and acme
+	if err := validateChallengeFlag(ctx, p.Type); err != nil {
+		return err
+	}
+	// Validate attestation format flag on acme
+	if err := validateAttestationFormatFlag(ctx, p.Type); err != nil {
+		return err
 	}
 
 	// Read x509 template if passed
@@ -536,11 +555,22 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	attestationRoots, err := parseCACertificates(ctx.StringSlice("attestation-roots"))
+	if err != nil {
+		return nil, err
+	}
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_ACME{
 			ACME: &linkedca.ACMEProvisioner{
 				ForceCn:    ctx.Bool("force-cn"),
 				RequireEab: ctx.Bool("require-eab"),
+				Challenges: sliceutil.RemoveDuplicates(
+					acmeChallengeToLinkedca(ctx.StringSlice("challenge")),
+				),
+				AttestationFormats: sliceutil.RemoveDuplicates(
+					acmeAttestationFormatToLinkedca(ctx.StringSlice("attestation-format")),
+				),
+				AttestationRoots: attestationRoots,
 			},
 		},
 	}, nil
@@ -555,9 +585,9 @@ func createSSHPOPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error)
 }
 
 func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
-	x5cRootFile := ctx.String("x5c-root")
+	x5cRootFile := ctx.String("x5c-roots")
 	if x5cRootFile == "" {
-		return nil, errs.RequiredWithFlagValue(ctx, "type", "x5c", "x5c-root")
+		return nil, errs.RequiredWithFlagValue(ctx, "type", "x5c", "x5c-roots")
 	}
 
 	roots, err := pemutil.ReadCertificateBundle(x5cRootFile)
@@ -748,11 +778,16 @@ func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	var challenge string
+	// We have already validated that at most 1 is provided.
+	if v := ctx.StringSlice("challenge"); len(v) > 0 {
+		challenge = v[0]
+	}
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_SCEP{
 			SCEP: &linkedca.SCEPProvisioner{
 				ForceCn:                       ctx.Bool("force-cn"),
-				Challenge:                     ctx.String("challenge"),
+				Challenge:                     challenge,
 				Capabilities:                  ctx.StringSlice("capabilities"),
 				MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
 				IncludeRoot:                   ctx.Bool("include-root"),
@@ -760,4 +795,109 @@ func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			},
 		},
 	}, nil
+}
+
+func validateChallengeFlag(ctx *cli.Context, typ linkedca.Provisioner_Type) error {
+	switch typ {
+	case linkedca.Provisioner_ACME:
+		for _, v := range ctx.StringSlice("challenge") {
+			switch strings.ToLower(v) {
+			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01":
+			default:
+				return errs.InvalidFlagValue(ctx, "challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
+			}
+		}
+		for _, v := range ctx.StringSlice("remove-challenge") {
+			switch strings.ToLower(v) {
+			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01":
+			default:
+				return errs.InvalidFlagValue(ctx, "remove-challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
+			}
+		}
+
+	case linkedca.Provisioner_SCEP:
+		if len(ctx.StringSlice("challenge")) > 1 {
+			return errors.New("provisioner type 'SCEP' does not support multiple '--challenge' flags")
+		}
+	}
+	return nil
+}
+
+func validateAttestationFormatFlag(ctx *cli.Context, typ linkedca.Provisioner_Type) error {
+	if typ == linkedca.Provisioner_ACME {
+		for _, v := range ctx.StringSlice("attestation-format") {
+			switch strings.ToLower(v) {
+			case "apple", "step", "tpm":
+			default:
+				return errs.InvalidFlagValue(ctx, "attestation-format", v, "apple, step, and tpm")
+			}
+		}
+		for _, v := range ctx.StringSlice("remove-attestation-format") {
+			switch strings.ToLower(v) {
+			case "apple", "step", "tpm":
+			default:
+				return errs.InvalidFlagValue(ctx, "remove-attestation-format", v, "apple, step, and tpm")
+			}
+		}
+	}
+	return nil
+}
+
+// acmeChallengeToLinkedca returns the linkedca challenge types on the challenge
+// flag. It won't fail or add unsupported flags, the function assumes the
+// options have been previously validated.
+func acmeChallengeToLinkedca(challenges []string) []linkedca.ACMEProvisioner_ChallengeType {
+	var ret []linkedca.ACMEProvisioner_ChallengeType
+	for _, v := range challenges {
+		switch strings.ToLower(v) {
+		case "http-01":
+			ret = append(ret, linkedca.ACMEProvisioner_HTTP_01)
+		case "dns-01":
+			ret = append(ret, linkedca.ACMEProvisioner_DNS_01)
+		case "tls-alpn-01":
+			ret = append(ret, linkedca.ACMEProvisioner_TLS_ALPN_01)
+		case "device-attest-01":
+			ret = append(ret, linkedca.ACMEProvisioner_DEVICE_ATTEST_01)
+		}
+	}
+	return ret
+}
+
+// acmeAttestationFormatToLinkedca returns the linkedca attestation format types
+// for the attestation-format flag. This function assumes the inputs have been
+// previously validated.
+func acmeAttestationFormatToLinkedca(formats []string) []linkedca.ACMEProvisioner_AttestationFormatType {
+	var ret []linkedca.ACMEProvisioner_AttestationFormatType
+	for _, v := range formats {
+		switch strings.ToLower(v) {
+		case "apple":
+			ret = append(ret, linkedca.ACMEProvisioner_APPLE)
+		case "step":
+			ret = append(ret, linkedca.ACMEProvisioner_STEP)
+		case "tpm":
+			ret = append(ret, linkedca.ACMEProvisioner_TPM)
+		}
+	}
+	return ret
+}
+
+func parseCACertificates(filenames []string) ([][]byte, error) {
+	var pemCerts [][]byte
+	for _, name := range filenames {
+		certs, err := pemutil.ReadCertificateBundle(name)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading certificates from %s", name)
+		}
+
+		for _, cert := range certs {
+			if !cert.IsCA || cert.KeyUsage&x509.KeyUsageCertSign == 0 {
+				return nil, errors.Errorf("certificate with common name %q is not a valid CA", cert.Subject.CommonName)
+			}
+			pemCerts = append(pemCerts, pem.EncodeToMemory(&pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: cert.Raw,
+			}))
+		}
+	}
+	return pemCerts, nil
 }

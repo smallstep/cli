@@ -18,6 +18,7 @@ func InjectContext(injectedCtx context.Context, fn func(context.Context) error, 
 		},
 	}
 	injectedMiddleware = append(injectedMiddleware, middleware...)
+	//nolint:contextcheck // context is injected in fn
 	return wrap(fn, injectedMiddleware...)
 }
 
@@ -38,7 +39,6 @@ func CLIContextFromContext(ctx context.Context) *cli.Context {
 // the cli.Context added to the Context.
 func wrap(fn func(context.Context) error, middleware ...func(context.Context) (context.Context, error)) cli.ActionFunc {
 	return func(clictx *cli.Context) error {
-
 		ctx := context.Background()
 
 		// apply middleware to the new context

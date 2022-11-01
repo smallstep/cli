@@ -303,7 +303,7 @@ func needSkipLink(flags HTMLFlags, dest []byte) bool {
 	return flags&Safelink != 0 && !isSafeLink(dest) && !isMailto(dest)
 }
 
-func isSmartypantable(node *Node) bool {
+func isSmartypantsable(node *Node) bool {
 	pt := node.Parent.Type
 	return pt != Link && pt != CodeBlock && pt != Code
 }

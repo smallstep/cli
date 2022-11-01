@@ -7,12 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/smallstep/cli/flags"
-
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/pemutil"
 )
 
 const defaultPercentUsedThreshold = 66
@@ -179,7 +178,6 @@ func needsRenewalAction(ctx *cli.Context) error {
 	}
 
 	for _, cert := range certs {
-
 		remainingValidity := time.Until(cert.NotAfter)
 
 		if isPercent {

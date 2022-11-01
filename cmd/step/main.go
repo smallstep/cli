@@ -1,10 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"reflect"
 	"regexp"
@@ -13,10 +12,11 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command/version"
+	"github.com/smallstep/cli/internal/plugin"
 	"github.com/smallstep/cli/usage"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
@@ -40,9 +40,6 @@ import (
 	_ "github.com/smallstep/certificates/cas/cloudcas"
 	_ "github.com/smallstep/certificates/cas/softcas"
 	_ "github.com/smallstep/certificates/cas/stepcas"
-
-	// Profiling and debugging
-	_ "net/http/pprof"
 )
 
 // Version is set by an LDFLAG at build time representing the git tag or commit
@@ -89,20 +86,28 @@ func main() {
 		Usage: "path to the config file to use for CLI flags",
 	})
 
+	// Action runs on `step` or `step <command>` if the command is not enabled.
+	app.Action = func(ctx *cli.Context) error {
+		args := ctx.Args()
+		if name := args.First(); name != "" {
+			if file, err := plugin.LookPath(name); err == nil {
+				return plugin.Run(ctx, file)
+			}
+			if u := plugin.GetURL(name); u != "" {
+				//nolint:stylecheck // this is a top level error - capitalization is ok
+				return fmt.Errorf("The plugin %q is not it in your system.\nDownload it from %s", name, u)
+			}
+			return cli.ShowCommandHelp(ctx, name)
+		}
+		return cli.ShowAppHelp(ctx)
+	}
+
 	// All non-successful output should be written to stderr
 	app.Writer = os.Stdout
 	app.ErrWriter = os.Stderr
 
-	// Start the golang debug logger if environment variable is set.
-	// See https://golang.org/pkg/net/http/pprof/
-	debugProfAddr := os.Getenv("STEP_PROF_ADDR")
-	if debugProfAddr != "" {
-		go func() {
-			log.Println(http.ListenAndServe(debugProfAddr, nil))
-		}()
-	}
-
-	// Define default prompters for go.step.sm
+	// Define default file writers and prompters for go.step.sm/crypto
+	pemutil.WriteFile = utils.WriteFile
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {
 		return ui.PromptPassword(msg)
 	}
@@ -111,11 +116,14 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		if fe, ok := err.(errs.FriendlyError); ok {
+		var messenger interface {
+			Message() string
+		}
+		if errors.As(err, &messenger) {
 			if os.Getenv("STEPDEBUG") == "1" {
-				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, fe.Message())
+				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, messenger.Message())
 			} else {
-				fmt.Fprintln(os.Stderr, fe.Message())
+				fmt.Fprintln(os.Stderr, messenger.Message())
 				fmt.Fprintln(os.Stderr, "Re-run with STEPDEBUG=1 for more info.")
 			}
 		} else {
@@ -125,8 +133,7 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 			}
 		}
-		// ignore exitAfterDefer error because the defer is required for recovery.
-		// nolint:gocritic
+		//nolint:gocritic // ignore exitAfterDefer error because the defer is required for recovery.
 		os.Exit(1)
 	}
 }

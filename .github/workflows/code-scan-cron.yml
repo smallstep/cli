@@ -1,0 +1,14 @@
+name: Code Scan Cron
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  code-scan:
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: smallstep/workflows/.github/workflows/code-scan.yml@main
+    secrets: inherit

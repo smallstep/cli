@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/api"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils/cautils"
@@ -14,6 +13,7 @@ import (
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/pemutil"
 )
 
 func signCertificateCommand() cli.Command {
@@ -27,9 +27,9 @@ func signCertificateCommand() cli.Command {
 [**--set**=<key=value>] [**--set-file**=<file>]
 [**--acme**=<uri>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>] [**--console**]
-[**--x5c-cert**=<file>] [**--x5c-key**=<file>]
-[**--k8ssa-token-path**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]
+[**--offline**] [**--password-file**=<file>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca sign** command signs the given csr and generates a new certificate.
 
 ## POSITIONAL ARGUMENTS
@@ -58,6 +58,12 @@ Sign a new certificate using the offline mode, requires the configuration
 files, certificates, and keys created with **step ca init**:
 '''
 $ step ca sign --offline internal internal.csr internal.crt
+'''
+
+Sign a new certificate using the offline mode with additional flag to avoid
+console prompts:
+'''
+$ step ca sign --offline --password-file ./pass.txt internal internal.csr internal.crt
 '''
 
 Sign a new certificate using an X5C provisioner:
@@ -117,6 +123,7 @@ $ step ca sign foo.csr foo.crt \
 			flags.TemplateSetFile,
 			flags.Force,
 			flags.Offline,
+			flags.PasswordFile,
 			consoleFlag,
 			flags.X5cCert,
 			flags.X5cKey,
@@ -178,13 +185,11 @@ func signCertificateAction(ctx *cli.Context) error {
 		}
 		sans := mergeSans(ctx, csr)
 		if tok, err = flow.GenerateToken(ctx, csr.Subject.CommonName, sans); err != nil {
-			switch k := err.(type) {
-			// Use the ACME flow with the step certificate authority.
-			case *cautils.ErrACMEToken:
-				return cautils.ACMESignCSRFlow(ctx, csr, crtFile, k.Name)
-			default:
-				return err
+			var acmeTokenErr *cautils.ACMETokenError
+			if errors.As(err, &acmeTokenErr) {
+				return cautils.ACMESignCSRFlow(ctx, csr, crtFile, acmeTokenErr.Name)
 			}
+			return err
 		}
 	}
 

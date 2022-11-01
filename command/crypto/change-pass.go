@@ -7,15 +7,14 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/urfave/cli"
-
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
+	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 )
 
 func changePassCommand() cli.Command {
@@ -87,9 +86,9 @@ $ step crypto change-pass key.jwk --out new-key.jwk
 }
 
 // changePassAction does the following:
-//   1. decrypts a private key (if necessary)
-//   2. encrypts the key using a new password
-//   3. writes the encrypted key to the original file
+//  1. decrypts a private key (if necessary)
+//  2. encrypts the key using a new password
+//  3. writes the encrypted key to the original file
 func changePassAction(ctx *cli.Context) error {
 	if err := errs.NumberOfArguments(ctx, 1); err != nil {
 		return err
@@ -144,22 +143,24 @@ func changePassAction(ctx *cli.Context) error {
 		if len(decryptPassFile) > 0 {
 			opts = append(opts, jose.WithPasswordFile(decryptPassFile))
 		}
-		jwk, err := jose.ParseKey(keyPath, opts...)
+		jwk, err := jose.ReadKey(keyPath, opts...)
 		if err != nil {
 			return err
 		}
-		var b []byte
-		if noPass {
-			b, err = jwk.MarshalJSON()
-			if err != nil {
-				return err
+		b, err := json.Marshal(jwk)
+		if err != nil {
+			return err
+		}
+		if !noPass {
+			opts = []jose.Option{
+				jose.WithPasswordPrompter("Please enter the password to encrypt the private JWK", func(s string) ([]byte, error) {
+					return ui.PromptPassword(s)
+				}),
 			}
-		} else {
-			opts = []jose.Option{}
 			if len(encryptPassFile) > 0 {
 				opts = append(opts, jose.WithPasswordFile(encryptPassFile))
 			}
-			jwe, err := jose.EncryptJWK(jwk, opts...)
+			jwe, err := jose.Encrypt(b, opts...)
 			if err != nil {
 				return err
 			}

@@ -10,17 +10,16 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/truststore"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
-
-	"github.com/pkg/errors"
+	"go.step.sm/crypto/pemutil"
 )
 
 type bootstrapAPIResponse struct {
@@ -219,10 +218,14 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 	}
 
 	// Using public PKI
+	//nolint:gosec // Variadic URL is considered safe here for the following reasons:
+	//  1) The input is from the command line, rather than a web form or publicly available API.
+	//  2) The command is expected to be used on a client, rather than a privileged backend host.
 	resp, err := http.Get(apiEndpoint)
 	if err != nil {
 		return errors.Wrap(err, "error getting authority data")
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		if resp.StatusCode == http.StatusNotFound {
 			return errors.New("error getting authority data: authority not found")

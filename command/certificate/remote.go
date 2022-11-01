@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/x509util"
+	"go.step.sm/crypto/x509util"
 )
 
 var urlPrefixes = map[string]uint16{
@@ -26,11 +26,12 @@ var urlPrefixes = map[string]uint16{
 // If the address does not contain a port then default to port 443.
 //
 // Params
-//   *addr*:       can be a host (e.g. smallstep.com) or an IP (e.g. 127.0.0.1)
-//   *serverName*: use a specific Server Name Indication (e.g. smallstep.com)
-//   *roots*:      a file, a directory, or a comma-separated list of files.
-//   *insecure*:   do not verify that the server's certificate has been signed by
-//                 a trusted root
+//
+//	*addr*:       can be a host (e.g. smallstep.com) or an IP (e.g. 127.0.0.1)
+//	*serverName*: use a specific Server Name Indication (e.g. smallstep.com)
+//	*roots*:      a file, a directory, or a comma-separated list of files.
+//	*insecure*:   do not verify that the server's certificate has been signed by
+//	              a trusted root
 func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509.Certificate, error) {
 	var (
 		err     error
@@ -45,7 +46,10 @@ func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509
 	if _, _, err := net.SplitHostPort(addr); err != nil {
 		addr = net.JoinHostPort(addr, "443")
 	}
-	tlsConfig := &tls.Config{RootCAs: rootCAs}
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		RootCAs:    rootCAs,
+	}
 	if insecure {
 		tlsConfig.InsecureSkipVerify = true
 	}
@@ -67,7 +71,7 @@ func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509
 // by the URL prefix is used.
 //
 // Examples:
-// trimURL("https://smallstep.com/onbaording") -> "smallstep.com:443", true, nil
+// trimURL("https://smallstep.com/onboarding") -> "smallstep.com:443", true, nil
 // trimURL("https://ca.smallSTEP.com:8080") -> "ca.smallSTEP.com:8080", true, nil
 // trimURL("./certs/root_ca.crt") -> "", false, nil
 // trimURL("hTtPs://sMaLlStEp.cOm") -> "sMaLlStEp.cOm:443", true, nil
