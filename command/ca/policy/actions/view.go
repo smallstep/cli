@@ -21,12 +21,12 @@ func ViewCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "view",
 		Usage: "view current certificate issuance policy",
-		UsageText: `**step ca policy authority view**
+		UsageText: fmt.Sprintf(`**%s**
 [**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
+[**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** shows the currently configured policy.
 
 ## EXAMPLES
