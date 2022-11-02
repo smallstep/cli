@@ -48,7 +48,6 @@ $(info    PUSHTYPE is $(PUSHTYPE))
 endif
 
 include make/common.mk
-include make/docker.mk
 
 #################################################
 # Build statically compiled step binary for various operating systems
@@ -110,11 +109,3 @@ bundle-windows: binary-windows-amd64
 	$(call BUNDLE,--zip,windows-amd64,windows,amd64,step.exe)
 
 .PHONY: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips binary-darwin-amd64 binary-darwin-arm64 binary-windows-amd64 bundle-linux bundle-darwin bundle-windows
-
-#################################################
-# Targets for creating step artifacts
-#################################################
-
-docker-artifacts: docker-$(PUSHTYPE)
-
-.PHONY: docker-artifacts
