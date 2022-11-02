@@ -442,7 +442,7 @@ func initAction(ctx *cli.Context) (err error) {
 		// for ease of use, but this seems to require a bit of refactoring when generating
 		// the full CA configuration with DB initialization.
 		if deploymentType != pki.StandaloneDeployment && addDefaultACMEProvisioner {
-			return fmt.Errorf("adding a default ACME provisioner by providing the --acme flag is not supported with deployment type %q. Please use `step ca provisioner add acme --type ACME` after initializing your CA", deploymentType.String())
+			return fmt.Errorf("adding a default ACME provisioner by providing the --acme flag is not supported with deployment type %q.\nPlease use `step ca provisioner add acme --type ACME` after initializing your CA", deploymentType.String())
 		}
 
 		ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
