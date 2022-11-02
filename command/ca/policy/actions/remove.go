@@ -20,12 +20,12 @@ func RemoveCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "remove",
 		Usage: "remove certificate issuance policy",
-		UsageText: `**step ca policy authority remove**
+		UsageText: fmt.Sprintf(`**%s** 
 [**--provisioner**=<name>] [**--eab-key-id**=<eab-ey-id>] [**--eab-key-reference**=<eab-key-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
 [**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
+[**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** removes a certificate issuance policy.
 
 Remove the authority certificate issuance policy
