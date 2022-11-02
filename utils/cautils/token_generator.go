@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/smallstep/cli/internal/cryptoutil"
 	"os"
 	"strings"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/exec"
+	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
 	"github.com/urfave/cli"
@@ -186,7 +186,7 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 		return "", err
 	}
 
-	joseSigner := jose.NewOpaqueSigner(&kmsSigner)
+	joseSigner := jose.NewOpaqueSigner(kmsSigner)
 
 	jwk = &jose.JSONWebKey{
 		Key:       joseSigner,
