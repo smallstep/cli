@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support for ACME device-attest-01 challenges with YubiKeys.
 - Added support for SUSE13 and upwards for `step certificate install`.
 - Added support for printing [Sigstore](https://www.sigstore.dev/) certificate details to `step certificate inspect`
+- Added `--acme` flag to the `step ca init` command, to create a default ACME provisioner when initializing a CA.
+- Added `--remote-management` flag to the `step ca init` command, which enables Remote Management of the CA using the Admin API.
 ### Changed
 - New OAuth success page with color.
 - Added `x5c-roots` as alias for `x5c-root` flag.
