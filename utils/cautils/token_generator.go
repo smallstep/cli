@@ -175,32 +175,25 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 	var jwk *jose.JSONWebKey
 	var err error
 
-	if kmsURI != "" {
-		var opts []pemutil.Options
-		var kmsSigner crypto.Signer
-		kmsSigner, err = cryptoutil.CreateSigner(ctx.String("kms"), x5cKeyFile, opts...)
-		if err != nil {
-			return "", err
-		}
-
-		joseSigner := jose.NewOpaqueSigner(&kmsSigner)
-
-		jwk = &jose.JSONWebKey{
-			Key:       joseSigner,
-			KeyID:     x5cKeyFile,
-			Algorithm: string(joseSigner.Algs()[0]),
-		}
-	} else {
-		// Get private key from given key file
-		var opts []jose.Option
-		if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
-			opts = append(opts, passOpt)
-		}
-		jwk, err = jose.ReadKey(x5cKeyFile, opts...)
-		if err != nil {
-			return "", err
-		}
+	var opts []pemutil.Options
+	if passOpt := getProvisionerPasswordPEMOption(ctx); passOpt != nil {
+		opts = append(opts, passOpt)
 	}
+
+	var kmsSigner crypto.Signer
+	kmsSigner, err = cryptoutil.CreateSigner(ctx.String("kms"), x5cKeyFile, opts...)
+	if err != nil {
+		return "", err
+	}
+
+	joseSigner := jose.NewOpaqueSigner(&kmsSigner)
+
+	jwk = &jose.JSONWebKey{
+		Key:       joseSigner,
+		KeyID:     x5cKeyFile,
+		Algorithm: string(joseSigner.Algs()[0]),
+	}
+
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
 		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetIDForToken()), tokAttrs.root,
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
@@ -215,9 +208,8 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 		x5cChainCerts, err := cryptoutil.LoadCertificate(kmsURI, chainPath)
 		if err != nil {
 			return "", fmt.Errorf("could not load x5c chain certificate %s: %w", chainPath, err)
-		} else {
-			x5cCerts = append(x5cCerts, x5cChainCerts...)
 		}
+		x5cCerts = append(x5cCerts, x5cChainCerts...)
 	}
 
 	if ctx.Bool("x5c-insecure") {
@@ -330,6 +322,17 @@ func getProvisionerPasswordOption(ctx *cli.Context) jose.Option {
 		return jose.WithPasswordFile(ctx.String("provisioner-password-file"))
 	case ctx.String("password-file") != "":
 		return jose.WithPasswordFile(ctx.String("password-file"))
+	default:
+		return nil
+	}
+}
+
+func getProvisionerPasswordPEMOption(ctx *cli.Context) pemutil.Options {
+	switch {
+	case ctx.String("provisioner-password-file") != "":
+		return pemutil.WithPasswordFile(ctx.String("provisioner-password-file"))
+	case ctx.String("password-file") != "":
+		return pemutil.WithPasswordFile(ctx.String("password-file"))
 	default:
 		return nil
 	}
