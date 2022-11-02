@@ -192,7 +192,7 @@ release:
     Below is an example using `cosign` to verify a release artifact:
 
     ```
-    cosign verify-blob \
+    COSIGN_EXPERIMENTAL=1 cosign verify-blob \
       --certificate ~/Download/step_darwin_{{ .Version }}_amd64.tar.gz.pem \
       --signature ~/Downloads/step_darwin_{{ .Version }}_amd64.tar.gz.sig \
       ~/Downloads/step_darwin_{{ .Version }}_amd64.tar.gz
