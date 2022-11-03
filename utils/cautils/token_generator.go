@@ -14,6 +14,7 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/exec"
+	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/token/provision"
 	"github.com/urfave/cli"
@@ -161,6 +162,9 @@ func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) 
 func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttrs tokenAttrs) (string, error) {
 	x5cCertFile := ctx.String("x5c-cert")
 	x5cKeyFile := ctx.String("x5c-key")
+	x5cChainFiles := ctx.StringSlice("x5c-chain")
+	kmsURI := ctx.String("kms")
+
 	if x5cCertFile == "" {
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "X5C", "x5c-cert")
 	}
@@ -168,14 +172,26 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 		return "", errs.RequiredWithProvisionerTypeFlag(ctx, "X5C", "x5c-key")
 	}
 
-	// Get private key from given key file
-	var opts []jose.Option
-	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
+	var jwk *jose.JSONWebKey
+	var err error
+
+	var opts []pemutil.Options
+	if passOpt := getProvisionerPasswordPEMOption(ctx); passOpt != nil {
 		opts = append(opts, passOpt)
 	}
-	jwk, err := jose.ReadKey(x5cKeyFile, opts...)
+
+	var kmsSigner crypto.Signer
+	kmsSigner, err = cryptoutil.CreateSigner(ctx.String("kms"), x5cKeyFile, opts...)
 	if err != nil {
 		return "", err
+	}
+
+	joseSigner := jose.NewOpaqueSigner(kmsSigner)
+
+	jwk = &jose.JSONWebKey{
+		Key:       joseSigner,
+		KeyID:     x5cKeyFile,
+		Algorithm: string(joseSigner.Algs()[0]),
 	}
 
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
@@ -183,10 +199,23 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
 
 	var tokenOpts []token.Options
+	x5cCerts, err := cryptoutil.LoadCertificate(kmsURI, x5cCertFile)
+	if err != nil {
+		return "", fmt.Errorf("could not load x5c certificate: %w", err)
+	}
+
+	for _, chainPath := range x5cChainFiles {
+		x5cChainCerts, err := cryptoutil.LoadCertificate(kmsURI, chainPath)
+		if err != nil {
+			return "", fmt.Errorf("could not load x5c chain certificate %s: %w", chainPath, err)
+		}
+		x5cCerts = append(x5cCerts, x5cChainCerts...)
+	}
+
 	if ctx.Bool("x5c-insecure") {
-		tokenOpts = append(tokenOpts, token.WithX5CInsecureFile(x5cCertFile, jwk.Key))
+		tokenOpts = append(tokenOpts, token.WithX5CInsecureCerts(x5cCerts, jwk.Key))
 	} else {
-		tokenOpts = append(tokenOpts, token.WithX5CFile(x5cCertFile, jwk.Key))
+		tokenOpts = append(tokenOpts, token.WithX5CCerts(x5cCerts, jwk.Key))
 	}
 
 	switch tokType {
@@ -293,6 +322,17 @@ func getProvisionerPasswordOption(ctx *cli.Context) jose.Option {
 		return jose.WithPasswordFile(ctx.String("provisioner-password-file"))
 	case ctx.String("password-file") != "":
 		return jose.WithPasswordFile(ctx.String("password-file"))
+	default:
+		return nil
+	}
+}
+
+func getProvisionerPasswordPEMOption(ctx *cli.Context) pemutil.Options {
+	switch {
+	case ctx.String("provisioner-password-file") != "":
+		return pemutil.WithPasswordFile(ctx.String("provisioner-password-file"))
+	case ctx.String("password-file") != "":
+		return pemutil.WithPasswordFile(ctx.String("password-file"))
 	default:
 		return nil
 	}
