@@ -53,7 +53,7 @@ YWJjMTIzJCVeJiooKV8rLT1-Cg==
 '''
 
 Decode an url encoded base64 string. The encoding type can be enforced
-using the '-u' or '-r' flags, but it will be autodetected if they are not
+using the '-u' or '-r' flags, but it will be auto-detected if they are not
 passed:
 '''
 $ echo YWJjMTIzJCVeJiooKV8rLT1-Cg== | step base64 -d

@@ -12,7 +12,7 @@ import (
 	"go.step.sm/linkedca"
 )
 
-// nodb implements the certificates/Admiclient interface with noops.
+// nodb implements the certificates/Adminclient interface with noops.
 type nodb struct{}
 
 func newNoDB() *nodb {
@@ -91,7 +91,6 @@ func newCaConfigClient(ctx context.Context, cfg *config.Config, cfgFile string) 
 			return nil, err
 		}
 	}
-	//nolint:contextcheck // no context for backward compatibility
 	a, err := authority.New(cfg, authority.WithAdminDB(newNoDB()),
 		//nolint:staticcheck // TODO: WithProvisioners has been deprecated, temporarily do not lint this line.
 		authority.WithSkipInit(), authority.WithProvisioners(provClxn))
@@ -179,7 +178,7 @@ func (client *caConfigClient) loadProvisioner(opts ...ca.ProvisionerOption) (pro
 		return nil, errors.New("provisioner options must define either ID or Name to remove")
 	}
 
-	return prov, errors.Wrapf(err, "erorr loading provisioner")
+	return prov, errors.Wrapf(err, "error loading provisioner")
 }
 
 func (client *caConfigClient) GetProvisioners(opts ...ca.ProvisionerOption) (provisioner.List, error) {

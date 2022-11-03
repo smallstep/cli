@@ -21,14 +21,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/randutil"
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/randutil"
 )
 
 // These are the OAuth2.0 client IDs from the Step CLI. This application is
@@ -857,7 +857,7 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 
 	var idr identifyDeviceResponse
 	if err := json.NewDecoder(bytes.NewReader(b)).Decode(&idr); err != nil {
-		return nil, errors.Wrap(err, "failure decoding device authz response to JWON")
+		return nil, errors.Wrap(err, "failure decoding device authz response to JSON")
 	}
 
 	switch {

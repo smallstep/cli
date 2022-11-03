@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/jose"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/jose"
 )
 
 // Command returns the cli.Command for jose related subcommands.

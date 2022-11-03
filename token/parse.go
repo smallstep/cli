@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/jose"
+	"go.step.sm/crypto/jose"
 )
 
 // Type indicates the token Type.

@@ -9,9 +9,10 @@ import (
 	"github.com/smallstep/cli/utils"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/jose"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 )
 
 func signCommand() cli.Command {
@@ -257,13 +258,13 @@ func signAction(ctx *cli.Context) error {
 	var jwk *jose.JSONWebKey
 	switch {
 	case isX5T:
-		jwk, err = jose.ParseKey(x5tKeyFile, options...)
+		jwk, err = jose.ReadKey(x5tKeyFile, options...)
 	case isX5C:
-		jwk, err = jose.ParseKey(x5cKeyFile, options...)
+		jwk, err = jose.ReadKey(x5cKeyFile, options...)
 	case key != "":
-		jwk, err = jose.ParseKey(key, options...)
+		jwk, err = jose.ReadKey(key, options...)
 	case jwks != "":
-		jwk, err = jose.ParseKeySet(jwks, options...)
+		jwk, err = jose.ReadKeySet(jwks, options...)
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwks")
 	}
@@ -310,14 +311,22 @@ func signAction(ctx *cli.Context) error {
 		so.WithHeader("jwk", jwk.Public())
 	}
 	if isX5C {
-		certStrs, err := jose.ValidateX5C(x5cCertFile, jwk.Key)
+		certs, err := pemutil.ReadCertificateBundle(x5cCertFile)
+		if err != nil {
+			return err
+		}
+		certStrs, err := jose.ValidateX5C(certs, jwk.Key)
 		if err != nil {
 			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
 		}
 		so.WithHeader("x5c", certStrs)
 	}
 	if isX5T {
-		fingerprint, err := jose.ValidateX5T(x5tCertFile, jwk.Key)
+		certs, err := pemutil.ReadCertificateBundle(x5tCertFile)
+		if err != nil {
+			return err
+		}
+		fingerprint, err := jose.ValidateX5T(certs, jwk.Key)
 		if err != nil {
 			return errors.Wrap(err, "error validating x5t certificate and key for use in x5t header")
 		}

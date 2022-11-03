@@ -11,6 +11,7 @@ import (
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli/command/ca/provisioner/webhook"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
@@ -31,6 +32,7 @@ func Command() cli.Command {
 			addCommand(),
 			updateCommand(),
 			removeCommand(),
+			webhook.Command(),
 		},
 		Description: `**step ca provisioner** command group provides facilities for managing the
 certificate authority provisioners.
@@ -388,6 +390,12 @@ certificate can use the device-attest-01 challenge to get a new certificate.
 to get a new certificate.`,
 	}
 
+	attestationRootsFlag = cli.StringSliceFlag{
+		Name: "attestation-roots",
+		Usage: `PEM-formatted root certificate(s) <file> used to validate the attestation
+certificates. Use the flag multiple times to read from multiple files.`,
+	}
+
 	removeAttestationFormatFlag = cli.StringSliceFlag{
 		Name: "remove-attestation-format",
 		Usage: `Remove an ACME attestation statement <format> from the list configured in the provisioner.
@@ -572,7 +580,7 @@ Use the '--remove-domain' flag multiple times to remove multiple domains.`,
 	}
 	oidcGroupFlag = cli.StringSliceFlag{
 		Name: "group",
-		Usage: `The <group> list used to validate the groups extenstion in an OpenID Connect token.
+		Usage: `The <group> list used to validate the groups extension in an OpenID Connect token.
 Use the '--group' flag multiple times to configure multiple groups.`,
 	}
 	oidcTenantIDFlag = cli.StringFlag{

@@ -4,9 +4,9 @@ import (
 	"crypto/x509"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/pemutil"
 )
 
 // ACMECreateCertFlow performs an ACME transaction to get a new certificate.

@@ -1,21 +1,19 @@
 package certificate
 
 import (
-	"crypto"
 	"crypto/rand"
 	"crypto/x509"
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/crypto/fingerprint"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
-
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 	"software.sslmate.com/src/go-pkcs12"
 )
 
@@ -149,7 +147,7 @@ func p12Action(ctx *cli.Context) error {
 
 		// The first certificate in the bundle will be our server cert
 		x509Cert := x509CertBundle[0]
-		// Any remaning certs will be intermediates for the server
+		// Any remaining certs will be intermediates for the server
 		x509CAs = append(x509CAs, x509CertBundle[1:]...)
 
 		pkcs12Data, err = pkcs12.Encode(rand.Reader, key, x509Cert, x509CAs, password)
@@ -161,11 +159,8 @@ func p12Action(ctx *cli.Context) error {
 		var certsWithFriendlyNames []pkcs12.TrustStoreEntry
 		for _, cert := range x509CAs {
 			certsWithFriendlyNames = append(certsWithFriendlyNames, pkcs12.TrustStoreEntry{
-				Cert: cert,
-				FriendlyName: fmt.Sprintf(
-					"%s - %s",
-					cert.Subject.String(),
-					fingerprint.Fingerprint(cert.Raw, fingerprint.WithHash(crypto.SHA256))),
+				Cert:         cert,
+				FriendlyName: fmt.Sprintf("%s - %s", cert.Subject.String(), x509util.Fingerprint(cert)),
 			})
 		}
 		pkcs12Data, err = pkcs12.EncodeTrustStoreEntries(rand.Reader, certsWithFriendlyNames, password)

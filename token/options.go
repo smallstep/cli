@@ -3,6 +3,7 @@ package token
 import (
 	"bytes"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"os"
@@ -10,8 +11,8 @@ import (
 
 	"github.com/pkg/errors"
 	nebula "github.com/slackhq/nebula/cert"
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/jose"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 )
 
 // Options is a function that set claims.
@@ -165,7 +166,23 @@ func WithKid(s string) Options {
 // WithX5CFile returns a Options that sets the header x5c claims.
 func WithX5CFile(certFile string, key interface{}) Options {
 	return func(c *Claims) error {
-		certStrs, err := jose.ValidateX5C(certFile, key)
+		certs, err := pemutil.ReadCertificateBundle(certFile)
+		if err != nil {
+			return err
+		}
+		certStrs, err := jose.ValidateX5C(certs, key)
+		if err != nil {
+			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
+		}
+		c.SetHeader("x5c", certStrs)
+		return nil
+	}
+}
+
+// WithX5CCerts returns a Options that sets the header x5c claims from a cert in memory
+func WithX5CCerts(certs []*x509.Certificate, key interface{}) Options {
+	return func(c *Claims) error {
+		certStrs, err := jose.ValidateX5C(certs, key)
 		if err != nil {
 			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
 		}
@@ -210,7 +227,23 @@ func WithNebulaCert(certFile string, key []byte) Options {
 // NOTE: here be dragons. Use WithX5CFile unless you know what you are doing.
 func WithX5CInsecureFile(certFile string, key interface{}) Options {
 	return func(c *Claims) error {
-		certStrs, err := jose.ValidateX5C(certFile, key)
+		certs, err := pemutil.ReadCertificateBundle(certFile)
+		if err != nil {
+			return err
+		}
+		certStrs, err := jose.ValidateX5C(certs, key)
+		if err != nil {
+			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
+		}
+		c.SetHeader(jose.X5cInsecureKey, certStrs)
+		return nil
+	}
+}
+
+// WithX5CInsecureCerts returns a Options that sets the header x5cAllowInvalid claims using the cert in memory
+func WithX5CInsecureCerts(certs []*x509.Certificate, key interface{}) Options {
+	return func(c *Claims) error {
+		certStrs, err := jose.ValidateX5C(certs, key)
 		if err != nil {
 			return errors.Wrap(err, "error validating x5c certificate chain and key for use in x5c header")
 		}

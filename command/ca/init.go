@@ -15,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
@@ -25,6 +24,7 @@ import (
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/kms"
+	"go.step.sm/crypto/pemutil"
 
 	// Enable azurekms
 	_ "go.step.sm/crypto/kms/azurekms"
@@ -38,10 +38,11 @@ func initCommand() cli.Command {
 		UsageText: `**step ca init**
 [**--root**=<file>] [**--key**=<file>] [**--pki**] [**--ssh**]
 [**--helm**] [**--deployment-type**=<name>] [**--name**=<name>]
-[**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
-[**--provisioner-password-file**=<file>] [**--password-file**=<file>]
-[**--ra**=<type>] [**--kms**=<type>] [**--with-ca-url**=<url>] [**--no-db**]
-[**--context**=<name>] [**--profile**=<name>] [**--authority**=<name>]`,
+[**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>] 
+[**--admin-subject**=<string>] [**--provisioner-password-file**=<file>] 
+[**--password-file**=<file>] [**--ra**=<type>] [**--kms**=<type>] 
+[**--with-ca-url**=<url>] [**--no-db**] [**--remote-management**] 
+[**--acme**] [**--context**=<name>] [**--profile**=<name>] [**--authority**=<name>]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
 		Flags: []cli.Flag{
@@ -196,6 +197,15 @@ Cloud.`,
 				Name:  "context",
 				Usage: `The <name> of the context for the new authority.`,
 			},
+			cli.BoolFlag{
+				Name:  "remote-management",
+				Usage: `Enable Remote Management. Defaults to false.`,
+			},
+			cli.BoolFlag{
+				Name:  "acme",
+				Usage: `Create a default ACME provisioner. Defaults to false.`,
+			},
+			flags.AdminSubject,
 			flags.ContextProfile,
 			flags.ContextAuthority,
 			flags.HiddenNoContext,
@@ -219,6 +229,9 @@ func initAction(ctx *cli.Context) (err error) {
 	pkiOnly := ctx.Bool("pki")
 	noDB := ctx.Bool("no-db")
 	helm := ctx.Bool("helm")
+	enableRemoteManagement := ctx.Bool("remote-management")
+	addDefaultACMEProvisioner := ctx.Bool("acme")
+	firstSuperAdminSubject := ctx.String("admin-subject")
 
 	switch {
 	case root != "" && key == "":
@@ -242,6 +255,19 @@ func initAction(ctx *cli.Context) (err error) {
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "no-db")
 	case pkiOnly && helm:
 		return errs.IncompatibleFlagWithFlag(ctx, "pki", "helm")
+	case enableRemoteManagement && noDB:
+		// remote management via the Admin API requires a database configuration
+		return errs.IncompatibleFlagWithFlag(ctx, "remote-management", "no-db")
+	case addDefaultACMEProvisioner && noDB:
+		// ACME functionality requires a database configuration
+		return errs.IncompatibleFlagWithFlag(ctx, "acme", "no-db")
+	case firstSuperAdminSubject != "" && helm:
+		// providing the first super admin subject is not (yet) supported with Helm output
+		return errs.IncompatibleFlagWithFlag(ctx, "admin-subject", "helm")
+	case firstSuperAdminSubject != "" && !enableRemoteManagement:
+		// providing the first super admin subject only works with DB-backed provisioners,
+		// thus remote management should be enabled.
+		return errs.IncompatibleFlagWithFlag(ctx, "admin-subject", "remote-management")
 	}
 
 	var password string
@@ -411,6 +437,13 @@ func initAction(ctx *cli.Context) (err error) {
 			ui.Println()
 			return nil
 		}
+		// When initializing a linked CA, providing the --acme flag doesn't currently
+		// result in the default ACME provisioner being added. We may want to support this
+		// for ease of use, but this seems to require a bit of refactoring when generating
+		// the full CA configuration with DB initialization.
+		if deploymentType != pki.StandaloneDeployment && addDefaultACMEProvisioner {
+			return fmt.Errorf("adding a default ACME provisioner by providing the --acme flag is not supported with deployment type %q.\nPlease use `step ca provisioner add acme --type ACME` after initializing your CA", deploymentType.String())
+		}
 
 		ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
 		name, err = ui.Prompt("(e.g. Smallstep)", ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
@@ -540,10 +573,10 @@ func initAction(ctx *cli.Context) (err error) {
 			return err
 		}
 
-		var provisioner string
 		// Only standalone deployments will create an initial provisioner.
 		// Linked or hosted deployments will use an OIDC token as the first
 		// deployment.
+		var provisioner string
 		if deploymentType == pki.StandaloneDeployment {
 			ui.Println("What would you like to name the CA's first provisioner?", ui.WithValue(ctx.String("provisioner")))
 			provisioner, err = ui.Prompt("(e.g. you@smallstep.com)",
@@ -560,7 +593,10 @@ func initAction(ctx *cli.Context) (err error) {
 			pki.WithDeploymentType(deploymentType),
 		)
 		if deploymentType == pki.StandaloneDeployment {
-			pkiOpts = append(pkiOpts, pki.WithProvisioner(provisioner))
+			pkiOpts = append(pkiOpts,
+				pki.WithProvisioner(provisioner),
+				pki.WithSuperAdminSubject(firstSuperAdminSubject),
+			)
 		}
 		if deploymentType == pki.LinkedDeployment {
 			pkiOpts = append(pkiOpts, pki.WithAdmin())
@@ -572,6 +608,20 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 		if helm {
 			pkiOpts = append(pkiOpts, pki.WithHelm())
+		}
+
+		// enable the admin API if the `--remote-management` flag is provided. This will
+		// also result in the default provisioner being stored in the database and a default
+		// admin (called `step` by default, but can be named with --admin-subject) to be
+		// created for the default provisioner when the PKI is saved.
+		if enableRemoteManagement {
+			pkiOpts = append(pkiOpts, pki.WithAdmin())
+		}
+
+		// add a default ACME provisioner named `acme` if `--acme` flag is provided
+		// and configuring a standalone CA. Not yet supported for linked deployments.
+		if addDefaultACMEProvisioner && deploymentType == pki.StandaloneDeployment {
+			pkiOpts = append(pkiOpts, pki.WithACME())
 		}
 	}
 

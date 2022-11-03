@@ -3,19 +3,17 @@ package ssh
 import (
 	"fmt"
 
-	"github.com/smallstep/cli/command"
-	libfingerprint "github.com/smallstep/cli/crypto/fingerprint"
-	"github.com/smallstep/cli/crypto/sshutil"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
-	libcommand "go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/sshutil"
 )
 
 func fingerPrintCommand() cli.Command {
 	return cli.Command{
 		Name:      "fingerprint",
-		Action:    libcommand.ActionFunc(fingerprint),
+		Action:    cli.ActionFunc(fingerprint),
 		Usage:     "print the fingerprint of an SSH public key or certificate",
 		UsageText: `**step ssh fingerprint** <file>`,
 		Description: `**step ssh fingerprint** prints the fingerprint of an ssh public key or
@@ -38,7 +36,7 @@ Print the fingerprint for an SSH public key:
 $ step ssh fingerprint id_ecdsa.pub
 '''`,
 		Flags: []cli.Flag{
-			command.FingerprintFormatFlag("base64-raw"),
+			flags.FingerprintFormatFlag("base64-raw"),
 		},
 	}
 }
@@ -48,21 +46,9 @@ func fingerprint(ctx *cli.Context) error {
 		return err
 	}
 
-	var (
-		format = ctx.String("format")
-
-		opts []libfingerprint.Option
-	)
-
-	if format != "" {
-		encoding, err := command.GetFingerprintEncoding(format)
-		if err != nil {
-			return err
-		}
-		opts = []libfingerprint.Option{
-			libfingerprint.WithPrefix("SHA256:"),
-			libfingerprint.WithEncoding(encoding),
-		}
+	format, err := flags.ParseFingerprintFormat(ctx.String("format"))
+	if err != nil {
+		return err
 	}
 
 	name := ctx.Args().First()
@@ -75,7 +61,7 @@ func fingerprint(ctx *cli.Context) error {
 		return err
 	}
 
-	s, err := sshutil.Fingerprint(b, sshutil.WithFingerprintOptions(opts...))
+	s, err := sshutil.FormatFingerprint(b, format)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -13,9 +14,9 @@ import (
 	"github.com/smallstep/cli/command/version"
 	"github.com/smallstep/cli/internal/plugin"
 	"github.com/smallstep/cli/usage"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
@@ -105,7 +106,8 @@ func main() {
 	app.Writer = os.Stdout
 	app.ErrWriter = os.Stderr
 
-	// Define default prompters for go.step.sm
+	// Define default file writers and prompters for go.step.sm/crypto
+	pemutil.WriteFile = utils.WriteFile
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {
 		return ui.PromptPassword(msg)
 	}
@@ -114,12 +116,14 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		//nolint:errorlint // not a specific error
-		if fe, ok := err.(errs.FriendlyError); ok {
+		var messenger interface {
+			Message() string
+		}
+		if errors.As(err, &messenger) {
 			if os.Getenv("STEPDEBUG") == "1" {
-				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, fe.Message())
+				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, messenger.Message())
 			} else {
-				fmt.Fprintln(os.Stderr, fe.Message())
+				fmt.Fprintln(os.Stderr, messenger.Message())
 				fmt.Fprintln(os.Stderr, "Re-run with STEPDEBUG=1 for more info.")
 			}
 		} else {

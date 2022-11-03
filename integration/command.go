@@ -54,7 +54,7 @@ func WithStdin(command string, r io.Reader) ([]byte, error) {
 	return cmd.Output()
 }
 
-// CLICommand repreents a command-line command to execute.
+// CLICommand represents a command-line command to execute.
 type CLICommand struct {
 	command   string
 	arguments string
