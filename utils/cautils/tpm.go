@@ -28,10 +28,10 @@ import (
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certinfo"
-	"go.step.sm/cli-utils/ui"
 
-	"github.com/smallstep/cli/crypto/pemutil"
-	"github.com/smallstep/cli/jose"
+	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 )
 
 // TODO(hs): all required?
