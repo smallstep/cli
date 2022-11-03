@@ -6,7 +6,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.14
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
 	github.com/fxamacker/cbor/v2 v2.4.0
-	github.com/google/go-attestation v0.4.4-0.20220603195156-f5d560164e65
+	github.com/google/go-attestation v0.4.4-0.20220404204839-8820d49b18d9
 	github.com/google/uuid v1.3.0
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
 	github.com/manifoldco/promptui v0.9.0
@@ -16,20 +16,20 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/slackhq/nebula v1.5.2
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.21.1-0.20220901231813-e75e7e7cd6f7
-	github.com/smallstep/certinfo v1.7.0
-	github.com/smallstep/truststore v0.11.0
+	github.com/smallstep/certificates v0.23.0-rc.1
+	github.com/smallstep/certinfo v1.8.1
+	github.com/smallstep/truststore v0.12.0
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
 	github.com/stretchr/testify v1.7.1
 	github.com/urfave/cli v1.22.5
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
-	go.step.sm/cli-utils v0.7.4
+	go.step.sm/cli-utils v0.7.5
 	go.step.sm/crypto v0.19.0
-	go.step.sm/linkedca v0.18.1-0.20220824000236-47827c8eb300
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
-	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
-	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
+	go.step.sm/linkedca v0.19.0-rc.1
+	golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d
+	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
+	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/square/go-jose.v2 v2.6.0
@@ -96,7 +96,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/certificate-transparency-go v1.1.2 // indirect
-	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-tpm v0.3.3 // indirect
 	github.com/google/go-tspi v0.2.1-0.20190423175329-115dea689aad // indirect
 	github.com/google/trillian v1.4.0 // indirect
@@ -141,6 +141,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
@@ -206,4 +207,5 @@ require (
 
 //replace go.step.sm/crypto => github.com/brandonweeks/crypto v0.16.2-0.20220531234114-45e4f06ca16b
 
-replace github.com/google/go-attestation => github.com/brandonweeks/go-attestation v0.0.0-20220602235615-164122a1d59b
+//replace github.com/google/go-attestation => github.com/brandonweeks/go-attestation v0.0.0-20220602235615-164122a1d59b
+replace github.com/google/go-attestation => ./../../go-attestation

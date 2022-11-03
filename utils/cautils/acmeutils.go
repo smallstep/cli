@@ -1,46 +1,42 @@
 package cautils
 
 import (
-	"bytes"
 	"context"
 	"crypto"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/asn1"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"log"
-	"math/big"
 	"net"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/acme"
 	acmeAPI "github.com/smallstep/certificates/acme/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/certinfo"
-	"github.com/smallstep/cli/crypto/keys"
-	"github.com/smallstep/cli/crypto/pemutil"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/jose"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
-
-	"github.com/fxamacker/cbor/v2"
-	"github.com/google/go-attestation/attest"
-	x509ext "github.com/google/go-attestation/x509"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
 )
 
 func startHTTPServer(addr, token, keyAuth string) *http.Server {
@@ -206,396 +202,8 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 	return nil
 }
 
-// TODO(hs): all required?
-type AttestationParameters struct {
-	Public                  []byte `json:"public"`
-	UseTCSDActivationFormat bool   `json:"useTCSDActivationFormat"`
-	CreateData              []byte `json:"createData"`
-	CreateAttestation       []byte `json:"createAttestation"`
-	CreateSignature         []byte `json:"createSignature"`
-}
-
-type AttestationRequest struct {
-	TPMVersion   attest.TPMVersion     `json:"version"`
-	EKs          []string              `json:"eks"` // TODO(hs): rename to eks
-	AK           string                `json:"ak"`  // TODO(hs): do we want this in the request?
-	AttestParams AttestationParameters `json:"params"`
-}
-
-type AttestationResponse struct {
-	Credential []byte `json:"credential"`
-	Secret     []byte `json:"secret"` // encrypted secret
-}
-
-type SecretRequest struct {
-	Secret []byte `json:"secret"` // decrypted secret
-}
-
-type SecretResponse struct {
-	CertificateChain []string `json:"chain"` // TODO(hs): determine type to be consistent with e.g. ACME or other usages of sending chains from the CA to client
-}
-
-func validatePermanentIdentifierChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
-	// TODO: identifier for permanent-identifier handled differently? Can we provide just whatever we want and is that secure?
-	// The permanent-identifier should probably be more like a hardware identifier specific to the device, not just any hostname or IP.
-	// The hardware identifier (e.g. serial) should then be mapped to something else that is more useful for a server cert, like a
-	// hostname. Or is it more like a device can request a hostname and the attestation can be used to verify that the device is
-	// actually what it says it's saying and allowed to request that specific hostname?
-
-	// 1. Prepare the mode to be ran
-	// 2. Validate the challenge
-	// 3. Get the challenge?
-	// 4. Perform cleanup
-
-	ui.Printf("Using Standalone Mode Device Attestation challenge to validate `%s`", identifier)
-
-	// ch is the chal := authz.Challenges[0]
-	// Generate the certificate key, include the ACME key authorization in the
-	// the TPM certification data.
-	tpm, ak, akCert, err := tpmInit(identifier)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	info, err := tpm.Info()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// TODO(hs): remove this output
-	ui.Printf("\nTPM INFO:")
-	ui.Printf("\nversion: %d", info.Version)
-	ui.Printf("\ninterface: %d", info.Interface)
-	ui.Printf("\nmanufacturer: %s", info.Manufacturer)
-	ui.Printf("\nvendor info: %s", info.VendorInfo)
-	ui.Printf("\nfirmware version: %d.%d\n", info.FirmwareVersionMajor, info.FirmwareVersionMinor)
-
-	eks, err := tpm.EKs()
-	if err != nil {
-		log.Fatal(err)
-	}
-	var encodedEKs []string
-	var ekData []byte
-	for _, ek := range eks {
-		fmt.Println(ek.CertificateURL)
-		block, err := pemutil.Serialize(ek.Certificate)
-		if err != nil {
-			log.Fatal(err)
-		}
-		ekData = append(ekData, pem.EncodeToMemory(block)...)
-		encodedEKs = append(encodedEKs, base64.RawURLEncoding.EncodeToString(ek.Certificate.Raw)) // TODO(hs): or use PEM format? While this is not ACME, we might use the methods ACME RFCs use to communicate CSRs/Certs?
-	}
-
-	ui.Printf("EK Certificate:\n")
-	ui.Printf("%s\n", string(ekData))
-
-	encodedAK := base64.RawURLEncoding.EncodeToString(akCert)
-
-	attestParams := ak.AttestationParameters()
-
-	// TODO: to be loaded later; maybe persist them to file too?
-	// akBytes, err := ak.Marshal()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// TODO: perform challenge/response with the Privacy/Attestation CA
-	// TODO: should the request include nonce? Or token? Or the KeyAuthDigest? Combination/All?
-	// TODO: should this include a CSR?
-	ar := AttestationRequest{
-		TPMVersion: info.Version,
-		EKs:        encodedEKs,
-		AttestParams: AttestationParameters{
-			Public:                  attestParams.Public,
-			UseTCSDActivationFormat: attestParams.UseTCSDActivationFormat,
-			CreateData:              attestParams.CreateData,
-			CreateAttestation:       attestParams.CreateAttestation,
-			CreateSignature:         attestParams.CreateSignature,
-		},
-		AK: encodedAK,
-	}
-
-	body, err := json.Marshal(ar)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tpmAttestationCABaseURL := ctx.String("attestation-ca-url")
-	if tpmAttestationCABaseURL == "" { // TODO(hs): move this check earlier in the process?
-		log.Fatal(errors.New("--attestation-ca-url must be provided"))
-	}
-
-	attestURL := tpmAttestationCABaseURL + "/attest"
-	req, err := http.NewRequest(http.MethodPost, attestURL, bytes.NewReader(body))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// TODO(hs): implement a client, similar to the caClient and acmeClient, that use sane defaults and
-	// automatically use the CA root as trust anchor.
-	client := http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			Proxy:           http.ProxyFromEnvironment,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // quick hack; don't verify TLS for now
-		},
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var attResp AttestationResponse
-	if err := json.NewDecoder(resp.Body).Decode(&attResp); err != nil {
-		log.Fatal(err)
-	}
-
-	// TODO: ensure that decoding the response results in the right data, e.g. []byte slice that was sent
-	// otherwise we need to do our own encoding (e.g. to string). That might be the best way, anyway.
-	encryptedCredentials := attest.EncryptedCredential{
-		Credential: attResp.Credential,
-		Secret:     attResp.Secret,
-	}
-
-	// TODO: load the AK, if it was persisted outside of the TPM. In the POC we have it in memory, so no need to do that.
-
-	// activate the credential
-	secret, err := ak.ActivateCredential(tpm, encryptedCredentials)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	sr := SecretRequest{
-		Secret: secret,
-	}
-
-	body, err = json.Marshal(sr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	secretURL := tpmAttestationCABaseURL + "/secret"
-	req, err = http.NewRequest(http.MethodPost, secretURL, bytes.NewReader(body))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	resp, err = client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var secretResp SecretResponse
-	if err := json.NewDecoder(resp.Body).Decode(&secretResp); err != nil {
-		log.Fatal(err)
-	}
-
-	akChain := [][]byte{}
-	for _, c := range secretResp.CertificateChain {
-		certBytes, err := base64.RawURLEncoding.DecodeString(c)
-		if err != nil {
-			log.Fatal(err)
-		}
-		cert, err := x509.ParseCertificate(certBytes)
-		if err != nil {
-			log.Fatal(err)
-		}
-		info, err := certinfo.CertificateText(cert)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(info)
-		akChain = append(akChain, certBytes)
-	}
-
-	data, err := keyAuthDigest(ac.Key, ch.Token)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	config := &attest.KeyConfig{
-		//Algorithm: attest.ECDSA,
-		//Size:      256,
-		// TODO(hs): I had to change this to RSA to make the AK key and the cert key type check out with each other. Check if this is indeed required.
-		// TODO(hs): with attest.RSA, I get an error when decoding the public key on server side:  panic: parsing public key: missing rsa signature scheme. Not sure where that has to be added ATM.
-		Algorithm:      attest.RSA,
-		Size:           2048, // TODO(hs): 4096 didn't work on my TPM? Look into why that's the case. Returned a TPM error; RCValue = 0x04;  value is out of range or is not correct for the context
-		QualifyingData: data,
-	}
-	certKey, err := tpm.NewKey(ak, config)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// passing the TPM key to the ACME flow, so that it can be used
-	// TODO(hs): this is a bit of a hack that needs some refactoring
-	af.tpmKey = certKey
-
-	// Generate the WebAuthn attestation statement.
-	attStmt, err := attestationStatement(certKey, akChain...)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	challengeBody := struct {
-		AttObj string `json:"attObj"`
-	}{
-		AttObj: base64.RawURLEncoding.EncodeToString(attStmt),
-	}
-
-	payload, err := json.Marshal(challengeBody)
-	if err != nil {
-		return errors.Wrapf(err, "error marshaling challenge body")
-	}
-
-	if err := ac.ValidateWithPayload(ch.URL, payload); err != nil {
-		ui.Printf(" Error!\n\n")
-		//mode.Cleanup()
-		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
-	}
-	var (
-		isValid = false
-		vch     *acme.Challenge
-		//err     error
-	)
-	time.Sleep(time.Second) // brief sleep to allow server time to validate challenge.
-	for attempts := 0; attempts < 10; attempts++ {
-		vch, err = ac.GetChallenge(ch.URL)
-		if err != nil {
-			ui.Printf(" Error!\n\n")
-			//mode.Cleanup()
-			return errors.Wrapf(err, "error retrieving ACME Challenge at %s", ch.URL)
-		}
-		if vch.Status == "valid" {
-			isValid = true
-			break
-		}
-		ui.Printf(".")
-		time.Sleep(5 * time.Second)
-	}
-	if !isValid {
-		ui.Printf(" Error!\n\n")
-		//mode.Cleanup()
-		return errors.Errorf("Unable to validate challenge: %+v", vch)
-	}
-	// if err := mode.Cleanup(); err != nil {
-	// 	return err
-	// }
-	ui.Printf(" done!\n")
-
-	return nil
-}
-
-func akCert(ak *attest.AK, identifier string) ([]byte, error) {
-	// TODO(hs): took this from example; shouldn't this be generated inside the TPM?
-	akRootKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-	// akRootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	akRootTemplate := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
-	}
-	permID := x509ext.PermanentIdentifier{
-		IdentifierValue: identifier,
-		Assigner:        asn1.ObjectIdentifier{0, 1, 2, 3, 4},
-	}
-	san := &x509ext.SubjectAltName{
-		PermanentIdentifiers: []x509ext.PermanentIdentifier{
-			permID,
-		},
-	}
-	ext, err := x509ext.MarshalSubjectAltName(san)
-	if err != nil {
-		return nil, err
-	}
-	akTemplate := &x509.Certificate{
-		SerialNumber:    big.NewInt(2),
-		ExtraExtensions: []pkix.Extension{ext},
-	}
-	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, ak.AttestationParameters().Public)
-	if err != nil {
-		return nil, err
-	}
-	// TODO(hs): use x509util.CreateCertificate?
-	akCert, err := x509.CreateCertificate(rand.Reader, akTemplate, akRootTemplate, akPub.Public, akRootKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return akCert, nil
-}
-
-type AttestationObject struct {
-	Format       string                 `json:"fmt"`
-	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
-}
-
-func attestationStatement(key *attest.Key, akChain ...[]byte) ([]byte, error) {
-	params := key.CertificationParameters()
-
-	obj := &AttestationObject{
-		Format: "tpm", // TODO(hs): `tpm` is the value used in WebAuthn for generic TPM attestation; is that what we want in `step` CLI too?
-		AttStatement: map[string]interface{}{
-			"ver":      "2.0",
-			"alg":      int64(-257), // AlgRS256
-			"x5c":      akChain,
-			"sig":      params.CreateSignature,
-			"certInfo": params.CreateAttestation,
-			"pubArea":  params.Public,
-		},
-	}
-	b, err := cbor.Marshal(obj)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
-}
-
-func tpmInit(identifier string) (*attest.TPM, *attest.AK, []byte, error) {
-	config := &attest.OpenConfig{
-		TPMVersion: attest.TPMVersion20,
-	}
-
-	// TODO(hs): OpenTPM should only be called once for every CLI invocation, but potentially multiple TPM operations
-	tpm, err := attest.OpenTPM(config)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	ak, err := tpm.NewAK(nil)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	akCert, err := akCert(ak, identifier)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	return tpm, ak, akCert, nil
-}
-
-// Borrowed from:
-// https://github.com/golang/crypto/blob/master/acme/acme.go#L748
-func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
-	th, err := jwk.Thumbprint(crypto.SHA256) // TODO(hs): verify this is the correct thumbprint
-	// jwk, err := jwkEncode(pub)
-	// if err != nil {
-	// 	return "", err
-	// }
-	// b := sha256.Sum256([]byte(jwk))
-	// return base64.RawURLEncoding.EncodeToString(b[:]), nil
-	// th, err := stdacme.JWKThumbprint(pub)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	digest := sha256.Sum256([]byte(fmt.Sprintf("%s.%s", token, th)))
-	return digest[:], err
-}
-
-func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order, af *acmeFlow) error {
+func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
+	isAttest := (ctx.String("attestation-uri") != "")
 	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
 		if err != nil {
@@ -609,16 +217,16 @@ func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order, af *acme
 
 		chValidated := false
 		for _, ch := range az.Challenges {
-			// TODO: Allow other types of challenges (not just http); at least TLS-ALPN-01
-			if ch.Type == "http-01" {
+			// TODO: Allow other types of challenges (not just http).
+			if ch.Type == "http-01" && !isAttest {
 				if err := serveAndValidateHTTPChallenge(ctx, ac, ch, ident); err != nil {
 					return err
 				}
 				chValidated = true
 				break
 			}
-			if ch.Type == "device-attest-01" {
-				if err := validatePermanentIdentifierChallenge(ctx, ac, ch, ident, af); err != nil {
+			if ch.Type == "device-attest-01" && isAttest {
+				if err := doDeviceAttestation(ctx, ac, ch, ident); err != nil {
 					return err
 				}
 				chValidated = true
@@ -697,6 +305,207 @@ func validateSANsForACME(sans []string) ([]string, []net.IP, error) {
 	return dnsNames, ips, nil
 }
 
+func createNewOrderRequest(ctx *cli.Context, acmeDir, subject string, sans []string) (interface{}, []string, []net.IP, error) {
+	dnsNames, ips, err := validateSANsForACME(sans)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	var idents []acme.Identifier
+	for _, dns := range dnsNames {
+		idents = append(idents, acme.Identifier{
+			Type:  "dns",
+			Value: dns,
+		})
+	}
+	for _, ip := range ips {
+		idents = append(idents, acme.Identifier{
+			Type:  "ip",
+			Value: ip.String(),
+		})
+	}
+
+	if strings.Contains(acmeDir, "letsencrypt") {
+		// LetsEncrypt does not support NotBefore and NotAfter attributes in
+		// orders.
+		if ctx.IsSet("not-before") || ctx.IsSet("not-after") {
+			return nil, nil, nil, errors.New(
+				"LetsEncrypt public CA does not support NotBefore/NotAfter attributes for certificates. " +
+					"Instead, each certificate has a default lifetime of 3 months.",
+			)
+		}
+
+		// LetsEncrypt requires that the Common Name of the Certificate also be
+		// represented as a DNSName in the SAN extension, and therefore must be
+		// authorized as part of the ACME order.
+		hasSubject := false
+		for _, n := range idents {
+			if n.Value == subject {
+				hasSubject = true
+			}
+		}
+
+		if !hasSubject {
+			dnsNames = append(dnsNames, subject)
+			idents = append(idents, acme.Identifier{
+				Type:  "dns",
+				Value: subject,
+			})
+		}
+
+		return struct {
+			Identifiers []acme.Identifier
+		}{Identifiers: idents}, dnsNames, ips, nil
+	}
+
+	// parse times or durations
+	nbf, naf, err := flags.ParseTimeDuration(ctx)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// check if the list of identifiers for which to request a certificate
+	// already contains the subject
+	hasSubject := false
+	for _, n := range idents {
+		if n.Value == subject {
+			hasSubject = true
+		}
+	}
+
+	// if the subject is not yet included in the slice of identifiers, it is
+	// added to either the DNS names or IP addresses slice and the corresponding
+	// type of identifier is added to the slice of identifiers.
+	if !hasSubject {
+		if ip := net.ParseIP(subject); ip != nil {
+			ips = append(ips, ip)
+			idents = append(idents, acme.Identifier{
+				Type:  "ip",
+				Value: ip.String(),
+			})
+		} else {
+			dnsNames = append(dnsNames, subject)
+			idents = append(idents, acme.Identifier{
+				Type:  "dns",
+				Value: subject,
+			})
+		}
+	}
+
+	return acmeAPI.NewOrderRequest{
+		Identifiers: idents,
+		NotAfter:    naf.Time(),
+		NotBefore:   nbf.Time(),
+	}, dnsNames, ips, nil
+}
+
+type attestationPayload struct {
+	AttObj string `json:"attObj"`
+}
+
+type attestationObject struct {
+	Format       string                 `json:"fmt"`
+	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
+}
+
+func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string) error {
+
+	// TODO(hs): determine how to choose this case; transparently? Integrate TPM with the KMS plugin?
+	// Another plugin? Or just integrated inside of the CLI (if it's all plain Go, then that would)
+	// work as we want. Some of the logic is very similar to the `step` attestation with Yubikeys; let's
+	// make that more reusable.
+	if ctx.Bool("tpm") {
+		return doTPMAttestation(ctx, ac, ch, identifier)
+	}
+
+	attestor, err := cryptoutil.CreateAttestor("", ctx.String("attestation-uri"))
+	if err != nil {
+		return err
+	}
+	pemData, err := attestor.Attest()
+	if err != nil {
+		return err
+	}
+
+	data, err := acme.KeyAuthorization(ch.Token, ac.Key)
+	if err != nil {
+		return errors.Wrap(err, "error generating ACME key authorization")
+	}
+
+	var alg int64
+	var digest []byte
+	var opts crypto.SignerOpts
+	switch k := attestor.Public().(type) {
+	case *ecdsa.PublicKey:
+		if k.Curve != elliptic.P256() {
+			return fmt.Errorf("unsupported elliptic curve %s", k.Curve)
+		}
+		alg = -7 // ES256
+		opts = crypto.SHA256
+		sum := sha256.Sum256([]byte(data))
+		digest = sum[:]
+	case *rsa.PublicKey:
+		// TODO(mariano): support for PS256 (-37)
+		alg = -257 // RS256
+		opts = crypto.SHA256
+		sum := sha256.Sum256([]byte(data))
+		digest = sum[:]
+	case ed25519.PublicKey:
+		alg = -8 // EdDSA
+		opts = crypto.Hash(0)
+		digest = []byte(data)
+	default:
+		return fmt.Errorf("unsupported public key type %T", k)
+	}
+
+	// Sign proves possession of private key. Per recommendation at
+	// https://w3c.github.io/webauthn/#sctn-signature-attestation-types, we use
+	// CBOR to encode the signature.
+	sig, err := attestor.Sign(rand.Reader, digest, opts)
+	if err != nil {
+		return errors.Wrap(err, "error signing key authorization")
+	}
+	sig, err = cbor.Marshal(sig)
+	if err != nil {
+		return errors.Wrap(err, "error marshaling signature")
+	}
+
+	certs, err := pemutil.ParseCertificateBundle(pemData)
+	if err != nil {
+		return err
+	}
+
+	x5c := make([][]byte, len(certs))
+	for i, c := range certs {
+		x5c[i] = c.Raw
+	}
+
+	// step format is based on the "packed" format described in
+	// https://w3c.github.io/webauthn/#sctn-attestation but with the authData
+	// omitted as described in the device-attest-01 RFC.
+	obj := &attestationObject{
+		Format: "step",
+		AttStatement: map[string]interface{}{
+			"alg": alg,
+			"sig": sig,
+			"x5c": x5c,
+		},
+	}
+
+	b, err := cbor.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	payload, err := json.Marshal(attestationPayload{
+		AttObj: base64.RawURLEncoding.EncodeToString(b),
+	})
+	if err != nil {
+		return fmt.Errorf("error marshaling payload: %w", err)
+	}
+	return ac.ValidateWithPayload(ch.URL, payload)
+}
+
 type acmeFlowOp func(*acmeFlow) error
 
 func withProvisionerName(name string) acmeFlowOp {
@@ -731,7 +540,6 @@ type acmeFlow struct {
 	provisionerName string
 	csr             *x509.CertificateRequest
 	priv            interface{}
-	tpmKey          *attest.Key
 	subject         string
 	sans            []string
 	acmeDir         string
@@ -823,72 +631,18 @@ func (af *acmeFlow) getClientTruststoreOption(mergeRootCAs bool) (ca.ClientOptio
 }
 
 func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
-	dnsNames, ips, err := validateSANsForACME(af.sans)
-	if err != nil {
-		return nil, err
-	}
-
-	var idents []acme.Identifier
-	for _, dns := range dnsNames {
-		idents = append(idents, acme.Identifier{
-			Type:  "dns",
-			Value: dns,
-		})
-	}
-	for _, ip := range ips {
-		idents = append(idents, acme.Identifier{
-			Type:  "ip",
-			Value: ip.String(),
-		})
-	}
-
-	permanentIdentifiers := af.ctx.StringSlice("permanent-identifier")
-	for _, pi := range permanentIdentifiers {
-		idents = append(idents, acme.Identifier{
-			Type:  "permanent-identifier",
-			Value: pi,
-		})
-	}
-
 	var (
-		orderPayload []byte
-		clientOps    []ca.ClientOption
+		err             error
+		newOrderRequest interface{}
+		dnsNames        []string
+		ips             []net.IP
 	)
 
-	ops, err := af.getClientTruststoreOption(af.ctx.IsSet("acme"))
-	if err != nil {
-		return nil, err
-	}
-
-	clientOps = append(clientOps, ops)
-
-	if strings.Contains(af.acmeDir, "letsencrypt") {
-		// LetsEncrypt does not support NotBefore and NotAfter attributes in orders.
-		if af.ctx.IsSet("not-before") || af.ctx.IsSet("not-after") {
-			return nil, errors.New("LetsEncrypt public CA does not support NotBefore/NotAfter " +
-				"attributes for certificates. Instead, each certificate has a default lifetime of 3 months.")
-		}
-		// LetsEncrypt requires that the Common Name of the Certificate also be
-		// represented as a DNSName in the SAN extension, and therefore must be
-		// authorized as part of the ACME order.
-		hasSubject := false
-		for _, n := range idents {
-			if n.Value == af.subject {
-				hasSubject = true
-			}
-		}
-		if !hasSubject {
-			dnsNames = append(dnsNames, af.subject)
-			idents = append(idents, acme.Identifier{
-				Type:  "dns",
-				Value: af.subject,
-			})
-		}
-		orderPayload, err = json.Marshal(struct {
-			Identifiers []acme.Identifier
-		}{Identifiers: idents})
+	attestationURI := af.ctx.String("attestation-uri")
+	if attestationURI == "" {
+		newOrderRequest, dnsNames, ips, err = createNewOrderRequest(af.ctx, af.acmeDir, af.subject, af.sans)
 		if err != nil {
-			return nil, errors.Wrap(err, "error marshaling new letsencrypt order request")
+			return nil, err
 		}
 	} else {
 		// parse times or durations
@@ -897,45 +651,28 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 			return nil, err
 		}
 
-		// check if the list of identifiers for which to
-		// request a certificate already contains the subject
-		hasSubject := false
-		for _, n := range idents {
-			if n.Value == af.subject {
-				hasSubject = true
-			}
-		}
-		// if the subject is not yet included in the slice
-		// of identifiers, it is added to either the DNS names
-		// or IP addresses slice and the corresponding type of
-		// identifier is added to the slice of identifers.
-		if !hasSubject {
-			if ip := net.ParseIP(af.subject); ip != nil {
-				ips = append(ips, ip)
-				idents = append(idents, acme.Identifier{
-					Type:  "ip",
-					Value: ip.String(),
-				})
-			} else {
-				dnsNames = append(dnsNames, af.subject)
-				idents = append(idents, acme.Identifier{
-					Type:  "dns",
-					Value: af.subject,
-				})
-			}
-		}
-		nor := acmeAPI.NewOrderRequest{
-			Identifiers: idents,
-			NotAfter:    naf.Time(),
-			NotBefore:   nbf.Time(),
-		}
-		orderPayload, err = json.Marshal(nor)
-		if err != nil {
-			return nil, errors.Wrap(err, "error marshaling new order request")
+		// We currently do not accept other SANs with attestation certificates.
+		newOrderRequest = acmeAPI.NewOrderRequest{
+			Identifiers: []acme.Identifier{{
+				Type:  "permanent-identifier",
+				Value: af.subject,
+			}},
+			NotBefore: nbf.Time(),
+			NotAfter:  naf.Time(),
 		}
 	}
 
-	ac, err := ca.NewACMEClient(af.acmeDir, af.ctx.StringSlice("contact"), clientOps...)
+	orderPayload, err := json.Marshal(newOrderRequest)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshaling order request")
+	}
+
+	ops, err := af.getClientTruststoreOption(af.ctx.IsSet("acme"))
+	if err != nil {
+		return nil, err
+	}
+
+	ac, err := ca.NewACMEClient(af.acmeDir, af.ctx.StringSlice("contact"), ops)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error initializing ACME client with server %s", af.acmeDir)
 	}
@@ -945,65 +682,44 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		return nil, errors.Wrapf(err, "error creating new ACME order")
 	}
 
-	if err := authorizeOrder(af.ctx, ac, o, af); err != nil {
+	if err := authorizeOrder(af.ctx, ac, o); err != nil {
 		return nil, err
 	}
 
 	if af.csr == nil {
-		insecure := af.ctx.Bool("insecure")
-		kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, insecure, "kty", "curve", "size")
-		if err != nil {
-			return nil, err
-		}
-
-		var signer interface{}
-		if af.tpmKey == nil {
-			af.priv, err = keys.GenerateKey(kty, crv, size)
-			if err != nil {
-				return nil, errors.Wrap(err, "error generating private key")
-			}
-			signer = af.priv
-		} else {
-			// TODO(hs): when using the TPM backed key, the key is generated in the authorize
-			// flow. That doesn't respect the CLI flags for `kty`, `curve` nor `size`. We may want
-			// to do that for consistency. Probably needs some additional input checking.
-			signer, err = af.tpmKey.Private(af.tpmKey.Public())
-			if err != nil {
-				return nil, errors.Wrap(err, "error getting TPM private key")
-			}
-		}
-
-		// prepare the certificate request
-		_csr := &x509.CertificateRequest{
-			Subject: pkix.Name{
-				CommonName: af.subject,
-			},
-			DNSNames:    dnsNames,
-			IPAddresses: ips,
-		}
-
-		// process PermanentIdentifiers and add them to the certificate request
-		permanentIdentifiers := af.ctx.StringSlice("permanent-identifier")
-		if len(permanentIdentifiers) > 0 {
-			san := &x509ext.SubjectAltName{
-				PermanentIdentifiers: []x509ext.PermanentIdentifier{},
-			}
-			for _, identifier := range permanentIdentifiers {
-				permID := x509ext.PermanentIdentifier{
-					IdentifierValue: identifier,
-					Assigner:        asn1.ObjectIdentifier{0, 1, 2, 3, 4},
-				}
-				san.PermanentIdentifiers = append(san.PermanentIdentifiers, permID)
-			}
-			ext, err := x509ext.MarshalSubjectAltName(san)
+		var signer crypto.Signer
+		var template *x509.CertificateRequest
+		if attestationURI == "" {
+			insecure := af.ctx.Bool("insecure")
+			kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, insecure, "kty", "curve", "size")
 			if err != nil {
 				return nil, err
 			}
-			_csr.ExtraExtensions = []pkix.Extension{ext}
+			signer, err = keyutil.GenerateSigner(kty, crv, size)
+			if err != nil {
+				return nil, errors.Wrap(err, "error generating private key")
+			}
+			af.priv = signer
+			template = &x509.CertificateRequest{
+				Subject: pkix.Name{
+					CommonName: af.subject,
+				},
+				DNSNames:    dnsNames,
+				IPAddresses: ips,
+			}
+		} else {
+			signer, err = cryptoutil.CreateSigner(attestationURI, attestationURI)
+			if err != nil {
+				return nil, err
+			}
+			template = &x509.CertificateRequest{
+				Subject: pkix.Name{
+					CommonName: af.subject,
+				},
+			}
 		}
 
-		var csrBytes []byte
-		csrBytes, err = x509.CreateCertificateRequest(rand.Reader, _csr, signer)
+		csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, signer)
 		if err != nil {
 			return nil, errors.Wrap(err, "error creating certificate request")
 		}

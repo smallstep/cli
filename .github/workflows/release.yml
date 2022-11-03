@@ -7,20 +7,12 @@ on:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
-  lint:
-    uses: smallstep/workflows/.github/workflows/goLint.yml@main
-
-  test:
-    needs: lint
-    uses: smallstep/workflows/.github/workflows/goTest.yml@main
-
-  build:
-    needs: test
-    uses: smallstep/workflows/.github/workflows/goBuild.yml@main
+  ci:
+    uses: smallstep/workflows/.github/workflows/goCI.yml@main
 
   create_release:
     name: Create Release
-    needs: build
+    needs: ci
     runs-on: ubuntu-20.04
     outputs:
       version: ${{ steps.extract-tag.outputs.VERSION }}
@@ -71,6 +63,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
+          check-latest: true
       -
         name: Configure Go
         id: configure_go
@@ -105,7 +98,7 @@ jobs:
   build_upload_docker:
     name: Build & Upload Docker Images
     runs-on: ubuntu-20.04
-    needs: build
+    needs: ci
     steps:
       -
         name: Checkout
@@ -115,6 +108,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
+          check-latest: true
       -
         name: Install cosign
         uses: sigstore/cosign-installer@v1.1.0
@@ -151,6 +145,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
+          check-latest: true
       -
         name: Build
         id: build
@@ -193,6 +188,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
+          check-latest: true
       -
         name: Build
         id: build

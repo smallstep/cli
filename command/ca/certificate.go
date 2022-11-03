@@ -163,6 +163,10 @@ Use the '--permanent-identifier' flag multiple times to set more than one.`,
 				Usage: "The base url of the attestation CA to use",
 				Value: "https://192.168.0.186:2443/tpmattest/tpm01", // TODO(hs): remove default value
 			},
+			cli.BoolFlag{
+				Name:  "tpm",
+				Usage: "Use TPM for Device Attestation", // TODO(hs): may want to provide path to TPM instead to enable this flow?
+			},
 			flags.TemplateSet,
 			flags.TemplateSetFile,
 			flags.CaConfig,
@@ -177,6 +181,7 @@ Use the '--permanent-identifier' flag multiple times to set more than one.`,
 			flags.Size,
 			flags.NotAfter,
 			flags.NotBefore,
+			flags.AttestationURI,
 			flags.Force,
 			flags.Offline,
 			flags.PasswordFile,
@@ -196,8 +201,13 @@ Use the '--permanent-identifier' flag multiple times to set more than one.`,
 }
 
 func certificateAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 3); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 2, 3); err != nil {
 		return err
+	}
+
+	// Allow two arguments with the attestation uri.
+	if ctx.NArg() == 2 && ctx.String("attestation-uri") == "" {
+		return errs.TooFewArguments(ctx)
 	}
 
 	args := ctx.Args()
