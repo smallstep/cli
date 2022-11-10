@@ -39,7 +39,7 @@ ACME
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
 [**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
 [**--attestation-format**=<format>] [**--remove-attestation-format**=<format>]
-[**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
