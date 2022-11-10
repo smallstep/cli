@@ -185,11 +185,7 @@ $ step oauth --client-id my-client-id --client-secret my-client-secret \
 			cli.BoolFlag{
 				Name: "console, c",
 				Usage: `Complete the flow while remaining only inside the terminal.
-
-NOTE: This flag will continue to use the Out of Band (OOB) flow for Google OAuth clients
-until Oct 3, 2022 when the OOB flow will be shut off. All other OAuth clients
-will default to using the Device Authorization Grant flow
-(https://datatracker.ietf.org/doc/html/rfc8628#section-3.2).`,
+This flag defaults to use the Device Authorization Grant flow.`,
 			},
 			cli.StringFlag{
 				Name: "console-flow",
@@ -385,14 +381,8 @@ func oauthCmd(c *cli.Context) error {
 	case c.IsSet("console-flow"):
 		return errs.InvalidFlagValue(c, "console-flow", consoleFlowInput, "device, oob")
 	case c.Bool("console"):
-		oobDeprecationDate := time.Date(2022, time.October, 3, 0, 0, 0, 0, time.UTC)
-		if time.Now().Before(oobDeprecationDate) && (opts.Provider == "google" || strings.HasPrefix(opts.Provider, "https://accounts.google.com")) {
-			isOOBFlow = true
-			opts.ConsoleFlow = oobConsoleFlow
-		} else {
-			isDeviceFlow = true
-			opts.ConsoleFlow = deviceConsoleFlow
-		}
+		isDeviceFlow = true
+		opts.ConsoleFlow = deviceConsoleFlow
 	}
 
 	var clientID, clientSecret string
