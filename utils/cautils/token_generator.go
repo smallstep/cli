@@ -320,6 +320,8 @@ func getProvisionerPasswordOption(ctx *cli.Context) jose.Option {
 	switch {
 	case ctx.String("provisioner-password-file") != "":
 		return jose.WithPasswordFile(ctx.String("provisioner-password-file"))
+	case ctx.String("admin-password-file") != "":
+		return jose.WithPasswordFile(ctx.String("admin-password-file"))
 	case ctx.String("password-file") != "":
 		return jose.WithPasswordFile(ctx.String("password-file"))
 	default:
@@ -331,6 +333,8 @@ func getProvisionerPasswordPEMOption(ctx *cli.Context) pemutil.Options {
 	switch {
 	case ctx.String("provisioner-password-file") != "":
 		return pemutil.WithPasswordFile(ctx.String("provisioner-password-file"))
+	case ctx.String("admin-password-file") != "":
+		return pemutil.WithPasswordFile(ctx.String("admin-password-file"))
 	case ctx.String("password-file") != "":
 		return pemutil.WithPasswordFile(ctx.String("password-file"))
 	default:

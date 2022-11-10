@@ -23,10 +23,9 @@ func ViewCommand(ctx context.Context) cli.Command {
 		Usage: "view current certificate issuance policy",
 		UsageText: fmt.Sprintf(`**%s**
 [**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`, commandName),
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** shows the currently configured policy.
 
 ## EXAMPLES
@@ -62,9 +61,9 @@ $ step ca policy acme view --provisioner my_acme_provisioner --eab-key-id "lUOTG
 			flags.EABReference,
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

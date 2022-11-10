@@ -30,17 +30,17 @@ func updateCommand() cli.Command {
 		Usage:  "update a provisioner",
 		UsageText: `**step ca provisioner update** <name> [**--public-key**=<file>]
 [**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 ACME
 
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
 [**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
 [**--attestation-format**=<format>] [**--remove-attestation-format**=<format>]
-[**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>]
+[**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 OIDC
@@ -51,23 +51,23 @@ OIDC
 [**--domain**=<domain>] [**--remove-domain**=<domain>]
 [**--group**=<group>] [**--remove-group**=<group>]
 [**--admin**=<email>]... [**--remove-admin**=<email>]...
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 X5C
 
 **step ca provisioner update** <name> **--x5c-roots**=<file>
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 K8SSA (Kubernetes Service Account)
 
 **step ca provisioner update** <name> [**--public-key**=<file>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 IID (AWS/GCP/Azure)
 
@@ -79,18 +79,17 @@ IID (AWS/GCP/Azure)
 [**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
 [**--azure-object-id**=<id>] [**--instance-age**=<duration>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 SCEP
 
 **step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>]
-[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<name>] [**--admin-subject**=<subject>] [**--password-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
-`,
+[**--encryption-algorithm-identifier**=<id>][**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			nameFlag,
 			pubKeyFlag,
@@ -172,8 +171,9 @@ SCEP
 
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFileNoAlias,
 			flags.PasswordFile,
 			flags.CaURL,
 			flags.Root,

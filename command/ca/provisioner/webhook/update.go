@@ -21,9 +21,9 @@ func updateCommand() cli.Command {
 [**--url**=<url>] [**--kind**=<kind>] [**--bearer-token-file**=<filename>]
 [**--basic-auth-username**=<username>] [**--basic-auth-password-file**=<filename>]
 [**--disable-tls-client-auth**] [**--cert-type**=<cert-type>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			// General webhook flags
 			urlFlag,
@@ -36,9 +36,9 @@ func updateCommand() cli.Command {
 
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
