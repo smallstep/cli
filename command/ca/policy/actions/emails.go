@@ -20,11 +20,10 @@ func EmailCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "email",
 		Usage: "add or remove email addresses",
-		UsageText: fmt.Sprintf(`**%s** <email> [**--remove**]
-[**--provisioner**=<name>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`, commandName),
+		UsageText: fmt.Sprintf(`**%s** <email> [**--remove**] [**--provisioner**=<name>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** command manages email addresses and domains in policies
 
 ## EXAMPLES
@@ -57,10 +56,7 @@ $ step ca policy provisioner ssh user allow email @example.com --provisioner my_
 Deny root@example.com domain in SSH user certificates on provisioner level
 '''
 $ step ca policy provisioner ssh user deny email @example.com --provisioner my_provisioner
-'''
-
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			emailAction,
@@ -73,9 +69,9 @@ $ step ca policy provisioner ssh user deny email @example.com --provisioner my_p
 			},
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

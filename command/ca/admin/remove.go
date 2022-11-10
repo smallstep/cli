@@ -13,16 +13,16 @@ func removeCommand() cli.Command {
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove an admin from the CA configuration",
 		UsageText: `**step ca admin remove** <subject> [**--provisioner**=<name>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>]`,
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
 			provisionerFilterFlag,
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

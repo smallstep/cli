@@ -20,11 +20,10 @@ func URICommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "uri",
 		Usage: "add or remove URI domains",
-		UsageText: fmt.Sprintf(`**%s** <uri domain> [**--remove**]
-[**--provisioner**=<name>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`, commandName),
+		UsageText: fmt.Sprintf(`**%s** <uri domain> [**--remove**] [**--provisioner**=<name>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** command manages URI domains in policies
 
 ## EXAMPLES
@@ -47,9 +46,7 @@ $ step ca policy authority x509 deny uri badhost.local --remove
 Allow all URI subdomains of "example.com" in X.509 certificates on provisioner level
 '''
 $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_provisioner
-'''
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			uriAction,
@@ -62,9 +59,9 @@ $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_pro
 			},
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

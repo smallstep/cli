@@ -29,18 +29,18 @@ func addCommand() cli.Command {
 		Usage:  "add a provisioner",
 		UsageText: `**step ca provisioner add** <name> **--type**=JWK [**--public-key**=<file>]
 [**--private-key**=<file>] [**--create**] [**--password-file**=<file>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 ACME
 
 **step ca provisioner add** <name> **--type**=ACME
 [**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>]
 [**--attestation-format**=<format>] [**--attestation-roots**=<file>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 OIDC
 
@@ -48,37 +48,37 @@ OIDC
 [**--client-id**=<id>] [**--client-secret**=<secret>]
 [**--configuration-endpoint**=<url>] [**--domain**=<domain>]
 [**--admin**=<email>]...
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 X5C
 
 **step ca provisioner add** <name> **--type**=X5C **--x5c-roots**=<file>
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 SSHPOP
 
 **step ca provisioner add** <name> **--type**=SSHPOP
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 Nebula
 
 **step ca provisioner add** <name> **--type**=Nebula **--nebula-root**=<file>
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 K8SSA
 
 **step ca provisioner add** <name> **--type**=K8SSA [**--public-key**=<file>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 IID
 
@@ -88,16 +88,17 @@ IID
 [**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
 [**--azure-object-id**=<id>] [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 SCEP
 
 **step ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--min-public-key-length**=<length>]
-[**--encryption-algorithm-identifier**=<id>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>] [**--password-file**=<file>]
+[**--encryption-algorithm-identifier**=<id>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			// General provisioner flags
@@ -171,8 +172,9 @@ SCEP
 
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFileNoAlias,
 			flags.PasswordFile,
 			flags.CaURL,
 			flags.Root,

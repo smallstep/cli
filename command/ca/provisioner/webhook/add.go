@@ -19,9 +19,9 @@ func addCommand() cli.Command {
 [**--url**=<url>] [**--kind**=<kind>] [**--bearer-token-file**=<filename>]
 [**--basic-auth-username**=<username>] [**--basic-auth-password-file**=<filename>]
 [**--disable-tls-client-auth**] [**--cert-type**=<cert-type>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-provisioner**=<name>]
-[**--admin-subject**=<subject>] [**--password-file**=<file>] [**--ca-url**=<uri>]
-[**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			urlFlag,
 			kindFlag,
@@ -33,9 +33,9 @@ func addCommand() cli.Command {
 
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
@@ -78,8 +78,8 @@ step ca provisioner webhook add my_provisioner my_webhook --url https://example.
 Create a webhook that will only be called when signing x509 certificates:
 '''
 step ca provisioner webhook add my_provisioner my_webhook --url https://example.com --cert-type X509
-'''
-`}
+'''`,
+	}
 }
 
 func addAction(ctx *cli.Context) (err error) {
