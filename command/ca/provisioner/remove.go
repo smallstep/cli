@@ -39,8 +39,7 @@ $ step ca provisioner remove acme
 Remove provisioner from a ca.json that is not in the default location:
 '''
 $ step ca provisioner remove acme --ca-config /path/to/ca.json
-'''
-`,
+'''`,
 	}
 }
 

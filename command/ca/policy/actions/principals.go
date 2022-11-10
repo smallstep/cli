@@ -51,9 +51,7 @@ $ step ca policy provisioner ssh host allow principal user --provisioner my_ssh_
 Deny principal root in SSH user certificates on provisioner level
 '''
 $ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_user_provisioner
-'''
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			principalAction,

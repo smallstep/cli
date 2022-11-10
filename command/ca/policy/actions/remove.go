@@ -47,8 +47,7 @@ $ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-referen
 Remove an ACME EAB certificate issuance policy by EAB Key ID
 '''
 $ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-id "lUOTGwvFQADjk8nxsVufbhyTOwrFmvO2"
-'''
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			removeAction,

@@ -87,9 +87,7 @@ $ step ca policy authority ssh host allow ip 192.168.0.0/24
 Deny IP address 192.168.0.40 in SSH host certificates on authority level
 '''
 $ step ca policy authority ssh host deny ip 192.168.0.40
-'''
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			ipAction,

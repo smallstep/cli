@@ -49,10 +49,7 @@ $ step ca policy authority x509 allow cn www.example.com --remove
 Deny "My Bad CA Name" as Common Name in X.509 certificates on authority level
 '''
 $ step ca policy authority x509 deny cn "My Bad CA Name"
-'''
-
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			commonNamesAction,

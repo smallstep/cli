@@ -78,8 +78,8 @@ step ca provisioner webhook add my_provisioner my_webhook --url https://example.
 Create a webhook that will only be called when signing x509 certificates:
 '''
 step ca provisioner webhook add my_provisioner my_webhook --url https://example.com --cert-type X509
-'''
-`}
+'''`,
+	}
 }
 
 func addAction(ctx *cli.Context) (err error) {

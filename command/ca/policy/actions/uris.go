@@ -46,9 +46,7 @@ $ step ca policy authority x509 deny uri badhost.local --remove
 Allow all URI subdomains of "example.com" in X.509 certificates on provisioner level
 '''
 $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_provisioner
-'''
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			uriAction,

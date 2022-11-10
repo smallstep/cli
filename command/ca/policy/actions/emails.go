@@ -56,10 +56,7 @@ $ step ca policy provisioner ssh user allow email @example.com --provisioner my_
 Deny root@example.com domain in SSH user certificates on provisioner level
 '''
 $ step ca policy provisioner ssh user deny email @example.com --provisioner my_provisioner
-'''
-
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			emailAction,

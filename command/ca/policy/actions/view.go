@@ -48,9 +48,7 @@ $ step ca policy acme view --provisioner my_acme_provisioner --eab-key-reference
 View an ACME EAB certificate issuance policy by EAB Key ID
 '''
 $ step ca policy acme view --provisioner my_acme_provisioner --eab-key-id "lUOTGwvFQADjk8nxsVufbhyTOwrFmvO2"
-'''
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			viewAction,

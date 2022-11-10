@@ -74,8 +74,7 @@ step ca provisioner webhook update my_provisioner my_webhook --basic-auth-passwo
 Configure the webhook to be called only when signing x509 certificates, not SSH certificates:
 '''
 step ca provisioner webhook update my_provisioner my_webhook --cert-type X509
-'''
-`,
+'''`,
 	}
 }
 

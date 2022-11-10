@@ -67,9 +67,7 @@ $ step ca policy authority ssh host allow dns "*.local"
 Deny badsshhost.local in SSH host certificates on authority level
 '''
 $ step ca policy authority ssh host allow dns "badsshhost.local"
-'''
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			dnsAction,
