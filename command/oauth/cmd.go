@@ -328,8 +328,8 @@ type options struct {
 
 // Validate validates the options.
 func (o *options) Validate() error {
-	if o.Provider != "google" && !strings.HasPrefix(o.Provider, "https://") {
-		return errors.New("use a valid provider: google")
+	if o.Provider != "google" && o.Provider != "github" && !strings.HasPrefix(o.Provider, "https://") {
+		return errors.New("use a valid provider: google or github")
 	}
 	if o.CallbackListener != "" {
 		if _, _, err := net.SplitHostPort(o.CallbackListener); err != nil {
@@ -563,6 +563,28 @@ type oauth struct {
 	tokCh               chan *token
 }
 
+type endpoint struct {
+	authorization       string
+	deviceAuthorization string
+	token               string
+	userInfo            string
+}
+
+var knownProviders = map[string]endpoint{
+	"google": {
+		authorization:       "https://accounts.google.com/o/oauth2/v2/auth",
+		deviceAuthorization: "https://oauth2.googleapis.com/device/code",
+		token:               "https://www.googleapis.com/oauth2/v4/token",
+		userInfo:            "https://www.googleapis.com/oauth2/v3/userinfo",
+	},
+	"github": {
+		authorization:       "https://github.com/login/oauth/authorize",
+		deviceAuthorization: "https://github.com/login/device/code",
+		token:               "https://github.com/login/oauth/access_token",
+		userInfo:            "https://api.github.com/user",
+	},
+}
+
 func newOauth(provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp, scope, prompt string, authParams url.Values, opts *options) (*oauth, error) {
 	state, err := randutil.Alphanumeric(32)
 	if err != nil {
@@ -579,71 +601,18 @@ func newOauth(provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp,
 		return nil, err
 	}
 
-	switch provider {
-	case "google":
+	// Check known providers
+	if p, ok := knownProviders[provider]; ok {
 		return &oauth{
 			provider:            provider,
 			clientID:            clientID,
 			clientSecret:        clientSecret,
 			scope:               scope,
 			prompt:              prompt,
-			authzEndpoint:       "https://accounts.google.com/o/oauth2/v2/auth",
-			deviceAuthzEndpoint: "https://oauth2.googleapis.com/device/code",
-			tokenEndpoint:       "https://www.googleapis.com/oauth2/v4/token",
-			userInfoEndpoint:    "https://www.googleapis.com/oauth2/v3/userinfo",
-			loginHint:           opts.Email,
-			state:               state,
-			codeChallenge:       challenge,
-			nonce:               nonce,
-			implicit:            opts.Implicit,
-			CallbackListener:    opts.CallbackListener,
-			CallbackListenerURL: opts.CallbackListenerURL,
-			CallbackPath:        opts.CallbackPath,
-			terminalRedirect:    opts.TerminalRedirect,
-			browser:             opts.Browser,
-			authParams:          authParams,
-			errCh:               make(chan error),
-			tokCh:               make(chan *token),
-		}, nil
-	default:
-		userinfoEp := ""
-
-		isDeviceFlow := opts.Console && opts.ConsoleFlow == deviceConsoleFlow
-
-		if (isDeviceFlow && deviceAuthzEp == "" && tokenEp == "") ||
-			(!isDeviceFlow && authzEp == "" && tokenEp == "") {
-			d, err := disco(provider)
-			if err != nil {
-				return nil, err
-			}
-
-			if v, ok := d["device_authorization_endpoint"].(string); !ok && isDeviceFlow {
-				return nil, errors.New("missing or invalid 'device_authorization_endpoint' in provider metadata")
-			} else if ok {
-				deviceAuthzEp = v
-			}
-			if v, ok := d["authorization_endpoint"].(string); !ok && !isDeviceFlow {
-				return nil, errors.New("missing or invalid 'authorization_endpoint' in provider metadata")
-			} else if ok {
-				authzEp = v
-			}
-			v, ok := d["token_endpoint"].(string)
-			if !ok {
-				return nil, errors.New("missing or invalid 'token_endpoint' in provider metadata")
-			}
-			tokenEp, userinfoEp = v, v
-		}
-
-		return &oauth{
-			provider:            provider,
-			clientID:            clientID,
-			clientSecret:        clientSecret,
-			scope:               scope,
-			prompt:              prompt,
-			authzEndpoint:       authzEp,
-			deviceAuthzEndpoint: deviceAuthzEp,
-			tokenEndpoint:       tokenEp,
-			userInfoEndpoint:    userinfoEp,
+			authzEndpoint:       p.authorization,
+			deviceAuthzEndpoint: p.deviceAuthorization,
+			tokenEndpoint:       p.token,
+			userInfoEndpoint:    p.userInfo,
 			loginHint:           opts.Email,
 			state:               state,
 			codeChallenge:       challenge,
@@ -659,6 +628,57 @@ func newOauth(provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp,
 			tokCh:               make(chan *token),
 		}, nil
 	}
+
+	userinfoEp := ""
+	isDeviceFlow := opts.Console && opts.ConsoleFlow == deviceConsoleFlow
+
+	if (isDeviceFlow && deviceAuthzEp == "" && tokenEp == "") || (!isDeviceFlow && authzEp == "" && tokenEp == "") {
+		d, err := disco(provider)
+		if err != nil {
+			return nil, err
+		}
+
+		if v, ok := d["device_authorization_endpoint"].(string); !ok && isDeviceFlow {
+			return nil, errors.New("missing or invalid 'device_authorization_endpoint' in provider metadata")
+		} else if ok {
+			deviceAuthzEp = v
+		}
+		if v, ok := d["authorization_endpoint"].(string); !ok && !isDeviceFlow {
+			return nil, errors.New("missing or invalid 'authorization_endpoint' in provider metadata")
+		} else if ok {
+			authzEp = v
+		}
+		v, ok := d["token_endpoint"].(string)
+		if !ok {
+			return nil, errors.New("missing or invalid 'token_endpoint' in provider metadata")
+		}
+		tokenEp, userinfoEp = v, v
+	}
+
+	return &oauth{
+		provider:            provider,
+		clientID:            clientID,
+		clientSecret:        clientSecret,
+		scope:               scope,
+		prompt:              prompt,
+		authzEndpoint:       authzEp,
+		deviceAuthzEndpoint: deviceAuthzEp,
+		tokenEndpoint:       tokenEp,
+		userInfoEndpoint:    userinfoEp,
+		loginHint:           opts.Email,
+		state:               state,
+		codeChallenge:       challenge,
+		nonce:               nonce,
+		implicit:            opts.Implicit,
+		CallbackListener:    opts.CallbackListener,
+		CallbackListenerURL: opts.CallbackListenerURL,
+		CallbackPath:        opts.CallbackPath,
+		terminalRedirect:    opts.TerminalRedirect,
+		browser:             opts.Browser,
+		authParams:          authParams,
+		errCh:               make(chan error),
+		tokCh:               make(chan *token),
+	}, nil
 }
 
 func disco(provider string) (map[string]interface{}, error) {
@@ -686,6 +706,19 @@ func disco(provider string) (map[string]interface{}, error) {
 		return nil, errors.Wrapf(err, "error reading %s: unsupported format", u.String())
 	}
 	return details, err
+}
+
+// postForm simulates http.PostForm but adds the header "Accept:
+// application/json", without this header GitHub will use
+// application/x-www-form-urlencoded.
+func postForm(rawurl string, data url.Values) (*http.Response, error) {
+	req, err := http.NewRequest("POST", rawurl, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("create POST %s request failed: %w", rawurl, err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+	return http.DefaultClient.Do(req)
 }
 
 // NewServer creates http server
@@ -826,7 +859,7 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 	data.Set("client_secret", o.clientSecret)
 	data.Set("scope", o.scope)
 
-	resp, err := http.PostForm(o.deviceAuthzEndpoint, data)
+	resp, err := postForm(o.deviceAuthzEndpoint, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "http failure to identify device")
 	}
@@ -913,7 +946,7 @@ func openBrowserIfAsked(o *oauth, u string) {
 var errHTTPToken = errors.New("bad request; token not returned")
 
 func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
-	resp, err := http.PostForm(o.tokenEndpoint, data)
+	resp, err := postForm(o.tokenEndpoint, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "error doing POST to /token endpoint")
 	}
@@ -986,7 +1019,7 @@ func (o *oauth) DoTwoLeggedAuthorization(issuer string) (*token, error) {
 	}
 
 	// Send the POST request and return token.
-	resp, err := http.PostForm(o.tokenEndpoint, params)
+	resp, err := postForm(o.tokenEndpoint, params)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error from token endpoint")
 	}
@@ -1193,9 +1226,7 @@ func (o *oauth) Exchange(tokenEndpoint, code string) (*token, error) {
 	data.Set("grant_type", "authorization_code")
 	data.Set("code_verifier", o.codeChallenge)
 
-	//nolint:gosec // Tainted url deemed acceptable. Not used to store any
-	// backend data.
-	resp, err := http.PostForm(tokenEndpoint, data)
+	resp, err := postForm(tokenEndpoint, data)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
