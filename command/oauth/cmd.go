@@ -711,10 +711,10 @@ func disco(provider string) (map[string]interface{}, error) {
 // postForm simulates http.PostForm but adds the header "Accept:
 // application/json", without this header GitHub will use
 // application/x-www-form-urlencoded.
-func postForm(url string, data url.Values) (*http.Response, error) {
-	req, err := http.NewRequest("POST", url, strings.NewReader(data.Encode()))
+func postForm(rawurl string, data url.Values) (*http.Response, error) {
+	req, err := http.NewRequest("POST", rawurl, strings.NewReader(data.Encode()))
 	if err != nil {
-		return nil, fmt.Errorf("create POST %s request failed: %w", url, err)
+		return nil, fmt.Errorf("create POST %s request failed: %w", rawurl, err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
@@ -860,7 +860,6 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 	data.Set("scope", o.scope)
 
 	resp, err := postForm(o.deviceAuthzEndpoint, data)
-	// resp, err := http.PostForm(o.deviceAuthzEndpoint, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "http failure to identify device")
 	}
@@ -948,7 +947,6 @@ var errHTTPToken = errors.New("bad request; token not returned")
 
 func (o *oauth) deviceAuthzTokenPoll(data url.Values) (*token, error) {
 	resp, err := postForm(o.tokenEndpoint, data)
-	// resp, err := http.PostForm(o.tokenEndpoint, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "error doing POST to /token endpoint")
 	}
@@ -1022,7 +1020,6 @@ func (o *oauth) DoTwoLeggedAuthorization(issuer string) (*token, error) {
 
 	// Send the POST request and return token.
 	resp, err := postForm(o.tokenEndpoint, params)
-	// resp, err := http.PostForm(o.tokenEndpoint, params)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error from token endpoint")
 	}
@@ -1229,10 +1226,7 @@ func (o *oauth) Exchange(tokenEndpoint, code string) (*token, error) {
 	data.Set("grant_type", "authorization_code")
 	data.Set("code_verifier", o.codeChallenge)
 
-	//nolint:gosec // Tainted url deemed acceptable. Not used to store any
-	// backend data.
 	resp, err := postForm(tokenEndpoint, data)
-	// resp, err := http.PostForm(tokenEndpoint, data)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
