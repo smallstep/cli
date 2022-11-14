@@ -185,7 +185,8 @@ func signCertificateAction(ctx *cli.Context) error {
 		if ctx.IsSet("acme") {
 			return cautils.ACMESignCSRFlow(ctx, csr, crtFile, "")
 		}
-		sans := mergeSans(ctx, csr)
+		sans := ctx.StringSlice("san")
+		sans = mergeSans(sans, csr)
 		if tok, err = flow.GenerateToken(ctx, csr.Subject.CommonName, sans); err != nil {
 			var acmeTokenErr *cautils.ACMETokenError
 			if errors.As(err, &acmeTokenErr) {
@@ -219,10 +220,10 @@ func signCertificateAction(ctx *cli.Context) error {
 	return nil
 }
 
-func mergeSans(ctx *cli.Context, csr *x509.CertificateRequest) []string {
+func mergeSans(sans []string, csr *x509.CertificateRequest) []string {
 	uniq := make([]string, 0)
 	m := make(map[string]bool)
-	for _, s := range ctx.StringSlice("san") {
+	for _, s := range sans {
 		if _, ok := m[s]; !ok {
 			uniq = append(uniq, s)
 			m[s] = true
@@ -242,6 +243,13 @@ func mergeSans(ctx *cli.Context, csr *x509.CertificateRequest) []string {
 		}
 	}
 	for _, s := range csr.EmailAddresses {
+		if _, ok := m[s]; !ok {
+			uniq = append(uniq, s)
+			m[s] = true
+		}
+	}
+	for _, u := range csr.URIs {
+		s := u.String()
 		if _, ok := m[s]; !ok {
 			uniq = append(uniq, s)
 			m[s] = true
