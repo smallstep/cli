@@ -3,9 +3,8 @@ package ca
 import (
 	"crypto/x509"
 	"net"
-	"testing"
-
 	"net/url"
+	"testing"
 
 	"github.com/google/go-cmp/cmp"
 )
