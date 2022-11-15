@@ -17,6 +17,9 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	neturl "net/url"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -45,8 +48,9 @@ type AttestationParameters struct {
 
 type AttestationRequest struct {
 	TPMVersion   attest.TPMVersion     `json:"version"`
-	EKs          []string              `json:"eks"` // TODO(hs): rename to eks
-	AK           string                `json:"ak"`  // TODO(hs): do we want this in the request?
+	EKs          []string              `json:"eks"`
+	EKPub        string                `json:"ek"`
+	AK           string                `json:"ak"` // TODO(hs): do we want this in the request?
 	AttestParams AttestationParameters `json:"params"`
 }
 
@@ -63,7 +67,15 @@ type SecretResponse struct {
 	CertificateChain []string `json:"chain"` // TODO(hs): determine type to be consistent with e.g. ACME or other usages of sending chains from the CA to client
 }
 
-func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string) error {
+type intelEKCertResponse struct {
+	Pubhash     string `json:"pubhash"`
+	Certificate string `json:"certificate"`
+}
+
+type tpmKey interface {
+}
+
+func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 	// TODO: identifier for permanent-identifier handled differently? Can we provide just whatever we want and is that secure?
 	// The permanent-identifier should probably be more like a hardware identifier specific to the device, not just any hostname or IP.
 	// The hardware identifier (e.g. serial) should then be mapped to something else that is more useful for a server cert, like a
@@ -104,14 +116,79 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	}
 	var encodedEKs []string
 	var ekData []byte
+	var ekPub string
 	for _, ek := range eks {
-		fmt.Println(ek.CertificateURL)
-		block, err := pemutil.Serialize(ek.Certificate)
-		if err != nil {
-			log.Fatal(err)
+		ekCert := ek.Certificate
+		if url := ek.CertificateURL; ekCert == nil && url != "" {
+			var u *neturl.URL
+			u, err = neturl.Parse(url)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// Ensure the URL is in the right format; for Intel TPMs, the path
+			// parameter contains the base64 encoding of the hash of the public key,
+			// potentially containing padding characters, which will results in a 403,
+			// if not transformed to `%3D`. The below has currently only be tested for
+			// Intel TPMs, which connect to https://ekop.intel.com/ekcertservice. It may
+			// be different for other URLs. Ideally, I think this should be fixed in
+			// the underlying TPM library to contain the right URL? The `intelEKURL` already
+			// seems to do URLEncoding, though. Why do we still get an `=` then?
+			s := u.String()
+			h := path.Base(s)
+			h = strings.ReplaceAll(h, "=", "%3D") // TODO(hs): no better function in Go to do this in paths? https://github.com/golang/go/issues/27559;
+			s = s[:strings.LastIndex(s, "/")+1] + h
+
+			u, err = neturl.Parse(s)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Println("ek url:", u)
+			var r *http.Response
+			r, err = http.Get(u.String())
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer r.Body.Close()
+
+			if r.StatusCode != http.StatusOK {
+				log.Fatalf("http get resulted in %d", r.StatusCode)
+			}
+
+			var c intelEKCertResponse
+			if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
+				log.Fatal(err)
+			}
+
+			cb, err := base64.URLEncoding.DecodeString(c.Certificate)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			ekCert, err = attest.ParseEKCertificate(cb)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
-		ekData = append(ekData, pem.EncodeToMemory(block)...)
-		encodedEKs = append(encodedEKs, base64.RawURLEncoding.EncodeToString(ek.Certificate.Raw)) // TODO(hs): or use PEM format? While this is not ACME, we might use the methods ACME RFCs use to communicate CSRs/Certs?
+
+		if ekCert == nil {
+			log.Println("no EK certificate found") // TODO: work with just a public key?
+
+			// TODO: how to handle the case without a certificate?
+			p, err := pemutil.Serialize(ek.Public)
+			if err != nil {
+				log.Fatal(err)
+			}
+			ekPub = base64.RawURLEncoding.EncodeToString(pem.EncodeToMemory(p))
+		} else {
+			block, err := pemutil.Serialize(ekCert)
+			if err != nil {
+				log.Fatal(err)
+			}
+			ekData = append(ekData, pem.EncodeToMemory(block)...)
+			encodedEKs = append(encodedEKs, base64.RawURLEncoding.EncodeToString(ekCert.Raw)) // TODO(hs): or use PEM format? While this is not ACME, we might use the methods ACME RFCs use to communicate CSRs/Certs?
+		}
 	}
 
 	ui.Printf("EK Certificate:\n")
@@ -133,6 +210,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	ar := AttestationRequest{
 		TPMVersion: info.Version,
 		EKs:        encodedEKs,
+		EKPub:      ekPub,
 		AttestParams: AttestationParameters{
 			Public:                  attestParams.Public,
 			UseTCSDActivationFormat: attestParams.UseTCSDActivationFormat,
@@ -248,7 +326,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		// TODO(hs): I had to change this to RSA to make the AK key and the cert key type check out with each other. Check if this is indeed required.
 		// TODO(hs): with attest.RSA, I get an error when decoding the public key on server side:  panic: parsing public key: missing rsa signature scheme. Not sure where that has to be added ATM.
 		Algorithm:      attest.RSA,
-		Size:           2048, // TODO(hs): 4096 didn't work on my TPM? Look into why that's the case. Returned a TPM error; RCValue = 0x04;  value is out of range or is not correct for the context
+		Size:           2048, // TODO(hs): 4096 didn't work on my RPi TPM. Look into why that's the case. Returned a TPM error; RCValue = 0x04;  value is out of range or is not correct for the context
 		QualifyingData: data,
 	}
 	certKey, err := tpm.NewKey(ak, config)
@@ -256,9 +334,36 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		log.Fatal(err)
 	}
 
-	// passing the TPM key to the ACME flow, so that it can be used
-	// TODO(hs): this is a bit of a hack that needs some refactoring
-	//af.tpmKey = certKey
+	// passing the TPM key to the ACME flow, so that it can be used as a signer
+	// TODO(hs): this is a bit of a hack that needs refactoring
+	af.tpmKey = certKey
+
+	keyBytes, err := certKey.Marshal()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(keyBytes)
+	fmt.Println(string(keyBytes))
+
+	loadedKey, err := tpm.LoadKey(keyBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(loadedKey)
+	fmt.Println(certKey)
+
+	// TODO(hs): remove this? Or persist it somewhere
+	af.tpmKey = loadedKey
+
+	// TODO: pass the AK as a key instead?
+	// ak.AttestationParameters().CreateSignature
+	// ak.AttestationParameters().CreateAttestation
+	// ak.AttestationParameters().Public
+	// "sig":      params.CreateSignature,
+	// "certInfo": params.CreateAttestation,
+	// "pubArea":  params.Public,
 
 	// Generate the WebAuthn attestation statement.
 	attStmt, err := attestationStatement(certKey, akChain...)

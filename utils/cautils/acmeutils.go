@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/google/go-attestation/attest"
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/acme"
 	acmeAPI "github.com/smallstep/certificates/acme/api"
@@ -202,7 +203,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 	return nil
 }
 
-func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
+func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order, af *acmeFlow) error {
 	isAttest := (ctx.String("attestation-uri") != "")
 	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
@@ -226,7 +227,7 @@ func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
 				break
 			}
 			if ch.Type == "device-attest-01" && isAttest {
-				if err := doDeviceAttestation(ctx, ac, ch, ident); err != nil {
+				if err := doDeviceAttestation(ctx, ac, ch, ident, af); err != nil {
 					return err
 				}
 				chValidated = true
@@ -408,14 +409,14 @@ type attestationObject struct {
 	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
 }
 
-func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string) error {
+func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 
 	// TODO(hs): determine how to choose this case; transparently? Integrate TPM with the KMS plugin?
 	// Another plugin? Or just integrated inside of the CLI (if it's all plain Go, then that would)
 	// work as we want. Some of the logic is very similar to the `step` attestation with Yubikeys; let's
 	// make that more reusable.
 	if ctx.Bool("tpm") {
-		return doTPMAttestation(ctx, ac, ch, identifier)
+		return doTPMAttestation(ctx, ac, ch, identifier, af)
 	}
 
 	attestor, err := cryptoutil.CreateAttestor("", ctx.String("attestation-uri"))
@@ -543,6 +544,7 @@ type acmeFlow struct {
 	subject         string
 	sans            []string
 	acmeDir         string
+	tpmKey          *attest.Key
 }
 
 func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
@@ -682,7 +684,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		return nil, errors.Wrapf(err, "error creating new ACME order")
 	}
 
-	if err := authorizeOrder(af.ctx, ac, o); err != nil {
+	if err := authorizeOrder(af.ctx, ac, o, af); err != nil {
 		return nil, err
 	}
 
@@ -706,6 +708,19 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 				},
 				DNSNames:    dnsNames,
 				IPAddresses: ips,
+			}
+		} else if af.tpmKey != nil {
+			s, err := af.tpmKey.Private(af.tpmKey.Public())
+			if st, ok := s.(crypto.Signer); ok {
+				signer = st
+			}
+			if signer == nil {
+				return nil, errors.Wrap(err, "error getting TPM private key as crypto.Signer")
+			}
+			template = &x509.CertificateRequest{
+				Subject: pkix.Name{
+					CommonName: af.subject,
+				},
 			}
 		} else {
 			signer, err = cryptoutil.CreateSigner(attestationURI, attestationURI)
