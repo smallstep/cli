@@ -62,11 +62,13 @@ fixed period can be set with the **--renew-period** flag.
 The **--daemon** flag can be combined with **--pid**, **--signal**, or **--exec**
 to provide certificate reloads on your services.
 
-The renew command uses mTLS (by default) to authenticate to the step-ca API.
-However, there are scenarios where mTLS is not an option - step-ca is behind a
-proxy or the leaf certificate is not configured to do client authentication. To
-circumvent the default mTLS authentication use **--mtls=false** to force a flow that
-uses X5C token based authentication.
+By default, the renew command authenticates to step-ca using mTLS, except when
+the certificate is expired and renewal after expiry is allowed by the CA.
+
+There are scenarios where mTLS is not possible: If step-ca is behind a proxy,
+or the server's leaf certificate EKU is not configured for client authentication.
+For these scenarios, use **--mtls=false** to force a flow that uses X5C
+token-based authentication.
 
 ## POSITIONAL ARGUMENTS
 
