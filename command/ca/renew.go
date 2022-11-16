@@ -65,7 +65,7 @@ to provide certificate reloads on your services.
 By default, the renew command authenticates to step-ca using mTLS, except when
 the certificate is expired and renewal after expiry is allowed by the CA.
 
-There are scenarios where mTLS is not possible: When step-ca is behind a proxy,
+There are scenarios where mTLS is not possible: When step-ca is behind a layer 7 proxy,
 when the server's leaf certificate EKU is not configured for client authentication,
 or when the server is a StepCAS RA for an upstream step-ca server.
 For these scenarios, use **--mtls=false** to force a flow that uses X5C
