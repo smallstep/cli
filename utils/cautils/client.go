@@ -40,6 +40,7 @@ type CaClient interface {
 	SSHGetHosts() (*api.SSHGetHostsResponse, error)
 	SSHBastion(req *api.SSHBastionRequest) (*api.SSHBastionResponse, error)
 	Version() (*api.VersionResponse, error)
+	Capabilities() (*api.CapabilitiesResponse, error)
 	GetRootCAs() *x509.CertPool
 	GetCaURL() string
 }

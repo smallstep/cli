@@ -101,15 +101,47 @@ type crudClient interface {
 }
 
 func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
+	// Check for CA capabilities.
+	client, err := cautils.NewClient(cliCtx)
+	if err != nil {
+		return nil, fmt.Errorf("error creating CA client: %w", err)
+	}
+	caps, err := client.Capabilities()
+	switch {
+	case errors.Is(err, ca.ErrNotFound):
+		ui.Println()
+		ui.Printf("WARNING: 'step-ca' version is out of date - please update to the latest release.\n")
+		return newCRUDClientLegacy(cliCtx, cfgFile)
+	case err != nil:
+		ui.Printf("capabilities API error: %w", err)
+		return newCRUDClientLegacy(cliCtx, cfgFile)
+	case caps.RemoteConfigurationManagement:
+		return cautils.NewAdminClient(cliCtx)
+	default:
+		ui.PrintSelected("CA Configuration", cfgFile)
+		cfg, err := config.LoadConfiguration(cfgFile)
+		if err != nil {
+			return nil, fmt.Errorf("error loading configuration: %w", err)
+		}
+		// Assume the ca.json is already valid to avoid enabling all the
+		// features present in step-ca just to modify the provisioners.
+		cfg.SkipValidation = true
+
+		ui.Println()
+		return newCaConfigClient(context.Background(), cfg, cfgFile)
+	}
+}
+
+func newCRUDClientLegacy(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 	// os.Stat("") probably returns os.ErrNotExist, but this behavior is
 	// undocumented so we'll handle this case separately.
 	if cfgFile == "" {
 		return cautils.NewAdminClient(cliCtx)
 	}
-
 	_, err := os.Stat(cfgFile)
 	switch {
 	case errors.Is(err, os.ErrNotExist):
+		ui.Printf("WARNING: 'step-ca' config file (%s) not found - attempting remote administration client connection.\n", cfgFile)
 		return cautils.NewAdminClient(cliCtx)
 	case err == nil:
 		ui.PrintSelected("CA Configuration", cfgFile)

@@ -188,6 +188,13 @@ func (c *OfflineCA) Version() (*api.VersionResponse, error) {
 	}, nil
 }
 
+// Capabilities is a wrapper on top of the Capabilities method. It returns
+// an api.CapabilitiesResponse.
+func (c *OfflineCA) Capabilities() (*api.CapabilitiesResponse, error) {
+	cap := api.CapabilitiesResponse(c.authority.Capabilities())
+	return &cap, nil
+}
+
 // Sign is a wrapper on top of certificates Authorize and Sign methods. It
 // returns an api.SignResponse with the requested certificate and the
 // intermediate.
