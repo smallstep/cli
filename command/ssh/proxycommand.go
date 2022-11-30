@@ -151,6 +151,8 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 	// the application of an Identity function.
 	if email, ok := tokenEmail(token); ok {
 		subject = email
+		// NOTE: In case of OIDC replace principals to not trigger an error on CA side.
+		principals = []string{subject}
 	}
 
 	caClient, err := flow.GetClient(ctx, token)
