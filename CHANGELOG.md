@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Check for remote configuration API before prompting for admin credentials.
+
 ### Fixed
 
 - Generation of OTT when signing a CSR with URIs.
