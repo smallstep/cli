@@ -385,7 +385,7 @@ $ step certificate create \
 			flags.TemplateSetFile,
 			cli.StringFlag{
 				Name: "password-file",
-				Usage: `The <file> to the file containing the password to
+				Usage: `The path to the <file> containing the password to
 encrypt the new private key or decrypt the user submitted private key.`,
 			},
 			cli.StringFlag{
@@ -398,7 +398,7 @@ encrypt the new private key or decrypt the user submitted private key.`,
 			},
 			cli.StringFlag{
 				Name: "ca-password-file",
-				Usage: `The <file> to the file containing the password to
+				Usage: `The path to the <file> containing the password to
 decrypt the CA private key.`,
 			},
 			cli.StringFlag{
