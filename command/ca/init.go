@@ -525,6 +525,7 @@ func initAction(ctx *cli.Context) (err error) {
 		ui.Println("What DNS names or IP addresses would you like to add to your new CA?",
 			ui.WithSliceValue(ctx.StringSlice("dns")))
 		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
+			ui.WithValidateFunc(ui.DNS()),
 			ui.WithSliceValue(ctx.StringSlice("dns")))
 		if err != nil {
 			return err
