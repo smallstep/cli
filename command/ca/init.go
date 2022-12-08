@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -525,7 +526,7 @@ func initAction(ctx *cli.Context) (err error) {
 		ui.Println("What DNS names or IP addresses would you like to add to your new CA?",
 			ui.WithSliceValue(ctx.StringSlice("dns")))
 		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
-			ui.WithValidateFunc(ui.DNS()),
+			ui.WithValidateFunc(DNSListValidate()),
 			ui.WithSliceValue(ctx.StringSlice("dns")))
 		if err != nil {
 			return err
@@ -813,6 +814,40 @@ func assertCryptoRand() error {
 		return errs.NewError("crypto/rand is unavailable: Read() failed with %#v", err)
 	}
 	return nil
+}
+
+// validates that it is a comma separated list
+// validates that no element of the list is empty or spaces
+// validates that each element is either a validIP or validDNS
+// return with an error as soon as one of the validations fails
+func DNSListValidate() promptui.ValidateFunc {
+
+	return func(s string) error {
+		//validate it is a comma separated list
+		validCSVList := regexp.MustCompile(`\s*,\s*`)
+		validHostnameRegex := regexp.MustCompile(`^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$`)
+		dnsValues := validCSVList.Split(s, -1)
+		var err error
+		for _, v := range dnsValues {
+			//if empty return
+
+			if strings.TrimSpace(v) == "" {
+				return errors.New("a value of the comma separated list is empty")
+
+			}
+
+			if len(v) > 255 {
+				return errors.New("the total length of the hostname must not exceed 255 characters. For more information, please consult RFC-952 and RFC-1123")
+			}
+			if validHostnameRegex.Match([]byte(v)) {
+				continue //only if dns matches the regexp is valid
+			}
+			err = fmt.Errorf("%v is not a valid DNS", v)
+			break
+
+		}
+		return err
+	}
 }
 
 // processDNSValue reads DNS names from user supplied DNS value

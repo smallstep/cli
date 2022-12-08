@@ -7,6 +7,78 @@ import (
 	_ "go.step.sm/crypto/kms/azurekms"
 )
 
+func TestDNSListValidate(t *testing.T) {
+	tests := []struct {
+		name     string
+		dnsValue string
+		wantErr  bool
+	}{
+		{
+			name:     "dns can't start with -",
+			dnsValue: "-ca.smallstep.com",
+			wantErr:  true,
+		},
+		{
+			name:     "dns can't contain spaces",
+			dnsValue: "ca.small step.com",
+			wantErr:  true,
+		},
+		{
+			name:     "dns label can't be over 63 octects long",
+			dnsValue: "ca.s0000000m0000000000a0000000000000000000000000000000000000l000000000l0000000000.com",
+			wantErr:  true,
+		},
+
+		{
+			name:     "dns can't be over 255 octets long",
+			dnsValue: "1123456789012345678901233456789012345678901234567834567890123456789012345678345678901234567890123456783456789012345678901234567845678901234567890123456789012345678901234567890123456789012345678901234567890234567890.smalls345678901234567890123456783456789012345678901234567834567890123456789012345678tep.com",
+			wantErr:  true,
+		},
+
+		{
+			name:     "dns can't end with -",
+			dnsValue: "ca.smallstep-.com",
+			wantErr:  true,
+		},
+		{
+			name:     "dns can't contain _",
+			dnsValue: "c_a.smallstep.com",
+			wantErr:  true,
+		},
+
+		{
+			name:     "an element is empty at the end",
+			dnsValue: "elem,",
+			wantErr:  true,
+		},
+		{
+			name:     "an element is empty at the begining",
+			dnsValue: "elem,",
+			wantErr:  true,
+		},
+		{
+			name:     "an element is empty in the middle",
+			dnsValue: "elem,,elem",
+			wantErr:  true,
+		},
+		{
+			name:     "dns OK",
+			dnsValue: "ca.smallstep.com",
+			wantErr:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := DNSListValidate()(tt.dnsValue)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DNSListValidate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+
+}
+
 func Test_processDNSValue(t *testing.T) {
 	tests := []struct {
 		name     string
