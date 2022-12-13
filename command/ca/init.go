@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/x509"
+	stderrors "errors"
 	"fmt"
 	"io"
 	"net"
@@ -823,8 +824,11 @@ func processDNSValue(dnsValue string) ([]string, error) {
 	)
 	dnsValue = strings.ReplaceAll(dnsValue, " ", ",")
 	parts := strings.Split(dnsValue, ",")
+	if allEmpty(parts) {
+		return nil, stderrors.New("dns must not be empty")
+	}
 	for _, name := range parts {
-		if name == "" {
+		if name == "" { // skip empty name
 			continue
 		}
 		if err := dnsValidator(name); err != nil {
@@ -844,4 +848,14 @@ func normalize(name string) string {
 		}
 	}
 	return name
+}
+
+// allEmpty loops through all strings in the slice and returns if
+// all are empty (length 0).
+func allEmpty(parts []string) bool {
+	sumLength := 0
+	for _, p := range parts {
+		sumLength += len(p)
+	}
+	return sumLength == 0
 }

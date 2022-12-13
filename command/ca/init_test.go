@@ -14,6 +14,19 @@ func Test_processDNSValue(t *testing.T) {
 		want     []string
 		wantErr  bool
 	}{
+
+		{
+			name:     "fail/empty",
+			dnsValue: "",
+			want:     nil,
+			wantErr:  true,
+		},
+		{
+			name:     "fail/empty-multiple",
+			dnsValue: ",,",
+			want:     nil,
+			wantErr:  true,
+		},
 		{
 			name:     "fail/dns",
 			dnsValue: "ca.smallstep.com:8443",
@@ -42,6 +55,12 @@ func Test_processDNSValue(t *testing.T) {
 			name:     "ok/multi-dns",
 			dnsValue: "ca.smallstep.com,ca.localhost",
 			want:     []string{"ca.smallstep.com", "ca.localhost"},
+			wantErr:  false,
+		},
+		{
+			name:     "ok/multi-dns-with-skip",
+			dnsValue: "ca.smallstep.com,ca.localhost,,test.localhost",
+			want:     []string{"ca.smallstep.com", "ca.localhost", "test.localhost"},
 			wantErr:  false,
 		},
 		{
