@@ -853,9 +853,10 @@ func normalize(name string) string {
 // allEmpty loops through all strings in the slice and returns if
 // all are empty (length 0).
 func allEmpty(parts []string) bool {
-	sumLength := 0
 	for _, p := range parts {
-		sumLength += len(p)
+		if p != "" {
+			return false
+		}
 	}
-	return sumLength == 0
+	return true
 }
