@@ -2,12 +2,7 @@ package provisioner
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net/http"
-	"net/url"
-	"os"
-	"path"
 	"time"
 
 	"github.com/pkg/errors"
@@ -15,15 +10,12 @@ import (
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli/command/ca/provisioner/webhook"
-	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
-	"go.step.sm/crypto/x509util"
 	"go.step.sm/linkedca"
 )
 
@@ -108,53 +100,14 @@ type crudClient interface {
 }
 
 func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
-	caURL, err := flags.ParseCaURLIfExists(cliCtx)
+	unauthAdminClient, err := cautils.NewUnauthenticatedAdminClient(cliCtx)
 	if err != nil {
-		return nil, err
-	}
-	if caURL == "" {
-		return nil, errs.RequiredFlag(cliCtx, "ca-url")
-	}
-	root := cliCtx.String("root")
-	if root == "" {
-		root = pki.GetRootCAPath()
-		if _, err := os.Stat(root); err != nil {
-			return nil, errs.RequiredFlag(cliCtx, "root")
-		}
-	}
-	rootCAs, err := x509util.ReadCertPool(root)
-	if err != nil {
-		return nil, fmt.Errorf("error generating cert pool: %w", err)
+		return nil, fmt.Errorf("error generating admin client: %w", err)
 	}
 
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: false,
-		MinVersion:         tls.VersionTLS12,
-		RootCAs:            rootCAs,
-	}
-	tr := &http.Transport{
-		IdleConnTimeout: 10 * time.Second,
-		TLSClientConfig: tlsConfig,
-	}
-
-	client := &http.Client{Transport: tr}
-	// TODO: Replace this logic with url.JoinPath once go1.18 is no longer supported.
-	u, err := url.Parse(caURL)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing caURL: %w", err)
-	}
-	u.Path = path.Join(u.Path, "admin/admins")
-
-	resp, err := client.Get(u.String())
-	if err != nil {
-		return nil, fmt.Errorf("error checking for remote configuration API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// If the response is a 404 then the Admin Remote Management API is not
-	// enabled. Therefore we default to using the local ca.json.
-	switch resp.StatusCode {
-	case http.StatusNotFound:
+	err = unauthAdminClient.IsEnabled()
+	switch {
+	case errors.Is(err, ca.ErrAdminAPINotImplemented):
 		ui.PrintSelected("CA Configuration", cfgFile)
 		cfg, err := config.LoadConfiguration(cfgFile)
 		if err != nil {
@@ -166,10 +119,10 @@ func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 
 		ui.Println()
 		return newCaConfigClient(context.Background(), cfg, cfgFile)
-	case http.StatusUnauthorized:
+	case errors.Is(err, ca.ErrAdminAPINotAuthorized):
 		return cautils.NewAdminClient(cliCtx)
 	default:
-		return nil, errors.Errorf("unexpected status code from remote configuration API: %d", resp.StatusCode)
+		return nil, err
 	}
 }
 
