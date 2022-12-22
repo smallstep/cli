@@ -70,6 +70,7 @@ type token struct {
 	TokenType    string `json:"token_type"`
 	Err          string `json:"error,omitempty"`
 	ErrDesc      string `json:"error_description,omitempty"`
+	Scope        string `json:"scope,omitempty"`
 }
 
 func init() {
@@ -1075,7 +1076,7 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 		return nil, errors.Wrapf(err, "error serializing JWT")
 	}
 
-	tok := &token{raw, "", "", 3600, "Bearer", "", ""}
+	tok := &token{raw, "", "", 3600, "Bearer", "", "", ""}
 	return tok, nil
 }
 
