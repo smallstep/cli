@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Generation of OTT when signing a CSR with URIs.
+- CA certificates path for SLSE with [smallstep/truststore/#16](https://github.com/smallstep/truststore/pull/16).
 
 ## [v0.23.0] - 2022-11-11
 
