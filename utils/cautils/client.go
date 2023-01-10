@@ -70,6 +70,28 @@ func NewClient(ctx *cli.Context, opts ...ca.ClientOption) (CaClient, error) {
 	return ca.NewClient(caURL, opts...)
 }
 
+// NewUnauthenticatedAdminClient returns a unauthenticated client for the mgmt API of the online CA.
+func NewUnauthenticatedAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient, error) {
+	caURL, err := flags.ParseCaURLIfExists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if caURL == "" {
+		return nil, errs.RequiredFlag(ctx, "ca-url")
+	}
+	root := ctx.String("root")
+	if root == "" {
+		root = pki.GetRootCAPath()
+		if _, err := os.Stat(root); err != nil {
+			return nil, errs.RequiredFlag(ctx, "root")
+		}
+	}
+
+	// Create online client
+	opts = append([]ca.ClientOption{ca.WithRootFile(root)}, opts...)
+	return ca.NewAdminClient(caURL, opts...)
+}
+
 // NewAdminClient returns a client for the mgmt API of the online CA.
 func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient, error) {
 	caURL, err := flags.ParseCaURLIfExists(ctx)

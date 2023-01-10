@@ -3,7 +3,6 @@ package provisioner
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -101,38 +100,29 @@ type crudClient interface {
 }
 
 func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
-	// os.Stat("") probably returns os.ErrNotExist, but this behavior is
-	// undocumented so we'll handle this case separately.
-	if cfgFile == "" {
-		return cautils.NewAdminClient(cliCtx)
+	unauthAdminClient, err := cautils.NewUnauthenticatedAdminClient(cliCtx)
+	if err != nil {
+		return nil, fmt.Errorf("error generating admin client: %w", err)
 	}
 
-	_, err := os.Stat(cfgFile)
+	err = unauthAdminClient.IsEnabled()
 	switch {
-	case errors.Is(err, os.ErrNotExist):
-		return cautils.NewAdminClient(cliCtx)
-	case err == nil:
+	case errors.Is(err, ca.ErrAdminAPINotImplemented):
 		ui.PrintSelected("CA Configuration", cfgFile)
 		cfg, err := config.LoadConfiguration(cfgFile)
 		if err != nil {
 			return nil, fmt.Errorf("error loading configuration: %w", err)
 		}
-
-		if cfg.AuthorityConfig.EnableAdmin {
-			if len(cfg.AuthorityConfig.Provisioners) > 0 {
-				return nil, errors.New("when 'enableAdmin' attribute set to 'true', provisioners list in ca.json must be empty")
-			}
-			return cautils.NewAdminClient(cliCtx)
-		}
-
 		// Assume the ca.json is already valid to avoid enabling all the
 		// features present in step-ca just to modify the provisioners.
 		cfg.SkipValidation = true
 
 		ui.Println()
 		return newCaConfigClient(context.Background(), cfg, cfgFile)
+	case errors.Is(err, ca.ErrAdminAPINotAuthorized):
+		return cautils.NewAdminClient(cliCtx)
 	default:
-		return nil, errs.FileError(err, cfgFile)
+		return nil, err
 	}
 }
 
