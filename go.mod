@@ -16,7 +16,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0
 	github.com/slackhq/nebula v1.6.1
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.23.1-0.20230110231700-627506b5197c
+	github.com/smallstep/certificates v0.23.1
 	github.com/smallstep/certinfo v1.10.0
 	github.com/smallstep/truststore v0.12.1
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
