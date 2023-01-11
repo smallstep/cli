@@ -28,14 +28,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v0.23.1] - 2022-01-10
+
+### Added
+
+- Add scope parameter in `step oauth` (smallstep/cli#816).
+
 ### Changed
 
-- Check for remote configuration API before prompting for admin credentials.
+- Check for remote configuration API before prompting for admin credentials
+  (smallstep/cli809).
 
 ### Fixed
 
-- Generation of OTT when signing a CSR with URIs.
-- CA certificates path for SLSE with [smallstep/truststore/#16](https://github.com/smallstep/truststore/pull/16).
+- Generation of OTT when signing a CSR with URIs (smallstep/cli#799).
+- CA certificates path for SLSE with
+  [smallstep/truststore/#16](https://github.com/smallstep/truststore/pull/16)
+  (smallstep/cli#818).
 
 ## [v0.23.0] - 2022-11-11
 
