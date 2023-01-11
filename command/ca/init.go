@@ -267,7 +267,7 @@ func initAction(ctx *cli.Context) (err error) {
 	case firstSuperAdminSubject != "" && !enableRemoteManagement:
 		// providing the first super admin subject only works with DB-backed provisioners,
 		// thus remote management should be enabled.
-		return errs.IncompatibleFlagWithFlag(ctx, "admin-subject", "remote-management")
+		return errors.New("flag '--admin-subject' is only supported when '--remote-management' is enabled")
 	}
 
 	var password string
