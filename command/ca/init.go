@@ -25,6 +25,7 @@ import (
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/kms"
+	_ "go.step.sm/crypto/kms/pkcs11"
 	"go.step.sm/crypto/pemutil"
 
 	// Enable azurekms
