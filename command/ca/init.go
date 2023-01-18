@@ -430,10 +430,10 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 		if deploymentType == pki.HostedDeployment {
 			ui.Println()
-			ui.Println("Sorry, we can't create hosted authorities from the CLI yet. To create a hosted")
-			ui.Println("authority please visit:\n")
+			ui.Println("To use a Hosted authority, you'll need a Smallstep account. To create one,")
+			ui.Println("visit:\n")
 			ui.Println("    \033[1mhttps://u.step.sm/hosted\033[0m\n")
-			ui.Println("To connect to an existing hosted authority run:\n")
+			ui.Println("To connect to your hosted authority, run:\n")
 			ui.Println("    $ step ca bootstrap --team <name> --authority <authority>")
 			ui.Println()
 			return nil
