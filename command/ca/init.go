@@ -433,7 +433,7 @@ func initAction(ctx *cli.Context) (err error) {
 			ui.Println("To use a Hosted authority, you'll need a Smallstep account. To create one,")
 			ui.Println("visit:\n")
 			ui.Println("    \033[1mhttps://u.step.sm/hosted\033[0m\n")
-			ui.Println("To connect to your hosted authority, run:\n")
+			ui.Println("Then, to connect to your hosted authority, run:\n")
 			ui.Println("    $ step ca bootstrap --team <name> --authority <authority>")
 			ui.Println()
 			return nil
