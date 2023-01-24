@@ -12,7 +12,6 @@ import (
 	"encoding/asn1"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"log"
 	"math/big"
@@ -34,7 +33,6 @@ import (
 
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
-	"go.step.sm/crypto/pemutil"
 )
 
 // TODO(hs): all required?
@@ -48,9 +46,9 @@ type AttestationParameters struct {
 
 type AttestationRequest struct {
 	TPMVersion   attest.TPMVersion     `json:"version"`
-	EKs          []string              `json:"eks"`
-	EKPub        string                `json:"ek"`
-	AK           string                `json:"ak"` // TODO(hs): do we want this in the request?
+	EKPub        []byte                `json:"ek"`
+	EKCerts      [][]byte              `json:"ekCerts"`
+	AKCert       []byte                `json:"akCert"`
 	AttestParams AttestationParameters `json:"params"`
 }
 
@@ -64,7 +62,7 @@ type SecretRequest struct {
 }
 
 type SecretResponse struct {
-	CertificateChain []string `json:"chain"` // TODO(hs): determine type to be consistent with e.g. ACME or other usages of sending chains from the CA to client
+	CertificateChain [][]byte `json:"chain"`
 }
 
 type intelEKCertResponse struct {
@@ -114,9 +112,9 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	if err != nil {
 		log.Fatal(err)
 	}
-	var encodedEKs []string
-	var ekData []byte
-	var ekPub string
+	var ekCerts [][]byte
+	var ekPub []byte
+
 	for _, ek := range eks {
 		ekCert := ek.Certificate
 		if url := ek.CertificateURL; ekCert == nil && url != "" {
@@ -173,28 +171,14 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		}
 
 		if ekCert == nil {
-			log.Println("no EK certificate found") // TODO: work with just a public key?
-
-			// TODO: how to handle the case without a certificate?
-			p, err := pemutil.Serialize(ek.Public)
-			if err != nil {
+			log.Println("no EK certificate found")
+			if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public); err != nil {
 				log.Fatal(err)
 			}
-			ekPub = base64.RawURLEncoding.EncodeToString(pem.EncodeToMemory(p))
 		} else {
-			block, err := pemutil.Serialize(ekCert)
-			if err != nil {
-				log.Fatal(err)
-			}
-			ekData = append(ekData, pem.EncodeToMemory(block)...)
-			encodedEKs = append(encodedEKs, base64.RawURLEncoding.EncodeToString(ekCert.Raw)) // TODO(hs): or use PEM format? While this is not ACME, we might use the methods ACME RFCs use to communicate CSRs/Certs?
+			ekCerts = append(ekCerts, ekCert.Raw)
 		}
 	}
-
-	ui.Printf("EK Certificate:\n")
-	ui.Printf("%s\n", string(ekData))
-
-	encodedAK := base64.RawURLEncoding.EncodeToString(akCert)
 
 	attestParams := ak.AttestationParameters()
 
@@ -204,12 +188,11 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	//  log.Fatal(err)
 	// }
 
-	// TODO: perform challenge/response with the Privacy/Attestation CA
 	// TODO: should the request include nonce? Or token? Or the KeyAuthDigest? Combination/All?
 	// TODO: should this include a CSR?
 	ar := AttestationRequest{
 		TPMVersion: info.Version,
-		EKs:        encodedEKs,
+		EKCerts:    ekCerts,
 		EKPub:      ekPub,
 		AttestParams: AttestationParameters{
 			Public:                  attestParams.Public,
@@ -218,7 +201,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 			CreateAttestation:       attestParams.CreateAttestation,
 			CreateSignature:         attestParams.CreateSignature,
 		},
-		AK: encodedAK,
+		AKCert: akCert,
 	}
 
 	body, err := json.Marshal(ar)
@@ -257,8 +240,6 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		log.Fatal(err)
 	}
 
-	// TODO: ensure that decoding the response results in the right data, e.g. []byte slice that was sent
-	// otherwise we need to do our own encoding (e.g. to string). That might be the best way, anyway.
 	encryptedCredentials := attest.EncryptedCredential{
 		Credential: attResp.Credential,
 		Secret:     attResp.Secret,
@@ -298,11 +279,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	}
 
 	akChain := [][]byte{}
-	for _, c := range secretResp.CertificateChain {
-		certBytes, err := base64.RawURLEncoding.DecodeString(c)
-		if err != nil {
-			log.Fatal(err)
-		}
+	for _, certBytes := range secretResp.CertificateChain {
 		cert, err := x509.ParseCertificate(certBytes)
 		if err != nil {
 			log.Fatal(err)
@@ -356,14 +333,6 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	// TODO(hs): remove this? Or persist it somewhere
 	af.tpmKey = loadedKey
-
-	// TODO: pass the AK as a key instead?
-	// ak.AttestationParameters().CreateSignature
-	// ak.AttestationParameters().CreateAttestation
-	// ak.AttestationParameters().Public
-	// "sig":      params.CreateSignature,
-	// "certInfo": params.CreateAttestation,
-	// "pubArea":  params.Public,
 
 	// Generate the WebAuthn attestation statement.
 	attStmt, err := attestationStatement(certKey, akChain...)
@@ -472,7 +441,7 @@ func attestationStatement(key *attest.Key, akChain ...[]byte) ([]byte, error) {
 	params := key.CertificationParameters()
 
 	obj := &AttestationObject{
-		Format: "tpm", // TODO(hs): `tpm` is the value used in WebAuthn for generic TPM attestation; is that what we want in `step` CLI too?
+		Format: "tpm",
 		AttStatement: map[string]interface{}{
 			"ver":      "2.0",
 			"alg":      int64(-257), // AlgRS256
@@ -490,6 +459,7 @@ func attestationStatement(key *attest.Key, akChain ...[]byte) ([]byte, error) {
 }
 
 func tpmInit(identifier string) (*attest.TPM, *attest.AK, []byte, error) {
+
 	config := &attest.OpenConfig{
 		TPMVersion: attest.TPMVersion20,
 	}
