@@ -136,13 +136,4 @@ require (
 	k8s.io/klog/v2 v2.80.1 // indirect
 )
 
-// replace github.com/smallstep/certificates => ../certificates
-// replace github.com/smallstep/certinfo => ../certinfo
-// replace go.step.sm/linkedca => ../linkedca
-// replace go.step.sm/cli-utils => ../cli-utils
-// replace go.step.sm/crypto => ../crypto
-
-//replace go.step.sm/crypto => github.com/brandonweeks/crypto v0.16.2-0.20220531234114-45e4f06ca16b
-//replace github.com/google/go-attestation => github.com/brandonweeks/go-attestation v0.0.0-20220602235615-164122a1d59b
-
-replace github.com/google/go-attestation => ./../../go-attestation
+replace github.com/google/go-attestation v0.4.4-0.20220404204839-8820d49b18d9 => github.com/smallstep/go-attestation v0.4.4-0.20230113130042-0ad94dd6a52e
