@@ -20,11 +20,10 @@ func PrincipalsCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "principal",
 		Usage: "add or remove principals",
-		UsageText: fmt.Sprintf(`**%s** <principal> [**--remove**]
-[**--provisioner**=<name>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`, commandName),
+		UsageText: fmt.Sprintf(`**%s** <principal> [**--remove**] [**--provisioner**=<name>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** command manages principals in SSH policies
 
 ## EXAMPLES
@@ -52,9 +51,7 @@ $ step ca policy provisioner ssh host allow principal user --provisioner my_ssh_
 Deny principal root in SSH user certificates on provisioner level
 '''
 $ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_user_provisioner
-'''
-
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			principalAction,
@@ -67,9 +64,9 @@ $ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_u
 			},
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

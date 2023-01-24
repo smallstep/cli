@@ -172,6 +172,22 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 		Usage: "The admin <subject> to use for generating admin credentials.",
 	}
 
+	// AdminPasswordFileWithAlias is a cli.Flag used to pass the password to use
+	// when generating admin credentials.
+	AdminPasswordFile = cli.StringFlag{
+		Name: "admin-password-file,password-file",
+		Usage: `The path to the <file> containing the password to decrypt the one-time token
+generating key.`,
+	}
+
+	// AdminPasswordFileNoAlias is a cli.Flag used to pass the password to use
+	// when generating admin credentials.
+	AdminPasswordFileNoAlias = cli.StringFlag{
+		Name: "admin-password-file",
+		Usage: `The path to the <file> containing the password to decrypt the one-time token
+generating key.`,
+	}
+
 	// ProvisionerPasswordFile is a cli.Flag used to pass the password file to
 	// decrypt the generating key.
 	ProvisionerPasswordFile = cli.StringFlag{

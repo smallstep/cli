@@ -22,11 +22,12 @@ func RemoveCommand(ctx context.Context) cli.Command {
 		Usage: "remove certificate issuance policy",
 		UsageText: fmt.Sprintf(`**%s** 
 [**--provisioner**=<name>] [**--eab-key-id**=<eab-ey-id>] [**--eab-key-reference**=<eab-key-reference>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`, commandName),
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`, commandName),
 		Description: fmt.Sprintf(`**%s** removes a certificate issuance policy.
+
+## EXAMPLES
 
 Remove the authority certificate issuance policy
 '''
@@ -46,8 +47,7 @@ $ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-referen
 Remove an ACME EAB certificate issuance policy by EAB Key ID
 '''
 $ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-id "lUOTGwvFQADjk8nxsVufbhyTOwrFmvO2"
-'''
-`, commandName),
+'''`, commandName),
 		Action: command.InjectContext(
 			ctx,
 			removeAction,
@@ -58,9 +58,9 @@ $ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-id "lUO
 			flags.EABReference,
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

@@ -33,10 +33,9 @@ func allowWildcardsCommand(ctx context.Context) cli.Command {
 		Usage: "allow wildcard names in X.509 certificate issuance policies",
 		UsageText: `**step ca policy x509 wildcards allow**
 [**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca policy x509 wildcards allow** allow wildcard names in X.509 policy
 
 ## EXAMPLES	
@@ -65,9 +64,9 @@ $ step ca policy acme x509 wildcards allow --provisioner my_acme_provisioner --e
 			flags.EABReference,
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
@@ -81,10 +80,9 @@ func denyWildcardsCommand(ctx context.Context) cli.Command {
 		Usage: "deny wildcard names in X.509 certificate issuance policies",
 		UsageText: `**step ca policy x509 wildcards deny**
 [**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-provisioner**=<string>] [**--admin-subject**=<string>]
-[**--password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
-[**--context**=<name>]`,
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca policy x509 wildcards deny** deny wildcard names in X.509 policy
 
 ## EXAMPLES	
@@ -113,9 +111,9 @@ $ step ca policy acme x509 wildcards deny --provisioner my_acme_provisioner --ea
 			flags.EABReference,
 			flags.AdminCert,
 			flags.AdminKey,
-			flags.AdminProvisioner,
 			flags.AdminSubject,
-			flags.PasswordFile,
+			flags.AdminProvisioner,
+			flags.AdminPasswordFile,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/x509"
+	stderrors "errors"
 	"fmt"
 	"io"
 	"net"
@@ -267,7 +268,7 @@ func initAction(ctx *cli.Context) (err error) {
 	case firstSuperAdminSubject != "" && !enableRemoteManagement:
 		// providing the first super admin subject only works with DB-backed provisioners,
 		// thus remote management should be enabled.
-		return errs.IncompatibleFlagWithFlag(ctx, "admin-subject", "remote-management")
+		return errors.New("flag '--admin-subject' is only supported when '--remote-management' is enabled")
 	}
 
 	var password string
@@ -429,10 +430,10 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 		if deploymentType == pki.HostedDeployment {
 			ui.Println()
-			ui.Println("Sorry, we can't create hosted authorities from the CLI yet. To create a hosted")
-			ui.Println("authority please visit:\n")
+			ui.Println("To use a Hosted authority, you'll need a Smallstep account. To create one,")
+			ui.Println("visit:\n")
 			ui.Println("    \033[1mhttps://u.step.sm/hosted\033[0m\n")
-			ui.Println("To connect to an existing hosted authority run:\n")
+			ui.Println("Then, to connect to your hosted authority, run:\n")
 			ui.Println("    $ step ca bootstrap --team <name> --authority <authority>")
 			ui.Println()
 			return nil
@@ -823,8 +824,11 @@ func processDNSValue(dnsValue string) ([]string, error) {
 	)
 	dnsValue = strings.ReplaceAll(dnsValue, " ", ",")
 	parts := strings.Split(dnsValue, ",")
+	if allEmpty(parts) {
+		return nil, stderrors.New("dns must not be empty")
+	}
 	for _, name := range parts {
-		if name == "" {
+		if name == "" { // skip empty name
 			continue
 		}
 		if err := dnsValidator(name); err != nil {
@@ -844,4 +848,15 @@ func normalize(name string) string {
 		}
 	}
 	return name
+}
+
+// allEmpty loops through all strings in the slice and returns if
+// all are empty (length 0).
+func allEmpty(parts []string) bool {
+	for _, p := range parts {
+		if p != "" {
+			return false
+		}
+	}
+	return true
 }
