@@ -22,6 +22,8 @@ import (
 	"strings"
 	"time"
 
+	stderrors "errors"
+
 	"github.com/fxamacker/cbor/v2"
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/acme"
@@ -494,7 +496,76 @@ func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	if err != nil {
 		return fmt.Errorf("error marshaling payload: %w", err)
 	}
-	return ac.ValidateWithPayload(ch.URL, payload)
+
+	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
+	ui.Printf(" .") // Indicates passage of time.
+
+	if err := ac.ValidateWithPayload(ch.URL, payload); err != nil {
+		ui.Printf(" Error!\n\n")
+		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
+	}
+
+	var (
+		isValid = false
+		vch     *acme.Challenge
+	)
+
+	for attempts := 0; attempts < 10; attempts++ {
+		vch, err = ac.GetChallenge(ch.URL) // TODO(hs): GetChallenge should return an ACME GetChallenge client response type; not core acme.Challenge type (for safety)
+		if err != nil {
+			ui.Printf(" Error!\n\n")
+			return errors.Wrapf(err, "error retrieving ACME Challenge at %s", ch.URL)
+		}
+		// break early if challenge validation failed. Due to nature of the `device-attest-01`
+		// challenge validation, this will (currently) happen immediately, as the validation is
+		// performed synchronously by the CA when the request for `ac.ValidateWithPayload` is
+		// sent. In the (near) future we might change the way the validation is performed, so
+		// keeping the retry logic intact for now.
+		if vch.Status == "invalid" {
+			break
+		}
+		if vch.Status == "valid" {
+			isValid = true
+			break
+		}
+		ui.Printf(".")
+		time.Sleep(2 * time.Second) // NOTE: a bit shorter than the other challenge types
+	}
+	if !isValid {
+		ui.Printf(" Error!\n\n")
+		return errors.New(extractDetailedErrorMessageFromChallenge(vch))
+	}
+
+	ui.Printf(" done!\n")
+	return nil
+}
+
+func extractDetailedErrorMessageFromChallenge(vch *acme.Challenge) string {
+	switch {
+	case vch == nil:
+		// shouldn't happen in normal flow
+		panic(stderrors.New("no ACME challenge to extract potential error from"))
+	case vch.Error == nil:
+		// fallback to original error message
+		return fmt.Sprintf("Unable to validate challenge: %+v", vch)
+	case len(vch.Error.Subproblems) == 1:
+		return fmt.Sprintf("Unable to validate challenge: %s", vch.Error.Subproblems[0].Detail)
+	case len(vch.Error.Subproblems) > 1:
+		details := make([]string, len(vch.Error.Subproblems))
+		for i, s := range vch.Error.Subproblems {
+			if s.Detail == "" {
+				details[i] = fmt.Sprintf("%+v", s)
+			} else {
+				details[i] = s.Detail
+			}
+		}
+		return fmt.Sprintf("Unable to validate challenge: %s", strings.Join(details, "; "))
+	case vch.Error.Detail == "":
+		// fallback to original error message
+		return fmt.Sprintf("Unable to validate challenge: %+v", vch)
+	default:
+		return fmt.Sprintf("Unable to validate challenge: %s", vch.Error.Detail)
+	}
 }
 
 type acmeFlowOp func(*acmeFlow) error
