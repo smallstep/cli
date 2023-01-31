@@ -531,7 +531,7 @@ func getChallengeStatus(ac *ca.ACMEClient, ch *acme.Challenge, durationBetweenAt
 			break
 		}
 		ui.Printf(".")
-		time.Sleep(durationBetweenAttempts) // NOTE: a bit shorter than the HTTP challenge type
+		time.Sleep(durationBetweenAttempts)
 	}
 	if !isValid {
 		return errors.New(extractDetailedErrorMessageFromChallenge(vch))
