@@ -523,7 +523,7 @@ func initAction(ctx *cli.Context) (err error) {
 	if pkiOnly {
 		pkiOpts = append(pkiOpts, pki.WithPKIOnly())
 	} else {
-		ui.Println("What DNS names and IP addresses will clients use to reach your CA?",
+		ui.Println("What DNS names or IP addresses will clients use to reach your CA?",
 			ui.WithSliceValue(ctx.StringSlice("dns")))
 		dnsValue, err := ui.Prompt("(e.g. ca.example.com[,10.1.2.3,etc.])",
 			ui.WithSliceValue(ctx.StringSlice("dns")))
