@@ -153,11 +153,6 @@ $ step ca certificate foo.internal foo.crt foo.key \
 that should be authorized. Use the '--san' flag multiple times to configure
 multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			},
-			cli.StringSliceFlag{
-				Name: "permanent-identifier",
-				Usage: `Add a 'permanent-identifier' to the certificate request
-Use the '--permanent-identifier' flag multiple times to set more than one.`,
-			},
 			cli.StringFlag{
 				Name:  "attestation-ca-url",
 				Usage: "The base url of the attestation CA to use",

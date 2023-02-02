@@ -13,18 +13,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/big"
 	"net/http"
-	neturl "net/url"
-	"path"
-	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/google/go-attestation/attest"
 	x509ext "github.com/google/go-attestation/x509"
-	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certificates/acme"
@@ -38,8 +33,7 @@ import (
 	"go.step.sm/crypto/jose"
 )
 
-// TODO(hs): all required?
-type AttestationParameters struct {
+type attestationParameters struct {
 	Public                  []byte `json:"public"`
 	UseTCSDActivationFormat bool   `json:"useTCSDActivationFormat"`
 	CreateData              []byte `json:"createData"`
@@ -47,33 +41,25 @@ type AttestationParameters struct {
 	CreateSignature         []byte `json:"createSignature"`
 }
 
-type AttestationRequest struct {
+type attestationRequest struct {
 	TPMVersion   attest.TPMVersion     `json:"version"`
 	EKPub        []byte                `json:"ek"`
 	EKCerts      [][]byte              `json:"ekCerts"`
 	AKCert       []byte                `json:"akCert"`
-	AttestParams AttestationParameters `json:"params"`
+	AttestParams attestationParameters `json:"params"`
 }
 
-type AttestationResponse struct {
+type attestationResponse struct {
 	Credential []byte `json:"credential"`
 	Secret     []byte `json:"secret"` // encrypted secret
 }
 
-type SecretRequest struct {
+type secretRequest struct {
 	Secret []byte `json:"secret"` // decrypted secret
 }
 
-type SecretResponse struct {
+type secretResponse struct {
 	CertificateChain [][]byte `json:"chain"`
-}
-
-type intelEKCertResponse struct {
-	Pubhash     string `json:"pubhash"`
-	Certificate string `json:"certificate"`
-}
-
-type tpmKey interface {
 }
 
 func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
@@ -83,10 +69,10 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	// hostname. Or is it more like a device can request a hostname and the attestation can be used to verify that the device is
 	// actually what it says it's saying and allowed to request that specific hostname?
 
-	// 1. Prepare the mode to be ran
-	// 2. Validate the challenge
-	// 3. Get the challenge?
-	// 4. Perform cleanup
+	tpmAttestationCABaseURL := ctx.String("attestation-ca-url")
+	if tpmAttestationCABaseURL == "" {
+		return fmt.Errorf("flag %q cannot be empty", "--attestation-ca-url")
+	}
 
 	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
 	ui.Printf(" .") // Indicates passage of time.
@@ -96,88 +82,34 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	// the TPM certification data.
 	tpm, ak, akCert, err := tpmInit(identifier)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error initializing TPM: %w", err)
 	}
 
 	info, err := tpm.Info(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error retrieving TPM info: %w", err)
 	}
 
-	// TODO(hs): remove this output
+	// TODO(hs): remove this from the standard output, unless debugging?
 	ui.Printf("\nTPM INFO:")
 	ui.Printf("\nversion: %d", info.Version)
 	ui.Printf("\ninterface: %d", info.Interface)
-	ui.Printf("\nmanufacturer: %s", info.Manufacturer)
+	ui.Printf("\nmanufacturer: %d", info.Manufacturer)
 	ui.Printf("\nvendor info: %s", info.VendorInfo)
 	ui.Printf("\nfirmware version: %d.%d\n", info.FirmwareVersionMajor, info.FirmwareVersionMinor)
 
 	eks, err := tpm.GetEKs(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error retrieving EKs from TPM: %w", err)
 	}
 	var ekCerts [][]byte
 	var ekPub []byte
 
 	for _, ek := range eks {
 		ekCert := ek.Certificate
-		if url := ek.CertificateURL; ekCert == nil && url != "" {
-			var u *neturl.URL
-			u, err = neturl.Parse(url)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// Ensure the URL is in the right format; for Intel TPMs, the path
-			// parameter contains the base64 encoding of the hash of the public key,
-			// potentially containing padding characters, which will results in a 403,
-			// if not transformed to `%3D`. The below has currently only be tested for
-			// Intel TPMs, which connect to https://ekop.intel.com/ekcertservice. It may
-			// be different for other URLs. Ideally, I think this should be fixed in
-			// the underlying TPM library to contain the right URL? The `intelEKURL` already
-			// seems to do URLEncoding, though. Why do we still get an `=` then?
-			s := u.String()
-			h := path.Base(s)
-			h = strings.ReplaceAll(h, "=", "%3D") // TODO(hs): no better function in Go to do this in paths? https://github.com/golang/go/issues/27559;
-			s = s[:strings.LastIndex(s, "/")+1] + h
-
-			u, err = neturl.Parse(s)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Println("ek url:", u)
-			var r *http.Response
-			r, err = http.Get(u.String())
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer r.Body.Close()
-
-			if r.StatusCode != http.StatusOK {
-				log.Fatalf("http get resulted in %d", r.StatusCode)
-			}
-
-			var c intelEKCertResponse
-			if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
-				log.Fatal(err)
-			}
-
-			cb, err := base64.URLEncoding.DecodeString(c.Certificate)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			ekCert, err = attest.ParseEKCertificate(cb)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
 		if ekCert == nil {
-			log.Println("no EK certificate found")
 			if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public); err != nil {
-				log.Fatal(err)
+				return fmt.Errorf("error marshaling public key: %w", err)
 			}
 		} else {
 			ekCerts = append(ekCerts, ekCert.Raw)
@@ -186,16 +118,16 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	attestParams, err := ak.AttestationParameters(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error getting AK attestation parameters: %w", err)
 	}
 
 	// TODO: should the request include nonce? Or token? Or the KeyAuthDigest? Combination/All?
 	// TODO: should this include a CSR?
-	ar := AttestationRequest{
+	ar := attestationRequest{
 		TPMVersion: attest.TPMVersion(info.Version),
 		EKCerts:    ekCerts,
 		EKPub:      ekPub,
-		AttestParams: AttestationParameters{
+		AttestParams: attestationParameters{
 			Public:                  attestParams.Public,
 			UseTCSDActivationFormat: attestParams.UseTCSDActivationFormat,
 			CreateData:              attestParams.CreateData,
@@ -207,18 +139,13 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	body, err := json.Marshal(ar)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	tpmAttestationCABaseURL := ctx.String("attestation-ca-url")
-	if tpmAttestationCABaseURL == "" { // TODO(hs): move this check earlier in the process?
-		log.Fatal(errors.New("--attestation-ca-url must be provided"))
+		return fmt.Errorf("error marshaling attestation request: %w", err)
 	}
 
 	attestURL := tpmAttestationCABaseURL + "/attest"
 	req, err := http.NewRequest(http.MethodPost, attestURL, bytes.NewReader(body))
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error creating POST http request for %q: %w", attestURL, err)
 	}
 
 	// TODO(hs): implement a client, similar to the caClient and acmeClient, that use sane defaults and
@@ -233,12 +160,12 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error performing attestation request with attestation CA %q: %w", attestURL, err)
 	}
 
-	var attResp AttestationResponse
+	var attResp attestationResponse
 	if err := json.NewDecoder(resp.Body).Decode(&attResp); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error decoding attestation response: %w", err)
 	}
 
 	encryptedCredentials := smalltpm.EncryptedCredential{
@@ -246,56 +173,57 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		Secret:     attResp.Secret,
 	}
 
-	// TODO: load the AK, if it was persisted outside of the TPM. In the POC we have it in memory, so no need to do that.
-
 	// activate the credential
 	secret, err := ak.ActivateCredential(context.Background(), encryptedCredentials)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error activating credential: %w", err)
 	}
 
-	sr := SecretRequest{
+	sr := secretRequest{
 		Secret: secret,
 	}
 
 	body, err = json.Marshal(sr)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error marshaling secret request: %w", err)
 	}
 
 	secretURL := tpmAttestationCABaseURL + "/secret"
 	req, err = http.NewRequest(http.MethodPost, secretURL, bytes.NewReader(body))
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error creating POST http request for %q: %w", secretURL, err)
 	}
 
 	resp, err = client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error performing secret request with attestation CA %q: %w", secretURL, err)
 	}
 
-	var secretResp SecretResponse
+	var secretResp secretResponse
 	if err := json.NewDecoder(resp.Body).Decode(&secretResp); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error decoding secret response: %w", err)
 	}
 
 	akChain := [][]byte{}
 	for _, certBytes := range secretResp.CertificateChain {
 		cert, err := x509.ParseCertificate(certBytes)
 		if err != nil {
-			log.Fatal(err)
+			return fmt.Errorf("error parsing certificate: %w", err)
 		}
+
+		// TODO(hs): don't output this by default (similar to TPM info)
 		info, err := certinfo.CertificateText(cert)
 		if err != nil {
-			log.Fatal(err)
+			return fmt.Errorf("error getting certificate text: %w", err)
 		}
 		fmt.Println(info)
+
 		akChain = append(akChain, certBytes)
 	}
 
 	data, err := keyAuthDigest(ac.Key, ch.Token)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error creating key authorization: %w", err)
 	}
 
 	config := smalltpm.AttestKeyConfig{
@@ -309,22 +237,22 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	}
 	attestedKey, err := tpm.AttestKey(context.Background(), identifier, "", config)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error creating new key attested by AK %q", identifier)
 	}
 
 	signer, err := attestedKey.Signer(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error getting signer for key %q", attestedKey.Name)
 	}
 
 	// passing the TPM key to the ACME flow, so that it can be used as a signer
-	// TODO(hs): this is a bit of a hack that needs refactoring
+	// TODO(hs): this is a bit of a hack that needs refactoring; should ideally behave similar to `step` format
 	af.tpmSigner = signer
 
 	// Generate the WebAuthn attestation statement.
 	attStmt, err := attestationStatement(tpm, attestedKey, akChain...)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error creating attestation statement: %w", err)
 	}
 
 	challengeBody := struct {
@@ -335,12 +263,12 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	payload, err := json.Marshal(challengeBody)
 	if err != nil {
-		return errors.Wrapf(err, "error marshaling challenge body")
+		return fmt.Errorf("error marshaling challenge body: %w", err)
 	}
 
 	if err := ac.ValidateWithPayload(ch.URL, payload); err != nil {
 		ui.Printf(" Error!\n\n")
-		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
+		return fmt.Errorf("error validating ACME Challenge at %q: %w", ch.URL, err)
 	}
 
 	durationBetweenAttempts := 2 * time.Second
@@ -354,20 +282,15 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	return nil
 }
 
-type AttestationObject struct {
-	Format       string                 `json:"fmt"`
-	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
-}
-
 func attestationStatement(t *smalltpm.TPM, key smalltpm.Key, akChain ...[]byte) ([]byte, error) {
 
 	// TODO: refactor so that key has the parameters itself?
-	params, err := t.GetKeyCertificationParameters(context.Background(), key.Name)
+	params, err := key.CertificationParameters(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	obj := &AttestationObject{
+	obj := &attestationObject{
 		Format: "tpm",
 		AttStatement: map[string]interface{}{
 			"ver":      "2.0",
@@ -392,7 +315,7 @@ func tpmInit(identifier string) (*smalltpm.TPM, *smalltpm.AK, []byte, error) {
 		return nil, nil, nil, err
 	}
 
-	ak, err := t.CreateAK(context.Background(), identifier)
+	ak, err := t.CreateAK(context.Background(), identifier) // TODO(hs): AK might already exist
 	if err != nil {
 		return nil, nil, nil, err
 	}
