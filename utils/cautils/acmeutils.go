@@ -24,6 +24,14 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
+	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
+
 	"github.com/smallstep/certificates/acme"
 	acmeAPI "github.com/smallstep/certificates/acme/api"
 	"github.com/smallstep/certificates/ca"
@@ -31,12 +39,6 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
-	"go.step.sm/crypto/jose"
-	"go.step.sm/crypto/keyutil"
-	"go.step.sm/crypto/pemutil"
 )
 
 func startHTTPServer(addr, token, keyAuth string) *http.Server {
@@ -170,34 +172,20 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 		mode.Cleanup()
 		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
 	}
-	var (
-		isValid = false
-		vch     *acme.Challenge
-		err     error
-	)
+
 	time.Sleep(time.Second) // brief sleep to allow server time to validate challenge.
-	for attempts := 0; attempts < 10; attempts++ {
-		vch, err = ac.GetChallenge(ch.URL)
-		if err != nil {
-			ui.Printf(" Error!\n\n")
-			mode.Cleanup()
-			return errors.Wrapf(err, "error retrieving ACME Challenge at %s", ch.URL)
-		}
-		if vch.Status == "valid" {
-			isValid = true
-			break
-		}
-		ui.Printf(".")
-		time.Sleep(5 * time.Second)
-	}
-	if !isValid {
+
+	durationBetweenAttempts := 5 * time.Second
+	if err := getChallengeStatus(ac, ch, durationBetweenAttempts); err != nil {
 		ui.Printf(" Error!\n\n")
 		mode.Cleanup()
-		return errors.Errorf("Unable to validate challenge: %+v", vch)
+		return err
 	}
+
 	if err := mode.Cleanup(); err != nil {
 		return err
 	}
+
 	ui.Printf(" done!\n")
 	return nil
 }
@@ -408,6 +396,7 @@ type attestationObject struct {
 	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
 }
 
+// doDeviceAttestation performs `device-attest-01` challenge validation.
 func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 
 	// TODO(hs): determine how to choose this case; transparently? Integrate TPM with the KMS plugin?
@@ -503,7 +492,94 @@ func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	if err != nil {
 		return fmt.Errorf("error marshaling payload: %w", err)
 	}
-	return ac.ValidateWithPayload(ch.URL, payload)
+
+	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
+	ui.Printf(" .") // Indicates passage of time.
+
+	if err := ac.ValidateWithPayload(ch.URL, payload); err != nil {
+		ui.Printf(" Error!\n\n")
+		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
+	}
+
+	durationBetweenAttempts := 2 * time.Second
+	if err := getChallengeStatus(ac, ch, durationBetweenAttempts); err != nil {
+		ui.Printf(" Error!\n\n")
+		return err
+	}
+
+	ui.Printf(" done!\n")
+	return nil
+}
+
+// getChallengeStatus retrieves the ACME Challenge status from the CA. It
+// will retry this 10 times if the status is not `invalid` or `valid`. This
+// is the case, for example, when the CA hasn't been able to connect to the
+// HTTP endpoint for some reason.
+func getChallengeStatus(ac *ca.ACMEClient, ch *acme.Challenge, durationBetweenAttempts time.Duration) error {
+	var (
+		isValid = false
+		vch     *acme.Challenge
+		err     error
+	)
+	for attempts := 0; attempts < 10; attempts++ {
+		vch, err = ac.GetChallenge(ch.URL) // TODO(hs): GetChallenge should return an ACME GetChallenge client response type; not core acme.Challenge type (for safety)
+		if err != nil {
+			return errors.Wrapf(err, "error retrieving ACME Challenge at %s", ch.URL)
+		}
+		// break early if challenge validation failed. Due to nature of the `device-attest-01`
+		// challenge validation, this will (currently) happen immediately, as the validation is
+		// performed synchronously by the CA when the request for `ac.ValidateWithPayload` is
+		// sent. For `http-01`, this is the case when the key authorization doesn't match.
+		// In the (near) future we might change the way the validation is performed, so keeping
+		// the retry logic intact for now.
+		if vch.Status == "invalid" {
+			break
+		}
+		if vch.Status == "valid" {
+			isValid = true
+			break
+		}
+		ui.Printf(".")
+		time.Sleep(durationBetweenAttempts)
+	}
+	if !isValid {
+		return errors.New(extractDetailedErrorMessageFromChallenge(vch))
+	}
+	return nil
+}
+
+// extractDetailedErrorMessageFromChallenge extracts error details from an
+// ACME Challenge if the server captured an error when validating it. When
+// the ACME Error has one or more Subproblems, the details will be extracted
+// from those. Otherwise, the main Error detail will be used. In case the
+// server did not return an Error for the Challenge, a textual representation
+// of the Challenge is printed as fallback.
+func extractDetailedErrorMessageFromChallenge(vch *acme.Challenge) string {
+	switch {
+	case vch.Error == nil:
+		// fallback to original error message
+		return fmt.Sprintf("Unable to validate challenge: %+v", vch)
+	case len(vch.Error.Subproblems) == 1:
+		if detail := vch.Error.Subproblems[0].Detail; detail != "" {
+			return fmt.Sprintf("Unable to validate challenge: %s", detail)
+		}
+		fallthrough // subproblem detail empty; fallthrough to the error
+	case len(vch.Error.Subproblems) > 1:
+		details := make([]string, len(vch.Error.Subproblems))
+		for i, s := range vch.Error.Subproblems {
+			if s.Detail == "" {
+				details[i] = fmt.Sprintf("%+v", s)
+			} else {
+				details[i] = s.Detail
+			}
+		}
+		return fmt.Sprintf("Unable to validate challenge: %s", strings.Join(details, "; "))
+	case vch.Error.Detail == "":
+		// fallback to original error message
+		return fmt.Sprintf("Unable to validate challenge: %+v", vch)
+	default:
+		return fmt.Sprintf("Unable to validate challenge: %s", vch.Error.Detail)
+	}
 }
 
 type acmeFlowOp func(*acmeFlow) error

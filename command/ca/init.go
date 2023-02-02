@@ -523,9 +523,9 @@ func initAction(ctx *cli.Context) (err error) {
 	if pkiOnly {
 		pkiOpts = append(pkiOpts, pki.WithPKIOnly())
 	} else {
-		ui.Println("What DNS names or IP addresses would you like to add to your new CA?",
+		ui.Println("What DNS names or IP addresses will clients use to reach your CA?",
 			ui.WithSliceValue(ctx.StringSlice("dns")))
-		dnsValue, err := ui.Prompt("(e.g. ca.smallstep.com[,1.1.1.1,etc.])",
+		dnsValue, err := ui.Prompt("(e.g. ca.example.com[,10.1.2.3,etc.])",
 			ui.WithSliceValue(ctx.StringSlice("dns")))
 		if err != nil {
 			return err
@@ -566,7 +566,7 @@ func initAction(ctx *cli.Context) (err error) {
 		if helm {
 			ui.Println("What IP and port will your new CA bind to (it should match service.targetPort)?", ui.WithValue(ctx.String("address")))
 		} else {
-			ui.Println("What IP and port will your new CA bind to?", ui.WithValue(ctx.String("address")))
+			ui.Println("What IP and port will your new CA bind to? (:443 will bind to 0.0.0.0:443)", ui.WithValue(ctx.String("address")))
 		}
 		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:443)",
 			ui.WithValidateFunc(ui.Address()), ui.WithValue(ctx.String("address")))

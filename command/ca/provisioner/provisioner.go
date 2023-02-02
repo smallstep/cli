@@ -3,6 +3,7 @@ package provisioner
 import (
 	"context"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/pkg/errors"
@@ -105,9 +106,11 @@ func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 		return nil, fmt.Errorf("error generating admin client: %w", err)
 	}
 
+	var netErr *net.OpError
+
 	err = unauthAdminClient.IsEnabled()
 	switch {
-	case errors.Is(err, ca.ErrAdminAPINotImplemented):
+	case errors.As(err, &netErr) || errors.Is(err, ca.ErrAdminAPINotImplemented):
 		ui.PrintSelected("CA Configuration", cfgFile)
 		cfg, err := config.LoadConfiguration(cfgFile)
 		if err != nil {
