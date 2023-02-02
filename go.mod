@@ -19,6 +19,7 @@ require (
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.23.1
 	github.com/smallstep/certinfo v1.10.0
+	github.com/smallstep/step-tpm-plugin v0.0.0-00010101000000-000000000000
 	github.com/smallstep/truststore v0.12.1
 	github.com/smallstep/zcrypto v0.0.0-20210924233136-66c2600f6e71
 	github.com/smallstep/zlint v0.0.0-20180727184541-d84eaafe274f
@@ -60,7 +61,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf // indirect
+	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -85,6 +86,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/btree v1.1.2 // indirect
 	github.com/google/certificate-transparency-go v1.1.4 // indirect
 	github.com/google/go-tpm v0.3.3 // indirect
 	github.com/google/go-tspi v0.2.1-0.20190423175329-115dea689aad // indirect
@@ -111,10 +113,12 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/newrelic/go-agent/v3 v3.20.2 // indirect
+	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/smallstep/nosql v0.5.0 // indirect
@@ -137,3 +141,5 @@ require (
 )
 
 replace github.com/google/go-attestation v0.4.4-0.20220404204839-8820d49b18d9 => github.com/smallstep/go-attestation v0.4.4-0.20230113130042-0ad94dd6a52e
+
+replace github.com/smallstep/step-tpm-plugin => ./../../step-tpm-plugin

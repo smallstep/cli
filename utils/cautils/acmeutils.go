@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
-	"github.com/google/go-attestation/attest"
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/acme"
 	acmeAPI "github.com/smallstep/certificates/acme/api"
@@ -544,7 +543,8 @@ type acmeFlow struct {
 	subject         string
 	sans            []string
 	acmeDir         string
-	tpmKey          *attest.Key
+	//tpmKey          *attest.Key
+	tpmSigner crypto.Signer
 }
 
 func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
@@ -709,14 +709,8 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 				DNSNames:    dnsNames,
 				IPAddresses: ips,
 			}
-		} else if af.tpmKey != nil {
-			s, err := af.tpmKey.Private(af.tpmKey.Public())
-			if st, ok := s.(crypto.Signer); ok {
-				signer = st
-			}
-			if signer == nil {
-				return nil, errors.Wrap(err, "error getting TPM private key as crypto.Signer")
-			}
+		} else if af.tpmSigner != nil {
+			signer = af.tpmSigner
 			template = &x509.CertificateRequest{
 				Subject: pkix.Name{
 					CommonName: af.subject,

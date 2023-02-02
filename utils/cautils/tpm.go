@@ -2,6 +2,7 @@ package cautils
 
 import (
 	"bytes"
+	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -9,7 +10,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/asn1"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -30,6 +30,9 @@ import (
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certinfo"
+
+	smalltpm "github.com/smallstep/step-tpm-plugin/pkg/tpm"
+	smalltpmstorage "github.com/smallstep/step-tpm-plugin/pkg/tpm/storage"
 
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
@@ -95,7 +98,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		log.Fatal(err)
 	}
 
-	info, err := tpm.Info()
+	info, err := tpm.Info(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,7 +111,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	ui.Printf("\nvendor info: %s", info.VendorInfo)
 	ui.Printf("\nfirmware version: %d.%d\n", info.FirmwareVersionMajor, info.FirmwareVersionMinor)
 
-	eks, err := tpm.EKs()
+	eks, err := tpm.GetEKs(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -180,18 +183,25 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		}
 	}
 
-	attestParams := ak.AttestationParameters()
+	// TODO: refactor this into using the smalltpm package
+	atpm, err := attest.OpenTPM(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer atpm.Close()
 
-	// TODO: to be loaded later; maybe persist them to file too?
-	// akBytes, err := ak.Marshal()
-	// if err != nil {
-	//  log.Fatal(err)
-	// }
+	aak, err := atpm.LoadAK(ak.Data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer aak.Close(atpm)
+
+	attestParams := aak.AttestationParameters()
 
 	// TODO: should the request include nonce? Or token? Or the KeyAuthDigest? Combination/All?
 	// TODO: should this include a CSR?
 	ar := AttestationRequest{
-		TPMVersion: info.Version,
+		TPMVersion: attest.TPMVersion(info.Version),
 		EKCerts:    ekCerts,
 		EKPub:      ekPub,
 		AttestParams: AttestationParameters{
@@ -247,8 +257,8 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	// TODO: load the AK, if it was persisted outside of the TPM. In the POC we have it in memory, so no need to do that.
 
-	// activate the credential
-	secret, err := ak.ActivateCredential(tpm, encryptedCredentials)
+	// activate the credential // TODO: refactor this into using the library function
+	secret, err := aak.ActivateCredential(atpm, encryptedCredentials)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -297,45 +307,31 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		log.Fatal(err)
 	}
 
-	config := &attest.KeyConfig{
+	config := smalltpm.AttestKeyConfig{
 		//Algorithm: attest.ECDSA,
 		//Size:      256,
 		// TODO(hs): I had to change this to RSA to make the AK key and the cert key type check out with each other. Check if this is indeed required.
 		// TODO(hs): with attest.RSA, I get an error when decoding the public key on server side:  panic: parsing public key: missing rsa signature scheme. Not sure where that has to be added ATM.
-		Algorithm:      attest.RSA,
+		Algorithm:      "RSA",
 		Size:           2048, // TODO(hs): 4096 didn't work on my RPi TPM. Look into why that's the case. Returned a TPM error; RCValue = 0x04;  value is out of range or is not correct for the context
 		QualifyingData: data,
 	}
-	certKey, err := tpm.NewKey(ak, config)
+	attestedKey, err := tpm.AttestKey(context.Background(), identifier, "", config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	certKey, err := tpm.GetSigner(context.Background(), attestedKey.Name)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// passing the TPM key to the ACME flow, so that it can be used as a signer
 	// TODO(hs): this is a bit of a hack that needs refactoring
-	af.tpmKey = certKey
-
-	keyBytes, err := certKey.Marshal()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(keyBytes)
-	fmt.Println(string(keyBytes))
-
-	loadedKey, err := tpm.LoadKey(keyBytes)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(loadedKey)
-	fmt.Println(certKey)
-
-	// TODO(hs): remove this? Or persist it somewhere
-	af.tpmKey = loadedKey
+	af.tpmSigner = certKey
 
 	// Generate the WebAuthn attestation statement.
-	attStmt, err := attestationStatement(certKey, akChain...)
+	attStmt, err := attestationStatement(tpm, attestedKey, akChain...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -389,56 +385,18 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	return nil
 }
 
-func akCert(ak *attest.AK, identifier string) ([]byte, error) {
-	// TODO(hs): took this from example; shouldn't this be generated inside the TPM?
-	akRootKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-	// akRootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	// if err != nil {
-	//  return nil, err
-	// }
-	akRootTemplate := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
-	}
-	permID := x509ext.PermanentIdentifier{
-		IdentifierValue: identifier,
-		Assigner:        asn1.ObjectIdentifier{0, 1, 2, 3, 4},
-	}
-	san := &x509ext.SubjectAltName{
-		PermanentIdentifiers: []x509ext.PermanentIdentifier{
-			permID,
-		},
-	}
-	ext, err := x509ext.MarshalSubjectAltName(san)
-	if err != nil {
-		return nil, err
-	}
-	akTemplate := &x509.Certificate{
-		SerialNumber:    big.NewInt(2),
-		ExtraExtensions: []pkix.Extension{ext},
-	}
-	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, ak.AttestationParameters().Public)
-	if err != nil {
-		return nil, err
-	}
-	// TODO(hs): use x509util.CreateCertificate?
-	akCert, err := x509.CreateCertificate(rand.Reader, akTemplate, akRootTemplate, akPub.Public, akRootKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return akCert, nil
-}
-
 type AttestationObject struct {
 	Format       string                 `json:"fmt"`
 	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
 }
 
-func attestationStatement(key *attest.Key, akChain ...[]byte) ([]byte, error) {
-	params := key.CertificationParameters()
+func attestationStatement(t *smalltpm.TPM, key smalltpm.Key, akChain ...[]byte) ([]byte, error) {
+
+	// TODO: refactor so that key has the parameters itself?
+	params, err := t.GetKeyCertificationParameters(context.Background(), key.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	obj := &AttestationObject{
 		Format: "tpm",
@@ -458,26 +416,84 @@ func attestationStatement(key *attest.Key, akChain ...[]byte) ([]byte, error) {
 	return b, nil
 }
 
-func tpmInit(identifier string) (*attest.TPM, *attest.AK, []byte, error) {
+func tpmInit(identifier string) (*smalltpm.TPM, *smalltpm.AK, []byte, error) {
 
-	config := &attest.OpenConfig{
-		TPMVersion: attest.TPMVersion20,
+	t, err := smalltpm.New(smalltpm.WithStore(smalltpmstorage.NewDirstore("."))) // TODO: put in right location
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
-	// TODO(hs): OpenTPM should only be called once for every CLI invocation, but potentially multiple TPM operations
-	tpm, err := attest.OpenTPM(config)
+	ak, err := t.CreateAK(context.Background(), identifier)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	ak, err := tpm.NewAK(nil)
+
+	akCert, err := akCert(t, ak, identifier)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	akCert, err := akCert(ak, identifier)
+
+	return t, &ak, akCert, nil
+}
+
+func akCert(t *smalltpm.TPM, ak smalltpm.AK, identifier string) ([]byte, error) {
+
+	// TODO: refactor this into using the smalltpm package
+	tpm, err := attest.OpenTPM(nil)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
-	return tpm, ak, akCert, nil
+	defer tpm.Close()
+
+	aak, err := tpm.LoadAK(ak.Data)
+	if err != nil {
+		return nil, err
+	}
+	defer aak.Close(tpm)
+
+	// TODO(hs): took this from example; shouldn't this be generated inside the TPM? Or is
+	// it only used to be able to convey the AK public key in a cert, and does the signature
+	// not matter?
+	akRootKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+	// akRootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	// if err != nil {
+	//  return nil, err
+	// }
+	akRootTemplate := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+	}
+	permID := x509ext.PermanentIdentifier{
+		IdentifierValue: identifier,
+		// Assigner:        asn1.ObjectIdentifier{0, 1, 2, 3, 4},
+	}
+	san := &x509ext.SubjectAltName{
+		PermanentIdentifiers: []x509ext.PermanentIdentifier{
+			permID,
+		},
+	}
+	ext, err := x509ext.MarshalSubjectAltName(san)
+	if err != nil {
+		return nil, err
+	}
+	akTemplate := &x509.Certificate{
+		SerialNumber:    big.NewInt(2),
+		ExtraExtensions: []pkix.Extension{ext},
+	}
+	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, aak.AttestationParameters().Public)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO(hs): use x509util.CreateCertificate?
+	akCert, err := x509.CreateCertificate(rand.Reader, akTemplate, akRootTemplate, akPub.Public, akRootKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return akCert, nil
 }
 
 // Borrowed from:
