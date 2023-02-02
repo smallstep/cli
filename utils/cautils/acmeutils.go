@@ -791,6 +791,8 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 				Subject: pkix.Name{
 					CommonName: af.subject,
 				},
+				// TODO(hs): add PermanentIdentifier extension?
+				// TODO(hs): add SKAE extension?
 			}
 		} else {
 			signer, err = cryptoutil.CreateSigner(attestationURI, attestationURI)

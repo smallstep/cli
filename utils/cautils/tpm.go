@@ -88,7 +88,8 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	// 3. Get the challenge?
 	// 4. Perform cleanup
 
-	ui.Printf("Using Standalone Mode Device Attestation challenge to validate `%s`", identifier)
+	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
+	ui.Printf(" .") // Indicates passage of time.
 
 	// ch is the chal := authz.Challenges[0]
 	// Generate the certificate key, include the ACME key authorization in the
@@ -183,20 +184,10 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		}
 	}
 
-	// TODO: refactor this into using the smalltpm package
-	atpm, err := attest.OpenTPM(nil)
+	attestParams, err := ak.AttestationParameters(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer atpm.Close()
-
-	aak, err := atpm.LoadAK(ak.Data)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer aak.Close(atpm)
-
-	attestParams := aak.AttestationParameters()
 
 	// TODO: should the request include nonce? Or token? Or the KeyAuthDigest? Combination/All?
 	// TODO: should this include a CSR?
@@ -250,15 +241,15 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		log.Fatal(err)
 	}
 
-	encryptedCredentials := attest.EncryptedCredential{
+	encryptedCredentials := smalltpm.EncryptedCredential{
 		Credential: attResp.Credential,
 		Secret:     attResp.Secret,
 	}
 
 	// TODO: load the AK, if it was persisted outside of the TPM. In the POC we have it in memory, so no need to do that.
 
-	// activate the credential // TODO: refactor this into using the library function
-	secret, err := aak.ActivateCredential(atpm, encryptedCredentials)
+	// activate the credential
+	secret, err := ak.ActivateCredential(context.Background(), encryptedCredentials)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -321,14 +312,14 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		log.Fatal(err)
 	}
 
-	certKey, err := tpm.GetSigner(context.Background(), attestedKey.Name)
+	signer, err := attestedKey.Signer(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// passing the TPM key to the ACME flow, so that it can be used as a signer
 	// TODO(hs): this is a bit of a hack that needs refactoring
-	af.tpmSigner = certKey
+	af.tpmSigner = signer
 
 	// Generate the WebAuthn attestation statement.
 	attStmt, err := attestationStatement(tpm, attestedKey, akChain...)
@@ -349,37 +340,15 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	if err := ac.ValidateWithPayload(ch.URL, payload); err != nil {
 		ui.Printf(" Error!\n\n")
-		//mode.Cleanup()
 		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
 	}
-	var (
-		isValid = false
-		vch     *acme.Challenge
-		//err     error
-	)
-	time.Sleep(time.Second) // brief sleep to allow server time to validate challenge.
-	for attempts := 0; attempts < 10; attempts++ {
-		vch, err = ac.GetChallenge(ch.URL)
-		if err != nil {
-			ui.Printf(" Error!\n\n")
-			//mode.Cleanup()
-			return errors.Wrapf(err, "error retrieving ACME Challenge at %s", ch.URL)
-		}
-		if vch.Status == "valid" {
-			isValid = true
-			break
-		}
-		ui.Printf(".")
-		time.Sleep(5 * time.Second)
-	}
-	if !isValid {
+
+	durationBetweenAttempts := 2 * time.Second
+	if err := getChallengeStatus(ac, ch, durationBetweenAttempts); err != nil {
 		ui.Printf(" Error!\n\n")
-		//mode.Cleanup()
-		return errors.Errorf("Unable to validate challenge: %+v", vch)
+		return err
 	}
-	// if err := mode.Cleanup(); err != nil {
-	//  return err
-	// }
+
 	ui.Printf(" done!\n")
 
 	return nil
@@ -438,18 +407,10 @@ func tpmInit(identifier string) (*smalltpm.TPM, *smalltpm.AK, []byte, error) {
 
 func akCert(t *smalltpm.TPM, ak smalltpm.AK, identifier string) ([]byte, error) {
 
-	// TODO: refactor this into using the smalltpm package
-	tpm, err := attest.OpenTPM(nil)
+	params, err := ak.AttestationParameters(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	defer tpm.Close()
-
-	aak, err := tpm.LoadAK(ak.Data)
-	if err != nil {
-		return nil, err
-	}
-	defer aak.Close(tpm)
 
 	// TODO(hs): took this from example; shouldn't this be generated inside the TPM? Or is
 	// it only used to be able to convey the AK public key in a cert, and does the signature
@@ -482,7 +443,7 @@ func akCert(t *smalltpm.TPM, ak smalltpm.AK, identifier string) ([]byte, error) 
 		SerialNumber:    big.NewInt(2),
 		ExtraExtensions: []pkix.Extension{ext},
 	}
-	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, aak.AttestationParameters().Public)
+	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, params.Public)
 	if err != nil {
 		return nil, err
 	}
