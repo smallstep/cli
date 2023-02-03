@@ -31,17 +31,17 @@ func createCommand() cli.Command {
 ## POSITIONAL ARGUMENTS
 
 <team-id>
-:  UUID of the team the API token will be issued for
+:  UUID of the team the API token will be issued for. This is available in the Smallstep dashboard.
 
 <crt-file>
-:  File to read the certificate (PEM format)
+:  File to read the certificate (PEM format). This certificate must be signed by a trusted root configured in the Smallstep dashboard.
 
 <key-file>
-:  File to read the private key (PEM format)
+:  File to read the private key (PEM format).
 
 ## Examples
 
-$ step api token create me.crt me.key
+$ step api token create ff98be70-7cc3-4df5-a5db-37f5d3c96e23 me.crt me.key
 `,
 	}
 }
@@ -67,18 +67,13 @@ func createAction(ctx *cli.Context) (err error) {
 	crtFile := args.Get(1)
 	keyFile := args.Get(2)
 
-	apiURL := ctx.String("api-url")
-	if apiURL == "" {
-		apiURL = "https://gateway.smallstep.com"
-	}
-	apiURL, err = url.JoinPath(apiURL, "api/auth")
+	apiURL, err := url.JoinPath(ctx.String("api-url"), "api/auth")
 	if err != nil {
 		return err
 	}
 
 	if _, err := uuid.Parse(teamID); err != nil {
-		// TODO improve message
-		return err
+		return fmt.Errorf("team-id argument must be a valid UUID")
 	}
 
 	clientCert, err := tls.LoadX509KeyPair(crtFile, keyFile)
@@ -105,6 +100,7 @@ func createAction(ctx *cli.Context) (err error) {
 		GetClientCertificate: func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 			return &clientCert, nil
 		},
+		MinVersion: tls.VersionTLS12,
 	}
 	client := http.Client{
 		Transport: transport,
@@ -123,7 +119,7 @@ func createAction(ctx *cli.Context) (err error) {
 		if respBody.Message != "" {
 			return errors.New(respBody.Message)
 		}
-		return fmt.Errorf("Failed to create token: %d", resp.StatusCode)
+		return fmt.Errorf("failed to create token: %d", resp.StatusCode)
 	}
 
 	// Print message to stderr for humans and token to stdout for scripts
