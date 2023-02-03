@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 
 	"github.com/google/uuid"
 	"github.com/urfave/cli"
@@ -67,10 +68,12 @@ func createAction(ctx *cli.Context) (err error) {
 	crtFile := args.Get(1)
 	keyFile := args.Get(2)
 
-	apiURL, err := url.JoinPath(ctx.String("api-url"), "api/auth")
+	parsedURL, err := url.Parse(ctx.String("api-url"))
 	if err != nil {
 		return err
 	}
+	parsedURL.Path = path.Join(parsedURL.Path, "api/auth")
+	apiURL := parsedURL.String()
 
 	if _, err := uuid.Parse(teamID); err != nil {
 		return fmt.Errorf("team-id argument must be a valid UUID")
