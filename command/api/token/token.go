@@ -4,7 +4,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-// Command returns the jwk subcommand.
+// Command returns the token subcommand.
 func Command() cli.Command {
 	return cli.Command{
 		Name:      "token",
