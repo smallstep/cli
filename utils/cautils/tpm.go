@@ -77,9 +77,6 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
 	ui.Printf(" .") // Indicates passage of time.
 
-	// ch is the chal := authz.Challenges[0]
-	// Generate the certificate key, include the ACME key authorization in the
-	// the TPM certification data.
 	tpm, ak, akCert, err := tpmInit(identifier)
 	if err != nil {
 		return fmt.Errorf("error initializing TPM: %w", err)
@@ -94,7 +91,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	ui.Printf("\nTPM INFO:")
 	ui.Printf("\nversion: %d", info.Version)
 	ui.Printf("\ninterface: %d", info.Interface)
-	ui.Printf("\nmanufacturer: %d", info.Manufacturer)
+	ui.Printf("\nmanufacturer: %s", info.Manufacturer)
 	ui.Printf("\nvendor info: %s", info.VendorInfo)
 	ui.Printf("\nfirmware version: %d.%d\n", info.FirmwareVersionMajor, info.FirmwareVersionMinor)
 
@@ -121,8 +118,6 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		return fmt.Errorf("error getting AK attestation parameters: %w", err)
 	}
 
-	// TODO: should the request include nonce? Or token? Or the KeyAuthDigest? Combination/All?
-	// TODO: should this include a CSR?
 	ar := attestationRequest{
 		TPMVersion: attest.TPMVersion(info.Version),
 		EKCerts:    ekCerts,
@@ -134,7 +129,10 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 			CreateAttestation:       attestParams.CreateAttestation,
 			CreateSignature:         attestParams.CreateSignature,
 		},
-		AKCert: akCert,
+	}
+
+	if akCert != nil {
+		ar.AKCert = akCert.Raw
 	}
 
 	body, err := json.Marshal(ar)
@@ -221,6 +219,8 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		akChain = append(akChain, certBytes)
 	}
 
+	// Generate the certificate key, include the ACME key authorization in the
+	// the TPM certification data.
 	data, err := keyAuthDigest(ac.Key, ch.Token)
 	if err != nil {
 		return fmt.Errorf("error creating key authorization: %w", err)
@@ -284,7 +284,6 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 func attestationStatement(t *smalltpm.TPM, key smalltpm.Key, akChain ...[]byte) ([]byte, error) {
 
-	// TODO: refactor so that key has the parameters itself?
 	params, err := key.CertificationParameters(context.Background())
 	if err != nil {
 		return nil, err
@@ -308,7 +307,7 @@ func attestationStatement(t *smalltpm.TPM, key smalltpm.Key, akChain ...[]byte) 
 	return b, nil
 }
 
-func tpmInit(identifier string) (*smalltpm.TPM, *smalltpm.AK, []byte, error) {
+func tpmInit(identifier string) (*smalltpm.TPM, *smalltpm.AK, *x509.Certificate, error) {
 
 	t, err := smalltpm.New(smalltpm.WithStore(smalltpmstorage.NewDirstore("."))) // TODO: put in right location
 	if err != nil {
@@ -328,16 +327,28 @@ func tpmInit(identifier string) (*smalltpm.TPM, *smalltpm.AK, []byte, error) {
 	return t, &ak, akCert, nil
 }
 
-func akCert(t *smalltpm.TPM, ak smalltpm.AK, identifier string) ([]byte, error) {
+func akCert(t *smalltpm.TPM, ak smalltpm.AK, identifier string) (*x509.Certificate, error) {
 
 	params, err := ak.AttestationParameters(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO(hs): took this from example; shouldn't this be generated inside the TPM? Or is
-	// it only used to be able to convey the AK public key in a cert, and does the signature
-	// not matter?
+	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, params.Public)
+	if err != nil {
+		return nil, err
+	}
+
+	returnWithoutAKCertificate := true
+	if returnWithoutAKCertificate {
+		return nil, nil
+	}
+
+	// TODO(hs): currently we don't support existing AK certificates to be
+	// returned. We could look into supporting this for TPMs with existing AKs
+	// available/loaded, for example after they've been issued an AK cert by
+	// an OEM. Alternatively, it may be possible to use a self-signed certificate,
+	// but that wouldn't provide more proof than the AK's AttestationParameters.
 	akRootKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
@@ -366,13 +377,13 @@ func akCert(t *smalltpm.TPM, ak smalltpm.AK, identifier string) ([]byte, error) 
 		SerialNumber:    big.NewInt(2),
 		ExtraExtensions: []pkix.Extension{ext},
 	}
-	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, params.Public)
+
+	akCertBytes, err := x509.CreateCertificate(rand.Reader, akTemplate, akRootTemplate, akPub.Public, akRootKey)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO(hs): use x509util.CreateCertificate?
-	akCert, err := x509.CreateCertificate(rand.Reader, akTemplate, akRootTemplate, akPub.Public, akRootKey)
+	akCert, err := x509.ParseCertificate(akCertBytes)
 	if err != nil {
 		return nil, err
 	}
