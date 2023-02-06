@@ -28,6 +28,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v0.23.2] - 2022-02-06
+
+### Added
+
+- Added support for extended SANs when creating CSRs (smallstep/crypto#168).
+- Added check for empty DNS value in `step ca init` (smallstep/cli#815).
+
+### Changed
+
+- Improved prompts and error messages in `step ca init` (smallstep/cli#827),
+  (smallstep/cli#831), (smallstep/cli#839).
+- Improved ACME device-attest-01 challenge validation logic (smallstep/cli#837).
+
+### Fixed
+
+- Fixed `step ca provisioner add` when CA is not online (smallstep/cli#833).
+
 ## [v0.23.1] - 2022-01-10
 
 ### Added
