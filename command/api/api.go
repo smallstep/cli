@@ -8,6 +8,7 @@ import (
 
 func init() {
 	cmd := cli.Command{
+		Hidden:    true,
 		Name:      "api",
 		Usage:     "authenticate to the Smallstep API",
 		UsageText: "**step api** <subcommand> [arguments] [global-flags] [subcommand-flags]",
