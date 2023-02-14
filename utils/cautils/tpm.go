@@ -22,15 +22,14 @@ import (
 	x509ext "github.com/google/go-attestation/x509"
 	"github.com/urfave/cli"
 
+	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	smalltpm "go.step.sm/crypto/tpm"
+	smalltpmstorage "go.step.sm/crypto/tpm/storage"
+
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certinfo"
-
-	smalltpm "github.com/smallstep/step-tpm-plugin/pkg/tpm"
-	smalltpmstorage "github.com/smallstep/step-tpm-plugin/pkg/tpm/storage"
-
-	"go.step.sm/cli-utils/ui"
-	"go.step.sm/crypto/jose"
 )
 
 type attestationParameters struct {
