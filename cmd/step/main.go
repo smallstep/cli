@@ -53,6 +53,7 @@ var BuildTime = "N/A"
 func init() {
 	step.Set("Smallstep CLI", Version, BuildTime)
 	ca.UserAgent = step.Version()
+	//nolint:staticcheck // deprecated in Go 1.20 - leaving because we support latest 2 versions of golang
 	rand.Seed(time.Now().UnixNano())
 }
 
