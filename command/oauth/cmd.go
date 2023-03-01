@@ -717,6 +717,10 @@ func postForm(rawurl string, data url.Values) (*http.Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create POST %s request failed: %w", rawurl, err)
 	}
+
+	// Prevents re-use of TCP connections between requests.
+	req.Close = true
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 	return http.DefaultClient.Do(req)
