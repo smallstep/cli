@@ -18,8 +18,7 @@ RUN apt-get update \
         && apt-get upgrade \
         && apt-get install -y --no-install-recommends curl \
         && addgroup --gid ${STEPGID} step \
-        && adduser --disabled-password --uid ${STEPUID} --gid ${STEPGID} step \
-        && chown step:step /home/step
+        && adduser --disabled-password --uid ${STEPUID} --gid ${STEPGID} step
 
 
 COPY --from=builder /src/bin/step "/usr/local/bin/step"
