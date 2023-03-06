@@ -4,32 +4,26 @@ import (
 	"bytes"
 	"context"
 	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"net/http"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/google/go-attestation/attest"
-	x509ext "github.com/google/go-attestation/x509"
 	"github.com/urfave/cli"
-
-	"go.step.sm/cli-utils/ui"
-	"go.step.sm/crypto/jose"
-	smalltpm "go.step.sm/crypto/tpm"
-	smalltpmstorage "go.step.sm/crypto/tpm/storage"
 
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certinfo"
+	"go.step.sm/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/tpm"
+	tpmstorage "go.step.sm/crypto/tpm/storage"
 )
 
 type attestationParameters struct {
@@ -76,27 +70,27 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
 	ui.Printf(" .") // Indicates passage of time.
 
-	tpm, ak, akCert, err := tpmInit(identifier)
+	t, ak, akCert, err := tpmInit(identifier)
 	if err != nil {
-		return fmt.Errorf("error initializing TPM: %w", err)
+		return fmt.Errorf("failed initializing TPM: %w", err)
 	}
 
-	info, err := tpm.Info(context.Background())
+	info, err := t.Info(context.Background())
 	if err != nil {
-		return fmt.Errorf("error retrieving TPM info: %w", err)
+		return fmt.Errorf("failed retrieving TPM info: %w", err)
 	}
 
-	// TODO(hs): remove this from the standard output, unless debugging?
+	// TODO(hs): remove this from the standard output, unless debugging/verbose logging?
 	ui.Printf("\nTPM INFO:")
 	ui.Printf("\nversion: %d", info.Version)
 	ui.Printf("\ninterface: %d", info.Interface)
 	ui.Printf("\nmanufacturer: %s", info.Manufacturer)
 	ui.Printf("\nvendor info: %s", info.VendorInfo)
-	ui.Printf("\nfirmware version: %d.%d\n", info.FirmwareVersionMajor, info.FirmwareVersionMinor)
+	ui.Printf("\nfirmware version: %s", info.FirmwareVersion)
 
-	eks, err := tpm.GetEKs(context.Background())
+	eks, err := t.GetEKs(context.Background())
 	if err != nil {
-		return fmt.Errorf("error retrieving EKs from TPM: %w", err)
+		return fmt.Errorf("failed retrieving EKs from TPM: %w", err)
 	}
 	var ekCerts [][]byte
 	var ekPub []byte
@@ -105,7 +99,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 		ekCert := ek.Certificate
 		if ekCert == nil {
 			if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public); err != nil {
-				return fmt.Errorf("error marshaling public key: %w", err)
+				return fmt.Errorf("failed marshaling public key: %w", err)
 			}
 		} else {
 			ekCerts = append(ekCerts, ekCert.Raw)
@@ -114,7 +108,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	attestParams, err := ak.AttestationParameters(context.Background())
 	if err != nil {
-		return fmt.Errorf("error getting AK attestation parameters: %w", err)
+		return fmt.Errorf("failed getting AK attestation parameters: %w", err)
 	}
 
 	ar := attestationRequest{
@@ -136,13 +130,13 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	body, err := json.Marshal(ar)
 	if err != nil {
-		return fmt.Errorf("error marshaling attestation request: %w", err)
+		return fmt.Errorf("failed marshaling attestation request: %w", err)
 	}
 
 	attestURL := tpmAttestationCABaseURL + "/attest"
 	req, err := http.NewRequest(http.MethodPost, attestURL, bytes.NewReader(body))
 	if err != nil {
-		return fmt.Errorf("error creating POST http request for %q: %w", attestURL, err)
+		return fmt.Errorf("failed creating POST http request for %q: %w", attestURL, err)
 	}
 
 	// TODO(hs): implement a client, similar to the caClient and acmeClient, that use sane defaults and
@@ -157,15 +151,15 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error performing attestation request with attestation CA %q: %w", attestURL, err)
+		return fmt.Errorf("failed performing attestation request with attestation CA %q: %w", attestURL, err)
 	}
 
 	var attResp attestationResponse
 	if err := json.NewDecoder(resp.Body).Decode(&attResp); err != nil {
-		return fmt.Errorf("error decoding attestation response: %w", err)
+		return fmt.Errorf("failed decoding attestation response: %w", err)
 	}
 
-	encryptedCredentials := smalltpm.EncryptedCredential{
+	encryptedCredentials := tpm.EncryptedCredential{
 		Credential: attResp.Credential,
 		Secret:     attResp.Secret,
 	}
@@ -173,7 +167,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	// activate the credential
 	secret, err := ak.ActivateCredential(context.Background(), encryptedCredentials)
 	if err != nil {
-		return fmt.Errorf("error activating credential: %w", err)
+		return fmt.Errorf("failed activating credential: %w", err)
 	}
 
 	sr := secretRequest{
@@ -182,36 +176,36 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	body, err = json.Marshal(sr)
 	if err != nil {
-		return fmt.Errorf("error marshaling secret request: %w", err)
+		return fmt.Errorf("failed marshaling secret request: %w", err)
 	}
 
 	secretURL := tpmAttestationCABaseURL + "/secret"
 	req, err = http.NewRequest(http.MethodPost, secretURL, bytes.NewReader(body))
 	if err != nil {
-		return fmt.Errorf("error creating POST http request for %q: %w", secretURL, err)
+		return fmt.Errorf("failed creating POST http request for %q: %w", secretURL, err)
 	}
 
 	resp, err = client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error performing secret request with attestation CA %q: %w", secretURL, err)
+		return fmt.Errorf("failed performing secret request with attestation CA %q: %w", secretURL, err)
 	}
 
 	var secretResp secretResponse
 	if err := json.NewDecoder(resp.Body).Decode(&secretResp); err != nil {
-		return fmt.Errorf("error decoding secret response: %w", err)
+		return fmt.Errorf("failed decoding secret response: %w", err)
 	}
 
 	akChain := [][]byte{}
 	for _, certBytes := range secretResp.CertificateChain {
 		cert, err := x509.ParseCertificate(certBytes)
 		if err != nil {
-			return fmt.Errorf("error parsing certificate: %w", err)
+			return fmt.Errorf("failed parsing certificate: %w", err)
 		}
 
 		// TODO(hs): don't output this by default (similar to TPM info)
 		info, err := certinfo.CertificateText(cert)
 		if err != nil {
-			return fmt.Errorf("error getting certificate text: %w", err)
+			return fmt.Errorf("failed getting certificate text: %w", err)
 		}
 		fmt.Println(info)
 
@@ -222,26 +216,22 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	// the TPM certification data.
 	data, err := keyAuthDigest(ac.Key, ch.Token)
 	if err != nil {
-		return fmt.Errorf("error creating key authorization: %w", err)
+		return fmt.Errorf("failed creating key authorization: %w", err)
 	}
 
-	config := smalltpm.AttestKeyConfig{
-		//Algorithm: attest.ECDSA,
-		//Size:      256,
-		// TODO(hs): I had to change this to RSA to make the AK key and the cert key type check out with each other. Check if this is indeed required.
-		// TODO(hs): with attest.RSA, I get an error when decoding the public key on server side:  panic: parsing public key: missing rsa signature scheme. Not sure where that has to be added ATM.
+	config := tpm.AttestKeyConfig{
 		Algorithm:      "RSA",
-		Size:           2048, // TODO(hs): 4096 didn't work on my RPi TPM. Look into why that's the case. Returned a TPM error; RCValue = 0x04;  value is out of range or is not correct for the context
+		Size:           2048,
 		QualifyingData: data,
 	}
-	attestedKey, err := tpm.AttestKey(context.Background(), identifier, "", config)
+	attestedKey, err := t.AttestKey(context.Background(), identifier, "", config)
 	if err != nil {
-		return fmt.Errorf("error creating new key attested by AK %q", identifier)
+		return fmt.Errorf("failed creating new key attested by AK %q", identifier)
 	}
 
 	signer, err := attestedKey.Signer(context.Background())
 	if err != nil {
-		return fmt.Errorf("error getting signer for key %q", attestedKey.Name)
+		return fmt.Errorf("failed getting signer for key %q", attestedKey.Name)
 	}
 
 	// passing the TPM key to the ACME flow, so that it can be used as a signer
@@ -249,9 +239,9 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	af.tpmSigner = signer
 
 	// Generate the WebAuthn attestation statement.
-	attStmt, err := attestationStatement(tpm, attestedKey, akChain...)
+	attStmt, err := attestationStatement(t, attestedKey, akChain...)
 	if err != nil {
-		return fmt.Errorf("error creating attestation statement: %w", err)
+		return fmt.Errorf("failed creating attestation statement: %w", err)
 	}
 
 	challengeBody := struct {
@@ -262,12 +252,12 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 
 	payload, err := json.Marshal(challengeBody)
 	if err != nil {
-		return fmt.Errorf("error marshaling challenge body: %w", err)
+		return fmt.Errorf("failed marshaling challenge body: %w", err)
 	}
 
 	if err := ac.ValidateWithPayload(ch.URL, payload); err != nil {
 		ui.Printf(" Error!\n\n")
-		return fmt.Errorf("error validating ACME Challenge at %q: %w", ch.URL, err)
+		return fmt.Errorf("failed validating ACME Challenge at %q: %w", ch.URL, err)
 	}
 
 	durationBetweenAttempts := 2 * time.Second
@@ -281,7 +271,7 @@ func doTPMAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, i
 	return nil
 }
 
-func attestationStatement(t *smalltpm.TPM, key smalltpm.Key, akChain ...[]byte) ([]byte, error) {
+func attestationStatement(t *tpm.TPM, key tpm.Key, akChain ...[]byte) ([]byte, error) {
 
 	params, err := key.CertificationParameters(context.Background())
 	if err != nil {
@@ -306,9 +296,9 @@ func attestationStatement(t *smalltpm.TPM, key smalltpm.Key, akChain ...[]byte) 
 	return b, nil
 }
 
-func tpmInit(identifier string) (*smalltpm.TPM, *smalltpm.AK, *x509.Certificate, error) {
+func tpmInit(identifier string) (*tpm.TPM, *tpm.AK, *x509.Certificate, error) {
 
-	t, err := smalltpm.New(smalltpm.WithStore(smalltpmstorage.NewDirstore("."))) // TODO: put in right location
+	t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore("."))) // TODO: put in right location
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -326,7 +316,7 @@ func tpmInit(identifier string) (*smalltpm.TPM, *smalltpm.AK, *x509.Certificate,
 	return t, &ak, akCert, nil
 }
 
-func akCert(t *smalltpm.TPM, ak smalltpm.AK, identifier string) (*x509.Certificate, error) {
+func akCert(t *tpm.TPM, ak tpm.AK, identifier string) (*x509.Certificate, error) {
 
 	params, err := ak.AttestationParameters(context.Background())
 	if err != nil {
@@ -338,72 +328,16 @@ func akCert(t *smalltpm.TPM, ak smalltpm.AK, identifier string) (*x509.Certifica
 		return nil, err
 	}
 
-	returnWithoutAKCertificate := true
-	if returnWithoutAKCertificate {
-		return nil, nil
-	}
+	// TODO(hs): lookup AK certificate by akPub; perform attestation for `identifier` if not found
+	_ = akPub
 
-	// TODO(hs): currently we don't support existing AK certificates to be
-	// returned. We could look into supporting this for TPMs with existing AKs
-	// available/loaded, for example after they've been issued an AK cert by
-	// an OEM. Alternatively, it may be possible to use a self-signed certificate,
-	// but that wouldn't provide more proof than the AK's AttestationParameters.
-	akRootKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-	// akRootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	// if err != nil {
-	//  return nil, err
-	// }
-	akRootTemplate := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
-	}
-	permID := x509ext.PermanentIdentifier{
-		IdentifierValue: identifier,
-		// Assigner:        asn1.ObjectIdentifier{0, 1, 2, 3, 4},
-	}
-	san := &x509ext.SubjectAltName{
-		PermanentIdentifiers: []x509ext.PermanentIdentifier{
-			permID,
-		},
-	}
-	ext, err := x509ext.MarshalSubjectAltName(san)
-	if err != nil {
-		return nil, err
-	}
-	akTemplate := &x509.Certificate{
-		SerialNumber:    big.NewInt(2),
-		ExtraExtensions: []pkix.Extension{ext},
-	}
-
-	akCertBytes, err := x509.CreateCertificate(rand.Reader, akTemplate, akRootTemplate, akPub.Public, akRootKey)
-	if err != nil {
-		return nil, err
-	}
-
-	akCert, err := x509.ParseCertificate(akCertBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return akCert, nil
+	return nil, nil
 }
 
 // Borrowed from:
 // https://github.com/golang/crypto/blob/master/acme/acme.go#L748
 func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
 	th, err := jwk.Thumbprint(crypto.SHA256) // TODO(hs): verify this is the correct thumbprint
-	// jwk, err := jwkEncode(pub)
-	// if err != nil {
-	//  return "", err
-	// }
-	// b := sha256.Sum256([]byte(jwk))
-	// return base64.RawURLEncoding.EncodeToString(b[:]), nil
-	// th, err := stdacme.JWKThumbprint(pub)
-	// if err != nil {
-	//  return nil, err
-	// }
 	digest := sha256.Sum256([]byte(fmt.Sprintf("%s.%s", token, th)))
 	return digest[:], err
 }
