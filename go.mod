@@ -29,7 +29,7 @@ require (
 	go.step.sm/linkedca v0.19.0
 	golang.org/x/crypto v0.6.0
 	golang.org/x/net v0.7.0
-	golang.org/x/sys v0.5.0
+	golang.org/x/sys v0.6.0
 	golang.org/x/term v0.5.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/square/go-jose.v2 v2.6.0
