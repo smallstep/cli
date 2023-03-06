@@ -23,6 +23,7 @@ import (
 	"go.step.sm/crypto/pemutil"
 
 	// Enabled commands
+	_ "github.com/smallstep/cli/command/api"
 	_ "github.com/smallstep/cli/command/base64"
 	_ "github.com/smallstep/cli/command/beta"
 	_ "github.com/smallstep/cli/command/ca"

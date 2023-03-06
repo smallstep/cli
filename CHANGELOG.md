@@ -28,6 +28,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v0.23.3] - 2022-03-01
+
+### Fixed
+
+- Prevent re-use of TCP connections between requests on `step oauth` (smallstep/cli#858).
+- Upgrade certinfo with a fix for the YubiKey touch policy information (smallstep/cli#854).
+- Upgrade Golang dependencies with reported issues.
+
 ## [v0.23.2] - 2022-02-06
 
 ### Added

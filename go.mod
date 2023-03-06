@@ -18,18 +18,18 @@ require (
 	github.com/slackhq/nebula v1.6.1
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.23.2-0.20230131224934-3a6fc5e0b4d7
-	github.com/smallstep/certinfo v1.10.0
+	github.com/smallstep/certinfo v1.11.0
 	github.com/smallstep/truststore v0.12.1
 	github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91
 	github.com/smallstep/zlint v0.0.0-20220930192201-67fb4aa21910
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/urfave/cli v1.22.12
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.5
 	go.step.sm/crypto v0.25.1-0.20230214233057-39fc78acbed7
 	go.step.sm/linkedca v0.19.0
 	golang.org/x/crypto v0.6.0
-	golang.org/x/net v0.6.0
+	golang.org/x/net v0.7.0
 	golang.org/x/sys v0.5.0
 	golang.org/x/term v0.5.0
 	google.golang.org/protobuf v1.28.1
