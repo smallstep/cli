@@ -1,0 +1,31 @@
+FROM golang AS builder
+
+RUN mkdir /src
+ADD . /src
+
+RUN cd /src && \
+	mkdir -p output/bin && \
+	make V=1 bin/step
+
+FROM debian:bullseye
+
+ENV STEP="/home/step"
+ENV STEPPATH="/home/step"
+ARG STEPUID=1000
+ARG STEPGID=1000
+
+RUN apt-get update \
+        && apt-get upgrade \
+        && apt-get install -y --no-install-recommends curl \
+        && addgroup --gid ${STEPGID} step \
+        && adduser --disabled-password --uid ${STEPUID} --gid ${STEPGID} step
+
+
+COPY --from=builder /src/bin/step "/usr/local/bin/step"
+
+USER step
+WORKDIR /home/step
+
+STOPSIGNAL SIGTERM
+
+CMD /bin/bash
