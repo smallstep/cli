@@ -18,9 +18,10 @@ func listCommand() cli.Command {
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all admins in the CA configuration",
 		UsageText: `**step ca admin list** [**--super**] [**--provisioner**=<name>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
-[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-token**]
+[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>]
+[**--admin-password-file**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>]`,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "super",
@@ -29,6 +30,7 @@ func listCommand() cli.Command {
 			provisionerFilterFlag,
 			flags.AdminCert,
 			flags.AdminKey,
+			flags.AdminToken,
 			flags.AdminSubject,
 			flags.AdminProvisioner,
 			flags.AdminPasswordFile,
@@ -85,6 +87,7 @@ func listAction(ctx *cli.Context) (err error) {
 	if err != nil {
 		return err
 	}
+	fmt.Println("I AM HERE")
 	cliAdmins, err := listToCLI(ctx, client, admins)
 	if err != nil {
 		return err

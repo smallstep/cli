@@ -31,6 +31,7 @@ const (
 	SSHRenewType
 	SSHRekeyType
 	RenewType
+	AdminType
 )
 
 // parseAudience creates the ca audience url from the ca-url
@@ -62,6 +63,8 @@ func parseAudience(ctx *cli.Context, tokType int) (string, error) {
 			path = "/1.0/ssh/renew"
 		case SSHRekeyType:
 			path = "/1.0/ssh/rekey"
+		case AdminType:
+			path = "/1.0/admin"
 		default:
 			return "", errors.Errorf("unexpected token type: %d", tokType)
 		}

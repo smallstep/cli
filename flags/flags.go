@@ -272,6 +272,13 @@ $(step path)/config/ca.json`,
 be stored in the 'x5c' header.`,
 	}
 
+	// AdminToken is a cli.Flag used to pass the token that authenticates the admin flow.
+	// that is used to sign the token.
+	AdminToken = cli.StringFlag{
+		Name:  "admin-token",
+		Usage: `Admin <token> used to authenticate the admin workflow.`,
+	}
+
 	// X5cCert is a cli.Flag used to pass the x5c header certificate for a JWT.
 	X5cCert = cli.StringFlag{
 		Name:  "x5c-cert",

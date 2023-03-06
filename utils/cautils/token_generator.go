@@ -99,6 +99,15 @@ func (t *TokenGenerator) SignToken(sub string, sans []string, opts ...token.Opti
 	return t.Token(sub, opts...)
 }
 
+// AdminAPIToken generates a token for authorizing to the admin API.
+func (t *TokenGenerator) AdminAPIToken(sub string, sans []string, opts ...token.Options) (string, error) {
+	if len(sans) == 0 {
+		sans = []string{sub}
+	}
+	opts = append(opts, token.WithSANS(sans))
+	return t.Token(sub, opts...)
+}
+
 // RevokeToken generates a X.509 certificate revoke token.
 func (t *TokenGenerator) RevokeToken(sub string, opts ...token.Options) (string, error) {
 	return t.Token(sub, opts...)
@@ -229,6 +238,10 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 	case SSHHostSignType:
 		return tokenGen.SignSSHToken(tokAttrs.subject, provisioner.SSHHostCert, tokAttrs.sans,
 			tokAttrs.certNotBefore, tokAttrs.certNotAfter, tokenOpts...)
+	case AdminType:
+		tokenOpts = append(tokenOpts, token.WithIssuer("step-admin-client/1.0"),
+			token.WithAudience("/1.0/admin"))
+		return tokenGen.AdminAPIToken(tokAttrs.subject, tokAttrs.sans, tokenOpts...)
 	default:
 		return tokenGen.Token(tokAttrs.subject, tokenOpts...)
 	}

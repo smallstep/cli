@@ -112,10 +112,15 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 	var (
 		adminCertFile = ctx.String("admin-cert")
 		adminKeyFile  = ctx.String("admin-key")
+		adminToken    = ctx.String("admin-token")
 		adminCert     []*x509.Certificate
 		adminKey      interface{}
 	)
-	if len(adminCertFile) > 0 || len(adminKeyFile) > 0 {
+	switch {
+	case adminToken != "":
+		opts = append([]ca.ClientOption{ca.WithRootFile(root),
+			ca.WithAdminToken(adminToken)}, opts...)
+	case adminCertFile != "" || adminKeyFile != "":
 		if adminCertFile == "" {
 			return nil, errs.RequiredWithFlag(ctx, "admin-key", "admin-cert")
 		}
@@ -130,7 +135,10 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		if err != nil {
 			return nil, errors.Wrap(err, "error reading admin key")
 		}
-	} else {
+		opts = append([]ca.ClientOption{ca.WithRootFile(root),
+			ca.WithAdminX5C(adminCert, adminKey, ctx.String("password-file"))},
+			opts...)
+	default:
 		ui.Printf("No admin credentials found. You must login to execute admin commands.\n")
 		// Generate a new admin cert/key in memory.
 		client, err := ca.NewClient(caURL, ca.WithRootFile(root))
@@ -191,11 +199,11 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		for i, c := range signResponse.CertChainPEM {
 			adminCert[i] = c.Certificate
 		}
+		opts = append([]ca.ClientOption{ca.WithRootFile(root),
+			ca.WithAdminX5C(adminCert, adminKey, ctx.String("password-file"))},
+			opts...)
 	}
 
 	// Create online client
-	opts = append([]ca.ClientOption{ca.WithRootFile(root),
-		ca.WithAdminX5C(adminCert, adminKey, ctx.String("password-file"))},
-		opts...)
 	return ca.NewAdminClient(caURL, opts...)
 }

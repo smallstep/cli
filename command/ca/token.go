@@ -33,7 +33,7 @@ func tokenCommand() cli.Command {
 [**--output-file**=<file>] [**--key**=<file>] [**--san**=<SAN>] [**--offline**]
 [**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--x5c-insecure**]
 [**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
-[**--ssh**] [**--host**] [**--principal**=<name>] [**--k8ssa-token-path**=<file>]
+[**--ssh**] [**--admin**] [**--host**] [**--principal**=<name>] [**--k8ssa-token-path**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
@@ -205,6 +205,10 @@ be invalid for any other API request.`,
 				Name:  "ssh",
 				Usage: `Create a token for authorizing an SSH certificate signing request.`,
 			},
+			cli.BoolFlag{
+				Name:  "admin",
+				Usage: `Create a token for authorizing an admin API request.`,
+			},
 			flags.K8sSATokenPathFlag,
 			flags.Offline,
 			flags.CaURL,
@@ -228,6 +232,7 @@ func tokenAction(ctx *cli.Context) error {
 	isRenew := ctx.Bool("renew")
 	isRekey := ctx.Bool("rekey")
 	// ssh flags
+	isAdmin := ctx.Bool("admin")
 	isSSH := ctx.Bool("ssh")
 	isHost := ctx.Bool("host")
 	principals := ctx.StringSlice("principal")
@@ -247,7 +252,10 @@ func tokenAction(ctx *cli.Context) error {
 
 	// Default token type is always a 'Sign' token.
 	var typ int
-	if isSSH {
+	switch {
+	case isAdmin:
+		typ = cautils.AdminType
+	case isSSH:
 		switch {
 		case isRevoke:
 			typ = cautils.SSHRevokeType
@@ -262,7 +270,7 @@ func tokenAction(ctx *cli.Context) error {
 			typ = cautils.SSHUserSignType
 			sans = principals
 		}
-	} else {
+	default:
 		switch {
 		case isRevoke:
 			typ = cautils.RevokeType
