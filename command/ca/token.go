@@ -15,12 +15,6 @@ import (
 )
 
 func tokenCommand() cli.Command {
-	// Avoid the conflict with --not-before --not-after
-	certNotBeforeFlag := flags.NotBefore
-	certNotAfterFlag := flags.NotAfter
-	certNotBeforeFlag.Name = "cert-not-before"
-	certNotAfterFlag.Name = "cert-not-after"
-
 	return cli.Command{
 		Name:   "token",
 		Action: command.ActionFunc(tokenAction),
@@ -145,8 +139,6 @@ $ TOKEN=$(step ca token --x5c-cert internal.crt --x5c-key internal.key --renew i
 $ curl -X POST -H "Authorization: Bearer $TOKEN" https://ca.example.com/1.0/renew
 '''`,
 		Flags: []cli.Flag{
-			certNotAfterFlag,
-			certNotBeforeFlag,
 			provisionerKidFlag,
 			cli.StringSliceFlag{
 				Name: "san",
@@ -167,9 +159,12 @@ multiple principals.`,
 			flags.Force,
 			flags.NotAfter,
 			flags.NotBefore,
+			flags.CertNotAfter,
+			flags.CertNotBefore,
 			flags.Provisioner,
 			flags.PasswordFile,
 			flags.ProvisionerPasswordFile,
+			flags.KMSUri,
 			flags.X5cCert,
 			flags.X5cKey,
 			flags.X5cInsecure,
