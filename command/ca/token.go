@@ -24,7 +24,7 @@ func tokenCommand() cli.Command {
 [**--cert-not-before**=<time|duration>] [**--cert-not-after**=<time|duration>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--password-file**=<file>] [**--provisioner-password-file**=<file>]
-[**--output-file**=<file>] [**--key**=<file>] [**--san**=<SAN>] [**--offline**]
+[**--output-file**=<file>] [**--kms**=uri] [**--key**=<file>] [**--san**=<SAN>] [**--offline**]
 [**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--x5c-insecure**]
 [**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
 [**--ssh**] [**--host**] [**--principal**=<name>] [**--k8ssa-token-path**=<file>]
@@ -137,6 +137,20 @@ Generate a renew token and use it in a renew after expiry request:
 '''
 $ TOKEN=$(step ca token --x5c-cert internal.crt --x5c-key internal.key --renew internal.example.com)
 $ curl -X POST -H "Authorization: Bearer $TOKEN" https://ca.example.com/1.0/renew
+'''
+
+Generate a JWK provisioner token using a key in a YubiKey:
+'''
+$ step ca token --kms yubikey:pin-value=123456 --key yubikey:slot-id=82 internal.example.com
+'''
+
+Generate an X5C provisioner token using a certificate in a YubiKey. Note that a
+YubiKey does not support storing a certificate bundle. To make it work, you must
+add the intermediate and the root in the provisioner configuration:
+'''
+$ step ca token --kms yubikey:pin-value=123456 \
+  --x5c-cert yubikey:slot-id=82 --x5c-key yubikey:slot-id=82 \
+  internal.example.com
 '''`,
 		Flags: []cli.Flag{
 			provisionerKidFlag,
