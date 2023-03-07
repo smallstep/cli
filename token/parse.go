@@ -171,7 +171,10 @@ func parseResponse(jwt *jose.JSONWebToken, p Payload) (*JSONWebToken, error) {
 		if err := json.Unmarshal(p.Amazon.Document, &p.Amazon.InstanceIdentityDocument); err != nil {
 			return nil, errors.Wrap(err, "error unmarshaling instance identity document")
 		}
-	case strings.HasPrefix(p.Issuer, "https://sts.windows.net/"):
+	case strings.HasPrefix(p.Issuer, "https://sts.windows.net/"),
+		strings.HasPrefix(p.Issuer, "https://sts.chinacloudapi.cn/"),
+		strings.HasPrefix(p.Issuer, "https://sts.microsoftazure.de/"),
+		strings.HasPrefix(p.Issuer, "https://sts.usgovcloudapi.net/"):
 		if re := azureXMSMirIDRegExp.FindStringSubmatch(p.XMSMirID); len(re) > 0 {
 			p.Azure = &AzurePayload{
 				SubscriptionID: re[1],
