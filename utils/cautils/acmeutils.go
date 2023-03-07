@@ -619,8 +619,7 @@ type acmeFlow struct {
 	subject         string
 	sans            []string
 	acmeDir         string
-	//tpmKey          *attest.Key
-	tpmSigner crypto.Signer
+	tpmSigner       crypto.Signer
 }
 
 func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
