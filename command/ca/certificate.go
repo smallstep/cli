@@ -1,6 +1,7 @@
 package ca
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -10,6 +11,7 @@ import (
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/pemutil"
 )
@@ -156,11 +158,15 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			cli.StringFlag{
 				Name:  "attestation-ca-url",
 				Usage: "The base url of the attestation CA to use",
-				Value: "https://192.168.0.186:2443/tpmattest/tpm01", // TODO(hs): remove default value
 			},
 			cli.BoolFlag{
 				Name:  "tpm",
-				Usage: "Use TPM for Device Attestation", // TODO(hs): may want to provide path to TPM instead to enable this flow?
+				Usage: "Use TPM for Device Attestation", // TODO(hs): may want to provide path to / name of TPM instead to enable this flow?
+			},
+			cli.StringFlag{
+				Name:  "tpm-storage-directory",
+				Usage: "The directory where TPM keys and certificates will be stored",
+				Value: filepath.Join(step.Path(), "tpm"),
 			},
 			flags.TemplateSet,
 			flags.TemplateSetFile,
