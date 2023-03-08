@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Support on `step ca token` for signing JWK, X5C and SSHPOP tokens using a KMS
+  (smallstep/cli#871).
+
 ## [v0.23.3] - 2022-03-01
 
 ### Fixed

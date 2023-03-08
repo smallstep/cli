@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
+	"crypto/elliptic"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
@@ -14,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/smallstep/cli/internal/plugin"
+	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 )
 
@@ -75,6 +77,52 @@ func LoadCertificate(kms, certPath string) ([]*x509.Certificate, error) {
 	}
 
 	return cert, nil
+}
+
+// LoadJSONWebKey returns a jose.JSONWebKey from a KMS or a file.
+func LoadJSONWebKey(kms, name string, opts ...jose.Option) (*jose.JSONWebKey, error) {
+	if kms == "" {
+		return jose.ReadKey(name, opts...)
+	}
+
+	signer, err := newKMSSigner(kms, name)
+	if err != nil {
+		return nil, err
+	}
+
+	jwk := &jose.JSONWebKey{
+		Key: jose.NewOpaqueSigner(signer),
+		Use: "sig",
+	}
+
+	// Get default signing algorithm for each key type:
+	switch pub := signer.Public().(type) {
+	case *ecdsa.PublicKey:
+		switch pub.Curve {
+		case elliptic.P256():
+			jwk.Algorithm = jose.ES256
+		case elliptic.P384():
+			jwk.Algorithm = jose.ES384
+		case elliptic.P521():
+			jwk.Algorithm = jose.ES512
+		default:
+			return nil, fmt.Errorf("unsupported elliptic curve %q", pub.Curve.Params().Name)
+		}
+	case *rsa.PublicKey:
+		jwk.Algorithm = jose.RS256
+	case ed25519.PublicKey:
+		jwk.Algorithm = jose.XEdDSA
+	default:
+		return nil, fmt.Errorf("unsupported key type %T", pub)
+	}
+
+	kid, err := jose.Thumbprint(jwk)
+	if err != nil {
+		return nil, err
+	}
+	jwk.KeyID = kid
+
+	return jwk, nil
 }
 
 // CreateAttestor creates an attestor that will use `step-kms-plugin` with the
