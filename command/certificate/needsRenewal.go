@@ -132,7 +132,7 @@ authenticity of the remote server.
 			},
 			cli.BoolFlag{
 				Name:  "verbose, v",
-				Usage: `Return "true" or "false" in the terminal.`,
+				Usage: `Print human readable affirmation if certificate requires renewal.`,
 			},
 			flags.ServerName,
 		},
