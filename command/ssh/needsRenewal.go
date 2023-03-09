@@ -153,10 +153,10 @@ func needsRenewalAction(ctx *cli.Context) error {
 }
 
 func isVerboseExit(needsRenewal, isVerbose bool) error {
-	if isVerbose {
-		fmt.Println(needsRenewal)
-	}
 	if needsRenewal {
+		if isVerbose {
+			fmt.Println("certificate needs renewal")
+		}
 		return nil
 	}
 	return errs.NewExitError(errors.Errorf("certificate does not need renewal"), 1)
