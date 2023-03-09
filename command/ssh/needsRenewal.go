@@ -70,7 +70,7 @@ Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
 			cli.BoolFlag{
 				Name:  "verbose, v",
-				Usage: `Print human readable affirmation of certificate requiring renewal if the certificate needs renewal.`,
+				Usage: `Print human readable affirmation if certificate requires renewal.`,
 			},
 		},
 	}
