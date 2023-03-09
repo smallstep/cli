@@ -27,12 +27,12 @@ func needsRenewalCommand() cli.Command {
 [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
 		Description: `**step certificate needs-renewal** returns '0' if the certificate needs
 to be renewed based on it's remaining lifetime. Returns '1' the certificate is
-within it's validity lifetime bounds and does not need to be renewed. Returns
-'255' for any other error. By default, a certificate "needs renewal" when it has
-passed 66% (default threshold) of it's allotted lifetime. This threshold can be
-adjusted using the '--expires-in' flag. Additionally, by default only the leaf
-certificate will be checked by the command; to check each certificate in the
-chain use the '--bundle' flag.
+within it's validity lifetime bounds and does not need to be renewed.
+By default, a certificate "needs renewal" when it has passed 66% (default
+threshold) of it's allotted lifetime. This threshold can be adjusted using the
+'--expires-in' flag. Additionally, by default only the leaf certificate will
+be checked by the command; to check each certificate in the chain use the
+'--bundle' flag.
 
 ## POSITIONAL ARGUMENTS
 
