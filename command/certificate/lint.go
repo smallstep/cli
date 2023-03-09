@@ -20,7 +20,7 @@ func lintCommand() cli.Command {
 		Usage:  `lint certificate details`,
 		UsageText: `**step certificate lint** <crt-file> [**--roots**=<root-bundle>]
 [**--servername**=<servername>]`,
-		Description: `**step certificate lint** checks a certificate for common errors and outputs the result in JSON format. It is intended for evaluating Web PKI certificates.
+		Description: `**step certificate lint** checks a certificate for common errors and outputs the result in JSON format. It is intended for evaluating Web PKI certificates, and may not be appropriate for internal PKIs.
 
 ## POSITIONAL ARGUMENTS
 
