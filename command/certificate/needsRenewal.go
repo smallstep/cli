@@ -48,9 +48,20 @@ Check if certificate.crt has passed 66 percent of its validity period:
 $ step certificate needs-renewal ./certificate.crt
 '''
 
+Check if any certificate in the bundle has passed 66 percent of it's validity period:
+'''
+$ step certificate needs-renewal ./certificate.crt --bundle
+'''
+
 Perform the same check for the TLS server certificate at smallstep.com:
 '''
 $ step certificate needs-renewal https://smallstep.com
+'''
+
+Check if any certificate in the bundle for smallstep.com has has passed 66 percent
+of it's validity period:
+'''
+$ step certificate needs-renewal https://smallstep.com --bundle
 '''
 
 Check if certificate.crt expires within 1 hour 15 minutes from now:
@@ -110,6 +121,11 @@ authenticity of the remote server.
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
+			cli.BoolFlag{
+				Name: `bundle`,
+				Usage: `Check all certificates in the order in which they appear in the bundle.
+By default (without this flag) this command will only check the leaf certificate.`,
+			},
 			flags.ServerName,
 		},
 	}
@@ -126,6 +142,7 @@ func needsRenewalAction(ctx *cli.Context) error {
 		expiresIn  = ctx.String("expires-in")
 		roots      = ctx.String("roots")
 		serverName = ctx.String("servername")
+		bundle     = ctx.Bool("bundle")
 	)
 
 	var certs []*x509.Certificate
@@ -189,6 +206,10 @@ func needsRenewalAction(ctx *cli.Context) error {
 			}
 		} else if duration >= remainingValidity {
 			return nil
+		}
+
+		if !bundle {
+			break
 		}
 	}
 
