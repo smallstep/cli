@@ -181,7 +181,7 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 	}
 
 	var kmsSigner crypto.Signer
-	kmsSigner, err = cryptoutil.CreateSigner(ctx.String("kms"), x5cKeyFile, opts...)
+	kmsSigner, err = cryptoutil.CreateSigner(kmsURI, x5cKeyFile, opts...)
 	if err != nil {
 		return "", err
 	}
@@ -297,7 +297,7 @@ func generateSSHPOPToken(ctx *cli.Context, p *provisioner.SSHPOP, tokType int, t
 	if passOpt := getProvisionerPasswordOption(ctx); passOpt != nil {
 		opts = append(opts, passOpt)
 	}
-	jwk, err := jose.ReadKey(sshPOPKeyFile, opts...)
+	jwk, err := cryptoutil.LoadJSONWebKey(ctx.String("kms"), sshPOPKeyFile, opts...)
 	if err != nil {
 		return "", err
 	}
@@ -391,8 +391,7 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 			return nil, "", errors.Wrap(err, "error unmarshaling provisioning key")
 		}
 	} else {
-		// Get private key from given key file
-		jwk, err = jose.ReadKey(keyFile, opts...)
+		jwk, err = cryptoutil.LoadJSONWebKey(ctx.String("kms"), keyFile, opts...)
 		if err != nil {
 			return nil, "", err
 		}
@@ -403,11 +402,9 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 		case len(tokAttrs.kid) > 0:
 			kid = tokAttrs.kid
 		default:
-			hash, err := jwk.Thumbprint(crypto.SHA256)
-			if err != nil {
-				return nil, "", errors.Wrap(err, "error generating JWK thumbprint")
+			if kid, err = jose.Thumbprint(jwk); err != nil {
+				return nil, "", err
 			}
-			kid = base64.RawURLEncoding.EncodeToString(hash)
 		}
 	}
 	return
