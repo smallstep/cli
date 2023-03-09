@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Support on `step ca token` for signing JWK, X5C and SSHPOP tokens using a KMS
   (smallstep/cli#871).
 
+### Changed
+
+- `step certificate needs-renewal` will only check the leaf certificate by default.
+  To test the full certificate bundle use the `--bundle` flag.
+
 ## [v0.23.3] - 2022-03-01
 
 ### Fixed
