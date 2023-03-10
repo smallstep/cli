@@ -1,12 +1,15 @@
-FROM golang:alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:alpine AS builder
 
-RUN mkdir /src
-ADD . /src
+WORKDIR /src
+COPY go.mod go.sum .
+RUN go mod download
+COPY . .
 
+ARG TARGETOS TARGETARCH
 RUN apk add --no-cache make git curl && \
 	cd /src && \
 	mkdir -p output/bin && \
-	make V=1 bin/step
+	CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -v -o bin/step github.com/smallstep/cli/cmd/step
 
 FROM alpine
 
