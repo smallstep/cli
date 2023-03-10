@@ -459,9 +459,9 @@ func createAction(ctx *cli.Context) error {
 		return err
 	}
 
-	insecure := ctx.Bool("insecure")
+	insecureMode := ctx.Bool("insecure")
 	noPass := ctx.Bool("no-password")
-	if noPass && !insecure {
+	if noPass && !insecureMode {
 		return errs.RequiredWithFlag(ctx, "no-password", "insecure")
 	}
 
@@ -710,9 +710,14 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 
 	// Validate key parameters and generate key pair
 	if keyFile == "" {
-		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, ctx.Bool("insecure"), "kty", "curve", "size")
+		insecureMode := ctx.Bool("insecure")
+		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, insecureMode, "kty", "curve", "size")
 		if err != nil {
 			return nil, nil, err
+		}
+		if insecureMode { // put keyutil in insecure mode, allowing RSA keys shorter than 2048 bits
+			undoInsecure := keyutil.Insecure()
+			defer undoInsecure()
 		}
 		pub, priv, err := keyutil.GenerateKeyPair(kty, crv, size)
 		if err != nil {
