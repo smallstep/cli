@@ -185,6 +185,13 @@ periodically. By default the daemon will rekey a certificate before 2/3 of the
 time to expiration has elapsed. The period can be configured using the
 **--rekey-period** or **--expires-in** flags.`,
 			},
+			cli.BoolFlag{
+				Name: "service",
+				Usage: `Run the rekey command as a windows service, rekeying and overwriting the certificate
+periodically. By default the service will rekey a certificate before 2/3 of the
+time to expiration has elapsed. The period can be configured using the
+**--rekey-period** or **--expires-in** flags. You must install this as a service first using **sc.exe create step-renew binPath= "path_to_step_cli.exe ca rekey --service --ca-url=your_ca_url --root=path_to_root_ca.crt other_arguments"** `,
+			},
 			cli.StringFlag{
 				Name: "rekey-period",
 				Usage: `The period with which to schedule rekeying of the certificate in daemon mode.
@@ -216,6 +223,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	keyFile := args.Get(1)
 	passFile := ctx.String("password-file")
 	isDaemon := ctx.Bool("daemon")
+	isService := ctx.Bool("service")
 	execCmd := ctx.String("exec")
 	givenPrivate := ctx.String("private-key")
 
@@ -310,6 +318,13 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		ctx.Set("force", "true")
 		next := nextRenewDuration(leaf, expiresIn, rekeyPeriod)
 		return renewer.Daemon(outCert, next, expiresIn, rekeyPeriod, afterRekey)
+	}
+
+	if isService {
+		// Force is always enabled when daemon mode is used
+		ctx.Set("force", "true")
+		next := nextRenewDuration(leaf, expiresIn, rekeyPeriod)
+		return renewer.Service(outCert, next, expiresIn, rekeyPeriod, afterRekey)
 	}
 
 	// Do not rekey if (cert.notAfter - now) > (expiresIn + jitter)
