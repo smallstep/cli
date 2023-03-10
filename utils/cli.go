@@ -3,6 +3,7 @@ package utils
 import (
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/keyutil"
 )
 
 // DefaultRSASize sets the default key size for RSA to 2048 bits.
@@ -29,8 +30,9 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 			if ctx.IsSet(curveKey) {
 				return kty, crv, size, errs.IncompatibleFlagValue(ctx, curveKey, ktyKey, kty)
 			}
-			if size < 2048 && !insecure {
-				return kty, crv, size, errs.MinSizeInsecureFlag(ctx, sizeKey, "2048")
+			minimalSize := keyutil.MinRSAKeyBytes * 8
+			if size < minimalSize && !insecure {
+				return kty, crv, size, errs.MinSizeInsecureFlag(ctx, sizeKey, minimalSize)
 			}
 			if size <= 0 {
 				return kty, crv, size, errs.MinSizeFlag(ctx, sizeKey, "0")

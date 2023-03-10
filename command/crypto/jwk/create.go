@@ -15,6 +15,7 @@ import (
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/randutil"
 )
 
@@ -432,8 +433,9 @@ func createAction(ctx *cli.Context) (err error) {
 		}
 		// If size is not set it will use a safe default
 		if ctx.IsSet("size") {
-			if size < 2048 && !ctx.Bool("insecure") {
-				return errs.MinSizeInsecureFlag(ctx, "size", "2048")
+			minimalSize := keyutil.MinRSAKeyBytes * 8
+			if size < minimalSize && !ctx.Bool("insecure") {
+				return errs.MinSizeInsecureFlag(ctx, "size", minimalSize)
 			}
 			if size <= 0 {
 				return errs.MinSizeFlag(ctx, "size", "0")
@@ -450,7 +452,7 @@ func createAction(ctx *cli.Context) (err error) {
 		// If size is not set it will use a safe default
 		if ctx.IsSet("size") {
 			if size < 16 && !ctx.Bool("insecure") {
-				return errs.MinSizeInsecureFlag(ctx, "size", "16")
+				return errs.MinSizeInsecureFlag(ctx, "size", 16)
 			}
 			if size <= 0 {
 				return errs.MinSizeFlag(ctx, "size", "0")
