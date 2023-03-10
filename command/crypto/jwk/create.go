@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
@@ -435,7 +436,7 @@ func createAction(ctx *cli.Context) (err error) {
 		if ctx.IsSet("size") {
 			minimalSize := keyutil.MinRSAKeyBytes * 8
 			if size < minimalSize && !ctx.Bool("insecure") {
-				return errs.MinSizeInsecureFlag(ctx, "size", minimalSize)
+				return errs.MinSizeInsecureFlag(ctx, "size", strconv.Itoa(minimalSize))
 			}
 			if size <= 0 {
 				return errs.MinSizeFlag(ctx, "size", "0")
@@ -452,7 +453,7 @@ func createAction(ctx *cli.Context) (err error) {
 		// If size is not set it will use a safe default
 		if ctx.IsSet("size") {
 			if size < 16 && !ctx.Bool("insecure") {
-				return errs.MinSizeInsecureFlag(ctx, "size", 16)
+				return errs.MinSizeInsecureFlag(ctx, "size", "16")
 			}
 			if size <= 0 {
 				return errs.MinSizeFlag(ctx, "size", "0")

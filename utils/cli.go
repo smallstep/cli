@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"strconv"
+
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/crypto/keyutil"
@@ -32,7 +34,7 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 			}
 			minimalSize := keyutil.MinRSAKeyBytes * 8
 			if size < minimalSize && !insecure {
-				return kty, crv, size, errs.MinSizeInsecureFlag(ctx, sizeKey, minimalSize)
+				return kty, crv, size, errs.MinSizeInsecureFlag(ctx, sizeKey, strconv.Itoa(minimalSize))
 			}
 			if size <= 0 {
 				return kty, crv, size, errs.MinSizeFlag(ctx, sizeKey, "0")
