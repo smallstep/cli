@@ -178,7 +178,6 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 }
 
 func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Certificate) ([]byte, error) {
-
 	params, err := key.CertificationParameters(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed obtaining key certification parameters: %w", err)
@@ -193,7 +192,7 @@ func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Cer
 		Format: "tpm",
 		AttStatement: map[string]interface{}{
 			"ver":      "2.0",
-			"alg":      int64(-257), // AlgRS256
+			"alg":      int64(-257), // AlgRS256 (COSE identifier); depends on type of the private key
 			"x5c":      akChainBytes,
 			"sig":      params.CreateSignature,
 			"certInfo": params.CreateAttestation,
@@ -208,7 +207,6 @@ func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Cer
 }
 
 func performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestationCABaseURL string) ([]*x509.Certificate, error) {
-
 	// TODO(hs): what about performing attestation for an existing AK identifier and/or cert, but
 	// with a different Attestation CA? It seems sensible to enroll with that other Attestation CA,
 	// but it needs capturing some knowledge about the Attestation CA with the AK (cert). Possible to
@@ -275,6 +273,7 @@ func performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestat
 	if err != nil {
 		return nil, fmt.Errorf("failed performing attestation request with attestation CA %q: %w", attestURL, err)
 	}
+	defer resp.Body.Close()
 
 	var attResp attestationResponse
 	if err := json.NewDecoder(resp.Body).Decode(&attResp); err != nil {
@@ -311,6 +310,7 @@ func performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestat
 	if err != nil {
 		return nil, fmt.Errorf("failed performing secret request with attestation CA %q: %w", secretURL, err)
 	}
+	defer resp.Body.Close()
 
 	var secretResp secretResponse
 	if err := json.NewDecoder(resp.Body).Decode(&secretResp); err != nil {
@@ -339,6 +339,7 @@ func performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestat
 
 // Borrowed from:
 // https://github.com/golang/crypto/blob/master/acme/acme.go#L748
+// TODO(hs): hash should depend on the "alg" parameter.
 func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
 	th, err := jwk.Thumbprint(crypto.SHA256)
 	digest := sha256.Sum256([]byte(fmt.Sprintf("%s.%s", token, th)))

@@ -761,7 +761,8 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	if af.csr == nil {
 		var signer crypto.Signer
 		var template *x509.CertificateRequest
-		if attestationURI == "" {
+		switch {
+		case attestationURI == "":
 			insecure := af.ctx.Bool("insecure")
 			kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, insecure, "kty", "curve", "size")
 			if err != nil {
@@ -779,7 +780,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 				DNSNames:    dnsNames,
 				IPAddresses: ips,
 			}
-		} else if af.tpmSigner != nil {
+		case af.tpmSigner != nil:
 			signer = af.tpmSigner
 			template = &x509.CertificateRequest{
 				Subject: pkix.Name{
@@ -788,7 +789,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 				// TODO(hs): add PermanentIdentifier extension?
 				// TODO(hs): add SKAE extension?
 			}
-		} else {
+		default:
 			signer, err = cryptoutil.CreateSigner(attestationURI, attestationURI)
 			if err != nil {
 				return nil, err
