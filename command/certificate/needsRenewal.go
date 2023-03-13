@@ -2,6 +2,7 @@ package certificate
 
 import (
 	"crypto/x509"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -22,13 +23,16 @@ func needsRenewalCommand() cli.Command {
 		Action: cli.ActionFunc(needsRenewalAction),
 		Usage:  `Check if a certificate needs to be renewed`,
 		UsageText: `**step certificate needs-renewal** <cert-file or hostname>
-[**--expires-in**=<percent|duration>] [**--roots**=<root-bundle>] [**--servername**=<servername>]`,
+[**--expires-in**=<percent|duration>] [**--bundle**] [**--verbose**]
+[**--roots**=<root-bundle>] [**--servername**=<servername>]`,
 		Description: `**step certificate needs-renewal** returns '0' if the certificate needs
-to be renewed based on it's remaining lifetime. Returns '1' the certificate is
-within it's validity lifetime bounds and does not need to be renewed. Returns
-'255' for any other error. By default, a certificate "needs renewal" when it has
-passed 66% (default threshold) of it's allotted lifetime. This threshold can be
-adjusted using the '--expires-in' flag.
+to be renewed based on its remaining lifetime. Returns '1' the certificate is
+within its validity lifetime bounds and does not need to be renewed.
+By default, a certificate "needs renewal" when it has passed 66% (default
+threshold) of its allotted lifetime. This threshold can be adjusted using the
+'--expires-in' flag. Additionally, by default only the leaf certificate will
+be checked by the command; to check each certificate in the chain use the
+'--bundle' flag.
 
 ## POSITIONAL ARGUMENTS
 
@@ -43,14 +47,26 @@ exist, and '255' for any other error.
 
 ## EXAMPLES
 
-Check if certificate.crt has passed 66 percent of its validity period:
+Check if the leaf certificate in the file certificate.crt has passed 66 percent of its validity period:
 '''
 $ step certificate needs-renewal ./certificate.crt
 '''
 
-Perform the same check for the TLS server certificate at smallstep.com:
+Check if any certificate in the bundle has passed 66 percent of its validity period:
+'''
+$ step certificate needs-renewal ./certificate.crt --bundle
+'''
+
+Check if the leaf certificate provided by smallstep.com has passed 66 percent
+of its vlaidity period:
 '''
 $ step certificate needs-renewal https://smallstep.com
+'''
+
+Check if any certificate in the bundle for smallstep.com has has passed 66 percent
+of its validity period:
+'''
+$ step certificate needs-renewal https://smallstep.com --bundle
 '''
 
 Check if certificate.crt expires within 1 hour 15 minutes from now:
@@ -110,6 +126,14 @@ authenticity of the remote server.
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
+			cli.BoolFlag{
+				Name:  `bundle`,
+				Usage: `Check all certificates in the order in which they appear in the bundle.`,
+			},
+			cli.BoolFlag{
+				Name:  "verbose, v",
+				Usage: `Print human readable affirmation if certificate requires renewal.`,
+			},
 			flags.ServerName,
 		},
 	}
@@ -126,6 +150,8 @@ func needsRenewalAction(ctx *cli.Context) error {
 		expiresIn  = ctx.String("expires-in")
 		roots      = ctx.String("roots")
 		serverName = ctx.String("servername")
+		bundle     = ctx.Bool("bundle")
+		isVerbose  = ctx.Bool("verbose")
 	)
 
 	var certs []*x509.Certificate
@@ -185,12 +211,26 @@ func needsRenewalAction(ctx *cli.Context) error {
 			percentUsed := (1 - remainingValidity.Minutes()/totalValidity.Minutes()) * 100
 
 			if int(percentUsed) >= percentThreshold {
-				return nil
+				return isVerboseExit(true, isVerbose)
 			}
 		} else if duration >= remainingValidity {
-			return nil
+			return isVerboseExit(true, isVerbose)
+		}
+
+		if !bundle {
+			break
 		}
 	}
 
+	return isVerboseExit(false, isVerbose)
+}
+
+func isVerboseExit(needsRenewal, isVerbose bool) error {
+	if needsRenewal {
+		if isVerbose {
+			fmt.Println("certificate needs renewal")
+		}
+		return nil
+	}
 	return errs.NewExitError(errors.Errorf("certificate does not need renewal"), 1)
 }

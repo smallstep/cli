@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -18,14 +19,15 @@ const defaultPercentUsedThreshold = 66
 
 func needsRenewalCommand() cli.Command {
 	return cli.Command{
-		Name:      "needs-renewal",
-		Action:    cli.ActionFunc(needsRenewalAction),
-		Usage:     `Check if an SSH certificate needs to be renewed`,
-		UsageText: `**step ssh needs-renewal** <crt-file> [**--expires-in**=<percent|duration>]`,
+		Name:   "needs-renewal",
+		Action: cli.ActionFunc(needsRenewalAction),
+		Usage:  `Check if an SSH certificate needs to be renewed`,
+		UsageText: `**step ssh needs-renewal** <crt-file>
+[**--expires-in**=<percent|duration>] [**--verbose**]`,
 		Description: `**step ssh needs-renewal** returns '0' if the SSH certificate needs
-to be renewed based on it's remaining lifetime. Returns '1' if the SSH certificate is
-within it's validity lifetime bounds and does not need to be renewed. Returns
-'255' for any other error. By default, an SSH certificate "needs renewal" when it has
+to be renewed based on it's remaining lifetime. Returns '1' if the SSH
+certificate is within it's validity lifetime bounds and does not need to be
+renewed. By default, an SSH certificate "needs renewal" when it has
 passed 66% (default threshold) of it's allotted lifetime. This threshold can be
 adjusted using the '--expires-in' flag.
 
@@ -66,6 +68,10 @@ character. If using <duration>, the input must be a sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			},
+			cli.BoolFlag{
+				Name:  "verbose, v",
+				Usage: `Print human readable affirmation if certificate requires renewal.`,
+			},
 		},
 	}
 }
@@ -78,6 +84,7 @@ func needsRenewalAction(ctx *cli.Context) error {
 	var (
 		certFile  = ctx.Args().First()
 		expiresIn = ctx.String("expires-in")
+		isVerbose = ctx.Bool("verbose")
 	)
 
 	_, err := os.Stat(certFile)
@@ -130,7 +137,7 @@ func needsRenewalAction(ctx *cli.Context) error {
 		percentUsed := (1 - remainingValidity.Minutes()/totalValidity.Minutes()) * 100
 
 		if int(percentUsed) >= percentThreshold {
-			return nil
+			return isVerboseExit(true, isVerbose)
 		}
 	} else {
 		duration, err = time.ParseDuration(expiresIn)
@@ -138,9 +145,19 @@ func needsRenewalAction(ctx *cli.Context) error {
 			return errs.NewExitError(errs.InvalidFlagValue(ctx, "expires-in", expiresIn, ""), 255)
 		}
 		if duration >= remainingValidity {
-			return nil
+			return isVerboseExit(true, isVerbose)
 		}
 	}
 
+	return isVerboseExit(false, isVerbose)
+}
+
+func isVerboseExit(needsRenewal, isVerbose bool) error {
+	if needsRenewal {
+		if isVerbose {
+			fmt.Println("certificate needs renewal")
+		}
+		return nil
+	}
 	return errs.NewExitError(errors.Errorf("certificate does not need renewal"), 1)
 }

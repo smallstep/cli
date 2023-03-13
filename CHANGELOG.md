@@ -26,7 +26,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
-## [Unreleased]
+## [v0.23.4] - 2022-03-09
+
+### Added
+
+- Support on `step ca token` for signing JWK, X5C and SSHPOP tokens using a KMS
+  (smallstep/cli#871).
+- debian:bullseye base image (smallstep/cli#861)
+
+### Changed
+
+- `step certificate needs-renewal` will only check the leaf certificate by default.
+  To test the full certificate bundle use the `--bundle` flag. (smallstep/cli#873)
 
 ## [v0.23.3] - 2022-03-01
 

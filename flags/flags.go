@@ -153,6 +153,28 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 "s", "m", "h".`,
 	}
 
+	// CertNotBefore is a cli.Flag used to pass the start period of the certificate
+	// validity. This is currently only used for SSH certificates.
+	CertNotBefore = cli.StringFlag{
+		Name: "cert-not-before",
+		Usage: `The <time|duration> when the certificate validity period starts. If a <time> is
+used it is expected to be in RFC 3339 format. If a <duration> is used, it is a
+sequence of decimal numbers, each with optional fraction and a unit suffix, such
+as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
+"s", "m", "h". This flag is only supported on SSH certificates.`,
+	}
+
+	// CertNotAfter is a cli.Flag used to pass the end period of the certificate
+	// validity. This is currently only used for SSH certificates.
+	CertNotAfter = cli.StringFlag{
+		Name: "cert-not-after",
+		Usage: `The <time|duration> when the certificate validity period ends. If a <time> is
+used it is expected to be in RFC 3339 format. If a <duration> is used, it is a
+sequence of decimal numbers, each with optional fraction and a unit suffix, such
+as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
+"s", "m", "h". This flag is only supported on SSH certificates.`,
+	}
+
 	// Provisioner is a cli.Flag used to pass the CA provisioner to use.
 	Provisioner = cli.StringFlag{
 		Name:  "provisioner,issuer",

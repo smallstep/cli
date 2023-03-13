@@ -103,13 +103,13 @@ func createAction(ctx *cli.Context) (err error) {
 		return errs.EqualArguments(ctx, "PUB_FILE", "PRIV_FILE")
 	}
 
-	insecure := ctx.Bool("insecure")
+	insecureMode := ctx.Bool("insecure")
 	noPass := ctx.Bool("no-password")
 	passwordFile := ctx.String("password-file")
 	if noPass && len(passwordFile) > 0 {
 		return errs.IncompatibleFlag(ctx, "no-password", "password-file")
 	}
-	if noPass && !insecure {
+	if noPass && !insecureMode {
 		return errs.RequiredWithFlag(ctx, "no-password", "insecure")
 	}
 
@@ -151,12 +151,15 @@ func createAction(ctx *cli.Context) (err error) {
 			kty, crv string
 			size     int
 		)
-		kty, crv, size, err = utils.GetKeyDetailsFromCLI(ctx, insecure, "kty",
+		kty, crv, size, err = utils.GetKeyDetailsFromCLI(ctx, insecureMode, "kty",
 			"curve", "size")
 		if err != nil {
 			return err
 		}
-
+		if insecureMode { // put keyutil in insecure mode, allowing RSA keys shorter than 2048 bits
+			undoInsecure := keyutil.Insecure()
+			defer undoInsecure()
+		}
 		pub, priv, err = keyutil.GenerateKeyPair(kty, crv, size)
 		if err != nil {
 			return err
