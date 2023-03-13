@@ -398,12 +398,7 @@ type attestationObject struct {
 
 // doDeviceAttestation performs `device-attest-01` challenge validation.
 func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
-
-	// TODO(hs): determine how to choose this case; transparently? Integrate TPM with the KMS plugin?
-	// Another plugin? Or just integrated inside of the CLI (if it's all plain Go, then that would)
-	// work as we want. Some of the logic is very similar to the `step` attestation with Yubikeys; let's
-	// make that more reusable.
-	if ctx.Bool("tpm") {
+	if ctx.String("attestation-ca-url") != "" {
 		return doTPMAttestation(ctx, ac, ch, identifier, af)
 	}
 

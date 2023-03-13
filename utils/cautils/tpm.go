@@ -57,21 +57,10 @@ type secretResponse struct {
 }
 
 func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
-	// TODO: identifier for permanent-identifier handled differently? Can we provide just whatever we want and is that secure?
-	// The permanent-identifier should probably be more like a hardware identifier specific to the device, not just any hostname or IP.
-	// The hardware identifier (e.g. serial) should then be mapped to something else that is more useful for a server cert, like a
-	// hostname. Or is it more like a device can request a hostname and the attestation can be used to verify that the device is
-	// actually what it says it's saying and allowed to request that specific hostname?
-
-	ctx := context.Background()
-
 	tpmAttestationCABaseURL := clictx.String("attestation-ca-url")
 	if tpmAttestationCABaseURL == "" {
 		return fmt.Errorf("flag %q cannot be empty", "--attestation-ca-url")
 	}
-
-	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
-	ui.Printf(" .") // Indicates passage of time.
 
 	tpmStorageDirectory := clictx.String("tpm-storage-directory")
 	t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)))
@@ -79,8 +68,10 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		return fmt.Errorf("failed initializing TPM: %w", err)
 	}
 
-	ctx = tpm.NewContext(ctx, t)
+	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
+	ui.Printf(" .") // Indicates passage of time.
 
+	ctx := tpm.NewContext(context.Background(), t)
 	info, err := t.Info(ctx)
 	if err != nil {
 		return fmt.Errorf("failed retrieving TPM info: %w", err)
@@ -100,20 +91,32 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		if !errors.Is(err, tpm.ErrNotFound) {
 			return fmt.Errorf("failed getting AK: %w", err)
 		}
-
+		// create a new AK for the identifier if it wasn't found
 		if ak, err = t.CreateAK(ctx, identifier); err != nil {
 			return fmt.Errorf("failed creating AK: %w", err)
 		}
 	}
 
-	akChain, err := akChain(ctx, t, ak, tpmAttestationCABaseURL)
-	if err != nil {
-		return fmt.Errorf("failed getting AK certificate for %q: %w", identifier, err)
+	akChain := ak.CertificateChain()
+	if len(akChain) == 0 {
+		if akChain, err = performAttestation(ctx, t, ak, tpmAttestationCABaseURL); err != nil {
+			return fmt.Errorf("failed performing AK attestation: %w", err)
+		}
+		if err := ak.SetCertificateChain(ctx, akChain); err != nil {
+			return fmt.Errorf("failed storing AK certificate chain: %w", err)
+		}
 	}
 
 	if len(akChain) == 0 {
 		return fmt.Errorf("no AK certificate (chain) available for %q", identifier)
 	}
+
+	// TODO(hs): perform precheck to verify the retrieved AK certificate chain
+	// does belong to the TPM that's in use? Depending on how the certificate
+	// was obtained and stored, it might've been altered somehow.
+	// TODO(hs): support attestation flow with multiple Attestation CAs for a
+	// single AK? Currently an AK is identified just by its name and can only
+	// have one AK certificate (chain) signed by one Attestation CA at a time.
 
 	// Generate the certificate key, include the ACME key authorization in the
 	// the TPM certification data.
@@ -123,23 +126,14 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	}
 
 	config := tpm.AttestKeyConfig{
-		Algorithm:      "RSA",
-		Size:           2048,
+		Algorithm:      "RSA", // TODO(hs): should come from flag/default input
+		Size:           2048,  // TODO(hs): should come from flag/default input
 		QualifyingData: data,
 	}
 	attestedKey, err := t.AttestKey(ctx, identifier, "", config)
 	if err != nil {
 		return fmt.Errorf("failed creating new key attested by AK %q", identifier)
 	}
-
-	signer, err := attestedKey.Signer(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting signer for key %q", attestedKey.Name())
-	}
-
-	// passing the TPM key to the ACME flow, so that it can be used as a signer
-	// TODO(hs): this is a bit of a hack that needs refactoring; should ideally behave similar to `step` format
-	af.tpmSigner = signer
 
 	// Generate the WebAuthn attestation statement.
 	attStmt, err := attestationStatement(ctx, attestedKey, akChain)
@@ -171,6 +165,15 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 
 	ui.Printf(" done!\n")
 
+	// passing the TPM key to the ACME flow, so that it can be used as a signer
+	// TODO(hs): this is a bit of a hack that needs refactoring; should ideally behave similar to `step` format
+	signer, err := attestedKey.Signer(ctx)
+	if err != nil {
+		return fmt.Errorf("failed getting signer for key %q", attestedKey.Name())
+	}
+
+	af.tpmSigner = signer
+
 	return nil
 }
 
@@ -178,7 +181,7 @@ func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Cer
 
 	params, err := key.CertificationParameters(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed obtaining key certification parameters: %w", err)
 	}
 
 	akChainBytes := make([][]byte, len(akChain))
@@ -204,26 +207,8 @@ func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Cer
 	return b, nil
 }
 
-func akChain(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestationCABaseURL string) ([]*x509.Certificate, error) {
+func performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestationCABaseURL string) ([]*x509.Certificate, error) {
 
-	// params, err := ak.AttestationParameters(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// akPub, err := attest.ParseAKPublic(attest.TPMVersion20, params.Public)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// // TODO(hs): lookup AK certificate by akPub; perform attestation for `identifier` if not found
-	// _ = akPub
-
-	// TODO(hs): check if AK has associated AK certificate (chain). It it does, return that.
-	// If not, continue with the attestation flow.
-	// TODO(hs): perform precheck to verify the retrieved AK certificate chain
-	// does belong to this TPM? Depending on how the certificate was obtained and stored,
-	// it might've been altered somehow.
 	// TODO(hs): what about performing attestation for an existing AK identifier and/or cert, but
 	// with a different Attestation CA? It seems sensible to enroll with that other Attestation CA,
 	// but it needs capturing some knowledge about the Attestation CA with the AK (cert). Possible to
@@ -239,7 +224,7 @@ func akChain(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestationCABaseUR
 	for _, ek := range eks {
 		ekCert := ek.Certificate()
 		if ekCert == nil {
-			if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public); err != nil {
+			if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public()); err != nil {
 				return nil, fmt.Errorf("failed marshaling public key: %w", err)
 			}
 		} else {
@@ -264,11 +249,6 @@ func akChain(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestationCABaseUR
 			CreateSignature:         attestParams.CreateSignature,
 		},
 	}
-
-	// TODO(hs): support a new attestation request with existing AK cert?
-	// if akCert != nil {
-	// 	ar.AKCert = akCert.Raw
-	// }
 
 	body, err := json.Marshal(ar)
 	if err != nil {
@@ -353,10 +333,6 @@ func akChain(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestationCABaseUR
 
 		akChain[i] = cert
 	}
-
-	// TODO(hs): persist the AK chain to the TPM storage, so that when a new key
-	// needs to be created with an attestation, the existing AK chain can be used
-	// in the attestation flow.
 
 	return akChain, nil
 }

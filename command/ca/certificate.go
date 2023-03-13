@@ -159,10 +159,6 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 				Name:  "attestation-ca-url",
 				Usage: "The base url of the attestation CA to use",
 			},
-			cli.BoolFlag{
-				Name:  "tpm",
-				Usage: "Use TPM for Device Attestation", // TODO(hs): may want to provide path to / name of TPM instead to enable this flow?
-			},
 			cli.StringFlag{
 				Name:  "tpm-storage-directory",
 				Usage: "The directory where TPM keys and certificates will be stored",
