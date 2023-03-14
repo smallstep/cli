@@ -3,7 +3,6 @@ package cautils
 import (
 	"bytes"
 	"context"
-	"crypto"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
@@ -118,8 +117,7 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	// single AK? Currently an AK is identified just by its name and can only
 	// have one AK certificate (chain) signed by one Attestation CA at a time.
 
-	// Generate the certificate key, include the ACME key authorization in the
-	// the TPM certification data.
+	// Generate the key authorization digest
 	data, err := keyAuthDigest(ac.Key, ch.Token)
 	if err != nil {
 		return fmt.Errorf("failed creating key authorization: %w", err)
@@ -337,11 +335,12 @@ func performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestat
 	return akChain, nil
 }
 
-// Borrowed from:
-// https://github.com/golang/crypto/blob/master/acme/acme.go#L748
-// TODO(hs): hash should depend on the "alg" parameter.
 func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
-	th, err := jwk.Thumbprint(crypto.SHA256)
-	digest := sha256.Sum256([]byte(fmt.Sprintf("%s.%s", token, th)))
-	return digest[:], err
+	keyAuth, err := acme.KeyAuthorization(token, jwk)
+	if err != nil {
+		return nil, err
+	}
+
+	hashedKeyAuth := sha256.Sum256([]byte(keyAuth))
+	return hashedKeyAuth[:], nil
 }
