@@ -9,7 +9,7 @@ RUN apk add --no-cache make git curl
 ARG TARGETOS TARGETARCH
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS_OVERRIDE='GOOS=\$TARGETOS GOARCH=\$TARGETARCH' make V=1 bin/step
+    CGO_ENABLED=0 GOOS_OVERRIDE="GOOS=$TARGETOS GOARCH=$TARGETARCH" make V=1 bin/step
 
 FROM alpine
 
