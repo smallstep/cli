@@ -90,14 +90,16 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		if !errors.Is(err, tpm.ErrNotFound) {
 			return fmt.Errorf("failed getting AK: %w", err)
 		}
-		// create a new AK for the identifier if it wasn't found
+		// create a new AK if it wasn't found. We're using the identifier as the name
+		// used for storing the AK for convenience.
 		if ak, err = t.CreateAK(ctx, identifier); err != nil {
 			return fmt.Errorf("failed creating AK: %w", err)
 		}
 	}
 
+	// check if a (valid) AK certificate (chain) is available. Perform attestation flow otherwise.
 	akChain := ak.CertificateChain()
-	if len(akChain) == 0 {
+	if len(akChain) == 0 || !ak.HasValidPermanentIdentifier(identifier) {
 		if akChain, err = performAttestation(ctx, t, ak, tpmAttestationCABaseURL); err != nil {
 			return fmt.Errorf("failed performing AK attestation: %w", err)
 		}
@@ -106,8 +108,11 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		}
 	}
 
-	if len(akChain) == 0 {
-		return fmt.Errorf("no AK certificate (chain) available for %q", identifier)
+	// when a new AK certificate was issued for the AK, it is possible the
+	// required PermanentIdentifier was not set in the certificate, so the current
+	// chain can't be used.
+	if !ak.HasValidPermanentIdentifier(identifier) {
+		return fmt.Errorf("AK certificate (chain) not valid for %q", identifier)
 	}
 
 	// TODO(hs): perform precheck to verify the retrieved AK certificate chain
