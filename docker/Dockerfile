@@ -6,10 +6,18 @@ RUN go mod download
 COPY . .
 RUN apk add --no-cache make git curl
 
-ARG TARGETOS TARGETARCH
+ARG TARGETOS
+ARG TARGETARCH
+ARG TARGETVARIANT
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS_OVERRIDE="GOOS=$TARGETOS GOARCH=$TARGETARCH" make V=1 bin/step
+    GOOS="${TARGETOS}"; \
+    GOARCH="${TARGETARCH}"; \
+    if [ "${TARGETARCH}" = "arm" ] && [ "${TARGETVARIANT}" ]; then \
+    GOARM="${TARGETVARIANT#v}"; \
+    fi; \
+    CGO_ENABLED=0 GOOS_OVERRIDE="GOOS=${GOOS} GOARCH=${GOARCH} GOARM=${GOARM}" \
+    make V=1 bin/step
 
 FROM alpine
 
