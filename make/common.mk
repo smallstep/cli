@@ -20,6 +20,7 @@ bootstra%:
 	$Q go install golang.org/x/vuln/cmd/govulncheck@latest
 	$Q go install gotest.tools/gotestsum@latest
 	$Q go install golang.org/x/tools/cmd/goimports@latest
+	$Q go install github.com/goreleaser/goreleaser@latest
 
 .PHONY: bootstra%
 
