@@ -8,17 +8,7 @@ ci: test build
 # Determine the type of `push` and `version`
 #################################################
 
-# If TRAVIS_TAG is set then we know this ref has been tagged.
-ifdef TRAVIS_TAG
-VERSION ?= $(TRAVIS_TAG)
-NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
-	ifeq ($(NOT_RC),)
-PUSHTYPE := release-candidate
-	else
-PUSHTYPE := release
-	endif
-# GITHUB Actions
-else ifdef GITHUB_REF
+ifdef GITHUB_REF
 VERSION ?= $(shell echo $(GITHUB_REF) | sed 's/^refs\/tags\///')
 NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
 	ifeq ($(NOT_RC),)
@@ -31,17 +21,12 @@ VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
 # If we are not in an active git dir then try reading the version from .VERSION.
 # .VERSION contains a slug populated by `git archive`.
 VERSION := $(or $(VERSION),$(shell ./.version.sh .VERSION))
-	ifeq ($(TRAVIS_BRANCH),master)
-PUSHTYPE := master
-	else
 PUSHTYPE := branch
-	endif
 endif
 
 VERSION := $(shell echo $(VERSION) | sed 's/^v//')
 
 ifdef V
-$(info    TRAVIS_TAG is $(TRAVIS_TAG))
 $(info    GITHUB_REF is $(GITHUB_REF))
 $(info    VERSION is $(VERSION))
 $(info    PUSHTYPE is $(PUSHTYPE))
@@ -54,7 +39,6 @@ include make/common.mk
 #################################################
 
 BINARY_OUTPUT=$(OUTPUT_ROOT)binary/
-RELEASE=./.releases
 
 define BUNDLE_MAKE
 	# $(1) -- Go Operating System (e.g. linux, darwin, windows, etc.)
@@ -85,27 +69,4 @@ binary-darwin-arm64:
 binary-windows-amd64:
 	$(call BUNDLE_MAKE,windows,amd64,,$(BINARY_OUTPUT)windows-amd64/)
 
-define BUNDLE
-    # $(1) -- Format output as .ZIP archive, rather than .tar.gzip (for older windows architecture)
-	# $(2) -- Binary Output Dir Name
-	# $(3) -- Step Platform Name
-	# $(4) -- Step Binary Architecture
-	# $(5) -- Step Binary Name (For Windows Compatibility)
-	$(q) ./make/bundle.sh $(1) "$(BINARY_OUTPUT)$(2)" "$(RELEASE)" "$(VERSION)" "$(3)" "$(4)" "$(5)"
-endef
-
-bundle-linux: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips
-	$(call BUNDLE,,linux-amd64,linux,amd64,step)
-	$(call BUNDLE,,linux-arm64,linux,arm64,step)
-	$(call BUNDLE,,linux-armv7,linux,armv7,step)
-	$(call BUNDLE,,linux-mips,linux,mips,step)
-
-bundle-darwin: binary-darwin-amd64 binary-darwin-arm64
-	$(call BUNDLE,,darwin-amd64,darwin,amd64,step)
-	$(call BUNDLE,,darwin-arm64,darwin,arm64,step)
-
-bundle-windows: binary-windows-amd64
-	$(call BUNDLE,,windows-amd64,windows,amd64,step.exe)
-	$(call BUNDLE,--zip,windows-amd64,windows,amd64,step.exe)
-
-.PHONY: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips binary-darwin-amd64 binary-darwin-arm64 binary-windows-amd64 bundle-linux bundle-darwin bundle-windows
+.PHONY: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips binary-darwin-amd64 binary-darwin-arm64 binary-windows-amd64

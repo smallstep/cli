@@ -19,6 +19,7 @@ bootstra%:
 	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin latest
 	$Q go install golang.org/x/vuln/cmd/govulncheck@latest
 	$Q go install gotest.tools/gotestsum@latest
+	$Q go install golang.org/x/tools/cmd/goimports@latest
 
 .PHONY: bootstra%
 
@@ -46,15 +47,6 @@ $(PREFIX)bin/$(BINNAME): download $(call rwildcard,*.go)
 	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) go build -v -o $@ $(GCFLAGS) $(LDFLAGS) $(PKG)
 
 .PHONY: build simple
-
-#########################################
-# Go generate
-#########################################
-
-generate:
-	$Q go generate ./...
-
-.PHONY: generate
 
 #########################################
 # Test
