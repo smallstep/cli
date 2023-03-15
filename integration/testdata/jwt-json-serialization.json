@@ -1,0 +1,10 @@
+{
+  "payload": "eyJ0eXAiOiAiSldUIiwgImFsZyI6ICJSUzI1NiJ9",
+  "signatures": [
+    {
+      "protected": "eyJleHAiOiA0Njg2MzA2MTI5LCAiYXVkIjogImZvbyIsICJpc3MiOiAiYmFyIiwgInN1YiI6ICJiYXoifQ",
+      "header": {"kid": "rsa2048.pem"},
+      "signature": "IUYTIU6gUDCFc5Ou7MDogK1LWP4qbo9esx6rCpBlDzQFV1TN83J1g7L9EwRnYZ8zI1FyHIHhLMwNgyQgvYOONUJQVs0ia7aXV_Z6Uno4cQPVoB5FDWmfY4GTi5GsADS2kyT0BRVCFp1QAT0uVAC03Iqh0NtUZs51C_Bj8tGY2NFvUuRZ3sHuVUhC7tn2Aw86dm2z7YLRH6lir2tjFnNwEimqb_i5BBjkxNUIBpRBNWf7FjH80q5RKk2sGnzFDqR2XqGNxkpHZ5iEjq5MOl97tLEfwcqU4FkNbEn5qG31-Xq39BBg5uaX-YeV4P7duCiA0DY-Yxf6aRNOkCmprrmPBA"
+    }
+  ]
+}
