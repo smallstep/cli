@@ -20,7 +20,7 @@ else
 VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
 # If we are not in an active git dir then try reading the version from .VERSION.
 # .VERSION contains a slug populated by `git archive`.
-VERSION := $(or $(VERSION),$(shell ./.version.sh .VERSION))
+VERSION := $(or $(VERSION),$(shell make/version.sh .VERSION))
 PUSHTYPE := branch
 endif
 
