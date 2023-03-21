@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -100,7 +101,11 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	// check if a (valid) AK certificate (chain) is available. Perform attestation flow otherwise.
 	akChain := ak.CertificateChain()
 	if len(akChain) == 0 || !ak.HasValidPermanentIdentifier(identifier) {
-		if akChain, err = performAttestation(ctx, t, ak, tpmAttestationCABaseURL); err != nil {
+		c, err := newClient(tpmAttestationCABaseURL)
+		if err != nil {
+			return fmt.Errorf("failed creating attestation client: %w", err)
+		}
+		if akChain, err = performAttestation(ctx, c, t, ak); err != nil {
 			return fmt.Errorf("failed performing AK attestation: %w", err)
 		}
 		if err := ak.SetCertificateChain(ctx, akChain); err != nil {
@@ -209,7 +214,7 @@ func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Cer
 	return b, nil
 }
 
-func performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestationCABaseURL string) ([]*x509.Certificate, error) {
+func performAttestation(ctx context.Context, c *attestClient, t *tpm.TPM, ak *tpm.AK) ([]*x509.Certificate, error) {
 	// TODO(hs): what about performing attestation for an existing AK identifier and/or cert, but
 	// with a different Attestation CA? It seems sensible to enroll with that other Attestation CA,
 	// but it needs capturing some knowledge about the Attestation CA with the AK (cert). Possible to
@@ -219,68 +224,15 @@ func performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestat
 	if err != nil {
 		return nil, fmt.Errorf("failed retrieving EKs from TPM: %w", err)
 	}
-	var ekCerts [][]byte
-	var ekPub []byte
-
-	for _, ek := range eks {
-		ekCert := ek.Certificate()
-		if ekCert == nil {
-			if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public()); err != nil {
-				return nil, fmt.Errorf("failed marshaling public key: %w", err)
-			}
-		} else {
-			ekCerts = append(ekCerts, ekCert.Raw)
-		}
-	}
 
 	attestParams, err := ak.AttestationParameters(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting AK attestation parameters: %w", err)
 	}
 
-	ar := attestationRequest{
-		TPMVersion: attest.TPMVersion20,
-		EKCerts:    ekCerts,
-		EKPub:      ekPub,
-		AttestParams: attestationParameters{
-			Public:                  attestParams.Public,
-			UseTCSDActivationFormat: attestParams.UseTCSDActivationFormat,
-			CreateData:              attestParams.CreateData,
-			CreateAttestation:       attestParams.CreateAttestation,
-			CreateSignature:         attestParams.CreateSignature,
-		},
-	}
-
-	body, err := json.Marshal(ar)
+	attResp, err := c.Attest(ctx, eks, attestParams)
 	if err != nil {
-		return nil, fmt.Errorf("failed marshaling attestation request: %w", err)
-	}
-
-	attestURL := tpmAttestationCABaseURL + "/attest"
-	req, err := http.NewRequest(http.MethodPost, attestURL, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("failed creating POST http request for %q: %w", attestURL, err)
-	}
-
-	// TODO(hs): implement a client, similar to the caClient and acmeClient, that uses sane defaults and
-	// automatically uses the Attestation CA root as trust anchor.
-	client := http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			Proxy:           http.ProxyFromEnvironment,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // quick hack; don't verify TLS for now
-		},
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed performing attestation request with attestation CA %q: %w", attestURL, err)
-	}
-	defer resp.Body.Close()
-
-	var attResp attestationResponse
-	if err := json.NewDecoder(resp.Body).Decode(&attResp); err != nil {
-		return nil, fmt.Errorf("failed decoding attestation response: %w", err)
+		return nil, fmt.Errorf("failed performing online attestation: %w", err)
 	}
 
 	encryptedCredentials := tpm.EncryptedCredential{
@@ -294,30 +246,9 @@ func performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK, tpmAttestat
 		return nil, fmt.Errorf("failed activating credential: %w", err)
 	}
 
-	sr := secretRequest{
-		Secret: secret,
-	}
-
-	body, err = json.Marshal(sr)
+	secretResp, err := c.Secret(ctx, secret)
 	if err != nil {
-		return nil, fmt.Errorf("failed marshaling secret request: %w", err)
-	}
-
-	secretURL := tpmAttestationCABaseURL + "/secret"
-	req, err = http.NewRequest(http.MethodPost, secretURL, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("failed creating POST http request for %q: %w", secretURL, err)
-	}
-
-	resp, err = client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed performing secret request with attestation CA %q: %w", secretURL, err)
-	}
-	defer resp.Body.Close()
-
-	var secretResp secretResponse
-	if err := json.NewDecoder(resp.Body).Decode(&secretResp); err != nil {
-		return nil, fmt.Errorf("failed decoding secret response: %w", err)
+		return nil, fmt.Errorf("failed validating online secret: %w", err)
 	}
 
 	akChain := make([]*x509.Certificate, len(secretResp.CertificateChain))
@@ -348,4 +279,116 @@ func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
 
 	hashedKeyAuth := sha256.Sum256([]byte(keyAuth))
 	return hashedKeyAuth[:], nil
+}
+
+type attestClient struct {
+	client  http.Client
+	baseURL *url.URL
+}
+
+// newClient creates a new attestClient
+// TODO(hs): provide more configuration options?
+func newClient(tpmAttestationCABaseURL string) (*attestClient, error) {
+	u, err := url.Parse(tpmAttestationCABaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed parsing URL: %w", err)
+	}
+	// TODO(hs): implement a client, similar to the caClient and acmeClient, that uses sane defaults and
+	// automatically uses the Attestation CA root as trust anchor.
+	client := http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			Proxy:           http.ProxyFromEnvironment,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // quick hack; don't verify TLS for now
+		},
+	}
+	return &attestClient{
+		client:  client,
+		baseURL: u,
+	}, nil
+}
+
+func (ac *attestClient) Attest(ctx context.Context, eks []*tpm.EK, attestParams attest.AttestationParameters) (*attestationResponse, error) {
+	var ekCerts [][]byte
+	var ekPub []byte
+	var err error
+
+	for _, ek := range eks {
+		ekCert := ek.Certificate()
+		if ekCert == nil {
+			if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public()); err != nil {
+				return nil, fmt.Errorf("failed marshaling public key: %w", err)
+			}
+		} else {
+			ekCerts = append(ekCerts, ekCert.Raw)
+		}
+	}
+
+	ar := attestationRequest{
+		TPMVersion: attest.TPMVersion20,
+		EKCerts:    ekCerts,
+		EKPub:      ekPub,
+		AttestParams: attestationParameters{
+			Public:                  attestParams.Public,
+			UseTCSDActivationFormat: attestParams.UseTCSDActivationFormat,
+			CreateData:              attestParams.CreateData,
+			CreateAttestation:       attestParams.CreateAttestation,
+			CreateSignature:         attestParams.CreateSignature,
+		},
+	}
+
+	body, err := json.Marshal(ar)
+	if err != nil {
+		return nil, fmt.Errorf("failed marshaling attestation request: %w", err)
+	}
+
+	attestURL := ac.baseURL.ResolveReference(&url.URL{Path: "/attest"}).String()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, attestURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed creating POST http request for %q: %w", attestURL, err)
+	}
+
+	resp, err := ac.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed performing attestation request with attestation CA %q: %w", attestURL, err)
+	}
+	defer resp.Body.Close()
+
+	var attResp attestationResponse
+	if err := json.NewDecoder(resp.Body).Decode(&attResp); err != nil {
+		return nil, fmt.Errorf("failed decoding attestation response: %w", err)
+	}
+
+	return &attResp, nil
+}
+
+func (ac *attestClient) Secret(ctx context.Context, secret []byte) (*secretResponse, error) {
+
+	sr := secretRequest{
+		Secret: secret,
+	}
+
+	body, err := json.Marshal(sr)
+	if err != nil {
+		return nil, fmt.Errorf("failed marshaling secret request: %w", err)
+	}
+
+	secretURL := ac.baseURL.ResolveReference(&url.URL{Path: "/secret"}).String()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, secretURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed creating POST http request for %q: %w", secretURL, err)
+	}
+
+	resp, err := ac.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed performing secret request with attestation CA %q: %w", secretURL, err)
+	}
+	defer resp.Body.Close()
+
+	var secretResp secretResponse
+	if err := json.NewDecoder(resp.Body).Decode(&secretResp); err != nil {
+		return nil, fmt.Errorf("failed decoding secret response: %w", err)
+	}
+
+	return &secretResp, nil
 }
