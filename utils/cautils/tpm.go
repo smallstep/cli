@@ -304,13 +304,6 @@ func withRootsFile(filename string) attestationClientOption {
 	}
 }
 
-func withRootCAs(rootCAs *x509.CertPool) attestationClientOption {
-	return func(o *attestationClientOptions) error {
-		o.rootCAs = rootCAs
-		return nil
-	}
-}
-
 func withInsecure() attestationClientOption {
 	return func(o *attestationClientOptions) error {
 		o.insecure = true
@@ -338,7 +331,7 @@ func newAttestationClient(tpmAttestationCABaseURL string, options ...attestation
 			Proxy: http.ProxyFromEnvironment,
 			TLSClientConfig: &tls.Config{
 				RootCAs:            opts.rootCAs,
-				InsecureSkipVerify: opts.insecure,
+				InsecureSkipVerify: opts.insecure, //nolint:gosec // intentional insecure
 			},
 		},
 	}
@@ -494,7 +487,6 @@ type secretResponse struct {
 // secret performs the HTTP POST request to the `/secret` endpoint of the
 // Attestation CA.
 func (ac *attestationClient) secret(ctx context.Context, secret []byte) (*secretResponse, error) {
-
 	sr := secretRequest{
 		Secret: secret,
 	}
