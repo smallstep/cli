@@ -64,9 +64,6 @@ can verify certificates in a simple, decentralized manner without relying on
 centralized 3rd parties. Passive revocation works best with short
 certificate lifetimes.
 
-**step ca revoke** currently only supports passive revocation. Active revocation
-is on our roadmap.
-
 A revocation request can be authorized using a JWK provisioner token, or using a
 client certificate.
 
