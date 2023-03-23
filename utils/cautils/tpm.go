@@ -3,6 +3,7 @@ package cautils
 import (
 	"bytes"
 	"context"
+	"crypto"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
@@ -12,6 +13,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -20,53 +23,26 @@ import (
 
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/certinfo"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/tpm"
 	tpmstorage "go.step.sm/crypto/tpm/storage"
 )
 
-type attestationParameters struct {
-	Public                  []byte `json:"public"`
-	UseTCSDActivationFormat bool   `json:"useTCSDActivationFormat"`
-	CreateData              []byte `json:"createData"`
-	CreateAttestation       []byte `json:"createAttestation"`
-	CreateSignature         []byte `json:"createSignature"`
-}
-
-type attestationRequest struct {
-	TPMVersion   attest.TPMVersion     `json:"version"`
-	EKPub        []byte                `json:"ek"`
-	EKCerts      [][]byte              `json:"ekCerts"`
-	AKCert       []byte                `json:"akCert"`
-	AttestParams attestationParameters `json:"params"`
-}
-
-type attestationResponse struct {
-	Credential []byte `json:"credential"`
-	Secret     []byte `json:"secret"` // encrypted secret
-}
-
-type secretRequest struct {
-	Secret []byte `json:"secret"` // decrypted secret
-}
-
-type secretResponse struct {
-	CertificateChain [][]byte `json:"chain"`
-}
-
 func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
-	tpmAttestationCABaseURL := clictx.String("attestation-ca-url")
-	if tpmAttestationCABaseURL == "" {
-		return fmt.Errorf("flag %q cannot be empty", "--attestation-ca-url")
-	}
-
 	tpmStorageDirectory := clictx.String("tpm-storage-directory")
 	t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)))
 	if err != nil {
 		return fmt.Errorf("failed initializing TPM: %w", err)
 	}
+
+	tpmAttestationCABaseURL := clictx.String("attestation-ca-url")
+	if tpmAttestationCABaseURL == "" {
+		return fmt.Errorf("flag %q cannot be empty", "--attestation-ca-url")
+	}
+
+	tpmAttestationCARootFile := clictx.String("attestation-ca-root")
 
 	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
 	ui.Printf(" .") // Indicates passage of time.
@@ -85,47 +61,15 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	ui.Printf("\nvendor info: %s", info.VendorInfo)
 	ui.Printf("\nfirmware version: %s", info.FirmwareVersion)
 
-	var ak *tpm.AK
-	if ak, err = t.GetAK(ctx, identifier); err != nil {
-		// return early if an error occurred that doesn't indicate that the AK does not exist
-		if !errors.Is(err, tpm.ErrNotFound) {
-			return fmt.Errorf("failed getting AK: %w", err)
-		}
-		// create a new AK if it wasn't found. We're using the identifier as the name
-		// used for storing the AK for convenience.
-		if ak, err = t.CreateAK(ctx, identifier); err != nil {
-			return fmt.Errorf("failed creating AK: %w", err)
-		}
+	atc, err := newAttestationClient(tpmAttestationCABaseURL, withRootsFile(tpmAttestationCARootFile), withInsecure()) // TODO(hs): remove `withInsecure`; convenience option
+	if err != nil {
+		return fmt.Errorf("failed creating attestation client: %w", err)
 	}
 
-	// check if a (valid) AK certificate (chain) is available. Perform attestation flow otherwise.
-	akChain := ak.CertificateChain()
-	if len(akChain) == 0 || !ak.HasValidPermanentIdentifier(identifier) {
-		c, err := newClient(tpmAttestationCABaseURL)
-		if err != nil {
-			return fmt.Errorf("failed creating attestation client: %w", err)
-		}
-		if akChain, err = performAttestation(ctx, c, t, ak); err != nil {
-			return fmt.Errorf("failed performing AK attestation: %w", err)
-		}
-		if err := ak.SetCertificateChain(ctx, akChain); err != nil {
-			return fmt.Errorf("failed storing AK certificate chain: %w", err)
-		}
+	ak, err := getAK(ctx, t, atc)
+	if err != nil {
+		return fmt.Errorf("failed getting AK: %w", err)
 	}
-
-	// when a new AK certificate was issued for the AK, it is possible the
-	// required PermanentIdentifier was not set in the certificate, so the current
-	// chain can't be used.
-	if !ak.HasValidPermanentIdentifier(identifier) {
-		return fmt.Errorf("AK certificate (chain) not valid for %q", identifier)
-	}
-
-	// TODO(hs): perform precheck to verify the retrieved AK certificate chain
-	// does belong to the TPM that's in use? Depending on how the certificate
-	// was obtained and stored, it might've been altered somehow.
-	// TODO(hs): support attestation flow with multiple Attestation CAs for a
-	// single AK? Currently an AK is identified just by its name and can only
-	// have one AK certificate (chain) signed by one Attestation CA at a time.
 
 	// Generate the key authorization digest
 	data, err := keyAuthDigest(ac.Key, ch.Token)
@@ -138,13 +82,13 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		Size:           2048,  // TODO(hs): should come from flag/default input
 		QualifyingData: data,
 	}
-	attestedKey, err := t.AttestKey(ctx, identifier, "", config)
+	attestedKey, err := t.AttestKey(ctx, ak.Name(), "", config) // TODO(hs): derive key name from identifier, so that it can be looked up / reused?
 	if err != nil {
-		return fmt.Errorf("failed creating new key attested by AK %q", identifier)
+		return fmt.Errorf("failed creating new key attested by AK %q: %w", ak.Name(), err)
 	}
 
 	// Generate the WebAuthn attestation statement.
-	attStmt, err := attestationStatement(ctx, attestedKey, akChain)
+	attStmt, err := attestationStatement(ctx, attestedKey, ak.CertificateChain())
 	if err != nil {
 		return fmt.Errorf("failed creating attestation statement: %w", err)
 	}
@@ -185,6 +129,72 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	return nil
 }
 
+// getAK returns an AK suitable for attesting the identifier that is requested. The
+// current behavior is to look for an AK backed by the TPM that has been issued a
+// certificate that includes the EK public key ID as one of it URI SANs. The AK itself
+// is identified by the hexadecimal representation of the EK public key.
+func getAK(ctx context.Context, t *tpm.TPM, ac *attestationClient) (*tpm.AK, error) {
+	eks, err := t.GetEKs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed retrieving TPM EKs: %w", err)
+	}
+
+	ekPublic := eks[0].Public()
+	ekKeyID, err := generateKeyID(ekPublic)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting EK public key ID: %w", err)
+	}
+
+	ekHexFingerprint, err := keyutil.EncodedFingerprint(ekPublic, keyutil.HexFingerprint)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating EK fingerprint: %w", err)
+	}
+
+	// strip off "<hash>:"
+	ekHexFingerprint = strings.Split(ekHexFingerprint, ":")[1]
+
+	// look for an AK named after the EK hex fingerprint by default
+	var ak *tpm.AK
+	if ak, err = t.GetAK(ctx, ekHexFingerprint); err != nil { // TODO(hs): determine if we want this as the (current) default behavior
+		// return early if an error occurred that doesn't indicate that the AK does not exist
+		if !errors.Is(err, tpm.ErrNotFound) {
+			return nil, fmt.Errorf("failed getting AK: %w", err)
+		}
+		// create a new AK if it wasn't found. We're using the identifier as the name
+		// used for storing the AK for convenience.
+		if ak, err = t.CreateAK(ctx, ekHexFingerprint); err != nil {
+			return nil, fmt.Errorf("failed creating AK: %w", err)
+		}
+	}
+
+	// check if a (valid) AK certificate (chain) is available. Perform attestation flow otherwise.
+	akChain := ak.CertificateChain()
+	if len(akChain) == 0 || !hasValidIdentity(ak, ekKeyID) {
+		if akChain, err = ac.performAttestation(ctx, t, ak); err != nil {
+			return nil, fmt.Errorf("failed performing AK attestation: %w", err)
+		}
+		if err := ak.SetCertificateChain(ctx, akChain); err != nil {
+			return nil, fmt.Errorf("failed storing AK certificate chain: %w", err)
+		}
+	}
+
+	// when a new certificate was issued for the AK, it is possible the
+	// certificate that was issued doesn't include the expected and/or required
+	// identity, so this is checked before continuing.
+	if !hasValidIdentity(ak, ekKeyID) {
+		return nil, fmt.Errorf("AK certificate (chain) not valid for %q", ekHexFingerprint) // TODO(hs): change logic for printing ekKeyID
+	}
+
+	// TODO(hs): perform precheck to verify the retrieved AK certificate chain
+	// does belong to the TPM that's in use? Depending on how the certificate
+	// was obtained and stored, it might've been altered somehow.
+	// TODO(hs): support attestation flow with multiple Attestation CAs for a
+	// single AK? Currently an AK is identified just by its name and can only
+	// have one AK certificate (chain) signed by one Attestation CA at a time.
+
+	return ak, nil
+}
+
 func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Certificate) ([]byte, error) {
 	params, err := key.CertificationParameters(ctx)
 	if err != nil {
@@ -214,7 +224,133 @@ func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Cer
 	return b, nil
 }
 
-func performAttestation(ctx context.Context, c *attestClient, t *tpm.TPM, ak *tpm.AK) ([]*x509.Certificate, error) {
+func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
+	keyAuth, err := acme.KeyAuthorization(token, jwk)
+	if err != nil {
+		return nil, err
+	}
+
+	hashedKeyAuth := sha256.Sum256([]byte(keyAuth))
+	return hashedKeyAuth[:], nil
+}
+
+func generateKeyID(pub crypto.PublicKey) ([]byte, error) {
+	b, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling public key: %w", err)
+	}
+	hash := sha256.Sum256(b)
+	return hash[:], nil
+}
+
+// hasValidIdentity indicates if the AK has an associated certificate
+// that includes a valid identity. Currently we only consider certificates
+// that encode the TPM EK public key ID as one of its URI SANs, which is
+// the default behavior of the Smallstep Attestation CA.
+func hasValidIdentity(ak *tpm.AK, keyID []byte) bool {
+	chain := ak.CertificateChain()
+	if len(chain) == 0 {
+		return false
+	}
+	akCert := chain[0]
+
+	// TODO(hs): before continuing, add check if the cert is still valid?
+
+	// the Smallstep Attestation CA will issue AK certifiates that
+	// contain the EK public key ID encoded as an URN by default.
+	keyIDURL := &url.URL{
+		Scheme: "urn",
+		Opaque: "ek:sha256:" + base64.StdEncoding.EncodeToString(keyID),
+	}
+
+	for _, u := range akCert.URIs {
+		if strings.EqualFold(keyIDURL.String(), u.String()) {
+			return true
+		}
+	}
+
+	// TODO(hs): scan through other SANs too, to find other valid identities.
+
+	return false
+}
+
+type attestationClient struct {
+	client  http.Client
+	baseURL *url.URL
+}
+
+type attestationClientOptions struct {
+	rootCAs  *x509.CertPool
+	insecure bool
+}
+
+type attestationClientOption func(o *attestationClientOptions) error
+
+func withRootsFile(filename string) attestationClientOption {
+	return func(o *attestationClientOptions) error {
+		if filename == "" {
+			return nil
+		}
+		data, err := os.ReadFile(filename)
+		if err != nil {
+			return fmt.Errorf("failed reading %q: %w", filename, err)
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(data) {
+			return fmt.Errorf("failed parsing %q: no certificates found", filename)
+		}
+		o.rootCAs = pool
+		return nil
+	}
+}
+
+func withRootCAs(rootCAs *x509.CertPool) attestationClientOption {
+	return func(o *attestationClientOptions) error {
+		o.rootCAs = rootCAs
+		return nil
+	}
+}
+
+func withInsecure() attestationClientOption {
+	return func(o *attestationClientOptions) error {
+		o.insecure = true
+		return nil
+	}
+}
+
+// newAttestationClient creates a new attestationClient
+func newAttestationClient(tpmAttestationCABaseURL string, options ...attestationClientOption) (*attestationClient, error) {
+	u, err := url.Parse(tpmAttestationCABaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed parsing URL: %w", err)
+	}
+
+	opts := &attestationClientOptions{}
+	for _, o := range options {
+		if err := o(opts); err != nil {
+			return nil, fmt.Errorf("failed applying option to attestation client: %w", err)
+		}
+	}
+
+	client := http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			TLSClientConfig: &tls.Config{
+				RootCAs:            opts.rootCAs,
+				InsecureSkipVerify: opts.insecure,
+			},
+		},
+	}
+
+	return &attestationClient{
+		client:  client,
+		baseURL: u,
+	}, nil
+}
+
+// performAttestation performs remote attestation using the AK backed by TPM t.
+func (ac *attestationClient) performAttestation(ctx context.Context, t *tpm.TPM, ak *tpm.AK) ([]*x509.Certificate, error) {
 	// TODO(hs): what about performing attestation for an existing AK identifier and/or cert, but
 	// with a different Attestation CA? It seems sensible to enroll with that other Attestation CA,
 	// but it needs capturing some knowledge about the Attestation CA with the AK (cert). Possible to
@@ -230,9 +366,9 @@ func performAttestation(ctx context.Context, c *attestClient, t *tpm.TPM, ak *tp
 		return nil, fmt.Errorf("failed getting AK attestation parameters: %w", err)
 	}
 
-	attResp, err := c.Attest(ctx, eks, attestParams)
+	attResp, err := ac.attest(ctx, eks, attestParams)
 	if err != nil {
-		return nil, fmt.Errorf("failed performing online attestation: %w", err)
+		return nil, fmt.Errorf("failed attesting AK: %w", err)
 	}
 
 	encryptedCredentials := tpm.EncryptedCredential{
@@ -246,9 +382,9 @@ func performAttestation(ctx context.Context, c *attestClient, t *tpm.TPM, ak *tp
 		return nil, fmt.Errorf("failed activating credential: %w", err)
 	}
 
-	secretResp, err := c.Secret(ctx, secret)
+	secretResp, err := ac.secret(ctx, secret)
 	if err != nil {
-		return nil, fmt.Errorf("failed validating online secret: %w", err)
+		return nil, fmt.Errorf("failed validating secret: %w", err)
 	}
 
 	akChain := make([]*x509.Certificate, len(secretResp.CertificateChain))
@@ -257,65 +393,46 @@ func performAttestation(ctx context.Context, c *attestClient, t *tpm.TPM, ak *tp
 		if err != nil {
 			return nil, fmt.Errorf("failed parsing certificate: %w", err)
 		}
-
-		// TODO(hs): don't output this by default (similar to TPM info)
-		info, err := certinfo.CertificateText(cert)
-		if err != nil {
-			return nil, fmt.Errorf("failed getting certificate text: %w", err)
-		}
-		ui.Printf(fmt.Sprintf("\n\n%s\n\n", info))
-
 		akChain[i] = cert
 	}
 
 	return akChain, nil
 }
 
-func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
-	keyAuth, err := acme.KeyAuthorization(token, jwk)
-	if err != nil {
-		return nil, err
-	}
-
-	hashedKeyAuth := sha256.Sum256([]byte(keyAuth))
-	return hashedKeyAuth[:], nil
+type attestationParameters struct {
+	Public                  []byte `json:"public"`
+	UseTCSDActivationFormat bool   `json:"useTCSDActivationFormat"`
+	CreateData              []byte `json:"createData"`
+	CreateAttestation       []byte `json:"createAttestation"`
+	CreateSignature         []byte `json:"createSignature"`
 }
 
-type attestClient struct {
-	client  http.Client
-	baseURL *url.URL
+type attestationRequest struct {
+	TPMVersion   attest.TPMVersion     `json:"version"`
+	EKPub        []byte                `json:"ek"`
+	EKCerts      [][]byte              `json:"ekCerts"`
+	AKCert       []byte                `json:"akCert"`
+	AttestParams attestationParameters `json:"params"`
 }
 
-// newClient creates a new attestClient
-// TODO(hs): provide more configuration options?
-func newClient(tpmAttestationCABaseURL string) (*attestClient, error) {
-	u, err := url.Parse(tpmAttestationCABaseURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed parsing URL: %w", err)
-	}
-	// TODO(hs): implement a client, similar to the caClient and acmeClient, that uses sane defaults and
-	// automatically uses the Attestation CA root as trust anchor.
-	client := http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			Proxy:           http.ProxyFromEnvironment,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // quick hack; don't verify TLS for now
-		},
-	}
-	return &attestClient{
-		client:  client,
-		baseURL: u,
-	}, nil
+type attestationResponse struct {
+	Credential []byte `json:"credential"`
+	Secret     []byte `json:"secret"` // encrypted secret
 }
 
-func (ac *attestClient) Attest(ctx context.Context, eks []*tpm.EK, attestParams attest.AttestationParameters) (*attestationResponse, error) {
+// attest performs the HTTP POST request to the `/attest` endpoint of the
+// Attestation CA.
+func (ac *attestationClient) attest(ctx context.Context, eks []*tpm.EK, attestParams attest.AttestationParameters) (*attestationResponse, error) {
 	var ekCerts [][]byte
 	var ekPub []byte
 	var err error
 
+	// TPM can have multiple EKs; typically an RSA and/or ECDSA key will
+	// be present. A certificate is optional.
 	for _, ek := range eks {
 		ekCert := ek.Certificate()
 		if ekCert == nil {
+			// TODO(hs): pick a specific EK public key if there are multiple?
 			if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public()); err != nil {
 				return nil, fmt.Errorf("failed marshaling public key: %w", err)
 			}
@@ -342,7 +459,7 @@ func (ac *attestClient) Attest(ctx context.Context, eks []*tpm.EK, attestParams 
 		return nil, fmt.Errorf("failed marshaling attestation request: %w", err)
 	}
 
-	attestURL := ac.baseURL.ResolveReference(&url.URL{Path: "/attest"}).String()
+	attestURL := ac.baseURL.JoinPath("attest").String()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, attestURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed creating POST http request for %q: %w", attestURL, err)
@@ -350,9 +467,13 @@ func (ac *attestClient) Attest(ctx context.Context, eks []*tpm.EK, attestParams 
 
 	resp, err := ac.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed performing attestation request with attestation CA %q: %w", attestURL, err)
+		return nil, fmt.Errorf("failed performing attestation request with Attestation CA %q: %w", attestURL, err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("POST %q failed with HTTP status %q", attestURL, resp.Status)
+	}
 
 	var attResp attestationResponse
 	if err := json.NewDecoder(resp.Body).Decode(&attResp); err != nil {
@@ -362,7 +483,17 @@ func (ac *attestClient) Attest(ctx context.Context, eks []*tpm.EK, attestParams 
 	return &attResp, nil
 }
 
-func (ac *attestClient) Secret(ctx context.Context, secret []byte) (*secretResponse, error) {
+type secretRequest struct {
+	Secret []byte `json:"secret"` // decrypted secret
+}
+
+type secretResponse struct {
+	CertificateChain [][]byte `json:"chain"`
+}
+
+// secret performs the HTTP POST request to the `/secret` endpoint of the
+// Attestation CA.
+func (ac *attestationClient) secret(ctx context.Context, secret []byte) (*secretResponse, error) {
 
 	sr := secretRequest{
 		Secret: secret,
@@ -373,7 +504,7 @@ func (ac *attestClient) Secret(ctx context.Context, secret []byte) (*secretRespo
 		return nil, fmt.Errorf("failed marshaling secret request: %w", err)
 	}
 
-	secretURL := ac.baseURL.ResolveReference(&url.URL{Path: "/secret"}).String()
+	secretURL := ac.baseURL.JoinPath("secret").String()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, secretURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed creating POST http request for %q: %w", secretURL, err)
@@ -384,6 +515,10 @@ func (ac *attestClient) Secret(ctx context.Context, secret []byte) (*secretRespo
 		return nil, fmt.Errorf("failed performing secret request with attestation CA %q: %w", secretURL, err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("POST %q failed with HTTP status %q", secretURL, resp.Status)
+	}
 
 	var secretResp secretResponse
 	if err := json.NewDecoder(resp.Body).Decode(&secretResp); err != nil {

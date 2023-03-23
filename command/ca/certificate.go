@@ -157,7 +157,11 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			},
 			cli.StringFlag{
 				Name:  "attestation-ca-url",
-				Usage: "The base url of the attestation CA to use",
+				Usage: "The base url of the Attestation CA to use",
+			},
+			cli.StringFlag{
+				Name:  "attestation-ca-root",
+				Usage: "The path to the PEM <file> with trusted roots when connecting to the Attestation CA",
 			},
 			cli.StringFlag{
 				Name:  "tpm-storage-directory",
