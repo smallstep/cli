@@ -8,17 +8,7 @@ ci: test build
 # Determine the type of `push` and `version`
 #################################################
 
-# If TRAVIS_TAG is set then we know this ref has been tagged.
-ifdef TRAVIS_TAG
-VERSION ?= $(TRAVIS_TAG)
-NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
-	ifeq ($(NOT_RC),)
-PUSHTYPE := release-candidate
-	else
-PUSHTYPE := release
-	endif
-# GITHUB Actions
-else ifdef GITHUB_REF
+ifdef GITHUB_REF
 VERSION ?= $(shell echo $(GITHUB_REF) | sed 's/^refs\/tags\///')
 NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
 	ifeq ($(NOT_RC),)
@@ -30,31 +20,132 @@ else
 VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
 # If we are not in an active git dir then try reading the version from .VERSION.
 # .VERSION contains a slug populated by `git archive`.
-VERSION := $(or $(VERSION),$(shell ./.version.sh .VERSION))
-	ifeq ($(TRAVIS_BRANCH),master)
-PUSHTYPE := master
-	else
+VERSION := $(or $(VERSION),$(shell make/version.sh .VERSION))
 PUSHTYPE := branch
-	endif
 endif
 
 VERSION := $(shell echo $(VERSION) | sed 's/^v//')
 
 ifdef V
-$(info    TRAVIS_TAG is $(TRAVIS_TAG))
 $(info    GITHUB_REF is $(GITHUB_REF))
 $(info    VERSION is $(VERSION))
 $(info    PUSHTYPE is $(PUSHTYPE))
 endif
 
-include make/common.mk
+PKG?=github.com/smallstep/cli/cmd/step
+BINNAME?=step
+
+# Set V to 1 for verbose output from the Makefile
+Q=$(if $V,,@)
+PREFIX?=
+SRC=$(shell find . -type f -name '*.go')
+GOOS_OVERRIDE ?=
+CGO_OVERRIDE ?= CGO_ENABLED=0
+OUTPUT_ROOT=output/
+
+.PHONY: all
+
+#########################################
+# Bootstrapping
+#########################################
+
+bootstra%:
+	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin latest
+	$Q go install golang.org/x/vuln/cmd/govulncheck@latest
+	$Q go install gotest.tools/gotestsum@latest
+	$Q go install golang.org/x/tools/cmd/goimports@latest
+	$Q go install github.com/goreleaser/goreleaser@latest
+
+.PHONY: bootstra%
+
+#########################################
+# Build
+#########################################
+
+DATE    := $(shell date -u '+%Y-%m-%d %H:%M UTC')
+ifdef DEBUG
+	LDFLAGS := -ldflags='-X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
+	GCFLAGS := -gcflags "all=-N -l"
+else
+	LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
+	GCFLAGS :=
+endif
+
+download:
+	$Q go mod download
+
+build: $(PREFIX)bin/$(BINNAME)
+	@echo "Build Complete!"
+
+$(PREFIX)bin/$(BINNAME): download $(call rwildcard,*.go)
+	$Q mkdir -p $(@D)
+	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) go build -v -o $@ $(GCFLAGS) $(LDFLAGS) $(PKG)
+
+.PHONY: build simple
+
+#########################################
+# Test
+#########################################
+
+test:
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) gotestsum -- -coverprofile=coverage.out -short -covermode=atomic ./...
+
+race:
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) gotestsum -- -race ./...
+
+.PHONY: test race
+
+integrate: integration
+
+integration: bin/$(BINNAME)
+	$Q $(CGO_OVERRIDE) gotestsum -- -tags=integration ./integration/...
+
+.PHONY: integrate integration
+
+#########################################
+# Linting
+#########################################
+
+fmt:
+	$Q goimports -local github.com/golangci/golangci-lint -l -w $(SRC)
+
+lint: SHELL:=/bin/bash
+lint:
+	$Q LOG_LEVEL=error golangci-lint run --config <(curl -s https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml) --timeout=30m
+	$Q govulncheck ./...
+
+.PHONY: fmt lint
+
+#########################################
+# Install
+#########################################
+
+INSTALL_PREFIX?=/usr/
+
+install: $(PREFIX)bin/$(BINNAME)
+	$Q install -D $(PREFIX)bin/$(BINNAME) $(DESTDIR)$(INSTALL_PREFIX)bin/$(BINNAME)
+
+uninstall:
+	$Q rm -f $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BINNAME)
+
+.PHONY: install uninstall
+
+#########################################
+# Clean
+#########################################
+
+clean:
+ifneq ($(BINNAME),"")
+	$Q rm -f bin/$(BINNAME)
+endif
+
+.PHONY: clean
 
 #################################################
 # Build statically compiled step binary for various operating systems
 #################################################
 
 BINARY_OUTPUT=$(OUTPUT_ROOT)binary/
-RELEASE=./.releases
 
 define BUNDLE_MAKE
 	# $(1) -- Go Operating System (e.g. linux, darwin, windows, etc.)
@@ -85,27 +176,4 @@ binary-darwin-arm64:
 binary-windows-amd64:
 	$(call BUNDLE_MAKE,windows,amd64,,$(BINARY_OUTPUT)windows-amd64/)
 
-define BUNDLE
-    # $(1) -- Format output as .ZIP archive, rather than .tar.gzip (for older windows architecture)
-	# $(2) -- Binary Output Dir Name
-	# $(3) -- Step Platform Name
-	# $(4) -- Step Binary Architecture
-	# $(5) -- Step Binary Name (For Windows Compatibility)
-	$(q) ./make/bundle.sh $(1) "$(BINARY_OUTPUT)$(2)" "$(RELEASE)" "$(VERSION)" "$(3)" "$(4)" "$(5)"
-endef
-
-bundle-linux: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips
-	$(call BUNDLE,,linux-amd64,linux,amd64,step)
-	$(call BUNDLE,,linux-arm64,linux,arm64,step)
-	$(call BUNDLE,,linux-armv7,linux,armv7,step)
-	$(call BUNDLE,,linux-mips,linux,mips,step)
-
-bundle-darwin: binary-darwin-amd64 binary-darwin-arm64
-	$(call BUNDLE,,darwin-amd64,darwin,amd64,step)
-	$(call BUNDLE,,darwin-arm64,darwin,arm64,step)
-
-bundle-windows: binary-windows-amd64
-	$(call BUNDLE,,windows-amd64,windows,amd64,step.exe)
-	$(call BUNDLE,--zip,windows-amd64,windows,amd64,step.exe)
-
-.PHONY: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips binary-darwin-amd64 binary-darwin-arm64 binary-windows-amd64 bundle-linux bundle-darwin bundle-windows
+.PHONY: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips binary-darwin-amd64 binary-darwin-arm64 binary-windows-amd64
