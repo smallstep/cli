@@ -1,6 +1,7 @@
 package ca
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -10,6 +11,7 @@ import (
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/pemutil"
 )
@@ -152,6 +154,24 @@ $ step ca certificate foo.internal foo.crt foo.key \
 				Usage: `Add <dns|ip|email|uri> Subject Alternative Name(s) (SANs)
 that should be authorized. Use the '--san' flag multiple times to configure
 multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
+			},
+			cli.StringFlag{
+				Name:  "attestation-ca-url",
+				Usage: "The base url of the Attestation CA to use",
+			},
+			cli.StringFlag{
+				Name:  "attestation-ca-root",
+				Usage: "The path to the PEM <file> with trusted roots when connecting to the Attestation CA",
+			},
+			cli.BoolFlag{
+				Name:   "attestation-ca-insecure",
+				Usage:  "Disables TLS server validation when connecting to the Attestation CA",
+				Hidden: true,
+			},
+			cli.StringFlag{
+				Name:  "tpm-storage-directory",
+				Usage: "The directory where TPM keys and certificates will be stored",
+				Value: filepath.Join(step.Path(), "tpm"),
 			},
 			flags.TemplateSet,
 			flags.TemplateSetFile,

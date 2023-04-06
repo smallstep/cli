@@ -190,7 +190,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 	return nil
 }
 
-func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
+func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order, af *acmeFlow) error {
 	isAttest := (ctx.String("attestation-uri") != "")
 	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
@@ -214,7 +214,7 @@ func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order) error {
 				break
 			}
 			if ch.Type == "device-attest-01" && isAttest {
-				if err := doDeviceAttestation(ctx, ac, ch, ident); err != nil {
+				if err := doDeviceAttestation(ctx, ac, ch, ident, af); err != nil {
 					return err
 				}
 				chValidated = true
@@ -397,8 +397,14 @@ type attestationObject struct {
 }
 
 // doDeviceAttestation performs `device-attest-01` challenge validation.
-func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string) error {
-	attestor, err := cryptoutil.CreateAttestor("", ctx.String("attestation-uri"))
+func doDeviceAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
+	// TODO(hs): make TPM flow work with CreateAttestor()/Attest() too
+	attestationURI := clictx.String("attestation-uri")
+	if strings.HasPrefix(attestationURI, "tpmkms:") {
+		return doTPMAttestation(clictx, ac, ch, identifier, af)
+	}
+
+	attestor, err := cryptoutil.CreateAttestor("", attestationURI)
 	if err != nil {
 		return err
 	}
@@ -610,6 +616,7 @@ type acmeFlow struct {
 	subject         string
 	sans            []string
 	acmeDir         string
+	tpmSigner       crypto.Signer
 }
 
 func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
@@ -749,14 +756,15 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		return nil, errors.Wrapf(err, "error creating new ACME order")
 	}
 
-	if err := authorizeOrder(af.ctx, ac, o); err != nil {
+	if err := authorizeOrder(af.ctx, ac, o, af); err != nil {
 		return nil, err
 	}
 
 	if af.csr == nil {
 		var signer crypto.Signer
 		var template *x509.CertificateRequest
-		if attestationURI == "" {
+		switch {
+		case attestationURI == "":
 			insecure := af.ctx.Bool("insecure")
 			kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, insecure, "kty", "curve", "size")
 			if err != nil {
@@ -774,7 +782,16 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 				DNSNames:    dnsNames,
 				IPAddresses: ips,
 			}
-		} else {
+		case af.tpmSigner != nil:
+			signer = af.tpmSigner
+			template = &x509.CertificateRequest{
+				Subject: pkix.Name{
+					CommonName: af.subject,
+				},
+				// TODO(hs): add PermanentIdentifier extension?
+				// TODO(hs): add SKAE extension?
+			}
+		default:
 			signer, err = cryptoutil.CreateSigner(attestationURI, attestationURI)
 			if err != nil {
 				return nil, err
