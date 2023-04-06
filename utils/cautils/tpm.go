@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto"
+	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli/utils"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
@@ -46,6 +48,33 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 
 	tpmAttestationCARootFile := clictx.String("attestation-ca-root")
 
+	insecure := af.ctx.Bool("insecure")
+	kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, insecure, "kty", "curve", "size")
+	if err != nil {
+		return fmt.Errorf("failed getting key details: %w", err)
+	}
+
+	var inputSize int
+	inputKeyType := kty
+	switch kty {
+	case "EC":
+		switch crv {
+		case "P-256":
+			inputSize = 256
+		case "P-384":
+			inputSize = 384
+		case "P-521":
+			inputSize = 521
+		default:
+			return fmt.Errorf("unsupported curve: %q", crv)
+		}
+		inputKeyType = "ECDSA"
+	case "RSA":
+		inputSize = size
+	default:
+		return fmt.Errorf("unsupported key type: %q", kty)
+	}
+
 	attestationURI := clictx.String("attestation-uri")
 	keyName, err := parseTPMAttestationURI(attestationURI)
 	if err != nil {
@@ -61,7 +90,6 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		return fmt.Errorf("failed retrieving TPM info: %w", err)
 	}
 
-	// TODO(hs): remove this from the standard output, unless debugging/verbose logging?
 	ui.Printf("\nTPM INFO:")
 	ui.Printf("\nVersion: %s", info.Version)
 	ui.Printf("\nInterface: %s", info.Interface)
@@ -74,20 +102,31 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		return fmt.Errorf("failed creating attestation client: %w", err)
 	}
 
+	// get or create an AK, including an AK certificate chain
 	ak, err := getAK(ctx, t, atc)
 	if err != nil {
 		return fmt.Errorf("failed getting AK: %w", err)
 	}
 
-	// Generate the key authorization digest
+	// generate the key authorization digest
 	data, err := keyAuthDigest(ac.Key, ch.Token)
 	if err != nil {
 		return fmt.Errorf("failed creating key authorization: %w", err)
 	}
 
+	// create a new key, attested by the AK. Note that the
+	// key authorization digest is used as the qualifying data,
+	// effectively resulting in binding the attestation of a key
+	// to the specific challenge (token) and ACME account key. Because
+	// the token will be different for a new ACME order, a single TPM
+	// backed key can't be (re)used for multiple orders. So, when a new
+	// certificate is required, a new key has to be attested. The CLI
+	// does not automatically delete the previous key of the same name,
+	// as it may still be required. It is thus up to the user to use
+	// either a different key name or to delete the key first.
 	config := tpm.AttestKeyConfig{
-		Algorithm:      "RSA", // TODO(hs): should come from flag/default input
-		Size:           2048,  // TODO(hs): should come from flag/default input
+		Algorithm:      inputKeyType,
+		Size:           inputSize,
 		QualifyingData: data,
 	}
 	attestedKey, err := t.AttestKey(ctx, ak.Name(), keyName, config)
@@ -95,7 +134,7 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		return fmt.Errorf("failed creating new key attested by AK %q: %w", ak.Name(), err)
 	}
 
-	// Generate the WebAuthn attestation statement.
+	// generate the WebAuthn attestation statement.
 	attStmt, err := attestationStatement(ctx, attestedKey, ak.CertificateChain())
 	if err != nil {
 		return fmt.Errorf("failed creating attestation statement: %w", err)
@@ -162,14 +201,18 @@ func parseTPMAttestationURI(attestationURI string) (string, error) {
 // certificate that includes the EK public key ID as one of it URI SANs. The AK itself
 // is identified by the hexadecimal representation of the EK public key. If no AK
 // is found, a new one is created. If the AK has not valid certificate, the system
-// enrols with an Attestation CA using the `attesationClient`.
+// enrolls with an Attestation CA using the `attesationClient`.
 func getAK(ctx context.Context, t *tpm.TPM, ac *attestationClient) (*tpm.AK, error) {
 	eks, err := t.GetEKs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed retrieving TPM EKs: %w", err)
 	}
 
-	ekPublic := eks[0].Public()
+	ek := getPreferredEK(eks)
+	if ek == nil {
+		return nil, errors.New("no TPM EKs available")
+	}
+	ekPublic := ek.Public()
 	ekKeyID, err := generateKeyID(ekPublic)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting EK public key ID: %w", err)
@@ -313,6 +356,21 @@ func hasValidIdentity(ak *tpm.AK, ekURL *url.URL) bool {
 	// a usable identity too.
 
 	return false
+}
+
+// getPreferredEK returns the first RSA TPM EK found. If no RSA
+// EK exists, it returns the first ECDSA EK found.
+func getPreferredEK(eks []*tpm.EK) (ek *tpm.EK) {
+	var fallback *tpm.EK
+	for _, ek = range eks {
+		if _, isRSA := ek.Public().(*rsa.PublicKey); isRSA {
+			return
+		}
+		if fallback == nil {
+			fallback = ek
+		}
+	}
+	return fallback
 }
 
 type attestationClient struct {
@@ -479,17 +537,20 @@ func (ac *attestationClient) attest(ctx context.Context, info *tpm.Info, eks []*
 	var err error
 
 	// TPM can have multiple EKs; typically an RSA and/or ECDSA key will
-	// be present. A certificate is optional.
+	// be present. A certificate is optional. We prefer using certificates
+	// over just the EK public key.
 	for _, ek := range eks {
-		ekCert := ek.Certificate()
-		if ekCert == nil {
-			// TODO(hs): pick a specific EK public key if there are multiple?
-			if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public()); err != nil {
-				return nil, fmt.Errorf("failed marshaling public key: %w", err)
-			}
-		} else {
+		if ekCert := ek.Certificate(); ekCert != nil {
 			ekCerts = append(ekCerts, ekCert.Raw)
 		}
+	}
+
+	ek := getPreferredEK(eks)
+	if ek == nil {
+		return nil, errors.New("no EK available")
+	}
+	if ekPub, err = x509.MarshalPKIXPublicKey(ek.Public()); err != nil {
+		return nil, fmt.Errorf("failed marshaling public key: %w", err)
 	}
 
 	ar := attestationRequest{
