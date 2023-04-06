@@ -21,11 +21,13 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/google/go-attestation/attest"
+	"github.com/google/go-tpm/tpm2"
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/utils"
+	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
@@ -43,7 +45,7 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 
 	tpmAttestationCABaseURL := clictx.String("attestation-ca-url")
 	if tpmAttestationCABaseURL == "" {
-		return fmt.Errorf("flag %q cannot be empty", "--attestation-ca-url")
+		return errs.RequiredFlag(clictx, "attestation-ca-url")
 	}
 
 	tpmAttestationCARootFile := clictx.String("attestation-ca-root")
@@ -82,21 +84,21 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		return fmt.Errorf("failed parsing --attestation-uri: %w", err)
 	}
 
-	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
-	ui.Printf(" .") // Indicates passage of time.
-
 	ctx := tpm.NewContext(context.Background(), t)
 	info, err := t.Info(ctx)
 	if err != nil {
 		return fmt.Errorf("failed retrieving TPM info: %w", err)
 	}
 
-	ui.Printf("\nTPM INFO:")
+	ui.Printf("TPM INFO:")
 	ui.Printf("\nVersion: %s", info.Version)
 	ui.Printf("\nInterface: %s", info.Interface)
 	ui.Printf("\nManufacturer: %s", info.Manufacturer)
 	ui.Printf("\nVendor info: %s", info.VendorInfo)
-	ui.Printf("\nFirmware version: %s", info.FirmwareVersion)
+	ui.Printf("\nFirmware version: %s\n", info.FirmwareVersion)
+
+	ui.Printf("Using Device Attestation challenge to validate %q", identifier)
+	ui.Printf(" .") // Indicates passage of time.
 
 	// prepare a client to perform attestation with an Attestation CA
 	attestationClientOptions := []attestationClientOption{withRootsFile(tpmAttestationCARootFile)}
@@ -288,11 +290,26 @@ func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Cer
 		akChainBytes[i] = cert.Raw
 	}
 
+	pub, err := tpm2.DecodePublic(params.Public)
+	if err != nil {
+		return nil, fmt.Errorf("failed decoding TPM public key: %w", err)
+	}
+
+	var alg int64
+	switch pub.Type {
+	case tpm2.AlgRSA:
+		alg = -257 // RS256 COSE Algorithm Identifier
+	case tpm2.AlgECC:
+		alg = -7 // ES256 COSE Algorithm Identifier
+	default:
+		return nil, fmt.Errorf("unsupported TPM public key type: 0x%x", pub.Type)
+	}
+
 	obj := &attestationObject{
 		Format: "tpm",
 		AttStatement: map[string]interface{}{
 			"ver":      "2.0",
-			"alg":      int64(-257), // AlgRS256 (COSE identifier); depends on type of the private key
+			"alg":      alg,
 			"x5c":      akChainBytes,
 			"sig":      params.CreateSignature,
 			"certInfo": params.CreateAttestation,
@@ -515,18 +532,18 @@ type tpmInfo struct {
 }
 
 type attestationParameters struct {
-	Public                  []byte `json:"public"`
-	UseTCSDActivationFormat bool   `json:"useTCSDActivationFormat"`
-	CreateData              []byte `json:"createData"`
-	CreateAttestation       []byte `json:"createAttestation"`
-	CreateSignature         []byte `json:"createSignature"`
+	Public                  []byte `json:"public,omitempty"`
+	UseTCSDActivationFormat bool   `json:"useTCSDActivationFormat,omitempty"`
+	CreateData              []byte `json:"createData,omitempty"`
+	CreateAttestation       []byte `json:"createAttestation,omitempty"`
+	CreateSignature         []byte `json:"createSignature,omitempty"`
 }
 
 type attestationRequest struct {
 	TPMInfo      tpmInfo               `json:"tpmInfo"`
-	EKPub        []byte                `json:"ek"`
-	EKCerts      [][]byte              `json:"ekCerts"`
-	AKCert       []byte                `json:"akCert"`
+	EKPub        []byte                `json:"ek,omitempty"`
+	EKCerts      [][]byte              `json:"ekCerts,omitempty"`
+	AKCert       []byte                `json:"akCert,omitempty"`
 	AttestParams attestationParameters `json:"params"`
 }
 

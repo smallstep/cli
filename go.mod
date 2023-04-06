@@ -8,6 +8,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/google/go-attestation v0.4.4-0.20220404204839-8820d49b18d9
 	github.com/google/go-cmp v0.5.9
+	github.com/google/go-tpm v0.3.3
 	github.com/google/uuid v1.3.0
 	github.com/icrowley/fake v0.0.0-20221112152111-d7b7e2276db2
 	github.com/manifoldco/promptui v0.9.0
@@ -82,7 +83,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/certificate-transparency-go v1.1.4 // indirect
-	github.com/google/go-tpm v0.3.3 // indirect
 	github.com/google/go-tpm-tools v0.3.10 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
@@ -135,4 +135,7 @@ require (
 	k8s.io/klog/v2 v2.90.0 // indirect
 )
 
+// use github.com/smallstep/go-attestation fork with patches for Windows AK
+// and QualifyingData support applied; on the CA side, this is primarily used
+// when simulating a TPM for testing
 replace github.com/google/go-attestation v0.4.4-0.20220404204839-8820d49b18d9 => github.com/smallstep/go-attestation v0.4.4-0.20230224121042-1bcb20a75add
