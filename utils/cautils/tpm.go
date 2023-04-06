@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -331,6 +332,9 @@ func withRootsFile(filename string) attestationClientOption {
 	}
 }
 
+// withInsecure disables TLS server certificate chain checking.
+// In general this shouldn't be used, but it can be of use in
+// during development and testing.
 func withInsecure() attestationClientOption {
 	return func(o *attestationClientOptions) error {
 		o.insecure = true
@@ -376,6 +380,11 @@ func (ac *attestationClient) performAttestation(ctx context.Context, t *tpm.TPM,
 	// but it needs capturing some knowledge about the Attestation CA with the AK (cert). Possible to
 	// derive that from the intermediate and/or root CA and/or fingerprint, somehow? Or the attestation URI?
 
+	info, err := t.Info(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed retrieving info from TPM: %w", err)
+	}
+
 	eks, err := t.GetEKs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed retrieving EKs from TPM: %w", err)
@@ -386,7 +395,7 @@ func (ac *attestationClient) performAttestation(ctx context.Context, t *tpm.TPM,
 		return nil, fmt.Errorf("failed getting AK attestation parameters: %w", err)
 	}
 
-	attResp, err := ac.attest(ctx, eks, attestParams)
+	attResp, err := ac.attest(ctx, info, eks, attestParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed attesting AK: %w", err)
 	}
@@ -419,6 +428,13 @@ func (ac *attestationClient) performAttestation(ctx context.Context, t *tpm.TPM,
 	return akChain, nil
 }
 
+type tpmInfo struct {
+	Version         attest.TPMVersion `json:"version,omitempty"`
+	Manufacturer    string            `json:"manufacturer,omitempty"`
+	Model           string            `json:"model,omitempty"`
+	FirmwareVersion string            `json:"firmwareVersion,omitempty"`
+}
+
 type attestationParameters struct {
 	Public                  []byte `json:"public"`
 	UseTCSDActivationFormat bool   `json:"useTCSDActivationFormat"`
@@ -428,7 +444,7 @@ type attestationParameters struct {
 }
 
 type attestationRequest struct {
-	TPMVersion   attest.TPMVersion     `json:"version"`
+	TPMInfo      tpmInfo               `json:"tpmInfo"`
 	EKPub        []byte                `json:"ek"`
 	EKCerts      [][]byte              `json:"ekCerts"`
 	AKCert       []byte                `json:"akCert"`
@@ -442,7 +458,7 @@ type attestationResponse struct {
 
 // attest performs the HTTP POST request to the `/attest` endpoint of the
 // Attestation CA.
-func (ac *attestationClient) attest(ctx context.Context, eks []*tpm.EK, attestParams attest.AttestationParameters) (*attestationResponse, error) {
+func (ac *attestationClient) attest(ctx context.Context, info *tpm.Info, eks []*tpm.EK, attestParams attest.AttestationParameters) (*attestationResponse, error) {
 	var ekCerts [][]byte
 	var ekPub []byte
 	var err error
@@ -462,9 +478,14 @@ func (ac *attestationClient) attest(ctx context.Context, eks []*tpm.EK, attestPa
 	}
 
 	ar := attestationRequest{
-		TPMVersion: attest.TPMVersion20,
-		EKCerts:    ekCerts,
-		EKPub:      ekPub,
+		TPMInfo: tpmInfo{
+			Version:         attest.TPMVersion20,
+			Manufacturer:    strconv.FormatUint(uint64(info.Manufacturer.ID), 10),
+			Model:           info.VendorInfo,
+			FirmwareVersion: info.FirmwareVersion.String(),
+		},
+		EKCerts: ekCerts,
+		EKPub:   ekPub,
 		AttestParams: attestationParameters{
 			Public:                  attestParams.Public,
 			UseTCSDActivationFormat: attestParams.UseTCSDActivationFormat,
