@@ -202,7 +202,7 @@ jobs:
       - name: Update Reference
         id: update_reference
         run: |
-          ./bin/step help --markdown ./docs/src/pages/docs/step-cli/reference
+          ./bin/step help --markdown ./docs/step-cli/reference
           cd ./docs
           git config user.email "eng+ci@smallstep.com"
           git config user.name "step-travis-ci"
