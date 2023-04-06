@@ -397,13 +397,14 @@ type attestationObject struct {
 }
 
 // doDeviceAttestation performs `device-attest-01` challenge validation.
-func doDeviceAttestation(ctx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
+func doDeviceAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 	// TODO(hs): make TPM flow work with CreateAttestor()/Attest() too
-	if ctx.String("attestation-ca-url") != "" {
-		return doTPMAttestation(ctx, ac, ch, identifier, af)
+	attestationURI := clictx.String("attestation-uri")
+	if strings.HasPrefix(attestationURI, "tpmkms:") {
+		return doTPMAttestation(clictx, ac, ch, identifier, af)
 	}
 
-	attestor, err := cryptoutil.CreateAttestor("", ctx.String("attestation-uri"))
+	attestor, err := cryptoutil.CreateAttestor("", attestationURI)
 	if err != nil {
 		return err
 	}

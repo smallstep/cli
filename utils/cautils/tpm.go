@@ -63,11 +63,11 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 
 	// TODO(hs): remove this from the standard output, unless debugging/verbose logging?
 	ui.Printf("\nTPM INFO:")
-	ui.Printf("\nversion: %s", info.Version)
-	ui.Printf("\ninterface: %s", info.Interface)
-	ui.Printf("\nmanufacturer: %s", info.Manufacturer)
-	ui.Printf("\nvendor info: %s", info.VendorInfo)
-	ui.Printf("\nfirmware version: %s", info.FirmwareVersion)
+	ui.Printf("\nVersion: %s", info.Version)
+	ui.Printf("\nInterface: %s", info.Interface)
+	ui.Printf("\nManufacturer: %s", info.Manufacturer)
+	ui.Printf("\nVendor info: %s", info.VendorInfo)
+	ui.Printf("\nFirmware version: %s", info.FirmwareVersion)
 
 	atc, err := newAttestationClient(tpmAttestationCABaseURL, withRootsFile(tpmAttestationCARootFile), withInsecure()) // TODO(hs): remove `withInsecure`; convenience option
 	if err != nil {
@@ -160,7 +160,9 @@ func parseTPMAttestationURI(attestationURI string) (string, error) {
 // getAK returns an AK suitable for attesting the identifier that is requested. The
 // current behavior is to look for an AK backed by the TPM that has been issued a
 // certificate that includes the EK public key ID as one of it URI SANs. The AK itself
-// is identified by the hexadecimal representation of the EK public key.
+// is identified by the hexadecimal representation of the EK public key. If no AK
+// is found, a new one is created. If the AK has not valid certificate, the system
+// enrols with an Attestation CA using the `attesationClient`.
 func getAK(ctx context.Context, t *tpm.TPM, ac *attestationClient) (*tpm.AK, error) {
 	eks, err := t.GetEKs(ctx)
 	if err != nil {
@@ -172,6 +174,7 @@ func getAK(ctx context.Context, t *tpm.TPM, ac *attestationClient) (*tpm.AK, err
 	if err != nil {
 		return nil, fmt.Errorf("failed getting EK public key ID: %w", err)
 	}
+	ekKeyURL := ekURL(ekKeyID)
 
 	ekHexFingerprint, err := keyutil.EncodedFingerprint(ekPublic, keyutil.HexFingerprint)
 	if err != nil {
@@ -183,7 +186,7 @@ func getAK(ctx context.Context, t *tpm.TPM, ac *attestationClient) (*tpm.AK, err
 
 	// look for an AK named after the EK hex fingerprint by default
 	var ak *tpm.AK
-	if ak, err = t.GetAK(ctx, ekHexFingerprint); err != nil { // TODO(hs): determine if we want this as the (current) default behavior
+	if ak, err = t.GetAK(ctx, ekHexFingerprint); err != nil {
 		// return early if an error occurred that doesn't indicate that the AK does not exist
 		if !errors.Is(err, tpm.ErrNotFound) {
 			return nil, fmt.Errorf("failed getting AK: %w", err)
@@ -197,7 +200,7 @@ func getAK(ctx context.Context, t *tpm.TPM, ac *attestationClient) (*tpm.AK, err
 
 	// check if a (valid) AK certificate (chain) is available. Perform attestation flow otherwise.
 	akChain := ak.CertificateChain()
-	if len(akChain) == 0 || !hasValidIdentity(ak, ekKeyID) {
+	if len(akChain) == 0 || !hasValidIdentity(ak, ekKeyURL) {
 		if akChain, err = ac.performAttestation(ctx, t, ak); err != nil {
 			return nil, fmt.Errorf("failed performing AK attestation: %w", err)
 		}
@@ -209,8 +212,8 @@ func getAK(ctx context.Context, t *tpm.TPM, ac *attestationClient) (*tpm.AK, err
 	// when a new certificate was issued for the AK, it is possible the
 	// certificate that was issued doesn't include the expected and/or required
 	// identity, so this is checked before continuing.
-	if !hasValidIdentity(ak, ekKeyID) {
-		return nil, fmt.Errorf("AK certificate (chain) not valid for %q", ekHexFingerprint) // TODO(hs): change logic for printing ekKeyID
+	if !hasValidIdentity(ak, ekKeyURL) {
+		return nil, fmt.Errorf("AK certificate (chain) not valid for EK %q", ekKeyURL)
 	}
 
 	// TODO(hs): perform precheck to verify the retrieved AK certificate chain
@@ -223,6 +226,8 @@ func getAK(ctx context.Context, t *tpm.TPM, ac *attestationClient) (*tpm.AK, err
 	return ak, nil
 }
 
+// attestationStatement constructs and marshals the attestation
+// object for the `tpm` format.
 func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Certificate) ([]byte, error) {
 	params, err := key.CertificationParameters(ctx)
 	if err != nil {
@@ -252,6 +257,7 @@ func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Cer
 	return b, nil
 }
 
+// keyAuthDigest generates the ACME key authorization digest.
 func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
 	keyAuth, err := acme.KeyAuthorization(token, jwk)
 	if err != nil {
@@ -262,6 +268,8 @@ func keyAuthDigest(jwk *jose.JSONWebKey, token string) ([]byte, error) {
 	return hashedKeyAuth[:], nil
 }
 
+// generateKeyID generates a key identifier from the
+// SHA256 hash of the public key.
 func generateKeyID(pub crypto.PublicKey) ([]byte, error) {
 	b, err := x509.MarshalPKIXPublicKey(pub)
 	if err != nil {
@@ -271,11 +279,20 @@ func generateKeyID(pub crypto.PublicKey) ([]byte, error) {
 	return hash[:], nil
 }
 
+// ekURL generates an EK URI containing the encoded key identifier
+// for the EK.
+func ekURL(keyID []byte) *url.URL {
+	return &url.URL{
+		Scheme: "urn",
+		Opaque: "ek:sha256:" + base64.StdEncoding.EncodeToString(keyID),
+	}
+}
+
 // hasValidIdentity indicates if the AK has an associated certificate
 // that includes a valid identity. Currently we only consider certificates
 // that encode the TPM EK public key ID as one of its URI SANs, which is
 // the default behavior of the Smallstep Attestation CA.
-func hasValidIdentity(ak *tpm.AK, keyID []byte) bool {
+func hasValidIdentity(ak *tpm.AK, ekURL *url.URL) bool {
 	chain := ak.CertificateChain()
 	if len(chain) == 0 {
 		return false
@@ -286,18 +303,14 @@ func hasValidIdentity(ak *tpm.AK, keyID []byte) bool {
 
 	// the Smallstep Attestation CA will issue AK certifiates that
 	// contain the EK public key ID encoded as an URN by default.
-	keyIDURL := &url.URL{
-		Scheme: "urn",
-		Opaque: "ek:sha256:" + base64.StdEncoding.EncodeToString(keyID),
-	}
-
 	for _, u := range akCert.URIs {
-		if strings.EqualFold(keyIDURL.String(), u.String()) {
+		if strings.EqualFold(ekURL.String(), u.String()) {
 			return true
 		}
 	}
 
-	// TODO(hs): scan through other SANs too, to find other valid identities.
+	// TODO(hs): we could consider checking other values to contain
+	// a usable identity too.
 
 	return false
 }
@@ -314,6 +327,8 @@ type attestationClientOptions struct {
 
 type attestationClientOption func(o *attestationClientOptions) error
 
+// withRootsFile can be used to set the trusted roots when
+// setting up a TLS connection.
 func withRootsFile(filename string) attestationClientOption {
 	return func(o *attestationClientOptions) error {
 		if filename == "" {
@@ -362,7 +377,7 @@ func newAttestationClient(tpmAttestationCABaseURL string, options ...attestation
 			Proxy: http.ProxyFromEnvironment,
 			TLSClientConfig: &tls.Config{
 				RootCAs:            opts.rootCAs,
-				InsecureSkipVerify: opts.insecure, //nolint:gosec // intentional insecure
+				InsecureSkipVerify: opts.insecure, //nolint:gosec // intentional insecure if provided as option
 			},
 		},
 	}
