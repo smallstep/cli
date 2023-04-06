@@ -47,9 +47,10 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	}
 
 	tpmAttestationCARootFile := clictx.String("attestation-ca-root")
+	tpmAttestationCAInsecure := clictx.Bool("attestation-ca-insecure")
 
-	insecure := af.ctx.Bool("insecure")
-	kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, insecure, "kty", "curve", "size")
+	insecure := clictx.Bool("insecure")
+	kty, crv, size, err := utils.GetKeyDetailsFromCLI(clictx, insecure, "kty", "curve", "size")
 	if err != nil {
 		return fmt.Errorf("failed getting key details: %w", err)
 	}
@@ -97,7 +98,12 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 	ui.Printf("\nVendor info: %s", info.VendorInfo)
 	ui.Printf("\nFirmware version: %s", info.FirmwareVersion)
 
-	atc, err := newAttestationClient(tpmAttestationCABaseURL, withRootsFile(tpmAttestationCARootFile), withInsecure()) // TODO(hs): remove `withInsecure`; convenience option
+	// prepare a client to perform attestation with an Attestation CA
+	attestationClientOptions := []attestationClientOption{withRootsFile(tpmAttestationCARootFile)}
+	if tpmAttestationCAInsecure {
+		attestationClientOptions = append(attestationClientOptions, withInsecure())
+	}
+	atc, err := newAttestationClient(tpmAttestationCABaseURL, attestationClientOptions...)
 	if err != nil {
 		return fmt.Errorf("failed creating attestation client: %w", err)
 	}

@@ -163,6 +163,11 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 				Name:  "attestation-ca-root",
 				Usage: "The path to the PEM <file> with trusted roots when connecting to the Attestation CA",
 			},
+			cli.BoolFlag{
+				Name:   "attestation-ca-insecure",
+				Usage:  "Disables TLS server validation when connecting to the Attestation CA",
+				Hidden: true,
+			},
 			cli.StringFlag{
 				Name:  "tpm-storage-directory",
 				Usage: "The directory where TPM keys and certificates will be stored",
