@@ -30,9 +30,9 @@ require (
 	go.step.sm/crypto v0.28.1-0.20230404230013-4e7c14d93fcc
 	go.step.sm/linkedca v0.19.0
 	golang.org/x/crypto v0.7.0
-	golang.org/x/net v0.8.0
-	golang.org/x/sys v0.6.0
-	golang.org/x/term v0.6.0
+	golang.org/x/net v0.9.0
+	golang.org/x/sys v0.7.0
+	golang.org/x/term v0.7.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 	software.sslmate.com/src/go-pkcs12 v0.2.0
@@ -124,7 +124,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/api v0.114.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
