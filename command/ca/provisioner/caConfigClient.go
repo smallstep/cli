@@ -56,7 +56,7 @@ func (n *nodb) GetAdmins(context.Context) ([]*linkedca.Admin, error) {
 	return nil, nil
 }
 
-func (n *nodb) UpdateAdmin(_ context.Context, _ *linkedca.Admin) error {
+func (n *nodb) UpdateAdmin(context.Context, *linkedca.Admin) error {
 	return nil
 }
 
