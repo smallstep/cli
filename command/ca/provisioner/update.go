@@ -635,7 +635,7 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	return nil
 }
 
-func updateSSHPOPDetails(_ *cli.Context, _ *linkedca.Provisioner) error {
+func updateSSHPOPDetails(*cli.Context, *linkedca.Provisioner) error {
 	return nil
 }
 
