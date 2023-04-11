@@ -78,7 +78,7 @@ func (n *nodb) UpdateAuthorityPolicy(context.Context, *linkedca.Policy) error {
 	return nil
 }
 
-func (n *nodb) DeleteAuthorityPolicy(_ context.Context) error {
+func (n *nodb) DeleteAuthorityPolicy(context.Context) error {
 	return nil
 }
 
