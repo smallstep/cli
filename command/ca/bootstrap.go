@@ -34,13 +34,13 @@ After the bootstrap, ca commands do not need to specify the flags
 
 Bootstrap using the CA url and a fingerprint:
 '''
-$ step ca bootstrap --ca-url https://ca.example.org \
+$ step ca bootstrap --ca-url https://ca.example.com \
   --fingerprint d9d0978692f1c7cc791f5c343ce98771900721405e834cd27b9502cc719f5097
 '''
 
 Bootstrap and install the root certificate
 '''
-$ step ca bootstrap --ca-url https://ca.example.org \
+$ step ca bootstrap --ca-url https://ca.example.com \
   --fingerprint d9d0978692f1c7cc791f5c343ce98771900721405e834cd27b9502cc719f5097 \
   --install
 '''
@@ -53,12 +53,12 @@ $ step ca bootstrap --team superteam
 To use team IDs in your own environment, you'll need an HTTP(S) server
 serving a JSON file:
 '''
-{"url":"https://ca.example.org","fingerprint":"d9d0978692f1c7cc791f5c343ce98771900721405e834cd27b9502cc719f5097"}
+{"url":"https://ca.example.com","fingerprint":"d9d0978692f1c7cc791f5c343ce98771900721405e834cd27b9502cc719f5097"}
 '''
 
-Then, this command will look for the file at https://config.example.org/superteam:
+Then, this command will look for the file at https://config.example.com/superteam:
 '''
-$ step ca bootstrap --team superteam --team-url https://config.example.org/<>
+$ step ca bootstrap --team superteam --team-url https://config.example.com/<>
 '''`,
 		Flags: []cli.Flag{
 			flags.CaURL,
