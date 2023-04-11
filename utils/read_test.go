@@ -16,7 +16,7 @@ type mockReader struct {
 	err error
 }
 
-func (r *mockReader) Read(_ []byte) (int, error) {
+func (r *mockReader) Read([]byte) (int, error) {
 	return r.n, r.err
 }
 
