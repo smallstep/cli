@@ -65,7 +65,7 @@ func (n *nodb) DeleteAdmin(_ context.Context, id string) error {
 	return nil
 }
 
-func (n *nodb) CreateAuthorityPolicy(_ context.Context, _ *linkedca.Policy) error {
+func (n *nodb) CreateAuthorityPolicy(context.Context, *linkedca.Policy) error {
 	return nil
 }
 
