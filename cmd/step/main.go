@@ -13,12 +13,12 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command/version"
 	"github.com/smallstep/cli/internal/plugin"
-	"github.com/smallstep/cli/usage"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/cli-utils/ui"
+	"go.step.sm/cli-utils/usage"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 
