@@ -29,7 +29,7 @@ func (n *nodb) GetProvisioner(_ context.Context, id string) (*linkedca.Provision
 	return nil, nil
 }
 
-func (n *nodb) GetProvisioners(_ context.Context) ([]*linkedca.Provisioner, error) {
+func (n *nodb) GetProvisioners(context.Context) ([]*linkedca.Provisioner, error) {
 	return nil, nil
 }
 
