@@ -36,8 +36,7 @@ func (n *nodb) UpdateProvisioner(context.Context, *linkedca.Provisioner) error {
 	return nil
 }
 
-func (n *nodb) DeleteProvisioner(_ context.Context, id string) error {
-	_ = id
+func (n *nodb) DeleteProvisioner(context.Context, string) error {
 	return nil
 }
 
