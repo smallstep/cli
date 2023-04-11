@@ -1,16 +1,12 @@
 package cautils
 
 import (
-	"context"
 	"crypto/x509"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/pemutil"
-	"go.step.sm/crypto/tpm"
-	tpmstorage "go.step.sm/crypto/tpm/storage"
 )
 
 // ACMECreateCertFlow performs an ACME transaction to get a new certificate.
@@ -41,28 +37,6 @@ func ACMECreateCertFlow(ctx *cli.Context, provisionerName string) error {
 		}
 		ui.PrintSelected("Private Key", keyFile)
 	} else if v := ctx.String("attestation-uri"); v != "" {
-		// TODO: refactor this to be cleaner by passing the TPM and/or key around
-		// instead of creating a new instance.
-		if af.tpmSigner != nil {
-			tpmStorageDirectory := ctx.String("tpm-storage-directory")
-			t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)))
-			if err != nil {
-				return fmt.Errorf("failed initializing TPM: %w", err)
-			}
-			keyName, err := parseTPMAttestationURI(ctx.String("attestation-uri"))
-			if err != nil {
-				return fmt.Errorf("failed parsing --attestation-uri: %w", err)
-			}
-			ctx := tpm.NewContext(context.Background(), t)
-			key, err := t.GetKey(ctx, keyName)
-			if err != nil {
-				return fmt.Errorf("failed getting TPM key: %w", err)
-			}
-			if err = key.SetCertificateChain(ctx, certs); err != nil {
-				return fmt.Errorf("failed storing certificate with TPM key: %w", err)
-			}
-		}
-
 		ui.PrintSelected("Private Key", v)
 	}
 	return nil
