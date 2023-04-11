@@ -26,7 +26,7 @@ func init() {
 }
 
 // Command prints out the current version of the tool
-func Command(_ *cli.Context) error {
+func Command(*cli.Context) error {
 	fmt.Printf("%s\n", step.Version())
 	fmt.Printf("Release Date: %s\n", step.ReleaseDate())
 	return nil
