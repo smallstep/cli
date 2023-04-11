@@ -69,7 +69,7 @@ func (n *nodb) CreateAuthorityPolicy(_ context.Context, _ *linkedca.Policy) erro
 	return nil
 }
 
-func (n *nodb) GetAuthorityPolicy(_ context.Context) (*linkedca.Policy, error) {
+func (n *nodb) GetAuthorityPolicy(context.Context) (*linkedca.Policy, error) {
 	//nolint:nilnil // nodb is a noop interface.
 	return nil, nil
 }
