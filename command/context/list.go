@@ -32,7 +32,7 @@ ssh.beta
 	}
 }
 
-func listAction(ctx *cli.Context) error {
+func listAction(_ *cli.Context) error {
 	cs := step.Contexts()
 
 	cur := cs.GetCurrent()

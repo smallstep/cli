@@ -62,7 +62,8 @@ func WithCertificate(cert *ssh.Certificate, priv interface{}) ShellOption {
 
 // WithAddUser uses the given provisioner certificate to add an user in the
 // server.
-func WithAddUser(user string, cert *ssh.Certificate, priv interface{}) ShellOption {
+func WithAddUser(user string, _ *ssh.Certificate, priv interface{}) ShellOption {
+	_, _ = user, priv
 	return func(s *Shell) error {
 		return errors.New("not yet implemented")
 	}

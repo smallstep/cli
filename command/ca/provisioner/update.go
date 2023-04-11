@@ -51,21 +51,21 @@ OIDC
 [**--domain**=<domain>] [**--remove-domain**=<domain>]
 [**--group**=<group>] [**--remove-group**=<group>]
 [**--admin**=<email>]... [**--remove-admin**=<email>]...
-[**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 X5C
 
 **step ca provisioner update** <name> **--x5c-roots**=<file>
-[**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
 K8SSA (Kubernetes Service Account)
 
 **step ca provisioner update** <name> [**--public-key**=<file>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
@@ -79,7 +79,7 @@ IID (AWS/GCP/Azure)
 [**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
 [**--azure-object-id**=<id>] [**--instance-age**=<duration>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
@@ -87,7 +87,7 @@ SCEP
 
 **step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>]
-[**--encryption-algorithm-identifier**=<id>][**--admin-cert**=<file>] [**--admin-key**=<file>] 
+[**--encryption-algorithm-identifier**=<id>][**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
@@ -335,11 +335,7 @@ func updateAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	if err := client.UpdateProvisioner(name, p); err != nil {
-		return err
-	}
-
-	return nil
+	return client.UpdateProvisioner(name, p)
 }
 
 func updateTemplates(ctx *cli.Context, p *linkedca.Provisioner) error {
@@ -639,7 +635,7 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	return nil
 }
 
-func updateSSHPOPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
+func updateSSHPOPDetails(_ *cli.Context, _ *linkedca.Provisioner) error {
 	return nil
 }
 

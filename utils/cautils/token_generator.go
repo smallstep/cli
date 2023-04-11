@@ -150,7 +150,7 @@ type tokenAttrs struct {
 	certNotBefore, certNotAfter provisioner.TimeDuration
 }
 
-func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) {
+func generateK8sSAToken(ctx *cli.Context, _ *provisioner.K8sSA) (string, error) {
 	path := ctx.String("k8ssa-token-path")
 	if path == "" {
 		path = "/var/run/secrets/kubernetes.io/serviceaccount/token"

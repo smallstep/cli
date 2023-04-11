@@ -578,7 +578,7 @@ func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	}, nil
 }
 
-func createSSHPOPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+func createSSHPOPDetails(_ *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_SSHPOP{
 			SSHPOP: &linkedca.SSHPOPProvisioner{},

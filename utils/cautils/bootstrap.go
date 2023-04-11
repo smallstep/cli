@@ -56,6 +56,7 @@ type bootstrapContext struct {
 }
 
 func withDefaultContextValues(context, authority, profile string) bootstrapOption {
+	_, _ = authority, profile
 	return func(bc *bootstrapContext) {
 		bc.defaultContextName = context
 	}

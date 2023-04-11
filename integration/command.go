@@ -128,6 +128,7 @@ func (c CLICommand) test(t *testing.T, name, expected string, msg ...interface{}
 }
 
 func (c CLICommand) fail(t *testing.T, name string, expected interface{}, msg ...interface{}) {
+	_ = msg
 	t.Run(name, func(t *testing.T) {
 		out, err := c.run()
 		if assert.NotNil(t, err) {
