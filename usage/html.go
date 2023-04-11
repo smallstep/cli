@@ -30,10 +30,8 @@ func markdownHelpAction(ctx *cli.Context) error {
 		return errs.FileError(err, dir)
 	}
 
-	isHugo := ctx.Bool("hugo")
-
 	// app index
-	index := path.Join(dir, "index.md")
+	index := path.Join(dir, "README.mdx")
 	w, err := os.Create(index)
 	if err != nil {
 		return errs.FileError(err, index)
@@ -45,23 +43,19 @@ func markdownHelpAction(ctx *cli.Context) error {
 
 	// Subcommands
 	for _, cmd := range ctx.App.Commands {
-		if err := markdownHelpCommand(ctx.App, cmd, cmd, path.Join(dir, cmd.Name), isHugo); err != nil {
+		if err := markdownHelpCommand(ctx.App, cmd, cmd, path.Join(dir, cmd.Name)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func markdownHelpCommand(app *cli.App, cmd, parent cli.Command, base string, isHugo bool) error {
+func markdownHelpCommand(app *cli.App, cmd, parent cli.Command, base string) error {
 	if err := os.MkdirAll(base, 0755); err != nil {
 		return errs.FileError(err, base)
 	}
 
-	fileName := "index.md"
-	// preserve jekyll compatibility for transition period
-	if isHugo && len(cmd.Subcommands) > 0 {
-		fileName = "_index.md"
-	}
+	fileName := "README.mdx"
 
 	index := path.Join(base, fileName)
 	w, err := os.Create(index)
@@ -88,7 +82,7 @@ func markdownHelpCommand(app *cli.App, cmd, parent cli.Command, base string, isH
 
 	for _, sub := range cmd.Subcommands {
 		sub.HelpName = fmt.Sprintf("%s %s", cmd.HelpName, sub.Name)
-		if err := markdownHelpCommand(app, sub, cmd, path.Join(base, sub.Name), isHugo); err != nil {
+		if err := markdownHelpCommand(app, sub, cmd, path.Join(base, sub.Name)); err != nil {
 			return err
 		}
 	}

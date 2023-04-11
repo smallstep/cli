@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `step certificate needs-renewal` will only check the leaf certificate by default.
   To test the full certificate bundle use the `--bundle` flag. (smallstep/cli#873)
+- Change how `step help --markdown` works: It now ouputs "REAME.mdx" instead of "index.md"
 
 ## [v0.23.3] - 2022-03-01
 
