@@ -213,6 +213,7 @@ jobs:
           git config --global user.signingkey "${{ secrets.STEP_TRAVIS_CI_GH_PUBLIC_SIGNING_KEY }}"
 
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
+          git tag "cli-${{ needs.create_release.outputs.vversion }}"
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
@@ -220,3 +221,4 @@ jobs:
           branch: 'main'
           directory: './docs'
           repository: 'smallstep/docs'
+          tags: true
