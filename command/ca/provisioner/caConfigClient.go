@@ -42,7 +42,7 @@ func (n *nodb) DeleteProvisioner(_ context.Context, id string) error {
 	return nil
 }
 
-func (n *nodb) CreateAdmin(_ context.Context, _ *linkedca.Admin) error {
+func (n *nodb) CreateAdmin(context.Context, *linkedca.Admin) error {
 	return nil
 }
 
