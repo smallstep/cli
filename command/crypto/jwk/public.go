@@ -25,7 +25,7 @@ For examples, see **step help crypto jwk**.`,
 	}
 }
 
-func publicAction(_ *cli.Context) error {
+func publicAction(*cli.Context) error {
 	b, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return errors.Wrap(err, "error reading from STDIN")
