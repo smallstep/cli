@@ -33,7 +33,7 @@ func (n *nodb) GetProvisioners(context.Context) ([]*linkedca.Provisioner, error)
 	return nil, nil
 }
 
-func (n *nodb) UpdateProvisioner(_ context.Context, _ *linkedca.Provisioner) error {
+func (n *nodb) UpdateProvisioner(context.Context, *linkedca.Provisioner) error {
 	return nil
 }
 
