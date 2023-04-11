@@ -28,7 +28,7 @@ For examples, see **step help crypto jwk**.`,
 	}
 }
 
-func thumbprintAction(_ *cli.Context) error {
+func thumbprintAction(*cli.Context) error {
 	b, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return errors.Wrap(err, "error reading from STDIN")
