@@ -573,7 +573,7 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string,
 	case *provisioner.Nebula: // Generate an JWK with an nebula header and signature.
 		return generateNebulaToken(ctx, p, tokType, tokAttrs)
 	case *provisioner.K8sSA: // Get the Kubernetes service account token.
-		return generateK8sSAToken(ctx, p)
+		return generateK8sSAToken(ctx)
 	case *provisioner.GCP: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, c.CaURL())

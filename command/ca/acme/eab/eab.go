@@ -25,7 +25,7 @@ type cliEAK struct {
 	account     string
 }
 
-func toCLI(ctx *cli.Context, client *ca.AdminClient, eak *linkedca.EABKey) *cliEAK {
+func toCLI(_ *cli.Context, _ *ca.AdminClient, eak *linkedca.EABKey) *cliEAK {
 	boundAt := ""
 	if !eak.BoundAt.AsTime().IsZero() {
 		boundAt = eak.BoundAt.AsTime().Format("2006-01-02 15:04:05 -07:00")
@@ -52,7 +52,7 @@ func Command() cli.Command {
 			addCommand(),
 			removeCommand(),
 		},
-		Description: `**step ca acme eab** command group provides facilities for managing ACME 
+		Description: `**step ca acme eab** command group provides facilities for managing ACME
 		External Account Binding Keys.
 
 ## EXAMPLES

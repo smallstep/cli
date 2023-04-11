@@ -128,14 +128,15 @@ func (c CLICommand) test(t *testing.T, name, expected string, msg ...interface{}
 }
 
 func (c CLICommand) fail(t *testing.T, name string, expected interface{}, msg ...interface{}) {
+	_ = msg
 	t.Run(name, func(t *testing.T) {
 		out, err := c.run()
 		if assert.NotNil(t, err) {
-			assert.Equals(t, err.Error(), "exit status 1")
+			assert.Equals(t, err.Error(), "exit status 1", msg...)
 		}
 		switch v := expected.(type) {
 		case string:
-			assert.Equals(t, expected, out.stderr)
+			assert.Equals(t, expected, out.stderr, msg...)
 		case *regexp.Regexp:
 			re := expected.(*regexp.Regexp)
 			if !re.MatchString(out.stderr) {
@@ -144,6 +145,6 @@ func (c CLICommand) fail(t *testing.T, name string, expected interface{}, msg ..
 		default:
 			t.Errorf("unexpected type %T", v)
 		}
-		assert.Equals(t, "", out.stdout)
+		assert.Equals(t, "", out.stdout, msg...)
 	})
 }

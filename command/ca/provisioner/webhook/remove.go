@@ -59,9 +59,5 @@ func removeAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	if err := client.DeleteProvisionerWebhook(provisionerName, args.Get(1)); err != nil {
-		return err
-	}
-
-	return nil
+	return client.DeleteProvisionerWebhook(provisionerName, args.Get(1))
 }

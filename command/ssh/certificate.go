@@ -298,7 +298,7 @@ func certificateAction(ctx *cli.Context) error {
 
 		// All host identity certs need a URI SAN to work with our ssh API.
 		if isHost {
-			var u = uuid.Nil
+			var u uuid.UUID
 			switch hostID {
 			case "":
 				// If there is an old identity cert lying around, by default use the host ID so that running
