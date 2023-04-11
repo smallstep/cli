@@ -23,8 +23,7 @@ func (n *nodb) CreateProvisioner(context.Context, *linkedca.Provisioner) error {
 	return nil
 }
 
-func (n *nodb) GetProvisioner(_ context.Context, id string) (*linkedca.Provisioner, error) {
-	_ = id
+func (n *nodb) GetProvisioner(context.Context, string) (*linkedca.Provisioner, error) {
 	//nolint:nilnil // nodb is a noop interface.
 	return nil, nil
 }
