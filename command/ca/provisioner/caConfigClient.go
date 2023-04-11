@@ -134,6 +134,8 @@ func (client *caConfigClient) GetProvisioner(opts ...ca.ProvisionerOption) (*lin
 	return linkedcaProv, nil
 }
 
+// NOTE: 'name' parameter has been deprecated and will be removed in a future
+// minor release.
 func (client *caConfigClient) UpdateProvisioner(name string, prov *linkedca.Provisioner) error {
 	_ = name
 	if err := client.auth.UpdateProvisioner(client.ctx, prov); err != nil {
