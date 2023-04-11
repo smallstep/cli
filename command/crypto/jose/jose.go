@@ -64,7 +64,7 @@ $ step crypto jwt sign --key p256.priv.json --iss "joe" --aud "bob" \
 	}
 }
 
-func formatAction(_ *cli.Context) error {
+func formatAction(*cli.Context) error {
 	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return errors.Wrap(err, "error reading input")
