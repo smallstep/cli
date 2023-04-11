@@ -44,8 +44,7 @@ func (n *nodb) CreateAdmin(context.Context, *linkedca.Admin) error {
 	return nil
 }
 
-func (n *nodb) GetAdmin(_ context.Context, id string) (*linkedca.Admin, error) {
-	_ = id
+func (n *nodb) GetAdmin(context.Context, string) (*linkedca.Admin, error) {
 	//nolint:nilnil // nodb is a noop interface.
 	return nil, nil
 }
