@@ -19,7 +19,7 @@ func newNoDB() *nodb {
 	return &nodb{}
 }
 
-func (n *nodb) CreateProvisioner(_ context.Context, _ *linkedca.Provisioner) error {
+func (n *nodb) CreateProvisioner(context.Context, *linkedca.Provisioner) error {
 	return nil
 }
 
