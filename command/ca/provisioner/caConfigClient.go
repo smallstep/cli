@@ -58,8 +58,7 @@ func (n *nodb) UpdateAdmin(context.Context, *linkedca.Admin) error {
 	return nil
 }
 
-func (n *nodb) DeleteAdmin(_ context.Context, id string) error {
-	_ = id
+func (n *nodb) DeleteAdmin(context.Context, string) error {
 	return nil
 }
 
