@@ -46,6 +46,7 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
     flags:
       - -trimpath
     main: ./cmd/step/main.go
