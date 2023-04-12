@@ -460,6 +460,17 @@ func FingerprintFormatFlag(defaultFmt string) cli.StringFlag {
 	}
 }
 
+// FingerprintCertificateModeFlag returns a flag for configuring the fingerprinting
+// mode. The default behavior is to fingerprint just the public key if an SSH certificate
+// is being fingerprinted. By providing `--certificate`, the certificate bytes will
+// be included in calculating the fingerprint, resulting in a different one.
+func FingerprintCertificateModeFlag() cli.BoolFlag {
+	return cli.BoolFlag{
+		Name:  "certificate",
+		Usage: `Include SSH certificate bytes in fingerprint`,
+	}
+}
+
 // ParseFingerprintFormat gets the fingerprint encoding from the format flag.
 func ParseFingerprintFormat(format string) (fingerprint.Encoding, error) {
 	switch strings.ToLower(strings.TrimSpace(format)) {

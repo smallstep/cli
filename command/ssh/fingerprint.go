@@ -26,7 +26,8 @@ certificate.
 
 ## EXAMPLES
 
-Print the fingerprint for a certificate:
+Print the fingerprint for the public key in 
+an SSH certificate:
 '''
 $ step ssh fingerprint id_ecdsa-cert.pub
 '''
@@ -34,9 +35,16 @@ $ step ssh fingerprint id_ecdsa-cert.pub
 Print the fingerprint for an SSH public key:
 '''
 $ step ssh fingerprint id_ecdsa.pub
+'''
+
+Print the fingerprint for the full contents of 
+an SSH certificate:
+'''
+$ step ssh fingerprint id_ecdsa-cert.pub --certificate
 '''`,
 		Flags: []cli.Flag{
 			flags.FingerprintFormatFlag("base64-raw"),
+			flags.FingerprintCertificateModeFlag(),
 		},
 	}
 }
@@ -51,6 +59,8 @@ func fingerprint(ctx *cli.Context) error {
 		return err
 	}
 
+	certificateMode := ctx.Bool("certificate")
+
 	name := ctx.Args().First()
 	if name == "" {
 		name = "-"
@@ -61,10 +71,16 @@ func fingerprint(ctx *cli.Context) error {
 		return err
 	}
 
-	s, err := sshutil.FormatFingerprint(b, format)
+	var fingerprint string
+	if certificateMode {
+		fingerprint, err = sshutil.FormatCertificateFingerprint(b, format)
+	} else {
+		fingerprint, err = sshutil.FormatFingerprint(b, format)
+	}
 	if err != nil {
 		return err
 	}
-	fmt.Println(s)
+
+	fmt.Println(fingerprint)
 	return nil
 }
