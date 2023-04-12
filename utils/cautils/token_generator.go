@@ -2,7 +2,10 @@ package cautils
 
 import (
 	"crypto"
+	"crypto/ecdsa"
 	"crypto/ed25519"
+	"crypto/elliptic"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -147,7 +150,7 @@ type tokenAttrs struct {
 	certNotBefore, certNotAfter provisioner.TimeDuration
 }
 
-func generateK8sSAToken(ctx *cli.Context, p *provisioner.K8sSA) (string, error) {
+func generateK8sSAToken(ctx *cli.Context) (string, error) {
 	path := ctx.String("k8ssa-token-path")
 	if path == "" {
 		path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
@@ -188,10 +191,15 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 
 	joseSigner := jose.NewOpaqueSigner(kmsSigner)
 
+	alg, err := getSigningAlgorithm(kmsSigner.Public())
+	if err != nil {
+		return "", err
+	}
+
 	jwk = &jose.JSONWebKey{
 		Key:       joseSigner,
 		KeyID:     x5cKeyFile,
-		Algorithm: string(joseSigner.Algs()[0]),
+		Algorithm: alg,
 	}
 
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
@@ -485,4 +493,26 @@ func generateRenewToken(ctx *cli.Context, aud, sub string) (string, error) {
 		return "", errors.Wrap(err, "error creating renew token")
 	}
 	return tok, nil
+}
+
+func getSigningAlgorithm(pub crypto.PublicKey) (string, error) {
+	switch k := pub.(type) {
+	case *ecdsa.PublicKey:
+		switch k.Curve {
+		case elliptic.P256():
+			return jose.ES256, nil
+		case elliptic.P384():
+			return jose.ES384, nil
+		case elliptic.P521():
+			return jose.ES512, nil
+		default:
+			return "", fmt.Errorf("unsupported public key type ECDSA %s", k.Curve.Params().Name)
+		}
+	case *rsa.PublicKey:
+		return jose.DefaultRSASigAlgorithm, nil
+	case ed25519.PublicKey:
+		return jose.EdDSA, nil
+	default:
+		return "", fmt.Errorf("unsupported public key type %T", k)
+	}
 }

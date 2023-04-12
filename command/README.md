@@ -68,10 +68,10 @@ and thus registered with the `smallstep/cli/command`.
 
 There are three packages which contain functionality to make writing commands easier:
 
-- `github.com/smallstep/cli/usage`
 - `github.com/smallstep/cli/flags`
 - `github.com/smallstep/cli/prompts`
 - `go.step.sm/cli-utils/errs`
+- `go.step.sm/cli-utils/usage`
 
 The usage package is used to extend the default documentation provided by
 `urfave/cli` by enabling us to document arguments, whether they are optional or

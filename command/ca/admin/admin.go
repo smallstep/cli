@@ -71,7 +71,7 @@ type cliAdmin struct {
 	ProvisionerType string
 }
 
-func toCLI(ctx *cli.Context, client *ca.AdminClient, adm *linkedca.Admin) (*cliAdmin, error) {
+func toCLI(_ *cli.Context, client *ca.AdminClient, adm *linkedca.Admin) (*cliAdmin, error) {
 	p, err := client.GetProvisioner(ca.WithProvisionerID(adm.ProvisionerId))
 	if err != nil {
 		return nil, err

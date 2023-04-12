@@ -26,6 +26,37 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [v0.24.0] - 2022-04-12
+
+### Added
+
+- Support for ACME device-attest-01 challenge with TPM 2.0 (smallstep/cli#712).
+- Build and release cleanups (smallstep/cli#883, smallstep/cli#884,
+  smallstep/cli#888, and smallstep/cli#896).
+- Release of the smallstep/step-cli:bullseye docker image with CGO and glibc
+  support (smallstep/cli#885).
+- Support for reload using the HUP signal on the test command `step fileserver`
+  (smallstep/cli#891).
+- Support for Azure sovereign clouds (smallstep/cli#872).
+
+### Fixed
+
+- Fix the `--insecure` flag when creating RSA keys of less than 2048 bits
+  (smallstep/cli#878).
+- Fix docs for active revocation (smallstep/cli#889)
+- Fix signing of X5C tokens with ECDSA P-384 and P-521 keys.
+- Fix 404 links in docs (smallstep/cli#907).
+- Linting and cleanup changes (smallstep/cli#904 and smallstep/cli#905).
+
+### Changed
+
+- Use key fingerprints by default for SSH certificates, and add `--certificate`
+  flag to print the certificate fingerprint (smallstep/cli#908).
+
+### Removed
+
+- Remove `--hugo` flag in `step help` command (smallstep/cli#898).
+
 ## [v0.23.4] - 2022-03-09
 
 ### Added
@@ -38,6 +69,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `step certificate needs-renewal` will only check the leaf certificate by default.
   To test the full certificate bundle use the `--bundle` flag. (smallstep/cli#873)
+- Change how `step help --markdown` works: It now ouputs "REAME.mdx" instead of "index.md"
 
 ## [v0.23.3] - 2022-03-01
 
