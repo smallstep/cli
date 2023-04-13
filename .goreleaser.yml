@@ -116,7 +116,6 @@ nfpms:
 
 source:
   enabled: true
-  rlcp: true
   name_template: '{{ .ProjectName }}_{{ .Version }}'
 
 checksum:
