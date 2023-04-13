@@ -224,6 +224,8 @@ jobs:
               .routes = $newRoutes
             else . end)' < manifest.json > manifest.json.new
 
+          mv manifest.json.new manifest.json
+
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
