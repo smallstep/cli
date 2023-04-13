@@ -224,7 +224,8 @@ jobs:
           jq --argfile newRoutes $RUNNER_TEMP/reference-routes.json 'walk(
             if type == "object" and .isStepReference == true then
               .routes = $newRoutes
-            else . end)' < manifest.json > manifest.json.new
+            else . end
+          )' < manifest.json > manifest.json.new
 
           mv manifest.json.new manifest.json
 
