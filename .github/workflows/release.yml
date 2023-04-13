@@ -212,6 +212,18 @@ jobs:
           git config --global gpg.format ssh
           git config --global user.signingkey "${{ secrets.STEP_TRAVIS_CI_GH_PUBLIC_SIGNING_KEY }}"
 
+          find step-cli/reference -mindepth 2 -type f | jq -R -s '[
+                split("\n")[:-1][]
+                | {hideFromSidebar: true,
+                   title: .|rtrimstr("/README.mdx"),
+                   path: ("/" + .)}
+          ]' > reference-routes.json
+          
+          jq --argfile newRoutes reference-routes.json 'walk(
+            if type == "object" and .isStepReference == true then
+              .routes = $newRoutes
+            else . end)' < manifest.json > manifest.json.new
+
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
