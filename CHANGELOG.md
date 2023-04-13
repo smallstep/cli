@@ -26,6 +26,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Fix encrypted PKCS#8 keys used on `step crypto key format`
+  (smallstep/crypto#216).
+
+## [v0.24.1] - 2022-04-12
+
+### Added
+
+- Cross-compile Debian docker builds to improve release performance
+  (smallstep/cli#911).
+
+### Fixed
+
+- Upgrade certificates version (smallstep/cli#910).
+
 ## [v0.24.0] - 2022-04-12
 
 ### Added
