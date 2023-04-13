@@ -212,14 +212,16 @@ jobs:
           git config --global gpg.format ssh
           git config --global user.signingkey "${{ secrets.STEP_TRAVIS_CI_GH_PUBLIC_SIGNING_KEY }}"
 
+          # Generate new routes for reference docs
           find step-cli/reference -mindepth 2 -type f | jq -R -s '[
                 split("\n")[:-1][]
                 | {hideFromSidebar: true,
                    title: .|rtrimstr("/README.mdx"),
                    path: ("/" + .)}
-          ]' > reference-routes.json
-          
-          jq --argfile newRoutes reference-routes.json 'walk(
+          ]' > $RUNNER_TEMP/reference-routes.json
+         
+          # Replace old routes with new 
+          jq --argfile newRoutes $RUNNER_TEMP/reference-routes.json 'walk(
             if type == "object" and .isStepReference == true then
               .routes = $newRoutes
             else . end)' < manifest.json > manifest.json.new
