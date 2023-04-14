@@ -31,6 +31,8 @@ import (
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/tpm"
+	tpmstorage "go.step.sm/crypto/tpm/storage"
 
 	"github.com/smallstep/certificates/acme"
 	acmeAPI "github.com/smallstep/certificates/acme/api"
@@ -822,7 +824,32 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting certificate")
 	}
-	return append([]*x509.Certificate{leaf}, chain...), nil
+
+	fullChain := append([]*x509.Certificate{leaf}, chain...)
+
+	// TODO: refactor this to be cleaner by passing the TPM and/or key around
+	// instead of creating a new instance.
+	if af.tpmSigner != nil {
+		tpmStorageDirectory := af.ctx.String("tpm-storage-directory")
+		t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)))
+		if err != nil {
+			return nil, fmt.Errorf("failed initializing TPM: %w", err)
+		}
+		keyName, err := parseTPMAttestationURI(af.ctx.String("attestation-uri"))
+		if err != nil {
+			return nil, fmt.Errorf("failed parsing --attestation-uri: %w", err)
+		}
+		ctx := tpm.NewContext(context.Background(), t)
+		key, err := t.GetKey(ctx, keyName)
+		if err != nil {
+			return nil, fmt.Errorf("failed getting TPM key: %w", err)
+		}
+		if err = key.SetCertificateChain(ctx, fullChain); err != nil {
+			return nil, fmt.Errorf("failed storing certificate with TPM key: %w", err)
+		}
+	}
+
+	return fullChain, nil
 }
 
 func writeCert(chain []*x509.Certificate, certFile string) error {
