@@ -202,8 +202,8 @@ jobs:
       - name: Update Reference
         id: update_reference
         run: |
-          ./bin/step help --markdown ./docs/step-cli/reference
           cd ./docs
+
           git config user.email "eng+ci@smallstep.com"
           git config user.name "step-travis-ci"
 
@@ -212,7 +212,13 @@ jobs:
           git config --global gpg.format ssh
           git config --global user.signingkey "${{ secrets.STEP_TRAVIS_CI_GH_PUBLIC_SIGNING_KEY }}"
 
-          # Generate new routes for reference docs
+          # Remove old docs
+          git rm -rf ./step-cli/reference
+
+          # Build fresh docs
+          ./bin/step help --markdown ./step-cli/reference
+
+          # Generate new route manifest for the docs
           find step-cli/reference -mindepth 2 -type f | jq -R -s '[
                 split("\n")[:-1][]
                 | {hideFromSidebar: true,
@@ -220,7 +226,7 @@ jobs:
                    path: ("/" + .)}
           ]' > $RUNNER_TEMP/reference-routes.json
          
-          # Replace old routes with new 
+          # Replace old route manifest with new 
           jq --argfile newRoutes $RUNNER_TEMP/reference-routes.json 'walk(
             if type == "object" and .isStepReference == true then
               .routes = $newRoutes
