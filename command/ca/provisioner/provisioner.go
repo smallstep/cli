@@ -578,7 +578,7 @@ Use the '--group' flag multiple times to configure multiple groups.`,
 	}
 	oidcTenantIDFlag = cli.StringFlag{
 		Name:  "tenant-id",
-		Usage: `The <tenant-id> used to replace the templatized {tenantid} in the OpenID Configuration.`,
+		Usage: `The <tenant-id> used to replace the templatized tenantid value in the OpenID Configuration.`,
 	}
 
 	// X5C provisioner flags

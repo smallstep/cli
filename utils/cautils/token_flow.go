@@ -145,7 +145,7 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 	case *provisioner.SSHPOP: // Generate a SSHPOP token using an ssh cert + key.
 		return generateSSHPOPToken(ctx, p, tokType, tokAttrs)
 	case *provisioner.K8sSA: // Get the Kubernetes service account token.
-		return generateK8sSAToken(ctx, p)
+		return generateK8sSAToken(ctx)
 	case *provisioner.GCP: // Do the identity request to get the token.
 		sharedContext.DisableCustomSANs = p.DisableCustomSANs
 		return p.GetIdentityToken(subject, caURL)

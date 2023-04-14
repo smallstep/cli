@@ -19,62 +19,62 @@ func newNoDB() *nodb {
 	return &nodb{}
 }
 
-func (n *nodb) CreateProvisioner(ctx context.Context, prov *linkedca.Provisioner) error {
+func (n *nodb) CreateProvisioner(context.Context, *linkedca.Provisioner) error {
 	return nil
 }
 
-func (n *nodb) GetProvisioner(ctx context.Context, id string) (*linkedca.Provisioner, error) {
+func (n *nodb) GetProvisioner(context.Context, string) (*linkedca.Provisioner, error) {
 	//nolint:nilnil // nodb is a noop interface.
 	return nil, nil
 }
 
-func (n *nodb) GetProvisioners(ctx context.Context) ([]*linkedca.Provisioner, error) {
+func (n *nodb) GetProvisioners(context.Context) ([]*linkedca.Provisioner, error) {
 	return nil, nil
 }
 
-func (n *nodb) UpdateProvisioner(ctx context.Context, prov *linkedca.Provisioner) error {
+func (n *nodb) UpdateProvisioner(context.Context, *linkedca.Provisioner) error {
 	return nil
 }
 
-func (n *nodb) DeleteProvisioner(ctx context.Context, id string) error {
+func (n *nodb) DeleteProvisioner(context.Context, string) error {
 	return nil
 }
 
-func (n *nodb) CreateAdmin(ctx context.Context, admin *linkedca.Admin) error {
+func (n *nodb) CreateAdmin(context.Context, *linkedca.Admin) error {
 	return nil
 }
 
-func (n *nodb) GetAdmin(ctx context.Context, id string) (*linkedca.Admin, error) {
+func (n *nodb) GetAdmin(context.Context, string) (*linkedca.Admin, error) {
 	//nolint:nilnil // nodb is a noop interface.
 	return nil, nil
 }
 
-func (n *nodb) GetAdmins(ctx context.Context) ([]*linkedca.Admin, error) {
+func (n *nodb) GetAdmins(context.Context) ([]*linkedca.Admin, error) {
 	return nil, nil
 }
 
-func (n *nodb) UpdateAdmin(ctx context.Context, prov *linkedca.Admin) error {
+func (n *nodb) UpdateAdmin(context.Context, *linkedca.Admin) error {
 	return nil
 }
 
-func (n *nodb) DeleteAdmin(ctx context.Context, id string) error {
+func (n *nodb) DeleteAdmin(context.Context, string) error {
 	return nil
 }
 
-func (n *nodb) CreateAuthorityPolicy(ctx context.Context, policy *linkedca.Policy) error {
+func (n *nodb) CreateAuthorityPolicy(context.Context, *linkedca.Policy) error {
 	return nil
 }
 
-func (n *nodb) GetAuthorityPolicy(ctx context.Context) (*linkedca.Policy, error) {
+func (n *nodb) GetAuthorityPolicy(context.Context) (*linkedca.Policy, error) {
 	//nolint:nilnil // nodb is a noop interface.
 	return nil, nil
 }
 
-func (n *nodb) UpdateAuthorityPolicy(ctx context.Context, policy *linkedca.Policy) error {
+func (n *nodb) UpdateAuthorityPolicy(context.Context, *linkedca.Policy) error {
 	return nil
 }
 
-func (n *nodb) DeleteAuthorityPolicy(ctx context.Context) error {
+func (n *nodb) DeleteAuthorityPolicy(context.Context) error {
 	return nil
 }
 
@@ -130,16 +130,15 @@ func (client *caConfigClient) GetProvisioner(opts ...ca.ProvisionerOption) (*lin
 	return linkedcaProv, nil
 }
 
+// NOTE: 'name' parameter has been deprecated and will be removed in a future
+// minor release.
 func (client *caConfigClient) UpdateProvisioner(name string, prov *linkedca.Provisioner) error {
+	_ = name
 	if err := client.auth.UpdateProvisioner(client.ctx, prov); err != nil {
 		return errors.Wrapf(err, "error updating provisioner")
 	}
 
-	if err := client.write(); err != nil {
-		return err
-	}
-
-	return nil
+	return client.write()
 }
 
 func (client *caConfigClient) RemoveProvisioner(opts ...ca.ProvisionerOption) error {
@@ -151,11 +150,7 @@ func (client *caConfigClient) RemoveProvisioner(opts ...ca.ProvisionerOption) er
 		return errors.Wrapf(err, "error removing provisioner")
 	}
 
-	if err := client.write(); err != nil {
-		return err
-	}
-
-	return nil
+	return client.write()
 }
 
 func (client *caConfigClient) loadProvisioner(opts ...ca.ProvisionerOption) (provisioner.Interface, error) {

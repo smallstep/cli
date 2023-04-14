@@ -28,7 +28,7 @@ authenticated by the sender, even if the attacker has adaptively influenced the
 messages authenticated by the sender. For a formal definition see, e.g., Section
 2.4 of Bellare, Kilian, and Rogaway, "The security of the cipher block chaining
 message authentication code," Journal of Computer and System Sciences 61 (2000),
-362–399; http://www-cse.ucsd.edu/~mihir/papers/cbc.html.
+362–399; https://cseweb.ucsd.edu/~mihir/papers/cbc.pdf.
 
 NaCl crypto_auth does not make any promises regarding "strong" unforgeability;
 perhaps one valid authenticator can be converted into another valid

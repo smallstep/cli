@@ -55,7 +55,7 @@ type bootstrapContext struct {
 	redirectURL        string
 }
 
-func withDefaultContextValues(context, authority, profile string) bootstrapOption {
+func withDefaultContextValues(context string) bootstrapOption {
 	return func(bc *bootstrapContext) {
 		bc.defaultContextName = context
 	}
@@ -242,12 +242,8 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 		r.RedirectURL = "https://smallstep.com/app/teams/sso/success"
 	}
 
-	caHostname, err := getHost(r.CaURL)
-	if err != nil {
-		return err
-	}
 	return bootstrap(ctx, r.CaURL, r.Fingerprint,
-		withDefaultContextValues(teamAuthority+"."+team, caHostname, team),
+		withDefaultContextValues(teamAuthority+"."+team),
 		withRedirectURL(r.RedirectURL))
 }
 
@@ -260,7 +256,7 @@ func BootstrapAuthority(ctx *cli.Context, caURL, fingerprint string) (err error)
 		}
 	}
 	return bootstrap(ctx, caURL, fingerprint,
-		withDefaultContextValues(caHostname, caHostname, caHostname))
+		withDefaultContextValues(caHostname))
 }
 
 func getHost(caURL string) (string, error) {

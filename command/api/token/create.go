@@ -40,10 +40,11 @@ func createCommand() cli.Command {
 <key-file>
 :  File to read the private key (PEM format).
 
-## Examples
-
+## EXAMPLES
+Use a certificate to get a new API token:
+'''
 $ step api token create ff98be70-7cc3-4df5-a5db-37f5d3c96e23 internal.crt internal.key
-`,
+'''`,
 	}
 }
 
