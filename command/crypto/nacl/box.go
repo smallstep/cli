@@ -29,7 +29,7 @@ privacy and third-party unforgeability for a public-key authenticated-encryption
 scheme using nonces. For formal definitions see, e.g., Jee Hea An,
 "Authenticated encryption in the public-key setting: security notions and
 analyzes," https://eprint.iacr.org/2001/079. Distinct messages between the same
-{sender, receiver} set are required to have distinct nonces. For example, the
+(sender, receiver) set are required to have distinct nonces. For example, the
 lexicographically smaller public key can use nonce 1 for its first message to
 the other key, nonce 3 for its second message, nonce 5 for its third message,
 etc., while the lexicographically larger public key uses nonce 2 for its first
@@ -37,9 +37,8 @@ message to the other key, nonce 4 for its second message, nonce 6 for its third
 message, etc. Nonces are long enough that randomly generated nonces have
 negligible risk of collision.
 
-There is no harm in having the same nonce for different messages if the {sender,
-receiver} sets are different. This is true even if the sets overlap. For
-example, a sender can use the same nonce for two different messages if the
+There is no harm in having the same nonce for different messages if the (sender,
+receiver) sets are different. This is true even if the sets overlap. For example, a sender can use the same nonce for two different messages if the
 messages are sent to two different public keys.
 
 By default nonces are alphanumeric, but it's possible to use binary nonces using
