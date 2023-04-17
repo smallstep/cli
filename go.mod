@@ -3,7 +3,7 @@ module github.com/smallstep/cli
 go 1.19
 
 require (
-	github.com/Microsoft/go-winio v0.6.0
+	github.com/Microsoft/go-winio v0.6.1
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/google/go-attestation v0.4.4-0.20220404204839-8820d49b18d9
