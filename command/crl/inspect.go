@@ -14,6 +14,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"math/big"
 	"net"
 	"net/http"
 	"net/url"
@@ -264,33 +265,32 @@ func inspectAction(ctx *cli.Context) error {
 
 // CRL is the JSON representation of a certificate revocation list.
 type CRL struct {
-	Version             int                  `json:"version"`
-	SignatureAlgorithm  SignatureAlgorithm   `json:"signature_algorithm"`
-	Issuer              DistinguishedName    `json:"issuer"`
-	ThisUpdate          time.Time            `json:"this_update"`
-	NextUpdate          time.Time            `json:"next_update"`
-	RevokedCertificates []RevokedCertificate `json:"revoked_certificates"`
-	Extensions          []Extension          `json:"extensions,omitempty"`
-	Signature           *Signature           `json:"signature"`
+	Version             *big.Int                `json:"version"`
+	SignatureAlgorithm  x509.SignatureAlgorithm `json:"signature_algorithm"`
+	Issuer              pkix.Name               `json:"issuer"`
+	ThisUpdate          time.Time               `json:"this_update"`
+	NextUpdate          time.Time               `json:"next_update"`
+	RevokedCertificates []RevokedCertificate    `json:"revoked_certificates"`
+	Extensions          []Extension             `json:"extensions,omitempty"`
+	Signature           *Signature              `json:"signature"`
 	authorityKeyID      []byte
 	raw                 []byte
 }
 
 func ParseCRL(b []byte) (*CRL, error) {
-	crl, err := x509.ParseCRL(b)
+	crl, err := x509.ParseRevocationList(b)
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing crl")
 	}
-	tcrl := crl.TBSCertList
 
-	certs := make([]RevokedCertificate, len(tcrl.RevokedCertificates))
-	for i, c := range tcrl.RevokedCertificates {
+	certs := make([]RevokedCertificate, len(crl.RevokedCertificates))
+	for i, c := range crl.RevokedCertificates {
 		certs[i] = newRevokedCertificate(c)
 	}
 
 	var issuerKeyID []byte
-	extensions := make([]Extension, len(tcrl.Extensions))
-	for i, e := range tcrl.Extensions {
+	extensions := make([]Extension, len(crl.Extensions))
+	for i, e := range crl.Extensions {
 		extensions[i] = newExtension(e)
 		if e.Id.Equal(oidExtensionAuthorityKeyID) {
 			var v authorityKeyID
@@ -301,21 +301,21 @@ func ParseCRL(b []byte) (*CRL, error) {
 	}
 
 	return &CRL{
-		Version:             tcrl.Version + 1,
-		SignatureAlgorithm:  newSignatureAlgorithm(tcrl.Signature),
-		Issuer:              newDistinguishedName(tcrl.Issuer),
-		ThisUpdate:          tcrl.ThisUpdate,
-		NextUpdate:          tcrl.NextUpdate,
+		Version:             crl.Number.Add(crl.Number, big.NewInt(1)),
+		SignatureAlgorithm:  crl.SignatureAlgorithm,
+		Issuer:              crl.Issuer,
+		ThisUpdate:          crl.ThisUpdate,
+		NextUpdate:          crl.NextUpdate,
 		RevokedCertificates: certs,
 		Extensions:          extensions,
 		Signature: &Signature{
-			SignatureAlgorithm: newSignatureAlgorithm(tcrl.Signature),
-			Value:              crl.SignatureValue.Bytes,
+			SignatureAlgorithm: crl.SignatureAlgorithm,
+			Value:              crl.Signature,
 			Valid:              false,
 			Reason:             "",
 		},
 		authorityKeyID: issuerKeyID,
-		raw:            crl.TBSCertList.Raw,
+		raw:            crl.RawTBSRevocationList,
 	}, nil
 }
 
@@ -411,71 +411,10 @@ func printCRL(crl *CRL) {
 
 // Signature is the JSON representation of a CRL signature.
 type Signature struct {
-	SignatureAlgorithm SignatureAlgorithm `json:"signature_algorithm"`
-	Value              []byte             `json:"value"`
-	Valid              bool               `json:"valid"`
-	Reason             string             `json:"reason,omitempty"`
-}
-
-// DistinguishedName is the JSON representation of the CRL issuer.
-type DistinguishedName struct {
-	Country            []string                 `json:"country,omitempty"`
-	Organization       []string                 `json:"organization,omitempty"`
-	OrganizationalUnit []string                 `json:"organizational_unit,omitempty"`
-	Locality           []string                 `json:"locality,omitempty"`
-	Province           []string                 `json:"province,omitempty"`
-	StreetAddress      []string                 `json:"street_address,omitempty"`
-	PostalCode         []string                 `json:"postal_code,omitempty"`
-	SerialNumber       string                   `json:"serial_number,omitempty"`
-	CommonName         string                   `json:"common_name,omitempty"`
-	ExtraNames         map[string][]interface{} `json:"extra_names,omitempty"`
-	raw                pkix.RDNSequence
-}
-
-// String returns the one line representation of the distinguished name.
-func (d DistinguishedName) String() string {
-	var parts []string
-	for _, dn := range d.raw {
-		v := strings.ReplaceAll(pkix.RDNSequence{dn}.String(), "\\,", ",")
-		parts = append(parts, v)
-	}
-	return strings.Join(parts, " ")
-}
-
-func newDistinguishedName(seq pkix.RDNSequence) DistinguishedName {
-	var n pkix.Name
-	n.FillFromRDNSequence(&seq)
-
-	var extraNames map[string][]interface{}
-	if len(n.ExtraNames) > 0 {
-		extraNames = make(map[string][]interface{})
-		for _, tv := range n.ExtraNames {
-			oid := tv.Type.String()
-			if s, ok := tv.Value.(string); ok {
-				extraNames[oid] = append(extraNames[oid], s)
-				continue
-			}
-			if b, err := asn1.Marshal(tv.Value); err == nil {
-				extraNames[oid] = append(extraNames[oid], b)
-				continue
-			}
-			extraNames[oid] = append(extraNames[oid], escapeValue(tv.Value))
-		}
-	}
-
-	return DistinguishedName{
-		Country:            n.Country,
-		Organization:       n.Organization,
-		OrganizationalUnit: n.OrganizationalUnit,
-		Locality:           n.Locality,
-		Province:           n.Province,
-		StreetAddress:      n.StreetAddress,
-		PostalCode:         n.PostalCode,
-		SerialNumber:       n.SerialNumber,
-		CommonName:         n.CommonName,
-		ExtraNames:         extraNames,
-		raw:                seq,
-	}
+	SignatureAlgorithm x509.SignatureAlgorithm `json:"signature_algorithm"`
+	Value              []byte                  `json:"value"`
+	Valid              bool                    `json:"valid"`
+	Reason             string                  `json:"reason,omitempty"`
 }
 
 // RevokedCertificate is the JSON representation of a certificate in a CRL.
