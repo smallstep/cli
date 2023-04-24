@@ -27,13 +27,6 @@ var (
 	oidSignatureECDSAWithSHA384 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 3}
 	oidSignatureECDSAWithSHA512 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 4}
 	oidSignatureEd25519         = asn1.ObjectIdentifier{1, 3, 101, 112}
-
-	//oidMGF1 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 8}
-
-	// oidISOSignatureSHA1WithRSA means the same as oidSignatureSHA1WithRSA
-	// but it's specified by ISO. Microsoft's makecert.exe has been known
-	// to produce certificates with this OID.
-	//oidISOSignatureSHA1WithRSA = asn1.ObjectIdentifier{1, 3, 14, 3, 2, 29}
 )
 
 type signatureAlgorithmDetails struct {
@@ -83,10 +76,15 @@ func newSignatureAlgorithm(xsa x509.SignatureAlgorithm) (SignatureAlgorithm, err
 
 	sad, ok := signatureAlgorithmMap[xsa]
 	if !ok {
-		return sa, fmt.Errorf("unknown or unsupported signature algorithm: %s", sa.Name)
+		if xsa == x509.UnknownSignatureAlgorithm {
+			sa.OID = "unknown"
+		} else {
+			return sa, fmt.Errorf("unsupported signature algorithm: %s", sa.Name)
+		}
+	} else {
+		sa.OID = sad.oid.String()
+		sa.hash = sad.hash
 	}
 
-	sa.OID = sad.oid.String()
-	sa.hash = sad.hash
 	return sa, nil
 }
