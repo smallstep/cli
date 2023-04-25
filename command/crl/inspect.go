@@ -314,10 +314,7 @@ func ParseCRL(b []byte) (*CRL, error) {
 		}
 	}
 
-	sa, err := newSignatureAlgorithm(crl.SignatureAlgorithm)
-	if err != nil {
-		return nil, err
-	}
+	sa := newSignatureAlgorithm(crl.SignatureAlgorithm)
 
 	return &CRL{
 		Version:             crl.Number.Add(crl.Number, big.NewInt(1)),

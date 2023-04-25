@@ -8,7 +8,6 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/asn1"
-	"fmt"
 )
 
 // OIDs for signature algorithms
@@ -30,28 +29,38 @@ var (
 )
 
 type signatureAlgorithmDetails struct {
-	oid  asn1.ObjectIdentifier
+	oid  stringer
 	hash crypto.Hash
 }
 
+type stringer interface {
+	String() string
+}
+
+type oidUnknown struct{}
+
+func (o oidUnknown) String() string {
+	return "unknown"
+}
+
 var signatureAlgorithmMap = map[x509.SignatureAlgorithm]signatureAlgorithmDetails{
-	x509.MD2WithRSA:  {oidSignatureMD2WithRSA, crypto.Hash(0)}, // no value for MD2
-	x509.MD5WithRSA:  {oidSignatureMD5WithRSA, crypto.MD5},
-	x509.SHA1WithRSA: {oidSignatureSHA1WithRSA, crypto.SHA1},
-	//x509.SHA1WithRSA:      {oidISOSignatureSHA1WithRSA, crypto.SHA1},
-	x509.SHA256WithRSA:    {oidSignatureSHA256WithRSA, crypto.SHA256},
-	x509.SHA384WithRSA:    {oidSignatureSHA384WithRSA, crypto.SHA384},
-	x509.SHA512WithRSA:    {oidSignatureSHA512WithRSA, crypto.SHA512},
-	x509.SHA256WithRSAPSS: {oidSignatureRSAPSS, crypto.SHA256},
-	x509.SHA384WithRSAPSS: {oidSignatureRSAPSS, crypto.SHA384},
-	x509.SHA512WithRSAPSS: {oidSignatureRSAPSS, crypto.SHA512},
-	x509.DSAWithSHA1:      {oidSignatureDSAWithSHA1, crypto.SHA1},
-	x509.DSAWithSHA256:    {oidSignatureDSAWithSHA256, crypto.SHA256},
-	x509.ECDSAWithSHA1:    {oidSignatureECDSAWithSHA1, crypto.SHA1},
-	x509.ECDSAWithSHA256:  {oidSignatureECDSAWithSHA256, crypto.SHA256},
-	x509.ECDSAWithSHA384:  {oidSignatureECDSAWithSHA384, crypto.SHA384},
-	x509.ECDSAWithSHA512:  {oidSignatureECDSAWithSHA512, crypto.SHA512},
-	x509.PureEd25519:      {oidSignatureEd25519, crypto.Hash(0)},
+	x509.MD2WithRSA:                {oidSignatureMD2WithRSA, crypto.Hash(0)}, // no value for MD2
+	x509.MD5WithRSA:                {oidSignatureMD5WithRSA, crypto.MD5},
+	x509.SHA1WithRSA:               {oidSignatureSHA1WithRSA, crypto.SHA1},
+	x509.SHA256WithRSA:             {oidSignatureSHA256WithRSA, crypto.SHA256},
+	x509.SHA384WithRSA:             {oidSignatureSHA384WithRSA, crypto.SHA384},
+	x509.SHA512WithRSA:             {oidSignatureSHA512WithRSA, crypto.SHA512},
+	x509.SHA256WithRSAPSS:          {oidSignatureRSAPSS, crypto.SHA256},
+	x509.SHA384WithRSAPSS:          {oidSignatureRSAPSS, crypto.SHA384},
+	x509.SHA512WithRSAPSS:          {oidSignatureRSAPSS, crypto.SHA512},
+	x509.DSAWithSHA1:               {oidSignatureDSAWithSHA1, crypto.SHA1},
+	x509.DSAWithSHA256:             {oidSignatureDSAWithSHA256, crypto.SHA256},
+	x509.ECDSAWithSHA1:             {oidSignatureECDSAWithSHA1, crypto.SHA1},
+	x509.ECDSAWithSHA256:           {oidSignatureECDSAWithSHA256, crypto.SHA256},
+	x509.ECDSAWithSHA384:           {oidSignatureECDSAWithSHA384, crypto.SHA384},
+	x509.ECDSAWithSHA512:           {oidSignatureECDSAWithSHA512, crypto.SHA512},
+	x509.PureEd25519:               {oidSignatureEd25519, crypto.Hash(0)},
+	x509.UnknownSignatureAlgorithm: {oidUnknown{}, crypto.Hash(0)},
 }
 
 type SignatureAlgorithm struct {
@@ -68,23 +77,18 @@ func (s SignatureAlgorithm) String() string {
 	return s.Name
 }
 
-func newSignatureAlgorithm(xsa x509.SignatureAlgorithm) (SignatureAlgorithm, error) {
+func newSignatureAlgorithm(xsa x509.SignatureAlgorithm) SignatureAlgorithm {
 	sa := SignatureAlgorithm{
 		Name: xsa.String(),
 		algo: xsa,
 	}
 
-	sad, ok := signatureAlgorithmMap[xsa]
-	if !ok {
-		if xsa == x509.UnknownSignatureAlgorithm {
-			sa.OID = "unknown"
-		} else {
-			return sa, fmt.Errorf("unsupported signature algorithm: %s", sa.Name)
-		}
-	} else {
+	if sad, ok := signatureAlgorithmMap[xsa]; ok {
 		sa.OID = sad.oid.String()
 		sa.hash = sad.hash
+	} else {
+		sa.OID = "unknown"
 	}
 
-	return sa, nil
+	return sa
 }
