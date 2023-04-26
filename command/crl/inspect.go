@@ -14,6 +14,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"math/big"
 	"net"
 	"net/http"
 	"net/url"
@@ -264,7 +265,7 @@ func inspectAction(ctx *cli.Context) error {
 
 // CRL is the JSON representation of a certificate revocation list.
 type CRL struct {
-	Version             int                  `json:"version"`
+	Version             *big.Int             `json:"version"`
 	SignatureAlgorithm  SignatureAlgorithm   `json:"signature_algorithm"`
 	Issuer              DistinguishedName    `json:"issuer"`
 	ThisUpdate          time.Time            `json:"this_update"`
@@ -276,21 +277,34 @@ type CRL struct {
 	raw                 []byte
 }
 
+// pemCRLPrefix is the magic string that indicates that we have a PEM encoded
+// CRL.
+var pemCRLPrefix = []byte("-----BEGIN X509 CRL")
+
+// pemType is the type of a PEM encoded CRL.
+var pemType = "X509 CRL"
+
 func ParseCRL(b []byte) (*CRL, error) {
-	crl, err := x509.ParseCRL(b)
+	if bytes.HasPrefix(b, pemCRLPrefix) {
+		block, _ := pem.Decode(b)
+		if block != nil && block.Type == pemType {
+			b = block.Bytes
+		}
+	}
+
+	crl, err := x509.ParseRevocationList(b)
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing crl")
 	}
-	tcrl := crl.TBSCertList
 
-	certs := make([]RevokedCertificate, len(tcrl.RevokedCertificates))
-	for i, c := range tcrl.RevokedCertificates {
+	certs := make([]RevokedCertificate, len(crl.RevokedCertificates))
+	for i, c := range crl.RevokedCertificates {
 		certs[i] = newRevokedCertificate(c)
 	}
 
 	var issuerKeyID []byte
-	extensions := make([]Extension, len(tcrl.Extensions))
-	for i, e := range tcrl.Extensions {
+	extensions := make([]Extension, len(crl.Extensions))
+	for i, e := range crl.Extensions {
 		extensions[i] = newExtension(e)
 		if e.Id.Equal(oidExtensionAuthorityKeyID) {
 			var v authorityKeyID
@@ -300,22 +314,24 @@ func ParseCRL(b []byte) (*CRL, error) {
 		}
 	}
 
+	sa := newSignatureAlgorithm(crl.SignatureAlgorithm)
+
 	return &CRL{
-		Version:             tcrl.Version + 1,
-		SignatureAlgorithm:  newSignatureAlgorithm(tcrl.Signature),
-		Issuer:              newDistinguishedName(tcrl.Issuer),
-		ThisUpdate:          tcrl.ThisUpdate,
-		NextUpdate:          tcrl.NextUpdate,
+		Version:             crl.Number.Add(crl.Number, big.NewInt(1)),
+		SignatureAlgorithm:  sa,
+		Issuer:              newDistinguishedName(crl.Issuer),
+		ThisUpdate:          crl.ThisUpdate,
+		NextUpdate:          crl.NextUpdate,
 		RevokedCertificates: certs,
 		Extensions:          extensions,
 		Signature: &Signature{
-			SignatureAlgorithm: newSignatureAlgorithm(tcrl.Signature),
-			Value:              crl.SignatureValue.Bytes,
+			SignatureAlgorithm: sa,
+			Value:              crl.Signature,
 			Valid:              false,
 			Reason:             "",
 		},
 		authorityKeyID: issuerKeyID,
-		raw:            crl.TBSCertList.Raw,
+		raw:            crl.RawTBSRevocationList,
 	}, nil
 }
 
@@ -374,7 +390,7 @@ func printCRL(crl *CRL) {
 	if len(crl.Signature.Reason) > 0 {
 		fmt.Printf("        Reason: %s\n", crl.Signature.Reason)
 	}
-	fmt.Printf("        Version: %d (0x%x)\n", crl.Version, crl.Version-1)
+	fmt.Printf("        Version: %d (0x%x)\n", crl.Version, crl.Version.Add(crl.Version, big.NewInt(-1)))
 	fmt.Println("    Signature algorithm:", crl.SignatureAlgorithm)
 	fmt.Println("        Issuer:", crl.Issuer)
 	fmt.Println("        Last Update:", crl.ThisUpdate.UTC())
@@ -429,27 +445,19 @@ type DistinguishedName struct {
 	SerialNumber       string                   `json:"serial_number,omitempty"`
 	CommonName         string                   `json:"common_name,omitempty"`
 	ExtraNames         map[string][]interface{} `json:"extra_names,omitempty"`
-	raw                pkix.RDNSequence
+	dn                 pkix.Name
 }
 
 // String returns the one line representation of the distinguished name.
 func (d DistinguishedName) String() string {
-	var parts []string
-	for _, dn := range d.raw {
-		v := strings.ReplaceAll(pkix.RDNSequence{dn}.String(), "\\,", ",")
-		parts = append(parts, v)
-	}
-	return strings.Join(parts, " ")
+	return d.dn.String()
 }
 
-func newDistinguishedName(seq pkix.RDNSequence) DistinguishedName {
-	var n pkix.Name
-	n.FillFromRDNSequence(&seq)
-
+func newDistinguishedName(dn pkix.Name) DistinguishedName {
 	var extraNames map[string][]interface{}
-	if len(n.ExtraNames) > 0 {
+	if len(dn.ExtraNames) > 0 {
 		extraNames = make(map[string][]interface{})
-		for _, tv := range n.ExtraNames {
+		for _, tv := range dn.ExtraNames {
 			oid := tv.Type.String()
 			if s, ok := tv.Value.(string); ok {
 				extraNames[oid] = append(extraNames[oid], s)
@@ -464,17 +472,16 @@ func newDistinguishedName(seq pkix.RDNSequence) DistinguishedName {
 	}
 
 	return DistinguishedName{
-		Country:            n.Country,
-		Organization:       n.Organization,
-		OrganizationalUnit: n.OrganizationalUnit,
-		Locality:           n.Locality,
-		Province:           n.Province,
-		StreetAddress:      n.StreetAddress,
-		PostalCode:         n.PostalCode,
-		SerialNumber:       n.SerialNumber,
-		CommonName:         n.CommonName,
+		Country:            dn.Country,
+		Organization:       dn.Organization,
+		OrganizationalUnit: dn.OrganizationalUnit,
+		Locality:           dn.Locality,
+		Province:           dn.Province,
+		StreetAddress:      dn.StreetAddress,
+		PostalCode:         dn.PostalCode,
+		SerialNumber:       dn.SerialNumber,
+		CommonName:         dn.CommonName,
 		ExtraNames:         extraNames,
-		raw:                seq,
 	}
 }
 
