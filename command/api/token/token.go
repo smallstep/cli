@@ -26,4 +26,8 @@ var (
 		Usage: "URL where the Smallstep API can be found",
 		Value: "https://gateway.smallstep.com",
 	}
+	audienceFlag = cli.StringFlag{
+		Name:  "audience",
+		Usage: "Request a token for an audience other than the API Gateway",
+	}
 )
