@@ -28,23 +28,52 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Fixed
-
-- Fix encrypted PKCS#8 keys used on `step crypto key format`
-  (smallstep/crypto#216).
-
-## [v0.24.1] - 2022-04-12
+## [v0.24.4] - 2023-05-11
 
 ### Added
+
+- Documentation for fish completion (smallstep/cli#930)
+- `--audience` flag to `step api token` (smallstep/cli#927)
+
+### Changed
+
+- Depend on [smallstep/go-attestation](https://github.com/smallstep/go-attestation) instead of [google/go-attestation](https://github.com/google/go-attestation)
+- Implementation for parsing CRLs (smallstep/cli#926)
+
+## [v0.24.3] - 2023-04-14
+
+### Added 
+
+- Storing of certificate chain for TPM keys in TPM storage (smallstep/cli#915)
+
+### Changed
+
+- The enrolment URL path used when enrolling with an attestation CA (smallstep/cli#915)
+
+### Fixed 
+
+- Issue with CLI reference not showing curly braces correctly (smallstep/cli#916)
+- Word wrapping for `step api token` example (smallstep/cli#917)
+
+## [v0.24.2] - 2023-04-14
+
+### Changed
 
 - Cross-compile Debian docker builds to improve release performance
   (smallstep/cli#911).
 
 ### Fixed
 
+- Fix encrypted PKCS#8 keys used on `step crypto key format`
+  (smallstep/crypto#216).
+
+## [v0.24.1] - 2023-04-12
+
+### Fixed
+
 - Upgrade certificates version (smallstep/cli#910).
 
-## [v0.24.0] - 2022-04-12
+## [v0.24.0] - 2023-04-12
 
 ### Added
 
@@ -75,7 +104,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Remove `--hugo` flag in `step help` command (smallstep/cli#898).
 
-## [v0.23.4] - 2022-03-09
+## [v0.23.4] - 2023-03-09
 
 ### Added
 
@@ -89,7 +118,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   To test the full certificate bundle use the `--bundle` flag. (smallstep/cli#873)
 - Change how `step help --markdown` works: It now ouputs "REAME.mdx" instead of "index.md"
 
-## [v0.23.3] - 2022-03-01
+## [v0.23.3] - 2023-03-01
 
 ### Fixed
 
@@ -97,7 +126,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Upgrade certinfo with a fix for the YubiKey touch policy information (smallstep/cli#854).
 - Upgrade Golang dependencies with reported issues.
 
-## [v0.23.2] - 2022-02-06
+## [v0.23.2] - 2023-02-06
 
 ### Added
 
@@ -114,7 +143,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Fixed `step ca provisioner add` when CA is not online (smallstep/cli#833).
 
-## [v0.23.1] - 2022-01-10
+## [v0.23.1] - 2023-01-10
 
 ### Added
 
