@@ -20,8 +20,8 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
-	"github.com/google/go-attestation/attest"
 	"github.com/google/go-tpm/tpm2"
+	"github.com/smallstep/go-attestation/attest"
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certificates/acme"
