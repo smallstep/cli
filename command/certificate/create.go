@@ -635,7 +635,7 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	// Create X.509 certificate used as base for the certificate
-	cr, err := x509util.CreateCertificateRequest(subject, sans, signer)
+	cr, err := x509util.CreateCertificateRequest(subject, sans, priv)
 	if err != nil {
 		return err
 	}
