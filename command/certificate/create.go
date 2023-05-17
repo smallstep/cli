@@ -446,6 +446,9 @@ the **--ca** flag.`,
 				Name:   "insecure",
 				Hidden: true,
 			},
+			cli.StringFlag{
+				Name: "ca-kms",
+			},
 		},
 	}
 }
@@ -644,6 +647,7 @@ func createAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
 	certTemplate := certificate.GetCertificate()
 	if parent == nil {
 		parent = certTemplate
@@ -766,9 +770,9 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	var (
 		caCert   = ctx.String("ca")
 		caKey    = ctx.String("ca-key")
+		caKMS    = ctx.String("ca-kms")
 		profile  = ctx.String("profile")
 		template = ctx.String("template")
-		kms      = ctx.String("kms")
 	)
 
 	// Check required flags when profile is used.
@@ -819,7 +823,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
 
-	signer, err := cryptoutil.CreateSigner(kms, caKey, opts...)
+	signer, err := cryptoutil.CreateSigner(caKMS, caKey, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
