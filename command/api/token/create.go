@@ -22,10 +22,11 @@ func createCommand() cli.Command {
 		Action: cli.ActionFunc(createAction),
 		Usage:  "create a new token",
 		UsageText: `**step api token create** <team-id> <crt-file> <key-file>
-[**--api-url**=<url>]
+[**--api-url**=<url>] [**--audience**=<name>]
 `,
 		Flags: []cli.Flag{
 			apiURLFlag,
+			audienceFlag,
 		},
 		Description: `**step ca api token create** creates a new token for connecting to the Smallstep API.
 
@@ -40,16 +41,18 @@ func createCommand() cli.Command {
 <key-file>
 :  File to read the private key (PEM format).
 
-## Examples
-
+## EXAMPLES
+Use a certificate to get a new API token:
+'''
 $ step api token create ff98be70-7cc3-4df5-a5db-37f5d3c96e23 internal.crt internal.key
-`,
+'''`,
 	}
 }
 
 type createTokenReq struct {
-	TeamID string   `json:"teamID"`
-	Bundle [][]byte `json:"bundle"`
+	TeamID   string   `json:"teamID"`
+	Bundle   [][]byte `json:"bundle"`
+	Audience string   `json:"audience,omitempty"`
 }
 
 type createTokenResp struct {
@@ -85,8 +88,9 @@ func createAction(ctx *cli.Context) (err error) {
 	}
 	b := &bytes.Buffer{}
 	r := &createTokenReq{
-		TeamID: teamID,
-		Bundle: clientCert.Certificate,
+		TeamID:   teamID,
+		Bundle:   clientCert.Certificate,
+		Audience: ctx.String("audience"),
 	}
 	err = json.NewEncoder(b).Encode(r)
 	if err != nil {

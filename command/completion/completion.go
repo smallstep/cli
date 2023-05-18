@@ -20,13 +20,18 @@ func init() {
 ## POSITIONAL ARGUMENTS
 
 <shell>
-: The shell program. Either bash or zsh.
+: The shell program. Supports bash, zsh, and fish.
 
 ## EXAMPLES
 
 Add bash completion for the current user.
 '''
 $ step completion bash >> ~/.bash_completion
+'''
+
+Add fish completions for the current user.
+'''
+$ step completion fish | source
 '''
 `,
 		Flags: []cli.Flag{

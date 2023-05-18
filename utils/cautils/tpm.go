@@ -20,8 +20,8 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
-	"github.com/google/go-attestation/attest"
 	"github.com/google/go-tpm/tpm2"
+	"github.com/smallstep/go-attestation/attest"
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certificates/acme"
@@ -491,7 +491,7 @@ func (ac *attestationClient) performAttestation(ctx context.Context, t *tpm.TPM,
 		return nil, fmt.Errorf("failed getting AK attestation parameters: %w", err)
 	}
 
-	attResp, err := ac.enroll(ctx, info, eks, attestParams)
+	attResp, err := ac.attest(ctx, info, eks, attestParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed attesting AK: %w", err)
 	}
@@ -552,9 +552,9 @@ type attestationResponse struct {
 	Secret     []byte `json:"secret"` // encrypted secret
 }
 
-// enroll performs the HTTP POST request to the `/enroll` endpoint of the
+// attest performs the HTTP POST request to the `/attest` endpoint of the
 // Attestation CA.
-func (ac *attestationClient) enroll(ctx context.Context, info *tpm.Info, eks []*tpm.EK, attestParams attest.AttestationParameters) (*attestationResponse, error) {
+func (ac *attestationClient) attest(ctx context.Context, info *tpm.Info, eks []*tpm.EK, attestParams attest.AttestationParameters) (*attestationResponse, error) {
 	var ekCerts [][]byte
 	var ekPub []byte
 	var err error
@@ -599,20 +599,20 @@ func (ac *attestationClient) enroll(ctx context.Context, info *tpm.Info, eks []*
 		return nil, fmt.Errorf("failed marshaling attestation request: %w", err)
 	}
 
-	enrollURL := ac.baseURL.JoinPath("enroll").String()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, enrollURL, bytes.NewReader(body))
+	attestURL := ac.baseURL.JoinPath("attest").String()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, attestURL, bytes.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("failed creating POST http request for %q: %w", enrollURL, err)
+		return nil, fmt.Errorf("failed creating POST http request for %q: %w", attestURL, err)
 	}
 
 	resp, err := ac.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed performing attestation request with Attestation CA %q: %w", enrollURL, err)
+		return nil, fmt.Errorf("failed performing attestation request with Attestation CA %q: %w", attestURL, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("POST %q failed with HTTP status %q", enrollURL, resp.Status)
+		return nil, fmt.Errorf("POST %q failed with HTTP status %q", attestURL, resp.Status)
 	}
 
 	var attResp attestationResponse
