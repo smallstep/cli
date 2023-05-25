@@ -447,7 +447,12 @@ the **--ca** flag.`,
 				Hidden: true,
 			},
 			cli.StringFlag{
-				Name: "ca-kms",
+				Name:  "ca-kms",
+				Usage: "The <uri> to configure the KMS used for signing the certificate",
+			},
+			cli.BoolFlag{
+				Name:  "skip-csr-signature",
+				Usage: "Skip creating and signing a CSR",
 			},
 		},
 	}
@@ -488,15 +493,20 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	var (
-		sans         = ctx.StringSlice("san")
-		profile      = ctx.String("profile")
-		templateFile = ctx.String("template")
-		bundle       = ctx.Bool("bundle")
-		subtle       = ctx.Bool("subtle")
+		sans             = ctx.StringSlice("san")
+		profile          = ctx.String("profile")
+		templateFile     = ctx.String("template")
+		bundle           = ctx.Bool("bundle")
+		subtle           = ctx.Bool("subtle")
+		skipCSRSignature = ctx.Bool("skip-csr-signature")
 	)
 
 	if ctx.IsSet("profile") && templateFile != "" {
 		return errs.IncompatibleFlagWithFlag(ctx, "profile", "template")
+	}
+
+	if ctx.Bool("csr") && skipCSRSignature {
+		return errs.IncompatibleFlagWithFlag(ctx, "csr", "skip-csr-signature")
 	}
 
 	// Read template if passed
@@ -558,7 +568,7 @@ func createAction(ctx *cli.Context) error {
 		// Create certificate request
 		data := x509util.CreateTemplateData(subject, sans)
 		data.SetUserData(userData)
-		csr, err := x509util.NewCertificateRequest(priv, x509util.WithTemplate(template, data))
+		csr, err := x509util.NewCertificateRequest(priv, x509util.WithTemplate[*x509.CertificateRequest](template, data))
 		if err != nil {
 			return err
 		}
@@ -634,21 +644,31 @@ func createAction(ctx *cli.Context) error {
 		defaultValidity = defaultTemplatevalidity
 	}
 
-	// Create X.509 certificate used as base for the certificate
-	cr, err := x509util.CreateCertificateRequest(subject, sans, priv)
-	if err != nil {
-		return err
-	}
-
 	// Create X.509 certificate
 	templateData := x509util.CreateTemplateData(subject, sans)
 	templateData.SetUserData(userData)
-	certificate, err := x509util.NewCertificate(cr, x509util.WithTemplate(template, templateData))
-	if err != nil {
-		return err
+
+	var certTemplate = &x509.Certificate{}
+	if skipCSRSignature {
+		certTemplate.PublicKey = pub
+		certificate, err := x509util.NewCertificateFromX509(certTemplate, x509util.WithTemplate[*x509.Certificate](template, templateData))
+		if err != nil {
+			return err
+		}
+		certTemplate = certificate.GetCertificate()
+	} else {
+		// Create X.509 certificate used as base for the certificate
+		cr, err := x509util.CreateCertificateRequest(subject, sans, priv)
+		if err != nil {
+			return err
+		}
+		certificate, err := x509util.NewCertificate(cr, x509util.WithTemplate[*x509.CertificateRequest](template, templateData))
+		if err != nil {
+			return err
+		}
+		certTemplate = certificate.GetCertificate()
 	}
 
-	certTemplate := certificate.GetCertificate()
 	if parent == nil {
 		parent = certTemplate
 	}
@@ -770,7 +790,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	var (
 		caCert   = ctx.String("ca")
 		caKey    = ctx.String("ca-key")
-		caKMS    = ctx.String("ca-kms")
+		caKMS    = ctx.String("ca-kms") // TODO: ensure "softkms:" is handled correctly
 		profile  = ctx.String("profile")
 		template = ctx.String("template")
 	)
