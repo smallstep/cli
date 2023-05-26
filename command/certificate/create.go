@@ -568,7 +568,7 @@ func createAction(ctx *cli.Context) error {
 		// Create certificate request
 		data := x509util.CreateTemplateData(subject, sans)
 		data.SetUserData(userData)
-		csr, err := x509util.NewCertificateRequest(priv, x509util.WithTemplate[*x509.CertificateRequest](template, data))
+		csr, err := x509util.NewCertificateRequest(priv, x509util.WithTemplate(template, data))
 		if err != nil {
 			return err
 		}
@@ -651,7 +651,7 @@ func createAction(ctx *cli.Context) error {
 	var certTemplate = &x509.Certificate{}
 	if skipCSRSignature {
 		certTemplate.PublicKey = pub
-		certificate, err := x509util.NewCertificateFromX509(certTemplate, x509util.WithTemplate[*x509.Certificate](template, templateData))
+		certificate, err := x509util.NewCertificateFromX509(certTemplate, x509util.WithTemplate(template, templateData))
 		if err != nil {
 			return err
 		}
@@ -662,7 +662,7 @@ func createAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		certificate, err := x509util.NewCertificate(cr, x509util.WithTemplate[*x509.CertificateRequest](template, templateData))
+		certificate, err := x509util.NewCertificate(cr, x509util.WithTemplate(template, templateData))
 		if err != nil {
 			return err
 		}

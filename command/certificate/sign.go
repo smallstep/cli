@@ -329,7 +329,7 @@ func signAction(ctx *cli.Context) error {
 	// Create certificate template from csr.
 	data := createTemplateData(csr, maxPathLen)
 	data.SetUserData(userData)
-	tpl, err := x509util.NewCertificate(csr, x509util.WithTemplate[*x509.CertificateRequest](template, data))
+	tpl, err := x509util.NewCertificate(csr, x509util.WithTemplate(template, data))
 	if err != nil {
 		return err
 	}
