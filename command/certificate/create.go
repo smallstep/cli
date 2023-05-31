@@ -350,6 +350,28 @@ $ step certificate create \
   --key 'pkcs11:id=4001' \
   'My KMS Intermediate' intermediate_ca.crt
 '''
+
+Create an intermediate certificate for an RSA decryption key in Google Cloud KMS, signed by a root stored on disk, using <step-kms-plugin>:
+'''
+$ step certificate create \
+  --profile intermediate-ca \ 
+  --kms cloudkms: \ 
+  --ca root_ca.crt --ca-key root_ca_key \  
+  --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
+  --skip-csr-signature \
+  'My RSA Intermediate' intermediate_rsa_ca.crt 
+'''
+
+Create an intermediate certificate for an RSA signing key in Google Cloud KMS, signed by a root stored in an HSM, using <step-kms-plugin>:
+'''
+$ step certificate create \
+  --profile intermediate-ca \ 
+  --ca-kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --kms cloudkms: \ 
+  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
+  --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
+  'My RSA Intermediate' intermediate_rsa_ca.crt 
+'''
 `,
 		Flags: []cli.Flag{
 			flags.KMSUri,
