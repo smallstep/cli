@@ -1,11 +1,14 @@
 package provisioner
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -137,6 +140,12 @@ SCEP
 			scepIncludeRootFlag,
 			scepMinimumPublicKeyLengthFlag,
 			scepEncryptionAlgorithmIdentifierFlag,
+			scepKMSTypeFlag,
+			scepKMSCredentialsFileFlag,
+			scepDecrypterCertFileFlag,
+			scepDecrypterCertFlag,
+			scepDecrypterKeyFlag,
+			scepDecrypterKeyPasswordFlag,
 
 			// Cloud provisioner flags
 			awsAccountFlag,
@@ -785,16 +794,65 @@ func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	if v := ctx.StringSlice("challenge"); len(v) > 0 {
 		challenge = v[0]
 	}
+	s := &linkedca.SCEPProvisioner{
+		ForceCn:                       ctx.Bool("force-cn"),
+		Challenge:                     challenge,
+		Capabilities:                  ctx.StringSlice("capabilities"),
+		MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
+		IncludeRoot:                   ctx.Bool("include-root"),
+		EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
+	}
+	decrypter := &linkedca.SCEPDecrypter{}
+	if kmsType := ctx.String("scep-kms-type"); kmsType != "" {
+		decrypter.Kms = &linkedca.KMS{}
+		if t, ok := linkedca.KMS_Type_value[strings.ToUpper(kmsType)]; ok {
+			decrypter.Kms.Type = linkedca.KMS_Type(t)
+		} else {
+			return nil, errs.InvalidFlagValue(ctx, "scep-kms-type", kmsType, "")
+		}
+		if credsFile := ctx.String("scep-kms-credentials-file"); credsFile != "" {
+			decrypter.Kms.CredentialsFile = credsFile
+		}
+		s.Decrypter = decrypter
+	}
+	if decrypterCertificateFile := ctx.String("scep-decrypter-certificate-file"); decrypterCertificateFile != "" {
+		data, err := parseSCEPDecrypterCertificate(decrypterCertificateFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed parsing certificate from %q: %w", decrypterCertificateFile, err)
+		}
+		decrypter.DecrypterCertificate = data
+		s.Decrypter = decrypter
+	}
+	if decrypterCertificate := ctx.String("scep-decrypter-certificate"); decrypterCertificate != "" {
+		// validate the provided value to be a valid base64 encoded PEM formatted certificate
+		b, err := base64.StdEncoding.DecodeString(decrypterCertificate)
+		if err != nil {
+			return nil, fmt.Errorf("failed base64 decoding decrypter certificate: %w", err)
+		}
+		block, rest := pem.Decode(b)
+		if len(rest) > 0 {
+			return nil, errors.New("failed parsing decrypter certificate: trailing data")
+		}
+		if block == nil {
+			return nil, errors.New("failed parsing decrypter certificate: no PEM block found")
+		}
+		if _, err := x509.ParseCertificate(block.Bytes); err != nil {
+			return nil, fmt.Errorf("failed parsing decrypter certificate: %w", err)
+		}
+		decrypter.DecrypterCertificate = []byte(decrypterCertificate)
+		s.Decrypter = decrypter
+	}
+	if decrypterKey := ctx.String("scep-decrypter-key"); decrypterKey != "" {
+		decrypter.DecrypterKey = decrypterKey
+		s.Decrypter = decrypter
+	}
+	if decrypterKeyPassword := ctx.String("scep-decrypter-key-password"); decrypterKeyPassword != "" {
+		decrypter.DecrypterKeyPassword = decrypterKeyPassword
+		s.Decrypter = decrypter
+	}
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_SCEP{
-			SCEP: &linkedca.SCEPProvisioner{
-				ForceCn:                       ctx.Bool("force-cn"),
-				Challenge:                     challenge,
-				Capabilities:                  ctx.StringSlice("capabilities"),
-				MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
-				IncludeRoot:                   ctx.Bool("include-root"),
-				EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
-			},
+			SCEP: s,
 		},
 	}, nil
 }
@@ -902,4 +960,23 @@ func parseCACertificates(filenames []string) ([][]byte, error) {
 		}
 	}
 	return pemCerts, nil
+}
+
+func parseSCEPDecrypterCertificate(filename string) ([]byte, error) {
+	certs, err := pemutil.ReadCertificateBundle(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed reading certificate from %q: %w", filename, err)
+	}
+	if len(certs) == 0 {
+		return nil, fmt.Errorf("no certificates found in %q", filename)
+	}
+	// TODO(hs): implement validation, such as key usage?
+	buf := bytes.Buffer{}
+	if err = pem.Encode(&buf, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certs[0].Raw, // assumes the bundle is a certificate chain; using first cert as decrypter
+	}); err != nil {
+		return nil, fmt.Errorf("failed encoding certificate: %w", err)
+	}
+	return buf.Bytes(), nil
 }

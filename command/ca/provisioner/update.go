@@ -5,10 +5,12 @@ import (
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/ca"
@@ -130,6 +132,12 @@ SCEP
 			scepIncludeRootFlag,
 			scepMinimumPublicKeyLengthFlag,
 			scepEncryptionAlgorithmIdentifierFlag,
+			scepKMSTypeFlag,
+			scepKMSCredentialsFileFlag,
+			scepDecrypterCertFileFlag,
+			scepDecrypterCertFlag,
+			scepDecrypterKeyFlag,
+			scepDecrypterKeyPasswordFlag,
 
 			// Cloud provisioner flags
 			awsAccountFlag,
@@ -910,6 +918,61 @@ func updateSCEPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 	if ctx.IsSet("encryption-algorithm-identifier") {
 		details.EncryptionAlgorithmIdentifier = int32(ctx.Int("encryption-algorithm-identifier"))
+	}
+
+	decrypter := details.GetDecrypter()
+	if decrypter == nil {
+		decrypter = &linkedca.SCEPDecrypter{}
+	}
+	if ctx.IsSet("scep-kms-type") {
+		kmsType := ctx.String("scep-kms-type")
+		decrypter.Kms = &linkedca.KMS{}
+		if t, ok := linkedca.KMS_Type_value[strings.ToUpper(kmsType)]; ok {
+			decrypter.Kms.Type = linkedca.KMS_Type(t)
+		} else {
+			return errs.InvalidFlagValue(ctx, "scep-kms-type", kmsType, "")
+		}
+		if credsFile := ctx.String("scep-kms-credentials-file"); credsFile != "" {
+			decrypter.Kms.CredentialsFile = credsFile
+		}
+		details.Decrypter = decrypter
+	}
+	if ctx.IsSet("scep-decrypter-certificate-file") {
+		decrypterCertificateFile := ctx.String("scep-decrypter-certificate-file")
+		data, err := parseSCEPDecrypterCertificate(decrypterCertificateFile)
+		if err != nil {
+			return fmt.Errorf("failed parsing certificate from %q: %w", decrypterCertificateFile, err)
+		}
+		decrypter.DecrypterCertificate = data
+		details.Decrypter = decrypter
+	}
+	if ctx.IsSet("scep-decrypter-certificate") {
+		// validate the provided value to be a valid base64 encoded PEM formatted certificate
+		decrypterCertificate := ctx.String("scep-decrypter-certificate")
+		b, err := base64.StdEncoding.DecodeString(decrypterCertificate)
+		if err != nil {
+			return fmt.Errorf("failed base64 decoding decrypter certificate: %w", err)
+		}
+		block, rest := pem.Decode(b)
+		if len(rest) > 0 {
+			return errors.New("failed parsing decrypter certificate: trailing data")
+		}
+		if block == nil {
+			return errors.New("failed parsing decrypter certificate: no PEM block found")
+		}
+		if _, err := x509.ParseCertificate(block.Bytes); err != nil {
+			return fmt.Errorf("failed parsing decrypter certificate: %w", err)
+		}
+		decrypter.DecrypterCertificate = []byte(decrypterCertificate)
+		details.Decrypter = decrypter
+	}
+	if ctx.IsSet("scep-decrypter-key") {
+		decrypter.DecrypterKey = ctx.String("scep-decrypter-key")
+		details.Decrypter = decrypter
+	}
+	if ctx.IsSet("scep-decrypter-key-password") {
+		decrypter.DecrypterKeyPassword = ctx.String("scep-decrypter-key-password")
+		details.Decrypter = decrypter
 	}
 
 	return nil

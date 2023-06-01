@@ -135,3 +135,5 @@ require (
 	howett.net/plist v1.0.0 // indirect
 	k8s.io/klog/v2 v2.90.0 // indirect
 )
+
+replace go.step.sm/linkedca => ./../linkedca
