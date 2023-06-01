@@ -804,6 +804,7 @@ func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	}
 	decrypter := &linkedca.SCEPDecrypter{}
 	if kmsType := ctx.String("scep-kms-type"); kmsType != "" {
+		kmsType = strings.Trim(strings.TrimSpace(kmsType), ":")
 		decrypter.Kms = &linkedca.KMS{}
 		if t, ok := linkedca.KMS_Type_value[strings.ToUpper(kmsType)]; ok {
 			decrypter.Kms.Type = linkedca.KMS_Type(t)

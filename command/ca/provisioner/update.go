@@ -926,6 +926,7 @@ func updateSCEPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 	if ctx.IsSet("scep-kms-type") {
 		kmsType := ctx.String("scep-kms-type")
+		kmsType = strings.Trim(strings.TrimSpace(kmsType), ":")
 		decrypter.Kms = &linkedca.KMS{}
 		if t, ok := linkedca.KMS_Type_value[strings.ToUpper(kmsType)]; ok {
 			decrypter.Kms.Type = linkedca.KMS_Type(t)
