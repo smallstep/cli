@@ -287,7 +287,6 @@ func TestPayload_Type(t *testing.T) {
 	type fields struct {
 		SHA    string
 		SANs   []string
-		Email  string
 		Google *GCPGooglePayload
 		Amazon *AWSAmazonPayload
 		Azure  *AzurePayload
@@ -298,22 +297,20 @@ func TestPayload_Type(t *testing.T) {
 		fields fields
 		want   Type
 	}{
-		{"JWK", fields{"a-sha", []string{"foo.bar.zar"}, "", nil, nil, nil, nil}, JWK},
-		{"JWK no sans", fields{"a-sha", nil, "", nil, nil, nil, nil}, JWK},
-		{"JWK no sha", fields{"", []string{"foo.bar.zar"}, "", nil, nil, nil, nil}, JWK},
-		{"OIDC", fields{"", nil, "mariano@smallstep.com", nil, nil, nil, nil}, OIDC},
-		{"GCP", fields{"", nil, "", &GCPGooglePayload{}, nil, nil, nil}, GCP},
-		{"AWS", fields{"", nil, "", nil, &AWSAmazonPayload{}, nil, nil}, AWS},
-		{"Azure", fields{"", nil, "", nil, nil, &AzurePayload{}, nil}, Azure},
-		{"Unknown", fields{"", nil, "", nil, nil, nil, nil}, Unknown},
-		{"OIDC Kubernetes", fields{"", nil, "", nil, nil, nil, &jose.Claims{Audience: jwt.Audience{"step-ca"}, Issuer: "https://kubernetes.default.svc.cluster.local", Subject: "system:serviceaccount:default:default", Expiry: jwt.NewNumericDate(time.Now()), IssuedAt: jwt.NewNumericDate(time.Now())}}, OIDC},
+		{"JWK", fields{"a-sha", []string{"foo.bar.zar"}, nil, nil, nil, nil}, JWK},
+		{"JWK no sans", fields{"a-sha", nil, nil, nil, nil, nil}, JWK},
+		{"JWK no sha", fields{"", []string{"foo.bar.zar"}, nil, nil, nil, nil}, JWK},
+		{"GCP", fields{"", nil, &GCPGooglePayload{}, nil, nil, nil}, GCP},
+		{"AWS", fields{"", nil, nil, &AWSAmazonPayload{}, nil, nil}, AWS},
+		{"Azure", fields{"", nil, nil, nil, &AzurePayload{}, nil}, Azure},
+		{"Unknown", fields{"", nil, nil, nil, nil, nil}, Unknown},
+		{"OIDC Kubernetes", fields{"", nil, nil, nil, nil, &jose.Claims{Audience: jwt.Audience{"step-ca"}, Issuer: "https://kubernetes.default.svc.cluster.local", Subject: "system:serviceaccount:default:default", Expiry: jose.NewNumericDate(time.Now()), IssuedAt: jose.NewNumericDate(time.Now())}}, OIDC},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := Payload{
 				SHA:    tt.fields.SHA,
 				SANs:   tt.fields.SANs,
-				Email:  tt.fields.Email,
 				Google: tt.fields.Google,
 				Amazon: tt.fields.Amazon,
 				Azure:  tt.fields.Azure,

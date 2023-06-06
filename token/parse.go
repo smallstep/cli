@@ -74,8 +74,6 @@ func (p Payload) Type() Type {
 		return K8sSA
 	case len(p.SHA) > 0 || len(p.SANs) > 0:
 		return JWK
-	case p.Email != "":
-		return OIDC
 	case len(p.Audience) > 0 && p.Issuer != "" && p.Subject != "" && !p.Expiry.Time().IsZero() && !p.IssuedAt.Time().IsZero():
 		return OIDC
 	default:
