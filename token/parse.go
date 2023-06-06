@@ -76,6 +76,8 @@ func (p Payload) Type() Type {
 		return JWK
 	case p.Email != "":
 		return OIDC
+	case len(p.Audience) > 0 && p.Issuer != "" && p.Subject != "" && !p.Expiry.Time().IsZero() && !p.IssuedAt.Time().IsZero():
+		return OIDC
 	default:
 		return Unknown
 	}

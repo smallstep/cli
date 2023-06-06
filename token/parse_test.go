@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.step.sm/crypto/jose"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 const (
@@ -290,20 +291,22 @@ func TestPayload_Type(t *testing.T) {
 		Google *GCPGooglePayload
 		Amazon *AWSAmazonPayload
 		Azure  *AzurePayload
+		Claims *jose.Claims
 	}
 	tests := []struct {
 		name   string
 		fields fields
 		want   Type
 	}{
-		{"JWK", fields{"a-sha", []string{"foo.bar.zar"}, "", nil, nil, nil}, JWK},
-		{"JWK no sans", fields{"a-sha", nil, "", nil, nil, nil}, JWK},
-		{"JWK no sha", fields{"", []string{"foo.bar.zar"}, "", nil, nil, nil}, JWK},
-		{"OIDC", fields{"", nil, "mariano@smallstep.com", nil, nil, nil}, OIDC},
-		{"GCP", fields{"", nil, "", &GCPGooglePayload{}, nil, nil}, GCP},
-		{"AWS", fields{"", nil, "", nil, &AWSAmazonPayload{}, nil}, AWS},
-		{"Azure", fields{"", nil, "", nil, nil, &AzurePayload{}}, Azure},
-		{"Unknown", fields{"", nil, "", nil, nil, nil}, Unknown},
+		{"JWK", fields{"a-sha", []string{"foo.bar.zar"}, "", nil, nil, nil, nil}, JWK},
+		{"JWK no sans", fields{"a-sha", nil, "", nil, nil, nil, nil}, JWK},
+		{"JWK no sha", fields{"", []string{"foo.bar.zar"}, "", nil, nil, nil, nil}, JWK},
+		{"OIDC", fields{"", nil, "mariano@smallstep.com", nil, nil, nil, nil}, OIDC},
+		{"GCP", fields{"", nil, "", &GCPGooglePayload{}, nil, nil, nil}, GCP},
+		{"AWS", fields{"", nil, "", nil, &AWSAmazonPayload{}, nil, nil}, AWS},
+		{"Azure", fields{"", nil, "", nil, nil, &AzurePayload{}, nil}, Azure},
+		{"Unknown", fields{"", nil, "", nil, nil, nil, nil}, Unknown},
+		{"OIDC Kubernetes", fields{"", nil, "", nil, nil, nil, &jose.Claims{Audience: jwt.Audience{"step-ca"}, Issuer: "https://kubernetes.default.svc.cluster.local", Subject: "system:serviceaccount:default:default", Expiry: jwt.NewNumericDate(time.Now()), IssuedAt: jwt.NewNumericDate(time.Now())}}, OIDC},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -314,6 +317,9 @@ func TestPayload_Type(t *testing.T) {
 				Google: tt.fields.Google,
 				Amazon: tt.fields.Amazon,
 				Azure:  tt.fields.Azure,
+			}
+			if tt.fields.Claims != nil {
+				p.Claims = *tt.fields.Claims
 			}
 			if got := p.Type(); got != tt.want {
 				t.Errorf("Payload.Type() = %v, want %v", got, tt.want)
