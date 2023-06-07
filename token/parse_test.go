@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"go.step.sm/crypto/jose"
-	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 const (
@@ -304,7 +303,7 @@ func TestPayload_Type(t *testing.T) {
 		{"AWS", fields{"", nil, nil, &AWSAmazonPayload{}, nil, nil}, AWS},
 		{"Azure", fields{"", nil, nil, nil, &AzurePayload{}, nil}, Azure},
 		{"Unknown", fields{"", nil, nil, nil, nil, nil}, Unknown},
-		{"OIDC Kubernetes", fields{"", nil, nil, nil, nil, &jose.Claims{Audience: jwt.Audience{"step-ca"}, Issuer: "https://kubernetes.default.svc.cluster.local", Subject: "system:serviceaccount:default:default", Expiry: jose.NewNumericDate(time.Now()), IssuedAt: jose.NewNumericDate(time.Now())}}, OIDC},
+		{"OIDC Kubernetes", fields{"", nil, nil, nil, nil, &jose.Claims{Audience: jose.Audience{"step-ca"}, Issuer: "https://kubernetes.default.svc.cluster.local", Subject: "system:serviceaccount:default:default", Expiry: jose.NewNumericDate(time.Now()), IssuedAt: jose.NewNumericDate(time.Now())}}, OIDC},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
