@@ -23,8 +23,12 @@ import (
 const (
 	// 128-bit salt
 	pbkdf2SaltSize = 16
-	// 100k iterations. Nist recommends at least 10k, 1Password uses 100k.
-	pbkdf2Iterations = 100000
+	// 600k iterations is the current OWASP recommendation (Dec 2022)
+	// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2
+	//
+	// Nist recommends at least 10k (800-63B). 1Password increased in 2023 the
+	// number of iterations from 100k to 650k.
+	pbkdf2Iterations = 600000
 )
 
 func createCommand() cli.Command {

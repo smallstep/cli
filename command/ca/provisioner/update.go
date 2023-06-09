@@ -800,7 +800,7 @@ func updateAWSDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.DisableCustomSans = ctx.Bool("disable-custom-sans")
 	}
 	if ctx.IsSet("disable-trust-on-first-use") {
-		details.DisableCustomSans = ctx.Bool("disable-trust-on-first-use")
+		details.DisableTrustOnFirstUse = ctx.Bool("disable-trust-on-first-use")
 	}
 	if ctx.IsSet("remove-aws-account") {
 		details.Accounts = removeElements(details.Accounts, ctx.StringSlice("remove-aws-account"))
@@ -828,7 +828,7 @@ func updateAzureDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.DisableCustomSans = ctx.Bool("disable-custom-sans")
 	}
 	if ctx.IsSet("disable-trust-on-first-use") {
-		details.DisableCustomSans = ctx.Bool("disable-trust-on-first-use")
+		details.DisableTrustOnFirstUse = ctx.Bool("disable-trust-on-first-use")
 	}
 	if ctx.IsSet("remove-azure-resource-group") {
 		details.ResourceGroups = removeElements(details.ResourceGroups, ctx.StringSlice("remove-azure-resource-group"))
@@ -869,7 +869,7 @@ func updateGCPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.DisableCustomSans = ctx.Bool("disable-custom-sans")
 	}
 	if ctx.IsSet("disable-trust-on-first-use") {
-		details.DisableCustomSans = ctx.Bool("disable-trust-on-first-use")
+		details.DisableTrustOnFirstUse = ctx.Bool("disable-trust-on-first-use")
 	}
 	if ctx.IsSet("remove-gcp-service-account") {
 		details.ServiceAccounts = removeElements(details.ServiceAccounts, ctx.StringSlice("remove-gcp-service-account"))
