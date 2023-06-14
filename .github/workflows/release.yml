@@ -222,7 +222,7 @@ jobs:
           find step-cli/reference -mindepth 2 -type f | jq -R -s '[
                 split("\n")[:-1][]
                 | {hideFromSidebar: true,
-                   title: .|rtrimstr("/README.mdx"),
+                   title: "",
                    path: ("/" + .)}
           ]' > $RUNNER_TEMP/reference-routes.json
          
