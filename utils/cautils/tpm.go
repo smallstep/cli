@@ -38,7 +38,8 @@ import (
 
 func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 	tpmStorageDirectory := clictx.String("tpm-storage-directory")
-	t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)))
+	tpmDevice := clictx.String("tpm-device")
+	t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)), tpm.WithDeviceName(tpmDevice))
 	if err != nil {
 		return fmt.Errorf("failed initializing TPM: %w", err)
 	}

@@ -32,6 +32,8 @@ import (
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/tpm"
+	"go.step.sm/crypto/kms/apiv1"
+	"go.step.sm/crypto/kms/uri"
 	tpmstorage "go.step.sm/crypto/tpm/storage"
 
 	"github.com/smallstep/certificates/acme"
@@ -401,8 +403,20 @@ type attestationObject struct {
 // doDeviceAttestation performs `device-attest-01` challenge validation.
 func doDeviceAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 	// TODO(hs): make TPM flow work with CreateAttestor()/Attest() too
+	// TODO: prepare the full attestation-uri: fill in missing data, fill in values from flags, 
+	// get defaults (AK name, based on TPM presence); fail early if no TPM available.
 	attestationURI := clictx.String("attestation-uri")
 	if strings.HasPrefix(attestationURI, "tpmkms:") {
+		u, err := uri.ParseWithScheme(string(apiv1.TPMKMS), attestationURI)
+		if err != nil {
+			return fmt.Errorf("failed to parse %q", err)
+		}
+		if device := clictx.String("tpm-device"); device != "" {
+			u.Values.Set("device", device)
+			clictx.Set("attestation-uri", u.String())
+			attestationURI = clictx.String("attestation-uri")
+		}
+
 		return doTPMAttestation(clictx, ac, ch, identifier, af)
 	}
 
@@ -831,7 +845,8 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	// instead of creating a new instance.
 	if af.tpmSigner != nil {
 		tpmStorageDirectory := af.ctx.String("tpm-storage-directory")
-		t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)))
+		tpmDevice := af.ctx.String("tpm-device")
+		t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)), tpm.WithDeviceName(tpmDevice))
 		if err != nil {
 			return nil, fmt.Errorf("failed initializing TPM: %w", err)
 		}
