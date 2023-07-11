@@ -21,7 +21,7 @@ func createCommand() cli.Command {
 		Name:   "create",
 		Action: cli.ActionFunc(createAction),
 		Usage:  "create a new token",
-		UsageText: `**step api token create** <team-id> <crt-file> <key-file>
+		UsageText: `**step api token create** <team-id>|<team-slug> <crt-file> <key-file>
 [**--api-url**=<url>] [**--audience**=<name>]
 `,
 		Flags: []cli.Flag{
@@ -32,8 +32,8 @@ func createCommand() cli.Command {
 
 ## POSITIONAL ARGUMENTS
 
-<team-id>
-:  UUID of the team the API token will be issued for. This is available in the Smallstep dashboard.
+<team-id>|<team-slug>
+:  UUID or slug of the team the API token will be issued for. This is available in the Smallstep dashboard.
 
 <crt-file>
 :  File to read the certificate (PEM format). This certificate must be signed by a trusted root configured in the Smallstep dashboard.
@@ -45,12 +45,19 @@ func createCommand() cli.Command {
 Use a certificate to get a new API token:
 '''
 $ step api token create ff98be70-7cc3-4df5-a5db-37f5d3c96e23 internal.crt internal.key
-'''`,
+'''
+
+Get a token using the team slug:
+'''
+$ step api token create teamfoo internal.crt internal.key
+'''
+`,
 	}
 }
 
 type createTokenReq struct {
 	TeamID   string   `json:"teamID"`
+	TeamSlug string   `json:"teamSlug"`
 	Bundle   [][]byte `json:"bundle"`
 	Audience string   `json:"audience,omitempty"`
 }
@@ -78,19 +85,19 @@ func createAction(ctx *cli.Context) (err error) {
 	parsedURL.Path = path.Join(parsedURL.Path, "api/auth")
 	apiURL := parsedURL.String()
 
-	if _, err := uuid.Parse(teamID); err != nil {
-		return fmt.Errorf("team-id argument must be a valid UUID")
-	}
-
 	clientCert, err := tls.LoadX509KeyPair(crtFile, keyFile)
 	if err != nil {
 		return err
 	}
 	b := &bytes.Buffer{}
 	r := &createTokenReq{
-		TeamID:   teamID,
 		Bundle:   clientCert.Certificate,
 		Audience: ctx.String("audience"),
+	}
+	if _, err := uuid.Parse(teamID); err == nil {
+		r.TeamID = teamID
+	} else {
+		r.TeamSlug = teamID
 	}
 	err = json.NewEncoder(b).Encode(r)
 	if err != nil {
