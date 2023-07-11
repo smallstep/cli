@@ -27,7 +27,7 @@ require (
 	go.step.sm/cli-utils v0.7.6
 	go.step.sm/crypto v0.32.2
 	go.step.sm/linkedca v0.19.1
-	golang.org/x/crypto v0.10.0
+	golang.org/x/crypto v0.11.0
 	golang.org/x/sys v0.10.0
 	golang.org/x/term v0.10.0
 	google.golang.org/protobuf v1.31.0
@@ -125,7 +125,7 @@ require (
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
-	golang.org/x/text v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/api v0.127.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
