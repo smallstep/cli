@@ -63,42 +63,12 @@ jobs:
           prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
   goreleaser:
-    name: Upload Assets to GitHub w/ goreleaser
-    runs-on: ubuntu-latest
     needs: create_release
     permissions:
       id-token: write
       contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-          check-latest: true
-      - name: Configure Go
-        id: configure_go
-        run: |
-          PATH=$PATH:/usr/local/go/bin:/home/admin/go/bin
-      - name: Install cosign
-        uses: sigstore/cosign-installer@v2
-        with:
-          cosign-release: 'v1.13.1'
-      - name: Get Release Date
-        id: release_date
-        run: |
-          RELEASE_DATE=$(date +"%y-%m-%d")
-          echo "RELEASE_DATE=${RELEASE_DATE}" >> ${GITHUB_OUTPUT}
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v3
-        with:
-          version: 'latest'
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GORELEASER_PAT }}
-          RELEASE_DATE: ${{ steps.release_date.outputs.RELEASE_DATE }}
-          COSIGN_EXPERIMENTAL: 1
+    uses: smallstep/workflows/.github/workflows/goreleaser.yml@main
+    secrets: inherit
 
   build_upload_docker:
     name: Build & Upload Docker Images
@@ -139,9 +109,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
-          go-version: 1.19
+          go-version: 'stable'
           check-latest: true
       - name: Build
         id: build
@@ -178,9 +148,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
-          go-version: 1.19
+          go-version: 'stable'
           check-latest: true
       - name: Build
         id: build
@@ -202,8 +172,8 @@ jobs:
       - name: Update Reference
         id: update_reference
         run: |
-          ./bin/step help --markdown ./docs/step-cli/reference
           cd ./docs
+
           git config user.email "eng+ci@smallstep.com"
           git config user.name "step-travis-ci"
 
@@ -211,6 +181,29 @@ jobs:
           git config --global commit.gpgsign true
           git config --global gpg.format ssh
           git config --global user.signingkey "${{ secrets.STEP_TRAVIS_CI_GH_PUBLIC_SIGNING_KEY }}"
+
+          # Remove old docs
+          git rm -rf ./step-cli/reference
+
+          # Build fresh docs
+          ./bin/step help --markdown ./step-cli/reference
+
+          # Generate new route manifest for the docs
+          find step-cli/reference -mindepth 2 -type f | jq -R -s '[
+                split("\n")[:-1][]
+                | {hideFromSidebar: true,
+                   title: "",
+                   path: ("/" + .)}
+          ]' > $RUNNER_TEMP/reference-routes.json
+         
+          # Replace old route manifest with new 
+          jq --argfile newRoutes $RUNNER_TEMP/reference-routes.json 'walk(
+            if type == "object" and .isStepReference == true then
+              .routes = $newRoutes
+            else . end
+          )' < manifest.json > manifest.json.new
+
+          mv manifest.json.new manifest.json
 
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
       - name: Push changes
