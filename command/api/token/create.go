@@ -21,7 +21,7 @@ func createCommand() cli.Command {
 		Name:   "create",
 		Action: cli.ActionFunc(createAction),
 		Usage:  "create a new token",
-		UsageText: `**step api token create** <team-id>|<team-slug> <crt-file> <key-file>
+		UsageText: `**step api token create** <team> <crt-file> <key-file>
 [**--api-url**=<url>] [**--audience**=<name>]
 `,
 		Flags: []cli.Flag{
@@ -32,7 +32,7 @@ func createCommand() cli.Command {
 
 ## POSITIONAL ARGUMENTS
 
-<team-id>|<team-slug>
+<team>
 :  UUID or slug of the team the API token will be issued for. This is available in the Smallstep dashboard.
 
 <crt-file>
