@@ -26,6 +26,26 @@ type Attestor interface {
 	Attest() ([]byte, error)
 }
 
+func PublicKey(kms, name string, opts ...pemutil.Options) (crypto.PublicKey, error) {
+	if kms == "" {
+		s, err := pemutil.Read(name, opts...)
+		if err != nil {
+			return nil, err
+		}
+		if pub, ok := s.(crypto.PublicKey); ok {
+			return pub, nil
+		}
+		return nil, fmt.Errorf("file %s does not contain a valid public key", name)
+	}
+
+	k, err := newKMSPublicKey(kms, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get public key: %w", err)
+	}
+
+	return k.Public(), nil
+}
+
 // CreateSigner reads a key from a file with a given name or creates a signer
 // with the given kms and name uri.
 func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, error) {
@@ -167,6 +187,12 @@ type kmsSigner struct {
 	kms, key string
 }
 
+type kmsPublicKey struct {
+	crypto.PublicKey
+	name     string
+	kms, key string
+}
+
 // exitError returns the error displayed on stderr after running the given
 // command.
 func exitError(cmd *exec.Cmd, err error) error {
@@ -208,6 +234,44 @@ func newKMSSigner(kms, key string) (*kmsSigner, error) {
 		kms:       kms,
 		key:       key,
 	}, nil
+}
+
+// newKMSPublicKey creates a signer using `step-kms-plugin` as the signer.
+func newKMSPublicKey(kms, key string) (*kmsPublicKey, error) {
+	name, err := plugin.LookPath("kms")
+	if err != nil {
+		return nil, err
+	}
+
+	args := []string{"key"}
+	if kms != "" {
+		args = append(args, "--kms", kms)
+	}
+	args = append(args, key)
+
+	// Get public key
+	cmd := exec.Command(name, args...)
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, exitError(cmd, err)
+	}
+
+	pub, err := pemutil.Parse(out)
+	if err != nil {
+		return nil, err
+	}
+
+	return &kmsPublicKey{
+		PublicKey: pub,
+		name:      name,
+		kms:       kms,
+		key:       key,
+	}, nil
+}
+
+// Public returns the KMS public key
+func (s *kmsPublicKey) Public() crypto.PublicKey {
+	return s.PublicKey
 }
 
 // Public implements crypto.Signer and returns the public key.

@@ -730,7 +730,7 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	// Save key and certificate request
-	if keyFile != "" && !cryptoutil.IsKMSSigner(priv) {
+	if keyFile != "" && priv != nil && !cryptoutil.IsKMSSigner(priv) {
 		if err := savePrivateKey(ctx, keyFile, priv, noPass); err != nil {
 			return err
 		}
@@ -792,17 +792,25 @@ func parseOrCreateKey(ctx *cli.Context) (crypto.PublicKey, crypto.Signer, error)
 		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
 
+	var pub crypto.PublicKey
+	var signer crypto.Signer
+
 	signer, err := cryptoutil.CreateSigner(kms, keyFile, opts...)
-	if err != nil {
-		return nil, nil, err
+	switch {
+	case err == nil:
+		pub = signer.Public()
+		// Make sure we can sign X509 certificates with it.
+		if !cryptoutil.IsX509Signer(signer) {
+			return nil, nil, errs.InvalidFlagValueMsg(ctx, "key", keyFile, "the given key cannot sign X509 certificates")
+		}
+	case err != nil: // TODO: check sentinel error; if it's not a signer, it could be a public key instead
+		pub, err = cryptoutil.PublicKey(kms, keyFile, opts...)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
-	// Make sure we can sign X509 certificates with it.
-	if !cryptoutil.IsX509Signer(signer) {
-		return nil, nil, errs.InvalidFlagValueMsg(ctx, "key", keyFile, "the given key cannot sign X509 certificates")
-	}
-
-	return signer.Public(), signer, nil
+	return pub, signer, nil
 }
 
 // parseSigner returns the parent certificate and key for leaf and intermediate
