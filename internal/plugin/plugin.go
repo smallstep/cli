@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/step"
@@ -11,12 +12,24 @@ import (
 
 // LookPath searches for an executable named step-<name>-plugin in the $(step
 // path)/plugins directory or in the directories named by the PATH environment
-// variable.
+// variable. On Windows, files with the .com, .exe, .bat and .cmd extension
+// will be checked to exist in the $(step path)/plugins directory first, after
+// which the directories in the PATH environment variable will be inspected.
 func LookPath(name string) (string, error) {
 	fileName := "step-" + name + "-plugin"
-	path := filepath.Join(step.BasePath(), "plugins", fileName)
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
+	switch runtime.GOOS {
+	case "windows":
+		for _, ext := range []string{".com", ".exe", ".bat", ".cmd"} {
+			path := filepath.Join(step.BasePath(), "plugins", fileName+ext)
+			if _, err := os.Stat(path); err == nil {
+				return path, nil
+			}
+		}
+	default:
+		path := filepath.Join(step.BasePath(), "plugins", fileName)
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		}
 	}
 	return exec.LookPath(fileName)
 }

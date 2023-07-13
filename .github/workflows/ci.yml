@@ -24,5 +24,6 @@ jobs:
       security-events: write
     uses: smallstep/workflows/.github/workflows/goCI.yml@main
     with:
+      only-latest-golang: false
       run-codeql: true
     secrets: inherit
