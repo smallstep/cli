@@ -342,16 +342,16 @@ winget:
         #
         # Default: false
         # Since: v1.19
-        draft: true
+        # draft: true
 
         # Base can also be another repository, in which case the owner and name
         # above will be used as HEAD, allowing cross-repository pull requests.
         #
         # Since: v1.19
-        base:
-          owner: microsoft
-          name: winget-pkgs
-          branch: main
+        # base:
+        #   owner: microsoft
+        #   name: winget-pkgs
+        #   branch: main
 
 scoops:
   -
