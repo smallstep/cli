@@ -58,7 +58,14 @@ func init() {
 }
 
 func main() {
+	// initialize step environment.
+	if err := step.Init(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+
 	defer panicHandler()
+
 	// Override global framework components
 	cli.VersionPrinter = func(c *cli.Context) {
 		version.Command(c)
