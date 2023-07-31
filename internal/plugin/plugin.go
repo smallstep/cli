@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/step"
@@ -19,7 +20,22 @@ func LookPath(name string) (string, error) {
 	fileName := "step-" + name + "-plugin"
 	switch runtime.GOOS {
 	case "windows":
-		for _, ext := range []string{".com", ".exe", ".bat", ".cmd"} {
+		var exts []string
+		x := os.Getenv(`PATHEXT`)
+		if x != "" {
+			for _, e := range strings.Split(strings.ToLower(x), `;`) {
+				if e == "" {
+					continue
+				}
+				if e[0] != '.' {
+					e = "." + e
+				}
+				exts = append(exts, e)
+			}
+		} else {
+			exts = []string{".com", ".exe", ".bat", ".cmd"}
+		}
+		for _, ext := range exts {
 			path := filepath.Join(step.BasePath(), "plugins", fileName+ext)
 			if _, err := os.Stat(path); err == nil {
 				return path, nil
