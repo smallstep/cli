@@ -58,7 +58,7 @@ func Run(ctx *cli.Context, file string) error {
 
 	// if running on Windows and (likely) a PowerShell script, invoke powershell
 	// with the arguments instead of the plugin file directly.
-	if runtime.GOOS == "windows" && filepath.Ext(file) == ".ps1" {
+	if runtime.GOOS == "windows" && strings.ToLower(filepath.Ext(file)) == ".ps1" {
 		cmdName = "powershell"
 		args = append([]string{args[0], "-noprofile", "-nologo", file}, args[1:]...)
 	}
