@@ -133,7 +133,7 @@ func generateOIDCToken(ctx *cli.Context, p *provisioner.OIDC) (string, error) {
 	}
 	out, err := exec.Step(args...)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf(`error generating OIDC token: exec "step oauth" failed`)
 	}
 	return strings.TrimSpace(string(out)), nil
 }
