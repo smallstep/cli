@@ -174,6 +174,7 @@ SCEP
 			sshHostDefaultDurFlag,
 			disableRenewalFlag,
 			allowRenewalAfterExpiryFlag,
+			disableSmallstepExtensionsFlag,
 			//enableX509Flag,
 			enableSSHFlag,
 
@@ -412,8 +413,11 @@ func updateClaims(ctx *cli.Context, p *linkedca.Provisioner) {
 	if ctx.IsSet("allow-renewal-after-expiry") {
 		p.Claims.AllowRenewalAfterExpiry = ctx.Bool("allow-renewal-after-expiry")
 	}
-	claims := p.Claims
+	if ctx.IsSet("disable-smallstep-extensions") {
+		p.Claims.DisableSmallstepExtensions = ctx.Bool("disable-smallstep-extensions")
+	}
 
+	claims := p.Claims
 	if claims.X509 == nil {
 		claims.X509 = &linkedca.X509Claims{}
 	}

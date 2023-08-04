@@ -16,7 +16,7 @@ require (
 	github.com/slackhq/nebula v1.6.1
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.24.2
-	github.com/smallstep/certinfo v1.11.0
+	github.com/smallstep/certinfo v1.12.0
 	github.com/smallstep/go-attestation v0.4.4-0.20230509120429-e17291421738
 	github.com/smallstep/truststore v0.12.1
 	github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91
@@ -24,15 +24,15 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli v1.22.14
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
-	go.step.sm/cli-utils v0.7.6
-	go.step.sm/crypto v0.32.2
-	go.step.sm/linkedca v0.19.1
+	go.step.sm/cli-utils v0.8.0
+	go.step.sm/crypto v0.33.0
+	go.step.sm/linkedca v0.20.0
 	golang.org/x/crypto v0.11.0
 	golang.org/x/sys v0.10.0
 	golang.org/x/term v0.10.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/square/go-jose.v2 v2.6.0
-	software.sslmate.com/src/go-pkcs12 v0.2.0
+	software.sslmate.com/src/go-pkcs12 v0.2.1
 )
 
 require (
@@ -44,7 +44,7 @@ require (
 	cloud.google.com/go/security v1.14.0 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.7.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.10.0 // indirect
@@ -72,19 +72,19 @@ require (
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
-	github.com/go-sql-driver/mysql v1.7.0 // indirect
+	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/glog v1.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/google/certificate-transparency-go v1.1.4 // indirect
+	github.com/google/certificate-transparency-go v1.1.6 // indirect
 	github.com/google/go-tpm-tools v0.3.12 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.2.4 // indirect
-	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.2.5 // indirect
+	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -122,20 +122,20 @@ require (
 	go.etcd.io/bbolt v1.3.7 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/exp v0.0.0-20230310171629-522b1b587ee0 // indirect
-	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/net v0.11.0 // indirect
-	golang.org/x/oauth2 v0.8.0 // indirect
+	golang.org/x/mod v0.10.0 // indirect
+	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/oauth2 v0.9.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
-	golang.org/x/tools v0.6.0 // indirect
-	google.golang.org/api v0.127.0 // indirect
+	golang.org/x/tools v0.8.0 // indirect
+	google.golang.org/api v0.130.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
-	google.golang.org/grpc v1.56.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230629202037-9506855d4529 // indirect
+	google.golang.org/grpc v1.56.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.0 // indirect
-	k8s.io/klog/v2 v2.90.0 // indirect
+	k8s.io/klog/v2 v2.100.1 // indirect
 )
 
 replace go.step.sm/linkedca => ./../linkedca

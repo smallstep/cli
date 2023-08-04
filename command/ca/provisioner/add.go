@@ -176,6 +176,7 @@ SCEP
 			sshHostDefaultDurFlag,
 			disableRenewalFlag,
 			allowRenewalAfterExpiryFlag,
+			disableSmallstepExtensionsFlag,
 			//enableX509Flag,
 			enableSSHFlag,
 
@@ -369,8 +370,9 @@ func addAction(ctx *cli.Context) (err error) {
 			HostDurations: &linkedca.Durations{},
 			Enabled:       !(ctx.IsSet("ssh") && !ctx.Bool("ssh")),
 		},
-		DisableRenewal:          ctx.Bool("disable-renewal"),
-		AllowRenewalAfterExpiry: ctx.Bool("allow-renewal-after-expiry"),
+		DisableRenewal:             ctx.Bool("disable-renewal"),
+		AllowRenewalAfterExpiry:    ctx.Bool("allow-renewal-after-expiry"),
+		DisableSmallstepExtensions: ctx.Bool("disable-smallstep-extensions"),
 	}
 
 	if ctx.IsSet("x509-min-dur") {
