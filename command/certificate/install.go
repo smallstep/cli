@@ -45,7 +45,7 @@ $ step certificate install --all root-ca.pem
 
 Install a root certificate in Firefox's and the system's default trust store:
 '''
-$ step certificate install --firefox root--ca.pem
+$ step certificate install --firefox root-ca.pem
 '''
 
 Install a root certificate in Java's and the system's default trust store:
@@ -115,7 +115,7 @@ $ step certificate uninstall --all root-ca.pem
 
 Uninstall a root certificate from Firefox's and the system's default trust store:
 '''
-$ step certificate uninstall --firefox root--ca.pem
+$ step certificate uninstall --firefox root-ca.pem
 '''
 
 Uninstall a root certificate from Java's and the system's default trust store:
