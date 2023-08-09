@@ -28,6 +28,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Add support for provisioner claim `disableSmallstepExtensions`
+  (smallstep/cli#986).
+- Add support for PowerShell plugins on Windows (smallstep/certificates#992).
+- Create API token using team slug (smallstep/cli#980).
+- Detect OIDC tokens issued by Kubernetes (smallstep/cli#953).
+- Add support for Smallstep Managed Endpoint X509 extension
+  (smallstep/cli#989).
+
+### Changed
+
+- Increase PBKDF2 iterations to 600k (smallstep/cli#949).
+
+### Fixed
+
+- Look for Windows plugins with executable extensions
+  (smallstep/certificates#976)
+- Fix empty ca.json with invalid template data (smallstep/certificates#1501).
+- Fix interactive prompt on docker builds (smallstep/cli#963).
+
+### Remove
+
+- Remove automatic creation of the step path (smallstep/certificates#991)
+
+
 ## [v0.24.4] - 2023-05-11
 
 ### Added
