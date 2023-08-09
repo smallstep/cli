@@ -345,8 +345,9 @@ $ step kms create \
   'pkcs11:id=4001;object=intermediate-key'
 $ step certificate create \
   --profile intermediate-ca \
-  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --ca-kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password'
   --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \ 
   --key 'pkcs11:id=4001' \
   'My KMS Intermediate' intermediate_ca.crt
 '''
@@ -355,8 +356,8 @@ Create an intermediate certificate for an RSA decryption key in Google Cloud KMS
 '''
 $ step certificate create \
   --profile intermediate-ca \ 
+  --ca root_ca.crt --ca-key root_ca_key \ 
   --kms cloudkms: \ 
-  --ca root_ca.crt --ca-key root_ca_key \  
   --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
   --skip-csr-signature \
   'My RSA Intermediate' intermediate_rsa_ca.crt 
@@ -367,8 +368,8 @@ Create an intermediate certificate for an RSA signing key in Google Cloud KMS, s
 $ step certificate create \
   --profile intermediate-ca \ 
   --ca-kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \ 
   --kms cloudkms: \ 
-  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
   --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
   'My RSA Intermediate' intermediate_rsa_ca.crt 
 '''

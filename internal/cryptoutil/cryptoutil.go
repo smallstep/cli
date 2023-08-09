@@ -49,7 +49,7 @@ func PublicKey(kms, name string, opts ...pemutil.Options) (crypto.PublicKey, err
 // CreateSigner reads a key from a file with a given name or creates a signer
 // with the given kms and name uri.
 func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, error) {
-	if kms == "" {
+	if kms == "" || isSoftKMS(kms) {
 		s, err := pemutil.Read(name, opts...)
 		if err != nil {
 			return nil, err
@@ -61,6 +61,10 @@ func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, err
 	}
 
 	return newKMSSigner(kms, name)
+}
+
+func isSoftKMS(kms string) bool {
+	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(kms)), "softkms")
 }
 
 // LoadCertificate returns a x509.Certificate from a kms or file
