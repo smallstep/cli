@@ -44,11 +44,11 @@ func createCommand() cli.Command {
 [**--kms**=<uri>] [**--csr**] [**--profile**=<profile>]
 [**--template**=<file>] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--not-before**=<duration>] [**--not-after**=<duration>]
-[**--password-file**=<file>] [**--ca**=<issuer-cert>]
+[**--password-file**=<file>] [**--ca**=<issuer-cert>] 
 [**--ca-key**=<issuer-key>] [**--ca-password-file**=<file>]
-[**--san**=<SAN>] [**--bundle**] [**--key**=<file>]
+[**--ca-kms**=<uri>] [**--san**=<SAN>] [**--bundle**] [**--key**=<file>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
-[**--no-password**] [**--insecure**]`,
+[**--skip-csr-signature**] [**--no-password**] [**--insecure**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing request (CSR) that can be signed later using 'step
 certificate sign' (or some other tool) to produce a certificate.
@@ -345,10 +345,33 @@ $ step kms create \
   'pkcs11:id=4001;object=intermediate-key'
 $ step certificate create \
   --profile intermediate-ca \
-  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --ca-kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password'
   --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \ 
   --key 'pkcs11:id=4001' \
   'My KMS Intermediate' intermediate_ca.crt
+'''
+
+Create an intermediate certificate for an RSA decryption key in Google Cloud KMS, signed by a root stored on disk, using <step-kms-plugin>:
+'''
+$ step certificate create \
+  --profile intermediate-ca \ 
+  --ca root_ca.crt --ca-key root_ca_key \ 
+  --kms cloudkms: \ 
+  --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
+  --skip-csr-signature \
+  'My RSA Intermediate' intermediate_rsa_ca.crt 
+'''
+
+Create an intermediate certificate for an RSA signing key in Google Cloud KMS, signed by a root stored in an HSM, using <step-kms-plugin>:
+'''
+$ step certificate create \
+  --profile intermediate-ca \ 
+  --ca-kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \ 
+  --kms cloudkms: \ 
+  --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
+  'My RSA Intermediate' intermediate_rsa_ca.crt 
 '''
 `,
 		Flags: []cli.Flag{
@@ -446,6 +469,14 @@ the **--ca** flag.`,
 				Name:   "insecure",
 				Hidden: true,
 			},
+			cli.StringFlag{
+				Name:  "ca-kms",
+				Usage: "The <uri> to configure the KMS used for signing the certificate",
+			},
+			cli.BoolFlag{
+				Name:  "skip-csr-signature",
+				Usage: "Skip creating and signing a CSR",
+			},
 		},
 	}
 }
@@ -485,15 +516,20 @@ func createAction(ctx *cli.Context) error {
 	}
 
 	var (
-		sans         = ctx.StringSlice("san")
-		profile      = ctx.String("profile")
-		templateFile = ctx.String("template")
-		bundle       = ctx.Bool("bundle")
-		subtle       = ctx.Bool("subtle")
+		sans             = ctx.StringSlice("san")
+		profile          = ctx.String("profile")
+		templateFile     = ctx.String("template")
+		bundle           = ctx.Bool("bundle")
+		subtle           = ctx.Bool("subtle")
+		skipCSRSignature = ctx.Bool("skip-csr-signature")
 	)
 
 	if ctx.IsSet("profile") && templateFile != "" {
 		return errs.IncompatibleFlagWithFlag(ctx, "profile", "template")
+	}
+
+	if ctx.Bool("csr") && skipCSRSignature {
+		return errs.IncompatibleFlagWithFlag(ctx, "csr", "skip-csr-signature")
 	}
 
 	// Read template if passed
@@ -631,20 +667,31 @@ func createAction(ctx *cli.Context) error {
 		defaultValidity = defaultTemplatevalidity
 	}
 
-	// Create X.509 certificate used as base for the certificate
-	cr, err := x509util.CreateCertificateRequest(subject, sans, signer)
-	if err != nil {
-		return err
-	}
-
 	// Create X.509 certificate
 	templateData := x509util.CreateTemplateData(subject, sans)
 	templateData.SetUserData(userData)
-	certificate, err := x509util.NewCertificate(cr, x509util.WithTemplate(template, templateData))
-	if err != nil {
-		return err
+
+	var certTemplate = &x509.Certificate{}
+	if skipCSRSignature {
+		certTemplate.PublicKey = pub
+		certificate, err := x509util.NewCertificateFromX509(certTemplate, x509util.WithTemplate(template, templateData))
+		if err != nil {
+			return err
+		}
+		certTemplate = certificate.GetCertificate()
+	} else {
+		// Create X.509 certificate used as base for the certificate
+		cr, err := x509util.CreateCertificateRequest(subject, sans, priv)
+		if err != nil {
+			return err
+		}
+		certificate, err := x509util.NewCertificate(cr, x509util.WithTemplate(template, templateData))
+		if err != nil {
+			return err
+		}
+		certTemplate = certificate.GetCertificate()
 	}
-	certTemplate := certificate.GetCertificate()
+
 	if parent == nil {
 		parent = certTemplate
 	}
@@ -766,9 +813,9 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	var (
 		caCert   = ctx.String("ca")
 		caKey    = ctx.String("ca-key")
+		caKMS    = ctx.String("ca-kms")
 		profile  = ctx.String("profile")
 		template = ctx.String("template")
-		kms      = ctx.String("kms")
 	)
 
 	// Check required flags when profile is used.
@@ -819,7 +866,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
 
-	signer, err := cryptoutil.CreateSigner(kms, caKey, opts...)
+	signer, err := cryptoutil.CreateSigner(caKMS, caKey, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
