@@ -45,10 +45,10 @@ func createCommand() cli.Command {
 [**--template**=<file>] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--not-before**=<duration>] [**--not-after**=<duration>]
 [**--password-file**=<file>] [**--ca**=<issuer-cert>]
-[**--ca-key**=<issuer-key>] [**--ca-password-file**=<file>]
+[**--ca-key**=<issuer-key>] [**--ca-kms**=<uri>] [**--ca-password-file**=<file>]
 [**--san**=<SAN>] [**--bundle**] [**--key**=<file>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
-[**--no-password**] [**--insecure**]`,
+[**--skip-csr-signature**] [**--no-password**] [**--insecure**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing request (CSR) that can be signed later using 'step
 certificate sign' (or some other tool) to produce a certificate.
@@ -812,7 +812,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	var (
 		caCert   = ctx.String("ca")
 		caKey    = ctx.String("ca-key")
-		caKMS    = ctx.String("ca-kms") // TODO: ensure "softkms:" is handled correctly
+		caKMS    = ctx.String("ca-kms")
 		profile  = ctx.String("profile")
 		template = ctx.String("template")
 	)
