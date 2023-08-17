@@ -85,7 +85,7 @@ func formatAction(ctx *cli.Context) error {
 	}
 
 	switch {
-	case bytes.HasPrefix(crtBytes, []byte("-----BEGIN ")): // PEM format
+	case bytes.Contains(crtBytes, []byte("-----BEGIN ")): // PEM format
 		ob, err = decodeCertificatePem(crtBytes)
 		if err != nil {
 			return err
