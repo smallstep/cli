@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"os"
 	"reflect"
 	"regexp"
@@ -54,7 +53,6 @@ var BuildTime = "N/A"
 func init() {
 	step.Set("Smallstep CLI", Version, BuildTime)
 	ca.UserAgent = step.Version()
-	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
