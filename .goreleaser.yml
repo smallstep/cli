@@ -59,7 +59,6 @@ archives:
     # Can be used to change the archive formats for specific GOOSs.
     # Most common use case is to archive as zip on Windows.
     # Default is empty.
-    rlcp: true
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
     format_overrides:
       - goos: windows
@@ -124,7 +123,6 @@ nfpms:
 
 source:
   enabled: true
-  rlcp: true
   name_template: '{{ .ProjectName }}_{{ .Version }}'
 
 checksum:
@@ -362,7 +360,7 @@ scoops:
     url_template: "http://github.com/smallstep/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
 
     # Repository to push the app manifest to.
-    bucket:
+    repository:
       owner: smallstep
       name: scoop-bucket
 
