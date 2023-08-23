@@ -333,7 +333,7 @@ winget:
       pull_request:
         # Whether to enable it or not.
         enabled: true
-
+        check_boxes: true
         # Whether to open the PR as a draft or not.
         #
         # Default: false
@@ -344,10 +344,10 @@ winget:
         # above will be used as HEAD, allowing cross-repository pull requests.
         #
         # Since: v1.19
-        # base:
-        #   owner: microsoft
-        #   name: winget-pkgs
-        #   branch: master
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
 
 scoops:
   -
