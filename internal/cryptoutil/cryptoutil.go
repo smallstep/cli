@@ -29,7 +29,7 @@ type Attestor interface {
 // CreateSigner reads a key from a file with a given name or creates a signer
 // with the given kms and name uri.
 func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, error) {
-	if kms == "" {
+	if kms == "" || isSoftKMS(kms) {
 		s, err := pemutil.Read(name, opts...)
 		if err != nil {
 			return nil, err
@@ -41,6 +41,10 @@ func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, err
 	}
 
 	return newKMSSigner(kms, name)
+}
+
+func isSoftKMS(kms string) bool {
+	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(kms)), "softkms")
 }
 
 // LoadCertificate returns a x509.Certificate from a kms or file
@@ -138,9 +142,13 @@ func IsKMSSigner(signer crypto.Signer) (ok bool) {
 }
 
 // IsX509Signer returns true if the given signer is supported by Go's
-// crypto/x509 package to sign sign X509 certificates. This methods returns true
+// crypto/x509 package to sign X509 certificates. This methods returns true
 // for ECDSA, RSA and Ed25519 keys, but if the kms is `sshagentkms:` it will
 // only return true for Ed25519 keys.
+// TODO(hs): introspect the KMS key to verify that it can actually be
+// used for signing? E.g. for Google Cloud KMS RSA keys can be used for
+// signing or decryption, but only one of those at a time. Trying to use
+// a signing key to decrypt data will result in an error from Cloud KMS.
 func IsX509Signer(signer crypto.Signer) bool {
 	pub := signer.Public()
 	if ks, ok := signer.(*kmsSigner); ok {

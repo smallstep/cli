@@ -17,50 +17,50 @@ func installCommand() cli.Command {
 	return cli.Command{
 		Name:   "install",
 		Action: command.ActionFunc(installAction),
-		Usage:  "install a root certificate in the system truststore",
+		Usage:  "install a root certificate in the supported trust stores",
 		UsageText: `**step certificate install** <crt-file>
 [**--prefix**=<name>] [**--all**]
 [**--java**] [**--firefox**] [**--no-system**]`,
-		Description: `**step certificate install** installs a root certificate in the system
-truststore.
+		Description: `**step certificate install** installs a root certificate in
+the supported trust stores.
 
-Java and Firefox truststores are also supported via the respective flags.
+Java's and Firefox's trust stores are also supported via the respective flags
 
 ## POSITIONAL ARGUMENTS
 
 <crt-file>
-:  Certificate to install in the system truststore
+:  Root certificate to install in the specified trust stores.
 
 ## EXAMPLES
 
-Install a certificate in the system truststore:
+Install a root certificate in the system's default trust store:
 '''
 $ step certificate install root-ca.pem
 '''
 
-Install a certificate in all the supported truststores:
+Install a root certificate in all the supported trust stores:
 '''
 $ step certificate install --all root-ca.pem
 '''
 
-Install a certificate in Firefox and the system truststore:
+Install a root certificate in Firefox's and the system's default trust store:
 '''
-$ step certificate install --firefox root--ca.pem
+$ step certificate install --firefox root-ca.pem
 '''
 
-Install a certificate in Java and the system truststore:
+Install a root certificate in Java's and the system's default trust store:
 '''
 $ step certificate install --java root-ca.pem
 '''
 
-Install a certificate in Firefox, Java, but not in the system truststore:
+Install a root certificate in Firefox's and Java's trust store, but not in the system's default trust store:
 '''
 $ step certificate install --firefox --java --no-system root-ca.pem
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "prefix",
-				Usage: `The prefix used to <name> the CA in the truststore. Defaults to the
+				Usage: `The prefix used to <name> the CA in the trust store. Defaults to the
 certificate common name.`,
 			},
 			cli.BoolFlag{
@@ -73,11 +73,11 @@ certificate common name.`,
 			},
 			cli.BoolFlag{
 				Name:  "no-system",
-				Usage: "disables the install on the system truststore",
+				Usage: "disables the install on the system's default trust store",
 			},
 			cli.BoolFlag{
 				Name:  "all",
-				Usage: "install on the system, Firefox and Java truststores",
+				Usage: "install in Firefox's, Java's, and the system's default trust store",
 			},
 		},
 	}
@@ -87,38 +87,38 @@ func uninstallCommand() cli.Command {
 	return cli.Command{
 		Name:   "uninstall",
 		Action: command.ActionFunc(uninstallAction),
-		Usage:  "uninstall a root certificate from the system truststore",
+		Usage:  "uninstall a root certificate from the supported trust stores",
 		UsageText: `**step certificate uninstall** <crt-file>
 [**--prefix**=<name>] [**--all**]
 [**--java**] [**--firefox**] [**--no-system**]`,
-		Description: `**step certificate uninstall** uninstalls a root certificate from the system
-truststore.
+		Description: `**step certificate uninstall** uninstalls a root certificate from
+the supported trust stores.
 
-Java and Firefox truststores are also supported via the respective flags.
+Java's and Firefox's trust stores are also supported via the respective flags.
 
 ## POSITIONAL ARGUMENTS
 
 <crt-file>
-:  Certificate to uninstall from the system truststore
+:  Root certificate to uninstall from the specified trust stores.
 
 ## EXAMPLES
 
-Uninstall from only the system truststore:
+Uninstall only from the system's default trust store:
 '''
 $ step certificate uninstall root-ca.pem
 '''
 
-Uninstall a certificate from all the supported truststores:
+Uninstall a root certificate from all the supported trust stores:
 '''
 $ step certificate uninstall --all root-ca.pem
 '''
 
-Uninstall a certificate from Firefox and the system truststore:
+Uninstall a root certificate from Firefox's and the system's default trust store:
 '''
-$ step certificate uninstall --firefox root--ca.pem
+$ step certificate uninstall --firefox root-ca.pem
 '''
 
-Uninstall a certificate from Java and the system truststore:
+Uninstall a root certificate from Java's and the system's default trust store:
 '''
 $ step certificate uninstall --java root-ca.pem
 '''
@@ -130,7 +130,7 @@ $ step certificate uninstall --firefox --java --no-system root-ca.pem
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name: "prefix",
-				Usage: `The prefix used to <name> the CA in the truststore. Defaults to the
+				Usage: `The prefix used to <name> the CA in the trust store. Defaults to the
 certificate common name.`,
 			},
 			cli.BoolFlag{
@@ -143,11 +143,11 @@ certificate common name.`,
 			},
 			cli.BoolFlag{
 				Name:  "no-system",
-				Usage: "disables the uninstall from the system truststore",
+				Usage: "disables the uninstall from the system's default trust store",
 			},
 			cli.BoolFlag{
 				Name:  "all",
-				Usage: "uninstall from the system, Firefox and Java truststores",
+				Usage: "uninstall from Firefox's, Java's, and the system's default trust store",
 			},
 		},
 	}

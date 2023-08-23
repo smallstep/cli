@@ -21,7 +21,7 @@ func fingerprintCommand() cli.Command {
 		Action: cli.ActionFunc(fingerprintAction),
 		Usage:  "print the fingerprint of a certificate",
 		UsageText: `**step certificate fingerprint** <crt-file>
-[**--bundle**] [**--roots**=<root-bundle>] [**--servername**=<servername>] 
+[**--bundle**] [**--roots**=<root-bundle>] [**--servername**=<servername>]
 [**--format**=<format>] [**--sha1**] [**--insecure**]`,
 		Description: `**step certificate fingerprint** reads a certificate and prints to STDOUT the
 certificate SHA256 of the raw certificate.
