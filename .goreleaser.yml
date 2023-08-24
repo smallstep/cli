@@ -345,7 +345,7 @@ winget:
         #
         # Since: v1.19
         base:
-          owner: smallstep
+          owner: microsoft
           name: winget-pkgs
           branch: master
 
