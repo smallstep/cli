@@ -145,8 +145,8 @@ of a requested certificate be validated as an Identifier in the ACME order along
 with any other SANS. Therefore, the Common Name must be a valid DNS Name. The
 step CA does not impose this requirement.
 '''
-$ step ca certificate foo.internal foo.crt foo.key \
---acme https://acme-staging-v02.api.letsencrypt.org/directory --san bar.internal
+$ step ca certificate foo.com foo.crt foo.key \
+--acme https://acme-staging-v02.api.letsencrypt.org/directory --san foo.net
 '''`,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
