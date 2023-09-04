@@ -20,7 +20,7 @@ func signCertificateCommand() cli.Command {
 	return cli.Command{
 		Name:   "sign",
 		Action: command.ActionFunc(signCertificateAction),
-		Usage:  "generate a new certificate signing a certificate request",
+		Usage:  "generate a new certificate from signing a certificate request",
 		UsageText: `**step ca sign** <csr-file> <crt-file>
 [**--token**=<token>] [**--issuer**=<name>] [**--provisioner-password-file=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]

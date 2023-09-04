@@ -44,11 +44,11 @@ func createCommand() cli.Command {
 [**--kms**=<uri>] [**--csr**] [**--profile**=<profile>]
 [**--template**=<file>] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--not-before**=<duration>] [**--not-after**=<duration>]
-[**--password-file**=<file>] [**--ca**=<issuer-cert>]
+[**--password-file**=<file>] [**--ca**=<issuer-cert>] 
 [**--ca-key**=<issuer-key>] [**--ca-password-file**=<file>]
-[**--san**=<SAN>] [**--bundle**] [**--key**=<file>]
+[**--ca-kms**=<uri>] [**--san**=<SAN>] [**--bundle**] [**--key**=<file>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
-[**--no-password**] [**--insecure**]`,
+[**--skip-csr-signature**] [**--no-password**] [**--insecure**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing request (CSR) that can be signed later using 'step
 certificate sign' (or some other tool) to produce a certificate.
@@ -345,8 +345,9 @@ $ step kms create \
   'pkcs11:id=4001;object=intermediate-key'
 $ step certificate create \
   --profile intermediate-ca \
-  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --ca-kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password'
   --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \ 
   --key 'pkcs11:id=4001' \
   'My KMS Intermediate' intermediate_ca.crt
 '''
@@ -355,8 +356,8 @@ Create an intermediate certificate for an RSA decryption key in Google Cloud KMS
 '''
 $ step certificate create \
   --profile intermediate-ca \ 
+  --ca root_ca.crt --ca-key root_ca_key \ 
   --kms cloudkms: \ 
-  --ca root_ca.crt --ca-key root_ca_key \  
   --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
   --skip-csr-signature \
   'My RSA Intermediate' intermediate_rsa_ca.crt 
@@ -367,8 +368,8 @@ Create an intermediate certificate for an RSA signing key in Google Cloud KMS, s
 $ step certificate create \
   --profile intermediate-ca \ 
   --ca-kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \ 
   --kms cloudkms: \ 
-  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
   --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
   'My RSA Intermediate' intermediate_rsa_ca.crt 
 '''
@@ -820,7 +821,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 	var (
 		caCert   = ctx.String("ca")
 		caKey    = ctx.String("ca-key")
-		caKMS    = ctx.String("ca-kms") // TODO: ensure "softkms:" is handled correctly
+		caKMS    = ctx.String("ca-kms")
 		profile  = ctx.String("profile")
 		template = ctx.String("template")
 	)
