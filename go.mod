@@ -28,8 +28,8 @@ require (
 	go.step.sm/crypto v0.35.0
 	go.step.sm/linkedca v0.20.0
 	golang.org/x/crypto v0.12.0
-	golang.org/x/sys v0.11.0
-	golang.org/x/term v0.11.0
+	golang.org/x/sys v0.12.0
+	golang.org/x/term v0.12.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 	software.sslmate.com/src/go-pkcs12 v0.2.1
