@@ -88,8 +88,9 @@ IID (AWS/GCP/Azure)
 SCEP
 
 **step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
-[**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>]
-[**--encryption-algorithm-identifier**=<id>][**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--capabilities**=<capabilities>] [**--include-root**] [**--exclude-intermediate**]
+[**--minimum-public-key-length**=<length>] [**--encryption-algorithm-identifier**=<id>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
@@ -130,6 +131,7 @@ SCEP
 			// SCEP flags
 			scepCapabilitiesFlag,
 			scepIncludeRootFlag,
+			scepExcludeIntermediateFlag,
 			scepMinimumPublicKeyLengthFlag,
 			scepEncryptionAlgorithmIdentifierFlag,
 			scepKMSTypeFlag,
@@ -915,6 +917,9 @@ func updateSCEPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 	if ctx.IsSet("include-root") {
 		details.IncludeRoot = ctx.Bool("include-root")
+	}
+	if ctx.IsSet("exclude-intermediate") {
+		details.ExcludeIntermediate = ctx.Bool("exclude-intermediate")
 	}
 	if ctx.IsSet("encryption-algorithm-identifier") {
 		details.EncryptionAlgorithmIdentifier = int32(ctx.Int("encryption-algorithm-identifier"))

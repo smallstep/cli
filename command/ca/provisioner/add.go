@@ -98,8 +98,8 @@ IID
 SCEP
 
 **step ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
-[**--capabilities**=<capabilities>] [**--include-root**] [**--min-public-key-length**=<length>]
-[**--encryption-algorithm-identifier**=<id>]
+[**--capabilities**=<capabilities>] [**--include-root**] [**--exclude-intermediate**]
+[**--min-public-key-length**=<length>] [**--encryption-algorithm-identifier**=<id>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
@@ -138,6 +138,7 @@ SCEP
 			// SCEP provisioner flags
 			scepCapabilitiesFlag,
 			scepIncludeRootFlag,
+			scepExcludeIntermediateFlag,
 			scepMinimumPublicKeyLengthFlag,
 			scepEncryptionAlgorithmIdentifierFlag,
 			scepKMSTypeFlag,
@@ -800,6 +801,7 @@ func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		Capabilities:                  ctx.StringSlice("capabilities"),
 		MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
 		IncludeRoot:                   ctx.Bool("include-root"),
+		ExcludeIntermediate:           ctx.Bool("exclude-intermediate"),
 		EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
 	}
 	decrypter := &linkedca.SCEPDecrypter{}

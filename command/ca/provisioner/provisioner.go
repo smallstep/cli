@@ -404,6 +404,10 @@ Use the flag multiple times to remove multiple formats.`,
 		Name:  "include-root",
 		Usage: `Include the CA root certificate in the SCEP CA certificate chain`,
 	}
+	scepExcludeIntermediateFlag = cli.BoolFlag{
+		Name:  "exclude-intermediate",
+		Usage: `Exclude the CA intermediate certificate in the SCEP CA certificate chain`,
+	}
 	scepMinimumPublicKeyLengthFlag = cli.IntFlag{
 		Name:  "min-public-key-length",
 		Usage: `The minimum public key <length> of the SCEP RSA encryption key`,
