@@ -8,14 +8,14 @@ require (
 	github.com/fxamacker/cbor/v2 v2.5.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-tpm v0.3.3
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/icrowley/fake v0.0.0-20221112152111-d7b7e2276db2
 	github.com/manifoldco/promptui v0.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.4.0
 	github.com/slackhq/nebula v1.6.1
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.24.3-rc.5.0.20230817222203-9ea1e64a0ad2
+	github.com/smallstep/certificates v0.24.3-rc.5.0.20230830002602-e22166c6288c
 	github.com/smallstep/certinfo v1.12.0
 	github.com/smallstep/go-attestation v0.4.4-0.20230509120429-e17291421738
 	github.com/smallstep/truststore v0.12.1
@@ -27,9 +27,9 @@ require (
 	go.step.sm/cli-utils v0.8.0
 	go.step.sm/crypto v0.35.0
 	go.step.sm/linkedca v0.20.0
-	golang.org/x/crypto v0.12.0
-	golang.org/x/sys v0.11.0
-	golang.org/x/term v0.11.0
+	golang.org/x/crypto v0.13.0
+	golang.org/x/sys v0.12.0
+	golang.org/x/term v0.12.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 	software.sslmate.com/src/go-pkcs12 v0.2.1
@@ -82,7 +82,7 @@ require (
 	github.com/google/certificate-transparency-go v1.1.6 // indirect
 	github.com/google/go-tpm-tools v0.3.12 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
-	github.com/google/s2a-go v0.1.4 // indirect
+	github.com/google/s2a-go v0.1.5 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
@@ -126,9 +126,9 @@ require (
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/oauth2 v0.11.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.8.0 // indirect
-	google.golang.org/api v0.136.0 // indirect
+	google.golang.org/api v0.138.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5 // indirect
