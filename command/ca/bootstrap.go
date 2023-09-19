@@ -65,7 +65,7 @@ $ step ca bootstrap --team superteam --team-url https://config.example.com/<>
 			fingerprintFlag,
 			cli.BoolFlag{
 				Name:  "install",
-				Usage: "Install the root certificate into the system truststore.",
+				Usage: "Install the root certificate into the system's default trust store.",
 			},
 			flags.Team,
 			flags.TeamAuthority,

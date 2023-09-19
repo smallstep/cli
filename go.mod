@@ -1,6 +1,6 @@
 module github.com/smallstep/cli
 
-go 1.19
+go 1.20
 
 require (
 	github.com/Microsoft/go-winio v0.6.1

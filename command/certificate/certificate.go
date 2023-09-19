@@ -70,12 +70,12 @@ Extract the public key from a PEM encoded certificate:
 $ step certificate key foo.crt
 '''
 
-Install a root certificate in the system truststore:
+Install a root certificate in the system's default trust store:
 '''
 $ step certificate install root-ca.crt
 '''
 
-Uninstall a root certificate from the system truststore:
+Uninstall a root certificate from the system's default trust store:
 '''
 $ step certificate uninstall root-ca.crt
 '''`,
