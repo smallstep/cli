@@ -137,7 +137,6 @@ SCEP
 			scepMinimumPublicKeyLengthFlag,
 			scepEncryptionAlgorithmIdentifierFlag,
 			scepDecrypterCertFileFlag,
-			scepDecrypterCertFlag,
 			scepDecrypterKeyFileFlag,
 			scepDecrypterKeyFlag,
 			scepDecrypterKeyURIFlag,
