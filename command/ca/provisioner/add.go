@@ -1005,7 +1005,7 @@ func readSCEPDecrypterKey(filename string) ([]byte, error) {
 		return nil, fmt.Errorf("failed reading %q: %w", filename, err)
 	}
 
-	if validateSCEPDecrypterKey(b); err != nil {
+	if err := validateSCEPDecrypterKey(b); err != nil {
 		return nil, fmt.Errorf("failed decoding %q: %w", filename, err)
 	}
 
