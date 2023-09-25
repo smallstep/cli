@@ -100,7 +100,7 @@ SCEP
 **step ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--exclude-intermediate**]
 [**--min-public-key-length**=<length>] [**--encryption-algorithm-identifier**=<id>]
-[**--scep-decrypter-certificate-file**=<file>] [**--scep-decrypter-certificate**=<base64>] 
+[**--scep-decrypter-certificate-file**=<file>]  
 [**--scep-decrypter-key-file**=<file>] [**--scep-decrypter-key**=<base64>] 
 [**--scep-decrypter-key-uri**=<uri>] [**--scep-decrypter-key-password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>] 
@@ -814,25 +814,6 @@ func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		data, err := parseSCEPDecrypterCertificate(decrypterCertificateFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed parsing certificate from %q: %w", decrypterCertificateFile, err)
-		}
-		decrypter.Certificate = data
-		s.Decrypter = decrypter
-	}
-	if decrypterCertificate := ctx.String("scep-decrypter-certificate"); decrypterCertificate != "" {
-		// validate the provided value to be a valid base64 encoded PEM formatted certificate
-		data, err := base64.StdEncoding.DecodeString(decrypterCertificate)
-		if err != nil {
-			return nil, fmt.Errorf("failed base64 decoding decrypter certificate: %w", err)
-		}
-		block, rest := pem.Decode(data)
-		if len(rest) > 0 {
-			return nil, errors.New("failed parsing decrypter certificate: trailing data")
-		}
-		if block == nil {
-			return nil, errors.New("failed parsing decrypter certificate: no PEM block found")
-		}
-		if _, err := x509.ParseCertificate(block.Bytes); err != nil {
-			return nil, fmt.Errorf("failed parsing decrypter certificate: %w", err)
 		}
 		decrypter.Certificate = data
 		s.Decrypter = decrypter

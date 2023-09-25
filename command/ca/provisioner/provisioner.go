@@ -432,10 +432,6 @@ Use the flag multiple times to remove multiple formats.`,
 		Name:  "scep-decrypter-certificate-file",
 		Usage: `The path to a PEM certificate <file> for the SCEP decrypter`,
 	}
-	scepDecrypterCertFlag = cli.StringFlag{
-		Name:  "scep-decrypter-certificate",
-		Usage: `The <base64> encoded PEM certificate for the SCEP decrypter`,
-	}
 	scepDecrypterKeyFileFlag = cli.StringFlag{
 		Name:  "scep-decrypter-key-file",
 		Usage: `The path to a PEM private key <file> for the SCEP decrypter`,
