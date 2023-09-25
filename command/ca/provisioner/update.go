@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"net/url"
@@ -89,8 +88,7 @@ SCEP
 **step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--exclude-intermediate**]
 [**--minimum-public-key-length**=<length>] [**--encryption-algorithm-identifier**=<id>]
-[**--scep-decrypter-certificate-file**=<file>]
-[**--scep-decrypter-key-file**=<file>] [**--scep-decrypter-key**=<base64>] 
+[**--scep-decrypter-certificate-file**=<file>] [**--scep-decrypter-key-file**=<file>]
 [**--scep-decrypter-key-uri**=<uri>] [**--scep-decrypter-key-password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>] 
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
@@ -138,7 +136,6 @@ SCEP
 			scepEncryptionAlgorithmIdentifierFlag,
 			scepDecrypterCertFileFlag,
 			scepDecrypterKeyFileFlag,
-			scepDecrypterKeyFlag,
 			scepDecrypterKeyURIFlag,
 			scepDecrypterKeyPasswordFileFlag,
 
@@ -951,17 +948,6 @@ func updateSCEPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		data, err := readSCEPDecrypterKey(decrypterKeyFile)
 		if err != nil {
 			return fmt.Errorf("failed reading decrypter key from %q: %w", decrypterKeyFile, err)
-		}
-		decrypter.Key = data
-		details.Decrypter = decrypter
-	}
-	if decrypterKey := ctx.String("scep-decrypter-key"); decrypterKey != "" {
-		data, err := base64.StdEncoding.DecodeString(decrypterKey)
-		if err != nil {
-			return fmt.Errorf("failed base64 decoding decrypter key: %w", err)
-		}
-		if err := validateSCEPDecrypterKey(data); err != nil {
-			return fmt.Errorf("failed validating decrypter key: %w", err)
 		}
 		decrypter.Key = data
 		details.Decrypter = decrypter
