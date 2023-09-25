@@ -89,8 +89,11 @@ SCEP
 **step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--exclude-intermediate**]
 [**--minimum-public-key-length**=<length>] [**--encryption-algorithm-identifier**=<id>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--scep-decrypter-certificate-file**=<file>] [**--scep-decrypter-certificate**=<base64>] 
+[**--scep-decrypter-key-file**=<file>] [**--scep-decrypter-key**=<base64>] 
+[**--scep-decrypter-key-uri**=<uri>] [**--scep-decrypter-key-password-file**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>] 
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			nameFlag,
@@ -133,12 +136,12 @@ SCEP
 			scepExcludeIntermediateFlag,
 			scepMinimumPublicKeyLengthFlag,
 			scepEncryptionAlgorithmIdentifierFlag,
-			scepKMSTypeFlag,
-			scepKMSCredentialsFileFlag,
 			scepDecrypterCertFileFlag,
 			scepDecrypterCertFlag,
+			scepDecrypterKeyFileFlag,
 			scepDecrypterKeyFlag,
-			scepDecrypterKeyPasswordFlag,
+			scepDecrypterKeyURIFlag,
+			scepDecrypterKeyPasswordFileFlag,
 
 			// Cloud provisioner flags
 			awsAccountFlag,

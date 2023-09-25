@@ -428,29 +428,29 @@ Use the flag multiple times to remove multiple formats.`,
 		Defaults to DES-CBC (0) for legacy clients.`,
 	}
 
-	scepKMSTypeFlag = cli.StringFlag{
-		Name:  "scep-kms-type",
-		Usage: `The KMS type to be used for the SCEP decrypter`,
-	}
-	scepKMSCredentialsFileFlag = cli.StringFlag{
-		Name:  "scep-kms-credentials-file",
-		Usage: `The credentials file for the SCEP decrypter KMS`,
-	}
 	scepDecrypterCertFileFlag = cli.StringFlag{
 		Name:  "scep-decrypter-certificate-file",
 		Usage: `The path to a PEM certificate <file> for the SCEP decrypter`,
 	}
 	scepDecrypterCertFlag = cli.StringFlag{
 		Name:  "scep-decrypter-certificate",
-		Usage: `The base64 encoded PEM certificate for the SCEP decrypter`,
+		Usage: `The <base64> encoded PEM certificate for the SCEP decrypter`,
+	}
+	scepDecrypterKeyFileFlag = cli.StringFlag{
+		Name:  "scep-decrypter-key-file",
+		Usage: `The path to a PEM private key <file> for the SCEP decrypter`,
 	}
 	scepDecrypterKeyFlag = cli.StringFlag{
-		Name:  "scep-decrypter-key-uri",
-		Usage: `The <key> URI for the SCEP decrypter. Should be a valid value for the KMS type used.`,
+		Name:  "scep-decrypter-key",
+		Usage: `The <base64> encoded PEM private key for the SCEP decrypter`,
 	}
-	scepDecrypterKeyPasswordFlag = cli.StringFlag{
-		Name:  "scep-decrypter-key-password",
-		Usage: `The password for the <key>, if set.`,
+	scepDecrypterKeyURIFlag = cli.StringFlag{
+		Name:  "scep-decrypter-key-uri",
+		Usage: `The key <uri> for the SCEP decrypter. Should be a valid value for the KMS type used.`,
+	}
+	scepDecrypterKeyPasswordFileFlag = cli.StringFlag{
+		Name:  "scep-decrypter-key-password-file",
+		Usage: `The path to a <file> containing the password for the SCEP decrypter key`,
 	}
 
 	// Cloud provisioner flags
