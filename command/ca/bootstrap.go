@@ -90,6 +90,8 @@ func bootstrapAction(ctx *cli.Context) error {
 	teamAuthority := ctx.String("team-authority")
 
 	switch {
+	case team != "" && fingerprint != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "fingerprint")
 	case team != "" && teamAuthority != "":
 		return cautils.BootstrapTeamAuthority(ctx, team, teamAuthority)
 	case team != "":
