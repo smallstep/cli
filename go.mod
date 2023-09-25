@@ -15,7 +15,7 @@ require (
 	github.com/pquerna/otp v1.4.0
 	github.com/slackhq/nebula v1.6.1
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.24.3-rc.5.0.20230922220656-ffe079f31bdf
+	github.com/smallstep/certificates v0.24.3-rc.5.0.20230925175351-0a5ae396c713
 	github.com/smallstep/certinfo v1.12.0
 	github.com/smallstep/go-attestation v0.4.4-0.20230627102604-cf579e53cbd2
 	github.com/smallstep/truststore v0.12.1
@@ -26,7 +26,7 @@ require (
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.8.0
 	go.step.sm/crypto v0.35.1
-	go.step.sm/linkedca v0.20.1-0.20230922094312-7d2f2f79fa6a
+	go.step.sm/linkedca v0.20.1
 	golang.org/x/crypto v0.13.0
 	golang.org/x/sys v0.12.0
 	golang.org/x/term v0.12.0
@@ -53,6 +53,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
+	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -96,7 +97,7 @@ require (
 	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/jackc/pgx/v4 v4.18.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.15.15 // indirect
+	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -105,7 +106,7 @@ require (
 	github.com/micromdm/scep/v2 v2.1.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/newrelic/go-agent/v3 v3.24.1 // indirect
+	github.com/newrelic/go-agent/v3 v3.25.1 // indirect
 	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -117,6 +118,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smallstep/nosql v0.6.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.49.0 // indirect
 	github.com/weppos/publicsuffix-go v0.20.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
@@ -128,7 +131,7 @@ require (
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.8.0 // indirect
-	google.golang.org/api v0.141.0 // indirect
+	google.golang.org/api v0.142.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5 // indirect
