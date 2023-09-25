@@ -445,8 +445,8 @@ Use the flag multiple times to remove multiple formats.`,
 		Usage: `The base64 encoded PEM certificate for the SCEP decrypter`,
 	}
 	scepDecrypterKeyFlag = cli.StringFlag{
-		Name:  "scep-decrypter-key",
-		Usage: `The <key> for the SCEP decrypter. Should be a valid value for the KMS type used.`,
+		Name:  "scep-decrypter-key-uri",
+		Usage: `The <key> URI for the SCEP decrypter. Should be a valid value for the KMS type used.`,
 	}
 	scepDecrypterKeyPasswordFlag = cli.StringFlag{
 		Name:  "scep-decrypter-key-password",
