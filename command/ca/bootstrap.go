@@ -90,6 +90,8 @@ func bootstrapAction(ctx *cli.Context) error {
 	teamAuthority := ctx.String("team-authority")
 
 	switch {
+	case team != "" && caURL != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "ca-url")
 	case team != "" && fingerprint != "":
 		return errs.IncompatibleFlagWithFlag(ctx, "team", "fingerprint")
 	case team != "" && teamAuthority != "":
