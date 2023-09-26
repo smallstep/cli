@@ -86,9 +86,12 @@ IID (AWS/GCP/Azure)
 SCEP
 
 **step ca provisioner update** <name> [**--force-cn**] [**--challenge**=<challenge>]
-[**--capabilities**=<capabilities>] [**--include-root**] [**--minimum-public-key-length**=<length>]
-[**--encryption-algorithm-identifier**=<id>][**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--capabilities**=<capabilities>] [**--include-root**] [**--exclude-intermediate**]
+[**--minimum-public-key-length**=<length>] [**--encryption-algorithm-identifier**=<id>]
+[**--scep-decrypter-certificate-file**=<file>] [**--scep-decrypter-key-file**=<file>]
+[**--scep-decrypter-key-uri**=<uri>] [**--scep-decrypter-key-password-file**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>] 
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			nameFlag,
@@ -128,8 +131,13 @@ SCEP
 			// SCEP flags
 			scepCapabilitiesFlag,
 			scepIncludeRootFlag,
+			scepExcludeIntermediateFlag,
 			scepMinimumPublicKeyLengthFlag,
 			scepEncryptionAlgorithmIdentifierFlag,
+			scepDecrypterCertFileFlag,
+			scepDecrypterKeyFileFlag,
+			scepDecrypterKeyURIFlag,
+			scepDecrypterKeyPasswordFileFlag,
 
 			// Cloud provisioner flags
 			awsAccountFlag,
@@ -912,8 +920,45 @@ func updateSCEPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("include-root") {
 		details.IncludeRoot = ctx.Bool("include-root")
 	}
+	if ctx.IsSet("exclude-intermediate") {
+		details.ExcludeIntermediate = ctx.Bool("exclude-intermediate")
+	}
 	if ctx.IsSet("encryption-algorithm-identifier") {
 		details.EncryptionAlgorithmIdentifier = int32(ctx.Int("encryption-algorithm-identifier"))
+	}
+
+	decrypter := details.GetDecrypter()
+	if decrypter == nil {
+		decrypter = &linkedca.SCEPDecrypter{}
+	}
+	if ctx.IsSet("scep-decrypter-certificate-file") {
+		decrypterCertificateFile := ctx.String("scep-decrypter-certificate-file")
+		data, err := parseSCEPDecrypterCertificate(decrypterCertificateFile)
+		if err != nil {
+			return fmt.Errorf("failed parsing certificate from %q: %w", decrypterCertificateFile, err)
+		}
+		decrypter.Certificate = data
+		details.Decrypter = decrypter
+	}
+	if ctx.IsSet("scep-decrypter-key-uri") {
+		decrypter.KeyUri = ctx.String("scep-decrypter-key-uri")
+		details.Decrypter = decrypter
+	}
+	if decrypterKeyFile := ctx.String("scep-decrypter-key-file"); decrypterKeyFile != "" {
+		data, err := readSCEPDecrypterKey(decrypterKeyFile)
+		if err != nil {
+			return fmt.Errorf("failed reading decrypter key from %q: %w", decrypterKeyFile, err)
+		}
+		decrypter.Key = data
+		details.Decrypter = decrypter
+	}
+	if decrypterKeyPasswordFile := ctx.String("scep-decrypter-key-password-file"); decrypterKeyPasswordFile != "" {
+		decrypterKeyPassword, err := utils.ReadPasswordFromFile(decrypterKeyPasswordFile)
+		if err != nil {
+			return fmt.Errorf("failed reading decrypter key password from %q: %w", decrypterKeyPasswordFile, err)
+		}
+		decrypter.KeyPassword = decrypterKeyPassword
+		details.Decrypter = decrypter
 	}
 
 	return nil
