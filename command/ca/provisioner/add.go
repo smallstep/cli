@@ -1,11 +1,13 @@
 package provisioner
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -95,10 +97,12 @@ IID
 SCEP
 
 **step ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
-[**--capabilities**=<capabilities>] [**--include-root**] [**--min-public-key-length**=<length>]
-[**--encryption-algorithm-identifier**=<id>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>]
-[**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
+[**--capabilities**=<capabilities>] [**--include-root**] [**--exclude-intermediate**]
+[**--min-public-key-length**=<length>] [**--encryption-algorithm-identifier**=<id>]
+[**--scep-decrypter-certificate-file**=<file>] [**--scep-decrypter-key-file**=<file>] 
+[**--scep-decrypter-key-uri**=<uri>] [**--scep-decrypter-key-password-file**=<file>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>] 
+[**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
 			// General provisioner flags
@@ -135,8 +139,13 @@ SCEP
 			// SCEP provisioner flags
 			scepCapabilitiesFlag,
 			scepIncludeRootFlag,
+			scepExcludeIntermediateFlag,
 			scepMinimumPublicKeyLengthFlag,
 			scepEncryptionAlgorithmIdentifierFlag,
+			scepDecrypterCertFileFlag,
+			scepDecrypterKeyFileFlag,
+			scepDecrypterKeyURIFlag,
+			scepDecrypterKeyPasswordFileFlag,
 
 			// Cloud provisioner flags
 			awsAccountFlag,
@@ -787,16 +796,47 @@ func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	if v := ctx.StringSlice("challenge"); len(v) > 0 {
 		challenge = v[0]
 	}
+	s := &linkedca.SCEPProvisioner{
+		ForceCn:                       ctx.Bool("force-cn"),
+		Challenge:                     challenge,
+		Capabilities:                  ctx.StringSlice("capabilities"),
+		MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
+		IncludeRoot:                   ctx.Bool("include-root"),
+		ExcludeIntermediate:           ctx.Bool("exclude-intermediate"),
+		EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
+	}
+	decrypter := &linkedca.SCEPDecrypter{}
+	if decrypterCertificateFile := ctx.String("scep-decrypter-certificate-file"); decrypterCertificateFile != "" {
+		data, err := parseSCEPDecrypterCertificate(decrypterCertificateFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed parsing certificate from %q: %w", decrypterCertificateFile, err)
+		}
+		decrypter.Certificate = data
+		s.Decrypter = decrypter
+	}
+	if decrypterKeyURI := ctx.String("scep-decrypter-key-uri"); decrypterKeyURI != "" {
+		decrypter.KeyUri = decrypterKeyURI
+		s.Decrypter = decrypter
+	}
+	if decrypterKeyFile := ctx.String("scep-decrypter-key-file"); decrypterKeyFile != "" {
+		data, err := readSCEPDecrypterKey(decrypterKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed reading decrypter key from %q: %w", decrypterKeyFile, err)
+		}
+		decrypter.Key = data
+		s.Decrypter = decrypter
+	}
+	if decrypterKeyPasswordFile := ctx.String("scep-decrypter-key-password-file"); decrypterKeyPasswordFile != "" {
+		decrypterKeyPassword, err := utils.ReadPasswordFromFile(decrypterKeyPasswordFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed reading decrypter key password from %q: %w", decrypterKeyPasswordFile, err)
+		}
+		decrypter.KeyPassword = decrypterKeyPassword
+		s.Decrypter = decrypter
+	}
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_SCEP{
-			SCEP: &linkedca.SCEPProvisioner{
-				ForceCn:                       ctx.Bool("force-cn"),
-				Challenge:                     challenge,
-				Capabilities:                  ctx.StringSlice("capabilities"),
-				MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
-				IncludeRoot:                   ctx.Bool("include-root"),
-				EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
-			},
+			SCEP: s,
 		},
 	}, nil
 }
@@ -904,4 +944,49 @@ func parseCACertificates(filenames []string) ([][]byte, error) {
 		}
 	}
 	return pemCerts, nil
+}
+
+func parseSCEPDecrypterCertificate(filename string) ([]byte, error) {
+	certs, err := pemutil.ReadCertificateBundle(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed reading certificate from %q: %w", filename, err)
+	}
+	if len(certs) == 0 {
+		return nil, fmt.Errorf("no certificates found in %q", filename)
+	}
+	// TODO(hs): implement validation, such as key usage?
+	buf := bytes.Buffer{}
+	if err = pem.Encode(&buf, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certs[0].Raw, // assumes the bundle is a certificate chain; using first cert as decrypter
+	}); err != nil {
+		return nil, fmt.Errorf("failed encoding certificate: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+func readSCEPDecrypterKey(filename string) ([]byte, error) {
+	b, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed reading %q: %w", filename, err)
+	}
+
+	if err := validateSCEPDecrypterKey(b); err != nil {
+		return nil, fmt.Errorf("failed decoding %q: %w", filename, err)
+	}
+
+	// TODO(hs): additional validation that this is an (encrypted) private key?
+
+	return b, err
+}
+
+func validateSCEPDecrypterKey(data []byte) error {
+	block, rest := pem.Decode(data)
+	switch {
+	case block == nil:
+		return errors.New("not a valid PEM encoded block")
+	case len(bytes.TrimSpace(rest)) > 0:
+		return errors.New("contains more than one PEM encoded block")
+	}
+	return nil
 }

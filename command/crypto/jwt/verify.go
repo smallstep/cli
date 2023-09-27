@@ -271,12 +271,10 @@ func validateClaimsWithLeeway(ctx *cli.Context, c jose.Claims, e jose.Expected, 
 		ers = append(ers, "invalid ID claim (jti)")
 	}
 
-	if len(e.Audience) != 0 {
-		for _, v := range e.Audience {
-			if !c.Audience.Contains(v) {
-				ers = append(ers, "invalid audience claim (aud)")
-				break
-			}
+	for _, v := range e.Audience {
+		if !c.Audience.Contains(v) {
+			ers = append(ers, "invalid audience claim (aud)")
+			break
 		}
 	}
 
