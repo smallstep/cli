@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Add support for provisioner claim `disableSmallstepExtensions`
   (smallstep/cli#986)
-- Add support for PowerShell plugins on Windows (smallstep/certificates#992)
+- Add support for PowerShell plugins on Windows (smallstep/cli#992)
 - Create API token using team slug (smallstep/cli#980)
 - Detect OIDC tokens issued by Kubernetes (smallstep/cli#953)
 - Add support for Smallstep Managed Endpoint X509 extension
@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   (smallstep/cli#1006)
 - Fix TOFU flag in `ca provisioner update` (smallstep/cli#941)
 - Make `--team` incompatible with `--fingerprint` and `--ca-url` in 
-  `step ca bootstrap (smallstep/cli#
+  `step ca bootstrap (smallstep/cli#1017)
 
 ### Remove
 
