@@ -26,11 +26,10 @@ func inspectCommand() cli.Command {
 		UsageText: `**step certificate inspect** <crt-file>
 [**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]
 [**--servername**=<servername>]`,
-		Description: `**step certificate inspect** prints the details of a certificate
-or CSR in a human readable format. Output from the inspect command is printed to
-STDERR instead of STDOUT. This is an intentional barrier to accidental
-misuse: scripts should never rely on the contents of an unvalidated certificate.
-For scripting purposes, use **step certificate verify**.
+		Description: `**step certificate inspect** prints the details of the 
+certificate or CSR in a human- or machine-readable format. Beware: Local certificates
+are never verified. Always verify a certificate (using **step certificate verify**)
+before relying on the output of this command.
 
 If crt-file contains multiple certificates (i.e., it is a certificate "bundle")
 the first certificate in the bundle will be output. Pass the --bundle option to
