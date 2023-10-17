@@ -6,7 +6,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.1
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
 	github.com/fxamacker/cbor/v2 v2.5.0
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/google/go-tpm v0.9.0
 	github.com/google/uuid v1.3.1
 	github.com/icrowley/fake v0.0.0-20221112152111-d7b7e2276db2
