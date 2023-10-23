@@ -1,6 +1,7 @@
 package utfbom
 
 import (
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -103,7 +104,7 @@ func TestSkip(t *testing.T) {
 			if !reflect.DeepEqual(output, tc.output) {
 				t.Fatalf("test %v reader=%s: expected to read %+#v, but got %+#v", tc.name, readMaker.name, tc.output, output)
 			}
-			if err != tc.inputError {
+			if !errors.Is(err, tc.inputError) {
 				t.Fatalf("test %v reader=%s: expected to get %+#v error, but got %+#v", tc.name, readMaker.name, tc.inputError, err)
 			}
 		}
@@ -125,7 +126,7 @@ func TestSkipSkip(t *testing.T) {
 			if !reflect.DeepEqual(output, tc.output) {
 				t.Fatalf("test %v reader=%s: expected to read %+#v, but got %+#v", tc.name, readMaker.name, tc.output, output)
 			}
-			if err != tc.inputError {
+			if !errors.Is(err, tc.inputError) {
 				t.Fatalf("test %v reader=%s: expected to get %+#v error, but got %+#v", tc.name, readMaker.name, tc.inputError, err)
 			}
 		}
@@ -143,7 +144,7 @@ func TestSkipOnly(t *testing.T) {
 			if !reflect.DeepEqual(output, tc.output) {
 				t.Fatalf("test %v reader=%s: expected to read %+#v, but got %+#v", tc.name, readMaker.name, tc.output, output)
 			}
-			if err != tc.inputError {
+			if !errors.Is(err, tc.inputError) {
 				t.Fatalf("test %v reader=%s: expected to get %+#v error, but got %+#v", tc.name, readMaker.name, tc.inputError, err)
 			}
 		}
@@ -180,7 +181,7 @@ func TestSkipZeroReader(t *testing.T) {
 			if n != 0 {
 				t.Error("unexpected bytes count:", n)
 			}
-			if err != io.ErrNoProgress {
+			if !errors.Is(err, io.ErrNoProgress) {
 				t.Error("unexpected error:", err)
 			}
 		}
@@ -205,7 +206,7 @@ func TestSkipOnlyZeroReader(t *testing.T) {
 		if n != 0 {
 			t.Error("unexpected bytes count:", n)
 		}
-		if err != io.ErrNoProgress {
+		if !errors.Is(err, io.ErrNoProgress) {
 			t.Error("unexpected error:", err)
 		}
 	case <-time.After(time.Second):

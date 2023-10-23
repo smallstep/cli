@@ -3,7 +3,7 @@
 // interface but provides automatic BOM checking and removing as necessary.
 //
 // This package was copied from https://github.com/dimchansky/utfbom. Only minor changes
-// were made to not depend on the io/ioutil package.
+// were made to not depend on the io/ioutil package and to make our linters pass.
 package utfbom
 
 import (
@@ -132,7 +132,7 @@ func detectUtf(rd io.Reader) (enc Encoding, buf []byte, err error) {
 		return UTF8, nilIfEmpty(buf[3:]), err
 	}
 
-	if (err != nil && err != io.EOF) || (len(buf) < 2) {
+	if (err != nil && !errors.Is(err, io.EOF)) || (len(buf) < 2) {
 		return Unknown, nilIfEmpty(buf), err
 	}
 
@@ -151,9 +151,9 @@ func readBOM(rd io.Reader) (buf []byte, err error) {
 	var bom [maxBOMSize]byte // used to read BOM
 
 	// read as many bytes as possible
-	for nEmpty, n := 0, 0; err == nil && len(buf) < maxBOMSize; buf = bom[:len(buf)+n] {
+	for nEmpty, n := 0, 0; err == nil && len(buf) < maxBOMSize; buf = bom[:len(buf)+n] { //nolint:wastedassign // copied code
 		if n, err = rd.Read(bom[len(buf):]); n < 0 {
-			panic(errNegativeRead)
+			return nil, errNegativeRead
 		}
 		if n > 0 {
 			nEmpty = 0
