@@ -359,8 +359,8 @@ github.com/smallstep/go-attestation v0.4.4-0.20230627102604-cf579e53cbd2 h1:UIAS
 github.com/smallstep/go-attestation v0.4.4-0.20230627102604-cf579e53cbd2/go.mod h1:vNAduivU014fubg6ewygkAvQC0IQVXqdc8vaGl/0er4=
 github.com/smallstep/nosql v0.6.0 h1:ur7ysI8s9st0cMXnTvB8tA3+x5Eifmkb6hl4uqNV5jc=
 github.com/smallstep/nosql v0.6.0/go.mod h1:jOXwLtockXORUPPZ2MCUcIkGR6w0cN1QGZniY9DITQA=
-github.com/smallstep/truststore v0.12.1 h1:guLUKkc1UlsXeS3t6BuVMa4leOOpdiv02PCRTiy1WdY=
-github.com/smallstep/truststore v0.12.1/go.mod h1:M4mebeNy28KusGX3lJxpLARIktLcyqBOrj3ZiZ46pqw=
+github.com/smallstep/truststore v0.13.0 h1:90if9htAOblavbMeWlqNLnO9bsjjgVv2hQeQJCi/py4=
+github.com/smallstep/truststore v0.13.0/go.mod h1:3tmMp2aLKZ/OA/jnFUB0cYPcho402UG2knuJoPh4j7A=
 github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91 h1:XE0cgVBMkYPxOZv4F3YY5mX9GgentifWU6vyJb6gKmc=
 github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91/go.mod h1:9AA5+s5DF+8sE93nQ7HUalesU2SDqNfvrwn+dls9upw=
 github.com/smallstep/zlint v0.0.0-20220930192201-67fb4aa21910 h1:eIjaqvVEq+8eWaZd56yA7Ux5W6gJ9kqvq9ZWTsp3fkc=

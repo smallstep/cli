@@ -37,21 +37,37 @@ import (
 )
 
 func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
+	attestationURI := clictx.String("attestation-uri")
 	tpmStorageDirectory := clictx.String("tpm-storage-directory")
-	t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)))
+	tpmAttestationCABaseURL := clictx.String("attestation-ca-url")
+	tpmAttestationCARootFile := clictx.String("attestation-ca-root")
+	tpmAttestationCAInsecure := clictx.Bool("attestation-ca-insecure")
+	insecure := clictx.Bool("insecure")
+
+	keyName, attURI, err := parseTPMAttestationURI(attestationURI)
+	if err != nil {
+		return fmt.Errorf("failed parsing --attestation-uri: %w", err)
+	}
+
+	if tpmAttestationCABaseURL == "" {
+		tpmAttestationCABaseURL = attURI.Get("attestation-ca-url")
+		if tpmAttestationCABaseURL == "" {
+			return errs.RequiredFlag(clictx, "attestation-ca-url")
+		}
+	}
+
+	tpmOpts := []tpm.NewTPMOption{
+		tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)),
+	}
+	if device := attURI.Get("device"); device != "" {
+		tpmOpts = append(tpmOpts, tpm.WithDeviceName(device))
+	}
+
+	t, err := tpm.New(tpmOpts...)
 	if err != nil {
 		return fmt.Errorf("failed initializing TPM: %w", err)
 	}
 
-	tpmAttestationCABaseURL := clictx.String("attestation-ca-url")
-	if tpmAttestationCABaseURL == "" {
-		return errs.RequiredFlag(clictx, "attestation-ca-url")
-	}
-
-	tpmAttestationCARootFile := clictx.String("attestation-ca-root")
-	tpmAttestationCAInsecure := clictx.Bool("attestation-ca-insecure")
-
-	insecure := clictx.Bool("insecure")
 	kty, crv, size, err := utils.GetKeyDetailsFromCLI(clictx, insecure, "kty", "curve", "size")
 	if err != nil {
 		return fmt.Errorf("failed getting key details: %w", err)
@@ -76,12 +92,6 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		inputSize = size
 	default:
 		return fmt.Errorf("unsupported key type: %q", kty)
-	}
-
-	attestationURI := clictx.String("attestation-uri")
-	keyName, err := parseTPMAttestationURI(attestationURI)
-	if err != nil {
-		return fmt.Errorf("failed parsing --attestation-uri: %w", err)
 	}
 
 	ctx := tpm.NewContext(context.Background(), t)
@@ -185,23 +195,23 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 }
 
 // parseTPMAttestationURI parses attestation URIs for `tpmkms`.
-func parseTPMAttestationURI(attestationURI string) (string, error) {
+func parseTPMAttestationURI(attestationURI string) (string, *uri.URI, error) {
 	if attestationURI == "" {
-		return "", errors.New("attestation URI cannot be empty")
+		return "", nil, errors.New("attestation URI cannot be empty")
 	}
 	if !strings.HasPrefix(attestationURI, "tpmkms:") {
-		return "", fmt.Errorf("%q does not start with tpmkms", attestationURI)
+		return "", nil, fmt.Errorf("%q does not start with tpmkms", attestationURI)
 	}
 	u, err := uri.Parse(attestationURI)
 	if err != nil {
-		return "", fmt.Errorf("failed parsing %q: %w", attestationURI, err)
+		return "", nil, fmt.Errorf("failed parsing %q: %w", attestationURI, err)
 	}
 	var name string
 	if name = u.Get("name"); name == "" {
-		return "", fmt.Errorf("failed parsing %q: name is missing", attestationURI)
+		return "", nil, fmt.Errorf("failed parsing %q: name is missing", attestationURI)
 	}
 	// TODO(hs): more properties for objects created/attested in TPM
-	return name, nil
+	return name, u, nil
 }
 
 // getAK returns an AK suitable for attesting the identifier that is requested. The
