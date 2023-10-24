@@ -830,15 +830,26 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	// TODO: refactor this to be cleaner by passing the TPM and/or key around
 	// instead of creating a new instance.
 	if af.tpmSigner != nil {
+		attestationURI := af.ctx.String("attestation-uri")
 		tpmStorageDirectory := af.ctx.String("tpm-storage-directory")
-		t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)))
-		if err != nil {
-			return nil, fmt.Errorf("failed initializing TPM: %w", err)
-		}
-		keyName, err := parseTPMAttestationURI(af.ctx.String("attestation-uri"))
+
+		keyName, attURI, err := parseTPMAttestationURI(attestationURI)
 		if err != nil {
 			return nil, fmt.Errorf("failed parsing --attestation-uri: %w", err)
 		}
+
+		tpmOpts := []tpm.NewTPMOption{
+			tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)),
+		}
+		if device := attURI.Get("device"); device != "" {
+			tpmOpts = append(tpmOpts, tpm.WithDeviceName(device))
+		}
+
+		t, err := tpm.New(tpmOpts...)
+		if err != nil {
+			return nil, fmt.Errorf("failed initializing TPM: %w", err)
+		}
+
 		ctx := tpm.NewContext(context.Background(), t)
 		key, err := t.GetKey(ctx, keyName)
 		if err != nil {
