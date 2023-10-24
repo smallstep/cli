@@ -18,7 +18,7 @@ require (
 	github.com/smallstep/certificates v0.25.0
 	github.com/smallstep/certinfo v1.12.0
 	github.com/smallstep/go-attestation v0.4.4-0.20230627102604-cf579e53cbd2
-	github.com/smallstep/truststore v0.12.1
+	github.com/smallstep/truststore v0.13.0
 	github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91
 	github.com/smallstep/zlint v0.0.0-20220930192201-67fb4aa21910
 	github.com/stretchr/testify v1.8.4
