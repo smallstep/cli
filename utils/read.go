@@ -9,7 +9,7 @@ import (
 	"unicode"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/utils/utfbom"
+	"github.com/smallstep/cli/utils/internal/utfbom"
 
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
