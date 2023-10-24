@@ -409,12 +409,11 @@ func doDeviceAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challe
 	if strings.HasPrefix(attestationURI, "tpmkms:") {
 		u, err := uri.ParseWithScheme(string(apiv1.TPMKMS), attestationURI)
 		if err != nil {
-			return fmt.Errorf("failed to parse %q", err)
+			return fmt.Errorf("failed to parse %q: %w", attestationURI, err)
 		}
 		if device := clictx.String("tpm-device"); device != "" {
 			u.Values.Set("device", device)
 			clictx.Set("attestation-uri", u.String())
-			attestationURI = clictx.String("attestation-uri")
 		}
 
 		return doTPMAttestation(clictx, ac, ch, identifier, af)
