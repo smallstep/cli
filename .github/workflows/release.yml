@@ -36,21 +36,21 @@ jobs:
           echo ${{ github.ref }} | grep "\-rc.*"
           OUT=$?
           if [ $OUT -eq 0 ]; then IS_PRERELEASE=true; else IS_PRERELEASE=false; fi
-          echo "IS_PRERELEASE=${IS_PRERELEASE}" >> ${GITHUB_OUTPUT}
+          echo "IS_PRERELEASE=${IS_PRERELEASE}" >> "${GITHUB_OUTPUT}"
       - name: Extract Tag Names
         id: extract-tag
         run: |
           VVERSION=${GITHUB_REF#refs/tags/}
           VERSION=${GITHUB_REF#refs/tags/v}
-          echo "VVERSION=${VVERSION}" >> ${GITHUB_OUTPUT}
-          echo "VERSION=${VERSION}" >> ${GITHUB_OUTPUT}
-          echo "DOCKER_TAGS=${{ env.DOCKER_IMAGE }}:${VERSION}" >> ${GITHUB_ENV}
-          echo "DOCKER_TAGS_DEBIAN=${{ env.DOCKER_IMAGE }}:${VERSION}-${DEBIAN_TAG}" >> ${GITHUB_ENV}
+          echo "VVERSION=${VVERSION}" >> "${GITHUB_OUTPUT}"
+          echo "VERSION=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "DOCKER_TAGS=${{ env.DOCKER_IMAGE }}:${VERSION}" >> "${GITHUB_ENV}"
+          echo "DOCKER_TAGS_DEBIAN=${{ env.DOCKER_IMAGE }}:${VERSION}-${DEBIAN_TAG}" >> "${GITHUB_ENV}"
       - name: Add Latest Tag
         if: steps.is_prerelease.outputs.IS_PRERELEASE == 'false'
         run: |
-          echo "DOCKER_TAGS=${{ env.DOCKER_TAGS }},${{ env.DOCKER_IMAGE }}:latest" >> ${GITHUB_ENV}
-          echo "DOCKER_TAGS_DEBIAN=${{ env.DOCKER_TAGS_DEBIAN }},${{ env.DOCKER_IMAGE }}:${DEBIAN_TAG}" >> ${GITHUB_ENV}
+          echo "DOCKER_TAGS=${{ env.DOCKER_TAGS }},${{ env.DOCKER_IMAGE }}:latest" >> "${GITHUB_ENV}"
+          echo "DOCKER_TAGS_DEBIAN=${{ env.DOCKER_TAGS_DEBIAN }},${{ env.DOCKER_IMAGE }}:${DEBIAN_TAG}" >> "${GITHUB_ENV}"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -107,7 +107,7 @@ jobs:
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -146,7 +146,7 @@ jobs:
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -156,13 +156,13 @@ jobs:
         id: build
         run: V=1 make build
       - name: Checkout Docs
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
         with:
           repository: smallstep/docs
           token: ${{ secrets.DOCS_PAT }}
           path: './docs'
       - name: Setup bot SSH signing key
-        uses: webfactory/ssh-agent@v0.7.0
+        uses: webfactory/ssh-agent@v0.8.0
         env:
           HAS_SSH_PRIVATE_KEY: ${{ secrets.STEP_TRAVIS_CI_GH_PRIVATE_SIGNING_KEY != '' }}
         if: ${{ env.HAS_SSH_PRIVATE_KEY == 'true' }}
@@ -186,7 +186,7 @@ jobs:
           git rm -rf ./step-cli/reference
 
           # Build fresh docs
-          ./bin/step help --markdown ./step-cli/reference
+          ../bin/step help --markdown ./step-cli/reference
 
           # Generate new route manifest for the docs
           find step-cli/reference -mindepth 2 -type f | jq -R -s '[
@@ -194,10 +194,10 @@ jobs:
                 | {hideFromSidebar: true,
                    title: "",
                    path: ("/" + .)}
-          ]' > $RUNNER_TEMP/reference-routes.json
-         
-          # Replace old route manifest with new 
-          jq --argfile newRoutes $RUNNER_TEMP/reference-routes.json 'walk(
+          ]' > "$RUNNER_TEMP/reference-routes.json"
+
+          # Replace old route manifest with new
+          jq --argfile newRoutes "$RUNNER_TEMP/reference-routes.json" 'walk(
             if type == "object" and .isStepReference == true then
               .routes = $newRoutes
             else . end
@@ -207,7 +207,7 @@ jobs:
 
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
       - name: Push changes
-        uses: ad-m/github-push-action@v0.6.0
+        uses: ad-m/github-push-action@v0.8.0
         with:
           github_token: ${{ secrets.DOCS_PAT }}
           branch: 'main'

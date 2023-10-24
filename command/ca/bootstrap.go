@@ -65,7 +65,7 @@ $ step ca bootstrap --team superteam --team-url https://config.example.com/<>
 			fingerprintFlag,
 			cli.BoolFlag{
 				Name:  "install",
-				Usage: "Install the root certificate into the system truststore.",
+				Usage: "Install the root certificate into the system's default trust store.",
 			},
 			flags.Team,
 			flags.TeamAuthority,
@@ -90,6 +90,10 @@ func bootstrapAction(ctx *cli.Context) error {
 	teamAuthority := ctx.String("team-authority")
 
 	switch {
+	case team != "" && caURL != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "ca-url")
+	case team != "" && fingerprint != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "team", "fingerprint")
 	case team != "" && teamAuthority != "":
 		return cautils.BootstrapTeamAuthority(ctx, team, teamAuthority)
 	case team != "":

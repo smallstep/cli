@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"os"
 	"reflect"
 	"regexp"
@@ -54,11 +53,17 @@ var BuildTime = "N/A"
 func init() {
 	step.Set("Smallstep CLI", Version, BuildTime)
 	ca.UserAgent = step.Version()
-	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
+	// initialize step environment.
+	if err := step.Init(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+
 	defer panicHandler()
+
 	// Override global framework components
 	cli.VersionPrinter = func(c *cli.Context) {
 		version.Command(c)

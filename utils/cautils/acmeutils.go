@@ -30,10 +30,10 @@ import (
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
-	"go.step.sm/crypto/pemutil"
-	"go.step.sm/crypto/tpm"
 	"go.step.sm/crypto/kms/apiv1"
 	"go.step.sm/crypto/kms/uri"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/tpm"
 	tpmstorage "go.step.sm/crypto/tpm/storage"
 
 	"github.com/smallstep/certificates/acme"
@@ -403,7 +403,7 @@ type attestationObject struct {
 // doDeviceAttestation performs `device-attest-01` challenge validation.
 func doDeviceAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 	// TODO(hs): make TPM flow work with CreateAttestor()/Attest() too
-	// TODO: prepare the full attestation-uri: fill in missing data, fill in values from flags, 
+	// TODO: prepare the full attestation-uri: fill in missing data, fill in values from flags,
 	// get defaults (AK name, based on TPM presence); fail early if no TPM available.
 	attestationURI := clictx.String("attestation-uri")
 	if strings.HasPrefix(attestationURI, "tpmkms:") {
@@ -844,16 +844,29 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	// TODO: refactor this to be cleaner by passing the TPM and/or key around
 	// instead of creating a new instance.
 	if af.tpmSigner != nil {
+		attestationURI := af.ctx.String("attestation-uri")
 		tpmStorageDirectory := af.ctx.String("tpm-storage-directory")
 		tpmDevice := af.ctx.String("tpm-device")
-		t, err := tpm.New(tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)), tpm.WithDeviceName(tpmDevice))
-		if err != nil {
-			return nil, fmt.Errorf("failed initializing TPM: %w", err)
+
+		tpmOpts := []tpm.NewTPMOption{
+			tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)),
 		}
-		keyName, err := parseTPMAttestationURI(af.ctx.String("attestation-uri"))
+
+		keyName, attURI, err := parseTPMAttestationURI(attestationURI)
 		if err != nil {
 			return nil, fmt.Errorf("failed parsing --attestation-uri: %w", err)
 		}
+
+		if tpmDevice == "" {
+			tpmDevice := attURI.Get("device")
+			tpmOpts = append(tpmOpts, tpm.WithDeviceName(tpmDevice))
+		}
+
+		t, err := tpm.New(tpmOpts...)
+		if err != nil {
+			return nil, fmt.Errorf("failed initializing TPM: %w", err)
+		}
+
 		ctx := tpm.NewContext(context.Background(), t)
 		key, err := t.GetKey(ctx, keyName)
 		if err != nil {
