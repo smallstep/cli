@@ -235,16 +235,21 @@ func inspectAction(ctx *cli.Context) error {
 					break
 				}
 				if bundle && block.Type != "CERTIFICATE" {
-					return errors.Errorf("certificate bundle %s contains an unexpected PEM block of type %s\n\n  expected type: CERTIFICATE",
+					return errors.Errorf("certificate bundle %q contains an unexpected PEM block of type %q\n\n  expected type: CERTIFICATE",
 						crtFile, block.Type)
 				}
 				blocks = append(blocks, block)
 			}
 		} else {
 			if block = derToPemBlock(crtBytes); block == nil {
-				return errors.Errorf("%s contains an invalid PEM block", crtFile)
+				return errors.Errorf("%q contains an invalid PEM block", crtFile)
 			}
 			blocks = append(blocks, block)
+		}
+
+		// prevent index out of range errors
+		if len(blocks) == 0 {
+			return fmt.Errorf("%q does not contain valid PEM blocks", crtFile)
 		}
 	}
 
@@ -259,7 +264,7 @@ func inspectAction(ctx *cli.Context) error {
 	case "CERTIFICATE REQUEST", "NEW CERTIFICATE REQUEST": // only one is supported
 		return inspectCertificateRequest(ctx, blocks[0])
 	default:
-		return errors.Errorf("Invalid PEM type in %s. Expected [CERTIFICATE|CERTIFICATE REQUEST] but got %s)", crtFile, block.Type)
+		return errors.Errorf("Invalid PEM type in %q. Expected [CERTIFICATE|CERTIFICATE REQUEST] but got %q)", crtFile, block.Type)
 	}
 }
 

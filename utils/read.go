@@ -9,6 +9,7 @@ import (
 	"unicode"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/utils/internal/utfbom"
 
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/cli-utils/ui"
@@ -91,7 +92,12 @@ func ReadFile(name string) (b []byte, err error) {
 		name = "/dev/stdin"
 		b, err = io.ReadAll(stdin)
 	} else {
-		b, err = os.ReadFile(name)
+		var contents []byte
+		contents, err = os.ReadFile(name)
+		if err != nil {
+			return nil, errs.FileError(err, name)
+		}
+		b, err = io.ReadAll(utfbom.SkipOnly(bytes.NewReader(contents)))
 	}
 	if err != nil {
 		return nil, errs.FileError(err, name)
