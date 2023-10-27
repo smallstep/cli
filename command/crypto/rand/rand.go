@@ -58,7 +58,8 @@ The list of supported formats is the following:
 
 The following special formats are also supported:
 
-* die: generates a random number between 1 and 6 or the given argument,
+* die: generates a random number between 1 and 6 (by default) or 1 and the
+  provided argument.
 * prime: generates number of the given bit length that is prime with high
   probability.
 * uuid: generates a UUIDv4.
