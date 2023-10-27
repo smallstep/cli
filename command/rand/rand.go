@@ -75,7 +75,7 @@ $ step rand
 Ijghm(Y?pfZiTPkHv0Z=1@MC<n&gsMe|
 '''
 
-Generate a random memorable string using a dictionary words:
+Generate a random memorable string using a dictionary of words:
 '''
 $ step rand --dictionary words.txt
 scalpel-elan-fulsome-BELT-warring-balcony
