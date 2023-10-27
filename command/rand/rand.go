@@ -65,7 +65,7 @@ The following special formats are also supported:
 
 <length>
 :  The length of the random string in characters or words. If the dice format
-is used, the length is the maximum number of the dice.
+is used, the length is the maximum number of the die.
 
 ## EXAMPLES
 
