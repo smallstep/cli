@@ -16,8 +16,8 @@ import (
 	"go.step.sm/crypto/randutil"
 )
 
-func init() {
-	cmd := cli.Command{
+func Command() cli.Command {
+	return cli.Command{
 		Name:      "rand",
 		Action:    command.ActionFunc(randAction),
 		Usage:     "generate random strings",
@@ -58,13 +58,15 @@ The list of supported formats is the following:
 
 The following special formats are also supported:
 
-* dice: generates a random number between 1 and 6 or the given argument,
+* die: generates a random number between 1 and 6 or the given argument,
+* prime: generates number of the given bit length that is prime with high
+  probability.
 * uuid: generates a UUIDv4.
 
 ## POSITIONAL ARGUMENTS
 
 <length>
-:  The length of the random string in characters or words. If the dice format
+:  The length of the random string in characters or words. If the die format
 is used, the length is the maximum number of the die.
 
 ## EXAMPLES
@@ -81,9 +83,9 @@ $ step rand --dictionary words.txt
 scalpel-elan-fulsome-BELT-warring-balcony
 '''
 
-Generates a random roll of dice:
+Generates a random roll of a die:
 '''
-$ step rand --format dice
+$ step rand --format die
 4
 '''
 
@@ -98,8 +100,6 @@ Generates 20 upper-case characters:
 $ step rand --format upper 20
 LMCKDYUMRVJTTTZIKWGG
 '''`}
-
-	command.Register(cmd)
 }
 
 func randAction(ctx *cli.Context) error {
@@ -115,12 +115,12 @@ func randAction(ctx *cli.Context) error {
 	dictionary := ctx.String("dictionary")
 	format := strings.ToLower(ctx.String("format"))
 
-	// Default to 32 characters, 6 words if a dictionary is used, or a dice roll
+	// Default to 32 characters, 6 words if a dictionary is used, or a die roll
 	// between 1 and 6.
 	switch {
 	case dictionary != "" && format != "":
 		return errs.IncompatibleFlagWithFlag(ctx, "format", "dictionary")
-	case dictionary != "", format == "dice":
+	case dictionary != "", format == "die", format == "dice":
 		length = 6
 	default:
 		length = 32
@@ -131,6 +131,9 @@ func randAction(ctx *cli.Context) error {
 		length, err = strconv.Atoi(arg)
 		if err != nil {
 			return fmt.Errorf("positional argument <length> %q is not a valid number", arg)
+		}
+		if length <= 0 {
+			return fmt.Errorf("positional argument <length> %q must be greater than 0", arg)
 		}
 	}
 
@@ -179,12 +182,18 @@ func randWithFormat(ctx *cli.Context, format string, length int) error {
 			return err
 		}
 		s = fingerprint.Fingerprint(b, fingerprint.EmojiFingerprint)
-	case "dice":
+	case "die", "dice":
 		bn, err := rand.Int(rand.Reader, big.NewInt(int64(length)))
 		if err != nil {
 			return err
 		}
 		s = bn.Add(bn, big.NewInt(1)).String()
+	case "prime":
+		bn, err := rand.Prime(rand.Reader, length)
+		if err != nil {
+			return err
+		}
+		s = bn.String()
 	default:
 		return errs.InvalidFlagValue(ctx, "format", format, "")
 	}

@@ -34,7 +34,6 @@ import (
 	_ "github.com/smallstep/cli/command/fileserver"
 	_ "github.com/smallstep/cli/command/oauth"
 	_ "github.com/smallstep/cli/command/path"
-	_ "github.com/smallstep/cli/command/rand"
 	_ "github.com/smallstep/cli/command/ssh"
 
 	// Enabled cas interfaces.
