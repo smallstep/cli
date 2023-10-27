@@ -69,8 +69,7 @@ complete -o bashdefault -o default -F _step_cli_bash_autocomplete step
 
 `
 
-var zsh = `# zsh completion for step
-#compdef step
+var zsh = `#compdef step
 
 _step() {
 
