@@ -21,7 +21,7 @@ func Command() cli.Command {
 		Name:      "rand",
 		Action:    command.ActionFunc(randAction),
 		Usage:     "generate random strings",
-		UsageText: "**step rand** [<length>] [--format=<format>] [--dictionary=<file>]",
+		UsageText: "**step crypto rand** [<length>] [--format=<format>] [--dictionary=<file>]",
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "format",
@@ -73,31 +73,31 @@ is used, the length is the maximum number of the die.
 
 Generate a random string using the default format (ascii) and length (32):
 '''
-$ step rand
+$ step crypto rand
 Ijghm(Y?pfZiTPkHv0Z=1@MC<n&gsMe|
 '''
 
 Generate a random memorable string using a dictionary of words:
 '''
-$ step rand --dictionary words.txt
+$ step crypto rand --dictionary words.txt
 scalpel-elan-fulsome-BELT-warring-balcony
 '''
 
 Generates a random roll of a die:
 '''
-$ step rand --format die
+$ step crypto rand --format die
 4
 '''
 
 Generates a random hexadecimal string of 16 characters:
 '''
-$ step rand --format hex 16
+$ step crypto rand --format hex 16
 f86a3f7b9299a413
 '''
 
 '''
 Generates 20 upper-case characters:
-$ step rand --format upper 20
+$ step crypto rand --format upper 20
 LMCKDYUMRVJTTTZIKWGG
 '''`}
 }
