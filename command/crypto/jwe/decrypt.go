@@ -47,6 +47,10 @@ used with **--key** the <kid> value must match the **"kid"** member of the JWK. 
 used with **--jwks** (a JWK Set) the KID value must match the **"kid"** member of
 one of the JWKs in the JWK Set.`,
 			},
+			cli.StringFlag{
+				Name: "password-file",
+				Usage: `The path to the <file> containing the password to encrypt the keys.`,
+			},
 		},
 	}
 }
@@ -64,6 +68,7 @@ func decryptAction(ctx *cli.Context) error {
 	key := ctx.String("key")
 	jwks := ctx.String("jwks")
 	kid := ctx.String("kid")
+	passwordFile := ctx.String("password-file")
 
 	obj, err := jose.ParseEncrypted(string(data))
 	if err != nil {
@@ -107,7 +112,17 @@ func decryptAction(ctx *cli.Context) error {
 	case jwks != "":
 		jwk, err = jose.ReadKeySet(jwks, options...)
 	case isPBES2:
-		pbes2Key, err = ui.PromptPassword("Please enter the password to decrypt the content encryption key")
+		var password string
+		if len(passwordFile) > 0 {
+			password, err = utils.ReadStringPasswordFromFile(passwordFile)
+			if err != nil {
+				return err
+			}
+		}
+		pbes2Key, err =
+			ui.PromptPassword(
+				"Please enter the password to decrypt the content encryption key",
+				ui.WithValue(password))
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwk")
 	}
