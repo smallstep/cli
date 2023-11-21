@@ -109,12 +109,16 @@ integration: bin/$(BINNAME)
 fmt:
 	$Q goimports -local github.com/golangci/golangci-lint -l -w $(SRC)
 
-lint: SHELL:=/bin/bash
-lint:
+lint: golint govulncheck
+
+golint: SHELL:=/bin/bash
+golint:
 	$Q LOG_LEVEL=error golangci-lint run --config <(curl -s https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml) --timeout=30m
+
+govulncheck:
 	$Q govulncheck ./...
 
-.PHONY: fmt lint
+.PHONY: fmt lint golint govulncheck
 
 #########################################
 # Install
