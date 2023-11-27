@@ -26,6 +26,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [v0.25.1] - 2023-xx-yy
+
+### Added
+
+- Add `step crypto rand` command in (smallstep/cli#1054)
+- Support for custom TPM device name in `--attestation-uri` flag in (smallstep/cli#1044)
+
+### Changed
+
+- Ignore BOM when reading files in (smallstep/cli#1045)
+- Upgraded `truststore` to fix installing certificates on certain Linux systems in (smallstep/cli#1053)
+
+### Fixed
+
+- Scoop and WinGet releases
+- Command completion for `zsh` in (smallstep/cli#1055)
+
 ## [v0.25.0] - 2023-09-26
 
 ### Added
