@@ -41,14 +41,15 @@ func createCommand() cli.Command {
 		Action: command.ActionFunc(createAction),
 		Usage:  "create a certificate or certificate signing request",
 		UsageText: `**step certificate create** <subject> <crt-file> <key-file>
-[**--kms**=<uri>] [**--csr**] [**--profile**=<profile>]
-[**--template**=<file>] [**--set**=<key=value>] [**--set-file**=<file>]
-[**--not-before**=<duration>] [**--not-after**=<duration>]
-[**--password-file**=<file>] [**--ca**=<issuer-cert>] 
-[**--ca-key**=<issuer-key>] [**--ca-password-file**=<file>]
-[**--ca-kms**=<uri>] [**--san**=<SAN>] [**--bundle**] [**--key**=<file>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>]
-[**--skip-csr-signature**] [**--no-password**] [**--insecure**]`,
+[**--csr**] [**--profile**=<profile>] [**--template**=<file>]
+[**--set**=<key=value>] [**--set-file**=<file>]
+[**--not-before**=<duration>] [**--not-after**=<duration>] [**--san**=<SAN>]
+[**--ca**=<issuer-cert>] [**--ca-kms**=<uri>]
+[**--ca-key**=<issuer-key>] [**--ca-password-file**=<file>]
+[**--kms**=<uri>] [**--key**=<file>] [**--password-file**=<file>]
+[**--bundle**] [**--skip-csr-signature**]
+[**--no-password**] [**--subtle**] [**--insecure**]`,
 		Description: `**step certificate create** generates a certificate or a
 certificate signing request (CSR) that can be signed later using 'step
 certificate sign' (or some other tool) to produce a certificate.
@@ -347,7 +348,7 @@ $ step certificate create \
   --profile intermediate-ca \
   --ca-kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password'
   --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
-  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \ 
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
   --key 'pkcs11:id=4001' \
   'My KMS Intermediate' intermediate_ca.crt
 '''
@@ -355,27 +356,29 @@ $ step certificate create \
 Create an intermediate certificate for an RSA decryption key in Google Cloud KMS, signed by a root stored on disk, using <step-kms-plugin>:
 '''
 $ step certificate create \
-  --profile intermediate-ca \ 
-  --ca root_ca.crt --ca-key root_ca_key \ 
-  --kms cloudkms: \ 
+  --profile intermediate-ca \
+  --ca root_ca.crt --ca-key root_ca_key \
+  --kms cloudkms: \
   --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
   --skip-csr-signature \
-  'My RSA Intermediate' intermediate_rsa_ca.crt 
+  'My RSA Intermediate' intermediate_rsa_ca.crt
 '''
 
 Create an intermediate certificate for an RSA signing key in Google Cloud KMS, signed by a root stored in an HSM, using <step-kms-plugin>:
 '''
 $ step certificate create \
-  --profile intermediate-ca \ 
+  --profile intermediate-ca \
   --ca-kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
-  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \ 
-  --kms cloudkms: \ 
+  --ca root_ca.crt --ca-key 'pkcs11:id=4000' \
+  --kms cloudkms: \
   --key 'projects/myProjectID/locations/global/keyRings/myKeyRing/cryptoKeys/myKey/cryptoKeyVersions/1' \
-  'My RSA Intermediate' intermediate_rsa_ca.crt 
+  'My RSA Intermediate' intermediate_rsa_ca.crt
 '''
 `,
 		Flags: []cli.Flag{
-			flags.KMSUri,
+			flags.KTY,
+			flags.Size,
+			flags.Curve,
 			cli.BoolFlag{
 				Name:  "csr",
 				Usage: `Generate a certificate signing request (CSR) instead of a certificate.`,
@@ -407,34 +410,6 @@ $ step certificate create \
 			flags.TemplateSet,
 			flags.TemplateSetFile,
 			cli.StringFlag{
-				Name: "password-file",
-				Usage: `The path to the <file> containing the password to
-encrypt the new private key or decrypt the user submitted private key.`,
-			},
-			cli.StringFlag{
-				Name:  "ca",
-				Usage: `The certificate authority used to issue the new certificate (PEM file).`,
-			},
-			cli.StringFlag{
-				Name:  "ca-key",
-				Usage: `The certificate authority private key used to sign the new certificate (PEM file).`,
-			},
-			cli.StringFlag{
-				Name: "ca-password-file",
-				Usage: `The path to the <file> containing the password to
-decrypt the CA private key.`,
-			},
-			cli.StringFlag{
-				Name:  "key",
-				Usage: "The <file> of the private key to use instead of creating a new one (PEM file).",
-			},
-			cli.BoolFlag{
-				Name: "no-password",
-				Usage: `Do not ask for a password to encrypt the private key.
-Sensitive key material will be written to disk unencrypted. This is not
-recommended. Requires **--insecure** flag.`,
-			},
-			cli.StringFlag{
 				Name: "not-before",
 				Usage: `The <time|duration> set in the NotBefore property of the certificate. If a
 <time> is used it is expected to be in RFC 3339 format. If a <duration> is
@@ -455,28 +430,51 @@ unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 				Usage: `Add DNS or IP Address Subjective Alternative Names (SANs). Use the '--san'
 flag multiple times to configure multiple SANs.`,
 			},
-			cli.BoolFlag{
-				Name: "bundle",
-				Usage: `Bundle the new leaf certificate with the signing certificate. This flag requires
-the **--ca** flag.`,
-			},
-			flags.KTY,
-			flags.Size,
-			flags.Curve,
-			flags.Force,
-			flags.Subtle,
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
+			cli.StringFlag{
+				Name:  "ca",
+				Usage: `The certificate authority used to issue the new certificate (PEM file).`,
 			},
 			cli.StringFlag{
 				Name:  "ca-kms",
 				Usage: "The <uri> to configure the KMS used for signing the certificate",
 			},
+			cli.StringFlag{
+				Name:  "ca-key",
+				Usage: `The certificate authority private key used to sign the new certificate (PEM file).`,
+			},
+			cli.StringFlag{
+				Name: "ca-password-file",
+				Usage: `The path to the <file> containing the password to
+decrypt the CA private key.`,
+			},
+			flags.KMSUri,
+			cli.StringFlag{
+				Name:  "key",
+				Usage: "The <file> of the private key to use instead of creating a new one (PEM file).",
+			},
+			cli.StringFlag{
+				Name: "password-file",
+				Usage: `The path to the <file> containing the password to
+encrypt the new private key or decrypt the user submitted private key.`,
+			},
+			cli.BoolFlag{
+				Name: "no-password",
+				Usage: `Do not ask for a password to encrypt the private key.
+Sensitive key material will be written to disk unencrypted. This is not
+recommended. Requires **--insecure** flag.`,
+			},
+			cli.BoolFlag{
+				Name: "bundle",
+				Usage: `Bundle the new leaf certificate with the signing certificate. This flag requires
+the **--ca** flag.`,
+			},
 			cli.BoolFlag{
 				Name:  "skip-csr-signature",
-				Usage: "Skip creating and signing a CSR",
+				Usage: "Skip creating and signing a CSR.",
 			},
+			flags.Force,
+			flags.Subtle,
+			flags.InsecureHidden,
 		},
 	}
 }

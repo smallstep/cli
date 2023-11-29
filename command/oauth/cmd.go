@@ -289,17 +289,13 @@ OpenID standard defines the following values, but your provider may support some
 				Usage:  "Uses the implicit flow to authenticate the user. Requires **--insecure** and **--client-id** flags.",
 				Hidden: true,
 			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Usage:  "Allows the use of insecure flows.",
-				Hidden: true,
-			},
 			cli.StringFlag{
 				Name:   "browser",
 				Usage:  "Path to browser for OAuth flow (macOS only).",
 				Hidden: true,
 			},
 			flags.RedirectURL,
+			flags.InsecureHidden,
 		},
 		Action: oauthCmd,
 	}

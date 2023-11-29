@@ -63,10 +63,7 @@ as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms"
 "s", "m", "h". A <duration> value is added to the current time. An empty
 <time|duration> defaults to "time.Now()".`,
 			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
-			},
+			flags.InsecureHidden,
 		},
 	}
 }

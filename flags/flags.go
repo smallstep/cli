@@ -69,12 +69,25 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
 
 	// Subtle is the flag required for delicate operations.
 	Subtle = cli.BoolFlag{
-		Name: "subtle",
+		Name:  "subtle",
+		Usage: "Allow delicate operations.",
+	}
+
+	// SubtleHidden is the hidden flag required for delicate operations.
+	SubtleHidden = cli.BoolFlag{
+		Name:   "subtle",
+		Hidden: true,
 	}
 
 	// Insecure is the flag required on insecure operations
 	Insecure = cli.BoolFlag{
 		Name: "insecure",
+	}
+
+	// InsecureHidden is the hidden flag required on insecure operations.
+	InsecureHidden = cli.BoolFlag{
+		Name:   "insecure",
+		Hidden: true,
 	}
 
 	// K8sSATokenPathFlag is an optional flag that allows modification of the

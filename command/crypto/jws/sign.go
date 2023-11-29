@@ -151,16 +151,13 @@ of the JWK. When used with **--jwks** (a JWK Set) the <kid> value must match
 the **"kid"** member of one of the JWKs in the JWK Set.`,
 			},
 			cli.BoolFlag{
-				Name:   "subtle",
-				Hidden: true,
-			},
-			cli.BoolFlag{
 				Name:   "no-kid",
 				Hidden: true,
 			},
 			flags.PasswordFile,
 			flags.X5cCert,
 			flags.X5tCert,
+			flags.SubtleHidden,
 		},
 	}
 }

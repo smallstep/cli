@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -90,17 +91,11 @@ member its value must match <kid> or verification will fail.`,
 				Usage: `The path to the <file> containing the password to decrypt the key.`,
 			},
 			cli.BoolFlag{
-				Name:   "subtle",
-				Hidden: true,
-			},
-			cli.BoolFlag{
 				Name:   "no-exp-check",
 				Hidden: true,
 			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
-			},
+			flags.SubtleHidden,
+			flags.InsecureHidden,
 		},
 	}
 }
