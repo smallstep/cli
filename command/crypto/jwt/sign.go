@@ -200,16 +200,13 @@ the **"kid"** member of one of the JWKs in the JWK Set.`,
 				Usage: `The path to the <file> containing the password to decrypt the key.`,
 			},
 			cli.BoolFlag{
-				Name:   "subtle",
-				Hidden: true,
-			},
-			cli.BoolFlag{
 				Name:   "no-kid",
 				Hidden: true,
 			},
 			flags.X5cCert,
 			flags.X5tCert,
 			flags.X5cInsecure,
+			flags.SubtleHidden,
 		},
 	}
 }

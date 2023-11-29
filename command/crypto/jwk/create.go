@@ -377,9 +377,9 @@ existing <pem-file> instead of creating a new key.`,
 			},
 			flags.PasswordFile,
 			flags.NoPassword,
+			flags.Force,
 			flags.Subtle,
 			flags.Insecure,
-			flags.Force,
 		},
 	}
 }

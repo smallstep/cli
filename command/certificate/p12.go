@@ -22,7 +22,8 @@ func p12Command() cli.Command {
 		Action: command.ActionFunc(p12Action),
 		Usage:  `package a certificate and keys into a .p12 file`,
 		UsageText: `step certificate p12 <p12-path> [<crt-path>] [<key-path>]
-[**--ca**=<file>] [**--password-file**=<file>] [**--legacy**]`,
+[**--ca**=<file>] [**--password-file**=<file>] [**--legacy**]
+[**--force**] [**--no-password**] [**--insecure**]`,
 		Description: `**step certificate p12** creates a .p12 (PFX / PKCS12)
 file containing certificates and keys. This can then be used to import
 into Windows / Firefox / Java applications.

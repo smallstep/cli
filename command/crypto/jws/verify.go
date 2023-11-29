@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -71,14 +72,8 @@ member its value must match <kid> or verification will fail.`,
 				Usage: `Displays the header, payload and signature as a JSON object. The payload will
 be encoded using Base64.`,
 			},
-			cli.BoolFlag{
-				Name:   "subtle",
-				Hidden: true,
-			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
-			},
+			flags.SubtleHidden,
+			flags.InsecureHidden,
 		},
 	}
 }
