@@ -150,13 +150,13 @@ func panicHandler() {
 			fmt.Fprintf(os.Stderr, "%s\n", step.Version())
 			fmt.Fprintf(os.Stderr, "Release Date: %s\n\n", step.ReleaseDate())
 			panic(r)
-		} else {
-			fmt.Fprintln(os.Stderr, "Something unexpected happened.")
-			fmt.Fprintln(os.Stderr, "If you want to help us debug the problem, please run:")
-			fmt.Fprintf(os.Stderr, "STEPDEBUG=1 %s\n", strings.Join(os.Args, " "))
-			fmt.Fprintln(os.Stderr, "and send the output to info@smallstep.com")
-			os.Exit(2)
 		}
+
+		fmt.Fprintln(os.Stderr, "Something unexpected happened.")
+		fmt.Fprintln(os.Stderr, "If you want to help us debug the problem, please run:")
+		fmt.Fprintf(os.Stderr, "STEPDEBUG=1 %s\n", strings.Join(os.Args, " "))
+		fmt.Fprintln(os.Stderr, "and send the output to info@smallstep.com")
+		os.Exit(2)
 	}
 }
 
