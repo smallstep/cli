@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -32,10 +33,7 @@ For examples, see **step help crypto jws**.`,
 				Usage: `Displays the header, payload and signature as a JSON object. The payload will
 be encoded using Base64.`,
 			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
-			},
+			flags.InsecureHidden,
 		},
 	}
 }

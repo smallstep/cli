@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 )
@@ -127,10 +128,7 @@ For examples, see **step help crypto hash**.
 		:  MD5 produces a 128-bit hash value
 `,
 			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
-			},
+			flags.InsecureHidden,
 		},
 	}
 }
@@ -187,10 +185,7 @@ For examples, see **step help crypto hash**.
 		:  MD5 produces a 128-bit hash value
 `,
 			},
-			cli.BoolFlag{
-				Name:   "insecure",
-				Hidden: true,
-			},
+			flags.InsecureHidden,
 		},
 	}
 }

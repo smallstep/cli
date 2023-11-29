@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -147,10 +148,7 @@ applications where more than one JWE payload type may be present. This
 parameter is ignored by JWE implementations, but may be processed by
 applications that use JWE.`,
 			},
-			cli.BoolFlag{
-				Name:   "subtle",
-				Hidden: true,
-			},
+			flags.SubtleHidden,
 		},
 	}
 }
