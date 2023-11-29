@@ -48,7 +48,7 @@ used with **--jwks** (a JWK Set) the KID value must match the **"kid"** member o
 one of the JWKs in the JWK Set.`,
 			},
 			cli.StringFlag{
-				Name: "password-file",
+				Name:  "password-file",
 				Usage: `The path to the <file> containing the password to encrypt the keys.`,
 			},
 		},
