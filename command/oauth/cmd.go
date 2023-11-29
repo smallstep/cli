@@ -44,10 +44,12 @@ import (
 // Google is also distributing the client ID and secret on the cloud SDK
 // available here https://cloud.google.com/sdk/docs/quickstarts
 const (
+	//nolint:gosec // This is a client meant for open source testing. The client has no security access or roles.
 	defaultClientID = "1087160488420-8qt7bavg3qesdhs6it824mhnfgcfe8il.apps.googleusercontent.com"
 	//nolint:gosec // This is a client meant for open source testing. The client has no security access or roles.
 	defaultClientNotSoSecret = "udTrOT3gzrO7W9fDPgZQLfYJ"
 
+	//nolint:gosec // This is a client meant for open source testing. The client has no security access or roles.
 	defaultDeviceAuthzClientID = "1087160488420-1u0jqoulmv3mfomfh6fhkfs4vk4bdjih.apps.googleusercontent.com"
 	//nolint:gosec // This is a client meant for open source testing. The client has no security access or roles.
 	defaultDeviceAuthzClientNotSoSecret = "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"
