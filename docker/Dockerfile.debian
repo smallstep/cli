@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:bullseye AS builder
+FROM --platform=$BUILDPLATFORM golang:bookworm AS builder
 
 WORKDIR /src
 COPY go.mod go.sum .
@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS_OVERRIDE="GOOS=${GOOS} GOARCH=${GOARCH} GOARM=${GOARM}" \
     make V=1 bin/step
 
-FROM debian:bullseye
+FROM debian:bookworm
 
 ENV STEP="/home/step"
 ENV STEPPATH="/home/step"
