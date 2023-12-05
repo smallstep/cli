@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_IMAGE: smallstep/step-cli
-      DEBIAN_TAG: bullseye
+      DEBIAN_TAG: bookworm
     outputs:
       version: ${{ steps.extract-tag.outputs.VERSION }}
       vversion: ${{ steps.extract-tag.outputs.VVERSION }}
