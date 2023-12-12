@@ -1,12 +1,14 @@
 package token
 
 import (
-	"crypto"
 	"crypto/ecdh"
+	"crypto/ecdsa"
 	"crypto/ed25519"
+	"crypto/elliptic"
 	"crypto/rand"
 	"net"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -22,29 +24,22 @@ func TestOptions(t *testing.T) {
 	now := time.Now()
 	c25519CACert, c25519CAKey := mustNebulaCurve25519CA(t)
 	p256CACert, p256CAKey := mustNebulaP256CA(t)
-
 	c25519Cert, c25519Signer := mustNebulaCurve25519Cert(t, "test.lan", mustNebulaIPNet(t, "10.1.0.1/16"), []string{"test"}, c25519CACert, c25519CAKey)
 	p256Cert, p256Signer := mustNebulaP256Cert(t, "test.lan", mustNebulaIPNet(t, "10.1.0.1/16"), []string{"test"}, p256CACert, p256CAKey)
 
 	tempDir := t.TempDir()
+	c25519CACertFilename, c25519CACertData := serializeAndWriteNebulaCert(t, tempDir, c25519CACert)
+	c25519CertFilename, c25519CertData := serializeAndWriteNebulaCert(t, tempDir, c25519Cert)
+	p256CertFilename, p256CertData := serializeAndWriteNebulaCert(t, tempDir, p256Cert)
 
-	c25519CertFile, err := os.CreateTemp(tempDir, "c25519Cert-*")
-	require.NoError(t, err)
-	c25519CertPEM, err := c25519Cert.MarshalToPEM()
-	require.NoError(t, err)
-	c25519CertData, err := c25519Cert.Marshal()
-	require.NoError(t, err)
-	_, err = c25519CertFile.Write(c25519CertPEM)
+	p256ECDHSigner, err := p256Signer.ECDH()
 	require.NoError(t, err)
 
-	p256CertFile, err := os.CreateTemp(tempDir, "p256Cert-*")
+	wrongNebulaContentsFilename := "testdata/ca.crt"
+
+	emptyFile, err := os.CreateTemp(tempDir, "empty-file")
 	require.NoError(t, err)
-	p256CertPEM, err := p256Cert.MarshalToPEM()
-	require.NoError(t, err)
-	p256CertData, err := p256Cert.Marshal()
-	require.NoError(t, err)
-	_, err = p256CertFile.Write(p256CertPEM)
-	require.NoError(t, err)
+	emptyFile.Close()
 
 	tests := []struct {
 		name    string
@@ -74,8 +69,16 @@ func TestOptions(t *testing.T) {
 		{"WithKid ok", WithKid("value"), &Claims{ExtraHeaders: map[string]interface{}{"kid": "value"}}, false},
 		{"WithKid fail", WithKid(""), empty, true},
 		{"WithSHA ok", WithSHA("6908751f68290d4573ae0be39a98c8b9b7b7d4e8b2a6694b7509946626adfe98"), &Claims{ExtraClaims: map[string]interface{}{"sha": "6908751f68290d4573ae0be39a98c8b9b7b7d4e8b2a6694b7509946626adfe98"}}, false},
-		{"WithNebulaCurve25519Cert ok", WithNebulaCert(c25519CertFile.Name(), c25519Signer), &Claims{ExtraHeaders: map[string]interface{}{"nebula": c25519CertData}}, false},
-		{"WithNebulaP256Cert ok", WithNebulaCert(p256CertFile.Name(), p256Signer), &Claims{ExtraHeaders: map[string]interface{}{"nebula": p256CertData}}, false},
+		{"WithNebulaCurve25519Cert ok", WithNebulaCert(c25519CertFilename, c25519Signer), &Claims{ExtraHeaders: map[string]interface{}{"nebula": c25519CertData}}, false},
+		{"WithNebulaCurve25519CACert ok", WithNebulaCert(c25519CACertFilename, c25519CAKey), &Claims{ExtraHeaders: map[string]interface{}{"nebula": c25519CACertData}}, false},
+		{"WithNebulaCurve25519Cert and key as bytes ok", WithNebulaCert(c25519CertFilename, []byte(c25519Signer)), &Claims{ExtraHeaders: map[string]interface{}{"nebula": c25519CertData}}, false},
+		{"WithNebulaP256Cert ok", WithNebulaCert(p256CertFilename, p256Signer), &Claims{ExtraHeaders: map[string]interface{}{"nebula": p256CertData}}, false},
+		{"WithNebulaP256Cert as ECDH signer ok", WithNebulaCert(p256CertFilename, p256ECDHSigner), &Claims{ExtraHeaders: map[string]interface{}{"nebula": p256CertData}}, false},
+		{"WithNebulaCurve25519Cert non existing file fail", WithNebulaCert(filepath.Join(tempDir, "does-not-exist"), nil), empty, true},
+		{"WithNebulaCurve25519Cert wrong contents fail", WithNebulaCert(wrongNebulaContentsFilename, nil), empty, true},
+		{"WithNebulaCurve25519Cert empty file fail", WithNebulaCert(emptyFile.Name(), nil), empty, true},
+		{"WithNebulaCurve25519Cert invalid content fail", WithNebulaCert(c25519CertFilename, nil), empty, true},
+		{"WithNebulaCurve25519Cert mismatching key fail", WithNebulaCert(c25519CertFilename, p256Signer), empty, true},
 	}
 
 	for _, tt := range tests {
@@ -91,6 +94,19 @@ func TestOptions(t *testing.T) {
 			assert.Equal(t, tt.want, claim)
 		})
 	}
+}
+
+func serializeAndWriteNebulaCert(t *testing.T, tempDir string, cert *nebula.NebulaCertificate) (string, []byte) {
+	file, err := os.CreateTemp(tempDir, "nebula-test-cert-*")
+	require.NoError(t, err)
+	defer file.Close()
+	pem, err := cert.MarshalToPEM()
+	require.NoError(t, err)
+	data, err := cert.Marshal()
+	require.NoError(t, err)
+	_, err = file.Write(pem)
+	require.NoError(t, err)
+	return file.Name(), data
 }
 
 func mustNebulaIPNet(t *testing.T, s string) *net.IPNet {
@@ -158,7 +174,7 @@ func mustNebulaP256CA(t *testing.T) (*nebula.NebulaCertificate, *ecdh.PrivateKey
 	return nc, priv
 }
 
-func mustNebulaCurve25519Cert(t *testing.T, name string, ipNet *net.IPNet, groups []string, ca *nebula.NebulaCertificate, signer ed25519.PrivateKey) (*nebula.NebulaCertificate, crypto.Signer) {
+func mustNebulaCurve25519Cert(t *testing.T, name string, ipNet *net.IPNet, groups []string, ca *nebula.NebulaCertificate, signer ed25519.PrivateKey) (*nebula.NebulaCertificate, x25519.PrivateKey) {
 	t.Helper()
 
 	pub, priv, err := x25519.GenerateKey(rand.Reader)
@@ -196,10 +212,10 @@ func mustNebulaCurve25519Cert(t *testing.T, name string, ipNet *net.IPNet, group
 	return nc, priv
 }
 
-func mustNebulaP256Cert(t *testing.T, name string, ipNet *net.IPNet, groups []string, ca *nebula.NebulaCertificate, signer *ecdh.PrivateKey) (*nebula.NebulaCertificate, *ecdh.PrivateKey) {
+func mustNebulaP256Cert(t *testing.T, name string, ipNet *net.IPNet, groups []string, ca *nebula.NebulaCertificate, signer *ecdh.PrivateKey) (*nebula.NebulaCertificate, *ecdsa.PrivateKey) {
 	t.Helper()
 
-	priv, err := ecdh.P256().GenerateKey(rand.Reader)
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)
 	issuer, err := ca.Sha256Sum()
 	require.NoError(t, err)
@@ -212,6 +228,9 @@ func mustNebulaP256Cert(t *testing.T, name string, ipNet *net.IPNet, groups []st
 	key := signer.Bytes()
 	curve := nebula.Curve_P256
 
+	pk, err := priv.ECDH()
+	require.NoError(t, err)
+
 	t1 := time.Now().Truncate(time.Second)
 	nc := &nebula.NebulaCertificate{
 		Details: nebula.NebulaCertificateDetails{
@@ -221,7 +240,7 @@ func mustNebulaP256Cert(t *testing.T, name string, ipNet *net.IPNet, groups []st
 			Groups:         groups,
 			NotBefore:      t1,
 			NotAfter:       t1.Add(5 * time.Minute),
-			PublicKey:      priv.PublicKey().Bytes(),
+			PublicKey:      pk.PublicKey().Bytes(),
 			IsCA:           false,
 			Issuer:         issuer,
 			InvertedGroups: invertedGroups,

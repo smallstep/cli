@@ -246,6 +246,7 @@ func WithNebulaCert(certFile string, anyKey any) Options {
 		if err := crt.VerifyPrivateKey(curve, key); err != nil {
 			return errors.Wrapf(err, "error validating %s", certFile)
 		}
+
 		c.SetHeader("nebula", b)
 		return nil
 	}
