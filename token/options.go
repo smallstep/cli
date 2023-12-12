@@ -240,7 +240,7 @@ func WithNebulaCert(certFile string, anyKey any) Options {
 			key = []byte(k.Bytes())
 			curve = nebula.Curve_P256
 		default:
-			return errors.Errorf("key content is not a valid nebula key")
+			return errors.Errorf("key content is not a valid nebula key; got type %T", anyKey)
 		}
 
 		if err := crt.VerifyPrivateKey(curve, key); err != nil {
