@@ -234,10 +234,10 @@ func WithNebulaCert(certFile string, anyKey any) Options {
 			if err != nil {
 				return fmt.Errorf("failed transforming to ECDH key: %w", err)
 			}
-			key = []byte(pk.Bytes())
+			key = pk.Bytes()
 			curve = nebula.Curve_P256
 		case *ecdh.PrivateKey:
-			key = []byte(k.Bytes())
+			key = k.Bytes()
 			curve = nebula.Curve_P256
 		default:
 			return errors.Errorf("key content is not a valid nebula key; got type %T", anyKey)

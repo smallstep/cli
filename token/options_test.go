@@ -209,7 +209,7 @@ func mustNebulaP256Cert(t *testing.T, name string, ipNet *net.IPNet, groups []st
 		invertedGroups[name] = struct{}{}
 	}
 
-	key := []byte(signer.Bytes())
+	key := signer.Bytes()
 	curve := nebula.Curve_P256
 
 	t1 := time.Now().Truncate(time.Second)
