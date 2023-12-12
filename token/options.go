@@ -2,10 +2,14 @@ package token
 
 import (
 	"bytes"
+	"crypto/ecdh"
+	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
+	"fmt"
 	"os"
 	"time"
 
@@ -13,6 +17,7 @@ import (
 	nebula "github.com/slackhq/nebula/cert"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x25519"
 )
 
 // Options is a function that set claims.
@@ -194,7 +199,7 @@ func WithX5CCerts(certs []*x509.Certificate, key interface{}) Options {
 var pemCertPrefix = []byte("-----BEGIN")
 
 // WithNebulaCert returns a Options that sets the nebula header.
-func WithNebulaCert(certFile string, key []byte) Options {
+func WithNebulaCert(certFile string, anyKey any) Options {
 	return func(c *Claims) error {
 		b, err := os.ReadFile(certFile)
 		if err != nil {
@@ -211,7 +216,34 @@ func WithNebulaCert(certFile string, key []byte) Options {
 		if err != nil {
 			return errors.Wrapf(err, "error reading %s", certFile)
 		}
-		if err := crt.VerifyPrivateKey(key); err != nil {
+
+		var key []byte
+		var curve nebula.Curve
+		switch k := anyKey.(type) {
+		case x25519.PrivateKey:
+			key = []byte(k)
+			curve = nebula.Curve_CURVE25519
+		case ed25519.PrivateKey:
+			key = []byte(k)
+			curve = nebula.Curve_CURVE25519
+		case []byte:
+			key = k
+			curve = nebula.Curve_CURVE25519
+		case *ecdsa.PrivateKey:
+			pk, err := k.ECDH()
+			if err != nil {
+				return fmt.Errorf("failed transforming to ECDH key: %w", err)
+			}
+			key = []byte(pk.Bytes())
+			curve = nebula.Curve_P256
+		case *ecdh.PrivateKey:
+			key = []byte(k.Bytes())
+			curve = nebula.Curve_P256
+		default:
+			return errors.Errorf("key content is not a valid nebula key")
+		}
+
+		if err := crt.VerifyPrivateKey(curve, key); err != nil {
 			return errors.Wrapf(err, "error validating %s", certFile)
 		}
 		c.SetHeader("nebula", b)
