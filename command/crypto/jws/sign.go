@@ -3,7 +3,6 @@ package jws
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
@@ -340,7 +339,7 @@ func signAction(ctx *cli.Context) error {
 
 	signed, err := signer.Sign(payload)
 	if err != nil {
-		return errors.Errorf("error signing payload: %s", strings.TrimPrefix(err.Error(), "square/go-jose: "))
+		return errors.Errorf("error signing payload: %s", jose.TrimPrefix(err))
 	}
 
 	raw, err := signed.CompactSerialize()
