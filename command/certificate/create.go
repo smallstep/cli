@@ -546,7 +546,8 @@ func createAction(ctx *cli.Context) error {
 		return err
 	}
 
-	// Read or generate key pair
+	// Read or generate key pair.
+	// When the flag --key has a public key, priv will be nil.
 	pub, priv, err := parseOrCreateKey(ctx)
 	if err != nil {
 		return err
@@ -554,6 +555,9 @@ func createAction(ctx *cli.Context) error {
 
 	// Create certificate request
 	if ctx.Bool("csr") {
+		if priv == nil {
+			return errors.New("invalid value for flag --key: a private key is required")
+		}
 		if bundle {
 			return errs.IncompatibleFlagWithFlag(ctx, "bundle", "csr")
 		}
@@ -630,6 +634,12 @@ func createAction(ctx *cli.Context) error {
 	// Subtle is required on self-signed certificates
 	if !subtle && profile == profileSelfSigned {
 		return errs.RequiredWithFlagValue(ctx, "profile", "self-signed", "subtle")
+	}
+
+	// When a public key is given with the flag --key, priv is nil and
+	// --skip-csr-signature is required.
+	if priv == nil && !skipCSRSignature {
+		return errors.New("flag '--skip-csr-signature' is required with a public key")
 	}
 
 	// Parse --ca and --ca-key flags and check when those flags are required.
