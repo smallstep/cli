@@ -2,7 +2,6 @@ package jws
 
 import (
 	"os"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
@@ -94,7 +93,7 @@ func verifyAction(ctx *cli.Context) error {
 
 	tok, err := jose.ParseJWS(token)
 	if err != nil {
-		return errors.Errorf("error parsing token: %s", strings.TrimPrefix(err.Error(), "square/go-jose: "))
+		return errors.Errorf("error parsing token: %s", jose.TrimPrefix(err))
 	}
 
 	// We don't support multiple signatures

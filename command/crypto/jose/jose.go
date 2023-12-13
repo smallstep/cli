@@ -80,7 +80,7 @@ func formatAction(*cli.Context) error {
 	} else {
 		tok, err := jose.ParseJWS(token)
 		if err != nil {
-			return errors.Wrap(trimPrefix(err), "error parsing data")
+			return errors.Wrap(jose.TrimPrefix(err), "error parsing data")
 		}
 		srz = tok
 	}
@@ -88,7 +88,7 @@ func formatAction(*cli.Context) error {
 	if strings.HasPrefix(token, "{") {
 		str, err := srz.CompactSerialize()
 		if err != nil {
-			return errors.Wrap(trimPrefix(err), "error serializing data")
+			return errors.Wrap(jose.TrimPrefix(err), "error serializing data")
 		}
 		fmt.Println(str)
 	} else {
@@ -96,10 +96,6 @@ func formatAction(*cli.Context) error {
 	}
 
 	return nil
-}
-
-func trimPrefix(err error) error {
-	return errors.New(strings.TrimPrefix(err.Error(), "square/go-jose: "))
 }
 
 var stripWhitespaceRegex = regexp.MustCompile(`\s`)
