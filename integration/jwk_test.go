@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"testing"
 
+	jose "github.com/go-jose/go-jose/v3"
 	"github.com/smallstep/assert"
 	"go.step.sm/crypto/randutil"
-	jose "gopkg.in/square/go-jose.v2"
 )
 
 func AssertFileExists(t *testing.T, path string, a ...interface{}) bool {

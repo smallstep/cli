@@ -22,11 +22,11 @@ import (
 	"time"
 
 	"github.com/ThomasRooney/gexpect"
+	jose "github.com/go-jose/go-jose/v3"
 	"github.com/icrowley/fake"
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
 	"go.step.sm/crypto/pemutil"
-	jose "gopkg.in/square/go-jose.v2"
 )
 
 type JWK struct {

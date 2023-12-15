@@ -121,7 +121,7 @@ func verifyAction(ctx *cli.Context) error {
 
 	tok, err := jose.ParseSigned(token)
 	if err != nil {
-		return errors.Errorf("error parsing token: %s", strings.TrimPrefix(err.Error(), "square/go-jose: "))
+		return errors.Errorf("error parsing token: %s", jose.TrimPrefix(err))
 	}
 
 	// Validate key, jwks and kid
