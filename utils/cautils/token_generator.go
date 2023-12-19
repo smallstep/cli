@@ -26,7 +26,6 @@ import (
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/randutil"
-	"go.step.sm/crypto/x25519"
 )
 
 // TokenGenerator is a helper used to generate different types of tokens used in
@@ -259,17 +258,7 @@ func generateNebulaToken(ctx *cli.Context, p *provisioner.Nebula, tokType int, t
 		return "", err
 	}
 
-	var key []byte
-	switch k := jwk.Key.(type) {
-	case x25519.PrivateKey:
-		key = []byte(k)
-	case ed25519.PrivateKey:
-		key = []byte(k)
-	case []byte:
-		key = k
-	default:
-		return "", errors.Errorf("error reading %s: content is not a valid nebula key", keyFile)
-	}
+	key := jwk.Key
 
 	tokenGen := NewTokenGenerator(jwk.KeyID, p.Name,
 		fmt.Sprintf("%s#%s", tokAttrs.audience, p.GetIDForToken()), tokAttrs.root,
