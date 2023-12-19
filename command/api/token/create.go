@@ -94,10 +94,10 @@ func createAction(ctx *cli.Context) (err error) {
 		Bundle:   clientCert.Certificate,
 		Audience: ctx.String("audience"),
 	}
-	if _, err := uuid.Parse(teamID); err == nil {
-		r.TeamID = teamID
-	} else {
+	if err := uuid.Validate(teamID); err != nil {
 		r.TeamSlug = teamID
+	} else {
+		r.TeamID = teamID
 	}
 	err = json.NewEncoder(b).Encode(r)
 	if err != nil {
