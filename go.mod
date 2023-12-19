@@ -9,7 +9,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-tpm v0.9.0
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/icrowley/fake v0.0.0-20221112152111-d7b7e2276db2
 	github.com/manifoldco/promptui v0.9.0
 	github.com/pkg/errors v0.9.1
@@ -28,7 +28,7 @@ require (
 	go.step.sm/cli-utils v0.8.0
 	go.step.sm/crypto v0.40.0
 	go.step.sm/linkedca v0.20.1
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/sys v0.15.0
 	golang.org/x/term v0.15.0
 	google.golang.org/protobuf v1.31.0
