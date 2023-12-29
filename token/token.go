@@ -32,6 +32,10 @@ const SANSClaim = "sans"
 // StepClaim is the property name for a JWT claim the stores the custom information in the certificate.
 const StepClaim = "step"
 
+// ConfirmationClaim is the property name for a JWT claim that stores a JSON
+// object used as Proof-Of-Possession.
+const ConfirmationClaim = "cnf"
+
 // Token interface which all token types should attempt to implement.
 type Token interface {
 	SignedString(sigAlg string, priv interface{}) (string, error)

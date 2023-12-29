@@ -2,6 +2,7 @@ package token
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -15,9 +16,11 @@ import (
 
 	"github.com/pkg/errors"
 	nebula "github.com/slackhq/nebula/cert"
+	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x25519"
+	"golang.org/x/crypto/ssh"
 )
 
 // Options is a function that set claims.
@@ -82,6 +85,43 @@ func WithSSH(v interface{}) Options {
 	return WithStep(map[string]interface{}{
 		"ssh": v,
 	})
+}
+
+// WithConfirmationKid returns an Options function that sets the cnf claim with
+// the given kid.
+func WithConfirmationKid(kid string) Options {
+	return func(c *Claims) error {
+		c.Set(ConfirmationClaim, map[string]string{
+			"kid": kid,
+		})
+		return nil
+	}
+}
+
+// WithFingerprint returns an Options function that the cnf claims with the kid
+// representing the fingerprint of the certificate request or the ssh public
+// key.
+func WithFingerprint(v interface{}) Options {
+	return func(c *Claims) error {
+		var data []byte
+		switch vv := v.(type) {
+		case *x509.CertificateRequest:
+			data = vv.Raw
+		case ssh.PublicKey:
+			data = vv.Marshal()
+		default:
+			return fmt.Errorf("unsupported fingerprint for %T", vv)
+		}
+
+		kid, err := fingerprint.New(data, crypto.SHA256, fingerprint.Base64RawURLFingerprint)
+		if err != nil {
+			return err
+		}
+		c.Set(ConfirmationClaim, map[string]string{
+			"kid": kid,
+		})
+		return nil
+	}
 }
 
 // WithValidity validates boundary inputs and sets the 'nbf' (NotBefore) and
