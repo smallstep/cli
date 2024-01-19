@@ -26,6 +26,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [v0.25.2] - 2024-01-19
+
+### Added
+
+- Add support for Nebula certificates using ECDSA P-256 (smallstep/cli#1085)
+
+### Changed
+
+- Upgrade docker image using Debian to Bookworm (smallstep/cli#1080)
+- Upgrade dependencies, including go-jose to v3 (smallstep/cli#1086)
+
 ## [v0.25.1] - 2023-11-28
 
 ### Added
