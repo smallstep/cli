@@ -9,7 +9,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-tpm v0.9.0
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/icrowley/fake v0.0.0-20221112152111-d7b7e2276db2
 	github.com/manifoldco/promptui v0.9.0
 	github.com/pkg/errors v0.9.1
