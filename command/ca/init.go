@@ -37,7 +37,7 @@ func initCommand() cli.Command {
 		Action: cli.ActionFunc(initAction),
 		Usage:  "initialize the CA PKI",
 		UsageText: `**step ca init**
-[**--root**=<file>] [**--key**=<file>] [**--pki**] [**--ssh**]
+[**--root**=<file>] [**--key**=<file>] [**--key-password-file**=<file>] [**--pki**] [**--ssh**]
 [**--helm**] [**--deployment-type**=<name>] [**--name**=<name>]
 [**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>] 
 [**--admin-subject**=<string>] [**--provisioner-password-file**=<file>] 
@@ -56,6 +56,10 @@ func initCommand() cli.Command {
 				Name:   "key",
 				Usage:  "The path of an existing key <file> of the root certificate authority.",
 				EnvVar: step.IgnoreEnvVar,
+			},
+			cli.StringFlag{
+				Name:  "key-password-file",
+				Usage: `The path to the <file> containing the password to decrypt the existing root certificate key.`,
 			},
 			cli.BoolFlag{
 				Name:  "pki",
@@ -240,10 +244,14 @@ func initAction(ctx *cli.Context) (err error) {
 	case root == "" && key != "":
 		return errs.RequiredWithFlag(ctx, "key", "root")
 	case root != "" && key != "":
+		opts := []pemutil.Options{}
+		if keyPasswordFile := ctx.String("key-password-file"); keyPasswordFile != "" {
+			opts = append(opts, pemutil.WithPasswordFile(keyPasswordFile))
+		}
 		if rootCrt, err = pemutil.ReadCertificate(root); err != nil {
 			return err
 		}
-		if rootKey, err = pemutil.Read(key); err != nil {
+		if rootKey, err = pemutil.Read(key, opts...); err != nil {
 			return err
 		}
 	case ra != "" && ra != apiv1.CloudCAS && ra != apiv1.StepCAS:
