@@ -28,9 +28,9 @@ require (
 	go.step.sm/cli-utils v0.8.0
 	go.step.sm/crypto v0.43.0
 	go.step.sm/linkedca v0.20.1
-	golang.org/x/crypto v0.18.0
-	golang.org/x/sys v0.16.0
-	golang.org/x/term v0.16.0
+	golang.org/x/crypto v0.19.0
+	golang.org/x/sys v0.17.0
+	golang.org/x/term v0.17.0
 	google.golang.org/protobuf v1.32.0
 	software.sslmate.com/src/go-pkcs12 v0.4.0
 )
