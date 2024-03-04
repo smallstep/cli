@@ -4,7 +4,7 @@
 
 // Package bcrypt_pbkdf implements password-based key derivation function based
 // on bcrypt compatible with bcrypt_pbkdf(3) from OpenBSD.
-package bcrypt_pbkdf
+package bcrypt_pbkdf //nolint:revive,stylecheck // keep compatible with existing importers
 
 import (
 	"crypto/sha512"
@@ -13,7 +13,7 @@ import (
 	// NOTE! Requires blowfish package version from Aug 1, 2014 or later.
 	// Will produce incorrect results if the package is older.
 	// See commit message for details: http://goo.gl/wx6g8O
-	"golang.org/x/crypto/blowfish"
+	"golang.org/x/crypto/blowfish" //nolint:staticcheck // required algorithm for bcrypt
 )
 
 // Key derives a key from the password, salt and rounds count, returning a
@@ -84,7 +84,7 @@ func bcryptHash(out, shapass, shasalt []byte) {
 		blowfish.ExpandKey(shasalt, c)
 		blowfish.ExpandKey(shapass, c)
 	}
-	copy(out[:], magic)
+	copy(out, magic)
 	for i := 0; i < 32; i += 8 {
 		for j := 0; j < 64; j++ {
 			c.Encrypt(out[i:i+8], out[i:i+8])

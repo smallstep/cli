@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package bcrypt_pbkdf
+package bcrypt_pbkdf //nolint:stylecheck // keep compatible with existing importers
 
 import (
 	"bytes"
