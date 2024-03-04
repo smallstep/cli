@@ -202,7 +202,7 @@ func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 		NotAfter:     req.NotAfter,
 		TemplateData: req.TemplateData,
 	}
-	certChain, err := c.authority.Sign(req.CsrPEM.CertificateRequest, signOpts, opts...)
+	certChain, err := c.authority.SignWithContext(ctx, req.CsrPEM.CertificateRequest, signOpts, opts...)
 	if err != nil {
 		return nil, err
 	}
