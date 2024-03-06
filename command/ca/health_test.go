@@ -88,7 +88,7 @@ func Test_healthAction(t *testing.T) {
 
 	app := cli.NewApp()
 	app.Commands = cli.Commands{caCommand}
-	err = app.Run([]string{"step", "ca", "health", "--root", rootFilepath, "--ca-url", fmt.Sprintf("https://127.0.0.1:%s", port)})
+	err = app.Run([]string{"step", "ca", "health", "--root", rootFilepath, "--ca-url", fmt.Sprintf("https://localhost:%s", port)})
 	assert.NoError(t, err)
 
 	// done testing; stop and wait for the server to quit
