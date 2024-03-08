@@ -77,9 +77,16 @@ download:
 build: $(PREFIX)bin/$(BINNAME)
 	@echo "Build Complete!"
 
+build-fips: $(PREFIX)bin/$(BINNAME).fips
+	@echo "Build Complete!"
+
 $(PREFIX)bin/$(BINNAME): download $(call rwildcard,*.go)
 	$Q mkdir -p $(@D)
 	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) go build -v -o $@ $(GCFLAGS) $(LDFLAGS) $(PKG)
+
+$(PREFIX)bin/$(BINNAME).fips: download $(call rwildcard,*.go)
+	$Q mkdir -p $(@D)
+	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) GOEXPERIMENT="boringcrypto" go build -v -o $@ $(GCFLAGS) $(LDFLAGS) $(PKG)
 
 .PHONY: build simple
 
