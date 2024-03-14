@@ -199,8 +199,6 @@ release:
     - 📦 [step_windows_{{ .Version }}_amd64.zip](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step_windows_{{ .Version }}_amd64.zip)
     - 📦 [step_windows_{{ .Version }}_arm64.zip](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step_windows_{{ .Version }}_arm64.zip)
 
-    Don't see the artifact you need? Check the `Assets` section below.
-    Still don't see it? Open an issue [here](https://github.com/smallstep/cli/issues/new/choose).
 
     ## Signatures and Checksums
 
