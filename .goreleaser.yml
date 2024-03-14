@@ -188,6 +188,7 @@ release:
     - 📦 [step-cli_{{ .Version }}_amd64.rpm](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_amd64.rpm)
     - 📦 [step-cli_{{ .Version }}_arm64.deb](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_arm64.deb)
     - 📦 [step-cli_{{ .Version }}_arm64.rpm](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_arm64.rpm)
+    - see `Assets` below for more builds
 
     #### macOS Darwin
 
