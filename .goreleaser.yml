@@ -176,7 +176,6 @@ release:
 
     Below are the most popular artifacts for `step` on each platform.
 
-    For more builds across platforms and architectures see the `Assets` section below.
     For packaged versions (Homebrew, Scoop, etc.), see our [installation docs](https://smallstep.com/docs/step-cli/installation).
 
     #### Linux
