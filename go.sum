@@ -511,8 +511,8 @@ github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
 github.com/smallstep/certificates v0.25.3-rc7 h1:iaw8sjfvHXwQt7xekFWC7TvP1Db34hQ06jrcuwCNMD8=
 github.com/smallstep/certificates v0.25.3-rc7/go.mod h1:awB/1GuilPy81lN+S9Uo04Q5KcxuNYFcMMqNd+EmKfw=
-github.com/smallstep/certinfo v1.12.1 h1:2o3kglUcIXbeRnlggpRBNCT3OfBDpYNo9te6aq1tr7Y=
-github.com/smallstep/certinfo v1.12.1/go.mod h1:KIhQCfpCy8pC1VOB9LYwS/Gno0jyjIJfVnPwSTaYECg=
+github.com/smallstep/certinfo v1.12.2 h1:cuyiPNo86yekliQduAGP/5BDR4JA/8S1UCtDtpKl8fQ=
+github.com/smallstep/certinfo v1.12.2/go.mod h1:J8E+AF8ZPEaCqG+eM3gAKGGfo7Zb9DSghjf9VG96x/0=
 github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935 h1:kjYvkvS/Wdy0PVRDUAA0gGJIVSEZYhiAJtfwYgOYoGA=
 github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935/go.mod h1:vNAduivU014fubg6ewygkAvQC0IQVXqdc8vaGl/0er4=
 github.com/smallstep/nosql v0.6.0 h1:ur7ysI8s9st0cMXnTvB8tA3+x5Eifmkb6hl4uqNV5jc=
