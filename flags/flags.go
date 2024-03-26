@@ -379,6 +379,21 @@ be stored in the 'sshpop' header.`,
 be stored in the 'nebula' header.`,
 	}
 
+	// ConfirmationFile is a cli.Flag used to add a confirmation claim in the
+	// tokens. It will add a confirmation kid with the fingerprint of the CSR or
+	// an SSH public key.
+	ConfirmationFile = cli.StringFlag{
+		Name:  "cnf-file",
+		Usage: `The CSR or SSH public key <file> to restrict this token for.`,
+	}
+
+	// ConfirmationKid is a cli.Flag used to add a confirmation claim in the
+	// token.
+	ConfirmationKid = cli.StringFlag{
+		Name:  "cnf-kid",
+		Usage: `The <fingerprint> of the CSR or SSH public key to restrict this token for.`,
+	}
+
 	// Team is a cli.Flag used to pass the team ID.
 	Team = cli.StringFlag{
 		Name:  "team",

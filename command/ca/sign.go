@@ -175,7 +175,7 @@ func signCertificateAction(ctx *cli.Context) error {
 	}
 
 	// certificate flow unifies online and offline flows on a single api
-	flow, err := cautils.NewCertificateFlow(ctx)
+	flow, err := cautils.NewCertificateFlow(ctx, cautils.WithCertificateRequest(csr))
 	if err != nil {
 		return err
 	}

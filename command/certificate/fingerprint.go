@@ -24,7 +24,7 @@ func fingerprintCommand() cli.Command {
 [**--bundle**] [**--roots**=<root-bundle>] [**--servername**=<servername>]
 [**--format**=<format>] [**--sha1**] [**--insecure**]`,
 		Description: `**step certificate fingerprint** reads a certificate and prints to STDOUT the
-certificate SHA256 of the raw certificate.
+certificate SHA256 of the raw certificate or certificate signing request.
 
 If <crt-file> contains multiple certificates (i.e., it is a certificate
 "bundle") the fingerprint of the first certificate in the bundle will be
@@ -55,6 +55,12 @@ Get the fingerprints for a remote certificate with its intermediate:
 $ step certificate fingerprint --bundle https://smallstep.com
 e2c4f12edfc1816cc610755d32e6f45d5678ba21ecda1693bb5b246e3c48c03d
 25847d668eb4f04fdd40b12b6b0740c567da7d024308eb6c2c96fe41d9de218d
+'''
+
+Get the fingerprint for a CSR using base64-url without padding encoding:
+'''
+$ step certificate fingerprint --format base64-url-raw hello.csr
+PJLNhtQoBE1yGN_ZKzr4Y2U5pyqIGiyyszkoz2raDOw
 '''`,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -128,7 +134,15 @@ func fingerprintAction(ctx *cli.Context) error {
 	default:
 		certs, err = pemutil.ReadCertificateBundle(crtFile)
 		if err != nil {
-			return err
+			// Fallback to parse a CSR
+			csr, csrErr := pemutil.ReadCertificateRequest(crtFile)
+			if csrErr != nil {
+				return err
+			}
+			// We will only need the raw the generate a fingerprint.
+			certs = []*x509.Certificate{
+				{Raw: csr.Raw},
+			}
 		}
 	}
 

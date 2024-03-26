@@ -85,7 +85,12 @@ func (e *ACMETokenError) Error() string {
 }
 
 // NewTokenFlow implements the common flow used to generate a token
-func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration) (string, error) {
+func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, caURL, root string, notBefore, notAfter time.Time, certNotBefore, certNotAfter provisioner.TimeDuration, opts ...Option) (string, error) {
+	// Apply options to shared context
+	for _, opt := range opts {
+		opt.apply(&sharedContext)
+	}
+
 	// Get audience from ca-url
 	audience, err := parseAudience(ctx, tokType)
 	if err != nil {
