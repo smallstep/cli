@@ -43,7 +43,7 @@ func revokeCertificateCommand() cli.Command {
 		Usage:  "revoke a certificate",
 		UsageText: `**step ca revoke** <serial-number>
 [**--cert**=<file>] [**--key**=<file>] [**--token**=<ott>]
-[**--reason**=<string>] [**--reasonCode**=<code>] [**-offline**]
+[**--reason**=<string>] [**--reasonCode**=<code>] [**--offline**]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `
 **step ca revoke** command revokes a certificate with the given serial
