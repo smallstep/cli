@@ -1090,6 +1090,12 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if req.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		w.Write(nil)
+		return
+	}
+
 	q := req.URL.Query()
 	errStr := q.Get("error")
 	if errStr != "" {
