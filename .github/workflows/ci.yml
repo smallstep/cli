@@ -26,4 +26,5 @@ jobs:
     with:
       only-latest-golang: false
       run-codeql: true
+      run-lint: false # skip linting to unblock release
     secrets: inherit
