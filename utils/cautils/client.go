@@ -115,7 +115,7 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		adminCert     []*x509.Certificate
 		adminKey      interface{}
 	)
-	if len(adminCertFile) > 0 || len(adminKeyFile) > 0 {
+	if adminCertFile != "" || adminKeyFile != "" {
 		if adminCertFile == "" {
 			return nil, errs.RequiredWithFlag(ctx, "admin-key", "admin-cert")
 		}

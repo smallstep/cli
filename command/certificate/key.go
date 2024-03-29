@@ -77,7 +77,7 @@ func keyAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if outputFile := ctx.String("output-file"); len(outputFile) > 0 {
+	if outputFile := ctx.String("output-file"); outputFile != "" {
 		if err := utils.WriteFile(outputFile, pem.EncodeToMemory(block), 0600); err != nil {
 			return err
 		}

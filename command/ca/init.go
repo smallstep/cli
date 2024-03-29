@@ -39,10 +39,10 @@ func initCommand() cli.Command {
 		UsageText: `**step ca init**
 [**--root**=<file>] [**--key**=<file>] [**--key-password-file**=<file>] [**--pki**] [**--ssh**]
 [**--helm**] [**--deployment-type**=<name>] [**--name**=<name>]
-[**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>] 
-[**--admin-subject**=<string>] [**--provisioner-password-file**=<file>] 
-[**--password-file**=<file>] [**--ra**=<type>] [**--kms**=<type>] 
-[**--with-ca-url**=<url>] [**--no-db**] [**--remote-management**] 
+[**--dns**=<dns>] [**--address**=<address>] [**--provisioner**=<name>]
+[**--admin-subject**=<string>] [**--provisioner-password-file**=<file>]
+[**--password-file**=<file>] [**--ra**=<type>] [**--kms**=<type>]
+[**--with-ca-url**=<url>] [**--no-db**] [**--remote-management**]
 [**--acme**] [**--context**=<name>] [**--profile**=<name>] [**--authority**=<name>]`,
 		Description: `**step ca init** command initializes a public key infrastructure (PKI) to be
  used by the Certificate Authority.`,
@@ -476,7 +476,7 @@ func initAction(ctx *cli.Context) (err error) {
 			if v, ok := keyManager.(interface{ ValidateName(s string) error }); ok {
 				validateFunc = v.ValidateName
 			} else {
-				validateFunc = func(s string) error {
+				validateFunc = func(_ string) error {
 					return nil
 				}
 			}

@@ -285,7 +285,7 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 		ctx = provisioner.NewContextWithMethod(context.Background(), provisioner.RevokeMethod)
 		err error
 	)
-	if len(req.OTT) > 0 {
+	if req.OTT != "" {
 		opts.OTT = req.OTT
 		opts.MTLS = false
 		if _, err = c.authority.Authorize(ctx, opts.OTT); err != nil {

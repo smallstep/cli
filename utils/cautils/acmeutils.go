@@ -49,7 +49,7 @@ func startHTTPServer(addr, token, keyAuth string) *http.Server {
 		ReadHeaderTimeout: 15 * time.Second,
 	}
 
-	http.HandleFunc(fmt.Sprintf("/.well-known/acme-challenge/%s", token), func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(fmt.Sprintf("/.well-known/acme-challenge/%s", token), func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Write([]byte(keyAuth))
 	})
@@ -629,7 +629,7 @@ func newACMEFlow(ctx *cli.Context, ops ...acmeFlowOp) (*acmeFlow, error) {
 	// One of --standalone or --webroot must be selected for use with ACME protocol.
 	isStandalone, webroot := ctx.Bool("standalone"), ctx.String("webroot")
 	switch {
-	case isStandalone && len(webroot) > 0:
+	case isStandalone && webroot != "":
 		return nil, errs.MutuallyExclusiveFlags(ctx, "standalone", "webroot")
 	case !isStandalone && webroot == "":
 		if err := ctx.Set("standalone", "true"); err != nil {
@@ -674,7 +674,7 @@ func (af *acmeFlow) getClientTruststoreOption(mergeRootCAs bool) (ca.ClientOptio
 	}
 
 	// 1. Merge local RootCA with system store
-	if mergeRootCAs && len(root) > 0 {
+	if mergeRootCAs && root != "" {
 		rootCAs, err := x509.SystemCertPool()
 		if err != nil || rootCAs == nil {
 			rootCAs = x509.NewCertPool()
@@ -698,7 +698,7 @@ func (af *acmeFlow) getClientTruststoreOption(mergeRootCAs bool) (ca.ClientOptio
 	}
 
 	// Use local Root CA only
-	if len(root) > 0 {
+	if root != "" {
 		return ca.WithRootFile(root), nil
 	}
 

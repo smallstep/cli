@@ -332,7 +332,7 @@ func tokenAction(ctx *cli.Context) error {
 			return err
 		}
 	}
-	if len(outputFile) > 0 {
+	if outputFile != "" {
 		return utils.WriteFile(outputFile, []byte(token), 0600)
 	}
 	fmt.Println(token)

@@ -367,7 +367,7 @@ func certificateAction(ctx *cli.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "error parsing ssh public key")
 		}
-		if len(sshPrivKeyFile) > 0 {
+		if sshPrivKeyFile != "" {
 			if priv, err = pemutil.Read(sshPrivKeyFile); err != nil {
 				return errors.Wrap(err, "error parsing private key")
 			}

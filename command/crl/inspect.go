@@ -387,7 +387,7 @@ func printCRL(crl *CRL) {
 	fmt.Println("Certificate Revocation List (CRL):")
 	fmt.Println("    Data:")
 	fmt.Printf("        Valid: %v\n", crl.Signature.Valid)
-	if len(crl.Signature.Reason) > 0 {
+	if crl.Signature.Reason != "" {
 		fmt.Printf("        Reason: %s\n", crl.Signature.Reason)
 	}
 	fmt.Printf("        Version: %d (0x%x)\n", crl.Version, crl.Version.Add(crl.Version, big.NewInt(-1)))

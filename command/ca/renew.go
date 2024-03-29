@@ -243,12 +243,12 @@ func renewCertificateAction(ctx *cli.Context) error {
 	}
 
 	var expiresIn, renewPeriod time.Duration
-	if s := ctx.String("expires-in"); len(s) > 0 {
+	if s := ctx.String("expires-in"); s != "" {
 		if expiresIn, err = time.ParseDuration(s); err != nil {
 			return errs.InvalidFlagValue(ctx, "expires-in", s, "")
 		}
 	}
-	if s := ctx.String("renew-period"); len(s) > 0 {
+	if s := ctx.String("renew-period"); s != "" {
 		if renewPeriod, err = time.ParseDuration(s); err != nil {
 			return errs.InvalidFlagValue(ctx, "renew-period", s, "")
 		}
@@ -269,7 +269,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	}
 
 	pidFile := ctx.String("pid-file")
-	if len(pidFile) > 0 {
+	if pidFile != "" {
 		pidB, err := os.ReadFile(pidFile)
 		if err != nil {
 			return errs.FileError(err, pidFile)
