@@ -99,9 +99,9 @@ SCEP
 **step ca provisioner add** <name> **--type**=SCEP [**--force-cn**] [**--challenge**=<challenge>]
 [**--capabilities**=<capabilities>] [**--include-root**] [**--exclude-intermediate**]
 [**--min-public-key-length**=<length>] [**--encryption-algorithm-identifier**=<id>]
-[**--scep-decrypter-certificate-file**=<file>] [**--scep-decrypter-key-file**=<file>] 
+[**--scep-decrypter-certificate-file**=<file>] [**--scep-decrypter-key-file**=<file>]
 [**--scep-decrypter-key-uri**=<uri>] [**--scep-decrypter-key-password-file**=<file>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>] 
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
 		Flags: []cli.Flag{
@@ -449,7 +449,7 @@ func createJWKDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		password string
 	)
 
-	if passwordFile := ctx.String("password-file"); len(passwordFile) > 0 {
+	if passwordFile := ctx.String("password-file"); passwordFile != "" {
 		password, err = utils.ReadStringPasswordFromFile(passwordFile)
 		if err != nil {
 			return nil, err

@@ -227,7 +227,7 @@ func getTruststoreOptions(ctx *cli.Context) ([]truststore.Option, error) {
 
 	prefix := ctx.String("prefix")
 	if prefix == "" {
-		if len(cert.Subject.CommonName) > 0 {
+		if cert.Subject.CommonName != "" {
 			prefix = cert.Subject.CommonName + " "
 		} else {
 			prefix = "Smallstep Development CA "

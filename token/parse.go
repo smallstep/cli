@@ -72,7 +72,7 @@ func (p Payload) Type() Type {
 		return Azure
 	case p.Issuer == "kubernetes/serviceaccount":
 		return K8sSA
-	case len(p.SHA) > 0 || len(p.SANs) > 0:
+	case p.SHA != "" || len(p.SANs) > 0:
 		return JWK
 	case len(p.Audience) > 0 && p.Issuer != "" && p.Subject != "" && !p.Expiry.Time().IsZero() && !p.IssuedAt.Time().IsZero():
 		return OIDC

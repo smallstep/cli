@@ -41,7 +41,7 @@ func phcParamsToMap(s string) map[string]string {
 // phcEncode creates a string using the PHC format.
 func phcEncode(identifier, params string, salt, hash []byte) string {
 	ret := "$" + identifier
-	if len(params) > 0 {
+	if params != "" {
 		ret += "$" + params
 	}
 	if len(salt) > 0 {

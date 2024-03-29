@@ -257,7 +257,7 @@ func (r *tlsRenewer) Reload() error {
 		ClientCAs:  clientCAs,
 		ClientAuth: clientAuth,
 		MinVersion: tls.VersionTLS12,
-		GetCertificate: func(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
+		GetCertificate: func(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
 			return &cert, nil
 		},
 	}
