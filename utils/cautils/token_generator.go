@@ -130,6 +130,11 @@ func generateOIDCToken(ctx *cli.Context, p *provisioner.OIDC) (string, error) {
 	if p.ListenAddress != "" && os.Getenv("STEP_LISTEN") == "" {
 		args = append(args, "--listen", p.ListenAddress)
 	}
+	if len(p.Scopes) != 0 {
+		for _, scope := range p.Scopes {
+			args = append(args, "--scope", scope)
+		}
+	}
 	out, err := exec.Step(args...)
 	if err != nil {
 		return "", fmt.Errorf(`error generating OIDC token: exec "step oauth" failed`)
