@@ -124,7 +124,13 @@ func generateOIDCToken(ctx *cli.Context, p *provisioner.OIDC) (string, error) {
 	args := []string{"oauth", "--oidc", "--bare",
 		"--provider", p.ConfigurationEndpoint,
 		"--client-id", p.ClientID, "--client-secret", p.ClientSecret}
-	if len(p.AuthParams) > 0 {
+	if len(p.Scopes) != 0 {
+		for _, keyval := range p.Scopes {
+			args = append(args, "--scope")
+			args = append(args, keyval)
+		}
+	}
+	if len(p.AuthParams) != 0 {
 		for _, keyval := range p.AuthParams {
 			args = append(args, "--auth-param")
 			args = append(args, keyval)
