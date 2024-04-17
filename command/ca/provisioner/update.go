@@ -51,6 +51,8 @@ OIDC
 [**--domain**=<domain>] [**--remove-domain**=<domain>]
 [**--group**=<group>] [**--remove-group**=<group>]
 [**--admin**=<email>]... [**--remove-admin**=<email>]...
+[**--scope**=<scope>] [**--remove-scope**=<scope>]
+[**--auth-param**=<auth-param>] [**--remove-auth-param**=<auth-param>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -112,6 +114,8 @@ SCEP
 			oidcRemoveDomainFlag,
 			oidcGroupFlag,
 			oidcTenantIDFlag,
+			oidcScopeFlag,
+			oidcAuthParamFlag,
 
 			// X5C Root Flag
 			x5cRootsFlag,
@@ -790,6 +794,18 @@ func updateOIDCDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 			return errs.InvalidFlagValue(ctx, "configuration-endpoint", ce, "")
 		}
 		details.ConfigurationEndpoint = ce
+	}
+	if ctx.IsSet("remove-scope") {
+		details.Scopes = removeElements(details.Scopes, ctx.StringSlice("remove-scope"))
+	}
+	if ctx.IsSet("scope") {
+		details.Scopes = append(details.Scopes, ctx.StringSlice("scope")...)
+	}
+	if ctx.IsSet("remove-auth-param") {
+		details.AuthParams = removeElements(details.AuthParams, ctx.StringSlice("remove-auth-param"))
+	}
+	if ctx.IsSet("auth-param") {
+		details.AuthParams = append(details.AuthParams, ctx.StringSlice("auth-param")...)
 	}
 	return nil
 }
