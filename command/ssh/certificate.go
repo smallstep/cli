@@ -41,7 +41,8 @@ func certificateCommand() cli.Command {
 [**--not-after**=<time|duration>] [**--token**=<token>] [**--issuer**=<name>]
 [**--no-password**] [**--insecure**] [**--force**] [**--x5c-cert**=<file>]
 [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>] [**--no-agent**]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
+[**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>]`,
 
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
@@ -150,7 +151,20 @@ $ step ssh certificate --principal max --principal mariano --sign \
 Generate a new key pair and a certificate using a given token:
 '''
 $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
+'''
+
+Create an EC pair with curve P-521 and certificate:
+
+'''
+$  step ssh certificate --kty EC --curve "P-521" mariano@work id_ecdsa
+'''
+
+Create an Octet Key Pair with curve Ed25519 and certificate:
+
+'''
+$  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 '''`,
+
 		Flags: []cli.Flag{
 			flags.Force,
 			flags.Insecure,
@@ -185,6 +199,9 @@ $ step ssh certificate --token $TOKEN mariano@work id_ecdsa
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
+			flags.KTY,
+			flags.Curve,
+			flags.Size,
 		},
 	}
 }
@@ -219,6 +236,11 @@ func certificateAction(ctx *cli.Context) error {
 		return err
 	}
 	templateData, err := flags.ParseTemplateData(ctx)
+	if err != nil {
+		return err
+	}
+
+	kty, curve, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty", "curve", "size")
 	if err != nil {
 		return err
 	}
@@ -374,7 +396,7 @@ func certificateAction(ctx *cli.Context) error {
 		}
 	} else {
 		// Generate keypair
-		pub, priv, err = keyutil.GenerateDefaultKeyPair()
+		pub, priv, err = keyutil.GenerateKeyPair(kty, curve, size)
 		if err != nil {
 			return err
 		}
@@ -389,7 +411,7 @@ func certificateAction(ctx *cli.Context) error {
 	var sshAuPubBytes []byte
 	var auPub, auPriv interface{}
 	if isAddUser {
-		auPub, auPriv, err = keyutil.GenerateDefaultKeyPair()
+		auPub, auPriv, err = keyutil.GenerateKeyPair(kty, curve, size)
 		if err != nil {
 			return err
 		}
