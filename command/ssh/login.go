@@ -29,7 +29,8 @@ func loginCommand() cli.Command {
 [**--principal**=<string>] [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--set**=<key=value>] [**--set-file**=<file>] [**--force**]
 [**--offline**] [**--ca-config**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
+[**--comment**=<comment>]`,
 		Description: `**step ssh login** generates a new SSH key pair and send a request to [step
 certificates](https://github.com/smallstep/certificates) to sign a user
 certificate. This certificate will be automatically added to the SSH agent.
@@ -64,6 +65,11 @@ $ step ssh login --not-after 1h alice
 Request a new SSH certificate with multiple principals:
 '''
 $ step ssh login --principal admin --principal bob bob@smallstep.com
+'''
+
+Request a new SSH certificate and set a custom comment in the agent
+'''
+$ step ssh login --comment my-custom-comment bob@smallstep.com
 '''`,
 		Flags: []cli.Flag{
 			flags.Token,
@@ -82,6 +88,7 @@ $ step ssh login --principal admin --principal bob bob@smallstep.com
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
+			flags.Comment,
 		},
 	}
 }
@@ -100,6 +107,11 @@ func loginAction(ctx *cli.Context) error {
 	principals := ctx.StringSlice("principal")
 	if subject != "" && len(principals) == 0 {
 		principals = []string{subject}
+	}
+
+	comment := ctx.String("comment")
+	if comment == "" {
+		comment = subject
 	}
 
 	// Flags
@@ -140,7 +152,7 @@ func loginAction(ctx *cli.Context) error {
 		}
 
 		// Just return if key is present
-		if key, err := agent.GetKey(subject, opts...); err == nil {
+		if key, err := agent.GetKey(comment, opts...); err == nil {
 			ui.Printf("The key %s is already present in the SSH agent.\n", key.String())
 			return nil
 		}
@@ -248,7 +260,7 @@ func loginAction(ctx *cli.Context) error {
 	}
 
 	// Attempt to add key to agent if private key defined.
-	if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
+	if err := agent.AddCertificate(comment, resp.Certificate.Certificate, priv); err != nil {
 		ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 	} else {
 		ui.PrintSelected("SSH Agent", "yes")
@@ -256,7 +268,7 @@ func loginAction(ctx *cli.Context) error {
 	if isAddUser {
 		if resp.AddUserCertificate == nil {
 			ui.Printf(`{{ "%s" | red }} {{ "Add User Certificate:" | bold }} failed to create a provisioner certificate`+"\n", ui.IconBad)
-		} else if err := agent.AddCertificate(subject, resp.AddUserCertificate.Certificate, auPriv); err != nil {
+		} else if err := agent.AddCertificate(comment, resp.AddUserCertificate.Certificate, auPriv); err != nil {
 			ui.Printf(`{{ "%s" | red }} {{ "Add User Certificate:" | bold }} %v`+"\n", ui.IconBad, err)
 		} else {
 			ui.PrintSelected("Add User Certificate", "yes")
