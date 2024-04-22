@@ -310,20 +310,18 @@ func inspectCertificateRequest(ctx *cli.Context, csr *x509.CertificateRequest, w
 				return err
 			}
 		}
-		fmt.Print(text)
+		fmt.Fprint(w, text)
 		return nil
 	case "json":
 		zcsr, err := zx509.ParseCertificateRequest(csr.Raw)
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		b, err := json.MarshalIndent(struct {
-			*zx509.CertificateRequest
-		}{zcsr}, "", "  ")
-		if err != nil {
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(zcsr); err != nil {
 			return errors.WithStack(err)
 		}
-		os.Stdout.Write(b)
 		return nil
 	case "pem":
 		err := pem.Encode(w, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csr.Raw})
