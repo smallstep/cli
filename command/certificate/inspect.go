@@ -223,7 +223,7 @@ func inspectAction(ctx *cli.Context) error {
 			if err != nil {
 				return errors.Errorf("file %s does not contain any valid CERTIFICATE or CERTIFICATE REQUEST blocks", crtFile)
 			}
-			return inspectCertificateRequest(ctx, csr)
+			return inspectCertificateRequest(ctx, csr, os.Stdout)
 		case err != nil:
 			return err
 		default:
@@ -293,7 +293,7 @@ func inspectCertificates(ctx *cli.Context, crts []*x509.Certificate, w io.Writer
 	}
 }
 
-func inspectCertificateRequest(ctx *cli.Context, csr *x509.CertificateRequest) error {
+func inspectCertificateRequest(ctx *cli.Context, csr *x509.CertificateRequest, w io.Writer) error {
 	var err error
 	format, short := ctx.String("format"), ctx.Bool("short")
 	switch format {
@@ -324,6 +324,12 @@ func inspectCertificateRequest(ctx *cli.Context, csr *x509.CertificateRequest) e
 			return errors.WithStack(err)
 		}
 		os.Stdout.Write(b)
+		return nil
+	case "pem":
+		err := pem.Encode(w, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csr.Raw})
+		if err != nil {
+			return errors.WithStack(err)
+		}
 		return nil
 	default:
 		return errs.InvalidFlagValue(ctx, "format", format, "text, json")

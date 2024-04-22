@@ -26,6 +26,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [unreleased] - aaaa-bb-cc
+
+### Added
+
+- Ability to output inspected CSR in PEM format (smallstep/cli#1153)
+
+### Fixed
+
+- Allow 'certificate inspect' to parse PEM files containig extraneous data (smallstep/cli#1153)
+
+
 ## [v0.26.0] - 2024-03-27
 
 ### Added
