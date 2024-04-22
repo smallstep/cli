@@ -329,16 +329,3 @@ func inspectCertificateRequest(ctx *cli.Context, csr *x509.CertificateRequest) e
 		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
 	}
 }
-
-// derToPemBlock attempts to parse the ASN.1 data as a certificate or a
-// certificate request, returning a pem.Block of the one that succeeds. Returns
-// nil if it cannot parse the data.
-func derToPemBlock(b []byte) *pem.Block {
-	if _, err := x509.ParseCertificate(b); err == nil {
-		return &pem.Block{Type: "CERTIFICATE", Bytes: b}
-	}
-	if _, err := x509.ParseCertificateRequest(b); err == nil {
-		return &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: b}
-	}
-	return nil
-}
