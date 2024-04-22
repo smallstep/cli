@@ -215,9 +215,10 @@ func inspectAction(ctx *cli.Context) error {
 		}
 		return inspectCertificates(ctx, peerCertificates, os.Stdout)
 	default: // is not URL
+		var pemError *pemutil.InvalidPEMError
 		crts, err := pemutil.ReadCertificateBundle(crtFile)
 		switch {
-		case errors.As(err, &pemutil.ErrNoValidPEMCert):
+		case errors.As(err, &pemError) && pemError.Type == pemutil.PEMTypeCertificate:
 			csr, err := pemutil.ReadCertificateRequest(crtFile)
 			if err != nil {
 				return errors.Errorf("file %s does not contain any valid CERTIFICATE or CERTIFICATE REQUEST blocks", crtFile)

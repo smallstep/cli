@@ -3,12 +3,12 @@ package certificate
 import (
 	"bytes"
 	"encoding/json"
-	"encoding/pem"
 	"flag"
 	"testing"
 
 	"github.com/smallstep/assert"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/pemutil"
 )
 
 var pemData = []byte(`-----BEGIN CERTIFICATE-----
@@ -39,9 +39,8 @@ func TestInspectCertificates(t *testing.T) {
 	_ = set.String("format", "", "")
 	ctx := cli.NewContext(app, set, nil)
 
-	var blocks []*pem.Block
-	block, _ := pem.Decode(pemData)
-	blocks = append(blocks, block)
+	certs, err := pemutil.ParseCertificateBundle(pemData)
+	assert.FatalError(t, err)
 
 	type testCase struct {
 		format string
@@ -72,7 +71,7 @@ func TestInspectCertificates(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			var buf bytes.Buffer
 			ctx.Set("format", tc.format)
-			err := inspectCertificates(ctx, blocks, &buf)
+			err := inspectCertificates(ctx, certs, &buf)
 			assert.NoError(t, err)
 			if err == nil {
 				tc.verify(&buf)
