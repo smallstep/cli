@@ -202,7 +202,7 @@ func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 		NotAfter:     req.NotAfter,
 		TemplateData: req.TemplateData,
 	}
-	certChain, err := c.authority.Sign(req.CsrPEM.CertificateRequest, signOpts, opts...)
+	certChain, err := c.authority.SignWithContext(ctx, req.CsrPEM.CertificateRequest, signOpts, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +285,7 @@ func (c *OfflineCA) Revoke(req *api.RevokeRequest, rt http.RoundTripper) (*api.R
 		ctx = provisioner.NewContextWithMethod(context.Background(), provisioner.RevokeMethod)
 		err error
 	)
-	if len(req.OTT) > 0 {
+	if req.OTT != "" {
 		opts.OTT = req.OTT
 		opts.MTLS = false
 		if _, err = c.authority.Authorize(ctx, opts.OTT); err != nil {

@@ -64,7 +64,7 @@ func (t *TokenGenerator) Token(sub string, opts ...token.Options) (string, error
 		token.WithIssuer(t.iss),
 		token.WithAudience(t.aud),
 	}
-	if len(t.root) > 0 {
+	if t.root != "" {
 		tokOptions = append(tokOptions, token.WithRootCA(t.root))
 	}
 
@@ -396,7 +396,7 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 		switch {
 		case p != nil:
 			kid = p.Key.KeyID
-		case len(tokAttrs.kid) > 0:
+		case tokAttrs.kid != "":
 			kid = tokAttrs.kid
 		default:
 			if kid, err = jose.Thumbprint(jwk); err != nil {

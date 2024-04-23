@@ -162,7 +162,7 @@ jobs:
           token: ${{ secrets.DOCS_PAT }}
           path: './docs'
       - name: Setup bot SSH signing key
-        uses: webfactory/ssh-agent@v0.8.0
+        uses: webfactory/ssh-agent@v0.9.0
         env:
           HAS_SSH_PRIVATE_KEY: ${{ secrets.STEP_TRAVIS_CI_GH_PRIVATE_SIGNING_KEY != '' }}
         if: ${{ env.HAS_SSH_PRIVATE_KEY == 'true' }}

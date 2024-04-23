@@ -135,7 +135,7 @@ signs:
 - cmd: cosign
   signature: "${artifact}.sig"
   certificate: "${artifact}.pem"
-  args: ["sign-blob", "--oidc-issuer=https://token.actions.githubusercontent.com", "--output-certificate=${certificate}", "--output-signature=${signature}", "${artifact}"]
+  args: ["sign-blob", "--oidc-issuer=https://token.actions.githubusercontent.com", "--output-certificate=${certificate}", "--output-signature=${signature}", "${artifact}", "--yes"]
   artifacts: all
 
 snapshot:
@@ -174,11 +174,20 @@ release:
   header: |
     ## Official Release Artifacts
 
+    Below are the most popular artifacts for `step` on each platform.
+
+    For packaged versions (Homebrew, Scoop, etc.), see our [installation docs](https://smallstep.com/docs/step-cli/installation).
+
     #### Linux
 
     - 📦 [step_linux_{{ .Version }}_amd64.tar.gz](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step_linux_{{ .Version }}_amd64.tar.gz)
+    - 📦 [step_linux_{{ .Version }}_arm64.tar.gz](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step_linux_{{ .Version }}_arm64.tar.gz)
+    - 📦 [step_linux_{{ .Version }}_armv7.tar.gz](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step_linux_{{ .Version }}_armv7.tar.gz)
     - 📦 [step-cli_{{ .Version }}_amd64.deb](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_amd64.deb)
     - 📦 [step-cli_{{ .Version }}_amd64.rpm](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_amd64.rpm)
+    - 📦 [step-cli_{{ .Version }}_arm64.deb](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_arm64.deb)
+    - 📦 [step-cli_{{ .Version }}_arm64.rpm](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ .Version }}_arm64.rpm)
+    - see `Assets` below for more builds
 
     #### macOS Darwin
 
@@ -188,12 +197,8 @@ release:
     #### Windows
 
     - 📦 [step_windows_{{ .Version }}_amd64.zip](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step_windows_{{ .Version }}_amd64.zip)
+    - 📦 [step_windows_{{ .Version }}_arm64.zip](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step_windows_{{ .Version }}_arm64.zip)
 
-    For more builds across platforms and architectures see the `Assets` section below.
-    And for packaged versions (Homebrew, Scoop, etc.), see our [installation docs](https://smallstep.com/docs/step-cli/installation).
-
-
-    Don't see the artifact you need? Open an issue [here](https://github.com/smallstep/cli/issues/new/choose).
 
     ## Signatures and Checksums
 
@@ -219,7 +224,7 @@ release:
 
     Those were the changes on {{ .Tag }}!
 
-    Come join us on [Discord](https://discord.gg/X2RKGwEbV9) to ask questions, chat about PKI, or get a sneak peak at the freshest PKI memes.
+    Come join us on [Discord](https://discord.gg/X2RKGwEbV9) to ask questions, chat about PKI, or get a sneak peek at the freshest PKI memes.
 
   # You can disable this pipe in order to not upload any artifacts.
   # Defaults to false.
@@ -235,7 +240,7 @@ release:
   #  - glob: ./glob/foo/to/bar/file/foobar/override_from_previous
 
 winget:
-  - 
+  -
     # IDs of the archives to use.
     # Empty means all IDs.
     ids: [ default ]
@@ -305,7 +310,7 @@ winget:
     # Release notes URL.
     #
     # Templates: allowed
-    release_notes_url: "https://github.com/smallstep/cli/releases/tag/{{.Version}}"
+    release_notes_url: "https://github.com/smallstep/cli/releases/tag/{{ .Tag }}"
 
     # Create the PR - for testing
     skip_upload: auto
@@ -319,7 +324,7 @@ winget:
     repository:
       owner: smallstep
       name: winget-pkgs
-      branch: step
+      branch: "step-{{.Version}}"
 
       # Optionally a token can be provided, if it differs from the token
       # provided to GoReleaser

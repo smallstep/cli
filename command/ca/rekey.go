@@ -239,12 +239,12 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	}
 
 	var expiresIn, rekeyPeriod time.Duration
-	if s := ctx.String("expires-in"); len(s) > 0 {
+	if s := ctx.String("expires-in"); s != "" {
 		if expiresIn, err = time.ParseDuration(s); err != nil {
 			return errs.InvalidFlagValue(ctx, "expires-in", s, "")
 		}
 	}
-	if s := ctx.String("rekey-period"); len(s) > 0 {
+	if s := ctx.String("rekey-period"); s != "" {
 		if rekeyPeriod, err = time.ParseDuration(s); err != nil {
 			return errs.InvalidFlagValue(ctx, "rekey-period", s, "")
 		}
@@ -265,7 +265,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	}
 
 	pidFile := ctx.String("pid-file")
-	if len(pidFile) > 0 {
+	if pidFile != "" {
 		pidB, err := os.ReadFile(pidFile)
 		if err != nil {
 			return errs.FileError(err, pidFile)

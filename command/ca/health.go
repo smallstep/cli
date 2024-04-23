@@ -1,6 +1,7 @@
 package ca
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -73,11 +74,11 @@ func healthAction(ctx *cli.Context) error {
 	var options []ca.ClientOption
 	options = append(options, ca.WithRootFile(root))
 
-	client, err := ca.NewClient(caURL, options...)
+	caClient, err := ca.NewClient(caURL, options...)
 	if err != nil {
 		return err
 	}
-	r, err := client.Health()
+	r, err := caClient.HealthWithContext(context.Background())
 	if err != nil {
 		return err
 	}

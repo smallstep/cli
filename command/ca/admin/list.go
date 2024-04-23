@@ -97,7 +97,7 @@ func listAction(ctx *cli.Context) (err error) {
 		if isNotSuperAdmin && a.Type == linkedca.Admin_SUPER_ADMIN {
 			return false
 		}
-		if len(provName) > 0 && a.ProvisionerName != provName {
+		if provName != "" && a.ProvisionerName != provName {
 			return false
 		}
 		return true

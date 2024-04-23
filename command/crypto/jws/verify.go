@@ -121,10 +121,10 @@ func verifyAction(ctx *cli.Context) error {
 	// Add parse options
 	var options []jose.Option
 	options = append(options, jose.WithUse("sig"))
-	if len(alg) > 0 {
+	if alg != "" {
 		options = append(options, jose.WithAlg(alg))
 	}
-	if len(kid) > 0 {
+	if kid != "" {
 		options = append(options, jose.WithKid(kid))
 	}
 	if !ctx.Bool("insecure") {

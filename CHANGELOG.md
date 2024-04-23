@@ -26,6 +26,36 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [unreleased] - aaaa-bb-cc
+
+### Added
+
+- Ability to output inspected CSR in PEM format (smallstep/cli#1153)
+
+### Fixed
+
+- Allow 'certificate inspect' to parse PEM files containig extraneous data (smallstep/cli#1153)
+
+
+## [v0.26.0] - 2024-03-27
+
+### Added
+
+- Sending of (an automatically generated) request identifier in the X-Request-Id header (smallstep/cli#1120)
+
+### Changed
+
+- Upgrade certinfo (smallstep/cli#1129)
+- Upgrade other dependencies
+
+### Fixed
+
+- OIDC flows failing using Chrome and other Chromium based browsers (smallstep/cli#1136)
+
+### Security
+
+- Upgrade to using cosign v2 for signing artifacts
+
 ## [v0.25.2] - 2024-01-19
 
 ### Added

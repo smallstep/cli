@@ -297,8 +297,8 @@ func ParseCRL(b []byte) (*CRL, error) {
 		return nil, errors.Wrap(err, "error parsing crl")
 	}
 
-	certs := make([]RevokedCertificate, len(crl.RevokedCertificates))
-	for i, c := range crl.RevokedCertificates {
+	certs := make([]RevokedCertificate, len(crl.RevokedCertificateEntries))
+	for i, c := range crl.RevokedCertificateEntries {
 		certs[i] = newRevokedCertificate(c)
 	}
 
@@ -387,7 +387,7 @@ func printCRL(crl *CRL) {
 	fmt.Println("Certificate Revocation List (CRL):")
 	fmt.Println("    Data:")
 	fmt.Printf("        Valid: %v\n", crl.Signature.Valid)
-	if len(crl.Signature.Reason) > 0 {
+	if crl.Signature.Reason != "" {
 		fmt.Printf("        Reason: %s\n", crl.Signature.Reason)
 	}
 	fmt.Printf("        Version: %d (0x%x)\n", crl.Version, crl.Version.Add(crl.Version, big.NewInt(-1)))
@@ -493,7 +493,7 @@ type RevokedCertificate struct {
 	SerialNumberBytes []byte      `json:"-"`
 }
 
-func newRevokedCertificate(c pkix.RevokedCertificate) RevokedCertificate {
+func newRevokedCertificate(c x509.RevocationListEntry) RevokedCertificate {
 	var extensions []Extension
 
 	return RevokedCertificate{

@@ -43,7 +43,7 @@ func revokeCertificateCommand() cli.Command {
 		Usage:  "revoke a certificate",
 		UsageText: `**step ca revoke** <serial-number>
 [**--cert**=<file>] [**--key**=<file>] [**--token**=<ott>]
-[**--reason**=<string>] [**--reasonCode**=<code>] [**-offline**]
+[**--reason**=<string>] [**--reasonCode**=<code>] [**--offline**]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `
 **step ca revoke** command revokes a certificate with the given serial
@@ -231,7 +231,7 @@ func revokeCertificateAction(ctx *cli.Context) error {
 
 	// If cert and key are passed then infer the serial number and certificate
 	// that should be revoked.
-	if len(certFile) > 0 || len(keyFile) > 0 {
+	if certFile != "" || keyFile != "" {
 		// Must be using cert/key flags for mTLS revoke so should be 0 cmd line args.
 		if ctx.NArg() > 0 {
 			return errors.Errorf("'%s %s --cert <certificate> --key <key>' expects no additional positional arguments", ctx.App.Name, ctx.Command.Name)
@@ -242,10 +242,10 @@ func revokeCertificateAction(ctx *cli.Context) error {
 		if keyFile == "" {
 			return errs.RequiredWithFlag(ctx, "cert", "key")
 		}
-		if len(token) > 0 {
+		if token != "" {
 			errs.IncompatibleFlagWithFlag(ctx, "cert", "token")
 		}
-		if len(serial) > 0 {
+		if serial != "" {
 			errs.IncompatibleFlagWithFlag(ctx, "cert", "serial")
 		}
 		var cert []*x509.Certificate
@@ -306,7 +306,7 @@ func newRevokeFlow(ctx *cli.Context, certFile, keyFile string) (*revokeFlow, err
 		if err != nil {
 			return nil, err
 		}
-		if len(certFile) > 0 || len(keyFile) > 0 {
+		if certFile != "" || keyFile != "" {
 			if err := offlineClient.VerifyClientCert(certFile, keyFile); err != nil {
 				return nil, err
 			}
@@ -332,7 +332,7 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.
 	rootFile := ctx.String("root")
 	var options []ca.ClientOption
 
-	if len(token) > 0 {
+	if token != "" {
 		tok, err := jose.ParseSigned(token)
 		if err != nil {
 			return nil, errors.Wrap(err, "error parsing flag '--token'")
@@ -346,7 +346,7 @@ func (f *revokeFlow) getClient(ctx *cli.Context, serial, token string) (cautils.
 		}
 
 		// Prepare client for bootstrap or provisioning tokens
-		if len(claims.SHA) > 0 && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
+		if claims.SHA != "" && len(claims.Audience) > 0 && strings.HasPrefix(strings.ToLower(claims.Audience[0]), "http") {
 			if caURL == "" {
 				caURL = claims.Audience[0]
 			}
