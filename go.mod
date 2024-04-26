@@ -150,5 +150,3 @@ require (
 	howett.net/plist v1.0.0 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
 )
-
-replace go.step.sm/crypto => ./../crypto3
