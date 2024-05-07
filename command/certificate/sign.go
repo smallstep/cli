@@ -449,16 +449,7 @@ func createTemplateData(cr *x509.CertificateRequest, maxPathLen int, omitCNSAN b
 	}
 
 	if !omitCNSAN && len(sans) == 0 {
-		cnInSANs := false
-		for _, v := range sans {
-			if v == cr.Subject.CommonName {
-				cnInSANs = true
-				break
-			}
-		}
-		if !cnInSANs {
-			sans = append(sans, cr.Subject.CommonName)
-		}
+		sans = append(sans, cr.Subject.CommonName)
 	}
 
 	data := x509util.NewTemplateData()
