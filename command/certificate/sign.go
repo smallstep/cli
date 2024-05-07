@@ -37,7 +37,7 @@ func signCommand() cli.Command {
 		Action: cli.ActionFunc(signAction),
 		Usage:  "sign a certificate signing request (CSR)",
 		UsageText: `**step certificate sign** <csr-file> <crt-file> <key-file>
-[**--profile**=<profile>] [**--template**=<file>] 
+[**--profile**=<profile>] [**--template**=<file>]
 [**--set**=<key=value>] [**--set-file**=<file>]
 [**--password-file**=<file>] [**--path-len**=<maximum>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
@@ -433,6 +433,10 @@ func createTemplateData(cr *x509.CertificateRequest, maxPathLen int) x509util.Te
 	}
 	for _, v := range cr.URIs {
 		sans = append(sans, v.String())
+	}
+
+	if cr.Subject.CommonName != "" && len(sans) == 0 {
+		sans = append(sans, cr.Subject.CommonName)
 	}
 
 	data := x509util.NewTemplateData()
