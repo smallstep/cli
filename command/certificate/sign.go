@@ -38,7 +38,7 @@ func signCommand() cli.Command {
 		Usage:  "sign a certificate signing request (CSR)",
 		UsageText: `**step certificate sign** <csr-file> <crt-file> <key-file>
 [**--profile**=<profile>] [**--template**=<file>]
-[**--set**=<key=value>] [**--set-file**=<file>]
+[**--set**=<key=value>] [**--set-file**=<file>] [**--add-cn-san**]
 [**--password-file**=<file>] [**--path-len**=<maximum>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--bundle**]`,
@@ -77,6 +77,11 @@ $ step certificate sign --bundle leaf.csr issuer.crt issuer.key
 Sign a CSR with custom validity and bundle the new certificate with the issuer:
 '''
 $ step certificate sign --bundle --not-before -1m --not-after 16h leaf.csr issuer.crt issuer.key
+'''
+
+Sign a CSR but do not add the Common Name to the SANs extension of the certificate:
+'''
+$ step certificate sign --add-cn-san=false leaf.csr issuer.crt issuer.key
 '''
 
 Sign an intermediate ca:
@@ -174,6 +179,12 @@ $ step certificate sign \
 			flags.Template,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
+			cli.BoolTFlag{
+				Name: "add-cn-san",
+				Usage: `Ensure that Common Name from CSR subject is added to Subject Alternative
+Name (SAN) extension of the certificate. This flag is enabled by default. To
+disable default behavior pass the flag as '--add-cn-san=false'.`,
+			},
 			flags.PasswordFile,
 			cli.StringFlag{
 				Name: "not-before",
@@ -327,7 +338,7 @@ func signAction(ctx *cli.Context) error {
 	}
 
 	// Create certificate template from csr.
-	data := createTemplateData(csr, maxPathLen)
+	data := createTemplateData(csr, maxPathLen, ctx.Bool("add-cn-san"))
 	data.SetUserData(userData)
 	tpl, err := x509util.NewCertificate(csr, x509util.WithTemplate(template, data))
 	if err != nil {
@@ -424,7 +435,7 @@ func validateIssuer(crt *x509.Certificate, profile string, maxPathLen int) error
 // createTemplateData create a new template data with subject and sans based on
 // the information in the certificate request, and the maxPathLen for
 // intermediate certificates.
-func createTemplateData(cr *x509.CertificateRequest, maxPathLen int) x509util.TemplateData {
+func createTemplateData(cr *x509.CertificateRequest, maxPathLen int, addCNSAN bool) x509util.TemplateData {
 	var sans []string
 	sans = append(sans, cr.DNSNames...)
 	sans = append(sans, cr.EmailAddresses...)
@@ -435,8 +446,17 @@ func createTemplateData(cr *x509.CertificateRequest, maxPathLen int) x509util.Te
 		sans = append(sans, v.String())
 	}
 
-	if cr.Subject.CommonName != "" && len(sans) == 0 {
-		sans = append(sans, cr.Subject.CommonName)
+	if addCNSAN {
+		cnInSANs := false
+		for _, v := range sans {
+			if v == cr.Subject.CommonName {
+				cnInSANs = true
+				break
+			}
+		}
+		if !cnInSANs {
+			sans = append(sans, cr.Subject.CommonName)
+		}
 	}
 
 	data := x509util.NewTemplateData()
