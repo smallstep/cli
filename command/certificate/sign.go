@@ -448,7 +448,7 @@ func createTemplateData(cr *x509.CertificateRequest, maxPathLen int, omitCNSAN b
 		sans = append(sans, v.String())
 	}
 
-	if !omitCNSAN && len(sans) == 0 {
+	if !omitCNSAN && len(sans) == 0 && cr.Subject.CommonName != "" {
 		sans = append(sans, cr.Subject.CommonName)
 	}
 
