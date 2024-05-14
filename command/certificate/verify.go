@@ -316,7 +316,7 @@ func verifyAction(ctx *cli.Context) error {
 		}
 
 		crlVerified := false
-		crlOut:
+	crlOut:
 		for _, endpoint := range endpoints {
 			respReceived, err := VerifyCRLEndpoint(endpoint, cert, issuer, httpClient, insecure)
 			switch {
@@ -349,7 +349,7 @@ func verifyAction(ctx *cli.Context) error {
 		}
 
 		ocspVerified := false
-		ocspOut:
+	ocspOut:
 		for _, endpoint := range endpoints {
 			respReceived, err := VerifyOCSPEndpoint(endpoint, cert, issuer, httpClient)
 			switch {
