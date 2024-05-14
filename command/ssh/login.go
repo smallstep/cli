@@ -10,6 +10,7 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sshutil"
+	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
@@ -27,10 +28,10 @@ func loginCommand() cli.Command {
 		UsageText: `**step ssh login** [<identity>]
 [**--token**=<token>] [**--provisioner**=<name>] [**--provisioner-password-file**=<file>]
 [**--principal**=<string>] [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
-[**--set**=<key=value>] [**--set-file**=<file>] [**--force**]
+[**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>] [**--comment**=<comment>]
+[**--set**=<key=value>] [**--set-file**=<file>] [**--force**] [**--insecure**]
 [**--offline**] [**--ca-config**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
-[**--comment**=<comment>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ssh login** generates a new SSH key pair and send a request to [step
 certificates](https://github.com/smallstep/certificates) to sign a user
 certificate. This certificate will be automatically added to the SSH agent.
@@ -70,6 +71,16 @@ $ step ssh login --principal admin --principal bob bob@smallstep.com
 Request a new SSH certificate and set a custom comment in the agent
 '''
 $ step ssh login --comment my-custom-comment bob@smallstep.com
+'''
+
+Request a new SSH certificate with an EC key and P-521 curve:
+'''
+$  step ssh certificate --kty EC --curve "P-521" mariano@work id_ecdsa
+'''
+
+Request a new SSH certificate with an Octet Key Pair and Ed25519 curve:
+'''
+$  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 '''`,
 		Flags: []cli.Flag{
 			flags.Token,
@@ -89,6 +100,10 @@ $ step ssh login --comment my-custom-comment bob@smallstep.com
 			flags.Root,
 			flags.Context,
 			flags.Comment,
+			flags.KTY,
+			flags.Curve,
+			flags.Size,
+			flags.Insecure,
 		},
 	}
 }
@@ -118,11 +133,17 @@ func loginAction(ctx *cli.Context) error {
 	token := ctx.String("token")
 	isAddUser := ctx.Bool("add-user")
 	force := ctx.Bool("force")
+	insecure := ctx.Bool("insecure")
 	validAfter, validBefore, err := flags.ParseTimeDuration(ctx)
 	if err != nil {
 		return err
 	}
 	templateData, err := flags.ParseTemplateData(ctx)
+	if err != nil {
+		return err
+	}
+
+	kty, curve, size, err := utils.GetKeyDetailsFromCLI(ctx, insecure, "kty", "curve", "size")
 	if err != nil {
 		return err
 	}
@@ -181,8 +202,7 @@ func loginAction(ctx *cli.Context) error {
 		return err
 	}
 
-	// Generate keypair
-	pub, priv, err := keyutil.GenerateDefaultKeyPair()
+	pub, priv, err := keyutil.GenerateKeyPair(kty, curve, size)
 	if err != nil {
 		return err
 	}
@@ -196,7 +216,7 @@ func loginAction(ctx *cli.Context) error {
 	var sshAuPubBytes []byte
 	var auPub, auPriv interface{}
 	if isAddUser {
-		auPub, auPriv, err = keyutil.GenerateDefaultKeyPair()
+		auPub, auPriv, err = keyutil.GenerateKeyPair(kty, curve, size)
 		if err != nil {
 			return err
 		}
