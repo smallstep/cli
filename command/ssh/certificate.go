@@ -37,12 +37,12 @@ func certificateCommand() cli.Command {
 		UsageText: `**step ssh certificate** <key-id> <key-file>
 [**--host**] [--**host-id**] [**--sign**] [**--principal**=<string>]
 [**--password-file**=<file>] [**--provisioner-password-file**=<file>]
-[**--add-user**] [**--not-before**=<time|duration>]
+[**--add-user**] [**--not-before**=<time|duration>] [**--comment**=<comment>]
 [**--not-after**=<time|duration>] [**--token**=<token>] [**--issuer**=<name>]
 [**--no-password**] [**--insecure**] [**--force**] [**--x5c-cert**=<file>]
 [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>] [**--no-agent**]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
-[**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>]`,
+[**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
@@ -184,6 +184,10 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 			sshPrivateKeyFlag,
 			sshProvisionerPasswordFlag,
 			sshSignFlag,
+                        flags.KTY,
+			flags.Curve,
+			flags.Size,
+                        flags.Comment,
 			flags.KMSUri,
 			flags.X5cCert,
 			flags.X5cKey,
@@ -199,9 +203,6 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			flags.KTY,
-			flags.Curve,
-			flags.Size,
 		},
 	}
 }
@@ -218,6 +219,11 @@ func certificateAction(ctx *cli.Context) error {
 	// SSH uses fixed suffixes for public keys and certificates
 	pubFile := baseName + ".pub"
 	crtFile := baseName + "-cert.pub"
+
+	comment := ctx.String("comment")
+	if comment == "" {
+		comment = subject
+	}
 
 	// Flags
 	token := ctx.String("token")
@@ -502,7 +508,7 @@ func certificateAction(ctx *cli.Context) error {
 			ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 		} else {
 			defer agent.Close()
-			if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
+			if err := agent.AddCertificate(comment, resp.Certificate.Certificate, priv); err != nil {
 				ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 			} else {
 				ui.PrintSelected("SSH Agent", "yes")
