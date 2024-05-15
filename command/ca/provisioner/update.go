@@ -33,6 +33,8 @@ func updateCommand() cli.Command {
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 ACME
 
@@ -42,6 +44,7 @@ ACME
 [**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>]
 
 OIDC
 
@@ -54,6 +57,8 @@ OIDC
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 X5C
 
@@ -61,6 +66,8 @@ X5C
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 K8SSA (Kubernetes Service Account)
 
@@ -68,6 +75,7 @@ K8SSA (Kubernetes Service Account)
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>]
 
 IID (AWS/GCP/Azure)
 
@@ -82,6 +90,8 @@ IID (AWS/GCP/Azure)
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 SCEP
 
@@ -92,7 +102,8 @@ SCEP
 [**--scep-decrypter-key-uri**=<uri>] [**--scep-decrypter-key-password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>]`,
 		Flags: []cli.Flag{
 			nameFlag,
 			pubKeyFlag,
