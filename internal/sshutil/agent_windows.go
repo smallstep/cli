@@ -4,6 +4,8 @@ import (
 	"context"
 	"net"
 	"os"
+	"bufio"
+	"regexp"
 
 	"github.com/Microsoft/go-winio"
 	"github.com/pkg/errors"
@@ -23,13 +25,33 @@ func dialAgent() (*Agent, error) {
 		}
 	}
 
-	// Windows OpenSSH agent
-	conn, err := winio.DialPipeContext(context.Background(), `\\.\\pipe\\openssh-ssh-agent`)
-	if err != nil {
+	homepath := os.Getenv("HOMEPATH")
+	sshagentfile := string(homepath) + "\\.ssh\\config"
+
+	pipename := "\\\\.\\pipe\\ssh-agent"
+
+	file, err := os.Open(sshagentfile);
+	if err == nil {
+		sc := bufio.NewScanner(file);
+		for sc.Scan() {
+			var line = sc.Text();
+			if len(line) > 15 {
+				compare := line[0:13]
+				if compare == "IdentityAgent" {
+					temp := line[14:len(line)]
+					re := regexp.MustCompile(`/`)
+					re2 := regexp.MustCompile(`[\s\"]*`)
+					pipename = re2.ReplaceAllString(re.ReplaceAllString(temp,"\\"),"")
+				}
+			}
+		}
+	}
+	if conn, err := winio.DialPipeContext(context.Background(), pipename); err == nil {
+		return &Agent{
+			ExtendedAgent: agent.NewClient(conn),
+			Conn:          conn,
+		},nil
+	} else {
 		return nil, errors.Wrap(err, "error connecting with ssh-agent")
 	}
-	return &Agent{
-		ExtendedAgent: agent.NewClient(conn),
-		Conn:          conn,
-	}, nil
 }
