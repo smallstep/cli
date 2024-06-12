@@ -462,6 +462,11 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 		Name:  "attestation-uri",
 		Usage: "The KMS <uri> used for attestation.",
 	}
+
+	Comment = cli.StringFlag{
+		Name:  "comment",
+		Usage: "The comment used when adding the certificate to an agent. Defaults to the subject if not provided.",
+	}
 )
 
 // FingerprintFormatFlag returns a flag for configuring the fingerprint format.
