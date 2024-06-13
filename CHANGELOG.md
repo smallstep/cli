@@ -26,7 +26,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
-## [unreleased] - aaaa-bb-cc
+## [0.26.2] - 2024-06-13
+
+### Added
+
+- Options for auth-params and scopes to OIDC token generator (smallstep/cli#1154)
+- --kty, --curve, and --size to ssh commands (login, certificate) (smallstep/cli#1156)
+- Stdin input for SSH needs-renewal (smallstep/cli#1157)
+- Allow users to define certificate comment in SSH agent (smallstep/cli#1158)
+- Add OCSP and CRL support to certificate verify (smallstep/cli#1161)
+
+
+## [0.26.1] - 2024-04-22
 
 ### Added
 
