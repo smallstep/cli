@@ -53,12 +53,12 @@ jobs:
           echo "DOCKER_TAGS_DEBIAN=${{ env.DOCKER_TAGS_DEBIAN }},${{ env.DOCKER_IMAGE }}:${DEBIAN_TAG}" >> "${GITHUB_ENV}"
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@69320dbe05506a9a39fc8ae11030b214ec2d1f87 # v2.0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          name: Release ${{ github.ref }}
           draft: false
           prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
@@ -107,9 +107,9 @@ jobs:
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version: 'stable'
           check-latest: true
@@ -129,7 +129,7 @@ jobs:
           cp ./output/binary/windows-amd64/bin/step ./.releases/step_latest_windows.exe
       - name: Upload s3
         id: upload-s3
-        uses: jakejarvis/s3-sync-action@v0.5.1
+        uses: jakejarvis/s3-sync-action@be0c4ab89158cac4278689ebedd8407dd5f35a83 # v0.5.1
         with:
           args: --acl public-read --follow-symlinks
         env:
@@ -146,9 +146,9 @@ jobs:
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version: 'stable'
           check-latest: true
@@ -156,13 +156,13 @@ jobs:
         id: build
         run: V=1 make build
       - name: Checkout Docs
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           repository: smallstep/docs
           token: ${{ secrets.DOCS_PAT }}
           path: './docs'
       - name: Setup bot SSH signing key
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387 # v0.9.0
         env:
           HAS_SSH_PRIVATE_KEY: ${{ secrets.STEP_TRAVIS_CI_GH_PRIVATE_SIGNING_KEY != '' }}
         if: ${{ env.HAS_SSH_PRIVATE_KEY == 'true' }}
@@ -207,7 +207,7 @@ jobs:
 
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
       - name: Push changes
-        uses: ad-m/github-push-action@v0.8.0
+        uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df # v0.8.0
         with:
           github_token: ${{ secrets.DOCS_PAT }}
           branch: 'main'
