@@ -605,6 +605,16 @@ Use the '--group' flag multiple times to configure multiple groups.`,
 		Name:  "tenant-id",
 		Usage: `The <tenant-id> used to replace the templatized tenantid value in the OpenID Configuration.`,
 	}
+	oidcScopeFlag = cli.StringSliceFlag{
+		Name: "scope",
+		Usage: `The <scope> list used to validate the scopes extension in an OpenID Connect token.
+Use the '--scope' flag multiple times to configure multiple scopes.`,
+	}
+	oidcAuthParamFlag = cli.StringSliceFlag{
+		Name: "auth-param",
+		Usage: `The <auth-param> list used to validate the auth-params extension in an OpenID Connect token.
+Use the '--auth-param' flag multiple times to configure multiple auth-params.`,
+	}
 
 	// X5C provisioner flags
 	x5cRootsFlag = cli.StringFlag{
