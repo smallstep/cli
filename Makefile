@@ -75,17 +75,17 @@ $(PREFIX)bin/$(BINNAME): download $(call rwildcard,*.go)
 #########################################
 
 test:
-	$Q $(CGO_OVERRIDE) $(GOFLAGS) go run gotest.tools/gotestsum@latest -- -coverprofile=coverage.out -short -covermode=atomic ./...
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) go run gotest.tools/gotestsum -- -coverprofile=coverage.out -short -covermode=atomic ./...
 
 race:
-	$Q $(CGO_OVERRIDE) $(GOFLAGS) go run gotest.tools/gotestsum@latest -- -race ./...
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) go run gotest.tools/gotestsum -- -race ./...
 
 .PHONY: test race
 
 integrate: integration
 
 integration: bin/$(BINNAME)
-	$Q $(CGO_OVERRIDE) go run gotest.tools/gotestsum@latest -- -tags=integration ./integration/...
+	$Q $(CGO_OVERRIDE) go run gotest.tools/gotestsum -- -tags=integration ./integration/...
 
 .PHONY: integrate integration
 
@@ -100,7 +100,7 @@ lint: golint govulncheck
 
 golint: SHELL:=/bin/bash
 golint:
-	$Q LOG_LEVEL=error go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run --config <(curl -s https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml) --timeout=30m
+	$Q LOG_LEVEL=error go run github.com/golangci/golangci-lint/cmd/golangci-lint run --config <(curl -s https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml) --timeout=30m
 
 govulncheck:
 	$Q go run golang.org/x/vuln/cmd/govulncheck@latest ./...
