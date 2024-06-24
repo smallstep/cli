@@ -46,19 +46,6 @@ OUTPUT_ROOT=output/
 .PHONY: all
 
 #########################################
-# Bootstrapping
-#########################################
-
-bootstra%:
-	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin latest
-	$Q go install golang.org/x/vuln/cmd/govulncheck@latest
-	$Q go install gotest.tools/gotestsum@latest
-	$Q go install golang.org/x/tools/cmd/goimports@latest
-	$Q go install github.com/goreleaser/goreleaser@latest
-
-.PHONY: bootstra%
-
-#########################################
 # Build
 #########################################
 
@@ -88,17 +75,17 @@ $(PREFIX)bin/$(BINNAME): download $(call rwildcard,*.go)
 #########################################
 
 test:
-	$Q $(CGO_OVERRIDE) $(GOFLAGS) gotestsum -- -coverprofile=coverage.out -short -covermode=atomic ./...
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) go run gotest.tools/gotestsum -- -coverprofile=coverage.out -short -covermode=atomic ./...
 
 race:
-	$Q $(CGO_OVERRIDE) $(GOFLAGS) gotestsum -- -race ./...
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) go run gotest.tools/gotestsum -- -race ./...
 
 .PHONY: test race
 
 integrate: integration
 
 integration: bin/$(BINNAME)
-	$Q $(CGO_OVERRIDE) gotestsum -- -tags=integration ./integration/...
+	$Q $(CGO_OVERRIDE) go run gotest.tools/gotestsum -- -tags=integration ./integration/...
 
 .PHONY: integrate integration
 
@@ -107,16 +94,16 @@ integration: bin/$(BINNAME)
 #########################################
 
 fmt:
-	$Q goimports -local github.com/golangci/golangci-lint -l -w $(SRC)
+	$Q go run golang.org/x/tools/cmd/goimports -local github.com/golangci/golangci-lint -l -w $(SRC)
 
 lint: golint govulncheck
 
 golint: SHELL:=/bin/bash
 golint:
-	$Q LOG_LEVEL=error golangci-lint run --config <(curl -s https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml) --timeout=30m
+	$Q LOG_LEVEL=error go run github.com/golangci/golangci-lint/cmd/golangci-lint run --config <(curl -s https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml) --timeout=30m
 
 govulncheck:
-	$Q govulncheck ./...
+	$Q go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
 .PHONY: fmt lint golint govulncheck
 
