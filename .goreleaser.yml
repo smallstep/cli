@@ -1,5 +1,5 @@
-# This is an example .goreleaser.yml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
+# Documentation: https://goreleaser.com/customization/
+version: 2
 project_name: step
 
 before:
