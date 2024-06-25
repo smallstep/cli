@@ -213,7 +213,10 @@ func inspectAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		return inspectCertificates(ctx, peerCertificates, os.Stdout)
+		if bundle {
+			return inspectCertificates(ctx, peerCertificates, os.Stdout)
+		}
+		return inspectCertificates(ctx, peerCertificates[:1], os.Stdout)
 	default: // is not URL
 		var pemError *pemutil.InvalidPEMError
 		crts, err := pemutil.ReadCertificateBundle(crtFile)
