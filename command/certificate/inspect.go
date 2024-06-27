@@ -202,7 +202,7 @@ func inspectAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "format", format, "text, json, pem")
 	}
 	if short && (format == "json" || format == "pem") {
-		return errs.IncompatibleFlagWithFlag(ctx, "short", "format json")
+		return errs.IncompatibleFlagWithFlag(ctx, "short", "format "+format)
 	}
 
 	switch addr, isURL, err := trimURL(crtFile); {
