@@ -1,6 +1,7 @@
 module github.com/smallstep/cli
 
 go 1.21
+toolchain go1.22.3
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
@@ -14,7 +15,7 @@ require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.4.0
-	github.com/slackhq/nebula v1.8.2
+	github.com/slackhq/nebula v1.9.3
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.26.2
 	github.com/smallstep/certinfo v1.12.2
