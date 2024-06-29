@@ -108,7 +108,11 @@ func Completion(ctx *cli.Context) error {
 	case "zsh":
 		fmt.Print(zsh)
 	case "fish":
-		fmt.Print(ctx.App.ToFishCompletion())
+		fish, err := ctx.App.ToFishCompletion()
+		if err != nil {
+			return fmt.Errorf("error creating fish completion: %w", err)
+		}
+		fmt.Print(fish)
 	default:
 		return errors.Errorf("unsupported shell %s", shell)
 	}
