@@ -127,7 +127,8 @@ govulncheck:
 INSTALL_PREFIX?=/usr/
 
 install: $(PREFIX)bin/$(BINNAME)
-	$Q install -D $(PREFIX)bin/$(BINNAME) $(DESTDIR)$(INSTALL_PREFIX)bin/$(BINNAME)
+	$Q mkdir -p $(INSTALL_PREFIX)bin/
+	$Q install $(PREFIX)bin/$(BINNAME) $(DESTDIR)$(INSTALL_PREFIX)bin/$(BINNAME)
 
 uninstall:
 	$Q rm -f $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BINNAME)
