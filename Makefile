@@ -124,7 +124,7 @@ govulncheck:
 # Install
 #########################################
 
-INSTALL_PREFIX?=/usr/
+INSTALL_PREFIX?=/usr/local/
 
 install: $(PREFIX)bin/$(BINNAME)
 	$Q mkdir -p $(INSTALL_PREFIX)bin/
