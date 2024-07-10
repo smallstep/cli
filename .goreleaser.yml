@@ -9,10 +9,17 @@ before:
     # - go generate ./...
 
 builds:
-  -
-    id: default
+  - &COMMON
     env:
       - CGO_ENABLED=0
+    main: ./cmd/step/main.go
+    flags:
+      - -trimpath
+    ldflags:
+      - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
+  -
+    << : *COMMON
+    id: default
     targets:
       - darwin_amd64
       - darwin_arm64
@@ -28,31 +35,44 @@ builds:
       - linux_ppc64le
       - windows_amd64
       - windows_arm64
-    flags:
-      - -trimpath
-    main: ./cmd/step/main.go
     binary: bin/step
     ldflags:
       - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
+  -
+    # This build is for S3 binaries that follow our naming convention there.
+    << : *COMMON
+    id: s3-versioned
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+    binary: 'step_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+  -
+    # This build is for S3 unversioned binaries that follow our naming convention there.
+    << : *COMMON
+    id: s3-unversioned
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+    binary: 'step_latest_{{ .Os }}_{{ .Arch }}'
   -
     # This build is specifically for nFPM targets (.deb and .rpm files).
     # It's exactly the same as the default build above, except:
     # - it only builds the archs we want to produce .deb and .rpm files for
     # - the name of the output binary is step-cli
+    << : *COMMON
     id: nfpm
-    env:
-      - CGO_ENABLED=0
     goos:
       - linux
     goarch:
       - amd64
       - arm64
-    flags:
-      - -trimpath
-    main: ./cmd/step/main.go
     binary: step-cli
-    ldflags:
-      - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
 
 archives:
   - &ARCHIVE
@@ -238,6 +258,18 @@ release:
     - glob: ./.releases/*
   #  - glob: ./glob/**/to/**/file/**/*
   #  - glob: ./glob/foo/to/bar/file/foobar/override_from_previous
+
+blobs:
+  -
+    provider: s3
+    region: us-east-1
+    bucket: '{{ .Env.AWS_S3_BUCKET }}'
+    ids:
+      - s3-versioned
+      - s3-unversioned
+    acl: public-read
+    disable: '{{ neq .Prerelease "" }}'
+
 
 winget:
   -
