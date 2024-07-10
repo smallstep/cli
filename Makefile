@@ -15,9 +15,10 @@ SRC=$(shell find . -type f -name '*.go')
 GOOS_OVERRIDE ?=
 CGO_OVERRIDE ?= CGO_ENABLED=0
 OUTPUT_ROOT=output/
-BUILDID?=default
+
+GORELEASER_BUILD_ID?=default
 ifdef DEBUG
-	BUILDID=debug
+	GORELEASER_BUILD_ID=debug
 endif
 
 
@@ -46,7 +47,7 @@ build: $(PREFIX)bin/step
 $(PREFIX)bin/step:
 	$Q mkdir -p $(@D)
 	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) goreleaser build \
-		--id $(BUILDID) \
+		--id $(GORELEASER_BUILD_ID) \
 	   	--snapshot \
 		--single-target \
 	   	--clean \
@@ -68,7 +69,7 @@ race:
 
 integrate: integration
 
-integration: bin/$(BINNAME)
+integration: bin/step
 	$Q $(CGO_OVERRIDE) gotestsum -- -tags=integration ./integration/...
 
 .PHONY: integrate integration
@@ -97,12 +98,12 @@ govulncheck:
 
 INSTALL_PREFIX?=/usr/local/
 
-install: $(PREFIX)bin/$(BINNAME)
+install: $(PREFIX)bin/step
 	$Q mkdir -p $(INSTALL_PREFIX)bin/
-	$Q install $(PREFIX)bin/$(BINNAME) $(DESTDIR)$(INSTALL_PREFIX)bin/$(BINNAME)
+	$Q install $(PREFIX)bin/step $(DESTDIR)$(INSTALL_PREFIX)bin/step
 
 uninstall:
-	$Q rm -f $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BINNAME)
+	$Q rm -f $(DESTDIR)$(INSTALL_PREFIX)/bin/step
 
 .PHONY: install uninstall
 
@@ -111,9 +112,8 @@ uninstall:
 #########################################
 
 clean:
-ifneq ($(BINNAME),"")
-	$Q rm -f bin/$(BINNAME)
-endif
+	$Q rm -f bin/step
+	$Q rm -rf dist
 
 .PHONY: clean
 
