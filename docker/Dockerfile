@@ -1,10 +1,11 @@
-FROM --platform=$BUILDPLATFORM golang:alpine AS builder
+FROM --platform=$BUILDPLATFORM goreleaser/goreleaser-pro:latest AS builder
+# Note: goreleaser-pro:lates uses golang:alpine as base image
 
 WORKDIR /src
 COPY go.mod go.sum .
 RUN go mod download
 COPY . .
-RUN apk add --no-cache make git curl
+# RUN apk add --no-cache git curl
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -16,8 +17,13 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     if [ "${TARGETARCH}" = "arm" ] && [ "${TARGETVARIANT}" ]; then \
     GOARM="${TARGETVARIANT#v}"; \
     fi; \
-    CGO_ENABLED=0 GOOS_OVERRIDE="GOOS=${GOOS} GOARCH=${GOARCH} GOARM=${GOARM}" \
-    make V=1 bin/step
+    CGO_ENABLED=0 \
+    goreleaser build \
+      --id default \
+      --single-target \
+      --auto-snapshot \
+      --clean \
+      --output bin/step
 
 FROM alpine
 
@@ -40,4 +46,4 @@ WORKDIR /home/step
 
 STOPSIGNAL SIGTERM
 
-CMD /bin/bash
+CMD [ "/bin/bash" ]
