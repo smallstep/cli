@@ -31,6 +31,17 @@ const customIntermediateTemplate = `{
 	}
 }`
 
+const customLeafTemplate = `{
+	"rawSubject": {{ toJson .Insecure.CR.RawSubject }},
+	"sans": {{ toJson .SANs }},
+{{- if typeIs "*rsa.PublicKey" .Insecure.CR.PublicKey }}
+	"keyUsage": ["keyEncipherment", "digitalSignature"],
+{{- else }}
+	"keyUsage": ["digitalSignature"],
+{{- end }}
+	"extKeyUsage": ["serverAuth", "clientAuth"]
+}`
+
 func signCommand() cli.Command {
 	return cli.Command{
 		Name:   "sign",
@@ -294,7 +305,7 @@ func signAction(ctx *cli.Context) error {
 	} else {
 		switch profile {
 		case profileLeaf:
-			template = x509util.DefaultLeafTemplate
+			template = customLeafTemplate
 		case profileIntermediateCA:
 			template = customIntermediateTemplate
 		case profileCSR:
@@ -465,6 +476,7 @@ func createTemplateData(cr *x509.CertificateRequest, maxPathLen int, omitCNSAN b
 		PostalCode:         cr.Subject.PostalCode,
 		SerialNumber:       cr.Subject.SerialNumber,
 		CommonName:         cr.Subject.CommonName,
+		ExtraNames:         x509util.NewExtraNames(cr.Subject.ExtraNames),
 	})
 	data.SetSANs(sans)
 	return data
