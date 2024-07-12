@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/smallstep/certinfo"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
@@ -218,17 +219,22 @@ func inspectAction(ctx *cli.Context) error {
 		}
 		return inspectCertificates(ctx, peerCertificates[:1], os.Stdout)
 	default: // is not URL
+		b, err := utils.ReadFile(crtFile)
+		if err != nil {
+			return errors.Wrapf(err, "error reading file %s", crtFile)
+		}
+
 		var pemError *pemutil.InvalidPEMError
-		crts, err := pemutil.ReadCertificateBundle(crtFile)
+		crts, err := pemutil.ParseCertificateBundle(b)
 		switch {
 		case errors.As(err, &pemError) && pemError.Type == pemutil.PEMTypeCertificate:
-			csr, err := pemutil.ReadCertificateRequest(crtFile)
+			csr, err := pemutil.ParseCertificateRequest(b)
 			if err != nil {
 				return errors.Errorf("file %s does not contain any valid CERTIFICATE or CERTIFICATE REQUEST blocks", crtFile)
 			}
 			return inspectCertificateRequest(ctx, csr, os.Stdout)
 		case err != nil:
-			return err
+			return fmt.Errorf("error parsing %s: %w", crtFile, err)
 		default:
 			if bundle {
 				return inspectCertificates(ctx, crts, os.Stdout)
