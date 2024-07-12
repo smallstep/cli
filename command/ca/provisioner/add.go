@@ -34,6 +34,8 @@ func addCommand() cli.Command {
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 ACME
 
@@ -43,6 +45,7 @@ ACME
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>]
 
 OIDC
 
@@ -53,6 +56,8 @@ OIDC
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 X5C
 
@@ -60,6 +65,8 @@ X5C
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 SSHPOP
 
@@ -75,14 +82,15 @@ Nebula
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 
-K8SSA
+K8SSA (Kubernetes Service Account)
 
 **step ca provisioner add** <name> **--type**=K8SSA [**--public-key**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>]
 
-IID
+IID (AWS/GCP/Azure)
 
 **step ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
 [**--aws-account**=<id>] [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
@@ -93,6 +101,8 @@ IID
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 SCEP
 
@@ -103,7 +113,8 @@ SCEP
 [**--scep-decrypter-key-uri**=<uri>] [**--scep-decrypter-key-password-file**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>]`,
 		Flags: []cli.Flag{
 			// General provisioner flags
 			typeFlag,

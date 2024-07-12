@@ -1,7 +1,6 @@
 package certificate
 
 import (
-	"bytes"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -16,6 +15,7 @@ import (
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
+	"go.step.sm/crypto/pemutil"
 )
 
 func inspectCommand() cli.Command {
@@ -26,7 +26,7 @@ func inspectCommand() cli.Command {
 		UsageText: `**step certificate inspect** <crt-file>
 [**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]
 [**--servername**=<servername>]`,
-		Description: `**step certificate inspect** prints the details of the 
+		Description: `**step certificate inspect** prints the details of the
 certificate or CSR in a human- or machine-readable format. Beware: Local certificates
 are never verified. Always verify a certificate (using **step certificate verify**)
 before relying on the output of this command.
@@ -203,11 +203,8 @@ func inspectAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "format", format, "text, json, pem")
 	}
 	if short && (format == "json" || format == "pem") {
-		return errs.IncompatibleFlagWithFlag(ctx, "short", "format json")
+		return errs.IncompatibleFlagWithFlag(ctx, "short", "format "+format)
 	}
-
-	var block *pem.Block
-	var blocks []*pem.Block
 
 	switch addr, isURL, err := trimURL(crtFile); {
 	case err != nil:
@@ -217,67 +214,43 @@ func inspectAction(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		for _, crt := range peerCertificates {
-			blocks = append(blocks, &pem.Block{
-				Type:  "CERTIFICATE",
-				Bytes: crt.Raw,
-			})
+		if bundle {
+			return inspectCertificates(ctx, peerCertificates, os.Stdout)
 		}
+		return inspectCertificates(ctx, peerCertificates[:1], os.Stdout)
 	default: // is not URL
-		crtBytes, err := utils.ReadFile(crtFile)
+		b, err := utils.ReadFile(crtFile)
 		if err != nil {
-			return errs.FileError(err, crtFile)
+			return errors.Wrapf(err, "error reading file %s", crtFile)
 		}
-		if bytes.Contains(crtBytes, []byte("-----BEGIN ")) {
-			for len(crtBytes) > 0 {
-				block, crtBytes = pem.Decode(crtBytes)
-				if block == nil {
-					break
-				}
-				if bundle && block.Type != "CERTIFICATE" {
-					return errors.Errorf("certificate bundle %q contains an unexpected PEM block of type %q\n\n  expected type: CERTIFICATE",
-						crtFile, block.Type)
-				}
-				blocks = append(blocks, block)
+
+		var pemError *pemutil.InvalidPEMError
+		crts, err := pemutil.ParseCertificateBundle(b)
+		switch {
+		case errors.As(err, &pemError) && pemError.Type == pemutil.PEMTypeCertificate:
+			csr, err := pemutil.ParseCertificateRequest(b)
+			if err != nil {
+				return errors.Errorf("file %s does not contain any valid CERTIFICATE or CERTIFICATE REQUEST blocks", crtFile)
 			}
-		} else {
-			if block = derToPemBlock(crtBytes); block == nil {
-				return errors.Errorf("%q contains an invalid PEM block", crtFile)
+			return inspectCertificateRequest(ctx, csr, os.Stdout)
+		case err != nil:
+			return fmt.Errorf("error parsing %s: %w", crtFile, err)
+		default:
+			if bundle {
+				return inspectCertificates(ctx, crts, os.Stdout)
 			}
-			blocks = append(blocks, block)
+			return inspectCertificates(ctx, crts[:1], os.Stdout)
 		}
-
-		// prevent index out of range errors
-		if len(blocks) == 0 {
-			return fmt.Errorf("%q does not contain valid PEM blocks", crtFile)
-		}
-	}
-
-	// Keep the first one if !bundle
-	if !bundle {
-		blocks = []*pem.Block{blocks[0]}
-	}
-
-	switch blocks[0].Type {
-	case "CERTIFICATE":
-		return inspectCertificates(ctx, blocks, os.Stdout)
-	case "CERTIFICATE REQUEST", "NEW CERTIFICATE REQUEST": // only one is supported
-		return inspectCertificateRequest(ctx, blocks[0])
-	default:
-		return errors.Errorf("Invalid PEM type in %q. Expected [CERTIFICATE|CERTIFICATE REQUEST] but got %q)", crtFile, block.Type)
 	}
 }
 
-func inspectCertificates(ctx *cli.Context, blocks []*pem.Block, w io.Writer) error {
+func inspectCertificates(ctx *cli.Context, crts []*x509.Certificate, w io.Writer) error {
+	var err error
 	format, short := ctx.String("format"), ctx.Bool("short")
 	switch format {
 	case "text":
 		var text string
-		for _, block := range blocks {
-			crt, err := x509.ParseCertificate(block.Bytes)
-			if err != nil {
-				return errors.WithStack(err)
-			}
+		for _, crt := range crts {
 			if short {
 				if text, err = certinfo.CertificateShortText(crt); err != nil {
 					return err
@@ -292,16 +265,16 @@ func inspectCertificates(ctx *cli.Context, blocks []*pem.Block, w io.Writer) err
 		return nil
 	case "json":
 		var v interface{}
-		if len(blocks) == 1 {
-			zcrt, err := zx509.ParseCertificate(blocks[0].Bytes)
+		if len(crts) == 1 {
+			zcrt, err := zx509.ParseCertificate(crts[0].Raw)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			v = struct{ *zx509.Certificate }{zcrt}
 		} else {
 			var zcrts []*zx509.Certificate
-			for _, block := range blocks {
-				zcrt, err := zx509.ParseCertificate(block.Bytes)
+			for _, crt := range crts {
+				zcrt, err := zx509.ParseCertificate(crt.Raw)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -317,8 +290,8 @@ func inspectCertificates(ctx *cli.Context, blocks []*pem.Block, w io.Writer) err
 		}
 		return nil
 	case "pem":
-		for _, block := range blocks {
-			err := pem.Encode(w, block)
+		for _, crt := range crts {
+			err := pem.Encode(w, &pem.Block{Type: "CERTIFICATE", Bytes: crt.Raw})
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -329,15 +302,12 @@ func inspectCertificates(ctx *cli.Context, blocks []*pem.Block, w io.Writer) err
 	}
 }
 
-func inspectCertificateRequest(ctx *cli.Context, block *pem.Block) error {
+func inspectCertificateRequest(ctx *cli.Context, csr *x509.CertificateRequest, w io.Writer) error {
+	var err error
 	format, short := ctx.String("format"), ctx.Bool("short")
 	switch format {
 	case "text":
 		var text string
-		csr, err := x509.ParseCertificateRequest(block.Bytes)
-		if err != nil {
-			return errors.WithStack(err)
-		}
 		if short {
 			text, err = certinfo.CertificateRequestShortText(csr)
 			if err != nil {
@@ -349,35 +319,26 @@ func inspectCertificateRequest(ctx *cli.Context, block *pem.Block) error {
 				return err
 			}
 		}
-		fmt.Print(text)
+		fmt.Fprint(w, text)
 		return nil
 	case "json":
-		zcsr, err := zx509.ParseCertificateRequest(block.Bytes)
+		zcsr, err := zx509.ParseCertificateRequest(csr.Raw)
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		b, err := json.MarshalIndent(struct {
-			*zx509.CertificateRequest
-		}{zcsr}, "", "  ")
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(zcsr); err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
+	case "pem":
+		err := pem.Encode(w, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csr.Raw})
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		os.Stdout.Write(b)
 		return nil
 	default:
 		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
 	}
-}
-
-// derToPemBlock attempts to parse the ASN.1 data as a certificate or a
-// certificate request, returning a pem.Block of the one that succeeds. Returns
-// nil if it cannot parse the data.
-func derToPemBlock(b []byte) *pem.Block {
-	if _, err := x509.ParseCertificate(b); err == nil {
-		return &pem.Block{Type: "CERTIFICATE", Bytes: b}
-	}
-	if _, err := x509.ParseCertificateRequest(b); err == nil {
-		return &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: b}
-	}
-	return nil
 }

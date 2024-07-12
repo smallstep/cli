@@ -3,12 +3,12 @@ package certificate
 import (
 	"bytes"
 	"encoding/json"
-	"encoding/pem"
 	"flag"
 	"testing"
 
 	"github.com/smallstep/assert"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/pemutil"
 )
 
 var pemData = []byte(`-----BEGIN CERTIFICATE-----
@@ -39,9 +39,8 @@ func TestInspectCertificates(t *testing.T) {
 	_ = set.String("format", "", "")
 	ctx := cli.NewContext(app, set, nil)
 
-	var blocks []*pem.Block
-	block, _ := pem.Decode(pemData)
-	blocks = append(blocks, block)
+	certs, err := pemutil.ParseCertificateBundle(pemData)
+	assert.FatalError(t, err)
 
 	type testCase struct {
 		format string
@@ -72,7 +71,65 @@ func TestInspectCertificates(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			var buf bytes.Buffer
 			ctx.Set("format", tc.format)
-			err := inspectCertificates(ctx, blocks, &buf)
+			err := inspectCertificates(ctx, certs, &buf)
+			assert.NoError(t, err)
+			if err == nil {
+				tc.verify(&buf)
+			}
+		})
+	}
+
+}
+
+var csrPEMData = []byte(`-----BEGIN CERTIFICATE REQUEST-----
+MIHmMIGNAgEAMAAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASGlyI2t5ibpcG+
+hGm0JMW0or/QphyTlc4GGAccapsz4BeXkNucKpeX3nupFbbABHLcN/bjxL87Ims8
+jz5sdl6xoCswKQYJKoZIhvcNAQkOMRwwGjAYBgNVHREEETAPggNmb2+CA2JhcoID
+YmF6MAoGCCqGSM49BAMCA0gAMEUCIEuWM0UdEeDfvWqssxyoY4cUuv++FrmA97j+
+Fbp7Kk6gAiEAuoyrBIvX28Spmeog9Jl4iBJYzceSNz8a7crRNGLTyjs=
+-----END CERTIFICATE REQUEST-----
+`)
+
+func TestInspectCertificateRequest(t *testing.T) {
+	// This is just to get a simple CLI context
+	app := &cli.App{}
+	set := flag.NewFlagSet("contrive", 0)
+	_ = set.String("format", "", "")
+	ctx := cli.NewContext(app, set, nil)
+
+	csr, err := pemutil.ParseCertificateRequest(csrPEMData)
+	assert.FatalError(t, err)
+
+	type testCase struct {
+		format string
+		verify func(buf *bytes.Buffer)
+	}
+
+	tests := map[string]testCase{
+		"format text": {"text",
+			func(buf *bytes.Buffer) {
+				assert.HasPrefix(t, buf.String(), "Certificate Request:")
+			},
+		},
+		"format json": {"json",
+			func(buf *bytes.Buffer) {
+				var v interface{}
+				err := json.Unmarshal(buf.Bytes(), &v)
+				assert.NoError(t, err)
+			},
+		},
+		"format pem": {"pem",
+			func(buf *bytes.Buffer) {
+				assert.Equals(t, string(csrPEMData), buf.String())
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			var buf bytes.Buffer
+			ctx.Set("format", tc.format)
+			err := inspectCertificateRequest(ctx, csr, &buf)
 			assert.NoError(t, err)
 			if err == nil {
 				tc.verify(&buf)

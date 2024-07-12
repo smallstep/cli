@@ -26,6 +26,45 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.27.0] - 2024-07-11
+
+### Changed
+
+- Makefile: install to /usr/local/bin, not /usr/bin (smallstep/cli#1214)
+
+### Fixed
+
+- Set proper JOSE algorithm for Ed25519 keys (smallstep/cli#1208)
+- Makefile: usage of install command line flags on MacOS (smallstep/cli#1212)
+- Restore operation of '--bundle' flag in certificate inspect (smallstep/cli#1215)
+- Fish completion (smallstep/cli#1222)
+- Restore operation of inspect CSR from STDIN (smallstep/cli#1232)
+
+### Security
+
+
+## [0.26.2] - 2024-06-13
+
+### Added
+
+- Options for auth-params and scopes to OIDC token generator (smallstep/cli#1154)
+- --kty, --curve, and --size to ssh commands (login, certificate) (smallstep/cli#1156)
+- Stdin input for SSH needs-renewal (smallstep/cli#1157)
+- Allow users to define certificate comment in SSH agent (smallstep/cli#1158)
+- Add OCSP and CRL support to certificate verify (smallstep/cli#1161)
+
+
+## [0.26.1] - 2024-04-22
+
+### Added
+
+- Ability to output inspected CSR in PEM format (smallstep/cli#1153)
+
+### Fixed
+
+- Allow 'certificate inspect' to parse PEM files containig extraneous data (smallstep/cli#1153)
+
+
 ## [v0.26.0] - 2024-03-27
 
 ### Added
