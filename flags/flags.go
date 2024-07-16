@@ -467,6 +467,11 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 		Name:  "comment",
 		Usage: "The comment used when adding the certificate to an agent. Defaults to the subject if not provided.",
 	}
+
+	Console = cli.BoolFlag{
+		Name:  "console",
+		Usage: `Complete the flow while remaining inside the terminal.`,
+	}
 )
 
 // FingerprintFormatFlag returns a flag for configuring the fingerprint format.

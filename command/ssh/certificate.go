@@ -39,7 +39,7 @@ func certificateCommand() cli.Command {
 [**--password-file**=<file>] [**--provisioner-password-file**=<file>]
 [**--add-user**] [**--not-before**=<time|duration>] [**--comment**=<comment>]
 [**--not-after**=<time|duration>] [**--token**=<token>] [**--issuer**=<name>]
-[**--no-password**] [**--insecure**] [**--force**] [**--x5c-cert**=<file>]
+[**--console**] [**--no-password**] [**--insecure**] [**--force**] [**--x5c-cert**=<file>]
 [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>] [**--no-agent**]
 [**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
@@ -176,6 +176,7 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 			flags.Token,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
+			flags.Console,
 			sshAddUserFlag,
 			sshHostFlag,
 			sshHostIDFlag,

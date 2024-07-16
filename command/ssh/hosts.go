@@ -19,7 +19,7 @@ func hostsCommand() cli.Command {
 		Action: command.ActionFunc(hostsAction),
 		Usage:  "returns a list of all valid hosts",
 		UsageText: `**step ssh hosts** [**--set**=<key=value>] [**--set-file**=<file>]
-[**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
+[**--console**] [**--offline**] [**--ca-config**=<file>] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
 		Description: `**step ssh hosts** returns a list of valid hosts for SSH.
 
@@ -35,6 +35,7 @@ $ step ssh hosts
 		Flags: []cli.Flag{
 			flags.TemplateSet,
 			flags.TemplateSetFile,
+			flags.Console,
 			flags.Offline,
 			flags.CaConfig,
 			flags.CaURL,

@@ -31,7 +31,7 @@ func configCommand() cli.Command {
 		UsageText: `**step ssh config**
 [**--team**=<name>] [**--team-authority**=<sub-domain>] [**--host**]
 [**--set**=<key=value>] [**--set-file**=<file>] [**--dry-run**] [**--roots**]
-[**--federation**] [**--force**] [**--offline**] [**--ca-config**=<file>]
+[**--federation**] [**--console**] [**--force**] [**--offline**] [**--ca-config**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
 [**--authority**=<name>] [**--profile**=<name>]`,
 		Description: `**step ssh config** configures SSH to be used with certificates. It also supports
@@ -89,6 +89,7 @@ user or host certificates`,
 times to set multiple variables.`,
 			},
 			flags.TemplateSetFile,
+			flags.Console,
 			flags.DryRun,
 			flags.Force,
 			flags.CaConfig,
@@ -203,6 +204,9 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	data[templates.SSHTemplateVersionKey] = "v2"
 	if step.Contexts().Enabled() {
 		data["Context"] = step.Contexts().GetCurrent().Name
+	}
+	if ctx.Bool("console") {
+		data["Console"] = "true"
 	}
 	if len(sets) > 0 {
 		for _, s := range sets {

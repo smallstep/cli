@@ -29,7 +29,7 @@ func loginCommand() cli.Command {
 [**--token**=<token>] [**--provisioner**=<name>] [**--provisioner-password-file**=<file>]
 [**--principal**=<string>] [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>] [**--comment**=<comment>]
-[**--set**=<key=value>] [**--set-file**=<file>] [**--force**] [**--insecure**]
+[**--set**=<key=value>] [**--set-file**=<file>] [**--console**] [**--force**] [**--insecure**]
 [**--offline**] [**--ca-config**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ssh login** generates a new SSH key pair and send a request to [step
@@ -93,6 +93,7 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 			flags.NotAfter,
 			flags.TemplateSet,
 			flags.TemplateSetFile,
+			flags.Console,
 			flags.Force,
 			flags.Offline,
 			flags.CaConfig,
