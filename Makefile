@@ -1,3 +1,9 @@
+# Set V=1 for verbose output.
+# Run `make bootstrap` to set up your local environment.
+# To build using go, use `make build`
+# For a binary that's in parity with how our CI system builds,
+# run `make goreleaser` to build using GoReleaser Pro.
+
 all: lint test build
 
 ci: test build
@@ -8,7 +14,39 @@ ci: test build
 # Determine the type of `push` and `version`
 #################################################
 
-# Set V to 1 for verbose output from the Makefile
+ifdef GITHUB_REF
+VERSION ?= $(shell echo $(GITHUB_REF) | sed 's/^refs\/tags\///')
+NOT_RC  := $(shell echo $(VERSION) | grep -v -e -rc)
+	ifeq ($(NOT_RC),)
+PUSHTYPE := release-candidate
+	else
+PUSHTYPE := release
+	endif
+else
+VERSION ?= $(shell [ -d .git ] && git describe --tags --always --dirty="-dev")
+# If we are not in an active git dir then try reading the version from .VERSION.
+# .VERSION contains a slug populated by `git archive`.
+VERSION := $(or $(VERSION),$(shell make/version.sh .VERSION))
+PUSHTYPE := branch
+endif
+
+VERSION := $(shell echo $(VERSION) | sed 's/^v//')
+
+ifdef V
+$(info    GITHUB_REF is $(GITHUB_REF))
+$(info    VERSION is $(VERSION))
+$(info    PUSHTYPE is $(PUSHTYPE))
+endif
+
+DATE    := $(shell date -u '+%Y-%m-%d %H:%M UTC')
+ifdef DEBUG
+	LDFLAGS := -ldflags='-X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
+	GCFLAGS := -gcflags "all=-N -l"
+else
+	LDFLAGS := -ldflags='-w -X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
+	GCFLAGS :=
+endif
+
 Q=$(if $V,,@)
 PREFIX?=
 SRC=$(shell find . -type f -name '*.go')
@@ -20,7 +58,6 @@ GORELEASER_BUILD_ID?=default
 ifdef DEBUG
 	GORELEASER_BUILD_ID=debug
 endif
-
 
 .PHONY: all
 
@@ -46,6 +83,14 @@ build: $(PREFIX)bin/step
 
 $(PREFIX)bin/step:
 	$Q mkdir -p $(@D)
+	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) go build \
+		-v \
+	   	-o $(PREFIX)bin/step \
+		$(GCFLAGS) $(LDFLAGS) \
+	   	github.com/smallstep/cli/cmd/step
+
+goreleaser:
+	$Q mkdir -p $(@D)
 	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) goreleaser build \
 		--id $(GORELEASER_BUILD_ID) \
 	   	--snapshot \
@@ -53,7 +98,8 @@ $(PREFIX)bin/step:
 	   	--clean \
 		--output $(PREFIX)bin/step
 
-.PHONY: build
+.PHONY: build gobuild
+
 
 #########################################
 # Test
