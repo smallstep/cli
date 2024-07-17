@@ -137,11 +137,6 @@ location being served by an existing fileserver in order to respond to ACME
 challenge validation requests.`,
 	}
 
-	consoleFlag = cli.BoolFlag{
-		Name:  "console",
-		Usage: "Complete the flow while remaining inside the terminal",
-	}
-
 	fingerprintFlag = cli.StringFlag{
 		Name:  "fingerprint",
 		Usage: "The <fingerprint> of the targeted root certificate.",
