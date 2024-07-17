@@ -48,6 +48,7 @@ builds:
       - linux_amd64
       - linux_arm64
       - windows_amd64
+      - freebsd_amd64
     binary: 'step_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
   -
     # This build is for S3 unversioned binaries that follow our naming convention there.
@@ -59,6 +60,7 @@ builds:
       - linux_amd64
       - linux_arm64
       - windows_amd64
+      - freebsd_amd64
     binary: 'step_latest_{{ .Os }}_{{ .Arch }}'
   -
     # This build is specifically for nFPM targets (.deb and .rpm files).
