@@ -26,6 +26,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.27.2] - 2024-07-18
+
+### Added
+
+- `console` flag to SSH commands (smallstep/cli#1238)
+- Upload FreeBSD build to S3 (smallstep/cli#1239)
+
+
+## [0.27.1] - 2024-07-11
+
+### Fixed
+
+- Broken release process
+
+
 ## [0.27.0] - 2024-07-11
 
 ### Changed
