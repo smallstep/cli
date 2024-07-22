@@ -190,24 +190,24 @@ define BUNDLE_MAKE
 endef
 
 binary-linux-amd64:
-	$(call BUNDLE_MAKE,linux,amd64,,$(BINARY_OUTPUT)linux-amd64/)
+	$(call BUNDLE_MAKE,linux,amd64,,$(BINARY_OUTPUT)linux-amd64)
 
 binary-linux-arm64:
-	$(call BUNDLE_MAKE,linux,arm64,,$(BINARY_OUTPUT)linux-arm64/)
+	$(call BUNDLE_MAKE,linux,arm64,,$(BINARY_OUTPUT)linux-arm64)
 
 binary-linux-armv7:
-	$(call BUNDLE_MAKE,linux,arm,7,$(BINARY_OUTPUT)linux-armv7/)
+	$(call BUNDLE_MAKE,linux,arm,7,$(BINARY_OUTPUT)linux-armv7)
 
 binary-linux-mips:
-	$(call BUNDLE_MAKE,linux,mips,,$(BINARY_OUTPUT)linux-mips/)
+	$(call BUNDLE_MAKE,linux,mips,,$(BINARY_OUTPUT)linux-mips)
 
 binary-darwin-amd64:
-	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin-amd64/)
+	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin-amd64)
 
 binary-darwin-arm64:
-	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin-arm64/)
+	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin-arm64)
 
 binary-windows-amd64:
-	$(call BUNDLE_MAKE,windows,amd64,,$(BINARY_OUTPUT)windows-amd64/)
+	$(call BUNDLE_MAKE,windows,amd64,,$(BINARY_OUTPUT)windows-amd64)
 
 .PHONY: binary-linux-amd64 binary-linux-arm64 binary-linux-armv7 binary-linux-mips binary-darwin-amd64 binary-darwin-arm64 binary-windows-amd64
