@@ -118,7 +118,7 @@ $(PREFIX)/$(BINNAME):
 goreleaser:
 	$Q mkdir -p $(PREFIX)
 	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) DEBUG=$(DEBUG) goreleaser build \
-		--id $(GORELEASER_BUILD_ID)
+		--id $(GORELEASER_BUILD_ID) \
 	   	--snapshot \
 		--single-target \
 	   	--clean \
