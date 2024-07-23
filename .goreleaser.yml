@@ -18,7 +18,7 @@ builds:
       - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
     gcflags:
       - >-
-        {{- if ne .Env.DEBUG "" }}all=-N -l{{- end }}
+        {{- if ne (index .Env "DEBUG") "" }}all=-N -l{{- end }}
     targets:
       - darwin_amd64
       - darwin_arm64
