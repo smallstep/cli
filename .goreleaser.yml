@@ -7,7 +7,7 @@ before:
     - go mod download
 
 builds:
-  - &COMMON
+  - &BUILD
     env:
       - CGO_ENABLED=0
     main: ./cmd/step/main.go
@@ -15,9 +15,6 @@ builds:
       - -trimpath
     ldflags:
       - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
-  -
-    << : *COMMON
-    id: default
     targets:
       - darwin_amd64
       - darwin_arm64
@@ -35,12 +32,12 @@ builds:
       - windows_arm64
     binary: bin/step
   -
-    << : *COMMON
+    << : *BUILD
     id: debug
     gcflags: all=-N -l
   -
     # This build is for S3 binaries that follow our naming convention there.
-    << : *COMMON
+    << : *BUILD
     id: s3-versioned
     targets:
       - darwin_amd64
@@ -52,7 +49,7 @@ builds:
     binary: 'step_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
   -
     # This build is for S3 unversioned binaries that follow our naming convention there.
-    << : *COMMON
+    << : *BUILD
     id: s3-unversioned
     targets:
       - darwin_amd64
@@ -67,7 +64,7 @@ builds:
     # It's exactly the same as the default build above, except:
     # - it only builds the archs we want to produce .deb and .rpm files for
     # - the name of the output binary is step-cli
-    << : *COMMON
+    << : *BUILD
     id: nfpm
     goos:
       - linux
