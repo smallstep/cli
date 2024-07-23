@@ -157,7 +157,7 @@ publishers:
   ids:
   - packages
   cmd: ./scripts/package-upload.sh {{ abs .ArtifactPath }} {{ .Var.packageName }} {{ .Version }} {{ .Var.packageRelease }}
-  disable: "{{ if .IsNightly }}true{{ end }}"
+  disable: "{{ if .Prerelease }}true{{ end }}"
 
 snapshot:
   name_template: "{{ .Tag }}-next"
