@@ -6,6 +6,11 @@ before:
   hooks:
     - go mod download
 
+after:
+  hooks:
+    - cmd: bash scripts/package-repo-import.sh {{ .Var.packageName }} {{ .Version }}
+      output: true
+
 builds:
   - &BUILD
     id: default
@@ -87,7 +92,7 @@ nfpms:
     builds:
       - nfpm
     package_name: step-cli
-    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    file_name_template: "{{.ConventionalFileName}}"
     vendor: Smallstep Labs
     homepage: https://github.com/smallstep/cli
     maintainer: Smallstep <techadmin@smallstep.com>
@@ -113,6 +118,13 @@ nfpms:
     scripts:
       postinstall: scripts/postinstall.sh
       postremove: scripts/postremove.sh
+    rpm:
+      signature:
+          key_file: "{{ .Env.GPG_PRIVATE_KEY_FILE }}"
+    deb:
+      signature:
+          key_file: "{{ .Env.GPG_PRIVATE_KEY_FILE }}"
+          type: origin
   -
     << : *NFPM
     id: unversioned
@@ -133,6 +145,13 @@ signs:
   certificate: "${artifact}.pem"
   args: ["sign-blob", "--oidc-issuer=https://token.actions.githubusercontent.com", "--output-certificate=${certificate}", "--output-signature=${signature}", "${artifact}", "--yes"]
   artifacts: all
+
+publishers:
+- name: Google Cloud Artifact Registry
+  ids:
+  - packages
+  cmd: ./scripts/package-upload.sh {{ abs .ArtifactPath }} {{ .Var.packageName }} {{ .Version }} {{ .Var.packageRelease }}
+  disable: "{{ if .IsNightly }}true{{ end }}"
 
 snapshot:
   name_template: "{{ .Tag }}-next"
