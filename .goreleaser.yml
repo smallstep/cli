@@ -8,6 +8,7 @@ before:
 
 builds:
   - &BUILD
+    id: default
     env:
       - CGO_ENABLED=0
     main: ./cmd/step/main.go
@@ -15,6 +16,9 @@ builds:
       - -trimpath
     ldflags:
       - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
+    gcflags:
+      - >-
+        {{- if ne .Env.DEBUG "" }}all=-N -l{{- end }}
     targets:
       - darwin_amd64
       - darwin_arm64
@@ -31,10 +35,6 @@ builds:
       - windows_amd64
       - windows_arm64
     binary: bin/step
-  -
-    << : *BUILD
-    id: debug
-    gcflags: all=-N -l
   -
     # This build is for S3 binaries that follow our naming convention there.
     << : *BUILD
@@ -75,6 +75,7 @@ builds:
 
 archives:
   - &ARCHIVE
+    id: default
     # Can be used to change the archive formats for specific GOOSs.
     # Most common use case is to archive as zip on Windows.
     # Default is empty.
@@ -83,7 +84,7 @@ archives:
       - goos: windows
         format: zip
     builds:
-      - default
+      - step
     wrap_in_directory: "{{ .ProjectName }}_{{ .Version }}"
     files:
       - README.md
