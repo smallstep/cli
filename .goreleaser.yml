@@ -3,6 +3,10 @@
 version: 2
 project_name: step
 
+variables:
+  packageName: step-cli
+  packageRelease: 1 # Manually update release: in the nfpm section to match this value if you change this
+
 before:
   hooks:
     - go mod download
@@ -92,7 +96,8 @@ nfpms:
   - &NFPM
     builds:
       - nfpm
-    package_name: step-cli
+    package_name: "{{ .Var.packageName }}"
+    release: "1"
     file_name_template: "{{.ConventionalFileName}}"
     vendor: Smallstep Labs
     homepage: https://github.com/smallstep/cli
