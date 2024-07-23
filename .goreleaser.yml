@@ -8,6 +8,7 @@ before:
 
 builds:
   - &BUILD
+    id: step
     env:
       - CGO_ENABLED=0
     main: ./cmd/step/main.go
@@ -83,7 +84,7 @@ archives:
       - goos: windows
         format: zip
     builds:
-      - default
+      - step
     wrap_in_directory: "{{ .ProjectName }}_{{ .Version }}"
     files:
       - README.md
