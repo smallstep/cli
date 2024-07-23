@@ -23,9 +23,6 @@ CGO_OVERRIDE?=CGO_ENABLED=0
 
 # which build id in .goreleaser.yml to build
 GORELEASER_BUILD_ID?=default
-ifdef DEBUG
-	GORELEASER_BUILD_ID=debug
-endif
 
 all: lint test build
 
@@ -120,7 +117,7 @@ $(PREFIX)/$(BINNAME):
 
 goreleaser:
 	$Q mkdir -p $(PREFIX)
-	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) goreleaser build \
+	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) DEBUG=$(DEBUG) goreleaser build \
 		--id $(GORELEASER_BUILD_ID) \
 	   	--snapshot \
 		--single-target \
