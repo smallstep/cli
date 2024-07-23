@@ -26,6 +26,38 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.27.2] - 2024-07-18
+
+### Added
+
+- `console` flag to SSH commands (smallstep/cli#1238)
+- Upload FreeBSD build to S3 (smallstep/cli#1239)
+
+
+## [0.27.1] - 2024-07-11
+
+### Fixed
+
+- Broken release process
+
+
+## [0.27.0] - 2024-07-11
+
+### Changed
+
+- Makefile: install to /usr/local/bin, not /usr/bin (smallstep/cli#1214)
+
+### Fixed
+
+- Set proper JOSE algorithm for Ed25519 keys (smallstep/cli#1208)
+- Makefile: usage of install command line flags on MacOS (smallstep/cli#1212)
+- Restore operation of '--bundle' flag in certificate inspect (smallstep/cli#1215)
+- Fish completion (smallstep/cli#1222)
+- Restore operation of inspect CSR from STDIN (smallstep/cli#1232)
+
+### Security
+
+
 ## [0.26.2] - 2024-06-13
 
 ### Added

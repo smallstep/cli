@@ -21,6 +21,12 @@ GOOS_OVERRIDE?=
 # CGO_OVERRIDE="CGO_ENABLED=1" to enable CGO
 CGO_OVERRIDE?=CGO_ENABLED=0
 
+# which build id in .goreleaser.yml to build
+GORELEASER_BUILD_ID?=default
+ifdef DEBUG
+	GORELEASER_BUILD_ID=debug
+endif
+
 all: lint test build
 
 ci: test build
@@ -68,23 +74,32 @@ Q=$(if $V,,@)
 SRC=$(shell find . -type f -name '*.go')
 OUTPUT_ROOT=output/
 
-GORELEASER_BUILD_ID?=default
-ifdef DEBUG
-	GORELEASER_BUILD_ID=debug
+ifeq ($(OS),Windows_NT)
+	HOSTOS=Windows
+else
+	HOSTOS=$(shell uname)
 endif
+HOSTARCH=$(shell go env GOHOSTARCH)
+
+GORELEASER_PRO_URL=https://github.com/goreleaser/goreleaser-pro/releases/latest/download/goreleaser-pro_$(HOSTOS)_$(HOSTARCH).tar.gz
 
 .PHONY: all
 
 #########################################
 # Bootstrapping
 #########################################
-
+TMPDIR := $(shell mktemp -d)
+bootstra%: GOPATH=$(shell go env GOPATH)
 bootstra%:
 	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin latest
 	$Q go install golang.org/x/vuln/cmd/govulncheck@latest
 	$Q go install gotest.tools/gotestsum@latest
 	$Q go install golang.org/x/tools/cmd/goimports@latest
-	$Q go install github.com/goreleaser/goreleaser@latest
+	@echo "Installing GoReleaser Pro into $(GOPATH)/bin"
+	$Q curl -o $(TMPDIR)/goreleaser.tar.gz -L $(GORELEASER_PRO_URL)
+	$Q ls $(TMPDIR)
+	$Q tar xvzf $(TMPDIR)/goreleaser.tar.gz -C $(TMPDIR)
+	$Q cp $(TMPDIR)/goreleaser $(GOPATH)/bin
 
 .PHONY: bootstra%
 
