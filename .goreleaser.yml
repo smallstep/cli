@@ -270,7 +270,9 @@ blobs:
     region: us-east-1
     directory: '/'
     acl: public-read
-    extra_files_only: false
+    extra_files:
+      - glob: ./dist/s3-versioned_*/**
+    extra_files_only: true
 
   - provider: s3
     disable: '{{ if .Prerelease }}true{{ else }}false{{ end }}'
@@ -280,7 +282,9 @@ blobs:
     region: us-east-1
     directory: '/'
     acl: public-read
-    extra_files_only: false
+    extra:files:
+      - glob: ./dist/s3-unversioned_*/**
+    extra_files_only: true
 
 winget:
   -
