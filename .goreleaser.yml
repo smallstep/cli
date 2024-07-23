@@ -4,9 +4,7 @@ project_name: step
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod download
-    # - go generate ./...
 
 builds:
   - &COMMON
@@ -36,8 +34,10 @@ builds:
       - windows_amd64
       - windows_arm64
     binary: bin/step
-    ldflags:
-      - -w -X main.Version={{.Version}} -X main.BuildTime={{.Date}}
+  -
+    << : *COMMON
+    id: debug
+    gcflags: all=-N -l
   -
     # This build is for S3 binaries that follow our naming convention there.
     << : *COMMON
