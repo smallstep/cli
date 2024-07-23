@@ -20,8 +20,14 @@ check_package() {
   local REPO="${1}"
   local VER="${2}"
   if [ ! -f /tmp/version-deleted.stamp ]; then
-    gcloud artifacts versions list --repository "${REPO}" --location "${GCLOUD_LOCATION}" --package "${PACKAGE}" \
-    --filter "VERSION:${VER}" --format json  2> /dev/null |jq -re '.[].name?' >/dev/null 2>&1 || EXITCODE=$?
+    gcloud artifacts versions list \
+       --repository "${REPO}" \
+       --location "${GCLOUD_LOCATION}" \
+       --package "${PACKAGE}" \
+       --filter "VERSION:${VER}" \
+       --format json  2> /dev/null \
+       | jq -re '.[].name?' >/dev/null 2>&1 \
+       || EXITCODE=$?
     if [[ "${EXITCODE}" -eq 0 ]]; then
       echo "Package version already exists. Removing it..."
       gcloud artifacts versions delete --quiet "${VER}" --package "${PACKAGE}" --repository "${REPO}" --location "${GCLOUD_LOCATION}"
