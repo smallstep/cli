@@ -1,4 +1,5 @@
 # Documentation: https://goreleaser.com/customization/
+# yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
 version: 2
 project_name: step
 
