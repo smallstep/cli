@@ -84,7 +84,7 @@ archives:
       - goos: windows
         format: zip
     builds:
-      - step
+      - default
     wrap_in_directory: "{{ .ProjectName }}_{{ .Version }}"
     files:
       - README.md
