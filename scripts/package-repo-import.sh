@@ -30,7 +30,11 @@ check_package() {
        || EXITCODE=$?
     if [[ "${EXITCODE}" -eq 0 ]]; then
       echo "Package version already exists. Removing it..."
-      gcloud artifacts versions delete --quiet "${VER}" --package "${PACKAGE}" --repository "${REPO}" --location "${GCLOUD_LOCATION}"
+      gcloud artifacts versions delete \
+      --quiet "${VER}" \
+      --package "${PACKAGE}" \
+      --repository "${REPO}" \
+      --location "${GCLOUD_LOCATION}"
       touch /tmp/version-deleted.stamp
     fi
   fi
