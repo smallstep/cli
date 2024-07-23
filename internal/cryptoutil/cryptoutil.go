@@ -135,7 +135,7 @@ func LoadJSONWebKey(kms, name string, opts ...jose.Option) (*jose.JSONWebKey, er
 	case *rsa.PublicKey:
 		jwk.Algorithm = jose.RS256
 	case ed25519.PublicKey:
-		jwk.Algorithm = jose.XEdDSA
+		jwk.Algorithm = jose.EdDSA
 	default:
 		return nil, fmt.Errorf("unsupported key type %T", pub)
 	}

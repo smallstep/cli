@@ -26,6 +26,90 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.27.2] - 2024-07-18
+
+### Added
+
+- `console` flag to SSH commands (smallstep/cli#1238)
+- Upload FreeBSD build to S3 (smallstep/cli#1239)
+
+
+## [0.27.1] - 2024-07-11
+
+### Fixed
+
+- Broken release process
+
+
+## [0.27.0] - 2024-07-11
+
+### Changed
+
+- Makefile: install to /usr/local/bin, not /usr/bin (smallstep/cli#1214)
+
+### Fixed
+
+- Set proper JOSE algorithm for Ed25519 keys (smallstep/cli#1208)
+- Makefile: usage of install command line flags on MacOS (smallstep/cli#1212)
+- Restore operation of '--bundle' flag in certificate inspect (smallstep/cli#1215)
+- Fish completion (smallstep/cli#1222)
+- Restore operation of inspect CSR from STDIN (smallstep/cli#1232)
+
+### Security
+
+
+## [0.26.2] - 2024-06-13
+
+### Added
+
+- Options for auth-params and scopes to OIDC token generator (smallstep/cli#1154)
+- --kty, --curve, and --size to ssh commands (login, certificate) (smallstep/cli#1156)
+- Stdin input for SSH needs-renewal (smallstep/cli#1157)
+- Allow users to define certificate comment in SSH agent (smallstep/cli#1158)
+- Add OCSP and CRL support to certificate verify (smallstep/cli#1161)
+
+
+## [0.26.1] - 2024-04-22
+
+### Added
+
+- Ability to output inspected CSR in PEM format (smallstep/cli#1153)
+
+### Fixed
+
+- Allow 'certificate inspect' to parse PEM files containig extraneous data (smallstep/cli#1153)
+
+
+## [v0.26.0] - 2024-03-27
+
+### Added
+
+- Sending of (an automatically generated) request identifier in the X-Request-Id header (smallstep/cli#1120)
+
+### Changed
+
+- Upgrade certinfo (smallstep/cli#1129)
+- Upgrade other dependencies
+
+### Fixed
+
+- OIDC flows failing using Chrome and other Chromium based browsers (smallstep/cli#1136)
+
+### Security
+
+- Upgrade to using cosign v2 for signing artifacts
+
+## [v0.25.2] - 2024-01-19
+
+### Added
+
+- Add support for Nebula certificates using ECDSA P-256 (smallstep/cli#1085)
+
+### Changed
+
+- Upgrade docker image using Debian to Bookworm (smallstep/cli#1080)
+- Upgrade dependencies, including go-jose to v3 (smallstep/cli#1086)
+
 ## [v0.25.1] - 2023-11-28
 
 ### Added

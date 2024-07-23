@@ -1,13 +1,15 @@
 package certificate
 
 import (
+	"crypto/x509"
 	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
 	"github.com/smallstep/certinfo"
 	"github.com/smallstep/truststore"
-	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/command"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/crypto/pemutil"
@@ -159,12 +161,12 @@ func installAction(ctx *cli.Context) error {
 	}
 
 	filename := ctx.Args().Get(0)
-	opts, err := getTruststoreOptions(ctx)
+	cert, opts, err := getTruststoreOptions(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err := truststore.InstallFile(filename, opts...); err != nil {
+	if err := truststore.Install(cert, opts...); err != nil {
 		var truststoreErr *truststore.CmdError
 		if errors.As(err, &truststoreErr) {
 			return errors.Errorf("failed to execute \"%s\" failed with: %s",
@@ -175,10 +177,8 @@ func installAction(ctx *cli.Context) error {
 
 	fmt.Printf("Certificate %s has been installed.\n", filename)
 	// Print certificate info (ignore errors)
-	if cert, err := pemutil.ReadCertificate(filename); err == nil {
-		if s, err := certinfo.CertificateShortText(cert); err == nil {
-			fmt.Print(s)
-		}
+	if s, err := certinfo.CertificateShortText(cert); err == nil {
+		fmt.Print(s)
 	}
 
 	return nil
@@ -190,12 +190,12 @@ func uninstallAction(ctx *cli.Context) error {
 	}
 
 	filename := ctx.Args().Get(0)
-	opts, err := getTruststoreOptions(ctx)
+	cert, opts, err := getTruststoreOptions(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err := truststore.UninstallFile(filename, opts...); err != nil {
+	if err := truststore.Uninstall(cert, opts...); err != nil {
 		var truststoreErr *truststore.CmdError
 		if errors.As(err, &truststoreErr) {
 			return errors.Errorf("failed to execute \"%s\" failed with: %s",
@@ -206,28 +206,26 @@ func uninstallAction(ctx *cli.Context) error {
 
 	fmt.Printf("Certificate %s has been removed.\n", filename)
 	// Print certificate info (ignore errors)
-	if cert, err := pemutil.ReadCertificate(filename); err == nil {
-		if s, err := certinfo.CertificateShortText(cert); err == nil {
-			fmt.Print(s)
-		}
+	if s, err := certinfo.CertificateShortText(cert); err == nil {
+		fmt.Print(s)
 	}
 
 	return nil
 }
 
-func getTruststoreOptions(ctx *cli.Context) ([]truststore.Option, error) {
+func getTruststoreOptions(ctx *cli.Context) (*x509.Certificate, []truststore.Option, error) {
 	cert, err := pemutil.ReadCertificate(ctx.Args().Get(0))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if !cert.IsCA || cert.CheckSignatureFrom(cert) != nil {
-		return nil, errors.Errorf("certificate %s is not a root CA", ctx.Args().Get(0))
+		return nil, nil, errors.Errorf("certificate %s is not a root CA", ctx.Args().Get(0))
 	}
 
 	prefix := ctx.String("prefix")
 	if prefix == "" {
-		if len(cert.Subject.CommonName) > 0 {
+		if cert.Subject.CommonName != "" {
 			prefix = cert.Subject.CommonName + " "
 		} else {
 			prefix = "Smallstep Development CA "
@@ -251,5 +249,5 @@ func getTruststoreOptions(ctx *cli.Context) ([]truststore.Option, error) {
 	if ctx.Bool("no-system") {
 		opts = append(opts, truststore.WithNoSystem())
 	}
-	return opts, nil
+	return cert, opts, nil
 }

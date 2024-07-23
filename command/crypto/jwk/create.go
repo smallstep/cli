@@ -394,7 +394,7 @@ func createAction(ctx *cli.Context) (err error) {
 	usePassword := true
 	passwordFile := ctx.String("password-file")
 	if ctx.Bool("no-password") {
-		if len(passwordFile) > 0 {
+		if passwordFile != "" {
 			return errs.IncompatibleFlag(ctx, "no-password", "password-file")
 		}
 		if ctx.Bool("insecure") {
@@ -412,7 +412,7 @@ func createAction(ctx *cli.Context) (err error) {
 
 	// Read password if necessary
 	var password string
-	if len(passwordFile) > 0 {
+	if passwordFile != "" {
 		password, err = utils.ReadStringPasswordFromFile(passwordFile)
 		if err != nil {
 			return err

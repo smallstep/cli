@@ -106,7 +106,7 @@ func createAction(ctx *cli.Context) (err error) {
 	insecureMode := ctx.Bool("insecure")
 	noPass := ctx.Bool("no-password")
 	passwordFile := ctx.String("password-file")
-	if noPass && len(passwordFile) > 0 {
+	if noPass && passwordFile != "" {
 		return errs.IncompatibleFlag(ctx, "no-password", "password-file")
 	}
 	if noPass && !insecureMode {
@@ -115,7 +115,7 @@ func createAction(ctx *cli.Context) (err error) {
 
 	// Read password if necessary
 	var password string
-	if len(passwordFile) > 0 {
+	if passwordFile != "" {
 		password, err = utils.ReadStringPasswordFromFile(passwordFile)
 		if err != nil {
 			return err
@@ -124,7 +124,7 @@ func createAction(ctx *cli.Context) (err error) {
 
 	var pub, priv interface{}
 	fromJWK := ctx.String("from-jwk")
-	if len(fromJWK) > 0 {
+	if fromJWK != "" {
 		switch {
 		case ctx.IsSet("kty"):
 			return errs.IncompatibleFlagWithFlag(ctx, "from-jwk", "kty")

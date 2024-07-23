@@ -99,7 +99,7 @@ func decryptAction(ctx *cli.Context) error {
 	// Add parse options
 	var options []jose.Option
 	options = append(options, jose.WithUse("enc"))
-	if len(kid) > 0 {
+	if kid != "" {
 		options = append(options, jose.WithKid(kid))
 	}
 
@@ -113,7 +113,7 @@ func decryptAction(ctx *cli.Context) error {
 		jwk, err = jose.ReadKeySet(jwks, options...)
 	case isPBES2:
 		var password string
-		if len(passwordFile) > 0 {
+		if passwordFile != "" {
 			password, err = utils.ReadStringPasswordFromFile(passwordFile)
 			if err != nil {
 				return err

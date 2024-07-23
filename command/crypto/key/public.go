@@ -95,7 +95,7 @@ func publicAction(ctx *cli.Context) error {
 		return err
 	}
 
-	if out := ctx.String("out"); len(out) > 0 {
+	if out := ctx.String("out"); out != "" {
 		if err := utils.WriteFile(out, pem.EncodeToMemory(block), 0600); err != nil {
 			return err
 		}

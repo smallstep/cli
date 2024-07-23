@@ -124,7 +124,7 @@ $ step ca sign foo.csr foo.crt \
 			flags.Force,
 			flags.Offline,
 			flags.PasswordFile,
-			consoleFlag,
+			flags.Console,
 			flags.KMSUri,
 			flags.X5cCert,
 			flags.X5cKey,

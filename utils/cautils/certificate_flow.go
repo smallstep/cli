@@ -131,7 +131,7 @@ func (f *CertificateFlow) GetClient(ctx *cli.Context, tok string, options ...ca.
 		return nil, errors.Wrap(err, "error parsing flag '--token'")
 	}
 	// Prepare client for bootstrap or provisioning tokens
-	if len(jwt.Payload.SHA) > 0 && len(jwt.Payload.Audience) > 0 && strings.HasPrefix(strings.ToLower(jwt.Payload.Audience[0]), "http") {
+	if jwt.Payload.SHA != "" && len(jwt.Payload.Audience) > 0 && strings.HasPrefix(strings.ToLower(jwt.Payload.Audience[0]), "http") {
 		if caURL == "" {
 			caURL = jwt.Payload.Audience[0]
 		}

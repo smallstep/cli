@@ -33,6 +33,8 @@ func updateCommand() cli.Command {
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 ACME
 
@@ -42,6 +44,7 @@ ACME
 [**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>]
 
 OIDC
 
@@ -51,9 +54,13 @@ OIDC
 [**--domain**=<domain>] [**--remove-domain**=<domain>]
 [**--group**=<group>] [**--remove-group**=<group>]
 [**--admin**=<email>]... [**--remove-admin**=<email>]...
+[**--scope**=<scope>] [**--remove-scope**=<scope>]
+[**--auth-param**=<auth-param>] [**--remove-auth-param**=<auth-param>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 X5C
 
@@ -61,6 +68,8 @@ X5C
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 K8SSA (Kubernetes Service Account)
 
@@ -68,6 +77,7 @@ K8SSA (Kubernetes Service Account)
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>]
 
 IID (AWS/GCP/Azure)
 
@@ -82,6 +92,8 @@ IID (AWS/GCP/Azure)
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>] [**--ssh-template**=<file>]
+[**--ssh-template-data**=<file>]
 
 SCEP
 
@@ -90,9 +102,10 @@ SCEP
 [**--minimum-public-key-length**=<length>] [**--encryption-algorithm-identifier**=<id>]
 [**--scep-decrypter-certificate-file**=<file>] [**--scep-decrypter-key-file**=<file>]
 [**--scep-decrypter-key-uri**=<uri>] [**--scep-decrypter-key-password-file**=<file>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>] 
+[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
+[**--x509-template**=<file>] [**--x509-template-data**=<file>]`,
 		Flags: []cli.Flag{
 			nameFlag,
 			pubKeyFlag,
@@ -112,6 +125,8 @@ SCEP
 			oidcRemoveDomainFlag,
 			oidcGroupFlag,
 			oidcTenantIDFlag,
+			oidcScopeFlag,
+			oidcAuthParamFlag,
 
 			// X5C Root Flag
 			x5cRootsFlag,
@@ -486,7 +501,7 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		err      error
 		password string
 	)
-	if passwordFile := ctx.String("password-file"); len(passwordFile) > 0 {
+	if passwordFile := ctx.String("password-file"); passwordFile != "" {
 		password, err = utils.ReadStringPasswordFromFile(passwordFile)
 		if err != nil {
 			return err
@@ -790,6 +805,18 @@ func updateOIDCDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 			return errs.InvalidFlagValue(ctx, "configuration-endpoint", ce, "")
 		}
 		details.ConfigurationEndpoint = ce
+	}
+	if ctx.IsSet("remove-scope") {
+		details.Scopes = removeElements(details.Scopes, ctx.StringSlice("remove-scope"))
+	}
+	if ctx.IsSet("scope") {
+		details.Scopes = append(details.Scopes, ctx.StringSlice("scope")...)
+	}
+	if ctx.IsSet("remove-auth-param") {
+		details.AuthParams = removeElements(details.AuthParams, ctx.StringSlice("remove-auth-param"))
+	}
+	if ctx.IsSet("auth-param") {
+		details.AuthParams = append(details.AuthParams, ctx.StringSlice("auth-param")...)
 	}
 	return nil
 }

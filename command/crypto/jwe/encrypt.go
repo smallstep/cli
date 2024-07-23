@@ -206,7 +206,7 @@ func encryptAction(ctx *cli.Context) error {
 	if len(alg) > 0 {
 		options = append(options, jose.WithAlg(string(alg)))
 	}
-	if len(kid) > 0 {
+	if kid != "" {
 		options = append(options, jose.WithKid(kid))
 	}
 	if isSubtle {

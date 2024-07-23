@@ -162,10 +162,10 @@ func verifyAction(ctx *cli.Context) error {
 	// Add parse options
 	var options []jose.Option
 	options = append(options, jose.WithUse("sig"))
-	if len(alg) > 0 {
+	if alg != "" {
 		options = append(options, jose.WithAlg(alg))
 	}
-	if len(kid) > 0 {
+	if kid != "" {
 		options = append(options, jose.WithKid(kid))
 	}
 	if isSubtle {
@@ -174,7 +174,7 @@ func verifyAction(ctx *cli.Context) error {
 	if !ctx.Bool("insecure") {
 		options = append(options, jose.WithNoDefaults(true))
 	}
-	if passwordFile := ctx.String("password-file"); len(passwordFile) > 0 {
+	if passwordFile := ctx.String("password-file"); passwordFile != "" {
 		options = append(options, jose.WithPasswordFile(passwordFile))
 	}
 

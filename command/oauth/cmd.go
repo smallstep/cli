@@ -1,7 +1,6 @@
 package oauth
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"crypto/x509"
@@ -901,10 +900,8 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 		idr.Interval = defaultDeviceAuthzInterval
 	}
 
-	fmt.Fprintf(os.Stderr, "Visit %s and enter the code: (press 'ENTER' to open default browser)\n", idr.VerificationURI)
+	fmt.Fprintf(os.Stderr, "Visit %s and enter the code:\n", idr.VerificationURI)
 	fmt.Fprintln(os.Stderr, idr.UserCode)
-
-	go openBrowserIfAsked(o, idr.VerificationURI)
 
 	// Poll the Token endpoint until the user completes the flow.
 	data = url.Values{}
@@ -937,13 +934,6 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 			return nil, errors.New("device authorization grant expired")
 		}
 	}
-}
-
-func openBrowserIfAsked(o *oauth, u string) {
-	reader := bufio.NewReader(os.Stdin)
-	reader.ReadString('\n')
-
-	exec.OpenInBrowser(u, o.browser)
 }
 
 var errHTTPToken = errors.New("bad request; token not returned")
@@ -1087,6 +1077,12 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path != o.CallbackPath {
 		http.NotFound(w, req)
+		return
+	}
+
+	if req.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		w.Write(nil)
 		return
 	}
 
