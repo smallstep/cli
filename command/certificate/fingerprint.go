@@ -139,7 +139,7 @@ func fingerprintAction(ctx *cli.Context) error {
 			if csrErr != nil {
 				return err
 			}
-			// We will only need the raw the generate a fingerprint.
+			// We will only need the raw DER bytes to generate a fingerprint.
 			certs = []*x509.Certificate{
 				{Raw: csr.Raw},
 			}

@@ -99,7 +99,7 @@ func WithConfirmationFingerprint(fp string) Options {
 
 // WithFingerprint returns an Options function that the cnf claims with
 // "x5rt#S256" representing the fingerprint of the CSR
-func WithFingerprint(v interface{}) Options {
+func WithFingerprint(v any) Options {
 	return func(c *Claims) error {
 		var data []byte
 		switch vv := v.(type) {
