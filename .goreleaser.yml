@@ -36,30 +36,6 @@ builds:
       - windows_arm64
     binary: bin/step
   -
-    # This build is for S3 binaries that follow our naming convention there.
-    << : *BUILD
-    id: s3-versioned
-    targets:
-      - darwin_amd64
-      - darwin_arm64
-      - linux_amd64
-      - linux_arm64
-      - windows_amd64
-      - freebsd_amd64
-    binary: 'step_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
-  -
-    # This build is for S3 unversioned binaries that follow our naming convention there.
-    << : *BUILD
-    id: s3-unversioned
-    targets:
-      - darwin_amd64
-      - darwin_arm64
-      - linux_amd64
-      - linux_arm64
-      - windows_amd64
-      - freebsd_amd64
-    binary: 'step_latest_{{ .Os }}_{{ .Arch }}'
-  -
     # This build is specifically for nFPM targets (.deb and .rpm files).
     # It's exactly the same as the default build above, except:
     # - it only builds the archs we want to produce .deb and .rpm files for
@@ -260,28 +236,48 @@ release:
   #  - glob: ./glob/foo/to/bar/file/foobar/override_from_previous
 
 blobs:
-  - provider: s3
+  - &S3_VERSIONED
+    provider: s3
     disable: 'false'
     ids:
-      - s3-versioned
+      - default
     bucket: '{{ .Env.AWS_S3_BUCKET }}'
-    region: us-east-1
+    region: '{{ .Env.AWS_S3_REGION }}'
     directory: '/'
     acl: public-read
     extra_files:
-      - glob: ./dist/s3-versioned_*/**
+      - glob: ./dist/default_darwin_amd64_v1/bin/step
+        name_template: step_{{ .Version }}_darwin_amd64
+      - glob: ./dist/default_darwin_arm64/bin/step
+        name_template: step_{{ .Version }}_darwin_arm64
+      - glob: ./dist/default_linux_amd64_v1/bin/step
+        name_template: step_{{ .Version }}_linux_amd64
+      - glob: ./dist/default_linux_arm64/bin/step
+        name_template: step_{{ .Version }}_linux_arm64
+      - glob: ./dist/default_windows_arm64/bin/step.exe
+        name_template: step_{{ .Version }}_windows_amd64.exe
+      - glob: ./dist/default_freebsd_*/bin/step
+        name_template: step_{{ .Version }}_freebsd_amd64
     extra_files_only: true
 
-  - provider: s3
+  # Unversioned (`latest`) copies of binaries.
+  # This section should only run on full releases (not prereleases).
+  -
+    << : *S3_VERSIONED
     disable: '{{ if .Prerelease }}true{{ else }}false{{ end }}'
-    ids:
-      - s3-unversioned
-    bucket: '{{ .Env.AWS_S3_BUCKET }}'
-    region: us-east-1
-    directory: '/'
-    acl: public-read
     extra_files:
-      - glob: ./dist/s3-unversioned_*/**
+      - glob: ./dist/default_darwin_amd64_v1/bin/step
+        name_template: step_latest_darwin_amd64
+      - glob: ./dist/default_darwin_arm64/bin/step
+        name_template: step_latest_darwin_arm64
+      - glob: ./dist/default_linux_amd64_v1/bin/step
+        name_template: step_latest_linux_amd64
+      - glob: ./dist/default_linux_arm64/bin/step
+        name_template: step_latest_linux_arm64
+      - glob: ./dist/default_windows_arm64/bin/step.exe
+        name_template: step_latest_windows_amd64.exe
+      - glob: ./dist/default_freebsd_*/bin/step
+        name_template: step_latest_freebsd_amd64
     extra_files_only: true
 
 winget:
