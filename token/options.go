@@ -2,6 +2,7 @@ package token
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/pkg/errors"
 	nebula "github.com/slackhq/nebula/cert"
+	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x25519"
@@ -82,6 +84,40 @@ func WithSSH(v interface{}) Options {
 	return WithStep(map[string]interface{}{
 		"ssh": v,
 	})
+}
+
+// WithConfirmationFingerprint returns an Options function that sets the cnf
+// claim with the given CSR fingerprint.
+func WithConfirmationFingerprint(fp string) Options {
+	return func(c *Claims) error {
+		c.Set(ConfirmationClaim, map[string]string{
+			"x5rt#S256": fp,
+		})
+		return nil
+	}
+}
+
+// WithFingerprint returns an Options function that the cnf claims with
+// "x5rt#S256" representing the fingerprint of the CSR
+func WithFingerprint(v any) Options {
+	return func(c *Claims) error {
+		var data []byte
+		switch vv := v.(type) {
+		case *x509.CertificateRequest:
+			data = vv.Raw
+		default:
+			return fmt.Errorf("unsupported fingerprint for %T", v)
+		}
+
+		kid, err := fingerprint.New(data, crypto.SHA256, fingerprint.Base64RawURLFingerprint)
+		if err != nil {
+			return err
+		}
+		c.Set(ConfirmationClaim, map[string]string{
+			"x5rt#S256": kid,
+		})
+		return nil
+	}
 }
 
 // WithValidity validates boundary inputs and sets the 'nbf' (NotBefore) and

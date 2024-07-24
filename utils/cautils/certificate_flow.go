@@ -27,6 +27,7 @@ import (
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
+	"golang.org/x/crypto/ssh"
 )
 
 // CertificateFlow manages the flow to retrieve a new certificate.
@@ -35,15 +36,65 @@ type CertificateFlow struct {
 	offline   bool
 }
 
+type flowContext struct {
+	DisableCustomSANs       bool
+	SSHPublicKey            ssh.PublicKey
+	CertificateRequest      *x509.CertificateRequest
+	ConfirmationFingerprint string
+}
+
 // sharedContext is used to share information between commands.
-var sharedContext = struct {
-	DisableCustomSANs bool
-}{}
+var sharedContext flowContext
+
+type funcFlowOption struct {
+	f func(fo *flowContext)
+}
+
+func (ffo *funcFlowOption) apply(fo *flowContext) {
+	ffo.f(fo)
+}
+
+func newFuncFlowOption(f func(fo *flowContext)) *funcFlowOption {
+	return &funcFlowOption{
+		f: f,
+	}
+}
+
+type Option interface {
+	apply(fo *flowContext)
+}
+
+// WithSSHPublicKey sets the SSH public key used in the request.
+func WithSSHPublicKey(key ssh.PublicKey) Option {
+	return newFuncFlowOption(func(fo *flowContext) {
+		fo.SSHPublicKey = key
+	})
+}
+
+// WithCertificateRequest sets the X509 certificate request used in the request.
+func WithCertificateRequest(cr *x509.CertificateRequest) Option {
+	return newFuncFlowOption(func(fo *flowContext) {
+		fo.CertificateRequest = cr
+	})
+}
+
+// WithConfirmationFingerprint sets the confirmation fingerprint used in the
+// request.
+func WithConfirmationFingerprint(fp string) Option {
+	return newFuncFlowOption(func(fo *flowContext) {
+		fo.ConfirmationFingerprint = fp
+	})
+}
 
 // NewCertificateFlow initializes a cli flow to get a new certificate.
-func NewCertificateFlow(ctx *cli.Context) (*CertificateFlow, error) {
+func NewCertificateFlow(ctx *cli.Context, opts ...Option) (*CertificateFlow, error) {
 	var err error
 	var offlineClient *OfflineCA
+
+	// Add options to the shared context
+	for _, opt := range opts {
+		opt.apply(&sharedContext)
+	}
 
 	offline := ctx.Bool("offline")
 	if offline {

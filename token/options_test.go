@@ -16,7 +16,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x25519"
+	"golang.org/x/crypto/ssh"
 )
 
 func TestOptions(t *testing.T) {
@@ -34,6 +36,11 @@ func TestOptions(t *testing.T) {
 
 	p256ECDHSigner, err := p256Signer.ECDH()
 	require.NoError(t, err)
+
+	testCSR, err := pemutil.ReadCertificateRequest("testdata/test.csr")
+	require.NoError(t, err)
+
+	testSSH := mustReadSSHPublicKey(t, "testdata/ssh-key.pub")
 
 	wrongNebulaContentsFilename := "testdata/ca.crt"
 
@@ -79,6 +86,10 @@ func TestOptions(t *testing.T) {
 		{"WithNebulaCurve25519Cert empty file fail", WithNebulaCert(emptyFile.Name(), nil), empty, true},
 		{"WithNebulaCurve25519Cert invalid content fail", WithNebulaCert(c25519CertFilename, nil), empty, true},
 		{"WithNebulaCurve25519Cert mismatching key fail", WithNebulaCert(c25519CertFilename, p256Signer), empty, true},
+		{"WithConfirmationFingerprint ok", WithConfirmationFingerprint("my-kid"), &Claims{ExtraClaims: map[string]any{"cnf": map[string]string{"kid": "my-kid"}}}, false},
+		{"WithFingerprint csr ok", WithFingerprint(testCSR), &Claims{ExtraClaims: map[string]any{"cnf": map[string]string{"kid": "ak6j6CwuZbd_mOQ-pNOUwhpmtSN0mY0xrLvaQL4J5l8"}}}, false},
+		{"WithFingerprint ssh ok", WithFingerprint(testSSH), &Claims{ExtraClaims: map[string]any{"cnf": map[string]string{"kid": "hpTQOoB7fIRxTp-FhXCIm94mGBv7_dzr_5SxLn1Pnwk"}}}, false},
+		{"WithFingerprint fail", WithFingerprint("unexpected type"), empty, true},
 	}
 
 	for _, tt := range tests {
@@ -94,6 +105,18 @@ func TestOptions(t *testing.T) {
 			assert.Equal(t, tt.want, claim)
 		})
 	}
+}
+
+func mustReadSSHPublicKey(t *testing.T, filename string) ssh.PublicKey {
+	t.Helper()
+
+	b, err := os.ReadFile(filename)
+	require.NoError(t, err)
+
+	pub, _, _, _, err := ssh.ParseAuthorizedKey(b)
+	require.NoError(t, err)
+
+	return pub
 }
 
 func serializeAndWriteNebulaCert(t *testing.T, tempDir string, cert *nebula.NebulaCertificate) (string, []byte) {
