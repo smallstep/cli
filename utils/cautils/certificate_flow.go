@@ -37,10 +37,10 @@ type CertificateFlow struct {
 }
 
 type flowContext struct {
-	DisableCustomSANs  bool
-	SSHPublicKey       ssh.PublicKey
-	CertificateRequest *x509.CertificateRequest
-	ConfirmationKid    string
+	DisableCustomSANs       bool
+	SSHPublicKey            ssh.PublicKey
+	CertificateRequest      *x509.CertificateRequest
+	ConfirmationFingerprint string
 }
 
 // sharedContext is used to share information between commands.
@@ -78,10 +78,11 @@ func WithCertificateRequest(cr *x509.CertificateRequest) Option {
 	})
 }
 
-// WithConfirmationKid sets the confirmation kid used in the request.
-func WithConfirmationKid(kid string) Option {
+// WithConfirmationFingerprint sets the confirmation fingerprint used in the
+// request.
+func WithConfirmationFingerprint(fp string) Option {
 	return newFuncFlowOption(func(fo *flowContext) {
-		fo.ConfirmationKid = kid
+		fo.ConfirmationFingerprint = fp
 	})
 }
 

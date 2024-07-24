@@ -20,7 +20,6 @@ import (
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x25519"
-	"golang.org/x/crypto/ssh"
 )
 
 // Options is a function that set claims.
@@ -87,30 +86,27 @@ func WithSSH(v interface{}) Options {
 	})
 }
 
-// WithConfirmationKid returns an Options function that sets the cnf claim with
-// the given kid.
-func WithConfirmationKid(kid string) Options {
+// WithConfirmationFingerprint returns an Options function that sets the cnf
+// claim with the given CSR fingerprint.
+func WithConfirmationFingerprint(fp string) Options {
 	return func(c *Claims) error {
 		c.Set(ConfirmationClaim, map[string]string{
-			"kid": kid,
+			"x5rt#S256": fp,
 		})
 		return nil
 	}
 }
 
-// WithFingerprint returns an Options function that the cnf claims with the kid
-// representing the fingerprint of the certificate request or the ssh public
-// key.
+// WithFingerprint returns an Options function that the cnf claims with
+// "x5rt#S256" representing the fingerprint of the CSR
 func WithFingerprint(v interface{}) Options {
 	return func(c *Claims) error {
 		var data []byte
 		switch vv := v.(type) {
 		case *x509.CertificateRequest:
 			data = vv.Raw
-		case ssh.PublicKey:
-			data = vv.Marshal()
 		default:
-			return fmt.Errorf("unsupported fingerprint for %T", vv)
+			return fmt.Errorf("unsupported fingerprint for %T", v)
 		}
 
 		kid, err := fingerprint.New(data, crypto.SHA256, fingerprint.Base64RawURLFingerprint)
@@ -118,7 +114,7 @@ func WithFingerprint(v interface{}) Options {
 			return err
 		}
 		c.Set(ConfirmationClaim, map[string]string{
-			"kid": kid,
+			"x5rt#S256": kid,
 		})
 		return nil
 	}

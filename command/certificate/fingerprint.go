@@ -57,7 +57,7 @@ e2c4f12edfc1816cc610755d32e6f45d5678ba21ecda1693bb5b246e3c48c03d
 25847d668eb4f04fdd40b12b6b0740c567da7d024308eb6c2c96fe41d9de218d
 '''
 
-Get the fingerprint for a CSR using base64-url without padding encoding:
+Get the fingerprint for a CSR using base64-url encoding without padding:
 '''
 $ step certificate fingerprint --format base64-url-raw hello.csr
 PJLNhtQoBE1yGN_ZKzr4Y2U5pyqIGiyyszkoz2raDOw

@@ -86,7 +86,7 @@ func TestOptions(t *testing.T) {
 		{"WithNebulaCurve25519Cert empty file fail", WithNebulaCert(emptyFile.Name(), nil), empty, true},
 		{"WithNebulaCurve25519Cert invalid content fail", WithNebulaCert(c25519CertFilename, nil), empty, true},
 		{"WithNebulaCurve25519Cert mismatching key fail", WithNebulaCert(c25519CertFilename, p256Signer), empty, true},
-		{"WithConfirmationKid ok", WithConfirmationKid("my-kid"), &Claims{ExtraClaims: map[string]any{"cnf": map[string]string{"kid": "my-kid"}}}, false},
+		{"WithConfirmationFingerprint ok", WithConfirmationFingerprint("my-kid"), &Claims{ExtraClaims: map[string]any{"cnf": map[string]string{"kid": "my-kid"}}}, false},
 		{"WithFingerprint csr ok", WithFingerprint(testCSR), &Claims{ExtraClaims: map[string]any{"cnf": map[string]string{"kid": "ak6j6CwuZbd_mOQ-pNOUwhpmtSN0mY0xrLvaQL4J5l8"}}}, false},
 		{"WithFingerprint ssh ok", WithFingerprint(testSSH), &Claims{ExtraClaims: map[string]any{"cnf": map[string]string{"kid": "hpTQOoB7fIRxTp-FhXCIm94mGBv7_dzr_5SxLn1Pnwk"}}}, false},
 		{"WithFingerprint fail", WithFingerprint("unexpected type"), empty, true},

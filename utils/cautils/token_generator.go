@@ -102,8 +102,8 @@ func (t *TokenGenerator) SignToken(sub string, sans []string, opts ...token.Opti
 	// Tie certificate request to the token used in the JWK and X5C provisioners
 	if sharedContext.CertificateRequest != nil {
 		opts = append(opts, token.WithFingerprint(sharedContext.CertificateRequest))
-	} else if sharedContext.ConfirmationKid != "" {
-		opts = append(opts, token.WithConfirmationKid(sharedContext.ConfirmationKid))
+	} else if sharedContext.ConfirmationFingerprint != "" {
+		opts = append(opts, token.WithConfirmationFingerprint(sharedContext.ConfirmationFingerprint))
 	}
 
 	return t.Token(sub, opts...)
@@ -123,13 +123,6 @@ func (t *TokenGenerator) SignSSHToken(sub, certType string, principals []string,
 		ValidAfter:  notBefore,
 		ValidBefore: notAfter,
 	})}, opts...)
-
-	// Tie SSH public key to the token used in the JWK and X5C provisioners
-	if sharedContext.SSHPublicKey != nil {
-		opts = append(opts, token.WithFingerprint(sharedContext.SSHPublicKey))
-	} else if sharedContext.ConfirmationKid != "" {
-		opts = append(opts, token.WithConfirmationKid(sharedContext.ConfirmationKid))
-	}
 
 	return t.Token(sub, opts...)
 }

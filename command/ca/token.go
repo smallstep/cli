@@ -30,7 +30,7 @@ func tokenCommand() cli.Command {
 [**--output-file**=<file>] [**--kms**=uri] [**--key**=<file>] [**--san**=<SAN>] [**--offline**]
 [**--revoke**] [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--x5c-insecure**]
 [**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
-[**--cnf-file**=<file>] [**--cnf-kid**=<fingerprint>]
+[**--cnf**=<fingerprint>] [**--cnf-file**=<file>]
 [**--ssh**] [**--host**] [**--principal**=<name>] [**--k8ssa-token-path**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
@@ -84,6 +84,13 @@ $ step ca token --not-after 30m internal.example.com
 Get a new token that becomes valid in 30 minutes and expires 5 minutes after that:
 '''
 $ step ca token --not-before 30m --not-after 35m internal.example.com
+'''
+
+Get a new token with a confirmation claim to enforce a given CSR fingerprint:
+'''
+$ step certificate fingerprint --format base64-url-raw internal.csr
+PJLNhtQoBE1yGN_ZKzr4Y2U5pyqIGiyyszkoz2raDOw
+$ step ca token --cnf PJLNhtQoBE1yGN_ZKzr4Y2U5pyqIGiyyszkoz2raDOw internal.smallstep.com
 '''
 
 Get a new token with a confirmation claim to enforce the use of a given CSR:
@@ -200,8 +207,8 @@ multiple principals.`,
 			flags.SSHPOPKey,
 			flags.NebulaCert,
 			flags.NebulaKey,
+			flags.Confirmation,
 			flags.ConfirmationFile,
-			flags.ConfirmationKid,
 			cli.StringFlag{
 				Name: "key",
 				Usage: `The private key <file> used to sign the JWT. This is usually downloaded from
@@ -258,7 +265,7 @@ func tokenAction(ctx *cli.Context) error {
 	principals := ctx.StringSlice("principal")
 	// confirmation claims
 	cnfFile := ctx.String("cnf-file")
-	cnfKid := ctx.String("cnf-kid")
+	cnf := ctx.String("cnf")
 
 	switch {
 	case isSSH && len(sans) > 0:
@@ -271,8 +278,8 @@ func tokenAction(ctx *cli.Context) error {
 		return errs.RequiredWithFlag(ctx, "host", "ssh")
 	case !isSSH && len(principals) > 0:
 		return errs.RequiredWithFlag(ctx, "principal", "ssh")
-	case cnfFile != "" && cnfKid != "":
-		return errs.IncompatibleFlagWithFlag(ctx, "cnf-file", "cnf-kid")
+	case cnfFile != "" && cnf != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "cnf-file", "cnf")
 	}
 
 	// Default token type is always a 'Sign' token.
@@ -337,8 +344,8 @@ func tokenAction(ctx *cli.Context) error {
 			}
 			tokenOpts = append(tokenOpts, cautils.WithCertificateRequest(csr))
 		}
-	} else if cnfKid != "" {
-		tokenOpts = append(tokenOpts, cautils.WithConfirmationKid(cnfKid))
+	} else if cnf != "" {
+		tokenOpts = append(tokenOpts, cautils.WithConfirmationFingerprint(cnf))
 	}
 
 	// --san and --type revoke are incompatible. Revocation tokens do not support SANs.
