@@ -16,6 +16,8 @@ import (
 
 	"github.com/pkg/errors"
 	nebula "github.com/slackhq/nebula/cert"
+	"golang.org/x/crypto/ssh"
+
 	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
@@ -105,16 +107,18 @@ func WithFingerprint(v any) Options {
 		switch vv := v.(type) {
 		case *x509.CertificateRequest:
 			data = vv.Raw
+		case ssh.PublicKey:
+			data = vv.Marshal()
 		default:
 			return fmt.Errorf("unsupported fingerprint for %T", v)
 		}
 
-		kid, err := fingerprint.New(data, crypto.SHA256, fingerprint.Base64RawURLFingerprint)
+		fp, err := fingerprint.New(data, crypto.SHA256, fingerprint.Base64RawURLFingerprint)
 		if err != nil {
 			return err
 		}
 		c.Set(ConfirmationClaim, map[string]string{
-			"x5rt#S256": kid,
+			"x5rt#S256": fp,
 		})
 		return nil
 	}
