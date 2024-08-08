@@ -67,6 +67,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
+      packages: write
     uses: smallstep/workflows/.github/workflows/goreleaser.yml@jdoss/Package_Repos
     secrets: inherit
 
