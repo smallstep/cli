@@ -25,3 +25,7 @@ vendor
 step
 .idea
 .envrc
+
+# Packages files
+0x889B19391F774443-Certify.key
+gha-creds-*.json
