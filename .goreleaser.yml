@@ -98,7 +98,11 @@ nfpms:
       - nfpm
     package_name: "{{ .Var.packageName }}"
     release: "1"
-    file_name_template: "{{.ConventionalFileName}}"
+    file_name_template: >-
+      {{- trimsuffix .ConventionalFileName .ConventionalExtension -}}
+      {{- if and (eq .Arm "6") (eq .ConventionalExtension ".deb") }}6{{ end -}}
+      {{- if not (eq .Amd64 "v1")}}{{ .Amd64 }}{{ end -}}
+      {{- .ConventionalExtension -}}
     vendor: Smallstep Labs
     homepage: https://github.com/smallstep/cli
     maintainer: Smallstep <techadmin@smallstep.com>
