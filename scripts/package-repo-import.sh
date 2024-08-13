@@ -40,11 +40,6 @@ check_package() {
   fi
 }
 
-if [[ ${GORELEASER_PHASE} != "publish" ]]; then
-  echo "Skipping artifact import; GORELEASER_PHASE is not 'publish'"
-  exit 0;
-fi
-
 if [[ ${IS_PRERELEASE} == "true" ]]; then
   echo "Skipping artifact import; IS_PRERELEASE is 'true'"
   exit 0;

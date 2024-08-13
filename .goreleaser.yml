@@ -95,6 +95,7 @@ nfpms:
   # Package metadata: dpkg --info dist/step_....deb
   #
   - &NFPM
+    id: packages
     builds:
       - nfpm
     package_name: "{{ .Var.packageName }}"
