@@ -71,7 +71,7 @@ jobs:
     uses: smallstep/workflows/.github/workflows/goreleaser.yml@jdoss/PRERELEASE_env_var
     with:
       enable-packages-upload: true
-      is-prerelease: ${{ needs.create_release.outputs.is_prerelease }}
+      is-prerelease: "${{ needs.create_release.outputs.is_prerelease }}"
     secrets: inherit
 
   build_upload_docker:
