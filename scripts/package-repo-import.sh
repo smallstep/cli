@@ -45,6 +45,11 @@ if [[ ${GORELEASER_PHASE} != "publish" ]]; then
   exit 0;
 fi
 
+if [[ ${IS_PRERELEASE} == "true" ]]; then
+  echo "Skipping artifact import; IS_PRERELEASE is 'true'"
+  exit 0;
+fi
+
 check_package "${GCLOUD_RPM_REPO}" "${EPOCH}:${VERSION}-${RELEASE}"
 gcloud artifacts yum import "${GCLOUD_RPM_REPO}" \
   --location "${GCLOUD_LOCATION}" \

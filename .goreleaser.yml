@@ -13,6 +13,7 @@ before:
 
 after:
   hooks:
+    # This script depends on IS_PRERELEASE env being set. This is set by CI in the Is Pre-release step.
     - cmd: bash scripts/package-repo-import.sh {{ .Var.packageName }} {{ .Version }}
       output: true
 
@@ -161,7 +162,6 @@ publishers:
   ids:
   - packages
   cmd: ./scripts/package-upload.sh {{ abs .ArtifactPath }} {{ .Var.packageName }} {{ .Version }} {{ .Var.packageRelease }}
-  disable: "{{ if .Prerelease }}true{{ end }}"
 
 snapshot:
   name_template: "{{ .Tag }}-next"
