@@ -211,7 +211,7 @@ release:
     - 📦 [step-cli_{{ replace .Version "-" "." }}-{{ .Var.packageRelease }}_amd64.deb](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ replace .Version "-" "." }}-{{ .Var.packageRelease }}_amd64.deb)
     - 📦 [step-cli-{{ replace .Version "-" "." }}-{{ .Var.packageRelease }}.x86_64.rpm](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli-{{ replace .Version "-" "." }}-{{ .Var.packageRelease }}.x86_64.rpm)
     - 📦 [step-cli_{{ replace .Version "-" "." }}-{{ .Var.packageRelease }}_arm64.deb](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli_{{ replace .Version "-" "." }}-{{ .Var.packageRelease }}_arm64.deb)
-    - 📦 [step-cli-{{ replace .Version "-" "." }}-{{ .Var.packageRelease }.aarch64.rpm](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli-{{ replace .Version "-" "." }}-{{ .Var.packageRelease }}.aarch64.rpm)
+    - 📦 [step-cli-{{ replace .Version "-" "." }}-{{ .Var.packageRelease }}.aarch64.rpm](https://dl.smallstep.com/gh-release/cli/gh-release-header/{{ .Tag }}/step-cli-{{ replace .Version "-" "." }}-{{ .Var.packageRelease }}.aarch64.rpm)
     - see `Assets` below for more builds
 
     #### macOS Darwin
