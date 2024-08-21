@@ -262,7 +262,7 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, tok string, csr api.Certificate
 		return err
 	}
 
-	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
+	if len(resp.CertChainPEM) == 0 {
 		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
 	}
 	var data []byte

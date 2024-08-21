@@ -472,7 +472,7 @@ func (r *renewer) Renew(outFile string) (resp *api.SignResponse, err error) {
 		return nil, errors.Wrap(err, "error renewing certificate")
 	}
 
-	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
+	if len(resp.CertChainPEM) == 0 {
 		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
 	}
 	var data []byte
@@ -503,7 +503,7 @@ func (r *renewer) Rekey(priv interface{}, outCert, outKey string, writePrivateKe
 	if err != nil {
 		return nil, errors.Wrap(err, "error rekeying certificate")
 	}
-	if resp.CertChainPEM == nil || len(resp.CertChainPEM) == 0 {
+	if len(resp.CertChainPEM) == 0 {
 		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
 	}
 	var data []byte

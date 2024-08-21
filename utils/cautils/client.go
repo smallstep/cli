@@ -184,7 +184,7 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		if err != nil {
 			return nil, err
 		}
-		if signResponse.CertChainPEM == nil || len(signResponse.CertChainPEM) == 0 {
+		if len(signResponse.CertChainPEM) == 0 {
 			signResponse.CertChainPEM = []api.Certificate{signResponse.ServerPEM, signResponse.CaPEM}
 		}
 		adminCert = make([]*x509.Certificate, len(signResponse.CertChainPEM))

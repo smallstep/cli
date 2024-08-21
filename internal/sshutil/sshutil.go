@@ -2,8 +2,7 @@ package sshutil
 
 import (
 	"crypto"
-	//nolint:staticcheck // Maintain support for deprecated algorithms.
-	"crypto/dsa"
+	"crypto/dsa" // Maintain support for deprecated algorithms.
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -202,7 +201,6 @@ func parseECDSA(in []byte) (*ecdsa.PublicKey, error) {
 		return nil, errors.Errorf("unsupported curve %s", w.Curve)
 	}
 
-	//nolint:staticcheck // ignore this deprecation warning - golang will fix
 	key.X, key.Y = elliptic.Unmarshal(key.Curve, w.KeyBytes)
 	if key.X == nil || key.Y == nil {
 		return nil, errors.New("invalid curve point")
