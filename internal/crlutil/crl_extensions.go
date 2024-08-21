@@ -85,15 +85,19 @@ func (d distributionPoint) FullNames() []string {
 type Extension struct {
 	Name    string   `json:"-"`
 	Details []string `json:"-"`
-	json    map[string]interface{}
+	json    map[string]any
 }
 
 func (e *Extension) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.json)
 }
 
-func (e *Extension) AddDetailf(format string, args ...interface{}) {
+func (e *Extension) AddDetailf(format string, args ...any) {
 	e.Details = append(e.Details, fmt.Sprintf(format, args...))
+}
+
+func (e *Extension) AddDetail(detail string) {
+	e.Details = append(e.Details, detail)
 }
 
 func newExtension(e pkix.Extension) Extension {
@@ -102,8 +106,8 @@ func newExtension(e pkix.Extension) Extension {
 	case e.Id.Equal(oidExtensionReasonCode):
 		ext.Name = "X509v3 CRL Reason Code:"
 		value := parseReasonCode(e.Value)
-		ext.AddDetailf(value)
-		ext.json = map[string]interface{}{
+		ext.AddDetail(value)
+		ext.json = map[string]any{
 			"crl_reason_code": value,
 		}
 
@@ -111,13 +115,13 @@ func newExtension(e pkix.Extension) Extension {
 		ext.Name = "X509v3 CRL Number:"
 		var n *big.Int
 		if _, err := asn1.Unmarshal(e.Value, &n); err == nil {
-			ext.AddDetailf(n.String())
-			ext.json = map[string]interface{}{
+			ext.AddDetail(n.String())
+			ext.json = map[string]any{
 				"crl_number": n.String(),
 			}
 		} else {
-			ext.AddDetailf(sanitizeBytes(e.Value))
-			ext.json = map[string]interface{}{
+			ext.AddDetail(sanitizeBytes(e.Value))
+			ext.json = map[string]any{
 				"crl_number": e.Value,
 			}
 		}
@@ -125,7 +129,7 @@ func newExtension(e pkix.Extension) Extension {
 	case e.Id.Equal(oidExtensionAuthorityKeyID):
 		var v authorityKeyID
 		ext.Name = "X509v3 Authority Key Identifier:"
-		ext.json = map[string]interface{}{
+		ext.json = map[string]any{
 			"authority_key_id": hex.EncodeToString(e.Value),
 		}
 		if _, err := asn1.Unmarshal(e.Value, &v); err == nil {
@@ -133,43 +137,43 @@ func newExtension(e pkix.Extension) Extension {
 			for _, b := range v.ID {
 				s += fmt.Sprintf(":%02X", b)
 			}
-			ext.AddDetailf("keyid" + s)
+			ext.AddDetail("keyid" + s)
 		} else {
-			ext.AddDetailf(sanitizeBytes(e.Value))
+			ext.AddDetail(sanitizeBytes(e.Value))
 		}
 	case e.Id.Equal(oidExtensionIssuingDistributionPoint):
 		ext.Name = "X509v3 Issuing Distribution Point:"
 
 		var v distributionPoint
 		if _, err := asn1.Unmarshal(e.Value, &v); err != nil {
-			ext.AddDetailf(sanitizeBytes(e.Value))
-			ext.json = map[string]interface{}{
+			ext.AddDetail(sanitizeBytes(e.Value))
+			ext.json = map[string]any{
 				"issuing_distribution_point": e.Value,
 			}
 		} else {
 			names := v.FullNames()
 			if len(names) > 0 {
-				ext.AddDetailf("Full Name:")
+				ext.AddDetail("Full Name:")
 				for _, n := range names {
-					ext.AddDetailf("    " + n)
+					ext.AddDetail("    " + n)
 				}
 			}
-			js := map[string]interface{}{
+			js := map[string]any{
 				"full_names": names,
 			}
 
 			// Only one of this should be set to true. But for inspect we
 			// will allow more than one.
 			if v.OnlyContainsUserCerts {
-				ext.AddDetailf("Only User Certificates")
+				ext.AddDetail("Only User Certificates")
 				js["only_user_certificates"] = true
 			}
 			if v.OnlyContainsCACerts {
-				ext.AddDetailf("Only CA Certificates")
+				ext.AddDetail("Only CA Certificates")
 				js["only_ca_certificates"] = true
 			}
 			if v.OnlyContainsAttributeCerts {
-				ext.AddDetailf("Only Attribute Certificates")
+				ext.AddDetail("Only Attribute Certificates")
 				js["only_attribute_certificates"] = true
 			}
 			if len(v.OnlySomeReasons.Bytes) > 0 {
@@ -177,14 +181,14 @@ func newExtension(e pkix.Extension) Extension {
 				js["only_some_reasons"] = v.OnlySomeReasons.Bytes
 			}
 
-			ext.json = map[string]interface{}{
+			ext.json = map[string]any{
 				"issuing_distribution_point": js,
 			}
 		}
 	default:
 		ext.Name = e.Id.String()
-		ext.AddDetailf(sanitizeBytes(e.Value))
-		ext.json = map[string]interface{}{
+		ext.AddDetail(sanitizeBytes(e.Value))
+		ext.json = map[string]any{
 			ext.Name: e.Value,
 		}
 	}
