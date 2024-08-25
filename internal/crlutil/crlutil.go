@@ -249,7 +249,11 @@ type RevokedCertificate struct {
 }
 
 func newRevokedCertificate(c x509.RevocationListEntry) RevokedCertificate {
-	var extensions []Extension
+	extensions := make([]Extension, len(c.Extensions))
+
+	for i, e := range c.Extensions {
+		extensions[i] = newExtension(e)
+	}
 
 	return RevokedCertificate{
 		SerialNumber:      c.SerialNumber.String(),
