@@ -32,7 +32,7 @@ require (
 	golang.org/x/sys v0.24.0
 	golang.org/x/term v0.23.0
 	google.golang.org/protobuf v1.34.2
-	software.sslmate.com/src/go-pkcs12 v0.4.0
+	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
 
 require (
