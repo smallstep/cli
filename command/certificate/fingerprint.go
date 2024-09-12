@@ -8,7 +8,9 @@ import (
 	//nolint:gosec // support for sha1 fingerprints
 	_ "crypto/sha1"
 
+	"github.com/pkg/errors"
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/cli-utils/errs"
 	"go.step.sm/crypto/fingerprint"
@@ -99,20 +101,25 @@ debugging invalid certificates remotely.`,
 }
 
 func fingerprintAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
 		return err
 	}
 
 	var (
+		crtFile    = ctx.Args().Get(0)
 		certs      []*x509.Certificate
 		serverName = ctx.String("servername")
 		roots      = ctx.String("roots")
 		bundle     = ctx.Bool("bundle")
 		insecure   = ctx.Bool("insecure")
-		crtFile    = ctx.Args().First()
 		format     = ctx.String("format")
 		useSHA1    = ctx.Bool("sha1")
 	)
+
+	// Use stdin if no argument is used.
+	if crtFile == "" {
+		crtFile = "-"
+	}
 
 	if useSHA1 && !insecure {
 		return errs.RequiredInsecureFlag(ctx, "sha")
@@ -132,17 +139,24 @@ func fingerprintAction(ctx *cli.Context) error {
 			return err
 		}
 	default:
-		certs, err = pemutil.ReadCertificateBundle(crtFile)
+		b, err := utils.ReadFile(crtFile)
 		if err != nil {
-			// Fallback to parse a CSR
-			csr, csrErr := pemutil.ReadCertificateRequest(crtFile)
-			if csrErr != nil {
-				return err
+			return errors.Wrapf(err, "error reading file %s", crtFile)
+		}
+
+		var pemError *pemutil.InvalidPEMError
+		certs, err = pemutil.ParseCertificateBundle(b)
+		switch {
+		case errors.As(err, &pemError) && pemError.Type == pemutil.PEMTypeCertificate:
+			csr, err := pemutil.ParseCertificateRequest(b)
+			if err != nil {
+				return errors.Errorf("file %s does not contain any valid CERTIFICATE or CERTIFICATE REQUEST blocks", crtFile)
 			}
-			// We will only need the raw DER bytes to generate a fingerprint.
 			certs = []*x509.Certificate{
 				{Raw: csr.Raw},
 			}
+		case err != nil:
+			return fmt.Errorf("error parsing %s: %w", crtFile, err)
 		}
 	}
 
