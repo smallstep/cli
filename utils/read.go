@@ -9,10 +9,11 @@ import (
 	"unicode"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/utils/internal/utfbom"
 
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
+
+	"github.com/smallstep/cli/utils/internal/utfbom"
 )
 
 // In command line utilities, it is a de facto standard that a hyphen "-"

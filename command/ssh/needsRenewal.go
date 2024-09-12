@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
+
+	"github.com/smallstep/cli-utils/errs"
+
 	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"golang.org/x/crypto/ssh"
 )
 
 const defaultPercentUsedThreshold = 66

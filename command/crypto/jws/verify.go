@@ -4,11 +4,13 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/jose"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/crypto/jose"
 )
 
 func verifyCommand() cli.Command {

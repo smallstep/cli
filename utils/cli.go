@@ -4,7 +4,8 @@ import (
 	"strconv"
 
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
+
+	"github.com/smallstep/cli-utils/errs"
 	"go.step.sm/crypto/keyutil"
 )
 

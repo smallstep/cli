@@ -4,11 +4,14 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
+
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+
 	libsshutil "go.step.sm/crypto/sshutil"
+
+	"github.com/smallstep/cli/internal/sshutil"
 )
 
 func listCommand() cli.Command {

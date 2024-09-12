@@ -12,7 +12,7 @@ should exist within its own package if possible. For example, `version` and
 Any package used by a command but does not contain explicit business logic
 directly related to the command should exist in the top-level of this
 repository. For example, the `github.com/smallstep/cli/flags` and
-`go.step.sm/cli-utils/errs` package are used by many different commands and
+`github.com/smallstep/cli-utils/errs` package are used by many different commands and
 contain functionality for defining flags and creating/manipulating errors.
 
 ### Adding a Command
@@ -70,8 +70,8 @@ There are three packages which contain functionality to make writing commands ea
 
 - `github.com/smallstep/cli/flags`
 - `github.com/smallstep/cli/prompts`
-- `go.step.sm/cli-utils/errs`
-- `go.step.sm/cli-utils/usage`
+- `github.com/smallstep/cli-utils/errs`
+- `github.com/smallstep/cli-utils/usage`
 
 The usage package is used to extend the default documentation provided by
 `urfave/cli` by enabling us to document arguments, whether they are optional or

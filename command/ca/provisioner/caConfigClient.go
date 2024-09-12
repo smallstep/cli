@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
-	"go.step.sm/cli-utils/ui"
+	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/linkedca"
 )
 

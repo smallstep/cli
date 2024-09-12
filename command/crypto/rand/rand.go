@@ -10,8 +10,10 @@ import (
 	"strings"
 
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
+
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+
 	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/randutil"
 )

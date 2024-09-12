@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/step"
+
+	"github.com/smallstep/cli-utils/step"
 )
 
 // LookPath searches for an executable named step-<name>-plugin in the $(step

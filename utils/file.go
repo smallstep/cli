@@ -3,7 +3,7 @@ package utils
 import (
 	"os"
 
-	"go.step.sm/cli-utils/errs"
+	"github.com/smallstep/cli-utils/errs"
 )
 
 // File represents a wrapper on os.File that supports read, write, seek and

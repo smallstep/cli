@@ -12,7 +12,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"go.mozilla.org/pkcs7"
-	"go.step.sm/cli-utils/errs"
+
+	"github.com/smallstep/cli-utils/errs"
 )
 
 // Command returns the winpe subcommand.

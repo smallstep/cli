@@ -2,7 +2,8 @@ package context
 
 import (
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
+
+	"github.com/smallstep/cli-utils/command"
 )
 
 // init creates and registers the ca command

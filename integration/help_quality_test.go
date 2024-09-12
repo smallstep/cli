@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/smallstep/assert"
-	"go.step.sm/cli-utils/usage"
+	"github.com/smallstep/cli-utils/usage"
 )
 
 func TestHelpQuality(t *testing.T) {

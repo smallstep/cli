@@ -10,12 +10,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/certificates/api"
-	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/step"
+
+	"github.com/smallstep/certificates/api"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/step"
 	"go.step.sm/crypto/fingerprint"
+
+	"github.com/smallstep/cli/utils"
 )
 
 var (

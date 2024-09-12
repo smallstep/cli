@@ -4,13 +4,15 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
+
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
-	"golang.org/x/crypto/ssh"
 )
 
 func logoutCommand() cli.Command {

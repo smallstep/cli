@@ -3,11 +3,13 @@ package webhook
 import (
 	"fmt"
 
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/linkedca"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/linkedca"
 )
 
 func addCommand() cli.Command {

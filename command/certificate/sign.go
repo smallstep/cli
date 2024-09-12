@@ -12,14 +12,15 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
+	"github.com/urfave/cli"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
-	"go.step.sm/crypto/pemutil"
-	"go.step.sm/crypto/x509util"
 )
 
 const customIntermediateTemplate = `{

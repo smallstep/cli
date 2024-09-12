@@ -6,13 +6,15 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/fileutil"
-	"go.step.sm/cli-utils/step"
-	"go.step.sm/cli-utils/ui"
+
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
+	"github.com/smallstep/cli-utils/step"
+	"github.com/smallstep/cli-utils/ui"
+
+	"github.com/smallstep/cli/flags"
 )
 
 func removeCommand() cli.Command {
