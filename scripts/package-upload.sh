@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -x
 
 FILE="${1}"
 PACKAGE="${2}"
@@ -13,7 +14,11 @@ echo "Release: ${RELEASE}"
 echo "Location: ${GCLOUD_LOCATION}"
 
 if [ "${FILE: -4}" == ".deb" ]; then
-  gcloud storage cp ${FILE} gs://artifacts-outgoing/${PACKAGE}/deb/${VERSION}/
+  if [[ "${FILE}" =~ "armhf6" ]]; then
+    echo "Skipping ${FILE} due to GCP Artifact Registry armhf conflict!"
+  else
+    gcloud storage cp ${FILE} gs://artifacts-outgoing/${PACKAGE}/deb/${VERSION}/
+  fi
 else
   gcloud storage cp ${FILE} gs://artifacts-outgoing/${PACKAGE}/rpm/${VERSION}/
 fi
