@@ -14,7 +14,7 @@ require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.4.0
-	github.com/slackhq/nebula v1.9.3
+	github.com/slackhq/nebula v1.9.4
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.27.4
 	github.com/smallstep/certinfo v1.12.2
