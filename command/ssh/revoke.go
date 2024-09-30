@@ -5,17 +5,19 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
+
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
+
 	cmdca "github.com/smallstep/cli/command/ca"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
-	"golang.org/x/crypto/ssh"
 )
 
 func revokeCommand() cli.Command {

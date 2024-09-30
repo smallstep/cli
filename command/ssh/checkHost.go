@@ -7,15 +7,17 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
 	"github.com/smallstep/certificates/ca"
 	caErrs "github.com/smallstep/certificates/errs"
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/jose"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/crypto/jose"
 )
 
 func checkHostCommand() cli.Command {

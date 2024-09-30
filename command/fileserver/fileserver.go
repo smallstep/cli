@@ -16,11 +16,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+
+	"github.com/smallstep/cli/utils"
 )
 
 func init() {

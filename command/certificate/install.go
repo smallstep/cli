@@ -9,9 +9,9 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certinfo"
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/truststore"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
 	"go.step.sm/crypto/pemutil"
 )
 

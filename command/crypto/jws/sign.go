@@ -9,7 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
+
+	"github.com/smallstep/cli-utils/errs"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 )

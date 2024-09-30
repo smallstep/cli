@@ -11,12 +11,14 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ocsp"
+
+	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/x509util"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/crlutil"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/crypto/x509util"
-	"golang.org/x/crypto/ocsp"
 )
 
 func verifyCommand() cli.Command {

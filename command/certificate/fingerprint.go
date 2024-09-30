@@ -9,12 +9,14 @@ import (
 	_ "crypto/sha1"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
+
+	"github.com/smallstep/cli-utils/errs"
 	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/pemutil"
+
+	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 )
 
 func fingerprintCommand() cli.Command {

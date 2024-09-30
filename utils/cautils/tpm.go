@@ -26,14 +26,15 @@ import (
 
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/utils"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/kms/uri"
 	"go.step.sm/crypto/tpm"
 	tpmstorage "go.step.sm/crypto/tpm/storage"
+
+	"github.com/smallstep/cli/utils"
 )
 
 func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {

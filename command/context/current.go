@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/flags"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/step"
+
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/step"
+
+	"github.com/smallstep/cli/flags"
 )
 
 func currentCommand() cli.Command {

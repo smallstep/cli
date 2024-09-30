@@ -8,19 +8,21 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/templates"
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/step"
+	"github.com/smallstep/cli-utils/ui"
+	"golang.org/x/crypto/ssh"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/step"
-	"go.step.sm/cli-utils/ui"
-	"golang.org/x/crypto/ssh"
 )
 
 func configCommand() cli.Command {

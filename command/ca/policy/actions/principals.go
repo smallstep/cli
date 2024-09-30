@@ -6,7 +6,8 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
+
+	"github.com/smallstep/cli-utils/errs"
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/flags"

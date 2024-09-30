@@ -5,14 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/urfave/cli"
+
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/linkedca"
+
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/command"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/linkedca"
 )
 
 // ViewCommand returns the policy view subcommand

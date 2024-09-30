@@ -14,14 +14,16 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/crlutil"
 	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/crypto/pemutil"
-	"go.step.sm/crypto/x509util"
 )
 
 func inspectCommand() cli.Command {

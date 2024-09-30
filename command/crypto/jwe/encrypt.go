@@ -5,12 +5,14 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
-	"go.step.sm/crypto/jose"
 )
 
 func encryptCommand() cli.Command {

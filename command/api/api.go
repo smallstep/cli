@@ -1,9 +1,11 @@
 package api
 
 import (
-	"github.com/smallstep/cli/command/api/token"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
+
+	"github.com/smallstep/cli-utils/command"
+
+	"github.com/smallstep/cli/command/api/token"
 )
 
 func init() {

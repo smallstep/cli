@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/urfave/cli"
+
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
+	"github.com/smallstep/cli-utils/errs"
+
 	"github.com/smallstep/cli/flags"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
 )
 
 func healthCommand() cli.Command {

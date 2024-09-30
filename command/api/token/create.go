@@ -12,8 +12,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
+
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
 )
 
 func createCommand() cli.Command {

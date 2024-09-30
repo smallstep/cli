@@ -11,9 +11,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
 )
 
 var (

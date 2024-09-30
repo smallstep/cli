@@ -14,21 +14,20 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/pki"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/step"
+	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/kms"
+	_ "go.step.sm/crypto/kms/azurekms" // enable azurekms
+	"go.step.sm/crypto/pemutil"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/step"
-	"go.step.sm/cli-utils/ui"
-	"go.step.sm/crypto/kms"
-	"go.step.sm/crypto/pemutil"
-
-	// Enable azurekms
-	_ "go.step.sm/crypto/kms/azurekms"
 )
 
 func initCommand() cli.Command {

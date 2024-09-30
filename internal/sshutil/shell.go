@@ -9,10 +9,11 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"go.step.sm/cli-utils/step"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 	"golang.org/x/term"
+
+	"github.com/smallstep/cli-utils/step"
 )
 
 // ProxyCommand replaces %%, %h, %p, and %r in the given command.

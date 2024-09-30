@@ -10,7 +10,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/ui"
+
+	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 )
 

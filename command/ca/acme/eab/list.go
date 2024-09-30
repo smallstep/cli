@@ -8,9 +8,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
 
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli-utils/errs"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"
 )

@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/step"
+
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/step"
 )
 
 func init() {

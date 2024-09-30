@@ -1,12 +1,14 @@
 package ca
 
 import (
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli-utils/command"
+
 	"github.com/smallstep/cli/command/ca/acme"
 	"github.com/smallstep/cli/command/ca/admin"
 	"github.com/smallstep/cli/command/ca/policy"
 	"github.com/smallstep/cli/command/ca/provisioner"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
 )
 
 // init creates and registers the ca command

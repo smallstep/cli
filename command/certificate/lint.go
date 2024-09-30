@@ -6,11 +6,13 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/flags"
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli-utils/errs"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"github.com/smallstep/zlint"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
+
+	"github.com/smallstep/cli/flags"
 )
 
 func lintCommand() cli.Command {

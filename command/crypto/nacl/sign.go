@@ -6,13 +6,15 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/nacl/sign"
+
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
-	"golang.org/x/crypto/nacl/sign"
 )
 
 func signCommand() cli.Command {

@@ -10,10 +10,10 @@ import (
 	"github.com/urfave/cli"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"go.step.sm/cli-utils/errs"
+	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli-utils/errs"
 	"go.step.sm/linkedca"
 
-	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/internal/command"
 )

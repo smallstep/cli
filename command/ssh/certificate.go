@@ -11,22 +11,24 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/blake2b"
+	"golang.org/x/crypto/ssh"
+
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/ca/identity"
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
+
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
-	"go.step.sm/crypto/keyutil"
-	"go.step.sm/crypto/pemutil"
-	"golang.org/x/crypto/blake2b"
-	"golang.org/x/crypto/ssh"
 )
 
 func certificateCommand() cli.Command {

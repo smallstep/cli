@@ -18,6 +18,7 @@ require (
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.27.4
 	github.com/smallstep/certinfo v1.12.2
+	github.com/smallstep/cli-utils v0.10.0
 	github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935
 	github.com/smallstep/truststore v0.13.0
 	github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91
@@ -25,8 +26,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli v1.22.15
 	go.mozilla.org/pkcs7 v0.9.0
-	go.step.sm/cli-utils v0.9.0
-	go.step.sm/crypto v0.52.0
+	go.step.sm/crypto v0.51.2
 	go.step.sm/linkedca v0.22.1
 	golang.org/x/crypto v0.27.0
 	golang.org/x/sys v0.25.0
@@ -134,6 +134,7 @@ require (
 	go.opentelemetry.io/otel v1.29.0 // indirect
 	go.opentelemetry.io/otel/metric v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
+	go.step.sm/cli-utils v0.9.0 // indirect
 	golang.org/x/exp v0.0.0-20240318143956-a85f2c67cd81 // indirect
 	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect

@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/urfave/cli"
+
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/cli/utils/cautils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/errs"
-	"go.step.sm/cli-utils/ui"
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/linkedca"
+
+	"github.com/smallstep/cli/utils/cautils"
 )
 
 // Command returns the webhook subcommand.
