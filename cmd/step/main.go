@@ -9,17 +9,24 @@ import (
 	"strings"
 	"time"
 
+	"github.com/urfave/cli"
+
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/step"
+	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
+
+	"github.com/smallstep/cli-utils/usage"
 	"github.com/smallstep/cli/command/version"
 	"github.com/smallstep/cli/internal/plugin"
 	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
-	"go.step.sm/cli-utils/command"
-	"go.step.sm/cli-utils/step"
-	"go.step.sm/cli-utils/ui"
-	"go.step.sm/cli-utils/usage"
-	"go.step.sm/crypto/jose"
-	"go.step.sm/crypto/pemutil"
+
+	// Enabled cas interfaces.
+	_ "github.com/smallstep/certificates/cas/cloudcas"
+	_ "github.com/smallstep/certificates/cas/softcas"
+	_ "github.com/smallstep/certificates/cas/stepcas"
 
 	// Enabled commands
 	_ "github.com/smallstep/cli/command/api"
@@ -35,11 +42,6 @@ import (
 	_ "github.com/smallstep/cli/command/oauth"
 	_ "github.com/smallstep/cli/command/path"
 	_ "github.com/smallstep/cli/command/ssh"
-
-	// Enabled cas interfaces.
-	_ "github.com/smallstep/certificates/cas/cloudcas"
-	_ "github.com/smallstep/certificates/cas/softcas"
-	_ "github.com/smallstep/certificates/cas/stepcas"
 )
 
 // Version is set by an LDFLAG at build time representing the git tag or commit
