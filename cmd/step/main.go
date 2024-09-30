@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"regexp"
@@ -15,10 +16,10 @@ import (
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
+	"github.com/smallstep/cli-utils/usage"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 
-	"github.com/smallstep/cli-utils/usage"
 	"github.com/smallstep/cli/command/version"
 	"github.com/smallstep/cli/internal/plugin"
 	"github.com/smallstep/cli/utils"
@@ -66,6 +67,42 @@ func main() {
 
 	defer panicHandler()
 
+	// create new instance of app
+	app := newApp(os.Stdout, os.Stderr)
+
+	if err := app.Run(os.Args); err != nil {
+		var messenger interface {
+			Message() string
+		}
+		if errors.As(err, &messenger) {
+			if os.Getenv("STEPDEBUG") == "1" {
+				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, messenger.Message())
+			} else {
+				fmt.Fprintln(os.Stderr, messenger.Message())
+				fmt.Fprintln(os.Stderr, "Re-run with STEPDEBUG=1 for more info.")
+			}
+		} else {
+			if os.Getenv("STEPDEBUG") == "1" {
+				fmt.Fprintf(os.Stderr, "%+v\n", err)
+			} else {
+				fmt.Fprintln(os.Stderr, err)
+			}
+		}
+		//nolint:gocritic // ignore exitAfterDefer error because the defer is required for recovery.
+		os.Exit(1)
+	}
+}
+
+func newApp(stdout, stderr io.Writer) *cli.App {
+	// Define default file writers and prompters for go.step.sm/crypto
+	pemutil.WriteFile = utils.WriteFile
+	pemutil.PromptPassword = func(msg string) ([]byte, error) {
+		return ui.PromptPassword(msg)
+	}
+	jose.PromptPassword = func(msg string) ([]byte, error) {
+		return ui.PromptPassword(msg)
+	}
+
 	// Override global framework components
 	cli.VersionPrinter = func(c *cli.Context) {
 		version.Command(c)
@@ -111,39 +148,10 @@ func main() {
 	}
 
 	// All non-successful output should be written to stderr
-	app.Writer = os.Stdout
-	app.ErrWriter = os.Stderr
+	app.Writer = stdout
+	app.ErrWriter = stderr
 
-	// Define default file writers and prompters for go.step.sm/crypto
-	pemutil.WriteFile = utils.WriteFile
-	pemutil.PromptPassword = func(msg string) ([]byte, error) {
-		return ui.PromptPassword(msg)
-	}
-	jose.PromptPassword = func(msg string) ([]byte, error) {
-		return ui.PromptPassword(msg)
-	}
-
-	if err := app.Run(os.Args); err != nil {
-		var messenger interface {
-			Message() string
-		}
-		if errors.As(err, &messenger) {
-			if os.Getenv("STEPDEBUG") == "1" {
-				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, messenger.Message())
-			} else {
-				fmt.Fprintln(os.Stderr, messenger.Message())
-				fmt.Fprintln(os.Stderr, "Re-run with STEPDEBUG=1 for more info.")
-			}
-		} else {
-			if os.Getenv("STEPDEBUG") == "1" {
-				fmt.Fprintf(os.Stderr, "%+v\n", err)
-			} else {
-				fmt.Fprintln(os.Stderr, err)
-			}
-		}
-		//nolint:gocritic // ignore exitAfterDefer error because the defer is required for recovery.
-		os.Exit(1)
-	}
+	return app
 }
 
 func panicHandler() {
