@@ -612,6 +612,11 @@ Use the '--group' flag multiple times to configure multiple groups.`,
 		Usage: `The <scope> list used to validate the scopes extension in an OpenID Connect token.
 Use the '--scope' flag multiple times to configure multiple scopes.`,
 	}
+	oidcRemoveScopeFlag = cli.StringSliceFlag{
+		Name: "remove-scope",
+		Usage: `Remove the <scope> used to validate the scopes extension in an OpenID Connect token.
+Use the '--remove-scope' flag multiple times to remove multiple scopes.`,
+	}
 	oidcAuthParamFlag = cli.StringSliceFlag{
 		Name: "auth-param",
 		Usage: `The <auth-param> list used to validate the auth-params extension in an OpenID Connect token.

@@ -129,6 +129,7 @@ SCEP
 			oidcGroupFlag,
 			oidcTenantIDFlag,
 			oidcScopeFlag,
+			oidcRemoveScopeFlag,
 			oidcAuthParamFlag,
 
 			// X5C Root Flag
