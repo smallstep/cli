@@ -31,7 +31,7 @@ require (
 	golang.org/x/crypto v0.28.0
 	golang.org/x/sys v0.26.0
 	golang.org/x/term v0.25.0
-	google.golang.org/protobuf v1.34.2
+	google.golang.org/protobuf v1.35.1
 	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
 
