@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.27.5] - 2024-10-17
+
+### Added
+
+- Add `--remove-scope` flag to provisioner update command. Removes the given
+  scope, used to validate the scopes extension in an OpenID Connect token (smallstep/cli#1287)
+
+
 ## [0.27.4] - 2024-09-13
 
 ### Added
