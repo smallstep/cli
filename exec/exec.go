@@ -115,6 +115,8 @@ func OpenInBrowser(url, browser string) error {
 		} else {
 			cmd = exec.Command("xdg-open", url)
 		}
+	case "android":
+		cmd = exec.Command("xdg-open", url)
 	case "windows":
 		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
 	default:
