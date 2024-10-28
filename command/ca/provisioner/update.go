@@ -92,6 +92,7 @@ IID (AWS/GCP/Azure)
 [**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
 [**--azure-object-id**=<id>] [**--instance-age**=<duration>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
+[**--disable-ssh-ca-user**] [**--disable-ssh-ca-host**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -913,6 +914,14 @@ func updateGCPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 	if ctx.IsSet("disable-trust-on-first-use") {
 		details.DisableTrustOnFirstUse = ctx.Bool("disable-trust-on-first-use")
+	}
+	if ctx.IsSet("disable-ssh-ca-user") {
+		boolVal := ctx.Bool("disable-ssh-ca-user")
+		details.DisableSshCaUser = &boolVal
+	}
+	if ctx.IsSet("disable-ssh-ca-host") {
+		boolVal := ctx.Bool("disable-ssh-ca-host")
+		details.DisableSshCaHost = &boolVal
 	}
 	if ctx.IsSet("remove-gcp-service-account") {
 		details.ServiceAccounts = removeElements(details.ServiceAccounts, ctx.StringSlice("remove-gcp-service-account"))
