@@ -173,6 +173,8 @@ SCEP
 			instanceAgeFlag,
 			disableCustomSANsFlag,
 			disableTOFUFlag,
+			disableSSHCAUserFlag,
+			disableSSHCAHostFlag,
 
 			// Claims
 			x509TemplateFlag,

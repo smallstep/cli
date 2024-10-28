@@ -177,6 +177,8 @@ SCEP
 			instanceAgeFlag,
 			disableCustomSANsFlag,
 			disableTOFUFlag,
+			disableSSHCAUserFlag,
+			disableSSHCAHostFlag,
 
 			// Claims
 			x509TemplateFlag,
@@ -917,6 +919,7 @@ func updateGCPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	}
 	if ctx.IsSet("disable-ssh-ca-user") {
 		boolVal := ctx.Bool("disable-ssh-ca-user")
+		fmt.Printf("boolVal = %+v\n", boolVal)
 		details.DisableSshCaUser = &boolVal
 	}
 	if ctx.IsSet("disable-ssh-ca-host") {
@@ -935,6 +938,8 @@ func updateGCPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("gcp-project") {
 		details.ProjectIds = append(details.ProjectIds, ctx.StringSlice("gcp-project")...)
 	}
+
+	fmt.Printf("*details.DisableSshCaUser = %+v\n", *details.DisableSshCaUser)
 	return nil
 }
 
