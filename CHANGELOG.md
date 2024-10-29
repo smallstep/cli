@@ -26,6 +26,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.28.0] - 2024-10-29
+
+### Added
+
+- disableSSHCAUser and disableSSHCAHost options to GCP provisioner create and update commands (smallstep/cli#1305)
+- Support programmatically opening browser on Android devices (smallstep/cli#1301)
+
+### Fixed
+
+- Fix --context being ignored in commands that rely on certificates (smallstep/cli#1301)
+
+
 ## [0.27.5] - 2024-10-17
 
 ### Added
