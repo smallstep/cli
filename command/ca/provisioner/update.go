@@ -829,6 +829,13 @@ func updateOIDCDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 }
 
 func updateAWSDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
+	if ctx.IsSet("disable-ssh-ca-user") {
+		return errors.New("flag disable-ssh-ca-user is not supported for AWS IID provisioners")
+	}
+	if ctx.IsSet("disable-ssh-ca-host") {
+		return errors.New("flag disable-ssh-ca-host is not supported for AWS IID provisioners")
+	}
+
 	data, ok := p.Details.GetData().(*linkedca.ProvisionerDetails_AWS)
 	if !ok {
 		return errors.New("error casting details to AWS type")
@@ -858,6 +865,13 @@ func updateAWSDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 }
 
 func updateAzureDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
+	if ctx.IsSet("disable-ssh-ca-user") {
+		return errors.New("flag disable-ssh-ca-user is not supported for Azure IID provisioners")
+	}
+	if ctx.IsSet("disable-ssh-ca-host") {
+		return errors.New("flag disable-ssh-ca-host is not supported for Azure IID provisioners")
+	}
+
 	data, ok := p.Details.GetData().(*linkedca.ProvisionerDetails_Azure)
 	if !ok {
 		return errors.New("error casting details to Azure type")

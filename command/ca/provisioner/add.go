@@ -747,6 +747,13 @@ func createOIDCDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createAWSDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	if ctx.IsSet("disable-ssh-ca-user") {
+		return nil, errors.New("flag disable-ssh-ca-user is not supported for AWS IID provisioners")
+	}
+	if ctx.IsSet("disable-ssh-ca-host") {
+		return nil, errors.New("flag disable-ssh-ca-host is not supported for AWS IID provisioners")
+	}
+
 	d, err := parseInstanceAge(ctx)
 	if err != nil {
 		return nil, err
@@ -767,6 +774,13 @@ func createAWSDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createAzureDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	if ctx.IsSet("disable-ssh-ca-user") {
+		return nil, errors.New("flag disable-ssh-ca-user is not supported for Azure IID provisioners")
+	}
+	if ctx.IsSet("disable-ssh-ca-host") {
+		return nil, errors.New("flag disable-ssh-ca-host is not supported for Azure IID provisioners")
+	}
+
 	tenantID := ctx.String("azure-tenant")
 	if tenantID == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "azure-tenant")
