@@ -542,6 +542,16 @@ with the same instance will be accepted. By default only the first request
 will be accepted.`,
 	}
 
+	disableSSHCAUserFlag = cli.BoolFlag{
+		Name:  "disable-ssh-ca-user",
+		Usage: `Disable ability to sign SSH user certificates`,
+	}
+
+	disableSSHCAHostFlag = cli.BoolFlag{
+		Name:  "disable-ssh-ca-host",
+		Usage: `Disable ability to sign SSH host certificates`,
+	}
+
 	// Nebula provisioner flags
 	nebulaRootFlag = cli.StringFlag{
 		Name: "nebula-root",

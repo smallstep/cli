@@ -100,6 +100,7 @@ IID (AWS/GCP/Azure)
 [**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
 [**--azure-object-id**=<id>] [**--instance-age**=<duration>] [**--iid-roots**=<file>]
 [**--disable-custom-sans**] [**--disable-trust-on-first-use**]
+[**--disable-ssh-ca-user**] [**--disable-ssh-ca-host**]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -172,6 +173,8 @@ SCEP
 			instanceAgeFlag,
 			disableCustomSANsFlag,
 			disableTOFUFlag,
+			disableSSHCAUserFlag,
+			disableSSHCAHostFlag,
 
 			// Claims
 			x509TemplateFlag,
@@ -744,6 +747,13 @@ func createOIDCDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createAWSDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	if ctx.IsSet("disable-ssh-ca-user") {
+		return nil, errors.New("flag disable-ssh-ca-user is not supported for AWS IID provisioners")
+	}
+	if ctx.IsSet("disable-ssh-ca-host") {
+		return nil, errors.New("flag disable-ssh-ca-host is not supported for AWS IID provisioners")
+	}
+
 	d, err := parseInstanceAge(ctx)
 	if err != nil {
 		return nil, err
@@ -764,6 +774,13 @@ func createAWSDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 }
 
 func createAzureDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	if ctx.IsSet("disable-ssh-ca-user") {
+		return nil, errors.New("flag disable-ssh-ca-user is not supported for Azure IID provisioners")
+	}
+	if ctx.IsSet("disable-ssh-ca-host") {
+		return nil, errors.New("flag disable-ssh-ca-host is not supported for Azure IID provisioners")
+	}
+
 	tenantID := ctx.String("azure-tenant")
 	if tenantID == "" {
 		return nil, errs.RequiredWithFlagValue(ctx, "type", ctx.String("type"), "azure-tenant")
@@ -790,6 +807,20 @@ func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		return nil, err
 	}
 
+	var (
+		disableSSHCAUser *bool
+		disableSSHCAHost *bool
+	)
+
+	if ctx.IsSet("disable-ssh-ca-user") {
+		boolVal := ctx.Bool("disable-ssh-ca-user")
+		disableSSHCAUser = &boolVal
+	}
+	if ctx.IsSet("disable-ssh-ca-host") {
+		boolVal := ctx.Bool("disable-ssh-ca-host")
+		disableSSHCAHost = &boolVal
+	}
+
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_GCP{
 			GCP: &linkedca.GCPProvisioner{
@@ -797,6 +828,8 @@ func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 				ProjectIds:             ctx.StringSlice("gcp-project"),
 				DisableCustomSans:      ctx.Bool("disable-custom-sans"),
 				DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
+				DisableSshCaUser:       disableSSHCAUser,
+				DisableSshCaHost:       disableSSHCAHost,
 				InstanceAge:            d,
 			},
 		},

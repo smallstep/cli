@@ -27,7 +27,7 @@ require (
 	github.com/urfave/cli v1.22.16
 	go.mozilla.org/pkcs7 v0.9.0
 	go.step.sm/crypto v0.54.0
-	go.step.sm/linkedca v0.22.1
+	go.step.sm/linkedca v0.22.2
 	golang.org/x/crypto v0.28.0
 	golang.org/x/sys v0.26.0
 	golang.org/x/term v0.25.0
