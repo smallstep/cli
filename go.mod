@@ -1,6 +1,6 @@
 module github.com/smallstep/cli
 
-go 1.22.0
+go 1.22.7
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
@@ -82,8 +82,8 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/btree v1.1.2 // indirect
-	github.com/google/certificate-transparency-go v1.1.7 // indirect
+	github.com/google/btree v1.1.3 // indirect
+	github.com/google/certificate-transparency-go v1.2.2 // indirect
 	github.com/google/go-tpm-tools v0.4.4 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
@@ -124,7 +124,7 @@ require (
 	github.com/spf13/cast v1.7.0 // indirect
 	github.com/weppos/publicsuffix-go v0.20.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.etcd.io/bbolt v1.3.10 // indirect
+	go.etcd.io/bbolt v1.3.11 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.54.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
@@ -144,5 +144,5 @@ require (
 	google.golang.org/grpc v1.67.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.0 // indirect
-	k8s.io/klog/v2 v2.100.1 // indirect
+	k8s.io/klog/v2 v2.130.1 // indirect
 )
