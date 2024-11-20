@@ -53,11 +53,9 @@ builds:
     # - the name of the output binary is step-cli
     << : *BUILD
     id: nfpm
-    goos:
-      - linux
-    goarch:
-      - amd64
-      - arm64
+    targets:
+      - linux_amd64
+      - linux_arm64
     binary: step-cli
 
 archives:
@@ -165,7 +163,7 @@ publishers:
   cmd: ./scripts/package-upload.sh {{ abs .ArtifactPath }} {{ .Var.packageName }} {{ .Version }} {{ .Var.packageRelease }}
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 release:
   # Repo in which the release will be created.
@@ -277,13 +275,13 @@ blobs:
     extra_files:
       - glob: ./dist/default_darwin_amd64_v1/bin/step
         name_template: step_{{ .Version }}_darwin_amd64
-      - glob: ./dist/default_darwin_arm64/bin/step
+      - glob: ./dist/default_darwin_arm64*/bin/step
         name_template: step_{{ .Version }}_darwin_arm64
       - glob: ./dist/default_linux_amd64_v1/bin/step
         name_template: step_{{ .Version }}_linux_amd64
-      - glob: ./dist/default_linux_arm64/bin/step
+      - glob: ./dist/default_linux_arm64*/bin/step
         name_template: step_{{ .Version }}_linux_arm64
-      - glob: ./dist/default_windows_arm64/bin/step.exe
+      - glob: ./dist/default_windows_amd64_v1/bin/step.exe
         name_template: step_{{ .Version }}_windows_amd64.exe
       - glob: ./dist/default_freebsd_*/bin/step
         name_template: step_{{ .Version }}_freebsd_amd64
@@ -297,13 +295,13 @@ blobs:
     extra_files:
       - glob: ./dist/default_darwin_amd64_v1/bin/step
         name_template: step_latest_darwin_amd64
-      - glob: ./dist/default_darwin_arm64/bin/step
+      - glob: ./dist/default_darwin_arm64*/bin/step
         name_template: step_latest_darwin_arm64
       - glob: ./dist/default_linux_amd64_v1/bin/step
         name_template: step_latest_linux_amd64
-      - glob: ./dist/default_linux_arm64/bin/step
+      - glob: ./dist/default_linux_arm64*/bin/step
         name_template: step_latest_linux_arm64
-      - glob: ./dist/default_windows_arm64/bin/step.exe
+      - glob: ./dist/default_windows_amd64_v1/bin/step.exe
         name_template: step_latest_windows_amd64.exe
       - glob: ./dist/default_freebsd_*/bin/step
         name_template: step_latest_freebsd_amd64
