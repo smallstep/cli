@@ -53,11 +53,9 @@ builds:
     # - the name of the output binary is step-cli
     << : *BUILD
     id: nfpm
-    goos:
-      - linux
-    goarch:
-      - amd64
-      - arm64
+    targets:
+      - linux_amd64
+      - linux_arm64
     binary: step-cli
 
 archives:
@@ -165,7 +163,7 @@ publishers:
   cmd: ./scripts/package-upload.sh {{ abs .ArtifactPath }} {{ .Var.packageName }} {{ .Version }} {{ .Var.packageRelease }}
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 release:
   # Repo in which the release will be created.
