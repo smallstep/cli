@@ -9,7 +9,7 @@ import (
 
 	adminAPI "github.com/smallstep/certificates/authority/admin/api"
 	"github.com/smallstep/cli-utils/errs"
-	"go.step.sm/linkedca"
+	"github.com/smallstep/linkedca"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"

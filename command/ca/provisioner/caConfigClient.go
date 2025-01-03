@@ -10,7 +10,7 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli-utils/ui"
-	"go.step.sm/linkedca"
+	"github.com/smallstep/linkedca"
 )
 
 // nodb implements the certificates/Adminclient interface with noops.

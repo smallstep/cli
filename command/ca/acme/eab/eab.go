@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
-	"go.step.sm/linkedca"
+	"github.com/smallstep/linkedca"
 
 	"github.com/smallstep/certificates/authority/admin"
 	"github.com/smallstep/certificates/ca"

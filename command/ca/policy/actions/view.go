@@ -9,7 +9,7 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli-utils/errs"
-	"go.step.sm/linkedca"
+	"github.com/smallstep/linkedca"
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/flags"
