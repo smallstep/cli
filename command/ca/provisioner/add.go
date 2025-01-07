@@ -17,9 +17,9 @@ import (
 
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
+	"github.com/smallstep/linkedca"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
-	"go.step.sm/linkedca"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sliceutil"

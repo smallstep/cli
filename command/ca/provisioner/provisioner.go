@@ -15,7 +15,7 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
-	"go.step.sm/linkedca"
+	"github.com/smallstep/linkedca"
 
 	"github.com/smallstep/cli/command/ca/provisioner/webhook"
 	"github.com/smallstep/cli/utils"
