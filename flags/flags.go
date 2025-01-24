@@ -487,6 +487,11 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 		Name:  "console",
 		Usage: `Complete the flow while remaining inside the terminal.`,
 	}
+
+	NSSDir = cli.StringFlag{
+		Name:  "dir",
+		Usage: "The directory of the NSS database with cert9.db and key4.db files.",
+	}
 )
 
 // FingerprintFormatFlag returns a flag for configuring the fingerprint format.
