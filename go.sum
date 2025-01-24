@@ -310,6 +310,8 @@ github.com/smallstep/pkcs7 v0.1.1 h1:x+rPdt2W088V9Vkjho4KtoggyktZJlMduZAtRHm68LU
 github.com/smallstep/pkcs7 v0.1.1/go.mod h1:dL6j5AIz9GHjVEBTXtW+QliALcgM19RtXaTeyxI+AfA=
 github.com/smallstep/scep v0.0.0-20240926084937-8cf1ca453101 h1:LyZqn24/ZiVg8v9Hq07K6mx6RqPtpDeK+De5vf4QEY4=
 github.com/smallstep/scep v0.0.0-20240926084937-8cf1ca453101/go.mod h1:EuKQjYGQwhUa1mgD21zxIgOgUYLsqikJmvxNscxpS/Y=
+github.com/smallstep/step-agent-plugin v0.43.0 h1:bBoLlq2fxImlGdOxLSNZ7oJwXodi4ce1pKPD8hdTYHM=
+github.com/smallstep/step-agent-plugin v0.43.0/go.mod h1:Jf6VCyLeBVqloV3QvZLa/a/u+lcspdjel9p1KiisDUg=
 github.com/smallstep/truststore v0.13.0 h1:90if9htAOblavbMeWlqNLnO9bsjjgVv2hQeQJCi/py4=
 github.com/smallstep/truststore v0.13.0/go.mod h1:3tmMp2aLKZ/OA/jnFUB0cYPcho402UG2knuJoPh4j7A=
 github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91 h1:XE0cgVBMkYPxOZv4F3YY5mX9GgentifWU6vyJb6gKmc=

@@ -120,6 +120,7 @@ require (
 	github.com/smallstep/nosql v0.7.0 // indirect
 	github.com/smallstep/pkcs7 v0.1.1 // indirect
 	github.com/smallstep/scep v0.0.0-20240926084937-8cf1ca453101 // indirect
+	github.com/smallstep/step-agent-plugin v0.43.0 // indirect
 	github.com/spf13/cast v1.7.0 // indirect
 	github.com/weppos/publicsuffix-go v0.20.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

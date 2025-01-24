@@ -40,6 +40,7 @@ import (
 	_ "github.com/smallstep/cli/command/crl"
 	_ "github.com/smallstep/cli/command/crypto"
 	_ "github.com/smallstep/cli/command/fileserver"
+	_ "github.com/smallstep/cli/command/nssdb"
 	_ "github.com/smallstep/cli/command/oauth"
 	_ "github.com/smallstep/cli/command/path"
 	_ "github.com/smallstep/cli/command/ssh"
