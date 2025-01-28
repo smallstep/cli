@@ -12,12 +12,24 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/smallstep/cli/internal/plugin"
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/kms"
+	"go.step.sm/crypto/kms/apiv1"
 	"go.step.sm/crypto/pemutil"
 )
+
+// IsKMS returns true if the given uri is a a kms URI.
+func IsKMS(rawuri string) bool {
+	typ, err := kms.TypeOf(rawuri)
+	if err != nil || typ == apiv1.DefaultKMS {
+		return false
+	}
+	return true
+}
 
 // Attestor is the interface implemented by step-kms-plugin using the key, sign,
 // and attest commands.
@@ -290,8 +302,10 @@ func (s *kmsSigner) Sign(_ io.Reader, digest []byte, opts crypto.SignerOpts) (si
 		args = append(args, "--kms", s.kms)
 	}
 	if _, ok := s.PublicKey.(*rsa.PublicKey); ok {
-		if _, pss := opts.(*rsa.PSSOptions); pss {
+		if o, pss := opts.(*rsa.PSSOptions); pss {
 			args = append(args, "--pss")
+			// This argument requires step-kms-plugin v0.12.0
+			args = append(args, "--salt-length", strconv.Itoa(o.SaltLength))
 		}
 		switch opts.HashFunc() {
 		case crypto.SHA256:
