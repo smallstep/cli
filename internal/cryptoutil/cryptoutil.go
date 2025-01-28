@@ -38,8 +38,8 @@ type Attestor interface {
 	Attest() ([]byte, error)
 }
 
-func PublicKey(kms, name string, opts ...pemutil.Options) (crypto.PublicKey, error) {
-	if kms == "" {
+func PublicKey(kmsURI, name string, opts ...pemutil.Options) (crypto.PublicKey, error) {
+	if kmsURI == "" {
 		s, err := pemutil.Read(name, opts...)
 		if err != nil {
 			return nil, err
@@ -50,7 +50,7 @@ func PublicKey(kms, name string, opts ...pemutil.Options) (crypto.PublicKey, err
 		return nil, fmt.Errorf("file %s does not contain a valid public key", name)
 	}
 
-	k, err := newKMSPublicKey(kms, name)
+	k, err := newKMSPublicKey(kmsURI, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get public key: %w", err)
 	}
@@ -60,8 +60,8 @@ func PublicKey(kms, name string, opts ...pemutil.Options) (crypto.PublicKey, err
 
 // CreateSigner reads a key from a file with a given name or creates a signer
 // with the given kms and name uri.
-func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, error) {
-	if kms == "" || isSoftKMS(kms) {
+func CreateSigner(kmsURI, name string, opts ...pemutil.Options) (crypto.Signer, error) {
+	if kmsURI == "" || isSoftKMS(kmsURI) {
 		s, err := pemutil.Read(name, opts...)
 		if err != nil {
 			return nil, err
@@ -72,16 +72,16 @@ func CreateSigner(kms, name string, opts ...pemutil.Options) (crypto.Signer, err
 		return nil, fmt.Errorf("file %s does not contain a valid private key", name)
 	}
 
-	return newKMSSigner(kms, name)
+	return newKMSSigner(kmsURI, name)
 }
 
-func isSoftKMS(kms string) bool {
-	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(kms)), "softkms")
+func isSoftKMS(kmsURI string) bool {
+	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(kmsURI)), "softkms")
 }
 
 // LoadCertificate returns a x509.Certificate from a kms or file
-func LoadCertificate(kms, certPath string) ([]*x509.Certificate, error) {
-	if kms == "" {
+func LoadCertificate(kmsURI, certPath string) ([]*x509.Certificate, error) {
+	if kmsURI == "" {
 		s, err := pemutil.ReadCertificateBundle(certPath)
 		if err != nil {
 			return nil, fmt.Errorf("file %s does not contain a valid certificate: %w", certPath, err)
@@ -95,8 +95,8 @@ func LoadCertificate(kms, certPath string) ([]*x509.Certificate, error) {
 	}
 
 	args := []string{"certificate"}
-	if kms != "" {
-		args = append(args, "--kms", kms)
+	if kmsURI != "" {
+		args = append(args, "--kms", kmsURI)
 	}
 	args = append(args, certPath)
 
@@ -116,12 +116,12 @@ func LoadCertificate(kms, certPath string) ([]*x509.Certificate, error) {
 }
 
 // LoadJSONWebKey returns a jose.JSONWebKey from a KMS or a file.
-func LoadJSONWebKey(kms, name string, opts ...jose.Option) (*jose.JSONWebKey, error) {
-	if kms == "" {
+func LoadJSONWebKey(kmsURI, name string, opts ...jose.Option) (*jose.JSONWebKey, error) {
+	if kmsURI == "" {
 		return jose.ReadKey(name, opts...)
 	}
 
-	signer, err := newKMSSigner(kms, name)
+	signer, err := newKMSSigner(kmsURI, name)
 	if err != nil {
 		return nil, err
 	}
@@ -163,8 +163,8 @@ func LoadJSONWebKey(kms, name string, opts ...jose.Option) (*jose.JSONWebKey, er
 
 // CreateAttestor creates an attestor that will use `step-kms-plugin` with the
 // given kms and name.
-func CreateAttestor(kms, name string) (Attestor, error) {
-	return newKMSSigner(kms, name)
+func CreateAttestor(kmsURI, name string) (Attestor, error) {
+	return newKMSSigner(kmsURI, name)
 }
 
 // IsKMSSigner returns true if the given signer uses the step-kms-plugin signer.
@@ -220,15 +220,15 @@ func exitError(cmd *exec.Cmd, err error) error {
 }
 
 // newKMSSigner creates a signer using `step-kms-plugin` as the signer.
-func newKMSSigner(kms, key string) (*kmsSigner, error) {
+func newKMSSigner(kmsURI, key string) (*kmsSigner, error) {
 	name, err := plugin.LookPath("kms")
 	if err != nil {
 		return nil, err
 	}
 
 	args := []string{"key"}
-	if kms != "" {
-		args = append(args, "--kms", kms)
+	if kmsURI != "" {
+		args = append(args, "--kms", kmsURI)
 	}
 	args = append(args, key)
 
@@ -247,21 +247,21 @@ func newKMSSigner(kms, key string) (*kmsSigner, error) {
 	return &kmsSigner{
 		PublicKey: pub,
 		name:      name,
-		kms:       kms,
+		kms:       kmsURI,
 		key:       key,
 	}, nil
 }
 
 // newKMSPublicKey creates a signer using `step-kms-plugin` as the signer.
-func newKMSPublicKey(kms, key string) (*kmsPublicKey, error) {
+func newKMSPublicKey(kmsURI, key string) (*kmsPublicKey, error) {
 	name, err := plugin.LookPath("kms")
 	if err != nil {
 		return nil, err
 	}
 
 	args := []string{"key"}
-	if kms != "" {
-		args = append(args, "--kms", kms)
+	if kmsURI != "" {
+		args = append(args, "--kms", kmsURI)
 	}
 	args = append(args, key)
 
@@ -280,7 +280,7 @@ func newKMSPublicKey(kms, key string) (*kmsPublicKey, error) {
 	return &kmsPublicKey{
 		PublicKey: pub,
 		name:      name,
-		kms:       kms,
+		kms:       kmsURI,
 		key:       key,
 	}, nil
 }
@@ -303,9 +303,8 @@ func (s *kmsSigner) Sign(_ io.Reader, digest []byte, opts crypto.SignerOpts) (si
 	}
 	if _, ok := s.PublicKey.(*rsa.PublicKey); ok {
 		if o, pss := opts.(*rsa.PSSOptions); pss {
-			args = append(args, "--pss")
-			// This argument requires step-kms-plugin v0.12.0
-			args = append(args, "--salt-length", strconv.Itoa(o.SaltLength))
+			// The --salt-length argument requires step-kms-plugin v0.12.0
+			args = append(args, "--pss", "--salt-length", strconv.Itoa(o.SaltLength))
 		}
 		switch opts.HashFunc() {
 		case crypto.SHA256:
