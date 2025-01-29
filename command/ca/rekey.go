@@ -53,6 +53,10 @@ fixed period can be set with the **--rekey-period** flag.
 The **--daemon** flag can be combined with **--pid**, **--signal**, or **--exec**
 to provide certificate reloads on your services.
 
+The **--kms** flag rekeys an existing key in a KMS with another key from the same
+KMS. It does not support generating new keys, using the **--daemon** flag, or
+rekeying across different KMS instances.
+
 ## POSITIONAL ARGUMENTS
 
 <crt-file>
