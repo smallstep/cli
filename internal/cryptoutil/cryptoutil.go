@@ -22,7 +22,7 @@ import (
 	"go.step.sm/crypto/pemutil"
 )
 
-// IsKMS returns true if the given uri is a a kms URI.
+// IsKMS returns true if the given uri is a KMS URI.
 func IsKMS(rawuri string) bool {
 	typ, err := kms.TypeOf(rawuri)
 	if err != nil || typ == apiv1.DefaultKMS {

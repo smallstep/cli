@@ -233,7 +233,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	kmsURI := ctx.String("kms")
 
 	// For now, if the --kms flag is given, do not allow to generate a new key
-	// and write it on disk. We can't use to use the daemon mode because we
+	// and write it on disk. We can't use the daemon mode because we
 	// cannot generate new keys.
 	if kmsURI != "" {
 		switch {
