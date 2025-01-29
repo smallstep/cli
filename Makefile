@@ -24,6 +24,9 @@ CGO_OVERRIDE?=CGO_ENABLED=0
 # which build id in .goreleaser.yml to build
 GORELEASER_BUILD_ID?=default
 
+# all go files
+SRC=$(shell find . -type f -name '*.go')
+
 all: lint test build
 
 ci: test build
@@ -107,7 +110,7 @@ bootstra%:
 build: $(PREFIX)/$(BINNAME)
 	@echo "Build Complete!"
 
-$(PREFIX)/$(BINNAME):
+$(PREFIX)/$(BINNAME): $(SRC)
 	$Q mkdir -p $(PREFIX)
 	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) go build \
 		-v \
