@@ -33,6 +33,7 @@ import (
 	"go.step.sm/crypto/x509util"
 
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/token"
 	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
@@ -47,7 +48,7 @@ func renewCertificateCommand() cli.Command {
 		UsageText: `**step ca renew** <crt-file> <key-file>
 [**--mtls**] [**--password-file**=<file>] [**--out**=<file>] [**--expires-in**=<duration>]
 [**--force**] [**--pid**=<int>] [**--pid-file**=<file>] [**--signal**=<int>]
-[**--exec**=<string>] [**--daemon**] [**--renew-period**=<duration>]
+[**--exec**=<string>] [**--daemon**] [**--renew-period**=<duration>] [**--kms**=<uri>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Description: `
 **step ca renew** command renews the given certificate (with a request to the
@@ -102,6 +103,13 @@ $ step ca renew --force internal.crt internal.key
 Renew a certificate using the token flow instead of mTLS:
 '''
 $ step ca renew --mtls=false --force internal.crt internal.key
+'''
+
+Renew a certificate which key is in a KMS:
+'''
+$ step ca renew \
+  --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
+  pkcs11.crt 'pkcs11:id=4001'
 '''
 
 Renew a certificate providing the <--ca-url> and <--root> flags:
@@ -159,6 +167,7 @@ authorization flow instead.`,
 			flags.Force,
 			flags.Offline,
 			flags.PasswordFile,
+			flags.KMSUri,
 			cli.StringFlag{
 				Name:  "out,output-file",
 				Usage: "The new certificate <file> path. Defaults to overwriting the <crt-file> positional argument",
@@ -228,6 +237,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	passFile := ctx.String("password-file")
 	isDaemon := ctx.Bool("daemon")
 	execCmd := ctx.String("exec")
+	kmsURI := ctx.String("kms")
 
 	outFile := ctx.String("out")
 	if outFile == "" {
@@ -290,7 +300,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 		return errs.InvalidFlagValue(ctx, "signal", strconv.Itoa(signum), "")
 	}
 
-	cert, err := tlsLoadX509KeyPair(certFile, keyFile, passFile)
+	cert, err := tlsLoadX509KeyPair(kmsURI, certFile, keyFile, passFile)
 	if err != nil {
 		return err
 	}
@@ -638,7 +648,7 @@ func (r *renewer) RenewWithToken(cert tls.Certificate) (*api.SignResponse, error
 	return r.client.RenewWithToken(tok)
 }
 
-func tlsLoadX509KeyPair(certFile, keyFile, passFile string) (tls.Certificate, error) {
+func tlsLoadX509KeyPair(kms, certFile, keyFile, passFile string) (tls.Certificate, error) {
 	x509Chain, err := pemutil.ReadCertificateBundle(certFile)
 	if err != nil {
 		return tls.Certificate{}, errs.Wrap(err, "error reading certificate chain")
@@ -652,14 +662,13 @@ func tlsLoadX509KeyPair(certFile, keyFile, passFile string) (tls.Certificate, er
 	if passFile != "" {
 		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
-	pk, err := pemutil.Read(keyFile, opts...)
+	signer, err := cryptoutil.CreateSigner(kms, keyFile, opts...)
 	if err != nil {
-		return tls.Certificate{}, errs.Wrap(err, "error parsing private key")
+		return tls.Certificate{}, errs.Wrap(err, "error loading private key")
 	}
-
 	return tls.Certificate{
 		Certificate: x509ChainBytes,
-		PrivateKey:  pk,
+		PrivateKey:  signer,
 		Leaf:        x509Chain[0],
 	}, nil
 }
