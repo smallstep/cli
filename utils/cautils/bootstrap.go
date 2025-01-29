@@ -219,7 +219,7 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 		apiEndpoint = u.String()
 	}
 
-	// Get the --redirect-url flag, If passed, we will use this one event if the
+	// Get the --redirect-url flag, If passed, we will use this one even if the
 	// API provides one.
 	redirectURL := ctx.String("redirect-url")
 	if redirectURL != "" {
