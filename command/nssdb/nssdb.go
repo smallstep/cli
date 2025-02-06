@@ -29,9 +29,10 @@ $ step nssdb import foo.crt --dir ~/.pki/nssdb
 
 		Subcommands: cli.Commands{
 			deleteCommand(),
-			rawCommand(),
 			importCommand(),
 			listCommand(),
+			rawCommand(),
+			resetCommand(),
 		},
 	}
 

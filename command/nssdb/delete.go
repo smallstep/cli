@@ -74,7 +74,7 @@ func deleteAction(ctx *cli.Context) error {
 	}
 	defer db.Close()
 
-	err = db.DeletePublic(context.Background(), uint32(id))
+	err = db.DeleteObjectPublic(context.Background(), uint32(id))
 	if err != nil {
 		return err
 	}
