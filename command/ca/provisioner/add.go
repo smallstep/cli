@@ -22,6 +22,7 @@ import (
 	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/cast"
 	"github.com/smallstep/cli/internal/sliceutil"
 	"github.com/smallstep/cli/utils"
 )
@@ -846,10 +847,10 @@ func createSCEPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 		ForceCn:                       ctx.Bool("force-cn"),
 		Challenge:                     challenge,
 		Capabilities:                  ctx.StringSlice("capabilities"),
-		MinimumPublicKeyLength:        int32(ctx.Int("min-public-key-length")),
+		MinimumPublicKeyLength:        cast.Int32(ctx.Int("min-public-key-length")),
 		IncludeRoot:                   ctx.Bool("include-root"),
 		ExcludeIntermediate:           ctx.Bool("exclude-intermediate"),
-		EncryptionAlgorithmIdentifier: int32(ctx.Int("encryption-algorithm-identifier")),
+		EncryptionAlgorithmIdentifier: cast.Int32(ctx.Int("encryption-algorithm-identifier")),
 	}
 	decrypter := &linkedca.SCEPDecrypter{}
 	if decrypterCertificateFile := ctx.String("scep-decrypter-certificate-file"); decrypterCertificateFile != "" {

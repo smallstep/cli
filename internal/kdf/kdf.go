@@ -5,10 +5,13 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"go.step.sm/crypto/randutil"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/scrypt"
+
+	"go.step.sm/crypto/randutil"
+
+	"github.com/smallstep/cli/internal/cast"
 )
 
 // KDF is the type that all the key derivation functions implements. The
@@ -109,7 +112,7 @@ func Compare(password, phc []byte) (bool, error) {
 		if version != 0 && version != argon2.Version {
 			return false, errors.Errorf("unsupported argon2 version '%d'", version)
 		}
-		hashedPass = argon2.Key(password, salt, p.t, p.m, p.p, uint32(len(hash)))
+		hashedPass = argon2.Key(password, salt, p.t, p.m, p.p, cast.Uint32(len(hash)))
 	case argon2idHash:
 		p, err := newArgon2Params(params)
 		if err != nil {
@@ -118,7 +121,7 @@ func Compare(password, phc []byte) (bool, error) {
 		if version != 0 && version != argon2.Version {
 			return false, errors.Errorf("unsupported argon2 version '%d'", version)
 		}
-		hashedPass = argon2.IDKey(password, salt, p.t, p.m, p.p, uint32(len(hash)))
+		hashedPass = argon2.IDKey(password, salt, p.t, p.m, p.p, cast.Uint32(len(hash)))
 	default:
 		return false, errors.Errorf("invalid or unsupported hash method with id '%s'", id)
 	}

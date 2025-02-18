@@ -2,16 +2,20 @@ package sshutil
 
 import (
 	"crypto"
-	"crypto/dsa" // Maintain support for deprecated algorithms.
+	"crypto/dsa" //nolint:staticcheck // support deprecated algorithms.
+	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rsa"
 	"encoding/binary"
+	"fmt"
 	"math/big"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/smallstep/cli/internal/cast"
 )
 
 // NewCertSigner creates a new signer with the given certificate and private key.
@@ -122,7 +126,7 @@ func parseString(in []byte) (out, rest []byte, ok bool) {
 	}
 	length := binary.BigEndian.Uint32(in)
 	in = in[4:]
-	if uint32(len(in)) < length {
+	if cast.Uint32(len(in)) < length {
 		return
 	}
 	out = in[:length]
@@ -177,36 +181,52 @@ func parseRSA(in []byte) (*rsa.PublicKey, error) {
 }
 
 // parseECDSA parses an ECDSA key according to RFC 5656, section 3.1.
+//
+// This function is based on the one in golang.org/x/crypto/ssh.
 func parseECDSA(in []byte) (*ecdsa.PublicKey, error) {
 	var w struct {
-		Curve    string
-		KeyBytes []byte
-		Rest     []byte `ssh:"rest"`
+		Name  string
+		Curve string
+		Key   []byte
 	}
 
 	if err := ssh.Unmarshal(in, &w); err != nil {
 		return nil, errors.Wrap(err, "error unmarshaling public key")
 	}
 
-	key := new(ecdsa.PublicKey)
+	var (
+		key   *ecdh.PublicKey
+		curve elliptic.Curve
+		size  int
+		err   error
+	)
 
 	switch w.Curve {
 	case "nistp256":
-		key.Curve = elliptic.P256()
+		curve = elliptic.P256()
+		key, err = ecdh.P256().NewPublicKey(w.Key)
+		size = 32
 	case "nistp384":
-		key.Curve = elliptic.P384()
+		curve = elliptic.P384()
+		key, err = ecdh.P384().NewPublicKey(w.Key)
+		size = 48
 	case "nistp521":
-		key.Curve = elliptic.P521()
+		curve = elliptic.P521()
+		key, err = ecdh.P521().NewPublicKey(w.Key)
+		size = 66
 	default:
 		return nil, errors.Errorf("unsupported curve %s", w.Curve)
 	}
 
-	key.X, key.Y = elliptic.Unmarshal(key.Curve, w.KeyBytes)
-	if key.X == nil || key.Y == nil {
-		return nil, errors.New("invalid curve point")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create key: %w", err)
 	}
 
-	return key, nil
+	return &ecdsa.PublicKey{
+		Curve: curve,
+		X:     big.NewInt(0).SetBytes(key.Bytes()[1 : size+1]),
+		Y:     big.NewInt(0).SetBytes(key.Bytes()[size+1:]),
+	}, nil
 }
 
 func parseED25519(in []byte) (ed25519.PublicKey, error) {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/internal/cast"
 )
 
 const (
@@ -57,8 +58,8 @@ func newArgon2Params(s string) (*argon2Param, error) {
 	}
 
 	return &argon2Param{
-		t: uint32(t),
-		m: uint32(m),
-		p: uint8(p),
+		t: cast.Uint32(t),
+		m: cast.Uint32(m),
+		p: cast.Uint8(p),
 	}, nil
 }

@@ -22,6 +22,7 @@ import (
 	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/cast"
 	"github.com/smallstep/cli/internal/sliceutil"
 	"github.com/smallstep/cli/utils"
 )
@@ -972,7 +973,7 @@ func updateSCEPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.Capabilities = ctx.StringSlice("capabilities")
 	}
 	if ctx.IsSet("min-public-key-length") {
-		details.MinimumPublicKeyLength = int32(ctx.Int("min-public-key-length"))
+		details.MinimumPublicKeyLength = cast.Int32(ctx.Int("min-public-key-length"))
 	}
 	if ctx.IsSet("include-root") {
 		details.IncludeRoot = ctx.Bool("include-root")
@@ -981,7 +982,7 @@ func updateSCEPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		details.ExcludeIntermediate = ctx.Bool("exclude-intermediate")
 	}
 	if ctx.IsSet("encryption-algorithm-identifier") {
-		details.EncryptionAlgorithmIdentifier = int32(ctx.Int("encryption-algorithm-identifier"))
+		details.EncryptionAlgorithmIdentifier = cast.Int32(ctx.Int("encryption-algorithm-identifier"))
 	}
 
 	decrypter := details.GetDecrypter()

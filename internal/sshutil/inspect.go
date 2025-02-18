@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"golang.org/x/crypto/ssh"
+
+	"github.com/smallstep/cli/internal/cast"
 )
 
 // using the same layout than ssh-keygen
@@ -59,9 +61,9 @@ func InspectCertificate(cert *ssh.Certificate) (*CertificateInspect, error) {
 		return nil, err
 	}
 
-	validAfter = time.Unix(int64(cert.ValidAfter), 0)
+	validAfter = time.Unix(cast.Int64(cert.ValidAfter), 0)
 	if cert.ValidBefore != ssh.CertTimeInfinity {
-		validBefore = time.Unix(int64(cert.ValidBefore), 0)
+		validBefore = time.Unix(cast.Int64(cert.ValidBefore), 0)
 	}
 
 	return &CertificateInspect{
