@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/smallstep/cli/internal/cast"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
@@ -66,7 +67,7 @@ func WithRemoveExpiredCerts(t time.Time) AgentOption {
 	return func(o *options) {
 		o.removeExpiredKey = func(a *Agent, k *agent.Key) bool {
 			if cert, err := ParseCertificate(k.Marshal()); err == nil {
-				if before := int64(cert.ValidBefore); cert.ValidBefore != uint64(ssh.CertTimeInfinity) && (unixNow >= before || before < 0) {
+				if before := cast.Int64(cert.ValidBefore); cert.ValidBefore != uint64(ssh.CertTimeInfinity) && (unixNow >= before || before < 0) {
 					if err := a.Remove(k); err == nil {
 						return true
 					}
@@ -244,7 +245,7 @@ func (a *Agent) RemoveAllKeys(opts ...AgentOption) (bool, error) {
 func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv interface{}) error {
 	var (
 		lifetime uint64
-		now      = uint64(time.Now().Unix())
+		now      = cast.Uint64(time.Now().Unix())
 	)
 	switch {
 	case cert.ValidBefore == ssh.CertTimeInfinity:
@@ -265,6 +266,6 @@ func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv inter
 		PrivateKey:   priv,
 		Certificate:  cert,
 		Comment:      subject,
-		LifetimeSecs: uint32(lifetime),
+		LifetimeSecs: cast.Uint32(lifetime),
 	}), "error adding key to agent")
 }

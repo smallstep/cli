@@ -29,7 +29,7 @@ func setStdin(f *os.File) (cleanup func()) {
 
 // Returns a temp file and a cleanup function to delete it.
 func newFile(t *testing.T, data []byte) (file *os.File, cleanup func()) {
-	f, err := os.CreateTemp("" /* dir */, "utils-read-test")
+	f, err := os.CreateTemp(t.TempDir(), "utils-read-test")
 	require.NoError(t, err)
 	// write to temp file and reset read cursor to beginning of file
 	_, err = f.Write(data)
