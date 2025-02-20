@@ -1,8 +1,6 @@
 module github.com/smallstep/cli
 
-go 1.23
-
-toolchain go1.23.5
+go 1.23.6
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
