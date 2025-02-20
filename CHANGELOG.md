@@ -26,6 +26,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.28.3] - 2025-02-20
+
+### Added
+
+- Add support for KMS in the ca renew and rekey commands (smallstep/cli#1353)
+
+### Fixed
+
+- Correctly handle redirect-url flag when bootstrapping (smallstep/cli#1350)
+
+
 ## [0.28.2] - 2024-11-20
 
 ### Fixed
@@ -192,11 +203,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Detect OIDC tokens issued by Kubernetes (smallstep/cli#953)
 - Add support for Smallstep Managed Endpoint X509 extension
   (smallstep/cli#989)
-- Support signing a certificate for a private key that can only be used for 
-  encryption with the `--skip-csr-signature` flag in `step certificate create`. 
-  Some KMSs restrict key usage to a single type of cryptographic operation. 
-  This blocks RSA decryption keys from being used to sign a CSR for their public 
-  key. Using the `--skip-csr-signature` flag, the public key is used directly 
+- Support signing a certificate for a private key that can only be used for
+  encryption with the `--skip-csr-signature` flag in `step certificate create`.
+  Some KMSs restrict key usage to a single type of cryptographic operation.
+  This blocks RSA decryption keys from being used to sign a CSR for their public
+  key. Using the `--skip-csr-signature` flag, the public key is used directly
   with a certificate template, removing the need for the CSR signature.
 - Add all AWS identity document certificates (smallstep/certificates#1510)
 - Add SCEP decrypter configuration flags (smallstep/cli#950)
@@ -206,8 +217,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Increase PBKDF2 iterations to 600k (smallstep/cli#949)
-- `--kms` flag is no longer used for the CA (signing) key for 
-`step certificate create`. It was replaced by the `--ca-kms` flag 
+- `--kms` flag is no longer used for the CA (signing) key for
+`step certificate create`. It was replaced by the `--ca-kms` flag
 (smallstep/cli#942).
 - Hide `step oauth command` on failure (smallstep/cli#993)
 
@@ -222,7 +233,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `step certificate format` correctly parse PEM files with non-PEM header
   (smallstep/cli#1006)
 - Fix TOFU flag in `ca provisioner update` (smallstep/cli#941)
-- Make `--team` incompatible with `--fingerprint` and `--ca-url` in 
+- Make `--team` incompatible with `--fingerprint` and `--ca-url` in
   `step ca bootstrap (smallstep/cli#1017)
 
 ### Remove
@@ -243,7 +254,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.24.3] - 2023-04-14
 
-### Added 
+### Added
 
 - Storing of certificate chain for TPM keys in TPM storage (smallstep/cli#915)
 
@@ -251,7 +262,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - The enrolment URL path used when enrolling with an attestation CA (smallstep/cli#915)
 
-### Fixed 
+### Fixed
 
 - Issue with CLI reference not showing curly braces correctly (smallstep/cli#916)
 - Word wrapping for `step api token` example (smallstep/cli#917)
