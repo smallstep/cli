@@ -162,9 +162,9 @@ jobs:
           ]' > "$RUNNER_TEMP/reference-routes.json"
 
           # Replace old route manifest with new
-          jq --argfile newRoutes "$RUNNER_TEMP/reference-routes.json" 'walk(
+          jq --slurpfile newRoutes "$RUNNER_TEMP/reference-routes.json" 'walk(
             if type == "object" and .isStepReference == true then
-              .routes = $newRoutes
+              .routes = $newRoutes[0]
             else . end
           )' < manifest.json > manifest.json.new
 
