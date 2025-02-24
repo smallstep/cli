@@ -36,7 +36,7 @@ func TestInt64ConvertsValues(t *testing.T) {
 }
 
 func TestInt64PanicsOnLargeValue(t *testing.T) {
-	require.Panics(t, func() { cast.Int64(uint64(math.MaxInt + 1)) })
+	require.Panics(t, func() { cast.Int64(uint64(math.MaxInt64 + 1)) })
 }
 
 func TestUint64ConvertsValues(t *testing.T) {
@@ -56,16 +56,16 @@ func TestInt32ConvertsValues(t *testing.T) {
 }
 
 func TestInt32PanicsOnTooSmallValue(t *testing.T) {
-	require.Panics(t, func() { cast.Int32(math.MinInt32 - 1) })
+	require.Panics(t, func() { cast.Int32(int64(math.MinInt32 - 1)) })
 }
 
 func TestInt32PanicsOnLargeValue(t *testing.T) {
-	require.Panics(t, func() { cast.Int32(math.MaxInt32 + 1) })
+	require.Panics(t, func() { cast.Int32(int64(math.MaxInt32 + 1)) })
 }
 
 func TestUint32ConvertsValues(t *testing.T) {
 	require.Equal(t, uint32(0), cast.Uint32(0))
-	require.Equal(t, uint32(math.MaxUint32), cast.Uint32(math.MaxUint32))
+	require.Equal(t, uint32(math.MaxUint32), cast.Uint32(int64(math.MaxUint32)))
 	require.Equal(t, uint32(42), cast.Uint32(42))
 }
 
@@ -74,8 +74,9 @@ func TestUint32PanicsOnNegativeValue(t *testing.T) {
 }
 
 func TestUint32PanicsOnLargeValue(t *testing.T) {
-	require.Panics(t, func() { cast.Uint32(math.MaxUint32 + 1) })
+	require.Panics(t, func() { cast.Uint32(int64(math.MaxUint32 + 1)) })
 }
+
 func TestUint8ConvertsValues(t *testing.T) {
 	require.Equal(t, uint8(0), cast.Uint8(0))
 	require.Equal(t, uint8(math.MaxUint8), cast.Uint8(math.MaxUint8))
@@ -87,5 +88,5 @@ func TestUint8PanicsOnNegativeValue(t *testing.T) {
 }
 
 func TestUint8PanicsOnLargeValue(t *testing.T) {
-	require.Panics(t, func() { cast.Uint8(math.MaxUint32 + 1) })
+	require.Panics(t, func() { cast.Uint8(math.MaxUint8 + 1) })
 }
