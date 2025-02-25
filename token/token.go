@@ -32,6 +32,9 @@ const SANSClaim = "sans"
 // StepClaim is the property name for a JWT claim the stores the custom information in the certificate.
 const StepClaim = "step"
 
+// UserClaim is the property name for a JWT claim that stores user-provided custom information.
+const UserClaim = "user"
+
 // ConfirmationClaim is the property name for a JWT claim that stores a JSON
 // object used as Proof-Of-Possession.
 const ConfirmationClaim = "cnf"
