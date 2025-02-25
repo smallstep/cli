@@ -784,18 +784,22 @@ func (o *oauth) DoLoopbackAuthorization() (*token, error) {
 		return nil, err
 	}
 
-	if err := exec.OpenInBrowser(authURL, o.browser); err != nil {
-		fmt.Fprintln(os.Stderr, "Cannot open a web browser on your platform.")
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintln(os.Stderr, "Open a local web browser and visit:")
-		fmt.Fprintln(os.Stderr)
+	if skipBrowser := os.Getenv("STEP_OPEN_BROWSER") == "0"; skipBrowser {
 		fmt.Fprintln(os.Stderr, authURL)
-		fmt.Fprintln(os.Stderr)
 	} else {
-		fmt.Fprintln(os.Stderr, "Your default web browser has been opened to visit:")
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintln(os.Stderr, authURL)
-		fmt.Fprintln(os.Stderr)
+		if err := exec.OpenInBrowser(authURL, o.browser); err != nil {
+			fmt.Fprintln(os.Stderr, "Cannot open a web browser on your platform.")
+			fmt.Fprintln(os.Stderr)
+			fmt.Fprintln(os.Stderr, "Open a local web browser and visit:")
+			fmt.Fprintln(os.Stderr)
+			fmt.Fprintln(os.Stderr, authURL)
+			fmt.Fprintln(os.Stderr)
+		} else {
+			fmt.Fprintln(os.Stderr, "Your default web browser has been opened to visit:")
+			fmt.Fprintln(os.Stderr)
+			fmt.Fprintln(os.Stderr, authURL)
+			fmt.Fprintln(os.Stderr)
+		}
 	}
 
 	// Wait for response and return the token
