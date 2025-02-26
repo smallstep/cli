@@ -108,6 +108,11 @@ func (t *TokenGenerator) SignToken(sub string, sans []string, opts ...token.Opti
 		opts = append(opts, token.WithConfirmationFingerprint(sharedContext.ConfirmationFingerprint))
 	}
 
+	// Add custom user data, if set.
+	if sharedContext.CustomAttributes != nil {
+		opts = append(opts, token.WithUserData(sharedContext.CustomAttributes))
+	}
+
 	return t.Token(sub, opts...)
 }
 
@@ -125,6 +130,11 @@ func (t *TokenGenerator) SignSSHToken(sub, certType string, principals []string,
 		ValidAfter:  notBefore,
 		ValidBefore: notAfter,
 	})}, opts...)
+
+	// Add custom user data, if set.
+	if sharedContext.CustomAttributes != nil {
+		opts = append(opts, token.WithUserData(sharedContext.CustomAttributes))
+	}
 
 	return t.Token(sub, opts...)
 }

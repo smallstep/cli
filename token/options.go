@@ -80,6 +80,25 @@ func WithStep(v interface{}) Options {
 	}
 }
 
+// WithUserData returns an Option function that merges the provided map with the
+// existing user claim in the payload.
+func WithUserData(v map[string]interface{}) Options {
+	return func(c *Claims) error {
+		if _, ok := c.ExtraClaims[UserClaim]; !ok {
+			c.Set(UserClaim, make(map[string]interface{}))
+		}
+		s := c.ExtraClaims[UserClaim]
+		sm, ok := s.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("%q claim is %T, not map[string]interface{}", UserClaim, s)
+		}
+		for k, val := range v {
+			sm[k] = val
+		}
+		return nil
+	}
+}
+
 // WithSSH returns an Options function that sets the step claim with the ssh
 // property in the value.
 func WithSSH(v interface{}) Options {
