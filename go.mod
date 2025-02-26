@@ -7,7 +7,7 @@ require (
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
 	github.com/ccoveille/go-safecast v1.5.0
 	github.com/fxamacker/cbor/v2 v2.7.0
-	github.com/go-jose/go-jose/v3 v3.0.3
+	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-tpm v0.9.3
 	github.com/google/uuid v1.6.0
