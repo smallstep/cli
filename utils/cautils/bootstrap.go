@@ -25,9 +25,11 @@ import (
 )
 
 type bootstrapAPIResponse struct {
-	CaURL       string `json:"url"`
-	Fingerprint string `json:"fingerprint"`
-	RedirectURL string `json:"redirect-url"`
+	CaURL                       string `json:"url"`
+	Fingerprint                 string `json:"fingerprint"`
+	RedirectURL                 string `json:"redirect-url"`
+	Provisioner                 string `json:"provisioner"`
+	MinEncryptionPasswordLength int    `json:"min-encryption-password-length"`
 }
 
 // UseContext returns true if contexts should be used, false otherwise.
@@ -53,8 +55,22 @@ func WarnContext() {
 type bootstrapOption func(bc *bootstrapContext)
 
 type bootstrapContext struct {
-	defaultContextName string
-	redirectURL        string
+	defaultContextName          string
+	redirectURL                 string
+	provisioner                 string
+	minEncryptionPasswordLength int
+}
+
+func withProvisioner(provisioner string) bootstrapOption {
+	return func(bc *bootstrapContext) {
+		bc.provisioner = provisioner
+	}
+}
+
+func withMinEncryptionPasswordLength(minLength int) bootstrapOption {
+	return func(bc *bootstrapContext) {
+		bc.minEncryptionPasswordLength = minLength
+	}
 }
 
 func withDefaultContextValues(context string) bootstrapOption {
@@ -70,10 +86,12 @@ func withRedirectURL(r string) bootstrapOption {
 }
 
 type bootstrapConfig struct {
-	CA          string `json:"ca-url"`
-	Fingerprint string `json:"fingerprint"`
-	Root        string `json:"root"`
-	Redirect    string `json:"redirect-url"`
+	CA                          string `json:"ca-url"`
+	Fingerprint                 string `json:"fingerprint"`
+	Root                        string `json:"root"`
+	Redirect                    string `json:"redirect-url"`
+	Provisioner                 string `json:"provisioner"`
+	MinEncryptionPasswordLength int    `json:"min-encryption-password-length"`
 }
 
 func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOption) error {
@@ -126,16 +144,16 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 	rootFile := pki.GetRootCAPath()
 	configFile := step.DefaultsFile()
 
-	if err = os.MkdirAll(filepath.Dir(rootFile), 0700); err != nil {
+	if err = os.MkdirAll(filepath.Dir(rootFile), 0o700); err != nil {
 		return errs.FileError(err, rootFile)
 	}
 
-	if err = os.MkdirAll(filepath.Dir(configFile), 0700); err != nil {
+	if err = os.MkdirAll(filepath.Dir(configFile), 0o700); err != nil {
 		return errs.FileError(err, configFile)
 	}
 
 	// Serialize root
-	_, err = pemutil.Serialize(resp.RootPEM.Certificate, pemutil.ToFile(rootFile, 0600))
+	_, err = pemutil.Serialize(resp.RootPEM.Certificate, pemutil.ToFile(rootFile, 0o600))
 	if err != nil {
 		return err
 	}
@@ -148,12 +166,19 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 	}
 
 	// Serialize defaults.json
-	b, err := json.MarshalIndent(bootstrapConfig{
+	bootConf := bootstrapConfig{
 		CA:          caURL,
 		Fingerprint: fingerprint,
 		Root:        pki.GetRootCAPath(),
 		Redirect:    bc.redirectURL,
-	}, "", "  ")
+	}
+	if bc.minEncryptionPasswordLength > 0 {
+		bootConf.MinEncryptionPasswordLength = bc.minEncryptionPasswordLength
+	}
+	if bc.provisioner != "" {
+		bootConf.Provisioner = bc.provisioner
+	}
+	b, err := json.MarshalIndent(bootConf, "", "  ")
 	if err != nil {
 		return errors.Wrap(err, "error marshaling defaults.json")
 	}
@@ -162,7 +187,7 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 	ctx.Set("fingerprint", fingerprint)
 	ctx.Set("root", rootFile)
 
-	if err := utils.WriteFile(configFile, b, 0644); err != nil {
+	if err := utils.WriteFile(configFile, b, 0o644); err != nil {
 		return err
 	}
 
@@ -171,12 +196,12 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 	if step.Contexts().Enabled() {
 		profileDefaultsFile := step.ProfileDefaultsFile()
 
-		if err := os.MkdirAll(filepath.Dir(profileDefaultsFile), 0700); err != nil {
+		if err := os.MkdirAll(filepath.Dir(profileDefaultsFile), 0o700); err != nil {
 			return errs.FileError(err, profileDefaultsFile)
 		}
 
 		if _, err := os.Stat(profileDefaultsFile); os.IsNotExist(err) {
-			if err := os.WriteFile(profileDefaultsFile, []byte("{}"), 0600); err != nil {
+			if err := os.WriteFile(profileDefaultsFile, []byte("{}"), 0o600); err != nil {
 				return errs.FileError(err, profileDefaultsFile)
 			}
 			ui.Printf("The profile configuration has been saved in %s.\n", profileDefaultsFile)
@@ -254,9 +279,17 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 		r.RedirectURL = "https://smallstep.com/app/teams/sso/success"
 	}
 
-	return bootstrap(ctx, r.CaURL, r.Fingerprint,
-		withDefaultContextValues(teamAuthority+"."+team),
-		withRedirectURL(r.RedirectURL))
+	bootOpts := []bootstrapOption{
+		withDefaultContextValues(teamAuthority + "." + team),
+		withRedirectURL(r.RedirectURL),
+	}
+	if r.Provisioner != "" {
+		bootOpts = append(bootOpts, withProvisioner(r.Provisioner))
+	}
+	if r.MinEncryptionPasswordLength > 0 {
+		bootOpts = append(bootOpts, withMinEncryptionPasswordLength(r.MinEncryptionPasswordLength))
+	}
+	return bootstrap(ctx, r.CaURL, r.Fingerprint, bootOpts...)
 }
 
 // BootstrapAuthority bootstraps an authority using only the caURL and fingerprint.
@@ -268,7 +301,7 @@ func BootstrapAuthority(ctx *cli.Context, caURL, fingerprint string) (err error)
 		}
 	}
 
-	var opts = []bootstrapOption{
+	opts := []bootstrapOption{
 		withDefaultContextValues(caHostname),
 	}
 
