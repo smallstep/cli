@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/x509"
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -44,7 +45,7 @@ func certificateCommand() cli.Command {
 [**--console**] [**--no-password**] [**--insecure**] [**--force**] [**--x5c-cert**=<file>]
 [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>] [**--no-agent**]
 [**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>]
-[**--min-encryption-password-length**=<length>] [**--ca-url**=<uri>]
+[**--min-password-length**=<length>] [**--ca-url**=<uri>]
 [**--root**=<file>] [**--context**=<name>]`,
 
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
@@ -204,7 +205,7 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 				Usage: "Do not add the generated certificate and associated private key to the SSH agent.",
 			},
 			cli.IntFlag{
-				Name:  "min-encryption-password-length",
+				Name:  "min-password-length",
 				Usage: "Set minimum required length for password used to encrypt private key. The default value is '0'. Values <=0 are interpreted as if no minimum value is set.",
 				Value: 0,
 			},
@@ -246,7 +247,7 @@ func certificateAction(ctx *cli.Context) error {
 	noPassword := ctx.Bool("no-password")
 	insecure := ctx.Bool("insecure")
 	sshPrivKeyFile := ctx.String("private-key")
-	minPasswordLength := ctx.Int("min-encryption-password-length")
+	minPasswordLength := ctx.Int("min-password-length")
 	validAfter, validBefore, err := flags.ParseTimeDuration(ctx)
 	if err != nil {
 		return err
@@ -266,7 +267,7 @@ func certificateAction(ctx *cli.Context) error {
 	case noPassword && !insecure:
 		return errs.RequiredInsecureFlag(ctx, "no-password")
 	case noPassword && minPasswordLength > 0:
-		return errs.IncompatibleFlagWithFlag(ctx, "noPassword", "minPasswordLen")
+		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "min-password-length")
 	case noPassword && passwordFile != "":
 		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "password-file")
 	case token != "" && provisionerPasswordFile != "":
@@ -472,8 +473,12 @@ func certificateAction(ctx *cli.Context) error {
 		case passwordFile != "":
 			opts = append(opts, pemutil.WithMinLengthPasswordFile(passwordFile, minPasswordLength))
 		default:
-			opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
-				return ui.PromptPassword(s, ui.WithValidateNotEmpty(), ui.WithValidateMinLength(minPasswordLength))
+			prompt := "Please enter the password to encrypt the private key"
+			if minPasswordLength > 0 {
+				prompt = fmt.Sprintf("%s (must be at least %d characters)", prompt, minPasswordLength)
+			}
+			opts = append(opts, pemutil.WithPasswordPrompt(prompt, func(s string) ([]byte, error) {
+				return ui.PromptPassword(s, ui.WithValidateNotEmpty(), ui.WithMinLength(minPasswordLength))
 			}))
 		}
 
