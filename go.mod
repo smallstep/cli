@@ -19,7 +19,7 @@ require (
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.28.2
 	github.com/smallstep/certinfo v1.13.0
-	github.com/smallstep/cli-utils v0.11.0
+	github.com/smallstep/cli-utils v0.12.1
 	github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935
 	github.com/smallstep/linkedca v0.23.0
 	github.com/smallstep/truststore v0.13.0
@@ -28,7 +28,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli v1.22.16
 	go.mozilla.org/pkcs7 v0.9.0
-	go.step.sm/crypto v0.58.0
+	go.step.sm/crypto v0.59.0
 	golang.org/x/crypto v0.35.0
 	golang.org/x/sys v0.30.0
 	golang.org/x/term v0.29.0
@@ -131,12 +131,15 @@ require (
 	go.opentelemetry.io/otel v1.34.0 // indirect
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect
+	go.uber.org/mock v0.5.0 // indirect
 	golang.org/x/exp v0.0.0-20240318143956-a85f2c67cd81 // indirect
+	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/oauth2 v0.26.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
+	golang.org/x/tools v0.24.0 // indirect
 	google.golang.org/api v0.221.0 // indirect
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 // indirect

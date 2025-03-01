@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/x509"
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -44,7 +45,8 @@ func certificateCommand() cli.Command {
 [**--console**] [**--no-password**] [**--insecure**] [**--force**] [**--x5c-cert**=<file>]
 [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>] [**--no-agent**]
 [**--kty**=<key-type>] [**--curve**=<curve>] [**--size**=<size>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--min-password-length**=<length>] [**--ca-url**=<uri>]
+[**--root**=<file>] [**--context**=<name>]`,
 
 		Description: `**step ssh certificate** command generates an SSH key pair and creates a
 certificate using [step certificates](https://github.com/smallstep/certificates).
@@ -202,6 +204,11 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 				Name:  "no-agent",
 				Usage: "Do not add the generated certificate and associated private key to the SSH agent.",
 			},
+			cli.IntFlag{
+				Name:  "min-password-length",
+				Usage: "Set minimum required length for password used to encrypt private key. The default value is '0'. Values <=0 are interpreted as if no minimum value is set.",
+				Value: 0,
+			},
 			flags.CaConfig,
 			flags.CaURL,
 			flags.Root,
@@ -240,6 +247,7 @@ func certificateAction(ctx *cli.Context) error {
 	noPassword := ctx.Bool("no-password")
 	insecure := ctx.Bool("insecure")
 	sshPrivKeyFile := ctx.String("private-key")
+	minPasswordLength := ctx.Int("min-password-length")
 	validAfter, validBefore, err := flags.ParseTimeDuration(ctx)
 	if err != nil {
 		return err
@@ -258,6 +266,8 @@ func certificateAction(ctx *cli.Context) error {
 	switch {
 	case noPassword && !insecure:
 		return errs.RequiredInsecureFlag(ctx, "no-password")
+	case noPassword && minPasswordLength > 0:
+		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "min-password-length")
 	case noPassword && passwordFile != "":
 		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "password-file")
 	case token != "" && provisionerPasswordFile != "":
@@ -456,42 +466,47 @@ func certificateAction(ctx *cli.Context) error {
 		// Private key (with password unless --no-password --insecure)
 		opts := []pemutil.Options{
 			pemutil.WithOpenSSH(true),
-			pemutil.ToFile(keyFile, 0600),
+			pemutil.ToFile(keyFile, 0o600),
 		}
 		switch {
 		case noPassword && insecure:
 		case passwordFile != "":
-			opts = append(opts, pemutil.WithPasswordFile(passwordFile))
+			opts = append(opts, pemutil.WithMinLengthPasswordFile(passwordFile, minPasswordLength))
 		default:
-			opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
-				return ui.PromptPassword(s, ui.WithValidateNotEmpty())
+			prompt := "Please enter the password to encrypt the private key"
+			if minPasswordLength > 0 {
+				prompt = fmt.Sprintf("%s (must be at least %d characters)", prompt, minPasswordLength)
+			}
+			opts = append(opts, pemutil.WithPasswordPrompt(prompt, func(s string) ([]byte, error) {
+				return ui.PromptPassword(s, ui.WithValidateNotEmpty(), ui.WithMinLength(minPasswordLength))
 			}))
 		}
+
 		_, err = pemutil.Serialize(priv, opts...)
 		if err != nil {
 			return err
 		}
 
-		if err := utils.WriteFile(pubFile, marshalPublicKey(sshPub, subject), 0644); err != nil {
+		if err := utils.WriteFile(pubFile, marshalPublicKey(sshPub, subject), 0o644); err != nil {
 			return err
 		}
 	}
 
 	// Write certificate
-	if err := utils.WriteFile(crtFile, marshalPublicKey(resp.Certificate, subject), 0644); err != nil {
+	if err := utils.WriteFile(crtFile, marshalPublicKey(resp.Certificate, subject), 0o644); err != nil {
 		return err
 	}
 
 	// Write Add User keys and certs
 	if isAddUser && resp.AddUserCertificate != nil {
 		id := provisioner.SanitizeSSHUserPrincipal(subject) + "-provisioner"
-		if _, err := pemutil.Serialize(auPriv, pemutil.WithOpenSSH(true), pemutil.ToFile(baseName+"-provisioner", 0600)); err != nil {
+		if _, err := pemutil.Serialize(auPriv, pemutil.WithOpenSSH(true), pemutil.ToFile(baseName+"-provisioner", 0o600)); err != nil {
 			return err
 		}
-		if err := utils.WriteFile(baseName+"-provisioner.pub", marshalPublicKey(sshAuPub, id), 0644); err != nil {
+		if err := utils.WriteFile(baseName+"-provisioner.pub", marshalPublicKey(sshAuPub, id), 0o644); err != nil {
 			return err
 		}
-		if err := utils.WriteFile(baseName+"-provisioner-cert.pub", marshalPublicKey(resp.AddUserCertificate, id), 0644); err != nil {
+		if err := utils.WriteFile(baseName+"-provisioner-cert.pub", marshalPublicKey(resp.AddUserCertificate, id), 0o644); err != nil {
 			return err
 		}
 	}
