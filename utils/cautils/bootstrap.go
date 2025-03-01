@@ -25,11 +25,11 @@ import (
 )
 
 type bootstrapAPIResponse struct {
-	CaURL                       string `json:"url"`
-	Fingerprint                 string `json:"fingerprint"`
-	RedirectURL                 string `json:"redirect-url"`
-	Provisioner                 string `json:"provisioner"`
-	MinEncryptionPasswordLength int    `json:"min-encryption-password-length"`
+	CaURL             string `json:"url"`
+	Fingerprint       string `json:"fingerprint"`
+	RedirectURL       string `json:"redirect-url"`
+	Provisioner       string `json:"provisioner"`
+	MinPasswordLength int    `json:"min-password-length"`
 }
 
 // UseContext returns true if contexts should be used, false otherwise.
@@ -55,10 +55,10 @@ func WarnContext() {
 type bootstrapOption func(bc *bootstrapContext)
 
 type bootstrapContext struct {
-	defaultContextName          string
-	redirectURL                 string
-	provisioner                 string
-	minEncryptionPasswordLength int
+	defaultContextName string
+	redirectURL        string
+	provisioner        string
+	minPasswordLength  int
 }
 
 func withProvisioner(provisioner string) bootstrapOption {
@@ -67,9 +67,9 @@ func withProvisioner(provisioner string) bootstrapOption {
 	}
 }
 
-func withMinEncryptionPasswordLength(minLength int) bootstrapOption {
+func withMinPasswordLength(minLength int) bootstrapOption {
 	return func(bc *bootstrapContext) {
-		bc.minEncryptionPasswordLength = minLength
+		bc.minPasswordLength = minLength
 	}
 }
 
@@ -86,12 +86,12 @@ func withRedirectURL(r string) bootstrapOption {
 }
 
 type bootstrapConfig struct {
-	CA                          string `json:"ca-url"`
-	Fingerprint                 string `json:"fingerprint"`
-	Root                        string `json:"root"`
-	Redirect                    string `json:"redirect-url"`
-	Provisioner                 string `json:"provisioner"`
-	MinEncryptionPasswordLength int    `json:"min-encryption-password-length"`
+	CA                string `json:"ca-url"`
+	Fingerprint       string `json:"fingerprint"`
+	Root              string `json:"root"`
+	Redirect          string `json:"redirect-url"`
+	Provisioner       string `json:"provisioner"`
+	MinPasswordLength int    `json:"min-password-length"`
 }
 
 func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOption) error {
@@ -172,8 +172,8 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 		Root:        pki.GetRootCAPath(),
 		Redirect:    bc.redirectURL,
 	}
-	if bc.minEncryptionPasswordLength > 0 {
-		bootConf.MinEncryptionPasswordLength = bc.minEncryptionPasswordLength
+	if bc.minPasswordLength > 0 {
+		bootConf.MinPasswordLength = bc.minPasswordLength
 	}
 	if bc.provisioner != "" {
 		bootConf.Provisioner = bc.provisioner
@@ -286,8 +286,8 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 	if r.Provisioner != "" {
 		bootOpts = append(bootOpts, withProvisioner(r.Provisioner))
 	}
-	if r.MinEncryptionPasswordLength > 0 {
-		bootOpts = append(bootOpts, withMinEncryptionPasswordLength(r.MinEncryptionPasswordLength))
+	if r.MinPasswordLength > 0 {
+		bootOpts = append(bootOpts, withMinPasswordLength(r.MinPasswordLength))
 	}
 	return bootstrap(ctx, r.CaURL, r.Fingerprint, bootOpts...)
 }
