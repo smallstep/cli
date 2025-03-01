@@ -28,7 +28,7 @@ type bootstrapAPIResponse struct {
 	CaURL             string `json:"url"`
 	Fingerprint       string `json:"fingerprint"`
 	RedirectURL       string `json:"redirect-url"`
-	Provisioner       string `json:"provisioner"`
+	Issuer            string `json:"issuer"`
 	MinPasswordLength int    `json:"min-password-length"`
 }
 
@@ -57,13 +57,13 @@ type bootstrapOption func(bc *bootstrapContext)
 type bootstrapContext struct {
 	defaultContextName string
 	redirectURL        string
-	provisioner        string
+	issuer             string
 	minPasswordLength  int
 }
 
-func withProvisioner(provisioner string) bootstrapOption {
+func withIssuer(issuer string) bootstrapOption {
 	return func(bc *bootstrapContext) {
-		bc.provisioner = provisioner
+		bc.issuer = issuer
 	}
 }
 
@@ -90,8 +90,8 @@ type bootstrapConfig struct {
 	Fingerprint       string `json:"fingerprint"`
 	Root              string `json:"root"`
 	Redirect          string `json:"redirect-url"`
-	Provisioner       string `json:"provisioner"`
-	MinPasswordLength int    `json:"min-password-length"`
+	Issuer            string `json:"issuer,omitempty"`
+	MinPasswordLength int    `json:"min-password-length,omitempty"`
 }
 
 func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOption) error {
@@ -175,8 +175,8 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 	if bc.minPasswordLength > 0 {
 		bootConf.MinPasswordLength = bc.minPasswordLength
 	}
-	if bc.provisioner != "" {
-		bootConf.Provisioner = bc.provisioner
+	if bc.issuer != "" {
+		bootConf.Issuer = bc.issuer
 	}
 	b, err := json.MarshalIndent(bootConf, "", "  ")
 	if err != nil {
@@ -283,8 +283,8 @@ func BootstrapTeamAuthority(ctx *cli.Context, team, teamAuthority string) error 
 		withDefaultContextValues(teamAuthority + "." + team),
 		withRedirectURL(r.RedirectURL),
 	}
-	if r.Provisioner != "" {
-		bootOpts = append(bootOpts, withProvisioner(r.Provisioner))
+	if r.Issuer != "" {
+		bootOpts = append(bootOpts, withIssuer(r.Issuer))
 	}
 	if r.MinPasswordLength > 0 {
 		bootOpts = append(bootOpts, withMinPasswordLength(r.MinPasswordLength))
