@@ -19,7 +19,7 @@ require (
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.28.2
 	github.com/smallstep/certinfo v1.13.0
-	github.com/smallstep/cli-utils v0.11.0
+	github.com/smallstep/cli-utils v0.12.1
 	github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935
 	github.com/smallstep/linkedca v0.23.0
 	github.com/smallstep/truststore v0.13.0
