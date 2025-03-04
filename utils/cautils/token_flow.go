@@ -212,7 +212,7 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 	}
 
 	kid := ctx.String("kid")
-	issuer := flags.FirstOf(ctx, "issuer", "provisioner")
+	issuer := flags.FirstStringOf(ctx, "provisioner", "issuer")
 
 	// Require issuer and keyFile if ca.json does not exists.
 	// kid can be passed or created using jwk.Thumbprint.
@@ -326,7 +326,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	}
 
 	// Filter by issuer (provisioner name)
-	if issuer := flags.FirstStringOf(ctx, "issuer", "provisioner"); issuer != "" {
+	if issuer := flags.FirstStringOf(ctx, "provisioner", "issuer"); issuer != "" {
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			return p.GetName() == issuer
 		})
