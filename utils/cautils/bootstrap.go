@@ -28,7 +28,7 @@ type bootstrapAPIResponse struct {
 	CaURL             string `json:"url"`
 	Fingerprint       string `json:"fingerprint"`
 	RedirectURL       string `json:"redirect-url"`
-	Provisioner       string `json:"issuer,omitempty"`
+	Provisioner       string `json:"provisioner,omitempty"`
 	MinPasswordLength int    `json:"min-password-length,omitempty"`
 }
 
@@ -61,9 +61,9 @@ type bootstrapContext struct {
 	minPasswordLength  int
 }
 
-func withProvisioner(issuer string) bootstrapOption {
+func withProvisioner(provisioner string) bootstrapOption {
 	return func(bc *bootstrapContext) {
-		bc.provisioner = issuer
+		bc.provisioner = provisioner
 	}
 }
 

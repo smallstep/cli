@@ -230,3 +230,122 @@ func TestParseFingerprintFormat(t *testing.T) {
 		})
 	}
 }
+
+func TestFirstStringOf(t *testing.T) {
+	getAppSet := func() (*cli.App, *flag.FlagSet) {
+		app := &cli.App{}
+		set := flag.NewFlagSet("contrive", 0)
+		return app, set
+	}
+	tests := []struct {
+		name       string
+		getContext func() *cli.Context
+		inputs     []string
+		want       string
+	}{
+		{
+			name: "no-flags-empty",
+			getContext: func() *cli.Context {
+				app, set := getAppSet()
+				//_ = set.String("ca-url", "", "")
+				return cli.NewContext(app, set, nil)
+			},
+			inputs: []string{"foo", "bar"},
+			want:   "",
+		},
+		{
+			name: "return-first-set-flag",
+			getContext: func() *cli.Context {
+				app, set := getAppSet()
+				_ = set.String("foo", "", "")
+				_ = set.String("bar", "", "")
+				_ = set.String("baz", "", "")
+				ctx := cli.NewContext(app, set, nil)
+				ctx.Set("bar", "test1")
+				ctx.Set("baz", "test2")
+				return ctx
+			},
+			inputs: []string{"foo", "bar", "baz"},
+			want:   "test1",
+		},
+		{
+			name: "return-first-default-flag",
+			getContext: func() *cli.Context {
+				app, set := getAppSet()
+				_ = set.String("foo", "", "")
+				_ = set.String("bar", "", "")
+				_ = set.String("baz", "test1", "")
+				ctx := cli.NewContext(app, set, nil)
+				return ctx
+			},
+			inputs: []string{"foo", "bar", "baz"},
+			want:   "test1",
+		},
+		{
+			name: "all-empty",
+			getContext: func() *cli.Context {
+				app, set := getAppSet()
+				_ = set.String("foo", "", "")
+				_ = set.String("bar", "", "")
+				_ = set.String("baz", "", "")
+				ctx := cli.NewContext(app, set, nil)
+				return ctx
+			},
+			inputs: []string{"foo", "bar", "baz"},
+			want:   "",
+		},
+		/*
+			{
+				name:      "negative",
+				minLength: -5,
+				promptRun: promptRunner([]string{"foobar"}, nil),
+				want:      "foobar",
+				wantErr:   false,
+			},
+			{
+				name:      "zero",
+				minLength: 0,
+				promptRun: promptRunner([]string{"foobar"}, nil),
+				want:      "foobar",
+				wantErr:   false,
+			},
+			{
+				name:      "greater-than-min-length",
+				minLength: 5,
+				promptRun: promptRunner([]string{"foobar"}, nil),
+				want:      "foobar",
+				wantErr:   false,
+			},
+			{
+				name:      "equal-min-length",
+				minLength: 6,
+				promptRun: promptRunner([]string{"foobar"}, nil),
+				want:      "foobar",
+				wantErr:   false,
+			},
+			{
+				name:      "less-than-min-length",
+				minLength: 8,
+				promptRun: promptRunner([]string{"pass", "foobar", "password"}, nil),
+				want:      "password",
+				wantErr:   false,
+			},
+			{
+				name:      "ignore-post-whitespace-characters",
+				minLength: 7,
+				promptRun: promptRunner([]string{"pass   ", "foobar ", "password  "}, nil),
+				want:      "password",
+				wantErr:   false,
+			},
+		*/
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.getContext()
+			val := FirstStringOf(ctx, tt.inputs...)
+			if val != tt.want {
+				t.Errorf("expected %v, but got %v", tt.want, val)
+			}
+		})
+	}
+}
