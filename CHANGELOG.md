@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.28.4] - 2025-03-04
+
+### Added
+
+- Add the --set and --set-file flags to the step ca token command, allowing the user to set keys in the "user" claim in the resulting JWT. (smallstep/cli#1375)
+- Support for downloading additional default settings when running 'step ssh config' (smallstep/cli#1377)
+    - 'min-password-length' and 'provisioner'
+
+
 ## [0.28.3] - 2025-02-20
 
 ### Added
