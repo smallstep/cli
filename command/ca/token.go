@@ -34,7 +34,8 @@ func tokenCommand() cli.Command {
 [**--sshpop-cert**=<file>] [**--sshpop-key**=<file>]
 [**--cnf**=<fingerprint>] [**--cnf-file**=<file>]
 [**--ssh**] [**--host**] [**--principal**=<name>] [**--k8ssa-token-path**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
+[**--set**=<key=value>] [**--set-file**=<file>]`,
 		Description: `**step ca token** command generates a one-time token granting access to the
 certificates authority.
 
@@ -174,6 +175,18 @@ add the intermediate and the root in the provisioner configuration:
 $ step ca token --kms yubikey:pin-value=123456 \
   --x5c-cert yubikey:slot-id=82 --x5c-key yubikey:slot-id=82 \
   internal.example.com
+'''
+
+Generate a token with custom data in the "user" claim. The example below can be
+accessed in a template as **{{ .Token.user.field }}**, rendering to the string
+"value".
+
+This is distinct from **.Insecure.User**: any attributes set using this option
+are added to a claim named "user" in the signed JWT produced by this command.
+This data may therefore be considered trusted (insofar as the token itself is
+trusted).
+'''
+$ step ca token --set field=value internal.example.com
 '''`,
 		Flags: []cli.Flag{
 			provisionerKidFlag,
@@ -244,6 +257,8 @@ be invalid for any other API request.`,
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
+			flags.TemplateSet,
+			flags.TemplateSetFile,
 		},
 	}
 }
@@ -350,9 +365,27 @@ func tokenAction(ctx *cli.Context) error {
 		tokenOpts = append(tokenOpts, cautils.WithConfirmationFingerprint(cnf))
 	}
 
+	templateData, err := flags.GetTemplateData(ctx)
+	if err != nil {
+		return err
+	}
+	if templateData != nil {
+		tokenOpts = append(tokenOpts, cautils.WithCustomAttributes(templateData))
+	}
+
 	// --san and --type revoke are incompatible. Revocation tokens do not support SANs.
 	if typ == cautils.RevokeType && len(sans) > 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "san", "revoke")
+	}
+
+	// --offline doesn't support tokenOpts, so reject set/set-file
+	if offline {
+		if len(ctx.StringSlice("set")) > 0 {
+			return errs.IncompatibleFlagWithFlag(ctx, "offline", "set")
+		}
+		if ctx.String("set-file") != "" {
+			return errs.IncompatibleFlagWithFlag(ctx, "offline", "set-file")
+		}
 	}
 
 	// parse times or durations
