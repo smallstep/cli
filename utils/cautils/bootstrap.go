@@ -28,8 +28,8 @@ type bootstrapAPIResponse struct {
 	CaURL             string `json:"url"`
 	Fingerprint       string `json:"fingerprint"`
 	RedirectURL       string `json:"redirect-url"`
-	Provisioner       string `json:"provisioner,omitempty"`
-	MinPasswordLength int    `json:"min-password-length,omitempty"`
+	Provisioner       string `json:"provisioner"`
+	MinPasswordLength int    `json:"min-password-length"`
 }
 
 // UseContext returns true if contexts should be used, false otherwise.

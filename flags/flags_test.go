@@ -294,50 +294,6 @@ func TestFirstStringOf(t *testing.T) {
 			inputs: []string{"foo", "bar", "baz"},
 			want:   "",
 		},
-		/*
-			{
-				name:      "negative",
-				minLength: -5,
-				promptRun: promptRunner([]string{"foobar"}, nil),
-				want:      "foobar",
-				wantErr:   false,
-			},
-			{
-				name:      "zero",
-				minLength: 0,
-				promptRun: promptRunner([]string{"foobar"}, nil),
-				want:      "foobar",
-				wantErr:   false,
-			},
-			{
-				name:      "greater-than-min-length",
-				minLength: 5,
-				promptRun: promptRunner([]string{"foobar"}, nil),
-				want:      "foobar",
-				wantErr:   false,
-			},
-			{
-				name:      "equal-min-length",
-				minLength: 6,
-				promptRun: promptRunner([]string{"foobar"}, nil),
-				want:      "foobar",
-				wantErr:   false,
-			},
-			{
-				name:      "less-than-min-length",
-				minLength: 8,
-				promptRun: promptRunner([]string{"pass", "foobar", "password"}, nil),
-				want:      "password",
-				wantErr:   false,
-			},
-			{
-				name:      "ignore-post-whitespace-characters",
-				minLength: 7,
-				promptRun: promptRunner([]string{"pass   ", "foobar ", "password  "}, nil),
-				want:      "password",
-				wantErr:   false,
-			},
-		*/
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
