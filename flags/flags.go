@@ -670,3 +670,21 @@ func parseCaURL(ctx *cli.Context, caURL string) (string, error) {
 
 	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
 }
+
+// FirstStringOf returns the value of the first defined flag from the input list.
+// If no defined flags, returns first flag with non-empty default value.
+func FirstStringOf(ctx *cli.Context, flags ...string) string {
+	// Return first defined flag.
+	for _, f := range flags {
+		if ctx.IsSet(f) {
+			return ctx.String(f)
+		}
+	}
+	// Return first non-empty, default, flag value.
+	for _, f := range flags {
+		if val := ctx.String(f); val != "" {
+			return val
+		}
+	}
+	return ""
+}

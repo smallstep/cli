@@ -230,3 +230,78 @@ func TestParseFingerprintFormat(t *testing.T) {
 		})
 	}
 }
+
+func TestFirstStringOf(t *testing.T) {
+	getAppSet := func() (*cli.App, *flag.FlagSet) {
+		app := &cli.App{}
+		set := flag.NewFlagSet("contrive", 0)
+		return app, set
+	}
+	tests := []struct {
+		name       string
+		getContext func() *cli.Context
+		inputs     []string
+		want       string
+	}{
+		{
+			name: "no-flags-empty",
+			getContext: func() *cli.Context {
+				app, set := getAppSet()
+				//_ = set.String("ca-url", "", "")
+				return cli.NewContext(app, set, nil)
+			},
+			inputs: []string{"foo", "bar"},
+			want:   "",
+		},
+		{
+			name: "return-first-set-flag",
+			getContext: func() *cli.Context {
+				app, set := getAppSet()
+				_ = set.String("foo", "", "")
+				_ = set.String("bar", "", "")
+				_ = set.String("baz", "", "")
+				ctx := cli.NewContext(app, set, nil)
+				ctx.Set("bar", "test1")
+				ctx.Set("baz", "test2")
+				return ctx
+			},
+			inputs: []string{"foo", "bar", "baz"},
+			want:   "test1",
+		},
+		{
+			name: "return-first-default-flag",
+			getContext: func() *cli.Context {
+				app, set := getAppSet()
+				_ = set.String("foo", "", "")
+				_ = set.String("bar", "", "")
+				_ = set.String("baz", "test1", "")
+				ctx := cli.NewContext(app, set, nil)
+				return ctx
+			},
+			inputs: []string{"foo", "bar", "baz"},
+			want:   "test1",
+		},
+		{
+			name: "all-empty",
+			getContext: func() *cli.Context {
+				app, set := getAppSet()
+				_ = set.String("foo", "", "")
+				_ = set.String("bar", "", "")
+				_ = set.String("baz", "", "")
+				ctx := cli.NewContext(app, set, nil)
+				return ctx
+			},
+			inputs: []string{"foo", "bar", "baz"},
+			want:   "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.getContext()
+			val := FirstStringOf(ctx, tt.inputs...)
+			if val != tt.want {
+				t.Errorf("expected %v, but got %v", tt.want, val)
+			}
+		})
+	}
+}
