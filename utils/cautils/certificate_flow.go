@@ -43,6 +43,7 @@ type flowContext struct {
 	SSHPublicKey            ssh.PublicKey
 	CertificateRequest      *x509.CertificateRequest
 	ConfirmationFingerprint string
+	CustomAttributes        map[string]interface{}
 }
 
 // sharedContext is used to share information between commands.
@@ -85,6 +86,18 @@ func WithCertificateRequest(cr *x509.CertificateRequest) Option {
 func WithConfirmationFingerprint(fp string) Option {
 	return newFuncFlowOption(func(fo *flowContext) {
 		fo.ConfirmationFingerprint = fp
+	})
+}
+
+// WithCustomAttributes adds custom attributes to be set in the "user" claim.
+func WithCustomAttributes(v map[string]interface{}) Option {
+	return newFuncFlowOption(func(fo *flowContext) {
+		if fo.CustomAttributes == nil {
+			fo.CustomAttributes = make(map[string]interface{})
+		}
+		for k, val := range v {
+			fo.CustomAttributes[k] = val
+		}
 	})
 }
 
