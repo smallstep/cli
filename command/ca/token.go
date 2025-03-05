@@ -178,7 +178,7 @@ $ step ca token --kms yubikey:pin-value=123456 \
 '''
 
 Generate a token with custom data in the "user" claim. The example below can be
-accessed in a template as **{{ .Token.user.field }}**, rendering to the string
+accessed in a template as **.Token.user.field**, rendering to the string
 "value".
 
 This is distinct from **.Insecure.User**: any attributes set using this option
