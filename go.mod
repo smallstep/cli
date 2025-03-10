@@ -31,7 +31,7 @@ require (
 	go.step.sm/crypto v0.59.1
 	golang.org/x/crypto v0.35.0
 	golang.org/x/sys v0.31.0
-	golang.org/x/term v0.29.0
+	golang.org/x/term v0.30.0
 	google.golang.org/protobuf v1.36.5
 	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
