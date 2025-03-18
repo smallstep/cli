@@ -5,7 +5,7 @@ go 1.23.6
 require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
-	github.com/ccoveille/go-safecast v1.5.0
+	github.com/ccoveille/go-safecast v1.6.0
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/google/go-cmp v0.7.0
@@ -17,7 +17,7 @@ require (
 	github.com/pquerna/otp v1.4.0
 	github.com/slackhq/nebula v1.9.5
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.28.2
+	github.com/smallstep/certificates v0.28.3
 	github.com/smallstep/certinfo v1.13.0
 	github.com/smallstep/cli-utils v0.12.1
 	github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935
@@ -37,13 +37,13 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.118.2 // indirect
+	cloud.google.com/go v0.118.3 // indirect
 	cloud.google.com/go/auth v0.15.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
-	cloud.google.com/go/iam v1.4.0 // indirect
-	cloud.google.com/go/longrunning v0.6.4 // indirect
-	cloud.google.com/go/security v1.18.3 // indirect
+	cloud.google.com/go/iam v1.4.1 // indirect
+	cloud.google.com/go/longrunning v0.6.6 // indirect
+	cloud.google.com/go/security v1.18.4 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
@@ -62,7 +62,7 @@ require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
-	github.com/coreos/go-oidc/v3 v3.12.0 // indirect
+	github.com/coreos/go-oidc/v3 v3.13.0 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/creack/pty v1.1.18 // indirect
@@ -87,7 +87,7 @@ require (
 	github.com/google/go-tpm-tools v0.4.5 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -95,7 +95,7 @@ require (
 	github.com/jackc/pgx/v5 v5.6.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -104,13 +104,13 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/newrelic/go-agent/v3 v3.36.0 // indirect
+	github.com/newrelic/go-agent/v3 v3.37.0 // indirect
 	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.20.5 // indirect
+	github.com/prometheus/client_golang v1.21.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -132,16 +132,16 @@ require (
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect
 	golang.org/x/exp v0.0.0-20240531132922-fd00a4e0eefc // indirect
-	golang.org/x/net v0.36.0 // indirect
-	golang.org/x/oauth2 v0.26.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/oauth2 v0.28.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
-	google.golang.org/api v0.223.0 // indirect
-	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
-	google.golang.org/grpc v1.70.0 // indirect
+	google.golang.org/api v0.224.0 // indirect
+	google.golang.org/genproto v0.0.0-20250303144028-a0af3efb3deb // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250303144028-a0af3efb3deb // indirect
+	google.golang.org/grpc v1.71.0 // indirect
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.0 // indirect
