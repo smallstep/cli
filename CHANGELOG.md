@@ -26,7 +26,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
-## [0.28.4] - 2025-03-04
+## [0.28.6] - 2025-03-17
+
+- dependabot updates
+
+
+## [0.28.5] - 2025-03-05
+
+- v0.28.4 skipped due to broken CI
 
 ### Added
 
