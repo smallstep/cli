@@ -114,6 +114,8 @@ $ step ca policy authority ssh host deny ip 192.168.0.40
 }
 
 func ipAction(ctx context.Context) (err error) {
+	ignoreProvisionerFlagIfRequired(ctx)
+
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

@@ -76,6 +76,8 @@ $ step ca policy authority x509 deny cn "My Bad CA Name"
 }
 
 func commonNamesAction(ctx context.Context) (err error) {
+	ignoreProvisionerFlagIfRequired(ctx)
+
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

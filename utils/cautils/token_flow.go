@@ -352,7 +352,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	// Filter by provisioner / issuer (provisioner name)
 	if provisionerName, flag := flags.FirstStringOf(ctx, "provisioner", "issuer"); provisionerName != "" {
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			if provisionerflag.ShouldBeIgnored() {
+			if provisionerflag.ShouldBeIgnored(ctx) {
 				return true // fake match; effectively skipping provisioner flag value for provisioner-dependent policy commands
 			}
 

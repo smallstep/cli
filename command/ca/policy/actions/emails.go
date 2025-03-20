@@ -81,6 +81,8 @@ $ step ca policy provisioner ssh user deny email @example.com --provisioner my_p
 }
 
 func emailAction(ctx context.Context) (err error) {
+	ignoreProvisionerFlagIfRequired(ctx)
+
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

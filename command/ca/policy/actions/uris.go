@@ -71,6 +71,8 @@ $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_pro
 }
 
 func uriAction(ctx context.Context) (err error) {
+	ignoreProvisionerFlagIfRequired(ctx)
+
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()
