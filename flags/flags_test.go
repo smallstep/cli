@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/smallstep/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli"
 	"go.step.sm/crypto/fingerprint"
 )
@@ -242,6 +243,7 @@ func TestFirstStringOf(t *testing.T) {
 		getContext func() *cli.Context
 		inputs     []string
 		want       string
+		wantName   string
 	}{
 		{
 			name: "no-flags-empty",
@@ -250,8 +252,9 @@ func TestFirstStringOf(t *testing.T) {
 				//_ = set.String("ca-url", "", "")
 				return cli.NewContext(app, set, nil)
 			},
-			inputs: []string{"foo", "bar"},
-			want:   "",
+			inputs:   []string{"foo", "bar"},
+			want:     "",
+			wantName: "foo",
 		},
 		{
 			name: "return-first-set-flag",
@@ -265,8 +268,9 @@ func TestFirstStringOf(t *testing.T) {
 				ctx.Set("baz", "test2")
 				return ctx
 			},
-			inputs: []string{"foo", "bar", "baz"},
-			want:   "test1",
+			inputs:   []string{"foo", "bar", "baz"},
+			want:     "test1",
+			wantName: "bar",
 		},
 		{
 			name: "return-first-default-flag",
@@ -278,8 +282,9 @@ func TestFirstStringOf(t *testing.T) {
 				ctx := cli.NewContext(app, set, nil)
 				return ctx
 			},
-			inputs: []string{"foo", "bar", "baz"},
-			want:   "test1",
+			inputs:   []string{"foo", "bar", "baz"},
+			want:     "test1",
+			wantName: "baz",
 		},
 		{
 			name: "all-empty",
@@ -291,17 +296,17 @@ func TestFirstStringOf(t *testing.T) {
 				ctx := cli.NewContext(app, set, nil)
 				return ctx
 			},
-			inputs: []string{"foo", "bar", "baz"},
-			want:   "",
+			inputs:   []string{"foo", "bar", "baz"},
+			want:     "",
+			wantName: "foo",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.getContext()
-			val := FirstStringOf(ctx, tt.inputs...)
-			if val != tt.want {
-				t.Errorf("expected %v, but got %v", tt.want, val)
-			}
+			val, name := FirstStringOf(ctx, tt.inputs...)
+			require.Equal(t, tt.want, val)
+			require.Equal(t, tt.wantName, name)
 		})
 	}
 }
