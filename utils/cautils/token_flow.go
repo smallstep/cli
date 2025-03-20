@@ -226,12 +226,12 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 	}
 
 	kid := ctx.String("kid")
-	issuer, flag := flags.FirstStringOf(ctx, "provisioner", "issuer")
+	provisionerName, flag := flags.FirstStringOf(ctx, "provisioner", "issuer")
 
-	// Require issuer and keyFile if ca.json does not exists.
+	// Require provisionerName and keyFile if ca.json does not exists.
 	// kid can be passed or created using jwk.Thumbprint.
 	switch {
-	case issuer == "":
+	case provisionerName == "":
 		return "", errs.RequiredWithFlag(ctx, "offline", flag)
 	case ctx.String("key") == "":
 		return "", errs.RequiredWithFlag(ctx, "offline", "key")
@@ -253,16 +253,16 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 	}
 
 	tokAttrs := tokenAttrs{
-		subject:       subject,
-		root:          root,
-		audience:      audience,
-		issuer:        issuer,
-		kid:           kid,
-		sans:          sans,
-		notBefore:     notBefore,
-		notAfter:      notAfter,
-		certNotBefore: certNotBefore,
-		certNotAfter:  certNotAfter,
+		subject:         subject,
+		root:            root,
+		audience:        audience,
+		provisionerName: provisionerName,
+		kid:             kid,
+		sans:            sans,
+		notBefore:       notBefore,
+		notAfter:        notAfter,
+		certNotBefore:   certNotBefore,
+		certNotAfter:    certNotAfter,
 	}
 
 	switch {
@@ -340,26 +340,26 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 	}
 
 	// Filter by admin-provisioner (provisioner name)
-	if issuer := ctx.String("admin-provisioner"); issuer != "" {
+	if provisionerName := ctx.String("admin-provisioner"); provisionerName != "" {
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			return p.GetName() == issuer
+			return p.GetName() == provisionerName
 		})
 		if len(provisioners) == 0 {
-			return nil, errs.InvalidFlagValue(ctx, "admin-provisioner", issuer, "")
+			return nil, errs.InvalidFlagValue(ctx, "admin-provisioner", provisionerName, "")
 		}
 	}
 
 	// Filter by provisioner / issuer (provisioner name)
-	if issuer, flag := flags.FirstStringOf(ctx, "provisioner", "issuer"); issuer != "" {
+	if provisionerName, flag := flags.FirstStringOf(ctx, "provisioner", "issuer"); provisionerName != "" {
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			if provisionerflag.ShouldBeIgnored() {
 				return true // fake match; effectively skipping provisioner flag value for provisioner-dependent policy commands
 			}
 
-			return p.GetName() == issuer
+			return p.GetName() == provisionerName
 		})
 		if len(provisioners) == 0 {
-			return nil, errs.InvalidFlagValue(ctx, flag, issuer, "")
+			return nil, errs.InvalidFlagValue(ctx, flag, provisionerName, "")
 		}
 	}
 
