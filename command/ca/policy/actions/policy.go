@@ -16,11 +16,24 @@ import (
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/internal/command"
+	"github.com/smallstep/cli/internal/provisionerflag"
 )
 
 var provisionerFilterFlag = cli.StringFlag{
 	Name:  "provisioner",
 	Usage: `The provisioner <name>`,
+}
+
+// ignoreProvisionerFlagIfRequired is a helper function that marks the provisioner
+// flag to be ignored when managing a provisioner or ACME account level policy. In
+// those cases the provisioner flag is used to filter which provisioner the policy
+// applies to, as opposed to its normal usage, where it can be used to select the
+// (admin) provisioner to use for authentication.
+func ignoreProvisionerFlagIfRequired(ctx context.Context) {
+	clictx := command.CLIContextFromContext(ctx)
+	if policycontext.IsProvisionerPolicyLevel(ctx) || policycontext.IsACMEPolicyLevel(ctx) {
+		provisionerflag.Ignore(clictx)
+	}
 }
 
 func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*linkedca.Policy, error) {

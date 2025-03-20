@@ -94,6 +94,8 @@ $ step ca policy authority ssh host allow dns "badsshhost.local"
 }
 
 func dnsAction(ctx context.Context) (err error) {
+	ignoreProvisionerFlagIfRequired(ctx)
+
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

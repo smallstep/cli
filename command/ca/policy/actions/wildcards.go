@@ -10,6 +10,8 @@ import (
 
 // AllowWildcardsAction updates the policy to allow wildcard names.
 func AllowWildcardsAction(ctx context.Context) (err error) {
+	ignoreProvisionerFlagIfRequired(ctx)
+
 	clictx := command.CLIContextFromContext(ctx)
 
 	client, err := cautils.NewAdminClient(clictx)
@@ -34,6 +36,8 @@ func AllowWildcardsAction(ctx context.Context) (err error) {
 
 // DenyWildcardsAction updates the policy to deny wildcard names.
 func DenyWildcardsAction(ctx context.Context) (err error) {
+	ignoreProvisionerFlagIfRequired(ctx)
+
 	clictx := command.CLIContextFromContext(ctx)
 
 	client, err := cautils.NewAdminClient(clictx)

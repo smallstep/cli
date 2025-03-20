@@ -76,6 +76,8 @@ $ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_u
 }
 
 func principalAction(ctx context.Context) (err error) {
+	ignoreProvisionerFlagIfRequired(ctx)
+
 	clictx := command.CLIContextFromContext(ctx)
 
 	args := clictx.Args()

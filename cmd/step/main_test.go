@@ -3,9 +3,13 @@ package main
 import (
 	"bytes"
 	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli/internal/provisionerflag"
 )
 
 func TestAppHasAllCommands(t *testing.T) {
@@ -43,4 +47,16 @@ func TestAppRuns(t *testing.T) {
 
 	output := ansiRegex.ReplaceAllString(stdout.String(), "")
 	require.Contains(t, output, "step -- plumbing for distributed systems")
+}
+
+func TestAppHasSentinelFlagForIgnoringProvisionersFlag(t *testing.T) {
+	app := newApp(nil, nil)
+	require.NotNil(t, app)
+
+	// this test only checks if the flag is present when an app is created
+	// through [getApp]. This is sufficient for now to proof that the flag
+	// exists in the actual released CLI binary.
+	require.True(t, slices.ContainsFunc(app.Flags, func(f cli.Flag) bool {
+		return f.GetName() == provisionerflag.DisabledSentinelFlagName()
+	}))
 }

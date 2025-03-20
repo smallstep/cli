@@ -9,7 +9,6 @@ import (
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/command/ca/policy/ssh"
 	"github.com/smallstep/cli/command/ca/policy/x509"
-	"github.com/smallstep/cli/internal/provisionerflag"
 )
 
 // Command returns the policy subcommand.
@@ -29,10 +28,6 @@ Please note that certificate issuance policies on the provisioner level are curr
 			actions.RemoveCommand(ctx),
 			x509.Command(ctx),
 			ssh.Command(ctx),
-		},
-		Before: func(ctx *cli.Context) error {
-			provisionerflag.Ignore()
-			return nil
 		},
 	}
 }

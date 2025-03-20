@@ -8,7 +8,6 @@ import (
 	"github.com/smallstep/cli/command/ca/policy/actions"
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/command/ca/policy/x509"
-	"github.com/smallstep/cli/internal/provisionerflag"
 )
 
 // Command returns the ACME account policy subcommand.
@@ -27,10 +26,6 @@ Please note that certificate issuance policies for ACME accounts are currently o
 			actions.ViewCommand(ctx),
 			actions.RemoveCommand(ctx),
 			x509.Command(ctx),
-		},
-		Before: func(ctx *cli.Context) error {
-			provisionerflag.Ignore()
-			return nil
 		},
 	}
 }
