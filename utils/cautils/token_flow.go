@@ -15,6 +15,7 @@ import (
 	"github.com/smallstep/cli-utils/ui"
 
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/internal/provisionerflag"
 	"github.com/smallstep/cli/utils"
 )
 
@@ -84,6 +85,17 @@ type ACMETokenError struct {
 // Error implements the error interface.
 func (e *ACMETokenError) Error() string {
 	return "step ACME provisioners do not support token auth flows"
+}
+
+// SCEPTokenError is the error type returned when the user attempts a Token Flow
+// while using a SCEP provisioner.
+type SCEPTokenError struct {
+	Name string
+}
+
+// Error implements the error interface.
+func (e *SCEPTokenError) Error() string {
+	return "step SCEP provisioners do not support token auth flows"
 }
 
 // NewTokenFlow implements the common flow used to generate a token
@@ -164,6 +176,8 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 		return p.GetIdentityToken(subject, caURL)
 	case *provisioner.ACME: // Return an error with the provisioner ID.
 		return "", &ACMETokenError{p.GetName()}
+	case *provisioner.SCEP:
+		return "", &SCEPTokenError{p.GetName()}
 	default:
 		return "", errors.Errorf("unknown provisioner type %T", p)
 	}
@@ -212,13 +226,13 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 	}
 
 	kid := ctx.String("kid")
-	issuer := flags.FirstStringOf(ctx, "provisioner", "issuer")
+	provisionerName, flag := flags.FirstStringOf(ctx, "provisioner", "issuer")
 
-	// Require issuer and keyFile if ca.json does not exists.
+	// Require provisionerName and keyFile if ca.json does not exists.
 	// kid can be passed or created using jwk.Thumbprint.
 	switch {
-	case issuer == "":
-		return "", errs.RequiredWithFlag(ctx, "offline", "issuer")
+	case provisionerName == "":
+		return "", errs.RequiredWithFlag(ctx, "offline", flag)
 	case ctx.String("key") == "":
 		return "", errs.RequiredWithFlag(ctx, "offline", "key")
 	}
@@ -239,16 +253,16 @@ func OfflineTokenFlow(ctx *cli.Context, typ int, subject string, sans []string, 
 	}
 
 	tokAttrs := tokenAttrs{
-		subject:       subject,
-		root:          root,
-		audience:      audience,
-		issuer:        issuer,
-		kid:           kid,
-		sans:          sans,
-		notBefore:     notBefore,
-		notAfter:      notAfter,
-		certNotBefore: certNotBefore,
-		certNotAfter:  certNotAfter,
+		subject:         subject,
+		root:            root,
+		audience:        audience,
+		provisionerName: provisionerName,
+		kid:             kid,
+		sans:            sans,
+		notBefore:       notBefore,
+		notAfter:        notAfter,
+		certNotBefore:   certNotBefore,
+		certNotAfter:    certNotAfter,
 	}
 
 	switch {
@@ -293,7 +307,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
 			switch p.GetType() {
 			case provisioner.TypeJWK, provisioner.TypeOIDC,
-				provisioner.TypeACME, provisioner.TypeK8sSA,
+				provisioner.TypeACME, provisioner.TypeSCEP, provisioner.TypeK8sSA,
 				provisioner.TypeX5C, provisioner.TypeSSHPOP, provisioner.TypeNebula:
 				return true
 			case provisioner.TypeGCP, provisioner.TypeAWS, provisioner.TypeAzure:
@@ -325,23 +339,27 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		}
 	}
 
-	// Filter by issuer (provisioner name)
-	if issuer := flags.FirstStringOf(ctx, "provisioner", "issuer"); issuer != "" {
+	// Filter by admin-provisioner (provisioner name)
+	if provisionerName := ctx.String("admin-provisioner"); provisionerName != "" {
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			return p.GetName() == issuer
+			return p.GetName() == provisionerName
 		})
 		if len(provisioners) == 0 {
-			return nil, errs.InvalidFlagValue(ctx, "issuer", issuer, "")
+			return nil, errs.InvalidFlagValue(ctx, "admin-provisioner", provisionerName, "")
 		}
 	}
 
-	// Filter by admin-provisioner (provisioner name)
-	if issuer := ctx.String("admin-provisioner"); issuer != "" {
+	// Filter by provisioner / issuer (provisioner name)
+	if provisionerName, flag := flags.FirstStringOf(ctx, "provisioner", "issuer"); provisionerName != "" {
 		provisioners = provisionerFilter(provisioners, func(p provisioner.Interface) bool {
-			return p.GetName() == issuer
+			if provisionerflag.ShouldBeIgnored(ctx) {
+				return true // fake match; effectively skipping provisioner flag value for provisioner-dependent policy commands
+			}
+
+			return p.GetName() == provisionerName
 		})
 		if len(provisioners) == 0 {
-			return nil, errs.InvalidFlagValue(ctx, "admin-provisioner", issuer, "")
+			return nil, errs.InvalidFlagValue(ctx, flag, provisionerName, "")
 		}
 	}
 
@@ -364,7 +382,7 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 				Name:        fmt.Sprintf("%s (%s) [tenant: %s]", p.Name, p.GetType(), p.TenantID),
 				Provisioner: p,
 			})
-		case *provisioner.GCP, *provisioner.AWS, *provisioner.X5C, *provisioner.SSHPOP, *provisioner.ACME, *provisioner.Nebula:
+		case *provisioner.GCP, *provisioner.AWS, *provisioner.X5C, *provisioner.SSHPOP, *provisioner.ACME, *provisioner.SCEP, *provisioner.Nebula:
 			items = append(items, &provisionersSelect{
 				Name:        fmt.Sprintf("%s (%s)", p.GetName(), p.GetType()),
 				Provisioner: p,

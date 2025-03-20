@@ -12,15 +12,17 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh"
+
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/cli/utils"
-	"github.com/urfave/cli"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
-	"golang.org/x/crypto/ssh"
+
+	"github.com/smallstep/cli/utils"
 )
 
 // OfflineCA is a wrapper on top of the certificates authority methods that is
@@ -585,6 +587,8 @@ func (c *OfflineCA) GenerateToken(ctx *cli.Context, tokType int, subject string,
 		return p.GetIdentityToken(subject, c.CaURL())
 	case *provisioner.ACME: // Return an error with the provisioner ID.
 		return "", &ACMETokenError{p.GetName()}
+	case *provisioner.SCEP:
+		return "", &SCEPTokenError{p.GetName()}
 	default: // Default is assumed to be a standard JWT.
 		jwkP, ok := p.(*provisioner.JWK)
 		if !ok {

@@ -673,18 +673,24 @@ func parseCaURL(ctx *cli.Context, caURL string) (string, error) {
 
 // FirstStringOf returns the value of the first defined flag from the input list.
 // If no defined flags, returns first flag with non-empty default value.
-func FirstStringOf(ctx *cli.Context, flags ...string) string {
+func FirstStringOf(ctx *cli.Context, flags ...string) (string, string) {
 	// Return first defined flag.
 	for _, f := range flags {
 		if ctx.IsSet(f) {
-			return ctx.String(f)
+			return ctx.String(f), f
 		}
 	}
 	// Return first non-empty, default, flag value.
 	for _, f := range flags {
 		if val := ctx.String(f); val != "" {
-			return val
+			return val, f
 		}
 	}
-	return ""
+
+	var name = "<unknown>"
+	if len(flags) > 0 {
+		name = flags[0]
+	}
+
+	return "", name
 }

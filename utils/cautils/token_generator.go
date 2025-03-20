@@ -173,7 +173,7 @@ type tokenAttrs struct {
 	root                        string
 	caURL                       string
 	audience                    string
-	issuer                      string
+	provisionerName             string
 	kid                         string
 	sans                        []string
 	notBefore, notAfter         time.Time
@@ -444,10 +444,11 @@ func generateJWKToken(ctx *cli.Context, p *provisioner.JWK, tokType int, tokAttr
 		return "", err
 	}
 
-	issuer := tokAttrs.issuer
+	issuer := tokAttrs.provisionerName
 	if p != nil {
 		issuer = p.Name
 	}
+
 	// Generate token
 	tokenGen := NewTokenGenerator(kid, issuer, tokAttrs.audience, tokAttrs.root,
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
