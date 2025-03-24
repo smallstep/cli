@@ -5,7 +5,7 @@ go 1.23.6
 require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
-	github.com/ccoveille/go-safecast v1.6.0
+	github.com/ccoveille/go-safecast v1.6.1
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/google/go-cmp v0.7.0
