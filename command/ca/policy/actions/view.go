@@ -72,21 +72,18 @@ $ step ca policy acme view --provisioner my_acme_provisioner --eab-key-id "lUOTG
 }
 
 func viewAction(ctx context.Context) (err error) {
-	ignoreProvisionerFlagIfRequired(ctx)
-
-	clictx := command.CLIContextFromContext(ctx)
-	provisioner := clictx.String("provisioner")
-	reference := clictx.String("eab-key-reference")
-	keyID := clictx.String("eab-key-id")
+	var (
+		provisioner = retrieveAndUnsetProvisionerFlagIfRequired(ctx)
+		clictx      = command.CLIContextFromContext(ctx)
+		reference   = clictx.String("eab-key-reference")
+		keyID       = clictx.String("eab-key-id")
+		policy      *linkedca.Policy
+	)
 
 	client, err := cautils.NewAdminClient(clictx)
 	if err != nil {
 		return fmt.Errorf("error creating admin client: %w", err)
 	}
-
-	var (
-		policy *linkedca.Policy
-	)
 
 	switch {
 	case policycontext.IsAuthorityPolicyLevel(ctx):

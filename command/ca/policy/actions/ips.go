@@ -114,11 +114,12 @@ $ step ca policy authority ssh host deny ip 192.168.0.40
 }
 
 func ipAction(ctx context.Context) (err error) {
-	ignoreProvisionerFlagIfRequired(ctx)
+	var (
+		provisioner = retrieveAndUnsetProvisionerFlagIfRequired(ctx)
+		clictx      = command.CLIContextFromContext(ctx)
+		args        = clictx.Args()
+	)
 
-	clictx := command.CLIContextFromContext(ctx)
-
-	args := clictx.Args()
 	if len(args) == 0 {
 		return errs.TooFewArguments(clictx)
 	}
@@ -128,7 +129,7 @@ func ipAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error creating admin client: %w", err)
 	}
 
-	policy, err := retrieveAndInitializePolicy(ctx, client)
+	policy, err := retrieveAndInitializePolicy(ctx, client, provisioner)
 	if err != nil {
 		return err
 	}
@@ -160,7 +161,7 @@ func ipAction(ctx context.Context) (err error) {
 		panic("no SSH nor X.509 context set")
 	}
 
-	updatedPolicy, err := updatePolicy(ctx, client, policy)
+	updatedPolicy, err := updatePolicy(ctx, client, policy, provisioner)
 	if err != nil {
 		return fmt.Errorf("error updating policy: %w", err)
 	}

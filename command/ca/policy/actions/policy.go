@@ -16,7 +16,6 @@ import (
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/internal/command"
-	"github.com/smallstep/cli/internal/provisionerflag"
 )
 
 var provisionerFilterFlag = cli.StringFlag{
@@ -24,28 +23,33 @@ var provisionerFilterFlag = cli.StringFlag{
 	Usage: `The provisioner <name>`,
 }
 
-// ignoreProvisionerFlagIfRequired is a helper function that marks the provisioner
-// flag to be ignored when managing a provisioner or ACME account level policy. In
-// those cases the provisioner flag is used to filter which provisioner the policy
-// applies to, as opposed to its normal usage, where it can be used to select the
-// (admin) provisioner to use for authentication.
-func ignoreProvisionerFlagIfRequired(ctx context.Context) {
-	clictx := command.CLIContextFromContext(ctx)
-	if policycontext.IsProvisionerPolicyLevel(ctx) || policycontext.IsACMEPolicyLevel(ctx) {
-		provisionerflag.Ignore(clictx)
+func retrieveAndUnsetProvisionerFlagIfRequired(ctx context.Context) string {
+	// when managing policies on the authority level there's no need
+	// to select a provisioner, so the flag does not need to be unset.
+	if policycontext.IsAuthorityPolicyLevel(ctx) {
+		return ""
 	}
-}
-
-func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient) (*linkedca.Policy, error) {
-	var (
-		policy *linkedca.Policy
-		err    error
-	)
 
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
-	reference := clictx.String("eab-key-reference")
-	keyID := clictx.String("eab-key-id")
+
+	// unset the provisioner flag value, so that it's not used
+	// automatically in token flows.
+	if err := clictx.Set("provisioner", ""); err != nil {
+		panic(fmt.Errorf("failed unsetting provisioner flag: %w", err))
+	}
+
+	return provisioner
+}
+
+func retrieveAndInitializePolicy(ctx context.Context, client *ca.AdminClient, provisioner string) (*linkedca.Policy, error) {
+	var (
+		clictx    = command.CLIContextFromContext(ctx)
+		reference = clictx.String("eab-key-reference")
+		keyID     = clictx.String("eab-key-id")
+		policy    *linkedca.Policy
+		err       error
+	)
 
 	switch {
 	case policycontext.IsAuthorityPolicyLevel(ctx):
@@ -160,13 +164,11 @@ func initPolicy(p *linkedca.Policy) *linkedca.Policy {
 	return p
 }
 
-func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.Policy) (*linkedca.Policy, error) {
-	clictx := command.CLIContextFromContext(ctx)
-	provisioner := clictx.String("provisioner")
-	reference := clictx.String("eab-key-reference")
-	keyID := clictx.String("eab-key-id")
-
+func updatePolicy(ctx context.Context, client *ca.AdminClient, policy *linkedca.Policy, provisioner string) (*linkedca.Policy, error) {
 	var (
+		clictx        = command.CLIContextFromContext(ctx)
+		reference     = clictx.String("eab-key-reference")
+		keyID         = clictx.String("eab-key-id")
 		updatedPolicy *linkedca.Policy
 		err           error
 	)

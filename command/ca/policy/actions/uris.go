@@ -71,11 +71,12 @@ $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_pro
 }
 
 func uriAction(ctx context.Context) (err error) {
-	ignoreProvisionerFlagIfRequired(ctx)
+	var (
+		provisioner = retrieveAndUnsetProvisionerFlagIfRequired(ctx)
+		clictx      = command.CLIContextFromContext(ctx)
+		args        = clictx.Args()
+	)
 
-	clictx := command.CLIContextFromContext(ctx)
-
-	args := clictx.Args()
 	if len(args) == 0 {
 		return errs.TooFewArguments(clictx)
 	}
@@ -85,7 +86,7 @@ func uriAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error creating admin client: %w", err)
 	}
 
-	policy, err := retrieveAndInitializePolicy(ctx, client)
+	policy, err := retrieveAndInitializePolicy(ctx, client, provisioner)
 	if err != nil {
 		return fmt.Errorf("error retrieving policy: %w", err)
 	}
@@ -110,7 +111,7 @@ func uriAction(ctx context.Context) (err error) {
 		panic("no SSH nor X.509 context set")
 	}
 
-	updatedPolicy, err := updatePolicy(ctx, client, policy)
+	updatedPolicy, err := updatePolicy(ctx, client, policy, provisioner)
 	if err != nil {
 		return fmt.Errorf("error updating policy: %w", err)
 	}

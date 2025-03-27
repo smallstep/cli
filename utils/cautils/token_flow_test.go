@@ -9,8 +9,6 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certificates/authority/provisioner"
-
-	"github.com/smallstep/cli/internal/provisionerflag"
 )
 
 func newContext(t *testing.T) *cli.Context {
@@ -19,8 +17,6 @@ func newContext(t *testing.T) *cli.Context {
 	app := cli.NewApp()
 
 	parentFlags := flag.NewFlagSet(fmt.Sprintf("parent-%s", t.Name()), 0)
-	parentFlags.String(provisionerflag.DisabledSentinelFlagName(), "", "")
-
 	parentCtx := cli.NewContext(app, parentFlags, nil)
 
 	set := flag.NewFlagSet(fmt.Sprintf("child-%s", t.Name()), 0)
@@ -89,13 +85,7 @@ func TestProvisionerPromptPrompts(t *testing.T) {
 	})
 
 	t.Run("ignore-provisioner-flag", func(t *testing.T) {
-		clictx := newContext(t)
-		require.NoError(t, clictx.Set("provisioner", "scep"))
-
-		// by ignoring the provisioner flag the prompt should fail, because
-		// there will be multiple provisioners to select from, which it can't do
-		// if it can't open a tty to get user input.
-		provisionerflag.Ignore(clictx)
+		clictx := newContext(t) // provisioner flag is not set; in reality it'll be unset based on policy level
 
 		p1 := &provisioner.OIDC{Name: "oidc", ClientID: "client-id"}
 		p2 := &provisioner.SCEP{Name: "scep"}

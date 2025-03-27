@@ -76,11 +76,12 @@ $ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_u
 }
 
 func principalAction(ctx context.Context) (err error) {
-	ignoreProvisionerFlagIfRequired(ctx)
+	var (
+		provisioner = retrieveAndUnsetProvisionerFlagIfRequired(ctx)
+		clictx      = command.CLIContextFromContext(ctx)
+		args        = clictx.Args()
+	)
 
-	clictx := command.CLIContextFromContext(ctx)
-
-	args := clictx.Args()
 	if len(args) == 0 {
 		return errs.TooFewArguments(clictx)
 	}
@@ -90,7 +91,7 @@ func principalAction(ctx context.Context) (err error) {
 		return fmt.Errorf("error creating admin client: %w", err)
 	}
 
-	policy, err := retrieveAndInitializePolicy(ctx, client)
+	policy, err := retrieveAndInitializePolicy(ctx, client, provisioner)
 	if err != nil {
 		return err
 	}
@@ -122,7 +123,7 @@ func principalAction(ctx context.Context) (err error) {
 		panic("no SSH nor X.509 context set")
 	}
 
-	updatedPolicy, err := updatePolicy(ctx, client, policy)
+	updatedPolicy, err := updatePolicy(ctx, client, policy, provisioner)
 	if err != nil {
 		return fmt.Errorf("error updating policy: %w", err)
 	}
