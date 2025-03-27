@@ -2,6 +2,7 @@ package token
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -15,6 +16,9 @@ import (
 
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/pemutil"
+
+	"github.com/smallstep/cli/internal/cryptoutil"
 )
 
 func createCommand() cli.Command {
@@ -73,27 +77,31 @@ func createAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	args := ctx.Args()
+	var (
+		args       = ctx.Args()
+		teamID     = args.Get(0)
+		crtFile    = args.Get(1)
+		keyFile    = args.Get(2)
+		apiURLFlag = ctx.String("api-url")
+		audience   = ctx.String("audience")
+	)
 
-	teamID := args.Get(0)
-	crtFile := args.Get(1)
-	keyFile := args.Get(2)
-
-	parsedURL, err := url.Parse(ctx.String("api-url"))
+	parsedURL, err := url.Parse(apiURLFlag)
 	if err != nil {
 		return err
 	}
 	parsedURL.Path = path.Join(parsedURL.Path, "api/auth")
 	apiURL := parsedURL.String()
 
-	clientCert, err := tls.LoadX509KeyPair(crtFile, keyFile)
+	clientCert, err := createClientCertificate(crtFile, keyFile)
 	if err != nil {
 		return err
 	}
+
 	b := &bytes.Buffer{}
 	r := &createTokenReq{
 		Bundle:   clientCert.Certificate,
-		Audience: ctx.String("audience"),
+		Audience: audience,
 	}
 	if err := uuid.Validate(teamID); err != nil {
 		r.TeamSlug = teamID
@@ -113,7 +121,7 @@ func createAction(ctx *cli.Context) (err error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{
 		GetClientCertificate: func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
-			return &clientCert, nil
+			return clientCert, nil
 		},
 		MinVersion: tls.VersionTLS12,
 	}
@@ -142,4 +150,39 @@ func createAction(ctx *cli.Context) (err error) {
 	fmt.Println(respBody.Token)
 
 	return nil
+}
+
+func createClientCertificate(crtFile, keyFile string) (*tls.Certificate, error) {
+	certs, err := pemutil.ReadCertificateBundle(crtFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed reading %q: %w", crtFile, err)
+	}
+
+	var certificates = make([][]byte, len(certs))
+	for i, c := range certs {
+		certificates[i] = c.Raw
+	}
+
+	var (
+		v      any
+		signer crypto.Signer
+	)
+	if cryptoutil.IsKMS(keyFile) {
+		signer, err = cryptoutil.CreateSigner(keyFile, keyFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed creating signer: %w", err)
+		}
+		v = signer
+	} else {
+		v, err = pemutil.Read(keyFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed reading %q: %w", keyFile, err)
+		}
+	}
+
+	return &tls.Certificate{
+		Certificate: certificates,
+		Leaf:        certs[0],
+		PrivateKey:  v,
+	}, nil
 }
