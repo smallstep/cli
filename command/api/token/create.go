@@ -2,16 +2,24 @@ package token
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
+	"time"
 
+	"github.com/google/go-tpm/legacy/tpm2"
 	"github.com/google/uuid"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/tpm/tss2"
+	"go.step.sm/crypto/tpm"
 
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
@@ -40,7 +48,7 @@ func createCommand() cli.Command {
 :  File to read the certificate (PEM format). This certificate must be signed by a trusted root configured in the Smallstep dashboard.
 
 <key-file>
-:  File to read the private key (PEM format).
+:  File to read the private key (PEM format, TSS2-wrapped keys are supported).
 
 ## EXAMPLES
 Use a certificate to get a new API token:
@@ -86,10 +94,60 @@ func createAction(ctx *cli.Context) (err error) {
 	parsedURL.Path = path.Join(parsedURL.Path, "api/auth")
 	apiURL := parsedURL.String()
 
-	clientCert, err := tls.LoadX509KeyPair(crtFile, keyFile)
+	buf, err := os.ReadFile(keyFile)
 	if err != nil {
 		return err
 	}
+	pem, _ := pem.Decode(buf)
+
+	var clientCert tls.Certificate
+	switch pem.Type {
+	case "TSS2 PRIVATE KEY":
+		chain, err := pemutil.ReadCertificateBundle(crtFile)
+		if err != nil {
+			return err
+		}
+
+		key, err := tss2.ParsePrivateKey(pem.Bytes)
+		if err != nil {
+			return err
+		}
+
+		raw := make([][]byte, len(chain))
+		for _, crt := range chain {
+			raw = append(raw, crt.Raw)
+		}
+
+		rw, err := tpm2.OpenTPM()
+		if err != nil {
+			return err
+		}
+
+		defer rw.Close()
+
+		t, err := tpm.New()
+		if err != nil {
+			return err
+		}
+
+
+		tpmCtx, cancel := context.WithTimeout(context.Background(), time.Second * 5)
+		defer cancel()
+
+		signer, err := tpm.CreateTSS2Signer(tpmCtx, t, key)
+
+		clientCert = tls.Certificate{
+			PrivateKey:  signer,
+			Leaf:        chain[0],
+			Certificate: raw,
+		}
+	default:
+		clientCert, err = tls.LoadX509KeyPair(crtFile, keyFile)
+		if err != nil {
+			return err
+		}
+	}
+
 	b := &bytes.Buffer{}
 	r := &createTokenReq{
 		Bundle:   clientCert.Certificate,
