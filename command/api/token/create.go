@@ -58,14 +58,29 @@ func createCommand() cli.Command {
 :  File to read the private key (PEM format).
 
 ## EXAMPLES
-Use a certificate to get a new API token:
+Use a certificate and team ID to get a new API token:
 '''
 $ step api token create ff98be70-7cc3-4df5-a5db-37f5d3c96e23 internal.crt internal.key
 '''
 
 Get a token using the team slug:
 '''
-$ step api token create teamfoo internal.crt internal.key
+$ step api token create team-foo internal.crt internal.key
+'''
+
+Use a certificate with a private key backed by a TPM to get a new API token:
+'''
+$ step api token create team-tpm ecdsa-chain.crt 'tpmkms:name=test-ecdsa'
+'''
+
+Use a certificate with a private key backed by a TPM simulator to get a new API token:
+'''
+$ step api token create team-tpm-simulator ecdsa-chain.crt 'tpmkms:name=test-ecdsa;device=/path/to/tpmsimulator.sock'
+'''
+
+Use a certificate and a TSS2 PEM encoded private key to get a new API token:
+'''
+$ step api token create team-tss2 ecdsa-chain.crt ecdsa.tss2.pem --tpm-device /dev/tpmrm0
 '''
 `,
 	}
