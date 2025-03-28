@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/urfave/cli"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/smallstep/certificates/ca"
@@ -17,11 +16,6 @@ import (
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/internal/command"
 )
-
-var provisionerFilterFlag = cli.StringFlag{
-	Name:  "provisioner",
-	Usage: `The provisioner <name>`,
-}
 
 func retrieveAndUnsetProvisionerFlagIfRequired(ctx context.Context) string {
 	// when managing policies on the authority level there's no need
@@ -33,10 +27,13 @@ func retrieveAndUnsetProvisionerFlagIfRequired(ctx context.Context) string {
 	clictx := command.CLIContextFromContext(ctx)
 	provisioner := clictx.String("provisioner")
 
-	// unset the provisioner flag value, so that it's not used
+	// unset the provisioner and issuer flag values, so that they're not used
 	// automatically in token flows.
 	if err := clictx.Set("provisioner", ""); err != nil {
 		panic(fmt.Errorf("failed unsetting provisioner flag: %w", err))
+	}
+	if err := clictx.Set("issuer", ""); err != nil {
+		panic(fmt.Errorf("failed unsetting issuer flag: %w", err))
 	}
 
 	return provisioner

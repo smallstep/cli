@@ -74,7 +74,7 @@ $ step ca policy authority ssh host allow dns "badsshhost.local"
 			dnsAction,
 		),
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
+			flags.Provisioner,
 			flags.EABKeyID,
 			flags.EABReference,
 			cli.BoolFlag{

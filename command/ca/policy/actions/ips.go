@@ -94,7 +94,7 @@ $ step ca policy authority ssh host deny ip 192.168.0.40
 			ipAction,
 		),
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
+			flags.Provisioner,
 			flags.EABKeyID,
 			flags.EABReference,
 			cli.BoolFlag{

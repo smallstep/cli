@@ -53,7 +53,7 @@ $ step ca policy provisioner x509 allow uri "*.example.com" --provisioner my_pro
 			uriAction,
 		),
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
+			flags.Provisioner,
 			cli.BoolFlag{
 				Name:  "remove",
 				Usage: `removes the provided URIs from the policy instead of adding them`,

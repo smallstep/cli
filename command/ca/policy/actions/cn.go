@@ -56,7 +56,7 @@ $ step ca policy authority x509 deny cn "My Bad CA Name"
 			commonNamesAction,
 		),
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
+			flags.Provisioner,
 			flags.EABKeyID,
 			flags.EABReference,
 			cli.BoolFlag{

@@ -56,7 +56,7 @@ $ step ca policy acme view --provisioner my_acme_provisioner --eab-key-id "lUOTG
 			viewAction,
 		),
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
+			flags.Provisioner,
 			flags.EABKeyID,
 			flags.EABReference,
 			flags.AdminCert,

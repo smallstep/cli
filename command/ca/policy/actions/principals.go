@@ -58,7 +58,7 @@ $ step ca policy provisioner ssh host deny principal root --provisioner my_ssh_u
 			principalAction,
 		),
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
+			flags.Provisioner,
 			cli.BoolFlag{
 				Name:  "remove",
 				Usage: `removes the provided Principals from the policy instead of adding them`,

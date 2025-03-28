@@ -55,7 +55,7 @@ $ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-id "lUO
 			removeAction,
 		),
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
+			flags.Provisioner,
 			flags.EABKeyID,
 			flags.EABReference,
 			flags.AdminCert,

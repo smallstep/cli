@@ -63,7 +63,7 @@ $ step ca policy provisioner ssh user deny email @example.com --provisioner my_p
 			emailAction,
 		),
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
+			flags.Provisioner,
 			cli.BoolFlag{
 				Name:  "remove",
 				Usage: `removes the provided emails from the policy instead of adding them`,
