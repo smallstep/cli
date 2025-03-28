@@ -55,7 +55,7 @@ $ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-id "lUO
 			removeAction,
 		),
 		Flags: []cli.Flag{
-			provisionerFilterFlag,
+			flags.Provisioner,
 			flags.EABKeyID,
 			flags.EABReference,
 			flags.AdminCert,
@@ -71,10 +71,12 @@ $ step ca policy acme remove --provisioner my_acme_provisioner --eab-key-id "lUO
 }
 
 func removeAction(ctx context.Context) (err error) {
-	clictx := command.CLIContextFromContext(ctx)
-	provisioner := clictx.String("provisioner")
-	reference := clictx.String("eab-key-reference")
-	keyID := clictx.String("eab-key-id")
+	var (
+		provisioner = retrieveAndUnsetProvisionerFlagIfRequired(ctx)
+		clictx      = command.CLIContextFromContext(ctx)
+		reference   = clictx.String("eab-key-reference")
+		keyID       = clictx.String("eab-key-id")
+	)
 
 	client, err := cautils.NewAdminClient(clictx)
 	if err != nil {
