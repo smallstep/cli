@@ -14,11 +14,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/urfave/cli"
 
+	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/randutil"
 
 	"github.com/smallstep/cli/internal/cryptoutil"
+	"github.com/smallstep/cli/internal/httptransport"
 )
 
 func createCommand() cli.Command {
@@ -98,27 +101,23 @@ func createAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	b := &bytes.Buffer{}
-	r := &createTokenReq{
+	b := new(bytes.Buffer)
+	r := createTokenReq{
 		Bundle:   clientCert.Certificate,
 		Audience: audience,
 	}
+
 	if err := uuid.Validate(teamID); err != nil {
 		r.TeamSlug = teamID
 	} else {
 		r.TeamID = teamID
 	}
-	err = json.NewEncoder(b).Encode(r)
-	if err != nil {
+
+	if err := json.NewEncoder(b).Encode(r); err != nil {
 		return err
 	}
 
-	post, err := http.NewRequest("POST", apiURL, b)
-	if err != nil {
-		return err
-	}
-	post.Header.Set("Content-Type", "application/json")
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport := httptransport.New()
 	transport.TLSClientConfig = &tls.Config{
 		GetClientCertificate: func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 			return clientCert, nil
@@ -128,7 +127,16 @@ func createAction(ctx *cli.Context) (err error) {
 	client := http.Client{
 		Transport: transport,
 	}
-	resp, err := client.Do(post)
+
+	req, err := http.NewRequest("POST", apiURL, b)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", ca.UserAgent) // this is set to step.Version() during init; i.e. "Smallstep CLI/vX.X.X (os/arch)"
+	req.Header.Set(requestIDHeader, newRequestID())
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -150,6 +158,21 @@ func createAction(ctx *cli.Context) (err error) {
 	fmt.Println(respBody.Token)
 
 	return nil
+}
+
+// requestIDHeader is the header name used for propagating request IDs from
+// the client to the server and back again.
+const requestIDHeader = "X-Request-Id"
+
+// newRequestID generates a new random UUIDv4 request ID. If it fails,
+// the request ID will be the empty string.
+func newRequestID() string {
+	requestID, err := randutil.UUIDv4()
+	if err != nil {
+		return ""
+	}
+
+	return requestID
 }
 
 func createClientCertificate(crtFile, keyFile string) (*tls.Certificate, error) {
