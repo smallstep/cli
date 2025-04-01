@@ -2,8 +2,6 @@ module github.com/smallstep/cli
 
 go 1.23.6
 
-toolchain go1.24.1
-
 require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/ThomasRooney/gexpect v0.0.0-20161231170123-5482f0350944
