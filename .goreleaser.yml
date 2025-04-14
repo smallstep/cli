@@ -71,7 +71,7 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-    builds:
+    ids:
       - default
     wrap_in_directory: "{{ .ProjectName }}_{{ .Version }}"
     files:
