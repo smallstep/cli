@@ -25,7 +25,7 @@ builds:
     id: default
     env:
       - CGO_ENABLED=0
-    main: ./cmd/step/main.go
+    main: ./cmd/step
     flags:
       - -trimpath
     ldflags:
