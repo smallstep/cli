@@ -97,7 +97,7 @@ nfpms:
   #
   - &NFPM
     id: packages
-    builds:
+    ids:
       - nfpm
     package_name: "{{ .Var.packageName }}"
     release: "1"
