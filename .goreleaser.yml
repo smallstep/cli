@@ -70,7 +70,7 @@ archives:
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
     format_overrides:
       - goos: windows
-        format: zip
+        formats: ['zip']
     ids:
       - default
     wrap_in_directory: "{{ .ProjectName }}_{{ .Version }}"

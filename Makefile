@@ -85,10 +85,10 @@ GORELEASER_PRO_URL=https://github.com/goreleaser/goreleaser-pro/releases/latest/
 
 # Determine the hooks to skip. When using GoReleaser OSS with a Pro config, specifying "after"
 # to be skipped results in an error. When using GoReleaser Pro running the "goreleaser-local"
-# target both "post-hooks" and "after" are necessary required to skip the upload to GCP. The 
-# logic below checks the GoReleaser binary to be Pro or not, and then sets the steps to skip 
-# accordingly. It's possible this is a GoReleaser bug for the case where a Pro config is used 
-# with GoReleaser OSS.
+# target both "post-hooks" and "after" are required to skip the upload to GCP. The logic below 
+# checks the GoReleaser binary to be Pro or not, and then sets the steps to skip accordingly. 
+# It's possible this is a GoReleaser bug for the case where a Pro config is used with GoReleaser 
+# OSS.
 GORELEASER_OSS_SKIP=post-hooks
 GORELEASER_PRO_SKIP=post-hooks,after
 GORELEASER_SKIP=$(if $(filter true,$(shell goreleaser --version | grep -q goreleaser-pro && echo true || echo false)),$(GORELEASER_PRO_SKIP),$(GORELEASER_OSS_SKIP))
