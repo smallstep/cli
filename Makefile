@@ -139,20 +139,10 @@ goreleaser:
 	   	--snapshot \
 		--single-target \
 	   	--clean \
-		--output $(PREFIX)/$(BINNAME)
-
-goreleaser-local:
-	$Q mkdir -p $(PREFIX)
-	$Q $(GOOS_OVERRIDE) $(CGO_OVERRIDE) DEBUG=$(DEBUG) goreleaser build \
-		--id $(GORELEASER_BUILD_ID) \
-	   	--snapshot \
-		--single-target \
-	   	--clean \
 		--skip=$(GORELEASER_SKIP) \
 		--output $(PREFIX)/$(BINNAME)
 
-
-.PHONY: build goreleaser goreleaser-local
+.PHONY: build goreleaser
 
 
 #########################################
