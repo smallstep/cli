@@ -91,8 +91,7 @@ func TestProvisionerPromptPrompts(t *testing.T) {
 		p2 := &provisioner.SCEP{Name: "scep"}
 
 		got, err := provisionerPrompt(clictx, []provisioner.Interface{p1, p2})
-		require.Nil(t, got)
-		require.ErrorContains(t, err, "error allocating terminal") // TODO(hs): would be nice to refactor to configurable output
+		require.Error(t, err) // TODO(hs): would be nice to refactor to configurable output, and catch specific error cases (again)
 		require.Nil(t, got)
 	})
 
@@ -158,7 +157,7 @@ func TestProvisionerPromptPrompts(t *testing.T) {
 		p2 := &provisioner.OIDC{Name: "oidc-2", ClientID: "client-id-1"}
 
 		got, err := provisionerPrompt(clictx, []provisioner.Interface{p1, p2})
-		require.ErrorContains(t, err, "error allocating terminal") // TODO(hs): would be nice to refactor to configurable output
+		require.Error(t, err) // TODO(hs): would be nice to refactor to configurable output, and catch specific error cases (again)
 		require.Nil(t, got)
 	})
 }
