@@ -82,6 +82,7 @@ Here's a quick example, combining `step oauth` and `step crypto` to get and veri
 
 * Connect with `step` users on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/step-discord)
 * [Open an issue](https://github.com/smallstep/cli/issues/new/choose) and tell us what features you'd like to see
+* [Contribute](./docs/CONTRIBUTING.md) to the `step` codebase
 * [Follow Smallstep on Twitter](https://twitter.com/smallsteplabs)
 
 ## Further Reading
