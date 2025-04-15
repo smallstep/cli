@@ -79,7 +79,11 @@ ifeq ($(OS),Windows_NT)
 else
 	HOSTOS=$(shell uname)
 endif
+
 HOSTARCH=$(shell go env GOHOSTARCH)
+ifeq ($(HOSTARCH),amd64)
+       HOSTARCH=x86_64
+endif
 
 GORELEASER_PRO_URL=https://github.com/goreleaser/goreleaser-pro/releases/latest/download/goreleaser-pro_$(HOSTOS)_$(HOSTARCH).tar.gz
 
