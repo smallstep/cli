@@ -116,7 +116,7 @@ func LoadCertificate(kmsURI, certPath string) ([]*x509.Certificate, error) {
 	return cert, nil
 }
 
-// LoadTLSCertificate returns a [tls.Certificate] from a certificate fine and a
+// LoadTLSCertificate returns a [tls.Certificate] from a certificate file and a
 // key in a file or in a KMS.
 func LoadTLSCertificate(certFile, keyName string, opts ...pemutil.Options) (tls.Certificate, error) {
 	bundle, err := pemutil.ReadCertificateBundle(certFile)

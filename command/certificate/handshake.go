@@ -113,7 +113,7 @@ func handshakeAction(ctx *cli.Context) error {
 		addr = net.JoinHostPort(addr, "443")
 	}
 
-	// Load certificate and if
+	// Load client TLS certificate 
 	var certificates []tls.Certificate
 	if certFile != "" && keyFile != "" {
 		opts := []pemutil.Options{}
@@ -183,7 +183,7 @@ func handshakeAction(ctx *cli.Context) error {
 		return nil
 	}
 
-	// Check if the certificates is verified
+	// Check if the certificate is valid
 	var intermediates *x509.CertPool
 	if len(cs.PeerCertificates) > 1 {
 		intermediates = x509.NewCertPool()
