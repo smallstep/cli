@@ -86,7 +86,6 @@ $ step certificate uninstall root-ca.crt
 			createCommand(),
 			formatCommand(),
 			inspectCommand(),
-			handshakeCommand(),
 			fingerprintCommand(),
 			lintCommand(),
 			needsRenewalCommand(),

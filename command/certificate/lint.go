@@ -13,6 +13,7 @@ import (
 	"github.com/smallstep/zlint"
 
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 )
 
 func lintCommand() cli.Command {
@@ -103,7 +104,7 @@ func lintAction(ctx *cli.Context) error {
 		insecure   = ctx.Bool("insecure")
 		block      *pem.Block
 	)
-	switch addr, isURL, err := trimURL(crtFile); {
+	switch addr, isURL, err := utils.TrimURL(crtFile); {
 	case err != nil:
 		return err
 	case isURL:

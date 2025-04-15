@@ -1,6 +1,7 @@
-package certificate
+package tls
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
@@ -11,6 +12,7 @@ import (
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/cryptoutil"
+	"github.com/smallstep/cli/utils"
 	"github.com/urfave/cli"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
@@ -21,8 +23,8 @@ func handshakeCommand() cli.Command {
 		Name:        "handshake",
 		Action:      cli.ActionFunc(handshakeAction),
 		Usage:       `print handshake details`,
-		UsageText:   `**step certificate handshake** <url>`,
-		Description: `**step certificate handshake** displays detailed handshake information for a TLS connection.`,
+		UsageText:   `**step tls handshake** <url>`,
+		Description: `**step tls handshake** displays detailed handshake information for a TLS connection.`,
 		Flags: []cli.Flag{
 			flags.ServerName,
 			cli.StringFlag{
@@ -76,35 +78,35 @@ debugging invalid certificates remotely.`,
 	}
 }
 
-func handshakeAction(ctx *cli.Context) error {
-	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+func handshakeAction(c *cli.Context) error {
+	if err := errs.NumberOfArguments(c, 1); err != nil {
 		return err
 	}
 
 	var (
-		addr         = ctx.Args().First()
-		tlsVersion   = ctx.String("tls")
-		roots        = ctx.String("roots")
-		serverName   = ctx.String("servername")
-		certFile     = ctx.String("cert")
-		keyFile      = ctx.String("key")
-		passwordFile = ctx.String("password-file")
-		printChains  = ctx.Bool("chain")
-		printPeer    = ctx.Bool("peer")
-		insecure     = ctx.Bool("insecure")
+		addr         = c.Args().First()
+		tlsVersion   = c.String("tls")
+		roots        = c.String("roots")
+		serverName   = c.String("servername")
+		certFile     = c.String("cert")
+		keyFile      = c.String("key")
+		passwordFile = c.String("password-file")
+		printChains  = c.Bool("chain")
+		printPeer    = c.Bool("peer")
+		insecure     = c.Bool("insecure")
 		rootCAs      *x509.CertPool
 		err          error
 	)
 
 	switch {
 	case certFile != "" && keyFile == "":
-		return errs.RequiredWithFlag(ctx, "cert", "key")
+		return errs.RequiredWithFlag(c, "cert", "key")
 	case keyFile != "" && certFile == "":
-		return errs.RequiredWithFlag(ctx, "key", "cert")
+		return errs.RequiredWithFlag(c, "key", "cert")
 	}
 
 	// Parse address
-	if u, ok, err := trimURL(addr); err != nil {
+	if u, ok, err := utils.TrimURL(addr); err != nil {
 		return err
 	} else if ok {
 		addr = u
@@ -113,7 +115,7 @@ func handshakeAction(ctx *cli.Context) error {
 		addr = net.JoinHostPort(addr, "443")
 	}
 
-	// Load client TLS certificate 
+	// Load client TLS certificate
 	var certificates []tls.Certificate
 	if certFile != "" && keyFile != "" {
 		opts := []pemutil.Options{}
@@ -155,7 +157,7 @@ func handshakeAction(ctx *cli.Context) error {
 		Certificates:       certificates,
 	}
 
-	cs, err := tlsDialWithFallback(addr, tlsConfig)
+	cs, err := tlsDialWithFallback(context.Background(), addr, tlsConfig)
 	if err != nil {
 		return err
 	}
@@ -245,16 +247,15 @@ func getTLSVersions(s string) (uint16, uint16, error) {
 	}
 }
 
-func tlsDialWithFallback(addr string, tlsConfig *tls.Config) (tls.ConnectionState, error) {
+func tlsDialWithFallback(ctx context.Context, addr string, tlsConfig *tls.Config) (tls.ConnectionState, error) {
 	conn, err := tls.Dial("tcp", addr, tlsConfig)
 	if err != nil {
 		if tlsConfig.InsecureSkipVerify {
 			return tls.ConnectionState{}, fmt.Errorf("error connecting to %q: %w", addr, err)
 		}
 		tlsConfig.InsecureSkipVerify = true
-		return tlsDialWithFallback(addr, tlsConfig)
+		return tlsDialWithFallback(ctx, addr, tlsConfig)
 	}
 	defer conn.Close()
-	conn.Handshake()
-	return conn.ConnectionState(), nil
+	return conn.ConnectionState(), conn.HandshakeContext(ctx)
 }
