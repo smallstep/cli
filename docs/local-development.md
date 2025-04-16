@@ -15,6 +15,8 @@ To get started with local development, you will need three things:
 
 - Golang installed locally (instructions available
 [here](https://golang.org/doc/install)).
+  - We follow the general Go support timeline, meaning the latest two versions 
+  of Go are supported. See `go.mod` for the current minimum version.
 - A version of `make` available for usage of the `Makefile`.
 - The repository checked out in the appropriate location of your `$GOPATH`.
 
@@ -40,7 +42,7 @@ binary in the `bin` folder.
 ### Running Tests and Linting
 
 Now that you've installed any dependencies, you can run the tests and lint the
-code base simply by running `make`.
+codebase simply by running `make`.
 
 #### Unit Tests
 
@@ -60,15 +62,7 @@ make integration
 
 #### And coding style tests
 
-These tests apply the following `Go` linters to verify code style and formatting:
-
-* [deadcode](https://github.com/tsenart/deadcode)
-* [gofmt](https://golang.org/cmd/gofmt/)
-* [golint](https://github.com/golang/lint/golint)
-* [ineffassign](https://github.com/gordonklaus/ineffassign)
-* [metalinter](https://github.com/alecthomas/gometalinter)
-* [misspell](https://github.com/client9/misspell/cmd/misspell)
-* [vet](https://golang.org/cmd/vet/)
+The currently enabled linters are defined in our shared [golangci-lint config](https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml)
 
 ```
 make lint

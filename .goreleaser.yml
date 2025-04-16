@@ -3,6 +3,9 @@
 version: 2
 project_name: step
 
+# Enable GoReleaser OSS to read Pro configs: https://goreleaser.com/errors/version/#using-a-pro-configuration-file-with-goreleaser-oss
+pro: true 
+
 variables:
   packageName: step-cli
   packageRelease: 1 # Manually update release: in the nfpm section to match this value if you change this
@@ -22,7 +25,7 @@ builds:
     id: default
     env:
       - CGO_ENABLED=0
-    main: ./cmd/step/main.go
+    main: ./cmd/step
     flags:
       - -trimpath
     ldflags:
@@ -67,8 +70,8 @@ archives:
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
     format_overrides:
       - goos: windows
-        format: zip
-    builds:
+        formats: ['zip']
+    ids:
       - default
     wrap_in_directory: "{{ .ProjectName }}_{{ .Version }}"
     files:
@@ -94,7 +97,7 @@ nfpms:
   #
   - &NFPM
     id: packages
-    builds:
+    ids:
       - nfpm
     package_name: "{{ .Var.packageName }}"
     release: "1"

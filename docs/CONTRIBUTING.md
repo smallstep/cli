@@ -7,9 +7,11 @@ to manage issues, etc.
 
 ## Table of Contents
 
-* [Asking Support Questions](#asking-support-questions)
 * [Reporting Issues](#reporting-issues)
-* [Submitting Patches](#submitting-patches)
+* [Asking Support Questions](#asking-support-questions)
+* [Code Contribution](#code-contribution)
+  * [Local Development](#local-development)
+  * [Submitting Patches](#submitting-patches)
   * [Code Contribution Guidelines](#code-contribution-guidelines)
   * [Git Commit Message Guidelines](#git-commit-message-guidelines)
 
@@ -18,8 +20,7 @@ to manage issues, etc.
 If you believe you have found a defect in `step cli` or its
 documentation, use the GitHub [issue
 tracker](https://github.com/smallstep/cli/issues) to report the
-problem. When reporting the issue, please provide the version of `step
-cli` in use (`step version`) and your operating system.
+problem. When reporting the issue, please provide the version of `step` CLI in use (`step version`) and your operating system.
 
 ## Asking Support Questions
 
@@ -37,7 +38,11 @@ primitives and higher order resources.
 
 **Bug fixes are, of course, always welcome.**
 
-## Submitting Patches
+### Local Development
+
+Check out the [local development](./local-development.md) guide for instructions for working on the `step` CLI code.
+
+### Submitting Patches
 
 `step cli` welcomes all contributors and contributions. If you are
 interested in helping with the project, please reach out to us or, better yet,
