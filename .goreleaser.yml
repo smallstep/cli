@@ -133,10 +133,10 @@ nfpms:
       postremove: scripts/postremove.sh
     rpm:
       signature:
-          key_file: "{{ .Env.GPG_PRIVATE_KEY_FILE }}"
+          key_file: '{{ envOrDefault "GPG_PRIVATE_KEY_FILE" "ENV_VAR_GPG_PRIVATE_KEY_FILE_NOT_SET" }}'
     deb:
       signature:
-          key_file: "{{ .Env.GPG_PRIVATE_KEY_FILE }}"
+          key_file: '{{ envOrDefault "GPG_PRIVATE_KEY_FILE" "ENV_VAR_GPG_PRIVATE_KEY_FILE_NOT_SET" }}'
           type: origin
   -
     << : *NFPM
