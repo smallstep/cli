@@ -207,8 +207,22 @@ multiple principals.`,
 			sshHostFlag,
 			flags.CaConfig,
 			flags.Force,
-			flags.NotAfter,
-			flags.NotBefore,
+			cli.StringFlag{
+				Name: "not-before",
+				Usage: `The <time|duration> when the token's validity period starts. If a <time> is
+		used it is expected to be in RFC 3339 format. If a <duration> is used, it is a
+		sequence of decimal numbers, each with optional fraction and a unit suffix, such
+		as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
+		"s", "m", "h".`,
+			},
+			cli.StringFlag{
+				Name: "not-after",
+				Usage: `The <time|duration> when the token's validity period ends. If a <time> is
+		used it is expected to be in RFC 3339 format. If a <duration> is used, it is a
+		sequence of decimal numbers, each with optional fraction and a unit suffix, such
+		as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms",
+		"s", "m", "h".`,
+			},
 			flags.CertNotAfter,
 			flags.CertNotBefore,
 			flags.Provisioner,
