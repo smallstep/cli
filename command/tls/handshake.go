@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"reflect"
@@ -164,6 +165,9 @@ func handshakeAction(c *cli.Context) error {
 
 	// Print only the list of verified chains
 	if printChains {
+		if len(cs.VerifiedChains) == 0 {
+			return errors.New("failed to build a chain of verified certificates")
+		}
 		for _, chain := range cs.VerifiedChains {
 			for _, crt := range chain {
 				fmt.Print(string(pem.EncodeToMemory(&pem.Block{
@@ -177,6 +181,9 @@ func handshakeAction(c *cli.Context) error {
 
 	// Print only the peer certificates
 	if printPeer {
+		if len(cs.PeerCertificates) == 0 {
+			return errors.New("peer did not sent a certificate")
+		}
 		for _, crt := range cs.PeerCertificates {
 			fmt.Print(string(pem.EncodeToMemory(&pem.Block{
 				Type: "CERTIFICATE", Bytes: crt.Raw,
