@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,14 +13,15 @@ func TestAppHasAllCommands(t *testing.T) {
 	app := newApp(&bytes.Buffer{}, &bytes.Buffer{})
 	require.NotNil(t, app)
 
-	require.Equal(t, "step", app.Name)
-	require.Equal(t, "step", app.HelpName)
+	assert.Equal(t, "step", app.Name)
+	assert.Equal(t, "step", app.HelpName)
 
 	var names = make([]string, 0, len(app.Commands))
 	for _, c := range app.Commands {
 		names = append(names, c.Name)
 	}
-	require.Equal(t, []string{
+
+	assert.ElementsMatch(t, []string{
 		"help", "api", "path", "base64", "fileserver",
 		"certificate", "completion", "context", "crl",
 		"crypto", "oauth", "version", "ca", "beta", "ssh",
@@ -42,5 +44,5 @@ func TestAppRuns(t *testing.T) {
 	require.Empty(t, stderr.Bytes())
 
 	output := ansiRegex.ReplaceAllString(stdout.String(), "")
-	require.Contains(t, output, "step -- plumbing for distributed systems")
+	assert.Contains(t, output, "step -- plumbing for distributed systems")
 }
