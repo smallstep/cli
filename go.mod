@@ -9,7 +9,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.8.0
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-tpm v0.9.3
+	github.com/google/go-tpm v0.9.4
 	github.com/google/uuid v1.6.0
 	github.com/icrowley/fake v0.0.0-20221112152111-d7b7e2276db2
 	github.com/manifoldco/promptui v0.9.0
