@@ -19,6 +19,7 @@ import (
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/crlutil"
+	"github.com/smallstep/cli/utils"
 )
 
 func verifyCommand() cli.Command {
@@ -170,7 +171,7 @@ func verifyAction(ctx *cli.Context) error {
 		httpClient       *http.Client
 	)
 
-	switch addr, isURL, err := trimURL(crtFile); {
+	switch addr, isURL, err := utils.TrimURL(crtFile); {
 	case err != nil:
 		return err
 	case isURL:
