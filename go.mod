@@ -14,7 +14,12 @@ require (
 	github.com/icrowley/fake v0.0.0-20221112152111-d7b7e2276db2
 	github.com/manifoldco/promptui v0.9.0
 	github.com/pkg/errors v0.9.1
+<<<<<<< HEAD
 	github.com/pquerna/otp v1.5.0
+=======
+	github.com/pquerna/otp v1.4.0
+	github.com/rogpeppe/go-internal v1.13.1
+>>>>>>> b69ee0ea (Refactor CLI to make it testable using `testscript`)
 	github.com/slackhq/nebula v1.9.5
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.28.3
@@ -142,6 +147,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250505200425-f936aa4a68b2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250512202823-5a2f75b736a9 // indirect
 	google.golang.org/grpc v1.72.2 // indirect
+	golang.org/x/tools v0.31.0 // indirect
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.0 // indirect
