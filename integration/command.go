@@ -1,3 +1,4 @@
+//nolint:unused // temporarily disable the linter here
 package integration
 
 import (
