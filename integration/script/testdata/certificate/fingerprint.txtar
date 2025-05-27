@@ -1,0 +1,11 @@
+exec step certificate fingerprint intermediate_ca.crt
+stdout '626dca961bfde13341b32e7711c7127612988dbc5d0082fb220efd8ab4087b4b'
+
+exec step certificate fingerprint intermediate_ca.crt --format=hex
+stdout '626dca961bfde13341b32e7711c7127612988dbc5d0082fb220efd8ab4087b4b'
+
+exec step certificate fingerprint intermediate_ca.crt --format=base64
+stdout 'Ym3Klhv94TNBsy53EccSdhKYjbxdAIL7Ig79irQIe0s='
+
+exec step certificate fingerprint intermediate_ca.crt --format=base64-url
+stdout 'Ym3Klhv94TNBsy53EccSdhKYjbxdAIL7Ig79irQIe0s='

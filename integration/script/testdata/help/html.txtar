@@ -1,0 +1,2 @@
+exec step help --html=./html --report
+check_quality ./html
