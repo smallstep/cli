@@ -1,0 +1,2 @@
+! exec step certificate verify bad.pem
+stderr 'bad.pem contains an invalid PEM block'
