@@ -139,7 +139,7 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 				return plugin.Run(ctx, file)
 			}
 			if u := plugin.GetURL(name); u != "" {
-				//nolint:stylecheck // this is a top level error - capitalization is ok
+				//nolint:staticcheck // this is a top level error - capitalization is ok
 				return fmt.Errorf("The plugin %q was not found on this system.\nDownload it from %s", name, u)
 			}
 			return cli.ShowCommandHelp(ctx, name)
