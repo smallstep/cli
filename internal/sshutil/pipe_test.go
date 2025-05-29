@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_determineWindowsPipeName(t *testing.T) {
+func TestDeterminesWindowsPipeName(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		assert.Equal(t, `\\.\\pipe\\openssh-ssh-agent`, determineWindowsPipeName())
 	})
