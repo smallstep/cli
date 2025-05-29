@@ -3,9 +3,12 @@ package sshutil
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/Microsoft/go-winio"
 	"github.com/pkg/errors"
@@ -28,42 +31,60 @@ func dialAgent() (*Agent, error) {
 		// Connect to Windows pipe at the supplied address
 		conn, err := winio.DialPipeContext(context.Background(), socket)
 		if err != nil {
-			return nil, errors.Wrap(err, "error connecting with ssh-agent at pipe specified by environment variable SSH_AUTH_SOCK")
+			return nil, errors.Wrap(err, fmt.Sprintf("failed to connect to SSH agent at SSH_AUTH_SOCK=%s", socket))
 		}
+
 		return &Agent{
 			ExtendedAgent: agent.NewClient(conn),
 			Conn:          conn,
 		}, nil
 	}
 
-	homepath := os.Getenv("HOMEPATH")
-	sshagentfile := string(homepath) + "\\.ssh\\config"
+	pipeName := determineWindowsPipeName()
+	conn, err := winio.DialPipeContext(context.Background(), pipeName)
+	if err != nil {
+		return nil, errors.Wrap(err, "error connecting with ssh-agent")
+	}
 
-	// DEFAULT: Windows OpenSSH agent
-	pipename := "\\\\.\\pipe\\ssh-agent"
+	return &Agent{
+		ExtendedAgent: agent.NewClient(conn),
+		Conn:          conn,
+	}, nil
+}
 
-	file, err := os.Open(sshagentfile)
+const (
+	// defaultPipeName is the default Windows OpenSSH agent pipe
+	defaultPipeName = `\\.\\pipe\\openssh-ssh-agent`
+)
+
+func determineWindowsPipeName() string {
+	homePath := os.Getenv("HOMEPATH") // TODO(hs): add default if not set?
+	sshAgentConfigFile := filepath.Join(homePath, ".ssh", "config")
+
+	if pipeName := readWindowsPipeNameFrom(sshAgentConfigFile); pipeName != "" {
+		return pipeName
+	}
+
+	return defaultPipeName
+}
+
+var (
+	re  = regexp.MustCompile(`/`)
+	re2 = regexp.MustCompile(`[\s\"]*`)
+)
+
+func readWindowsPipeNameFrom(configFile string) (pipeName string) {
+	file, err := os.Open(configFile)
 	if err == nil {
 		sc := bufio.NewScanner(file)
 		for sc.Scan() {
-			var line = sc.Text()
-			if len(line) > 15 {
-				compare := line[0:13]
-				if compare == "IdentityAgent" {
-					temp := line[14:len(line)]
-					re := regexp.MustCompile(`/`)
-					re2 := regexp.MustCompile(`[\s\"]*`)
-					pipename = re2.ReplaceAllString(re.ReplaceAllString(temp, "\\"), "")
-				}
+			line := sc.Text()
+			if len(line) > 15 && strings.HasPrefix(line, "IdentityAgent") {
+				pipeName = re2.ReplaceAllString(re.ReplaceAllString(line[14:], "\\"), "")
+				break
 			}
 		}
 	}
-	if conn, err := winio.DialPipeContext(context.Background(), pipename); err == nil {
-		return &Agent{
-			ExtendedAgent: agent.NewClient(conn),
-			Conn:          conn,
-		}, nil
-	} else {
-		return nil, errors.Wrap(err, "error connecting with ssh-agent")
-	}
+
+	return
 }
