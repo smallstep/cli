@@ -2,6 +2,7 @@ package sshutil
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"os"
 
@@ -26,19 +27,21 @@ func dialAgent() (*Agent, error) {
 		// Connect to Windows pipe at the supplied address
 		conn, err := winio.DialPipeContext(context.Background(), socket)
 		if err != nil {
-			return nil, errors.Wrap(err, "error connecting with ssh-agent at pipe specified by environment variable SSH_AUTH_SOCK")
+			return nil, errors.Wrap(err, fmt.Sprintf("failed to connect to SSH agent at SSH_AUTH_SOCK=%s", socket))
 		}
+
 		return &Agent{
 			ExtendedAgent: agent.NewClient(conn),
 			Conn:          conn,
 		}, nil
 	}
 
-	// DEFAULT: Windows OpenSSH agent
-	conn, err := winio.DialPipeContext(context.Background(), `\\.\\pipe\\openssh-ssh-agent`)
+	pipeName := determineWindowsPipeName()
+	conn, err := winio.DialPipeContext(context.Background(), pipeName)
 	if err != nil {
 		return nil, errors.Wrap(err, "error connecting with ssh-agent")
 	}
+
 	return &Agent{
 		ExtendedAgent: agent.NewClient(conn),
 		Conn:          conn,
