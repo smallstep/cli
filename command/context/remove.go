@@ -81,7 +81,7 @@ func removeAction(ctx *cli.Context) error {
 		}
 	}
 
-	if !ctx.Bool("force") && !(saveAuthority && saveProfile) {
+	if !ctx.Bool("force") && !(saveAuthority && saveProfile) { //nolint:staticcheck // TODO(hs): fix this
 		ui.Printf("The following directories will be removed:\n")
 		ui.Println()
 		if !saveAuthority {

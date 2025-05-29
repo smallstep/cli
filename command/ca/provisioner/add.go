@@ -385,7 +385,7 @@ func addAction(ctx *cli.Context) (err error) {
 		Ssh: &linkedca.SSHClaims{
 			UserDurations: &linkedca.Durations{},
 			HostDurations: &linkedca.Durations{},
-			Enabled:       !(ctx.IsSet("ssh") && !ctx.Bool("ssh")),
+			Enabled:       !(ctx.IsSet("ssh") && !ctx.Bool("ssh")), //nolint:staticcheck // TODO(hs): fix this
 		},
 		DisableRenewal:             ctx.Bool("disable-renewal"),
 		AllowRenewalAfterExpiry:    ctx.Bool("allow-renewal-after-expiry"),

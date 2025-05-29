@@ -1,3 +1,4 @@
+//nolint:unused // will be fixed with new integration tests
 package integration
 
 import (
