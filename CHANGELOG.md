@@ -26,10 +26,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [unreleased] - aaaa-bb-cc
+
+### Added
+
+- Add support for specifying key usage, extended key usage, and basic constraints
+  in certificate requests (smallstep/crypto#767)
+
 ## [0.28.6] - 2025-03-17
 
 - dependabot updates
-
 
 ## [0.28.5] - 2025-03-05
 
