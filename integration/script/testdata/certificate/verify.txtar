@@ -1,0 +1,1 @@
+exec step certificate verify test.crt --roots intermediate.pem

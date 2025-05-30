@@ -1,0 +1,2 @@
+exec step version
+stdout 'Smallstep CLI/0000000-dev'
