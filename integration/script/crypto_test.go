@@ -65,6 +65,9 @@ func TestCryptoJWTCommand(t *testing.T) {
 func TestCryptoKeyPair(t *testing.T) {
 	testscript.Run(t, testscript.Params{
 		Files: []string{"testdata/crypto/keypair.txtar"},
+		Setup: func(e *testscript.Env) error {
+			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
+		},
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
 			"check_key_pair": checkKeyPair,
 		},
