@@ -107,6 +107,20 @@ func WithSSH(v interface{}) Options {
 	})
 }
 
+// WithValidityOptions returns an Options function that sets the certificate
+// validity period in the token claims.
+func WithValidityOptions(notBefore, notAfter provisioner.TimeDuration) Options {
+	return func(c *Claims) error {
+		if !notBefore.IsZero() {
+			c.Set("certNotBefore", notBefore.Time().Unix())
+		}
+		if !notAfter.IsZero() {
+			c.Set("certNotAfter", notAfter.Time().Unix())
+		}
+		return nil
+	}
+}
+
 // WithConfirmationFingerprint returns an Options function that sets the cnf
 // claim with the given CSR fingerprint.
 func WithConfirmationFingerprint(fp string) Options {

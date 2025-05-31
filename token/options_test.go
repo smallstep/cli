@@ -19,6 +19,8 @@ import (
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x25519"
 	"golang.org/x/crypto/ssh"
+
+	"go.step.sm/crypto/provisioner"
 )
 
 func TestOptions(t *testing.T) {
@@ -90,6 +92,10 @@ func TestOptions(t *testing.T) {
 		{"WithFingerprint csr ok", WithFingerprint(testCSR), &Claims{ExtraClaims: map[string]any{"cnf": map[string]string{"x5rt#S256": "ak6j6CwuZbd_mOQ-pNOUwhpmtSN0mY0xrLvaQL4J5l8"}}}, false},
 		{"WithFingerprint ssh ok", WithFingerprint(testSSH), &Claims{ExtraClaims: map[string]any{"cnf": map[string]string{"x5rt#S256": "hpTQOoB7fIRxTp-FhXCIm94mGBv7_dzr_5SxLn1Pnwk"}}}, false},
 		{"WithFingerprint fail", WithFingerprint("unexpected type"), empty, true},
+		{"WithValidityOptions ok", WithValidityOptions(provisioner.TimeDuration{Time: now}, provisioner.TimeDuration{Time: now.Add(5 * time.Minute)}), &Claims{ExtraClaims: map[string]interface{}{"certNotBefore": now.Unix(), "certNotAfter": now.Add(5 * time.Minute).Unix()}}, false},
+		{"WithValidityOptions only NotBefore", WithValidityOptions(provisioner.TimeDuration{Time: now}, provisioner.TimeDuration{}), &Claims{ExtraClaims: map[string]interface{}{"certNotBefore": now.Unix()}}, false},
+		{"WithValidityOptions only NotAfter", WithValidityOptions(provisioner.TimeDuration{}, provisioner.TimeDuration{Time: now.Add(5 * time.Minute)}), &Claims{ExtraClaims: map[string]interface{}{"certNotAfter": now.Add(5 * time.Minute).Unix()}}, false},
+		{"WithValidityOptions zero values", WithValidityOptions(provisioner.TimeDuration{}, provisioner.TimeDuration{}), &Claims{ExtraClaims: map[string]interface{}{}}, false},
 	}
 
 	for _, tt := range tests {

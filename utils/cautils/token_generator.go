@@ -95,11 +95,16 @@ func (t *TokenGenerator) Token(sub string, opts ...token.Options) (string, error
 
 // SignToken generates a X.509 certificate signing token. If sans is empty, we
 // will use the subject (common name) as the only SAN.
-func (t *TokenGenerator) SignToken(sub string, sans []string, opts ...token.Options) (string, error) {
+func (t *TokenGenerator) SignToken(sub string, sans []string, certNotBefore, certNotAfter provisioner.TimeDuration, opts ...token.Options) (string, error) {
 	if len(sans) == 0 {
 		sans = []string{sub}
 	}
 	opts = append(opts, token.WithSANS(sans))
+
+	// Add validity options for the certificate
+	if !certNotBefore.IsZero() || !certNotAfter.IsZero() {
+		opts = append(opts, token.WithValidityOptions(certNotBefore, certNotAfter))
+	}
 
 	// Tie certificate request to the token used in the JWK and X5C provisioners
 	if sharedContext.CertificateRequest != nil {
@@ -258,7 +263,7 @@ func generateX5CToken(ctx *cli.Context, p *provisioner.X5C, tokType int, tokAttr
 
 	switch tokType {
 	case SignType:
-		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, tokenOpts...)
+		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, tokAttrs.certNotBefore, tokAttrs.certNotAfter, tokenOpts...)
 	case RevokeType:
 		return tokenGen.RevokeToken(tokAttrs.subject, tokenOpts...)
 	case SSHUserSignType:
@@ -296,7 +301,7 @@ func generateNebulaToken(ctx *cli.Context, p *provisioner.Nebula, tokType int, t
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
 	switch tokType {
 	case SignType:
-		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, token.WithNebulaCert(certFile, key))
+		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, tokAttrs.certNotBefore, tokAttrs.certNotAfter, token.WithNebulaCert(certFile, key))
 	case RevokeType:
 		return tokenGen.RevokeToken(tokAttrs.subject, token.WithNebulaCert(certFile, key))
 	case SSHUserSignType:
@@ -454,7 +459,7 @@ func generateJWKToken(ctx *cli.Context, p *provisioner.JWK, tokType int, tokAttr
 		tokAttrs.notBefore, tokAttrs.notAfter, jwk)
 	switch tokType {
 	case SignType:
-		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans)
+		return tokenGen.SignToken(tokAttrs.subject, tokAttrs.sans, tokAttrs.certNotBefore, tokAttrs.certNotAfter)
 	case RevokeType:
 		return tokenGen.RevokeToken(tokAttrs.subject)
 	case SSHUserSignType:
