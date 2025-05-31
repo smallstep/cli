@@ -21,6 +21,7 @@ import (
 	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/provisioner"
 	"go.step.sm/crypto/x25519"
 )
 
