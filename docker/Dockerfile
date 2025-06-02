@@ -28,7 +28,7 @@ ARG STEPGID=1000
 
 RUN apk update \
         && apk upgrade \
-        && apk add --no-cache bash curl tzdata \
+        && apk add --no-cache bash curl tzdata jq \
         && addgroup -g ${STEPGID} step \
         && adduser -D -u ${STEPUID} -G step step \
         && chown step:step /home/step
