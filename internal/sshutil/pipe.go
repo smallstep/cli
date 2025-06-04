@@ -14,8 +14,16 @@ const (
 )
 
 func determineWindowsPipeName() string {
-	homePath := os.Getenv("HOMEPATH") // TODO(hs): add default if not set?
-	sshAgentConfigFile := filepath.Join(homePath, ".ssh", "config")
+	var (
+		homeDrive = "C:"
+		homePath  = os.Getenv("HOMEPATH")
+	)
+
+	if hd := os.Getenv("HOMEDRIVE"); hd != "" {
+		homeDrive = hd
+	}
+
+	sshAgentConfigFile := filepath.Join(homeDrive, homePath, ".ssh", "config")
 
 	if pipeName := readWindowsPipeNameFrom(sshAgentConfigFile); pipeName != "" {
 		return pipeName
@@ -34,7 +42,7 @@ func readWindowsPipeNameFrom(configFile string) (pipeName string) {
 	if err == nil {
 		sc := bufio.NewScanner(file)
 		for sc.Scan() {
-			line := sc.Text()
+			line := strings.TrimSpace(sc.Text())
 			if len(line) > 15 && strings.HasPrefix(line, "IdentityAgent") {
 				pipeName = re2.ReplaceAllString(re.ReplaceAllString(line[14:], "\\"), "")
 				break

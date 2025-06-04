@@ -16,11 +16,13 @@ func TestDeterminesWindowsPipeName(t *testing.T) {
 
 	t.Run("valid-config-file", func(t *testing.T) {
 		dir := t.TempDir()
-		file := filepath.Join(dir, ".ssh", "config")
+		file := filepath.Join(dir, "Users", "username", ".ssh", "config")
 
-		t.Setenv("HOMEPATH", dir)
-		err := os.Mkdir(filepath.Join(dir, ".ssh"), 0777)
+		t.Setenv("HOMEDRIVE", dir)
+		t.Setenv("HOMEPATH", filepath.Join("Users", "username"))
+		err := os.MkdirAll(filepath.Dir(file), 0777)
 		require.NoError(t, err)
+
 		err = os.WriteFile(file, []byte(`IdentityAgent \\.\\pipe\\pageant.user.abcd`), 0600)
 		require.NoError(t, err)
 
@@ -29,10 +31,11 @@ func TestDeterminesWindowsPipeName(t *testing.T) {
 
 	t.Run("invalid-config-file", func(t *testing.T) {
 		dir := t.TempDir()
-		file := filepath.Join(dir, ".ssh", "config")
+		file := filepath.Join(dir, "Users", "username", ".ssh", "config")
 
-		t.Setenv("HOMEPATH", dir)
-		err := os.Mkdir(filepath.Join(dir, ".ssh"), 0777)
+		t.Setenv("HOMEDRIVE", dir)
+		t.Setenv("HOMEPATH", filepath.Join("Users", "username"))
+		err := os.MkdirAll(filepath.Dir(file), 0777)
 		require.NoError(t, err)
 		err = os.WriteFile(file, []byte(`NoIdentityAgent \\.\\pipe\\pageant.user.abcd`), 0600)
 		require.NoError(t, err)
