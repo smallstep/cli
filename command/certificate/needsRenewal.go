@@ -15,6 +15,7 @@ import (
 	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/flags"
+	"github.com/smallstep/cli/utils"
 )
 
 const defaultPercentUsedThreshold = 66
@@ -157,7 +158,7 @@ func needsRenewalAction(ctx *cli.Context) error {
 	)
 
 	var certs []*x509.Certificate
-	switch addr, isURL, err := trimURL(certFile); {
+	switch addr, isURL, err := utils.TrimURL(certFile); {
 	case err != nil:
 		return errs.NewExitError(err, 255)
 	case isURL:
