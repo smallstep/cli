@@ -58,7 +58,7 @@ func PublicKey(key ssh.PublicKey) (crypto.PublicKey, error) {
 		return parseECDSA(in)
 	case ssh.KeyAlgoED25519, ssh.KeyAlgoSKED25519:
 		return parseED25519(in)
-	case ssh.KeyAlgoDSA:
+	case ssh.InsecureKeyAlgoDSA: //nolint:staticcheck // compatibility with older tooling
 		return parseDSA(in)
 	default:
 		return nil, errors.Errorf("public key %s is not supported", key.Type())
@@ -98,7 +98,7 @@ func publicKeyTypeAndSize(key ssh.PublicKey) (string, int, error) {
 			return "", 0, err
 		}
 		size = 8 * k.Size()
-	case ssh.KeyAlgoDSA:
+	case ssh.InsecureKeyAlgoDSA: //nolint:staticcheck // compatibility with older tooling
 		typ = "DSA"
 		_, in, ok := parseString(key.Marshal())
 		if !ok {

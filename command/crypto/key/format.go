@@ -286,7 +286,7 @@ func formatAction(ctx *cli.Context) error {
 func isSSHPublicKey(in []byte) bool {
 	switch {
 	case bytes.HasPrefix(in, []byte(ssh.KeyAlgoRSA)),
-		bytes.HasPrefix(in, []byte(ssh.KeyAlgoDSA)),
+		bytes.HasPrefix(in, []byte(ssh.InsecureKeyAlgoDSA)), //nolint:staticcheck // compatibility with older tooling
 		bytes.HasPrefix(in, []byte(ssh.KeyAlgoECDSA256)),
 		bytes.HasPrefix(in, []byte(ssh.KeyAlgoECDSA384)),
 		bytes.HasPrefix(in, []byte(ssh.KeyAlgoECDSA521)),
