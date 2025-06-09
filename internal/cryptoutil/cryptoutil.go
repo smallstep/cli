@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rsa"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
@@ -113,6 +114,37 @@ func LoadCertificate(kmsURI, certPath string) ([]*x509.Certificate, error) {
 	}
 
 	return cert, nil
+}
+
+// LoadTLSCertificate returns a [tls.Certificate] from a certificate file and a
+// key in a file or in a KMS.
+func LoadTLSCertificate(certFile, keyName string, opts ...pemutil.Options) (tls.Certificate, error) {
+	bundle, err := pemutil.ReadCertificateBundle(certFile)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+
+	var signer crypto.Signer
+	if IsKMS(keyName) {
+		if signer, err = CreateSigner(keyName, keyName, opts...); err != nil {
+			return tls.Certificate{}, err
+		}
+	} else {
+		if signer, err = CreateSigner("", keyName, opts...); err != nil {
+			return tls.Certificate{}, err
+		}
+	}
+
+	cert := make([][]byte, len(bundle))
+	for i, crt := range bundle {
+		cert[i] = crt.Raw
+	}
+
+	return tls.Certificate{
+		Certificate: cert,
+		PrivateKey:  signer,
+		Leaf:        bundle[0],
+	}, nil
 }
 
 // LoadJSONWebKey returns a jose.JSONWebKey from a KMS or a file.

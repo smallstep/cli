@@ -132,7 +132,7 @@ func fingerprintAction(ctx *cli.Context) error {
 		return err
 	}
 
-	switch addr, isURL, err := trimURL(crtFile); {
+	switch addr, isURL, err := utils.TrimURL(crtFile); {
 	case err != nil:
 		return err
 	case isURL:

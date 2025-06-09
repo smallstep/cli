@@ -208,7 +208,7 @@ func inspectAction(ctx *cli.Context) error {
 		return errs.IncompatibleFlagWithFlag(ctx, "short", "format "+format)
 	}
 
-	switch addr, isURL, err := trimURL(crtFile); {
+	switch addr, isURL, err := utils.TrimURL(crtFile); {
 	case err != nil:
 		return err
 	case isURL:
