@@ -175,6 +175,10 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 				Usage: "The directory where TPM keys and certificates will be stored",
 				Value: filepath.Join(step.Path(), "tpm"),
 			},
+			cli.StringFlag{
+				Name:  "intermediate-file",
+				Usage: "Write intermediate certificates to a separate file",
+			},
 			flags.TemplateSet,
 			flags.TemplateSetFile,
 			flags.CaConfig,
@@ -279,8 +283,42 @@ func certificateAction(ctx *cli.Context) error {
 		return errors.New("token is not supported")
 	}
 
-	if err := flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
-		return err
+	if intermediateFile := ctx.String("intermediate-file"); intermediateFile != "" {
+		certs, err := flow.SignReturnsCerts(ctx, tok, req.CsrPEM)
+		if err != nil {
+			return err
+		}
+
+		if len(certs) < 2 {
+			return errors.New("certificate chain must contain at least 2 certificates (leaf + intermediate)")
+		}
+
+		// Leaf cert should NOT be a CA
+		if certs[0].IsCA {
+			return errors.New("first certificate (leaf) in chain should not be a CA certificate")
+		}
+
+		// Intermediates should be CAs
+		for i := 1; i < len(certs); i++ {
+			if !certs[i].IsCA {
+				return errors.New("intermediate certificate is not a CA certificate")
+			}
+		}
+
+		// Write leaf cert
+		if err := cautils.WriteCerts(crtFile, certs[:1]); err != nil {
+			return errors.Wrap(err, "error writing leaf certificate")
+		}
+		// Write intermediates
+		if err := cautils.WriteCerts(intermediateFile, certs[1:]); err != nil {
+			return errors.Wrap(err, "error writing intermediate certificates")
+		}
+		ui.PrintSelected("Intermediate Chain", intermediateFile)
+
+	} else {
+		if err := flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
+			return err
+		}
 	}
 
 	_, err = pemutil.Serialize(pk, pemutil.ToFile(keyFile, 0600))
