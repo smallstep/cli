@@ -1,5 +1,0 @@
-exec step crypto jwt sign -key p256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf 1 -iat 1 -exp 1 -subtle
-stdout 'eyJhbGciOiJFUzI1NiIsImtpZCI6Ii1pZ1pNalRCdkhFRG02bjkxQkgwT0k4ZUhqQko2b0I3UlpIZFA0RE81U0EiLCJ0eXAiOiJKV1QifQ'
-
-stdin token.txt
-exec step crypto jwt verify -key p256.pem -subtle

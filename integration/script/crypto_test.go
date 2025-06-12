@@ -6,57 +6,162 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	gojose "github.com/go-jose/go-jose/v3"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/stretchr/testify/require"
 
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/keyutil"
 )
 
 func TestCryptoJWTCommand(t *testing.T) {
-	b, err := os.ReadFile("./../testdata/p256.pem")
-	require.NoError(t, err)
+	p256JWK, p256Bytes := readKey(t, "./../testdata/p256.pem") // TODO(hs): can/must we get rid of these, and generate them on start of test?
+	rsaJWK, rsaBytes := readKey(t, "./../testdata/rsa2048.pem")
+	noUseBytes := readBytes(t, "./../testdata/jwk-no-use.json")
+	noAlgBytes := readBytes(t, "./../testdata/jwk-no-alg.json")
+	badKeyBytes := readBytes(t, "./../testdata/bad-key.json")
+	p256PubJSONBytes := readBytes(t, "./../testdata/jwk-pGoLJDgF5fgTNnB47SKMnVUzVNdu6MF0.pub.json")
+	p256PubPemBytes := readBytes(t, "./../testdata/p256.pem.pub")
+	twopemsBytes := readBytes(t, "./../testdata/twopems.pem")
+	badHeaderBytes := readBytes(t, "./../testdata/badheader.pem")
+	encP256Bytes := readBytes(t, "./../testdata/es256-enc.pem")
+	jwks, jwksBytes := readKeySet(t, "./../testdata/jwks.json")
+	ed25519JWK, ed25519JSONBytes := generateJWK(t, "OKP", "Ed25519")
 
-	jwk, err := jose.ReadKey("./../testdata/p256.pem")
-	require.NoError(t, err)
+	jwtJSON := readBytes(t, "./../testdata/jwt-json-serialization.json")
+	jwtFlattenedJSON := readBytes(t, "./../testdata/jwt-json-serialization-flattened.json")
+	jwtMultiJSON := readBytes(t, "./../testdata/jwt-json-serialization-multi.json")
 
 	now := time.Now()
-	c := &jose.Claims{
-		Issuer:    "TestIssuer",
-		Subject:   "TestSubject",
-		Audience:  jose.Audience([]string{"TestAudience"}),
-		Expiry:    jose.UnixNumericDate(now.Add(1 * time.Minute).Unix()),
-		NotBefore: jose.UnixNumericDate(now.Add(-1 * time.Minute).Unix()),
-		IssuedAt:  jose.UnixNumericDate(now.Unix()),
-		ID:        "test-id",
-	}
-
-	so := new(jose.SignerOptions).WithType("JWT").WithHeader("kid", jwk.KeyID)
-	signer, err := jose.NewSigner(jose.SigningKey{
-		Algorithm: jose.SignatureAlgorithm(jwk.Algorithm),
-		Key:       jwk.Key,
-	}, so)
-	require.NoError(t, err)
-
-	payload := make(map[string]any)
-	raw, err := jose.Signed(signer).Claims(c).Claims(payload).CompactSerialize()
-	require.NoError(t, err)
+	p256Token := createToken(t, p256JWK, now)
+	rsaToken := createToken(t, rsaJWK, now)
+	ed25519Token := createToken(t, ed25519JWK, now)
+	jwksToken := createToken(t, &jwks.Key("1")[0], now)
 
 	testscript.Run(t, testscript.Params{
-		Files: []string{"testdata/crypto/jwt.txtar"},
+		Files: []string{"testdata/crypto/jwt-sign.txtar"},
 		Setup: func(e *testscript.Env) error {
-			err := os.WriteFile(filepath.Join(e.Cd, "p256.pem"), b, 0600)
+			// set some additional environment variables required for token creation
+			e.Vars = append(e.Vars,
+				fmt.Sprintf("NBF=%d", now.Add(-1*time.Minute).Unix()),
+				fmt.Sprintf("EXP=%d", now.Add(1*time.Minute).Unix()),
+				fmt.Sprintf("IAT=%d", now.Unix()),
+				fmt.Sprintf("EXPIRY_IN_THE_PAST=%d", now.Add(-30*time.Second).Unix()),
+			)
+
+			// write the (existing) keys to the (temporary) test directory
+			err := os.WriteFile(filepath.Join(e.Cd, "p256.pem"), p256Bytes, 0600)
 			require.NoError(t, err)
-			err = os.WriteFile(filepath.Join(e.Cd, "token.txt"), []byte(raw), 0600)
+			err = os.WriteFile(filepath.Join(e.Cd, "rsa.pem"), rsaBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "ed25519.json"), ed25519JSONBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "nouse.json"), noUseBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "noalg.json"), noAlgBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "badkey.json"), badKeyBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "p256.pub.json"), p256PubJSONBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "p256.pub.pem"), p256PubPemBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "twopems.pem"), twopemsBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "badheader.pem"), badHeaderBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "encp256.pem"), encP256Bytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "jwks.json"), jwksBytes, 0600)
+			require.NoError(t, err)
+
+			return nil
+		},
+	})
+
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jwt-verify.txtar"},
+		Setup: func(e *testscript.Env) error {
+			// write the (existing) keys to the (temporary) test directory
+			err := os.WriteFile(filepath.Join(e.Cd, "p256.pem"), p256Bytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "p256token.txt"), []byte(p256Token), 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "rsa.pem"), rsaBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "rsatoken.txt"), []byte(rsaToken), 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "ed25519.json"), ed25519JSONBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "ed25519token.txt"), []byte(ed25519Token), 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "jwks.json"), jwksBytes, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "jwkstoken.txt"), []byte(jwksToken), 0600)
+			require.NoError(t, err)
+
+			// write fake / invalid tokens to the (temporary) test directory
+			invalidSignature := ed25519Token[:len(ed25519Token)-5] + "12345"
+			err = os.WriteFile(filepath.Join(e.Cd, "incomplete-signature.txt"), []byte(invalidSignature), 0600)
+			require.NoError(t, err)
+			parts := strings.Split(ed25519Token, ".")
+			err = os.WriteFile(filepath.Join(e.Cd, "invalid-header.txt"), []byte(createFakeToken(t, "foo", parts[1], parts[2])), 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "invalid-header-json.txt"), []byte(createFakeToken(t, "[42]", "bar", "deadbeef")), 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "invalid-header-changed-attribute.txt"), []byte(createFakeToken(t, `{"kty":"EC","alg":"ES256","xxx":"yyy"}`, parts[1], parts[2])), 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "invalid-header-bad-json.txt"), []byte(createFakeToken(t, `{"kty":"EC","alg":"ES256","}`, parts[1], parts[2])), 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "invalid-payload.txt"), []byte(createFakeToken(t, parts[0], "foo", parts[2])), 0600)
+			require.NoError(t, err)
+
+			// write tokens created by OpenSSL
+			exp := now.Add(1 * time.Minute).Unix()
+			validOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, fmt.Sprintf(`{"iss": "TestIssuer", "aud": "TestAudience", "exp": %d}`, exp), "./../testdata/rsa2048.pem")
+			err = os.WriteFile(filepath.Join(e.Cd, "ossltoken.txt"), []byte(validOpenSSLToken), 0600)
+			require.NoError(t, err)
+			expiredOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "TestIssuer", "aud": "TestAudience", "exp": 0}`, "./../testdata/rsa2048.pem")
+			err = os.WriteFile(filepath.Join(e.Cd, "expired-ossltoken.txt"), []byte(expiredOpenSSLToken), 0600)
+			require.NoError(t, err)
+			noExpiryOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "TestIssuer", "aud": "TestAudience"}`, "./../testdata/rsa2048.pem")
+			err = os.WriteFile(filepath.Join(e.Cd, "no-expiry-ossltoken.txt"), []byte(noExpiryOpenSSLToken), 0600)
+			require.NoError(t, err)
+			zeroNotBeforeOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "TestIssuer", "aud": "TestAudience", "nbf": 0}`, "./../testdata/rsa2048.pem")
+			err = os.WriteFile(filepath.Join(e.Cd, "zero-not-before-ossltoken.txt"), []byte(zeroNotBeforeOpenSSLToken), 0600)
+			require.NoError(t, err)
+
+			// write data for JSON serialization errors
+			err = os.WriteFile(filepath.Join(e.Cd, "jwt-json-serialization.json"), jwtJSON, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "jwt-json-serialization-flattened.json"), jwtFlattenedJSON, 0600)
+			require.NoError(t, err)
+			err = os.WriteFile(filepath.Join(e.Cd, "jwt-json-serialization-multi.json"), jwtMultiJSON, 0600)
+			require.NoError(t, err)
+
+			return nil
+		},
+	})
+
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jwt-inspect.txtar"},
+		Setup: func(e *testscript.Env) error {
+			err := os.WriteFile(filepath.Join(e.Cd, "token.txt"), []byte(p256Token), 0600)
 			require.NoError(t, err)
 
 			return nil
@@ -248,4 +353,97 @@ func keyCurve(jwk *jose.JSONWebKey) (elliptic.Curve, error) {
 	default:
 		return nil, fmt.Errorf("unsupported key type: %T", key)
 	}
+}
+
+func createToken(t *testing.T, jwk *jose.JSONWebKey, now time.Time) string {
+	t.Helper()
+
+	c := &jose.Claims{
+		Issuer:    "TestIssuer",
+		Subject:   "TestSubject",
+		Audience:  jose.Audience([]string{"TestAudience"}),
+		Expiry:    jose.UnixNumericDate(now.Add(1 * time.Minute).Unix()),
+		NotBefore: jose.UnixNumericDate(now.Add(-1 * time.Minute).Unix()),
+		IssuedAt:  jose.UnixNumericDate(now.Unix()),
+		ID:        "test-id",
+	}
+
+	so := new(jose.SignerOptions).WithType("JWT").WithHeader("kid", jwk.KeyID)
+	signer, err := jose.NewSigner(jose.SigningKey{
+		Algorithm: jose.SignatureAlgorithm(jwk.Algorithm),
+		Key:       jwk.Key,
+	}, so)
+	require.NoError(t, err)
+
+	payload := make(map[string]any)
+	raw, err := jose.Signed(signer).Claims(c).Claims(payload).CompactSerialize()
+	require.NoError(t, err)
+
+	return raw
+}
+
+func readBytes(t *testing.T, file string) []byte {
+	t.Helper()
+
+	b, err := os.ReadFile(file)
+	require.NoError(t, err)
+
+	return b
+}
+
+func readKey(t *testing.T, file string) (*jose.JSONWebKey, []byte) {
+	t.Helper()
+
+	b := readBytes(t, file)
+	jwk, err := jose.ParseKey(b)
+	require.NoError(t, err)
+
+	return jwk, b
+}
+
+func readKeySet(t *testing.T, file string) (*gojose.JSONWebKeySet, []byte) {
+	t.Helper()
+
+	b := readBytes(t, file)
+	var jwks gojose.JSONWebKeySet
+	err := json.Unmarshal(b, &jwks)
+	require.NoError(t, err)
+
+	return &jwks, b
+}
+
+func generateJWK(t *testing.T, kty, crv string) (*jose.JSONWebKey, []byte) {
+	t.Helper()
+
+	pk, err := keyutil.GenerateKey(kty, crv, 0)
+	require.NoError(t, err)
+
+	jwk := jose.JSONWebKey{
+		Key:   pk,
+		KeyID: fmt.Sprintf("kid-%s-%s", kty, crv),
+		//Algorithm: string(jose.ES256),
+		Use: "sig", // use for signature
+	}
+
+	b, err := jwk.MarshalJSON()
+	require.NoError(t, err)
+
+	return &jwk, b
+}
+
+func createFakeToken(t *testing.T, header, payload, signature string) string {
+	t.Helper()
+
+	header = base64.RawURLEncoding.EncodeToString([]byte(header))
+	payload = base64.RawURLEncoding.EncodeToString([]byte(payload))
+	return strings.Join([]string{header, payload, signature}, ".")
+}
+
+func createTokenUsingOpenSSL(t *testing.T, header, payload, key string) string {
+	t.Helper()
+
+	cmd := fmt.Sprintf("./../openssl-jwt.sh -a RS256 -k %s '%s' '%s'", key, header, payload)
+	jwt, err := exec.Command("bash", "-c", cmd).CombinedOutput()
+	require.NoError(t, err)
+	return string(jwt)
 }
