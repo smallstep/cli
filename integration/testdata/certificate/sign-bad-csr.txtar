@@ -1,0 +1,2 @@
+! exec step certificate sign bad.csr cacert.pem cakey.pem
+stderr 'error parsing bad.csr: error parsing certificate request as DER format'

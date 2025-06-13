@@ -1,0 +1,2 @@
+! exec step bogus
+stderr 'No help topic for ''bogus'''

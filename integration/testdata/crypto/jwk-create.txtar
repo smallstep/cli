@@ -1,0 +1,43 @@
+# defaults 
+exec step crypto jwk create --password-file password.txt defaults.pub defaults.priv 
+check_jwk defaults.pub defaults.priv ECDSA P-256
+
+
+# bad RSA key type
+! exec step crypto jwk create --kty rsa --size 2048 --alg HS384 fail.pub fail.priv 
+stderr 'invalid value ''rsa'' for flag ''--kty''; options are EC, RSA, OKP, or oct'
+
+
+# bad EC key type
+! exec step crypto jwk create --kty ec fail.pub fail.priv 
+stderr 'invalid value ''ec'' for flag ''--kty''; options are EC, RSA, OKP, or oct'
+
+
+# bad oct key type
+! exec step crypto jwk create --kty OCT fail.pub fail.priv 
+stderr 'invalid value ''OCT'' for flag ''--kty''; options are EC, RSA, OKP, or oct'
+
+
+# bad OKP key type
+! exec step crypto jwk create --kty okp fail.pub fail.priv 
+stderr 'invalid value ''okp'' for flag ''--kty''; options are EC, RSA, OKP, or oct'
+
+
+# no positional args
+! exec step crypto jwk create 
+stderr 'not enough positional arguments were provided in ''step crypto jwk create <public-jwk-file> <private-jwk-file>'''
+
+
+# not enough positional args 
+! exec step crypto jwk create fail.priv
+stderr 'not enough positional arguments were provided in ''step crypto jwk create <public-jwk-file> <private-jwk-file>'''
+
+
+# too many positional args 
+! exec step crypto jwk create fail.pub fail.priv fail
+stderr 'too many positional arguments were provided in ''step crypto jwk create <public-jwk-file> <private-jwk-file>'''
+
+
+# same positional args 
+! exec step crypto jwk create fail.priv fail.priv
+stderr 'positional arguments <public-jwk-file> and <private-jwk-file> cannot be equal in ''step crypto jwk create <public-jwk-file> <private-jwk-file>'''

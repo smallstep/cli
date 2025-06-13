@@ -52,14 +52,6 @@ Run the unit tests:
 make test
 ```
 
-#### Integration Tests
-
-Run the integration tests:
-
-```
-make integration
-```
-
 #### And coding style tests
 
 The currently enabled linters are defined in our shared [golangci-lint config](https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml)

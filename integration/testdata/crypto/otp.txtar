@@ -1,0 +1,37 @@
+# generate
+exec step crypto otp generate --issuer example.com --account foo@example.com
+cp stdout stdout.txt
+check_otp stdout.txt 32
+
+
+# generate with URL
+exec step crypto otp generate --issuer example.com --account foo@example.com --url
+cp stdout stdout.txt
+check_otp stdout.txt -1 
+
+
+# verify ok
+stdin code.txt
+exec step crypto otp verify --secret secret.txt
+stdout 'ok'
+
+
+# verify fails without code
+! exec step crypto otp verify --secret secret.txt
+stderr 'error while validating TOTP'
+
+
+# verify fails with invalid code
+stdin invalid.txt
+! exec step crypto otp verify --secret secret.txt
+stdout 'fail'
+
+
+# verify with URL 
+stdin urlcode.txt
+exec step crypto otp verify --secret urlsecret.txt
+
+
+# verify with URL fails without code
+! exec step crypto otp verify --secret urlsecret.txt
+stderr 'error while validating TOTP'

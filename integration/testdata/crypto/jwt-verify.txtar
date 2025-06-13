@@ -1,0 +1,176 @@
+# P-256 verification
+stdin p256token.txt
+exec step crypto jwt verify -key p256.pem -iss TestIssuer -aud TestAudience 
+
+
+# P-256 verify fails with RS256 alg
+stdin p256token.txt
+! exec step crypto jwt verify -key p256.pem -alg RS256 -iss TestIssuer -aud TestAudience 
+stderr 'alg ''RS256'' is not compatible with kty ''EC'' and crv ''P-256'''
+
+
+# P-256 verify fail with RSA384 alg
+stdin p256token.txt
+! exec step crypto jwt verify -key p256.pem -alg RS384 -iss TestIssuer -aud TestAudience 
+stderr 'alg ''RS384'' is not compatible with kty ''EC'' and crv ''P-256'''
+
+
+# RSA verification
+stdin rsatoken.txt
+exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience
+
+
+# RSA verification fails without alg
+stdin rsatoken.txt
+! exec step crypto jwt verify -key rsa.pem -iss TestIssuer -aud TestAudience
+stderr 'flag ''--alg'' is required with the given key'
+
+# Ed25519 verification 
+stdin ed25519token.txt 
+exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud TestAudience
+
+
+# Ed25519 verification fails with invalid token
+exec echo 'invalid token'
+stdin stdout
+! exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud TestAudience
+stderr 'error parsing token: compact JWS format must have three parts'
+
+
+# Ed25519 verification fails with invalid signature 
+stdin incomplete-signature.txt
+! exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud TestAudience
+stderr 'validation failed: invalid signature'
+
+
+# Ed25519 verification fails with wrong issuer
+stdin ed25519token.txt
+! exec step crypto jwt verify -key ed25519.json -iss WrongIssuer -aud TestAudience
+stderr 'validation failed: invalid issuer claim'
+
+
+# Ed25519 verification fails with wrong audience
+stdin ed25519token.txt
+! exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud WrongAudience
+stderr 'validation failed: invalid audience claim'
+
+
+# Ed25519 verification fails with invalid data
+stdin invalid-header.txt
+! exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud TestAudience
+stderr 'error parsing token: invalid character ''o'' in literal false'
+
+
+# Ed25519 verification fails with invalid JSON
+stdin invalid-header-json.txt
+! exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud TestAudience
+stderr 'error parsing token: json: cannot unmarshal array into Go value of type jose.rawHeader'
+
+
+# Ed25519 verification fails with changed attribute
+stdin invalid-header-changed-attribute.txt
+! exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud TestAudience
+stderr 'validation failed: invalid signature'
+
+
+# Ed25519 verification fails with bad header JSON
+stdin invalid-header-bad-json.txt
+! exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud TestAudience
+stderr 'error parsing token: unexpected end of JSON input'
+
+
+# Ed25519 verification fails with invalid payload
+stdin invalid-payload.txt
+! exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud TestAudience
+stderr 'error parsing token: invalid character ''e'' looking for beginning of value'
+
+
+# Verify with JWKS and KID 1
+stdin jwkstoken.txt
+exec step crypto jwt verify -jwks jwks.json -kid 1 -iss TestIssuer -aud TestAudience
+
+
+# Verify with JWKS and wrong KID 2
+stdin jwkstoken.txt
+! exec step crypto jwt verify -jwks jwks.json -kid 2 -iss TestIssuer -aud TestAudience
+stderr 'validation failed: invalid signature'
+
+
+# Verify with JWKS and non-existing KID 4
+stdin jwkstoken.txt
+! exec step crypto jwt verify -jwks jwks.json -kid 4 -iss TestIssuer -aud TestAudience
+stderr 'cannot find key with kid 4 on jwks.json'
+
+
+# Verify with JWKS, KID is optional when set in the JWT
+stdin jwkstoken.txt
+exec step crypto jwt verify -jwks jwks.json -iss TestIssuer -aud TestAudience
+
+
+# Verify token created by OpenSSL
+stdin ossltoken.txt
+exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience
+
+
+# Verify token created by OpenSSL fails with wrong issuer
+stdin ossltoken.txt
+! exec step crypto jwt verify -key rsa.pem -alg RS256 -iss WrongIssuer -aud TestAudience
+stderr 'validation failed: invalid issuer claim'
+
+
+# Verify token created by OpenSSL fails with wrong audience
+stdin ossltoken.txt
+! exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud WrongAudience
+stderr 'validation failed: invalid audience claim'
+
+
+# Verify token created by OpenSSL fails with wrong alg
+stdin ossltoken.txt
+! exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience -alg RS384
+stderr 'alg RS384 does not match the alg on JWT'
+
+
+# Verify token created by OpenSSL fails for expired token
+stdin expired-ossltoken.txt
+! exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience
+stderr 'token is expired by'
+
+
+# Verify token created by OpenSSL fails for expired token without no-exp
+stdin expired-ossltoken.txt
+! exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience --no-exp-check
+stderr 'flag ''--no-exp-check'' requires the ''--insecure'' flag'
+
+
+# Verify token created by OpenSSL for expired token succeeds with insecure flag
+stdin expired-ossltoken.txt
+exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience --no-exp-check --insecure
+
+
+# Verify token created by OpenSSL without expiry succeeds
+stdin no-expiry-ossltoken.txt
+exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience 
+
+
+# Verify token created by OpenSSL without nbf succeeds
+stdin zero-not-before-ossltoken.txt
+exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience 
+
+
+# Verify unsupported JSON serialized token 
+stdin jwt-json-serialization.json
+! exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience --no-exp-check
+stderr 'error parsing token: unexpected end of JSON input'
+
+
+# Verify unsupported JSON serialized token 
+stdin jwt-json-serialization-flattened.json
+! exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience --no-exp-check
+stderr 'error parsing token: unexpected end of JSON input'
+
+
+# Verify unsupported JSON serialized token 
+stdin jwt-json-serialization-multi.json
+! exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience --no-exp-check
+stderr 'error parsing token: unexpected end of JSON input'
+

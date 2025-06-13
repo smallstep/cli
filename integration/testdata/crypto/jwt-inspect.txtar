@@ -1,0 +1,16 @@
+# inspect
+stdin token.txt
+exec step crypto jwt inspect --insecure
+stdout 'ES256'
+
+# inspect fails without insecure flag
+exec echo foo
+stdin stdout
+! exec step crypto jwt inspect
+stderr '''step crypto jwt inspect'' requires the ''--insecure'' flag'
+
+# inspect fails for invalid token
+exec echo foo
+stdin stdout
+! exec step crypto jwt inspect --insecure
+stderr 'error parsing token: compact JWS format must have three parts'
