@@ -1,4 +1,4 @@
-package script
+package integration
 
 import (
 	"bytes"
@@ -27,23 +27,83 @@ import (
 	"go.step.sm/crypto/keyutil"
 )
 
+func TestCryptoJWKCommand(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jwk-create.txtar"}, // defaults and generic failures
+		Setup: func(e *testscript.Env) error {
+			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
+		},
+		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
+			"check_jwk": checkKeyPair,
+		},
+	})
+}
+
+func TestCryptoJWKCreateRSACommand(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jwk-create-rsa.txtar"}, // RSA generation
+		Setup: func(e *testscript.Env) error {
+			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
+		},
+		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
+			"check_jwk": checkKeyPair,
+		},
+	})
+}
+
+func TestCryptoJWKCreateECCommand(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jwk-create-ec.txtar"}, // EC generation
+		Setup: func(e *testscript.Env) error {
+			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
+		},
+		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
+			"check_jwk": checkKeyPair,
+		},
+	})
+}
+
+func TestCryptoJWKCreateOKPCommand(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jwk-create-okp.txtar"}, // OKP generation
+		Setup: func(e *testscript.Env) error {
+			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
+		},
+		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
+			"check_jwk": checkKeyPair,
+		},
+	})
+}
+
+func TestCryptoJWKCreateOctCommand(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jwk-create-oct.txtar"}, // oct generation
+		Setup: func(e *testscript.Env) error {
+			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
+		},
+		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
+			"check_jwk": checkKeyPair,
+		},
+	})
+}
+
 func TestCryptoJWTCommand(t *testing.T) {
-	p256JWK, p256Bytes := readKey(t, "./../testdata/p256.pem") // TODO(hs): can/must we get rid of these, and generate them on start of test?
-	rsaJWK, rsaBytes := readKey(t, "./../testdata/rsa2048.pem")
-	noUseBytes := readBytes(t, "./../testdata/jwk-no-use.json")
-	noAlgBytes := readBytes(t, "./../testdata/jwk-no-alg.json")
-	badKeyBytes := readBytes(t, "./../testdata/bad-key.json")
-	p256PubJSONBytes := readBytes(t, "./../testdata/jwk-pGoLJDgF5fgTNnB47SKMnVUzVNdu6MF0.pub.json")
-	p256PubPemBytes := readBytes(t, "./../testdata/p256.pem.pub")
-	twopemsBytes := readBytes(t, "./../testdata/twopems.pem")
-	badHeaderBytes := readBytes(t, "./../testdata/badheader.pem")
-	encP256Bytes := readBytes(t, "./../testdata/es256-enc.pem")
-	jwks, jwksBytes := readKeySet(t, "./../testdata/jwks.json")
+	p256JWK, p256Bytes := readKey(t, "./testdata/p256.pem") // TODO(hs): can/must we get rid of these, and generate them on start of test?
+	rsaJWK, rsaBytes := readKey(t, "./testdata/rsa2048.pem")
+	noUseBytes := readBytes(t, "./testdata/jwk-no-use.json")
+	noAlgBytes := readBytes(t, "./testdata/jwk-no-alg.json")
+	badKeyBytes := readBytes(t, "./testdata/bad-key.json")
+	p256PubJSONBytes := readBytes(t, "./testdata/jwk-pGoLJDgF5fgTNnB47SKMnVUzVNdu6MF0.pub.json")
+	p256PubPemBytes := readBytes(t, "./testdata/p256.pem.pub")
+	twopemsBytes := readBytes(t, "./testdata/twopems.pem")
+	badHeaderBytes := readBytes(t, "./testdata/badheader.pem")
+	encP256Bytes := readBytes(t, "./testdata/es256-enc.pem")
+	jwks, jwksBytes := readKeySet(t, "./testdata/jwks.json")
 	ed25519JWK, ed25519JSONBytes := generateJWK(t, "OKP", "Ed25519")
 
-	jwtJSON := readBytes(t, "./../testdata/jwt-json-serialization.json")
-	jwtFlattenedJSON := readBytes(t, "./../testdata/jwt-json-serialization-flattened.json")
-	jwtMultiJSON := readBytes(t, "./../testdata/jwt-json-serialization-multi.json")
+	jwtJSON := readBytes(t, "./testdata/jwt-json-serialization.json")
+	jwtFlattenedJSON := readBytes(t, "./testdata/jwt-json-serialization-flattened.json")
+	jwtMultiJSON := readBytes(t, "./testdata/jwt-json-serialization-multi.json")
 
 	now := time.Now()
 	p256Token := createToken(t, p256JWK, now)
@@ -133,16 +193,16 @@ func TestCryptoJWTCommand(t *testing.T) {
 
 			// write tokens created by OpenSSL
 			exp := now.Add(1 * time.Minute).Unix()
-			validOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, fmt.Sprintf(`{"iss": "TestIssuer", "aud": "TestAudience", "exp": %d}`, exp), "./../testdata/rsa2048.pem")
+			validOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, fmt.Sprintf(`{"iss": "TestIssuer", "aud": "TestAudience", "exp": %d}`, exp), "./testdata/rsa2048.pem")
 			err = os.WriteFile(filepath.Join(e.Cd, "ossltoken.txt"), []byte(validOpenSSLToken), 0600)
 			require.NoError(t, err)
-			expiredOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "TestIssuer", "aud": "TestAudience", "exp": 0}`, "./../testdata/rsa2048.pem")
+			expiredOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "TestIssuer", "aud": "TestAudience", "exp": 0}`, "./testdata/rsa2048.pem")
 			err = os.WriteFile(filepath.Join(e.Cd, "expired-ossltoken.txt"), []byte(expiredOpenSSLToken), 0600)
 			require.NoError(t, err)
-			noExpiryOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "TestIssuer", "aud": "TestAudience"}`, "./../testdata/rsa2048.pem")
+			noExpiryOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "TestIssuer", "aud": "TestAudience"}`, "./testdata/rsa2048.pem")
 			err = os.WriteFile(filepath.Join(e.Cd, "no-expiry-ossltoken.txt"), []byte(noExpiryOpenSSLToken), 0600)
 			require.NoError(t, err)
-			zeroNotBeforeOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "TestIssuer", "aud": "TestAudience", "nbf": 0}`, "./../testdata/rsa2048.pem")
+			zeroNotBeforeOpenSSLToken := createTokenUsingOpenSSL(t, `{"typ": "JWT", "alg": "RS256"}`, `{"iss": "TestIssuer", "aud": "TestAudience", "nbf": 0}`, "./testdata/rsa2048.pem")
 			err = os.WriteFile(filepath.Join(e.Cd, "zero-not-before-ossltoken.txt"), []byte(zeroNotBeforeOpenSSLToken), 0600)
 			require.NoError(t, err)
 
@@ -270,23 +330,29 @@ func checkKeyPair(ts *testscript.TestScript, neg bool, args []string) {
 	priv, err := jose.ParseKey([]byte(ts.ReadFile(args[1])), jose.WithPassword([]byte("password")))
 	ts.Check(err)
 
-	pubHash, err := pub.Thumbprint(crypto.SHA1)
-	ts.Check(err)
-	privHash, err := priv.Thumbprint(crypto.SHA1)
-	ts.Check(err)
+	keyType := strings.ToUpper(args[2])
+	if keyType == "OCT" {
+		if _, ok := pub.Key.([]byte); !ok {
+			ts.Fatalf("expected public key %s to be a byte slice; got %T", args[0], pub.Key)
+		}
+		if _, ok := priv.Key.([]byte); !ok {
+			ts.Fatalf("expected private key %s to be a byte slice; got %T", args[0], pub.Key)
+		}
+	} else {
+		pubHash, err := pub.Thumbprint(crypto.SHA1)
+		ts.Check(err)
+		privHash, err := priv.Thumbprint(crypto.SHA1)
+		ts.Check(err)
 
-	if !bytes.Equal(pubHash, privHash) {
-		ts.Fatalf("%s and %s have different thumbprints", args[0], args[1])
+		if !bytes.Equal(pubHash, privHash) {
+			ts.Fatalf("%s and %s have different thumbprints", args[0], args[1])
+		}
 	}
 
-	expectRSA := false
-	if s := strings.ToUpper(args[2]); s == "RSA" {
-		expectRSA = true
-	}
-
-	if expectRSA {
-		if !strings.HasPrefix(pub.Algorithm, "RS") {
-			ts.Fatalf("expected RSA key type, got %q", pub.Algorithm)
+	switch {
+	case keyType == "RSA":
+		if !strings.HasPrefix(pub.Algorithm, "RS") && !strings.HasPrefix(pub.Algorithm, "PS") {
+			ts.Fatalf("expected RSA algorithm for RSA key, got %q", pub.Algorithm)
 		}
 
 		expectedLength, err := strconv.Atoi(args[3])
@@ -299,31 +365,64 @@ func checkKeyPair(ts *testscript.TestScript, neg bool, args []string) {
 			ts.Fatalf("key length mismatch: expected %d, got %d", expectedLength, length)
 		}
 
+		if len(args) > 4 {
+			expectedAlgorithm := args[4]
+			if !strings.EqualFold(pub.Algorithm, expectedAlgorithm) {
+				ts.Fatalf("key algorithm mismatch: expected %s, got %s", expectedAlgorithm, pub.Algorithm)
+			}
+		}
+
 		return
-	}
-
-	if !strings.HasPrefix(pub.Algorithm, "ES") {
-		ts.Fatalf("expected EC key type, got %q", pub.Algorithm)
-	}
-
-	kc, err := keyCurve(pub)
-	ts.Check(err)
-
-	switch crv := strings.ToUpper(args[3]); crv {
-	case "P-256":
-		if kc != elliptic.P256() {
-			ts.Fatalf("expected P-256 curve, got %q", kc)
+	case keyType == "OKP":
+		if !strings.HasPrefix(pub.Algorithm, "EdDSA") {
+			ts.Fatalf("expected EC algorithm for EC key, got %q", pub.Algorithm)
 		}
-	case "P-384":
-		if kc != elliptic.P384() {
-			ts.Fatalf("expected P-384 curve, got %q", kc)
+
+		if crv := strings.ToUpper(args[3]); crv != "ED25519" {
+			ts.Fatalf("unexpected OKP curve %q", args[3])
 		}
-	case "P-521":
-		if kc != elliptic.P521() {
-			ts.Fatalf("expected P-521 curve, got %q", kc)
+	case keyType == "OCT":
+		if !strings.HasPrefix(pub.Algorithm, "HS") && !strings.HasPrefix(pub.Algorithm, "A") && pub.Algorithm != "dir" {
+			ts.Fatalf("expected oct algorithm for oct key, got %q", pub.Algorithm)
+		}
+
+		expectedAlgorithm := args[3]
+		if !strings.EqualFold(pub.Algorithm, expectedAlgorithm) {
+			ts.Fatalf("key algorithm mismatch: expected %s, got %s", expectedAlgorithm, pub.Algorithm)
+		}
+	case strings.HasPrefix(keyType, "EC"):
+		if !strings.HasPrefix(pub.Algorithm, "ES") && !strings.HasPrefix(pub.Algorithm, "ECDH") {
+			ts.Fatalf("expected EC algorithm for EC key, got %q", pub.Algorithm)
+		}
+
+		if len(args) > 4 {
+			expectedAlgorithm := args[4]
+			if !strings.EqualFold(pub.Algorithm, expectedAlgorithm) {
+				ts.Fatalf("key algorithm mismatch: expected %s, got %s", expectedAlgorithm, pub.Algorithm)
+			}
+		}
+
+		kc, err := keyCurve(pub)
+		ts.Check(err)
+
+		switch crv := strings.ToUpper(args[3]); crv {
+		case "P-256":
+			if kc != elliptic.P256() {
+				ts.Fatalf("expected P-256 curve, got %q", kc)
+			}
+		case "P-384":
+			if kc != elliptic.P384() {
+				ts.Fatalf("expected P-384 curve, got %q", kc)
+			}
+		case "P-521":
+			if kc != elliptic.P521() {
+				ts.Fatalf("expected P-521 curve, got %q", kc)
+			}
+		default:
+			ts.Fatalf("unknown curve %q", crv)
 		}
 	default:
-		ts.Fatalf("unknown curve %q", crv)
+		ts.Fatalf("unknown key format %q", args[2])
 	}
 }
 
@@ -442,7 +541,7 @@ func createFakeToken(t *testing.T, header, payload, signature string) string {
 func createTokenUsingOpenSSL(t *testing.T, header, payload, key string) string {
 	t.Helper()
 
-	cmd := fmt.Sprintf("./../openssl-jwt.sh -a RS256 -k %s '%s' '%s'", key, header, payload)
+	cmd := fmt.Sprintf("./openssl-jwt.sh -a RS256 -k %s '%s' '%s'", key, header, payload)
 	jwt, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	require.NoError(t, err)
 	return string(jwt)

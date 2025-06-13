@@ -1,0 +1,33 @@
+# OKP defaults 
+exec step crypto jwk create --password-file password.txt --kty OKP defaults.pub defaults.priv 
+check_jwk defaults.pub defaults.priv OKP Ed25519
+
+
+# OKP with curve 
+exec step crypto jwk create --password-file password.txt --kty OKP --crv Ed25519 crv.pub crv.priv 
+check_jwk crv.pub crv.priv OKP Ed25519
+
+
+# OKP with curve and KID
+exec step crypto jwk create --password-file password.txt --kty OKP --crv Ed25519 --kid keyid keyid.pub keyid.priv 
+check_jwk keyid.pub keyid.priv OKP Ed25519
+
+
+# OKP with alg
+exec step crypto jwk create --password-file password.txt --kty OKP --alg EdDSA alg.pub alg.priv 
+check_jwk alg.pub alg.priv OKP Ed25519
+
+
+# OKP with wrong arg fails
+! exec step crypto jwk create --password-file password.txt --kty OKP --alg ES256 fail.pub fail.priv
+stderr 'alg ''ES256'' is not compatible with kty ''OKP'' and crv ''Ed25519'''
+
+
+# OKP with size flag fails
+! exec step crypto jwk create --password-file password.txt --kty OKP --size 256 fail.pub fail.priv
+stderr 'flag ''--size'' is incompatible with ''--kty OKP'''
+
+
+# bad key type
+! exec step crypto jwk create --password-file password.txt --kty okp fail.pub fail.priv 
+stderr 'invalid value ''okp'' for flag ''--kty''; options are EC, RSA, OKP, or oct'

@@ -1,4 +1,4 @@
-package script
+package integration
 
 import (
 	"crypto/rand"
@@ -104,7 +104,7 @@ func TestCertificateVerifyCommand(t *testing.T) {
 }
 
 func TestCertificateFingerprintCommand(t *testing.T) {
-	b, err := os.ReadFile("./../testdata/intermediate_ca.crt")
+	b, err := os.ReadFile("./testdata/intermediate_ca.crt")
 	require.NoError(t, err)
 
 	testscript.Run(t, testscript.Params{

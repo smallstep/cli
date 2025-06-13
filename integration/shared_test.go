@@ -1,4 +1,4 @@
-package script
+package integration
 
 import (
 	"os"
@@ -11,6 +11,6 @@ import (
 
 func TestMain(m *testing.M) {
 	os.Exit(testscript.RunMain(m, map[string]func() int{
-		"step": cmd.Run,
+		"step": cmd.Run, // main entrypoint name
 	}))
 }
