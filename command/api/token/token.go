@@ -30,4 +30,8 @@ var (
 		Name:  "audience",
 		Usage: "Request a token for an audience other than the API Gateway",
 	}
+	tpmDeviceFlag = cli.StringFlag{
+		Name:  "tpm-device",
+		Usage: "(Optional) path to TPM device (e.g. /dev/tpmrm0)",
+	}
 )
