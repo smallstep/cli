@@ -1,0 +1,68 @@
+# EC defaults
+exec step crypto jwk create --password-file password.txt --kty EC ec-defaults.pub ec-defaults.priv 
+check_jwk ec-defaults.pub ec-defaults.priv ECDSA P-256
+
+
+# EC with kid 
+exec step crypto jwk create --password-file password.txt --kty EC --kid w00t ec-kid.pub ec-kid.priv 
+check_jwk ec-kid.pub ec-kid.priv ECDSA P-256
+
+
+# EC P-256
+exec step crypto jwk create --password-file password.txt --kty EC --crv P-256 --alg ES256 ec-p256.pub ec-p256.priv 
+check_jwk ec-p256.pub ec-p256.priv ECDSA P-256 
+
+
+# EC P-384
+exec step crypto jwk create --password-file password.txt --kty EC --crv P-384 --alg ES384 ec-p384.pub ec-p384.priv 
+check_jwk ec-p384.pub ec-p384.priv ECDSA P-384
+
+		
+# EC P-521
+exec step crypto jwk create --password-file password.txt --kty EC --crv P-521 --alg ES512 ec-p521.pub ec-p521.priv 
+check_jwk ec-p521.pub ec-p521.priv ECDSA P-521
+			
+	
+# EC RSA1_5 fails 
+! exec step crypto jwk create --password-file password.txt --kty EC --crv P-256 --alg RSA1_5 fail.pub fail.priv
+stderr 'alg ''RSA1_5'' is not compatible with kty ''EC'''
+
+
+# ECDHES enc
+exec step crypto jwk create --password-file password.txt --kty EC --crv P-256 --alg ECDH-ES --use enc ecdhes.pub ecdhes.priv 
+check_jwk ecdhes.pub ecdhes.priv ECDSA P-256 ECDH-ES 
+
+
+# ECDHES A128KW
+exec step crypto jwk create --password-file password.txt --kty EC --crv P-521 --alg ECDH-ES+A128KW --use enc ecdhes-a128kw.pub ecdhes-a128kw.priv 
+check_jwk ecdhes-a128kw.pub ecdhes-a128kw.priv ECDSA P-521 ECDH-ES+A128KW 
+
+
+# ECDHES A192KW
+exec step crypto jwk create --password-file password.txt --kty EC --crv P-521 --alg ECDH-ES+A192KW --use enc ecdhes-a192kw.pub ecdhes-a192kw.priv 
+check_jwk ecdhes-a192kw.pub ecdhes-a192kw.priv ECDSA P-521 ECDH-ES+A192KW 
+
+
+# ECDHES A256KW
+exec step crypto jwk create --password-file password.txt --kty EC --crv P-521 --alg ECDH-ES+A256KW --use enc ecdhes-a256kw.pub ecdhes-a256kw.priv 
+check_jwk ecdhes-a256kw.pub ecdhes-a256kw.priv ECDSA P-521 ECDH-ES+A256KW 
+
+
+# EC P256 ES384 fails
+! exec step crypto jwk create --password-file password.txt --kty EC --crv P-256 --alg ES384 fail.pub fail.priv
+stderr 'alg ''ES384'' is not compatible with kty ''EC'' and crv ''P-256'''
+
+
+# EC P256 size fails
+! exec step crypto jwk create --password-file password.txt --kty EC --crv P-256 --alg ES256 --size 2048 fail.pub fail.priv
+stderr 'flag ''--size'' is incompatible with ''--kty EC'''
+
+
+# EC P256 without password
+exec step crypto jwk create --no-password --insecure --kty EC ec-no-pass.pub ec-no-pass.priv 
+check_jwk_without_password ec-no-pass.pub ec-no-pass.priv ECDSA P-256
+
+
+# EC P256 without password without insecure fails
+! exec step crypto jwk create --no-password --kty EC fail.pub fail.priv 
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'

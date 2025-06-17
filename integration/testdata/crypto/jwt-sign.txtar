@@ -1,0 +1,152 @@
+# P-256 sign
+exec step crypto jwt sign -key p256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stdout 'eyJhbGciOiJFUzI1NiIsImtpZCI6Ii1pZ1pNalRCdkhFRG02bjkxQkgwT0k4ZUhqQko2b0I3UlpIZFA0RE81U0EiLCJ0eXAiOiJKV1QifQ'
+
+
+# P-256 sign with subtle flag
+exec step crypto jwt sign -key p256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf 1 -iat 1 -exp 1 -subtle
+stdout 'eyJhbGciOiJFUzI1NiIsImtpZCI6Ii1pZ1pNalRCdkhFRG02bjkxQkgwT0k4ZUhqQko2b0I3UlpIZFA0RE81U0EiLCJ0eXAiOiJKV1QifQ'
+
+
+# P-256 sign fails with JSON public key 
+! exec step crypto jwt sign -key p256.pub.json -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'cannot use a public key for signing'
+
+
+# P-256 sign fails with PEM public key 
+! exec step crypto jwt sign -key p256.pub.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'cannot use a public key for signing'
+
+
+# P-256 sign fails with PEM with multiple keys
+! exec step crypto jwt sign -key twopems.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'error decoding twopems.pem: contains more than one PEM encoded block'
+
+
+# P-256 sign fails with PEM with bad header
+! exec step crypto jwt sign -key badheader.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'error decoding badheader.pem: contains an unexpected header ''FOO PRIVATE KEY'''
+
+
+# P-256 sign with encrypted key
+exec step crypto jwt sign -key encp256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP -password-file password.txt
+stdout 'eyJhbGciOiJFUzI1NiIsImtpZCI6IkZhU3R4ZmFMYllVLVFaRHV6S0hWeGRONGppTzdNUTE3OGNWTEwydDBtSVkiLCJ0eXAiOiJKV1QifQ'
+
+# P-256 sign fails with encrypted key and wrong password
+! exec step crypto jwt sign -key encp256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP -password-file encp256.pem
+stderr 'error decrypting encp256.pem: x509: decryption password incorrect'
+
+
+# P-256 sign with expiry in the past fails without subtle
+! exec step crypto jwt sign -key p256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXPIRY_IN_THE_PAST
+stderr 'flag ''--exp'' must be in the future unless the ''--subtle'' flag is provided'
+
+
+# P-256 sign with expiry in the past with subtle
+exec step crypto jwt sign -key p256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXPIRY_IN_THE_PAST -subtle
+stdout 'eyJhbGciOiJFUzI1NiIsImtpZCI6Ii1pZ1pNalRCdkhFRG02bjkxQkgwT0k4ZUhqQko2b0I3UlpIZFA0RE81U0EiLCJ0eXAiOiJKV1QifQ'
+
+
+# RSA sign
+exec step crypto jwt sign -key rsa.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stdout 'eyJhbGciOiJSUzI1NiIsImtpZCI6InRvUVBfZV9UaU5fdHNJUlJaeVdnTkNhU2R1OFBrLW9VUExZcWhCSE5JdTQiLCJ0eXAiOiJKV1QifQ'
+
+
+# RSA sign with subtle flag
+exec step crypto jwt sign -key rsa.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf 1 -iat 1 -exp 1 -subtle
+stdout 'eyJhbGciOiJSUzI1NiIsImtpZCI6InRvUVBfZV9UaU5fdHNJUlJaeVdnTkNhU2R1OFBrLW9VUExZcWhCSE5JdTQiLCJ0eXAiOiJKV1QifQ'
+
+
+# RSA sign without issuer, audience, nor subject
+exec step crypto jwt sign -key rsa.pem -nbf $NBF -iat $IAT -exp $EXP -subtle
+stdout 'eyJhbGciOiJSUzI1NiIsImtpZCI6InRvUVBfZV9UaU5fdHNJUlJaeVdnTkNhU2R1OFBrLW9VUExZcWhCSE5JdTQiLCJ0eXAiOiJKV1QifQ'
+
+
+# RSA sign fails without issuer 
+! exec step crypto jwt sign -key rsa.pem -nbf $NBF -iat $IAT -exp $EXP
+stderr 'flag ''--iss'' is required unless ''--subtle'' is used'
+
+
+# RSA sign fails without audience 
+! exec step crypto jwt sign -key rsa.pem -iss TestIssuer -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'flag ''--aud'' is required unless ''--subtle'' is used'
+
+
+# RSA sign fails without issuer
+! exec step crypto jwt sign -key rsa.pem -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'flag ''--iss'' is required unless ''--subtle'' is used'
+
+
+# RSA sign fails without subject
+! exec step crypto jwt sign -key rsa.pem -iss TestIssuer -aud TestAudience -nbf $NBF -iat $IAT -exp $EXP
+stderr 'flag ''--sub'' is required unless ''--subtle'' is used'
+
+
+# RSA sign fails without expiry
+! exec step crypto jwt sign -key rsa.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT 
+stderr 'flag ''--exp'' is required unless ''--subtle'' is used'
+
+
+# JWK without use
+exec step crypto jwt sign -key nouse.json -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stdout 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9'
+
+
+# JWK without alg
+exec step crypto jwt sign -key noalg.json -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stdout 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9'
+
+
+# Non existing key
+! exec step crypto jwt sign -key none.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'error reading none.pem: open none.pem: no such file or directory'
+
+
+# Bad key format
+! exec step crypto jwt sign -key badkey.json -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'error reading badkey.json: unsupported format'
+
+
+# Sign with JWKS and KID 1
+exec step crypto jwt sign -jwks jwks.json -kid 1 -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stdout 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjEiLCJ0eXAiOiJKV1QifQ'
+
+
+# Sign with JWKS and KID 2
+exec step crypto jwt sign -jwks jwks.json -kid 2 -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stdout 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ'
+
+
+# Sign with JWKS and KID 3 fails
+! exec step crypto jwt sign -jwks jwks.json -kid 3 -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'invalid jwk use'
+
+
+# Sign with JWKS and KID 4 fails
+! exec step crypto jwt sign -jwks jwks.json -kid 4 -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'cannot find key with kid 4 on jwks.json'
+
+
+# Sign with JWKS without KID fails
+! exec step crypto jwt sign -jwks jwks.json -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'flag ''--kid'' requires the ''--jwks'' flag'
+
+
+# Sign with JWKS and key fails
+! exec step crypto jwt sign -jwks jwks.json -key p256.pem -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'flag ''--key'' and flag ''--jwks'' are mutually exclusive'
+
+
+# Sign with non-existing JWKS fails
+! exec step crypto jwt sign -jwks nojwks.json -kid 1 -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'error reading nojwks.json: open nojwks.json: no such file or directory'
+
+
+# Sign with unsupported format fails
+! exec step crypto jwt sign -jwks rsa.pem -kid 1 -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stderr 'error reading rsa.pem: unsupported format'
+
+
+# Sign with Ed25519
+exec step crypto jwt sign -key ed25519.json -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+stdout 'eyJhbGciOiJFZERTQSIsImtpZCI6ImtpZC1PS1AtRWQyNTUxOSIsInR5cCI6IkpXVCJ9'

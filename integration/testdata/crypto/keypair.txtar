@@ -1,0 +1,112 @@
+# This file contains multiple test cases for the "step crypto keypair" 
+# command. Splitting the test cases in different files sometimes resulted
+# in timeouts that I haven't the root cause for (yet).
+
+# defaults
+exec step crypto keypair --password-file password.txt key.pub key.priv 
+check_key_pair key.pub key.priv ECDSA P-256
+
+
+# no args
+! exec step crypto keypair
+stderr 'not enough positional arguments were provided in ''step crypto keypair <pub_file> <priv_file>'''
+
+
+# single arg 
+! exec step crypto keypair rsa-single.pub
+stderr 'not enough positional arguments were provided in ''step crypto keypair <pub_file> <priv_file>'''
+
+
+# invalid key type
+! exec step crypto keypair --kty foo  error.pub error.priv
+stderr 'invalid value ''foo'' for flag ''--kty''; options are RSA, EC, OK'
+
+
+# no-password without insecure
+! exec step crypto keypair --no-password error.pub error.priv
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'
+
+
+# no-password with insecure
+exec step crypto keypair --no-password --insecure no-pass.pub no-pass.priv
+check_key_pair key.pub key.priv ECDSA P-256
+
+
+# RSA defaults 
+exec step crypto keypair --password-file password.txt --kty RSA rsa-key.pub rsa-key.priv
+check_key_pair rsa-key.pub rsa-key.priv RSA 2048
+
+
+# RSA size 1024 with insecure flag 
+exec step crypto keypair --password-file password.txt --kty RSA --size 1024 --insecure rsa-1024.pub rsa-1024.priv
+check_key_pair rsa-1024.pub rsa-1024.priv RSA 1024
+
+
+# RSA size 3072 
+exec step crypto keypair --password-file password.txt --kty RSA --size 3072 rsa-3072.pub rsa-3072.priv
+check_key_pair rsa-3072.pub rsa-3072.priv RSA 3072
+
+
+# RSA size 4096
+exec step crypto keypair --password-file password.txt --kty RSA --size 4096 rsa-4096.pub rsa-4096.priv
+check_key_pair rsa-4096.pub rsa-4096.priv RSA 4096
+
+
+# RSA size 0 
+! exec step crypto keypair --kty RSA --size 0 rsa-error.pub rsa-error.priv
+stderr 'flag ''--size'' requires at least 2048 unless ''--insecure'' flag is provided'
+
+
+# RSA size 16 without insecure flag 
+! exec step crypto keypair --kty RSA --size 16 rsa-error.pub rsa-error.priv
+stderr 'flag ''--size'' requires at least 2048 unless ''--insecure'' flag is provided'
+
+
+# RSA negative size 
+! exec step crypto keypair --kty RSA --size -1 --insecure rsa-error.pub rsa-error.priv
+stderr 'flag ''--size'' must be greater than or equal to 0'
+
+
+# RSA size 16 with insecure flag; skipped on Go < 1.24, because small keys were supported on those
+[go1.24] ! exec step crypto keypair --password-file password.txt --kty RSA --size 16 --insecure rsa-error.pub rsa-error.priv
+[go1.24] stderr 'error generating RSA key: rsa: key too small'
+
+
+# RSA size 1024 without insecure flag 
+! exec step crypto keypair --kty RSA --size 1024 rsa-error.pub rsa-error.priv
+stderr 'flag ''--size'' requires at least 2048 unless ''--insecure'' flag is provided'
+
+
+# RSA with EC curve 
+! exec step crypto keypair --kty RSA --size 2048 --crv P-256 rsa-error.pub rsa-error.priv
+stderr 'flag ''--curve'' is incompatible with flag ''--kty RSA'''
+
+
+# EC defaults
+exec step crypto keypair --password-file password.txt --kty EC ec-key.pub ec-key.priv
+check_key_pair ec-key.pub ec-key.priv EC P-256
+
+
+# EC P-256
+exec step crypto keypair --password-file password.txt --kty EC --crv P-256 ec-256.pub ec-256.priv
+check_key_pair ec-256.pub ec-256.priv EC P-256
+
+
+# EC P-384
+exec step crypto keypair --password-file password.txt --kty EC --crv P-384 ec-384.pub ec-384.priv
+check_key_pair ec-384.pub ec-384.priv EC P-384
+
+
+# EC P-521
+exec step crypto keypair --password-file password.txt --kty EC --crv P-521 ec-521.pub ec-521.priv
+check_key_pair ec-521.pub ec-521.priv EC P-521
+
+
+# EC bad curve 
+! exec step crypto keypair --kty EC --crv P-512 ec-error.pub ec-error.priv
+stderr 'flag ''--kty EC'' is incompatible with flag ''--curve P-512'''
+
+
+# EC with RSA size
+! exec step crypto keypair --kty EC --size 2048 ec-error.pub ec-error.priv
+stderr 'flag ''--size'' is incompatible with flag ''--kty EC'''

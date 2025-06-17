@@ -1,0 +1,128 @@
+# RSA defaults
+exec step crypto jwk create --password-file password.txt --kty RSA rsa-defaults.pub rsa-defaults.priv 
+check_jwk rsa-defaults.pub rsa-defaults.priv  RSA 2048 RS256
+
+
+# RSA 2048, RS256
+exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg RS256 rsa-2048-rs256.pub rsa-2048-rs256.priv 
+check_jwk rsa-2048-rs256.pub rsa-2048-rs256.priv RSA 2048 RS256
+
+
+# RSA 2048, RS384
+exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg RS384 rsa-2048-rs384.pub rsa-2048-rs384.priv 
+check_jwk rsa-2048-rs384.pub rsa-2048-rs384.priv RSA 2048 RS384
+
+
+# RSA 2048, RS512
+exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg RS512 rsa-2048-rs512.pub rsa-2048-rs512.priv 
+check_jwk rsa-2048-rs512.pub rsa-2048-rs512.priv RSA 2048 RS512
+
+
+# RSA 4096, RS256
+exec step crypto jwk create --password-file password.txt --kty RSA --size 4096 --alg RS256 rsa-4096-rs256.pub rsa-4096-rs256.priv 
+check_jwk rsa-4096-rs256.pub rsa-4096-rs256.priv RSA 4096 RS256
+
+
+# RSA 4096, RS384
+exec step crypto jwk create --password-file password.txt --kty RSA --size 4096 --alg RS384 rsa-4096-rs384.pub rsa-4096-rs384.priv 
+check_jwk rsa-4096-rs384.pub rsa-4096-rs384.priv RSA 4096 RS384
+
+
+# RSA 4096, RS512
+exec step crypto jwk create --password-file password.txt --kty RSA --size 4096 --alg RS512 rsa-4096-rs512.pub rsa-4096-rs512.priv 
+check_jwk rsa-4096-rs512.pub rsa-4096-rs512.priv RSA 4096 RS512
+
+
+# RSA 2048, PS256
+exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg PS256 rsa-2048-ps256.pub rsa-2048-ps256.priv 
+check_jwk rsa-2048-ps256.pub rsa-2048-ps256.priv RSA 2048 PS256
+
+
+# RSA 2048, PS384
+exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg PS384 rsa-2048-ps384.pub rsa-2048-ps384.priv 
+check_jwk rsa-2048-ps384.pub rsa-2048-ps384.priv RSA 2048 PS384
+
+
+# RSA 2048, PS512
+exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg PS512 rsa-2048-ps512.pub rsa-2048-ps512.priv 
+check_jwk rsa-2048-ps512.pub rsa-2048-ps512.priv RSA 2048 PS512
+
+
+# RSA 1024, PS256 fails
+! exec step crypto jwk create --password-file password.txt --kty RSA --size 1024 --alg PS256 fail.pub fail.priv 
+stderr 'flag ''--size'' requires at least 2048 unless ''--insecure'' flag is provided'
+
+
+# RSA 1024, PS256 with insecure flag; skipped on Go < 1.24, because small keys were supported on those
+[go1.24] ! exec step crypto jwk create --password-file password.txt --kty RSA --size 1024 --alg PS256 rsa-1024-ps256.pub rsa-1024-ps256.priv --insecure
+[go1.24] stderr 'the size of the RSA key should be at least 2048 bits'
+			
+
+# RSA 0, PS256
+! exec step crypto jwk create --password-file password.txt --kty RSA --size 0 --alg PS256 --insecure fail.pub fail.priv 
+stderr 'flag ''--size'' must be greater than or equal to 0'
+
+
+# RSA 2048, bad alg
+! exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg BADALG fail.pub fail.priv 
+stderr 'alg ''BADALG'' is not compatible with kty ''RSA'''
+
+		
+# RSA 2048, bad alg with enc
+! exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg PS256 --use enc fail.pub fail.priv 
+stderr 'alg ''PS256'' is not compatible with kty ''RSA'''
+
+
+# RSA 2048, RSA-OAEP
+exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg RSA-OAEP --use enc rsa-2048-rsaoaep.pub rsa-2048-rsaoaep.priv 
+check_jwk rsa-2048-rsaoaep.pub rsa-2048-rsaoaep.priv RSA 2048 RSA-OAEP
+
+
+# RSA 2048, RSA-OAEP-256
+exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg RSA-OAEP-256 --use enc rsa-2048-rsaoaep256.pub rsa-2048-rsaoaep256.priv 
+check_jwk rsa-2048-rsaoaep256.pub rsa-2048-rsaoaep256.priv RSA 2048 RSA-OAEP-256
+
+
+# RSA 2048, bad alg
+! exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg ES256 fail.pub fail.priv 
+stderr 'alg ''ES256'' is not compatible with kty ''RSA'''
+
+
+# RSA 2048, bad alg
+! exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg HS384 fail.pub fail.priv 
+stderr 'alg ''HS384'' is not compatible with kty ''RSA'''
+
+
+# no password without insecure flag
+! exec step crypto jwk create --kty RSA --size 2048 --alg RS256 fail.pub fail.priv --no-password
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'
+
+
+# no password with insecure flag
+exec step crypto jwk create --kty RSA --size 2048 --alg RS256 nopass.pub nopass.priv --no-password --insecure
+check_jwk nopass.pub nopass.priv RSA 2048 RS256
+
+
+# RSA 2048, RSA1_5 enc
+exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg RSA1_5 --use enc rsa-2048-rsa15.pub rsa-2048-rsa15.priv 
+check_jwk rsa-2048-rsa15.pub rsa-2048-rsa15.priv RSA 2048 RSA1_5
+
+
+# RSA 2048, PS512 with kid
+exec step crypto jwk create --kty RSA --size 2048 --alg PS512 --kid snarf kid.pub kid.priv --no-password --insecure
+check_jwk kid.pub kid.priv RSA 2048 PS512
+
+
+# RSA 2048, with curve
+! exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg RS256 --crv P-256 fail.pub fail.priv 
+stderr 'flag ''--crv'' is incompatible with ''--kty RSA'''
+
+
+# OKP without password
+exec step crypto jwk create --no-password --insecure --kty RSA rsa-no-pass.pub rsa-no-pass.priv 
+check_jwk_without_password rsa-no-pass.pub rsa-no-pass.priv RSA 2048 RS256
+
+
+# OKP without password without insecure fails
+! exec step crypto jwk create --no-password --kty RSA fail.pub fail.priv 
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'

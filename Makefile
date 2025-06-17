@@ -157,13 +157,6 @@ race:
 
 .PHONY: test race
 
-integrate: integration
-
-integration: build
-	$Q $(CGO_OVERRIDE) gotestsum -- -tags=integration ./integration/...
-
-.PHONY: integrate integration
-
 #########################################
 # Linting
 #########################################

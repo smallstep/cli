@@ -1,0 +1,98 @@
+# oct defaults
+exec step crypto jwk create --password-file password.txt --kty oct oct-defaults.pub oct-defaults.priv 
+check_jwk oct-defaults.pub oct-defaults.priv oct HS256
+
+
+# oct too small without insecure fails
+! exec step crypto jwk create --password-file password.txt --size 4 --kty oct fail.pub fail.priv 
+stderr 'flag ''--size'' requires at least 16 unless ''--insecure'' flag is provided'
+
+
+# oct small size with insecure
+exec step crypto jwk create --password-file password.txt --kty oct --size 4 --insecure oct-small.pub oct-small.priv 
+check_jwk oct-small.pub oct-small.priv oct HS256
+
+
+# oct size 0 with insecure fails
+! exec step crypto jwk create --password-file password.txt --size 0 --insecure --kty oct fail.pub fail.priv 
+stderr 'must be greater than or equal to 0'
+
+
+# oct HS256
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 64 oct-hs256.pub oct-hs256.priv 
+check_jwk oct-hs256.pub oct-hs256.priv oct HS256
+
+
+# oct HS384
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS384 --size 64 oct-hs384.pub oct-hs384.priv 
+check_jwk oct-hs384.pub oct-hs384.priv oct HS384
+
+
+# oct HS512
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS512 --size 64 oct-hs512.pub oct-hs512.priv 
+check_jwk oct-hs512.pub oct-hs512.priv oct HS512
+
+
+# oct HS256 with enc use fails
+! exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 32 --use enc fail.pub fail.priv
+stderr 'alg ''HS256'' is not compatible with kty ''oct'''
+
+
+# oct enc dir
+exec step crypto jwk create --password-file password.txt --kty oct --alg dir --size 64 --use enc oct-enc-dir.pub oct-enc-dir.priv 
+check_jwk oct-enc-dir.pub oct-enc-dir.priv oct dir
+
+
+# oct A128KW
+exec step crypto jwk create --password-file password.txt --kty oct --alg A128KW --size 32 --use enc oct-a128kw.pub oct-a128kw.priv 
+check_jwk oct-a128kw.pub oct-a128kw.priv oct A128KW
+
+
+# oct A192KW
+exec step crypto jwk create --password-file password.txt --kty oct --alg A192KW --size 32 --use enc oct-a192kw.pub oct-a192kw.priv 
+check_jwk oct-a192kw.pub oct-a192kw.priv oct A192KW
+
+
+# oct A256KW
+exec step crypto jwk create --password-file password.txt --kty oct --alg A256KW --size 32 --use enc oct-a256kw.pub oct-a256kw.priv 
+check_jwk oct-a256kw.pub oct-a256kw.priv oct A256KW
+
+
+# oct A128GCMKW
+exec step crypto jwk create --password-file password.txt --kty oct --alg A128GCMKW --size 32 --use enc oct-a128gcmkw.pub oct-a128gcmkw.priv 
+check_jwk oct-a128gcmkw.pub oct-a128gcmkw.priv oct A128GCMKW
+
+
+# oct A192GCMKW
+exec step crypto jwk create --password-file password.txt --kty oct --alg A192GCMKW --size 32 --use enc oct-a192gcmkw.pub oct-a192gcmkw.priv 
+check_jwk oct-a192gcmkw.pub oct-a192gcmkw.priv oct A192GCMKW
+
+
+# oct A256GCMKW
+exec step crypto jwk create --password-file password.txt --kty oct --alg A256GCMKW --size 32 --use enc oct-a256gcmkw.pub oct-a256gcmkw.priv 
+check_jwk oct-a256gcmkw.pub oct-a256gcmkw.priv oct A256GCMKW
+
+
+# oct 256 HS256 
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 32 --kid foo oct-256-hs256.pub oct-256-hs256.priv 
+check_jwk oct-256-hs256.pub oct-256-hs256.priv oct HS256
+
+
+# oct with RSA algorithm fails
+! exec step crypto jwk create --password-file password.txt --kty oct --alg RS256 --size 32 fail.pub fail.priv
+stderr 'alg ''RS256'' is not compatible with kty ''oct'''
+
+
+# oct with curve fails 
+! exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 32 --curve P-256 fail.pub fail.priv
+stderr 'flag ''--crv'' is incompatible with ''--kty oct'''
+
+
+# oct without password
+exec step crypto jwk create --no-password --insecure --kty oct oct-no-pass.pub oct-no-pass.priv 
+check_jwk_without_password oct-no-pass.pub oct-no-pass.priv oct HS256
+
+
+# oct without password without insecure fails
+! exec step crypto jwk create --no-password --kty oct fail.pub fail.priv 
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'
