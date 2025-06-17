@@ -17,9 +17,13 @@ var Version = "N/A"
 // the time of build
 var BuildTime = "N/A"
 
+// AppName is the name of the binary. Defaults to "step" if not set.
+var AppName = ""
+
 func init() {
 	step.Set("Smallstep CLI", Version, BuildTime)
 	ca.UserAgent = step.Version()
+	cmd.SetName(AppName)
 }
 
 func main() {

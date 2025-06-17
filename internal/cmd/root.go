@@ -80,6 +80,16 @@ func Run() int {
 	return 0
 }
 
+var (
+	stepAppName = "step"
+)
+
+func SetName(appName string) {
+	if appName != "" {
+		stepAppName = appName
+	}
+}
+
 func newApp(stdout, stderr io.Writer) *cli.App {
 	// Define default file writers and prompters for go.step.sm/crypto
 	pemutil.WriteFile = utils.WriteFile
@@ -103,8 +113,8 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 
 	// Configure cli app
 	app := cli.NewApp()
-	app.Name = "step"
-	app.HelpName = "step"
+	app.Name = stepAppName     // "step" by default
+	app.HelpName = stepAppName // "step" by default
 	app.Usage = "plumbing for distributed systems"
 	app.Version = step.Version()
 	app.Commands = command.Retrieve()
