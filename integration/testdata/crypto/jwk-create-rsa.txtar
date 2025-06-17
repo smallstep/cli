@@ -116,3 +116,13 @@ check_jwk kid.pub kid.priv RSA 2048 PS512
 # RSA 2048, with curve
 ! exec step crypto jwk create --password-file password.txt --kty RSA --size 2048 --alg RS256 --crv P-256 fail.pub fail.priv 
 stderr 'flag ''--crv'' is incompatible with ''--kty RSA'''
+
+
+# OKP without password
+exec step crypto jwk create --no-password --insecure --kty RSA rsa-no-pass.pub rsa-no-pass.priv 
+check_jwk_without_password rsa-no-pass.pub rsa-no-pass.priv RSA 2048 RS256
+
+
+# OKP without password without insecure fails
+! exec step crypto jwk create --no-password --kty RSA fail.pub fail.priv 
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'

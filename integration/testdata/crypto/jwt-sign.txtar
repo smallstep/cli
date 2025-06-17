@@ -8,7 +8,6 @@ exec step crypto jwt sign -key p256.pem -iss TestIssuer -aud TestAudience -sub T
 stdout 'eyJhbGciOiJFUzI1NiIsImtpZCI6Ii1pZ1pNalRCdkhFRG02bjkxQkgwT0k4ZUhqQko2b0I3UlpIZFA0RE81U0EiLCJ0eXAiOiJKV1QifQ'
 
 
-
 # P-256 sign fails with JSON public key 
 ! exec step crypto jwt sign -key p256.pub.json -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
 stderr 'cannot use a public key for signing'

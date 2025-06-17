@@ -56,3 +56,13 @@ stderr 'alg ''ES384'' is not compatible with kty ''EC'' and crv ''P-256'''
 # EC P256 size fails
 ! exec step crypto jwk create --password-file password.txt --kty EC --crv P-256 --alg ES256 --size 2048 fail.pub fail.priv
 stderr 'flag ''--size'' is incompatible with ''--kty EC'''
+
+
+# EC P256 without password
+exec step crypto jwk create --no-password --insecure --kty EC ec-no-pass.pub ec-no-pass.priv 
+check_jwk_without_password ec-no-pass.pub ec-no-pass.priv ECDSA P-256
+
+
+# EC P256 without password without insecure fails
+! exec step crypto jwk create --no-password --kty EC fail.pub fail.priv 
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'

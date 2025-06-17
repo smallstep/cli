@@ -51,6 +51,9 @@ func TestCertificateSignCommand(t *testing.T) {
 
 			return nil
 		},
+		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
+			"check_certificate": checkCertificate,
+		},
 	})
 
 	testscript.Run(t, testscript.Params{
@@ -116,4 +119,14 @@ func TestCertificateFingerprintCommand(t *testing.T) {
 			return nil
 		},
 	})
+}
+
+func checkCertificate(ts *testscript.TestScript, neg bool, args []string) {
+	contents := ts.ReadFile("stdout") // directly reads from stdout of the previously executed command
+	bundle, err := pemutil.ParseCertificateBundle([]byte(contents))
+	ts.Check(err)
+
+	if len(bundle) != 1 {
+		ts.Fatalf("expected 1 certificate; got %d", len(bundle))
+	}
 }

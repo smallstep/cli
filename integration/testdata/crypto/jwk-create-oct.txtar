@@ -86,3 +86,13 @@ stderr 'alg ''RS256'' is not compatible with kty ''oct'''
 # oct with curve fails 
 ! exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 32 --curve P-256 fail.pub fail.priv
 stderr 'flag ''--crv'' is incompatible with ''--kty oct'''
+
+
+# oct without password
+exec step crypto jwk create --no-password --insecure --kty oct oct-no-pass.pub oct-no-pass.priv 
+check_jwk_without_password oct-no-pass.pub oct-no-pass.priv oct HS256
+
+
+# oct without password without insecure fails
+! exec step crypto jwk create --no-password --kty oct fail.pub fail.priv 
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'

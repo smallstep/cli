@@ -31,3 +31,13 @@ stderr 'flag ''--size'' is incompatible with ''--kty OKP'''
 # bad key type
 ! exec step crypto jwk create --password-file password.txt --kty okp fail.pub fail.priv 
 stderr 'invalid value ''okp'' for flag ''--kty''; options are EC, RSA, OKP, or oct'
+
+
+# OKP without password
+exec step crypto jwk create --no-password --insecure --kty OKP okp-no-pass.pub okp-no-pass.priv 
+check_jwk_without_password okp-no-pass.pub okp-no-pass.priv OKP Ed25519
+
+
+# OKP without password without insecure fails
+! exec step crypto jwk create --no-password --kty OKP fail.pub fail.priv 
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'

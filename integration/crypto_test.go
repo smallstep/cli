@@ -46,7 +46,8 @@ func TestCryptoJWKCreateRSACommand(t *testing.T) {
 			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
 		},
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
-			"check_jwk": checkKeyPair,
+			"check_jwk":                  checkKeyPair,
+			"check_jwk_without_password": checkKeyPairWithoutPassword,
 		},
 	})
 }
@@ -58,7 +59,8 @@ func TestCryptoJWKCreateECCommand(t *testing.T) {
 			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
 		},
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
-			"check_jwk": checkKeyPair,
+			"check_jwk":                  checkKeyPair,
+			"check_jwk_without_password": checkKeyPairWithoutPassword,
 		},
 	})
 }
@@ -70,7 +72,8 @@ func TestCryptoJWKCreateOKPCommand(t *testing.T) {
 			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
 		},
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
-			"check_jwk": checkKeyPair,
+			"check_jwk":                  checkKeyPair,
+			"check_jwk_without_password": checkKeyPairWithoutPassword,
 		},
 	})
 }
@@ -82,7 +85,8 @@ func TestCryptoJWKCreateOctCommand(t *testing.T) {
 			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
 		},
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
-			"check_jwk": checkKeyPair,
+			"check_jwk":                  checkKeyPair,
+			"check_jwk_without_password": checkKeyPairWithoutPassword,
 		},
 	})
 }
@@ -311,16 +315,10 @@ func TestCryptoHelp(t *testing.T) {
 	})
 }
 
-// checkKeyPair checks that the public/private key pair is valid. It performs
-// the following checks:
-//
-//   - Read and parse the JWK public key, validating it's a valid public key
-//   - Read and parse the JWK private key, validating it's a valid private key
-//   - Compare the public and private key SHA-1 thumbprints to verify they match
-//   - The type of the key that was created
-//   - For RSA keys, the key size is the expected size
-//   - For EC keys, the key curve is the expected curve
-func checkKeyPair(ts *testscript.TestScript, neg bool, args []string) {
+// checkKeyPair checks that the public/private key pair provided as filenames in
+// the first and second argument is valid. It always uses the password "password".
+// Other validations are delegated to the checkKeyDetails function.
+func checkKeyPair(ts *testscript.TestScript, _ bool, args []string) {
 	if len(args) < 4 {
 		ts.Fatalf("expected at least 4 arguments, got %d", len(args))
 	}
@@ -330,6 +328,35 @@ func checkKeyPair(ts *testscript.TestScript, neg bool, args []string) {
 	priv, err := jose.ParseKey([]byte(ts.ReadFile(args[1])), jose.WithPassword([]byte("password")))
 	ts.Check(err)
 
+	checkKeyDetails(ts, pub, priv, args)
+}
+
+// checkKeyPair checks that the public/private key pair provided as filenames in
+// the first and second argument is valid. It assumes no password is set on the file.
+// Other validations are delegated to the checkKeyDetails function.
+func checkKeyPairWithoutPassword(ts *testscript.TestScript, _ bool, args []string) {
+	if len(args) < 4 {
+		ts.Fatalf("expected at least 4 arguments, got %d", len(args))
+	}
+
+	pub, err := jose.ParseKey([]byte(ts.ReadFile(args[0])))
+	ts.Check(err)
+	priv, err := jose.ParseKey([]byte(ts.ReadFile(args[1])))
+	ts.Check(err)
+
+	checkKeyDetails(ts, pub, priv, args)
+}
+
+// checkKeyDetails checks that the public/private key pair is valid. It performs
+// the following checks:
+//
+//   - Compare the public and private key SHA-1 thumbprints to verify they match
+//   - The type of the key that was created
+//   - For RSA keys, the key size is the expected size, and using the expected algorithm
+//   - For EC keys, the key curve is the expected curve, and using the expected algorithm
+//   - For OKP keys, the key curve is the expected curve, and using the expected algorithm
+//   - For oct keys, the key parts are of the expected type, and using the expected algorithm
+func checkKeyDetails(ts *testscript.TestScript, pub, priv *jose.JSONWebKey, args []string) {
 	keyType := strings.ToUpper(args[2])
 	if keyType == "OCT" {
 		if _, ok := pub.Key.([]byte); !ok {
