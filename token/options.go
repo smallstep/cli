@@ -21,6 +21,7 @@ import (
 	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/provisioner"
 	"go.step.sm/crypto/x25519"
 )
 
@@ -105,6 +106,20 @@ func WithSSH(v interface{}) Options {
 	return WithStep(map[string]interface{}{
 		"ssh": v,
 	})
+}
+
+// WithValidityOptions returns an Options function that sets the certificate
+// validity period in the token claims.
+func WithValidityOptions(notBefore, notAfter provisioner.TimeDuration) Options {
+	return func(c *Claims) error {
+		if !notBefore.IsZero() {
+			c.Set("certNotBefore", notBefore.Time().Unix())
+		}
+		if !notAfter.IsZero() {
+			c.Set("certNotAfter", notAfter.Time().Unix())
+		}
+		return nil
+	}
 }
 
 // WithConfirmationFingerprint returns an Options function that sets the cnf
