@@ -247,21 +247,30 @@ func (f *CertificateFlow) GenerateIdentityToken(ctx *cli.Context) (string, error
 
 // Sign signs the CSR using the online or the offline certificate authority.
 func (f *CertificateFlow) Sign(ctx *cli.Context, tok string, csr api.CertificateRequest, crtFile string) error {
-	client, err := f.GetClient(ctx, tok)
+	certs, err := f.SignReturnsCerts(ctx, tok, csr)
 	if err != nil {
 		return err
+	}
+	return WriteCerts(crtFile, certs)
+}
+
+// SignReturnsCerts signs the CSR and returns the certificates
+func (f *CertificateFlow) SignReturnsCerts(ctx *cli.Context, tok string, csr api.CertificateRequest) ([]*x509.Certificate, error) {
+	client, err := f.GetClient(ctx, tok)
+	if err != nil {
+		return nil, err
 	}
 
 	// parse times or durations
 	notBefore, notAfter, err := flags.ParseTimeDuration(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// parse template data
 	templateData, err := flags.ParseTemplateData(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req := &api.SignRequest{
@@ -274,21 +283,18 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, tok string, csr api.Certificate
 
 	resp, err := client.Sign(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(resp.CertChainPEM) == 0 {
 		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
 	}
-	var data []byte
-	for _, certPEM := range resp.CertChainPEM {
-		pemblk, err := pemutil.Serialize(certPEM.Certificate)
-		if err != nil {
-			return errors.Wrap(err, "error serializing from step-ca API response")
-		}
-		data = append(data, pem.EncodeToMemory(pemblk)...)
+	certs := make([]*x509.Certificate, len(resp.CertChainPEM))
+
+	for i, certPEM := range resp.CertChainPEM {
+		certs[i] = certPEM.Certificate
 	}
-	return utils.WriteFile(crtFile, data, 0600)
+	return certs, nil
 }
 
 // CreateSignRequest is a helper function that given an x509 OTT returns a
@@ -417,4 +423,18 @@ func splitSANs(args ...[]string) (dnsNames []string, ipAddresses []net.IP, email
 		}
 	}
 	return x509util.SplitSANs(unique)
+}
+
+// writeCerts writes one or more certificates to a file using the standard overwrite protection
+func WriteCerts(filename string, certs []*x509.Certificate) error {
+	var data []byte
+	for _, certPEM := range certs {
+		pemblk, err := pemutil.Serialize(certPEM)
+		if err != nil {
+			return errors.Wrap(err, "error serializing from step-ca API response")
+		}
+		data = append(data, pem.EncodeToMemory(pemblk)...)
+	}
+
+	return utils.WriteFile(filename, data, 0600)
 }
