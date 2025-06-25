@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli-utils/step"
 
@@ -27,5 +25,5 @@ func init() {
 }
 
 func main() {
-	os.Exit(cmd.Run())
+	cmd.Run()
 }
