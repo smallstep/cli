@@ -43,14 +43,18 @@ import (
 	_ "github.com/smallstep/cli/command/ssh"
 )
 
-func Run() int {
+func Run() {
+	os.Exit(run())
+}
+
+func run() int {
+	defer panicHandler()
+
 	// initialize step environment.
 	if err := step.Init(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		return 1
 	}
-
-	defer panicHandler()
 
 	// create new instance of app
 	app := newApp(os.Stdout, os.Stderr)

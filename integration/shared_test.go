@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"os"
 	"testing"
 
 	"github.com/rogpeppe/go-internal/testscript"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	os.Exit(testscript.RunMain(m, map[string]func() int{
+	testscript.Main(m, map[string]func(){
 		"step": cmd.Run, // main entrypoint name
-	}))
+	})
 }
