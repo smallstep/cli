@@ -96,7 +96,7 @@ Keychain, and cloud KMSs.
 Provides an HSM/KMS-backed authenticating proxy for mTLS services. Thanks to
 [@andsens](https://github.com/andsens) for creating and maintaining this plugin!
 
-[`step-kms-proxy`] is also integrated directly into `step` to create
+`step-kms-plugin` is also integrated directly into `step` to create
 certificates, generate CSRs, sign tokens, and more using KMS-backed keys.
 
 ## Community
