@@ -82,14 +82,14 @@ Here's a quick example, combining `step oauth` and `step crypto` to get and veri
 
 A plugin is an executable file named using the format `step-<name>-plugin`.
 Plugins must be available in your `$PATH` or in the `$STEPPATH/plugins`
-directory.
+directory (`$HOME/.step`, by default).
 
 When you run `step <name>`, the CLI will automatically execute the corresponding
 plugin if it exists.
 
 Some known plugins include:
 
-- [**step-kms-proxy**](https://github.com/smallstep/step-kms-plugin): Manage
+- [**step-kms-plugin**](https://github.com/smallstep/step-kms-plugin): Manage
 keys and certificates stored in a KMS, including HSMs, TPMs, YubiKeys, the macOS
 Keychain, and cloud KMSs.
 - [**step-kmsproxy-plugin**](https://github.com/orbit-online/step-kmsproxy-plugin):
