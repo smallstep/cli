@@ -26,12 +26,47 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
-## [unreleased] - aaaa-bb-cc
+## [0.28.8] - unreleased
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [0.28.7] - unreleased
 
 ### Added
 
 - Add support for specifying key usage, extended key usage, and basic constraints
   in certificate requests (smallstep/crypto#767)
+- Ensure HOMEDRIVE is used, on Windows, when locating SSH config file (smallstep/cli#1434)
+
+### Changed
+
+- Enable alternate SSH agents for `step ssh` on Windows (smallstep/cli#1428)
+- Refactor CLI to enable testing via testscript (smallstep/cli#1426)
+
+### Fixed
+
+- Fix step ca token help text around validity period flags (smallstep/cli#1411)
+- Fix some provisioner and policy prompt issues (smallstep/cli#1391)
+    * SCEP provisioners not detected in admin token flows. They now return an error,
+      similar to ACME provisioners, if selected.
+    * Invalid provisioner selection logic when managing provisioner policies.
+      The --provisioner flag was used to select a provisioner to authenticate
+      as well as the provisioner to manage policies for.
+    * Unexpected error messages showing "issuer" instead of "provisioner" flag. In certain
+      situations the CLI would return error messages indicating an issue with the --issuer
+      flag value, whereas it was actually supplied in the --provisioner flag.
+
 
 ## [0.28.6] - 2025-03-17
 
