@@ -78,6 +78,27 @@ Here's a quick example, combining `step oauth` and `step crypto` to get and veri
 
 ![Animated terminal showing step in practice](https://smallstep.com/images/blog/2018-08-07-unfurl.gif)
 
+## Plugins
+
+A plugin is an executable file named using the format `step-<name>-plugin`.
+Plugins must be available in your `$PATH` or in the `$STEPPATH/plugins`
+directory (`$HOME/.step`, by default).
+
+When you run `step <name>`, the CLI will automatically execute the corresponding
+plugin if it exists.
+
+Some known plugins include:
+
+- [**step-kms-plugin**](https://github.com/smallstep/step-kms-plugin): Manage
+keys and certificates stored in a KMS, including HSMs, TPMs, YubiKeys, the macOS
+Keychain, and cloud KMSs.
+- [**step-kmsproxy-plugin**](https://github.com/orbit-online/step-kmsproxy-plugin):
+Provides an HSM/KMS-backed authenticating proxy for mTLS services. Thanks to
+[@andsens](https://github.com/andsens) for creating and maintaining this plugin!
+
+`step-kms-plugin` is also integrated directly into `step` to create
+certificates, generate CSRs, sign tokens, and more using KMS-backed keys.
+
 ## Community
 
 * Connect with `step` users on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/step-discord)
