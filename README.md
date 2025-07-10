@@ -10,10 +10,10 @@
 [![Twitter followers](https://img.shields.io/twitter/follow/smallsteplabs.svg?label=Follow&style=social)](https://twitter.com/intent/follow?screen_name=smallsteplabs)
 
 `step` is an easy-to-use CLI tool for building, operating, and automating Public Key Infrastructure (PKI) systems and workflows.
-It's the client counterpart to the [`step-ca` online Certificate Authority (CA)](https://github.com/smallstep/certificates).
+It's also a client for the [`step-ca` online Certificate Authority (CA)](https://github.com/smallstep/certificates) server.
 You can use it for many common crypto and X.509 operations—either independently, or with an online CA.
 
-**Questions? Ask us on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/step-discord).**
+**Questions? Ask us on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://u.step.sm/discord).**
 
 [Website](https://smallstep.com) |
 [Documentation](https://smallstep.com/docs/step-cli) |
@@ -82,10 +82,10 @@ Here's a quick example, combining `step oauth` and `step crypto` to get and veri
 
 A plugin is an executable file named using the format `step-<name>-plugin`.
 Plugins must be available in your `$PATH` or in the `$STEPPATH/plugins`
-directory (`$HOME/.step`, by default).
+directory (that's `$HOME/.step/plugins`, by default).
 
 When you run `step <name>`, the CLI will automatically execute the corresponding
-plugin if it exists.
+plugin, if found.
 
 Some known plugins include:
 
@@ -101,7 +101,7 @@ certificates, generate CSRs, sign tokens, and more using KMS-backed keys.
 
 ## Community
 
-* Connect with `step` users on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://bit.ly/step-discord)
+* Connect with `step` users on [GitHub Discussions](https://github.com/smallstep/certificates/discussions) or [Discord](https://u.step.sm/discord)
 * [Open an issue](https://github.com/smallstep/cli/issues/new/choose) and tell us what features you'd like to see
 * [Contribute](./docs/CONTRIBUTING.md) to the `step` codebase
 * [Follow Smallstep on Twitter](https://twitter.com/smallsteplabs)
