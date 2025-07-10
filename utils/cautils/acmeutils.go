@@ -31,6 +31,7 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
@@ -140,13 +141,13 @@ func (wm *webrootMode) Run() error {
 	// the one running the `step` command that will write the file.
 	chPath := fmt.Sprintf("%s/.well-known/acme-challenge", wm.dir)
 	if _, err = os.Stat(chPath); os.IsNotExist(err) {
-		if err = os.MkdirAll(chPath, 0755); err != nil {
+		if err = os.MkdirAll(chPath, 0o755); err != nil {
 			return errors.Wrapf(err, "error creating directory path %s", chPath)
 		}
 	}
 
 	//nolint:gosec // See note above.
-	return errors.Wrapf(os.WriteFile(fmt.Sprintf("%s/%s", chPath, wm.token), []byte(keyAuth), 0644),
+	return errors.Wrapf(os.WriteFile(fmt.Sprintf("%s/%s", chPath, wm.token), []byte(keyAuth), 0o644),
 		"error writing key authorization file %s", chPath+wm.token)
 }
 
@@ -864,7 +865,7 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 }
 
 func writeCert(chain []*x509.Certificate, certFile string) error {
-	var certBytes = []byte{}
+	certBytes := []byte{}
 	for _, c := range chain {
 		certBytes = append(certBytes, pem.EncodeToMemory(&pem.Block{
 			Type:  "CERTIFICATE",
@@ -872,7 +873,7 @@ func writeCert(chain []*x509.Certificate, certFile string) error {
 		})...)
 	}
 
-	if err := utils.WriteFile(certFile, certBytes, 0600); err != nil {
+	if err := fileutil.WriteFile(certFile, certBytes, 0o600); err != nil {
 		return errs.FileError(err, certFile)
 	}
 	return nil

@@ -13,11 +13,11 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/utils"
 )
 
 type flowType int
@@ -170,7 +170,7 @@ func rootsAndFederationFlow(ctx *cli.Context, typ flowType) error {
 	}
 
 	if outFile := ctx.Args().Get(0); outFile != "" {
-		if err := utils.WriteFile(outFile, data, 0600); err != nil {
+		if err := fileutil.WriteFile(outFile, data, 0o600); err != nil {
 			return err
 		}
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 
 	"github.com/smallstep/cli/flags"
@@ -137,11 +138,11 @@ func signKeypairAction(ctx *cli.Context) error {
 		return errors.Wrap(err, "error generating key")
 	}
 
-	if err := utils.WriteFile(pubFile, pub[:], 0600); err != nil {
+	if err := fileutil.WriteFile(pubFile, pub[:], 0o600); err != nil {
 		return errs.FileError(err, pubFile)
 	}
 
-	if err := utils.WriteFile(privFile, priv[:], 0600); err != nil {
+	if err := fileutil.WriteFile(privFile, priv[:], 0o600); err != nil {
 		return errs.FileError(err, privFile)
 	}
 

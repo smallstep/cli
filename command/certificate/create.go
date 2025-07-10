@@ -11,6 +11,7 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/pemutil"
@@ -616,7 +617,7 @@ func createAction(ctx *cli.Context) error {
 			}
 		}
 
-		if err = utils.WriteFile(crtFile, pem.EncodeToMemory(block), 0600); err != nil {
+		if err = fileutil.WriteFile(crtFile, pem.EncodeToMemory(block), 0o600); err != nil {
 			return errs.FileError(err, crtFile)
 		}
 
@@ -681,7 +682,7 @@ func createAction(ctx *cli.Context) error {
 	templateData := x509util.CreateTemplateData(subject, sans)
 	templateData.SetUserData(userData)
 
-	var certTemplate = &x509.Certificate{}
+	certTemplate := &x509.Certificate{}
 	if skipCSRSignature {
 		certTemplate.PublicKey = pub
 		certificate, err := x509util.NewCertificateFromX509(certTemplate, x509util.WithTemplate(template, templateData))
@@ -747,7 +748,7 @@ func createAction(ctx *cli.Context) error {
 		}
 	}
 
-	if err = utils.WriteFile(crtFile, pubBytes, 0600); err != nil {
+	if err = fileutil.WriteFile(crtFile, pubBytes, 0o600); err != nil {
 		return errs.FileError(err, crtFile)
 	}
 
@@ -901,7 +902,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 func savePrivateKey(ctx *cli.Context, filename string, priv interface{}, insecure bool) error {
 	var err error
 	if insecure {
-		_, err = pemutil.Serialize(priv, pemutil.ToFile(filename, 0600))
+		_, err = pemutil.Serialize(priv, pemutil.ToFile(filename, 0o600))
 		return err
 	}
 
@@ -918,6 +919,6 @@ func savePrivateKey(ctx *cli.Context, filename string, priv interface{}, insecur
 			return errors.Wrap(err, "error reading password")
 		}
 	}
-	_, err = pemutil.Serialize(priv, pemutil.WithPassword(pass), pemutil.ToFile(filename, 0600))
+	_, err = pemutil.Serialize(priv, pemutil.WithPassword(pass), pemutil.ToFile(filename, 0o600))
 	return err
 }
