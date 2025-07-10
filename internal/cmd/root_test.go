@@ -15,12 +15,12 @@ func TestAppHasAllCommands(t *testing.T) {
 	require.Equal(t, "step", app.Name)
 	require.Equal(t, "step", app.HelpName)
 
-	var names = make([]string, 0, len(app.Commands))
+	names := make([]string, 0, len(app.Commands))
 	for _, c := range app.Commands {
 		names = append(names, c.Name)
 	}
 	require.Equal(t, []string{
-		"help", "api", "path", "base64", "fileserver",
+		"help", "api", "base64", "fileserver", "path",
 		"certificate", "completion", "context", "crl",
 		"crypto", "oauth", "version", "ca", "beta", "ssh",
 	}, names)
