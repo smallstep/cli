@@ -1,4 +1,3 @@
-//nolint:revive // This package provides general utility functions.
 package utils
 
 import (
