@@ -16,6 +16,7 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
 	"github.com/smallstep/truststore"
@@ -187,7 +188,7 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 	ctx.Set("fingerprint", fingerprint)
 	ctx.Set("root", rootFile)
 
-	if err := utils.WriteFile(configFile, b, 0o644); err != nil {
+	if err := fileutil.WriteFile(configFile, b, 0o644); err != nil {
 		return err
 	}
 

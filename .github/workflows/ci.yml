@@ -22,7 +22,7 @@ jobs:
       actions: read
       contents: read
       security-events: write
-    uses: smallstep/workflows/.github/workflows/goCI.yml@main
+    uses: smallstep/workflows/.github/workflows/goCI.yml@max/revive-skipPackageNameChecks
     with:
       only-latest-golang: false
       run-codeql: true

@@ -8,6 +8,7 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/pemutil"
 
@@ -80,7 +81,7 @@ func keyAction(ctx *cli.Context) error {
 	}
 
 	if outputFile := ctx.String("output-file"); outputFile != "" {
-		if err := utils.WriteFile(outputFile, pem.EncodeToMemory(block), 0600); err != nil {
+		if err := fileutil.WriteFile(outputFile, pem.EncodeToMemory(block), 0o600); err != nil {
 			return err
 		}
 		ui.Printf("The public key has been saved in %s.\n", outputFile)

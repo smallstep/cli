@@ -13,13 +13,13 @@ import (
 	"github.com/smallstep/certificates/ca/identity"
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 )
 
@@ -157,7 +157,7 @@ func rekeyAction(ctx *cli.Context) error {
 	// Private key (with password unless --no-password --insecure)
 	opts := []pemutil.Options{
 		pemutil.WithOpenSSH(true),
-		pemutil.ToFile(newKeyFile, 0600),
+		pemutil.ToFile(newKeyFile, 0o600),
 	}
 	switch {
 	case noPassword && insecure:
@@ -174,12 +174,12 @@ func rekeyAction(ctx *cli.Context) error {
 	}
 
 	// Write public key
-	if err := utils.WriteFile(newPubFile, marshalPublicKey(sshPub, cert.KeyId), 0644); err != nil {
+	if err := fileutil.WriteFile(newPubFile, marshalPublicKey(sshPub, cert.KeyId), 0o644); err != nil {
 		return err
 	}
 
 	// Write certificate
-	if err := utils.WriteFile(newCertFile, marshalPublicKey(resp.Certificate, cert.KeyId), 0644); err != nil {
+	if err := fileutil.WriteFile(newCertFile, marshalPublicKey(resp.Certificate, cert.KeyId), 0o644); err != nil {
 		return err
 	}
 
