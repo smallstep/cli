@@ -27,6 +27,7 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
@@ -35,7 +36,6 @@ import (
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/cryptoutil"
 	"github.com/smallstep/cli/token"
-	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 	"github.com/smallstep/cli/utils/sysutils"
 )
@@ -495,7 +495,7 @@ func (r *renewer) Renew(outFile string) (resp *api.SignResponse, err error) {
 		}
 		data = append(data, pem.EncodeToMemory(pemblk)...)
 	}
-	if err := utils.WriteFile(outFile, data, 0600); err != nil {
+	if err := fileutil.WriteFile(outFile, data, 0o600); err != nil {
 		return nil, errs.FileError(err, outFile)
 	}
 
@@ -526,11 +526,11 @@ func (r *renewer) Rekey(priv interface{}, outCert, outKey string, writePrivateKe
 		}
 		data = append(data, pem.EncodeToMemory(pemblk)...)
 	}
-	if err := utils.WriteFile(outCert, data, 0600); err != nil {
+	if err := fileutil.WriteFile(outCert, data, 0o600); err != nil {
 		return nil, errs.FileError(err, outCert)
 	}
 	if writePrivateKey {
-		_, err = pemutil.Serialize(priv, pemutil.ToFile(outKey, 0600))
+		_, err = pemutil.Serialize(priv, pemutil.ToFile(outKey, 0o600))
 		if err != nil {
 			return nil, err
 		}

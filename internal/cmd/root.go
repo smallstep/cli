@@ -13,12 +13,12 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
 	"github.com/smallstep/cli-utils/usage"
 	"github.com/smallstep/cli/command/version"
 	"github.com/smallstep/cli/internal/plugin"
-	"github.com/smallstep/cli/utils"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 
@@ -84,9 +84,7 @@ func run() int {
 	return 0
 }
 
-var (
-	stepAppName = "step"
-)
+var stepAppName = "step"
 
 func SetName(appName string) {
 	if appName != "" {
@@ -96,7 +94,7 @@ func SetName(appName string) {
 
 func newApp(stdout, stderr io.Writer) *cli.App {
 	// Define default file writers and prompters for go.step.sm/crypto
-	pemutil.WriteFile = utils.WriteFile
+	pemutil.WriteFile = fileutil.WriteFile
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {
 		return ui.PromptPassword(msg)
 	}

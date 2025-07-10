@@ -11,12 +11,12 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/utils"
 )
 
 func changePassCommand() cli.Command {
@@ -136,7 +136,7 @@ func changePassAction(ctx *cli.Context) error {
 				opts = append(opts, pemutil.WithPassword(pass))
 			}
 		}
-		opts = append(opts, pemutil.ToFile(newKeyPath, 0644))
+		opts = append(opts, pemutil.ToFile(newKeyPath, 0o644))
 		if _, err := pemutil.Serialize(key, opts...); err != nil {
 			return err
 		}
@@ -172,7 +172,7 @@ func changePassAction(ctx *cli.Context) error {
 		if err := json.Indent(&out, b, "", "  "); err != nil {
 			return errors.Wrap(err, "error formatting JSON")
 		}
-		if err := utils.WriteFile(newKeyPath, out.Bytes(), 0600); err != nil {
+		if err := fileutil.WriteFile(newKeyPath, out.Bytes(), 0o600); err != nil {
 			return errs.FileError(err, newKeyPath)
 		}
 	}

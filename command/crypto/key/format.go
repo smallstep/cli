@@ -14,6 +14,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
@@ -274,7 +275,7 @@ func formatAction(ctx *cli.Context) error {
 		if err != nil {
 			return errs.FileError(err, keyFile)
 		}
-		if err := utils.WriteFile(out, ob, info.Mode()); err != nil {
+		if err := fileutil.WriteFile(out, ob, info.Mode()); err != nil {
 			return errs.FileError(err, out)
 		}
 		ui.Printf("Your key has been saved in %s.\n", out)

@@ -12,10 +12,10 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/cast"
-	"github.com/smallstep/cli/utils"
 )
 
 func generateCommand() cli.Command {
@@ -96,7 +96,7 @@ func generateAction(ctx *cli.Context) error {
 			return err
 		}
 		png.Encode(&buf, img)
-		if err := utils.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+		if err := fileutil.WriteFile(filename, buf.Bytes(), 0o644); err != nil {
 			return errs.FileError(err, filename)
 		}
 	}

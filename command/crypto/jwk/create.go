@@ -13,6 +13,7 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
@@ -515,7 +516,7 @@ func createAction(ctx *cli.Context) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "error marshaling JWK")
 	}
-	if err = utils.WriteFile(pubFile, b, 0600); err != nil {
+	if err = fileutil.WriteFile(pubFile, b, 0o600); err != nil {
 		return errs.FileError(err, pubFile)
 	}
 
@@ -589,7 +590,7 @@ func createAction(ctx *cli.Context) (err error) {
 			return errors.Wrap(err, "error marshaling JWK")
 		}
 	}
-	if err = utils.WriteFile(privFile, b, 0600); err != nil {
+	if err = fileutil.WriteFile(privFile, b, 0o600); err != nil {
 		return errs.FileError(err, privFile)
 	}
 

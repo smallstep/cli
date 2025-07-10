@@ -22,6 +22,7 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/pemutil"
@@ -288,7 +289,7 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, tok string, csr api.Certificate
 		}
 		data = append(data, pem.EncodeToMemory(pemblk)...)
 	}
-	return utils.WriteFile(crtFile, data, 0600)
+	return fileutil.WriteFile(crtFile, data, 0o600)
 }
 
 // CreateSignRequest is a helper function that given an x509 OTT returns a

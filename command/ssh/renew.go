@@ -13,10 +13,10 @@ import (
 	"github.com/smallstep/certificates/ca/identity"
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 
 	"github.com/smallstep/cli/flags"
-	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 )
 
@@ -128,7 +128,7 @@ func renewAction(ctx *cli.Context) error {
 	}
 
 	// Write certificate
-	if err := utils.WriteFile(outFile, marshalPublicKey(resp.Certificate, cert.KeyId), 0644); err != nil {
+	if err := fileutil.WriteFile(outFile, marshalPublicKey(resp.Certificate, cert.KeyId), 0o644); err != nil {
 		return err
 	}
 

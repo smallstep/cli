@@ -11,6 +11,7 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"go.step.sm/crypto/pemutil"
 	"golang.org/x/crypto/ssh"
 
@@ -435,7 +436,7 @@ func tokenAction(ctx *cli.Context) error {
 		}
 	}
 	if outputFile != "" {
-		return utils.WriteFile(outputFile, []byte(token), 0600)
+		return fileutil.WriteFile(outputFile, []byte(token), 0o600)
 	}
 	fmt.Println(token)
 	return nil

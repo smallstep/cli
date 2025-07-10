@@ -22,6 +22,7 @@ import (
 	"github.com/smallstep/certificates/ca/identity"
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/pemutil"
@@ -487,13 +488,13 @@ func certificateAction(ctx *cli.Context) error {
 			return err
 		}
 
-		if err := utils.WriteFile(pubFile, marshalPublicKey(sshPub, subject), 0o644); err != nil {
+		if err := fileutil.WriteFile(pubFile, marshalPublicKey(sshPub, subject), 0o644); err != nil {
 			return err
 		}
 	}
 
 	// Write certificate
-	if err := utils.WriteFile(crtFile, marshalPublicKey(resp.Certificate, subject), 0o644); err != nil {
+	if err := fileutil.WriteFile(crtFile, marshalPublicKey(resp.Certificate, subject), 0o644); err != nil {
 		return err
 	}
 
@@ -503,10 +504,10 @@ func certificateAction(ctx *cli.Context) error {
 		if _, err := pemutil.Serialize(auPriv, pemutil.WithOpenSSH(true), pemutil.ToFile(baseName+"-provisioner", 0o600)); err != nil {
 			return err
 		}
-		if err := utils.WriteFile(baseName+"-provisioner.pub", marshalPublicKey(sshAuPub, id), 0o644); err != nil {
+		if err := fileutil.WriteFile(baseName+"-provisioner.pub", marshalPublicKey(sshAuPub, id), 0o644); err != nil {
 			return err
 		}
-		if err := utils.WriteFile(baseName+"-provisioner-cert.pub", marshalPublicKey(resp.AddUserCertificate, id), 0o644); err != nil {
+		if err := fileutil.WriteFile(baseName+"-provisioner-cert.pub", marshalPublicKey(resp.AddUserCertificate, id), 0o644); err != nil {
 			return err
 		}
 	}
