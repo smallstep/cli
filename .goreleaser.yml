@@ -274,7 +274,7 @@ blobs:
     bucket: '{{ .Env.AWS_S3_BUCKET }}'
     region: '{{ .Env.AWS_S3_REGION }}'
     directory: '/'
-    acl: public-read
+    #acl: public-read
     extra_files:
       - glob: ./dist/default_darwin_amd64_v1/bin/step
         name_template: step_{{ .Version }}_darwin_amd64
