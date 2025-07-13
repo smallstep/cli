@@ -4,7 +4,7 @@ version: 2
 project_name: step
 
 # Enable GoReleaser OSS to read Pro configs: https://goreleaser.com/errors/version/#using-a-pro-configuration-file-with-goreleaser-oss
-pro: true 
+pro: true
 
 variables:
   packageName: step-cli

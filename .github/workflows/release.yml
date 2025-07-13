@@ -68,7 +68,7 @@ jobs:
       id-token: write
       contents: write
       packages: write
-    uses: smallstep/workflows/.github/workflows/goreleaser.yml@main
+    uses: smallstep/workflows/.github/workflows/goreleaser.yml@max/pin-goreleaser
     with:
       enable-packages-upload: true
       is-prerelease: ${{ needs.create_release.outputs.is_prerelease == 'true' }}
