@@ -228,7 +228,7 @@ binary-darwin-amd64:
 	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin-amd64)
 
 binary-darwin-arm64:
-	$(call BUNDLE_MAKE,darwin,amd64,,$(BINARY_OUTPUT)darwin-arm64)
+	$(call BUNDLE_MAKE,darwin,arm64,,$(BINARY_OUTPUT)darwin-arm64)
 
 binary-windows-amd64:
 	$(call BUNDLE_MAKE,windows,amd64,,$(BINARY_OUTPUT)windows-amd64)
