@@ -18,8 +18,8 @@ func wildcardsCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:        "wildcards",
 		Usage:       "manage wildcard name settings for X.509 certificate issuance policies",
-		UsageText:   `**step ca policy x509 wildcards**`,
-		Description: `**step ca policy x509 wildcards** command group provides facilities for managing X.509 wildcard names.`,
+		UsageText:   `**step ca policy <scope> x509 wildcards**`,
+		Description: `**step ca policy <scope> x509 wildcards** command group provides facilities for managing X.509 wildcard names.`,
 		Subcommands: cli.Commands{
 			allowWildcardsCommand(ctx),
 			denyWildcardsCommand(ctx),
@@ -31,12 +31,12 @@ func allowWildcardsCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "allow",
 		Usage: "allow wildcard names in X.509 certificate issuance policies",
-		UsageText: `**step ca policy x509 wildcards allow**
+		UsageText: `**step ca policy <scope> x509 wildcards allow**
 [**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
-		Description: `**step ca policy x509 wildcards allow** allow wildcard names in X.509 policy
+		Description: `**step ca policy <scope> x509 wildcards allow** allow wildcard names in X.509 policy
 
 ## EXAMPLES	
 
@@ -78,12 +78,12 @@ func denyWildcardsCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:  "deny",
 		Usage: "deny wildcard names in X.509 certificate issuance policies",
-		UsageText: `**step ca policy x509 wildcards deny**
+		UsageText: `**step ca policy <scope> x509 wildcards deny**
 [**--provisioner**=<name>] [**--eab-key-id**=<eab-key-id>] [**--eab-key-reference**=<eab-key-reference>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
-		Description: `**step ca policy x509 wildcards deny** deny wildcard names in X.509 policy
+		Description: `**step ca policy <scope> x509 wildcards deny** deny wildcard names in X.509 policy
 
 ## EXAMPLES	
 

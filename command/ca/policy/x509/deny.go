@@ -15,8 +15,8 @@ func denyCommand(ctx context.Context) cli.Command {
 	return cli.Command{
 		Name:        "deny",
 		Usage:       "manage denied names for X.509 certificate issuance policies",
-		UsageText:   "**step ca policy x509 deny** <subcommand> [arguments] [global-flags] [subcommand-flags]",
-		Description: `**step ca policy x509 deny** command group provides facilities for managing X.509 names to be denied.`,
+		UsageText:   "**step ca policy <scope> x509 deny** <subcommand> [arguments] [global-flags] [subcommand-flags]",
+		Description: `**step ca policy <scope> x509 deny** command group provides facilities for managing X.509 names to be denied.`,
 		Subcommands: cli.Commands{
 			actions.CommonNamesCommand(ctx),
 			actions.DNSCommand(ctx),
