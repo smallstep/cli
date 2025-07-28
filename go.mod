@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.5.0
 	github.com/rogpeppe/go-internal v1.14.1
-	github.com/slackhq/nebula v1.9.5
+	github.com/slackhq/nebula v1.9.6
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.28.4
 	github.com/smallstep/certinfo v1.14.0
