@@ -211,6 +211,13 @@ periodically. By default the daemon will renew a certificate before 2/3 of the
 time to expiration has elapsed. The period can be configured using the
 **--renew-period** or **--expires-in** flags.`,
 			},
+			cli.BoolFlag{
+				Name: "service",
+				Usage: `Run the renew command as a windows service, renewing and overwriting the certificate
+periodically. By default the service will renew a certificate before 2/3 of the
+time to expiration has elapsed. The period can be configured using the
+**--renew-period** or **--expires-in** flags. You must install this as a service first using **sc.exe create step-renew binPath= "path_to_step_cli.exe ca renew --service --ca-url=your_ca_url --root=path_to_root_ca.crt other_arguments"** `,
+			},
 			cli.StringFlag{
 				Name: "renew-period",
 				Usage: `The period with which to schedule renewals of the certificate in daemon mode.
@@ -236,6 +243,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	keyFile := args.Get(1)
 	passFile := ctx.String("password-file")
 	isDaemon := ctx.Bool("daemon")
+	isService := ctx.Bool("service")
 	execCmd := ctx.String("exec")
 	kmsURI := ctx.String("kms")
 
@@ -268,7 +276,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 	if expiresIn > 0 && renewPeriod > 0 {
 		return errs.IncompatibleFlagWithFlag(ctx, "expires-in", "renew-period")
 	}
-	if renewPeriod > 0 && !isDaemon {
+	if renewPeriod > 0 && !isDaemon && !isService {
 		return errs.RequiredWithFlag(ctx, "renew-period", "daemon")
 	}
 
@@ -326,6 +334,13 @@ func renewCertificateAction(ctx *cli.Context) error {
 		ctx.Set("force", "true")
 		next := nextRenewDuration(cert.Leaf, expiresIn, renewPeriod)
 		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew)
+	}
+
+	if isService {
+		// Force is always enabled when daemon mode is used
+		ctx.Set("force", "true")
+		next := nextRenewDuration(cert.Leaf, expiresIn, renewPeriod)
+		return renewer.Service(outFile, next, expiresIn, renewPeriod, afterRenew)
 	}
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
