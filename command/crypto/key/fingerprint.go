@@ -37,8 +37,9 @@ key.
 By default the fingerprint calculated is the SHA-256 hash with raw Base64 encoding
 of the ASN.1 BIT STRING of the subjectPublicKey defined in RFC 5280.
 
-Using the flag **--ssh** the fingerprint would be based on the SSH encoding of
-the public key.
+Using the **--pkix** flag, the fingerprint is calculated from the PKIX encoding
+of the public key. Using the **--ssh** flag, the fingerprint is calculated from
+the SSH encoding.
 
 Note that for certificates and certificate request, the fingerprint would be
 based only on the public key embedded in the certificate. To get the certificate
@@ -60,6 +61,11 @@ $ step ssh fingerprint <ssh-crt>
 Print the fingerprint of a public key:
 '''
 $ step crypto key fingerprint pub.pem
+'''
+
+Print the fingerprint of the PKIX format of public key:
+'''
+$ step crypto key fingerprint --pkix pub.pem
 '''
 
 Print the fingerprint of the public key using the SSH marshaling:
@@ -95,6 +101,10 @@ $ step crypto key fingerprint --password-file pass.txt priv.pem
 				Usage: "Use the SHA-1 hash with hexadecimal format. The result will be equivalent to the Subject Key Identifier in a X.509 certificate.",
 			},
 			cli.BoolFlag{
+				Name:  "pkix",
+				Usage: "Use the PKIX marshaling format instead of X.509.",
+			},
+			cli.BoolFlag{
 				Name:  "ssh",
 				Usage: "Use the SSH marshaling format instead of X.509.",
 			},
@@ -127,15 +137,21 @@ func fingerprintAction(ctx *cli.Context) error {
 	}
 
 	var (
-		raw    = ctx.Bool("raw")
-		sha1   = ctx.Bool("sha1")
-		encSSH = ctx.Bool("ssh")
-		format = ctx.String("format")
+		raw     = ctx.Bool("raw")
+		sha1    = ctx.Bool("sha1")
+		encPKIX = ctx.Bool("pkix")
+		encSSH  = ctx.Bool("ssh")
+		format  = ctx.String("format")
 
 		defaultFmt = "base64"
 		prefix     = "SHA256:"
 		hash       = crypto.SHA256
 	)
+
+	// SSH and PKIX are mutually exclusive.
+	if encPKIX && encSSH {
+		return errs.MutuallyExclusiveFlags(ctx, "pkix", "ssh")
+	}
 
 	// Keep backwards compatibility for SHA1.
 	if sha1 {
@@ -189,9 +205,12 @@ func fingerprintAction(ctx *cli.Context) error {
 		key = k.Public()
 	}
 
-	if encSSH {
+	switch {
+	case encSSH:
 		b, err = sshFingerprintBytes(key)
-	} else {
+	case encPKIX:
+		b, err = pkixFingerprintBytes(key)
+	default:
 		b, err = x509FingerprintBytes(key)
 	}
 	if err != nil {
@@ -218,10 +237,18 @@ type subjectPublicKeyInfo struct {
 	SubjectPublicKey asn1.BitString
 }
 
-func x509FingerprintBytes(pub crypto.PublicKey) ([]byte, error) {
+func pkixFingerprintBytes(pub crypto.PublicKey) ([]byte, error) {
 	b, err := x509.MarshalPKIXPublicKey(pub)
 	if err != nil {
 		return nil, errors.Wrap(err, "error marshaling public key")
+	}
+	return b, nil
+}
+
+func x509FingerprintBytes(pub crypto.PublicKey) ([]byte, error) {
+	b, err := pkixFingerprintBytes(pub)
+	if err != nil {
+		return nil, err
 	}
 	var info subjectPublicKeyInfo
 	if _, err = asn1.Unmarshal(b, &info); err != nil {
