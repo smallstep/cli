@@ -29,7 +29,7 @@ ARG STEPGID=1000
 
 RUN apt-get update \
         && apt-get upgrade -y \
-        && apt-get install -y --no-install-recommends curl \
+        && apt-get install -y --no-install-recommends curl jq \
         && addgroup --gid ${STEPGID} step \
         && adduser --disabled-password --uid ${STEPUID} --gid ${STEPGID} step \
         && chown step:step /home/step
