@@ -24,7 +24,7 @@ require (
 	github.com/smallstep/truststore v0.13.0
 	github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91
 	github.com/smallstep/zlint v0.0.0-20220930192201-67fb4aa21910
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli v1.22.17
 	go.mozilla.org/pkcs7 v0.9.0
 	go.step.sm/crypto v0.70.0
