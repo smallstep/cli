@@ -67,9 +67,9 @@ stderr 'flag ''--size'' requires at least 2048 unless ''--insecure'' flag is pro
 stderr 'flag ''--size'' must be greater than or equal to 0'
 
 
-# RSA size 16 with insecure flag; skipped on Go < 1.24, because small keys were supported on those
-[go1.24] ! exec step crypto keypair --password-file password.txt --kty RSA --size 16 --insecure rsa-error.pub rsa-error.priv
-[go1.24] stderr 'error generating RSA key: crypto/rsa: 16-bit keys are insecure'
+# RSA size 16 with insecure flag
+! exec step crypto keypair --password-file password.txt --kty RSA --size 16 --insecure rsa-error.pub rsa-error.priv
+stderr 'error generating RSA key: crypto/rsa: 16-bit keys are insecure'
 
 
 # RSA size 1024 without insecure flag 
