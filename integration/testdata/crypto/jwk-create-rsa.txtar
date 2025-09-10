@@ -53,9 +53,9 @@ check_jwk rsa-2048-ps512.pub rsa-2048-ps512.priv RSA 2048 PS512
 stderr 'flag ''--size'' requires at least 2048 unless ''--insecure'' flag is provided'
 
 
-# RSA 1024, PS256 with insecure flag; skipped on Go < 1.24, because small keys were supported on those
-[go1.24] ! exec step crypto jwk create --password-file password.txt --kty RSA --size 1024 --alg PS256 rsa-1024-ps256.pub rsa-1024-ps256.priv --insecure
-[go1.24] stderr 'the size of the RSA key should be at least 2048 bits'
+# RSA 1024, PS256 with insecure flag
+! exec step crypto jwk create --password-file password.txt --kty RSA --size 1024 --alg PS256 rsa-1024-ps256.pub rsa-1024-ps256.priv --insecure
+stderr 'the size of the RSA key should be at least 2048 bits'
 			
 
 # RSA 0, PS256

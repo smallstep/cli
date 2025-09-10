@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
+	"math/big"
 	"reflect"
 	"testing"
 	"time"
@@ -95,10 +96,11 @@ func TestClaims_Sign(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	badKey, err := rsa.GenerateKey(rand.Reader, 123)
+	badKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		t.Fatal(err)
 	}
+	badKey.N = big.NewInt(10) // render key useless for signing
 
 	tests := []struct {
 		name    string
