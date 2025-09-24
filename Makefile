@@ -25,7 +25,7 @@ CGO_OVERRIDE?=CGO_ENABLED=0
 GORELEASER_BUILD_ID?=default
 
 # all go files
-SRC=$(shell find . -type f -name '*.go')
+SRC=$(shell find . -type f -name '*.go' -or -name go.mod -or -name go.sum)
 
 all: lint test build
 
@@ -71,7 +71,6 @@ else
 endif
 
 Q=$(if $V,,@)
-SRC=$(shell find . -type f -name '*.go')
 OUTPUT_ROOT=output/
 
 ifeq ($(OS),Windows_NT)

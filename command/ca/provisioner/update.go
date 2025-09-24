@@ -89,6 +89,7 @@ IID (AWS/GCP/Azure)
 [**--aws-account**=<id>]... [**--remove-aws-account**=<id>]...
 [**--gcp-service-account**=<name>]... [**--remove-gcp-service-account**=<name>]...
 [**--gcp-project**=<name>]... [**--remove-gcp-project**=<name>]...
+[**--gcp-organization**=<id>]
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
 [**--azure-object-id**=<id>] [**--instance-age**=<duration>]
@@ -175,6 +176,7 @@ SCEP
 			removeGCPServiceAccountFlag,
 			gcpProjectFlag,
 			removeGCPProjectFlag,
+			gcpOrganizationFlag,
 			instanceAgeFlag,
 			disableCustomSANsFlag,
 			disableTOFUFlag,
@@ -287,6 +289,18 @@ Update a GCP provisioner:
 '''
 $ step ca provisioner update Google \
   --disable-custom-sans --gcp-project internal --remove-gcp-project public
+'''
+
+Remove the GCP project and use an organization id:
+'''
+$ step ca provisioner update Google \
+  --gpc-organization 123456789 --remove-gcp-project internal
+'''
+
+Remove the GCP organization and use a project:
+'''
+$ step ca provisioner update Google \
+  --gpc-organization="" --gcp-project internal
 '''
 
 Update an AWS provisioner:
@@ -946,11 +960,19 @@ func updateGCPDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 	if ctx.IsSet("gcp-service-account") {
 		details.ServiceAccounts = append(details.ServiceAccounts, ctx.StringSlice("gcp-service-account")...)
 	}
+	if ctx.IsSet("gcp-organization") {
+		details.OrganizationId = ctx.String("gcp-organization")
+	}
 	if ctx.IsSet("remove-gcp-project") {
 		details.ProjectIds = removeElements(details.ProjectIds, ctx.StringSlice("remove-gcp-project"))
 	}
 	if ctx.IsSet("gcp-project") {
 		details.ProjectIds = append(details.ProjectIds, ctx.StringSlice("gcp-project")...)
+	}
+
+	// Validate configuration
+	if details.OrganizationId != "" && len(details.ProjectIds) > 0 {
+		return errs.IncompatibleFlagWithFlag(ctx, "gcp-organization", "gcp-project")
 	}
 
 	return nil
