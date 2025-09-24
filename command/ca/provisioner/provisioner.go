@@ -516,6 +516,10 @@ Use the flag multiple times to configure multiple projects`,
 		Usage: `Remove a Google project <id> used to validate the identity tokens.
 Use the flag multiple times to remove multiple projects`,
 	}
+	gcpOrganizationFlag = cli.StringFlag{
+		Name:  "gcp-organization",
+		Usage: `The Google organization <id> used to validate the project in the identity tokens.`,
+	}
 	instanceAgeFlag = cli.DurationFlag{
 		Name: "instance-age",
 		Usage: `The maximum <duration> to grant a certificate in AWS and GCP provisioners.

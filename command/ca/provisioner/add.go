@@ -96,7 +96,8 @@ K8SSA (Kubernetes Service Account)
 IID (AWS/GCP/Azure)
 
 **step ca provisioner add** <name> **--type**=[AWS|Azure|GCP]
-[**--aws-account**=<id>] [**--gcp-service-account**=<name>] [**--gcp-project**=<name>]
+[**--aws-account**=<id>]
+[**--gcp-service-account**=<name>] [**--gcp-project**=<name>] [**--gcp-organization**=<id>]
 [**--azure-tenant**=<id>] [**--azure-resource-group**=<name>]
 [**--azure-audience**=<name>] [**--azure-subscription-id**=<id>]
 [**--azure-object-id**=<id>] [**--instance-age**=<duration>] [**--iid-roots**=<file>]
@@ -171,6 +172,7 @@ SCEP
 			azureObjectIDFlag,
 			gcpServiceAccountFlag,
 			gcpProjectFlag,
+			gcpOrganizationFlag,
 			instanceAgeFlag,
 			disableCustomSANsFlag,
 			disableTOFUFlag,
@@ -289,10 +291,15 @@ $ step ca provisioner add Azure --type Azure \
   --azure-object-id f50926c7-abbf-4c28-87dc-9adc7eaf3ba7
 '''
 
-Create an GCP provisioner that will only accept the SANs provided in the identity token:
+Create a GCP provisioner that will only accept the SANs provided in the identity token:
 '''
 $ step ca provisioner add Google --type GCP \
   --disable-custom-sans --gcp-project internal
+'''
+
+Create a GCP provisioner that can be used across all projects within an organization:
+'''
+$ step ca provisioner add Google --type GCP --gcp-organization 123456789
 '''
 
 Create an AWS provisioner that will only accept the SANs provided in the identity
@@ -803,6 +810,10 @@ func createAzureDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) 
 }
 
 func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
+	if ctx.String("gcp-organization") != "" && len(ctx.StringSlice("gcp-project")) > 0 {
+		return nil, errs.IncompatibleFlagWithFlag(ctx, "gcp-organization", "gcp-project")
+	}
+
 	d, err := parseInstanceAge(ctx)
 	if err != nil {
 		return nil, err
@@ -827,6 +838,7 @@ func createGCPDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 			GCP: &linkedca.GCPProvisioner{
 				ServiceAccounts:        ctx.StringSlice("gcp-service-account"),
 				ProjectIds:             ctx.StringSlice("gcp-project"),
+				OrganizationId:         ctx.String("gcp-organization"),
 				DisableCustomSans:      ctx.Bool("disable-custom-sans"),
 				DisableTrustOnFirstUse: ctx.Bool("disable-trust-on-first-use"),
 				DisableSshCaUser:       disableSSHCAUser,
