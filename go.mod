@@ -22,7 +22,7 @@ require (
 	github.com/smallstep/go-attestation v0.4.4-0.20241119153605-2306d5b464ca
 	github.com/smallstep/linkedca v0.24.0
 	github.com/smallstep/truststore v0.13.0
-	github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91
+	github.com/smallstep/zcrypto v0.0.0-20250915080517-c4e595d08032
 	github.com/smallstep/zlint v0.0.0-20220930192201-67fb4aa21910
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli v1.22.17
@@ -31,7 +31,7 @@ require (
 	golang.org/x/crypto v0.42.0
 	golang.org/x/sys v0.36.0
 	golang.org/x/term v0.35.0
-	google.golang.org/protobuf v1.36.9
+	google.golang.org/protobuf v1.36.10
 	software.sslmate.com/src/go-pkcs12 v0.6.0
 )
 
@@ -117,7 +117,7 @@ require (
 	github.com/smallstep/pkcs7 v0.2.1 // indirect
 	github.com/smallstep/scep v0.0.0-20240926084937-8cf1ca453101 // indirect
 	github.com/spf13/cast v1.7.0 // indirect
-	github.com/weppos/publicsuffix-go v0.20.0 // indirect
+	github.com/weppos/publicsuffix-go v0.50.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
