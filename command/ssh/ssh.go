@@ -187,6 +187,15 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 			return false
 		}
 
+		// Check if client authentication is required.
+		version, err := client.Version()
+		if err != nil {
+			return fail(err)
+		}
+		if !version.RequireClientAuthentication {
+			return false
+		}
+
 		// Generate OIDC token
 		tok, err := flow.GenerateIdentityToken(ctx)
 		if err != nil {
