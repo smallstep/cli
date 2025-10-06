@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Do not create an identity token if it's not enabled (smallstep/cli#1495).
+
 ### Deprecated
 
 ### Removed
