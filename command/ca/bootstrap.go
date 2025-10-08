@@ -20,7 +20,7 @@ func bootstrapCommand() cli.Command {
 		UsageText: `**step ca bootstrap**
 [**--ca-url**=<uri>] [**--fingerprint**=<fingerprint>] [**--install**]
 [**--team**=<name>] [**--authority**=<name>] [**--team-url**=<uri>] [**--redirect-url**=<uri>]
-[**--context**=<name>] [**--profile**=<name>]
+[**--context**=<name>] [**--fallback-context**=<name>] [**--profile**=<name>]
 [**--authority**=<name>] [**--team-authority**=<sub-domain>]`,
 		Description: `**step ca bootstrap** downloads the root certificate from the certificate
 authority and sets up the current environment to use it.
@@ -77,6 +77,7 @@ $ step ca bootstrap --team superteam --team-url https://config.example.com/<>
 			flags.Context,
 			flags.ContextProfile,
 			flags.ContextAuthority,
+			flags.FallbackContext,
 			flags.HiddenNoContext,
 		},
 	}
@@ -90,12 +91,18 @@ func bootstrapAction(ctx *cli.Context) error {
 	fingerprint := strings.TrimSpace(ctx.String("fingerprint"))
 	team := ctx.String("team")
 	teamAuthority := ctx.String("team-authority")
+	contextName := ctx.String("context")
+	fallbackContextName := ctx.String("fallback-context")
 
 	switch {
 	case team != "" && caURL != "":
 		return errs.IncompatibleFlagWithFlag(ctx, "team", "ca-url")
 	case team != "" && fingerprint != "":
 		return errs.IncompatibleFlagWithFlag(ctx, "team", "fingerprint")
+	case fallbackContextName != "" && contextName == "":
+		return errs.RequiredWithFlag(ctx, "fallback-context", "context")
+	case fallbackContextName != "" && contextName == fallbackContextName:
+		return errs.IncompatibleFlagValues(ctx, "fallback-context", fallbackContextName, "context", contextName)
 	case team != "" && teamAuthority != "":
 		return cautils.BootstrapTeamAuthority(ctx, team, teamAuthority)
 	case team != "":

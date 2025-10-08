@@ -261,7 +261,7 @@ generating key.`,
 		Hidden: true,
 	}
 
-	// Context is a cli.Flag used to select a a context name.
+	// Context is a cli.Flag used to select a context name.
 	Context = cli.StringFlag{
 		Name:  "context",
 		Usage: "The context <name> to apply for the given command.",
@@ -277,6 +277,12 @@ generating key.`,
 	ContextAuthority = cli.StringFlag{
 		Name:  "authority",
 		Usage: `The <name> that will serve as the authority name for the context.`,
+	}
+
+	// FallbackContext is a cli.flat to select a fallback context.
+	FallbackContext = cli.StringFlag{
+		Name:  "fallback-context",
+		Usage: "The context <name> to use as a fallback for the given command.",
 	}
 
 	// Offline is a cli.Flag used to activate the offline flow.
