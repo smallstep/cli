@@ -54,6 +54,7 @@ $ step ssh check-host internal.smallstep.com
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
+			flags.FallbackContext,
 		},
 	}
 }
@@ -71,7 +72,7 @@ func checkHostAction(ctx *cli.Context) error {
 	}
 	version, err := client.Version()
 	if err != nil {
-		return contactAdminErr(errors.Wrap(err, "error retrieving client version info"))
+		return runOnFallbackContext(ctx, contactAdminErr(errors.Wrap(err, "error retrieving client version info")))
 	}
 
 	var (
@@ -101,8 +102,7 @@ func checkHostAction(ctx *cli.Context) error {
 
 	resp, err := client.SSHCheckHost(hostname, tok)
 	if err != nil {
-		return caErrs.Wrap(http.StatusInternalServerError, err,
-			"error checking ssh host eligibility")
+		return runOnFallbackContext(ctx, caErrs.Wrap(http.StatusInternalServerError, err, "error checking ssh host eligibility"))
 	}
 
 	if isVerbose {
