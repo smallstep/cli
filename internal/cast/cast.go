@@ -17,7 +17,7 @@ type number interface {
 }
 
 func SafeUint(x int) (uint, error) {
-	return safecast.ToUint(x)
+	return safecast.Convert[uint](x)
 }
 
 func Uint(x int) uint {
@@ -30,7 +30,7 @@ func Uint(x int) uint {
 }
 
 func SafeInt(x uint) (int, error) {
-	return safecast.ToInt(x)
+	return safecast.Convert[int](x)
 }
 
 func Int(x uint) int {
@@ -43,7 +43,7 @@ func Int(x uint) int {
 }
 
 func SafeInt64[T number](x T) (int64, error) {
-	return safecast.ToInt64(x)
+	return safecast.Convert[int64](x)
 }
 
 func Int64[T number](x T) int64 {
@@ -56,7 +56,7 @@ func Int64[T number](x T) int64 {
 }
 
 func SafeUint64[T signed](x T) (uint64, error) {
-	return safecast.ToUint64(x)
+	return safecast.Convert[uint64](x)
 }
 
 func Uint64[T signed](x T) uint64 {
@@ -69,7 +69,7 @@ func Uint64[T signed](x T) uint64 {
 }
 
 func SafeInt32[T signed](x T) (int32, error) {
-	return safecast.ToInt32(x)
+	return safecast.Convert[int32](x)
 }
 
 func Int32[T signed](x T) int32 {
@@ -82,7 +82,7 @@ func Int32[T signed](x T) int32 {
 }
 
 func SafeUint32[T number](x T) (uint32, error) {
-	return safecast.ToUint32(x)
+	return safecast.Convert[uint32](x)
 }
 
 func Uint32[T number](x T) uint32 {
@@ -95,7 +95,7 @@ func Uint32[T number](x T) uint32 {
 }
 
 func SafeUint8(x int) (uint8, error) {
-	return safecast.ToUint8(x)
+	return safecast.Convert[uint8](x)
 }
 
 func Uint8(x int) uint8 {
