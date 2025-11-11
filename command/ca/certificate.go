@@ -228,10 +228,16 @@ func certificateAction(ctx *cli.Context) error {
 	offline := ctx.Bool("offline")
 	sans := ctx.StringSlice("san")
 
-	// offline and token are incompatible because the token is generated before
-	// the start of the offline CA.
-	if offline && tok != "" {
+	switch {
+	case offline && tok != "":
+		// offline and token are incompatible because the token is generated before
+		// the start of the offline CA.
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
+	case ctx.String("attestation-uri") != "" && ctx.String("kms") != "":
+		// attestation-uri and kms are incompatible because the ACME-DA flow
+		// expects all necessary parameters in the attestation-uri, and having
+		// both can be confusing.
+		return errs.IncompatibleFlagWithFlag(ctx, "attestation-uri", "kms")
 	}
 
 	// certificate flow unifies online and offline flows on a single api
