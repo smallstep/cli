@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
-	github.com/ccoveille/go-safecast v1.8.1
+	github.com/ccoveille/go-safecast/v2 v2.0.0
 	github.com/fxamacker/cbor/v2 v2.9.0
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/google/go-cmp v0.7.0
@@ -58,6 +58,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
+	github.com/ccoveille/go-safecast v1.8.2 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
