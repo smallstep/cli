@@ -12,7 +12,7 @@ jobs:
       actions: read
       contents: read
       security-events: write
-    uses: smallstep/cli/.github/workflows/ci.yml@master
+    uses: ./.github/workflows/ci.yml
     secrets: inherit
 
   create_release:
