@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:bookworm AS builder
+FROM --platform=$BUILDPLATFORM golang:trixie AS builder
 
 WORKDIR /src
 COPY go.mod go.sum .
@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS_OVERRIDE="GOOS=${GOOS} GOARCH=${GOARCH} GOARM=${GOARM}" \
     make V=1 bin/step
 
-FROM debian:bookworm
+FROM debian:trixie
 
 ENV STEP="/home/step"
 ENV STEPPATH="/home/step"
@@ -30,8 +30,8 @@ ARG STEPGID=1000
 RUN apt-get update \
         && apt-get upgrade -y \
         && apt-get install -y --no-install-recommends curl jq \
-        && addgroup --gid ${STEPGID} step \
-        && adduser --disabled-password --uid ${STEPUID} --gid ${STEPGID} step \
+        && groupadd --gid ${STEPGID} step \
+        && useradd --create-home --uid ${STEPUID} --gid ${STEPGID} step \
         && chown step:step /home/step
 
 COPY --from=builder /src/bin/step "/usr/local/bin/step"
@@ -41,4 +41,4 @@ WORKDIR /home/step
 
 STOPSIGNAL SIGTERM
 
-CMD /bin/bash
+CMD [ "/bin/bash" ]

@@ -40,4 +40,4 @@ WORKDIR /home/step
 
 STOPSIGNAL SIGTERM
 
-CMD /bin/bash
+CMD [ "/bin/bash" ]
