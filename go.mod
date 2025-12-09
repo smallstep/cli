@@ -1,6 +1,6 @@
 module github.com/smallstep/cli
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.5.0
 	github.com/rogpeppe/go-internal v1.14.1
-	github.com/slackhq/nebula v1.9.7
+	github.com/slackhq/nebula v1.10.0
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.29.0
 	github.com/smallstep/certinfo v1.15.0
@@ -43,7 +43,7 @@ require (
 	cloud.google.com/go/iam v1.5.2 // indirect
 	cloud.google.com/go/longrunning v0.7.0 // indirect
 	cloud.google.com/go/security v1.19.2 // indirect
-	dario.cat/mergo v1.0.1 // indirect
+	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.20.0 // indirect
