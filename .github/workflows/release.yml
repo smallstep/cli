@@ -12,7 +12,7 @@ jobs:
       actions: read
       contents: read
       security-events: write
-    uses: smallstep/cli/.github/workflows/ci.yml@master
+    uses: ./.github/workflows/ci.yml
     secrets: inherit
 
   create_release:
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_IMAGE: smallstep/step-cli
-      DEBIAN_TAG: bookworm
+      DEBIAN_TAG: trixie
     outputs:
       version: ${{ steps.extract-tag.outputs.VERSION }}
       vversion: ${{ steps.extract-tag.outputs.VVERSION }}
@@ -53,7 +53,7 @@ jobs:
           echo "DOCKER_TAGS_DEBIAN=${{ env.DOCKER_TAGS_DEBIAN }},${{ env.DOCKER_IMAGE }}:${DEBIAN_TAG}" >> "${GITHUB_ENV}"
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe # v2.4.2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -111,7 +111,7 @@ jobs:
     if: needs.create_release.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Setup Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
@@ -121,7 +121,7 @@ jobs:
         id: build
         run: V=1 make build
       - name: Checkout Docs
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: smallstep/docs
           token: ${{ secrets.DOCS_PAT }}

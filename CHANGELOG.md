@@ -26,24 +26,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
-## [0.28.8] - unreleased
+## [0.29.0] - 2025-12-02
 
 ### Added
+
+- Add PKIX fingerprint support for `step crypto key fingerprint` (smallstep/cli#1474)
+- Add remote configuration of the provisioner GCP organization id (smallstep/cli#1490)
 
 ### Changed
 
 - Do not create an identity token if it's not enabled (smallstep/cli#1495).
+- Make --attestation-uri incompatible with --kms for `step ca certificate` (smallstep/cli#1516)
 
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
-
-## [0.28.7] - unreleased
+## [0.28.7] - 2025-07-13
 
 ### Added
 
