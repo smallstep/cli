@@ -35,6 +35,8 @@ import (
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/kms/apiv1"
+	"go.step.sm/crypto/kms/uri"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/tpm"
 	tpmstorage "go.step.sm/crypto/tpm/storage"
@@ -402,8 +404,19 @@ type attestationObject struct {
 // doDeviceAttestation performs `device-attest-01` challenge validation.
 func doDeviceAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 	// TODO(hs): make TPM flow work with CreateAttestor()/Attest() too
+	// TODO: prepare the full attestation-uri: fill in missing data, fill in values from flags,
+	// get defaults (AK name, based on TPM presence); fail early if no TPM available.
 	attestationURI := clictx.String("attestation-uri")
 	if strings.HasPrefix(attestationURI, "tpmkms:") {
+		u, err := uri.ParseWithScheme(string(apiv1.TPMKMS), attestationURI)
+		if err != nil {
+			return fmt.Errorf("failed to parse %q: %w", attestationURI, err)
+		}
+		if device := clictx.String("tpm-device"); device != "" {
+			u.Values.Set("device", device)
+			clictx.Set("attestation-uri", u.String())
+		}
+
 		return doTPMAttestation(clictx, ac, ch, identifier, af)
 	}
 
@@ -833,17 +846,20 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	if af.tpmSigner != nil {
 		attestationURI := af.ctx.String("attestation-uri")
 		tpmStorageDirectory := af.ctx.String("tpm-storage-directory")
+		tpmDevice := af.ctx.String("tpm-device")
+
+		tpmOpts := []tpm.NewTPMOption{
+			tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)),
+		}
 
 		keyName, attURI, err := parseTPMAttestationURI(attestationURI)
 		if err != nil {
 			return nil, fmt.Errorf("failed parsing --attestation-uri: %w", err)
 		}
 
-		tpmOpts := []tpm.NewTPMOption{
-			tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)),
-		}
-		if device := attURI.Get("device"); device != "" {
-			tpmOpts = append(tpmOpts, tpm.WithDeviceName(device))
+		if tpmDevice == "" {
+			tpmDevice := attURI.Get("device")
+			tpmOpts = append(tpmOpts, tpm.WithDeviceName(tpmDevice))
 		}
 
 		t, err := tpm.New(tpmOpts...)
