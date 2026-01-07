@@ -11,9 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: |
-          Git tag to publish (e.g., v0.28.0).
-          Pre-release tags (-rc) are blocked.
+        description: 'Git tag to publish (e.g., v0.28.0)'
         required: true
         type: string
 
@@ -24,15 +22,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Validate tag (block pre-releases)
-        run: |
-          if [[ "$TAG" == *"-rc"* ]]; then
-            echo "::error::Pre-release tags (-rc) cannot be published to production repos"
-            exit 1
-          fi
-        env:
-          TAG: ${{ inputs.tag }}
-
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
@@ -42,6 +31,17 @@ jobs:
       - name: Extract version
         id: version
         run: echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ inputs.tag }}
+
+      - name: Is Pre-release
+        id: is_prerelease
+        run: |
+          if [[ "$TAG" == *"-rc"* ]]; then
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
         env:
           TAG: ${{ inputs.tag }}
 
@@ -59,9 +59,10 @@ jobs:
       - name: Download packages from GitHub release
         run: |
           mkdir -p dist
-          gh release download "$TAG" --pattern '*.deb' --pattern '*.rpm' --dir dist
+          gh release download "$TAG" --pattern "*${VERSION}*.deb" --pattern "*${VERSION}*.rpm" --dir dist
         env:
           TAG: ${{ inputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload packages to GCS
@@ -73,4 +74,4 @@ jobs:
       - name: Import packages to Artifact Registry
         run: ./scripts/package-repo-import.sh step-cli ${{ steps.version.outputs.version }}
         env:
-          IS_PRERELEASE: 'false'
+          IS_PRERELEASE: ${{ steps.is_prerelease.outputs.is_prerelease }}
