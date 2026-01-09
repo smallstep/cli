@@ -51,14 +51,10 @@ builds:
     binary: bin/step
   -
     # This build is specifically for nFPM targets (.deb and .rpm files).
-    # It's exactly the same as the default build above, except:
-    # - it only builds the archs we want to produce .deb and .rpm files for
-    # - the name of the output binary is step-cli
+    # It's exactly the same as the default build above, except the binary is
+    # named step-cli. It inherits all Linux targets from the default build.
     << : *BUILD
     id: nfpm
-    targets:
-      - linux_amd64
-      - linux_arm64
     binary: step-cli
 
 archives:
