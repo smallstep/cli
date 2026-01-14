@@ -172,5 +172,11 @@ func isVerboseExit(needsRenewal, isVerbose bool) error {
 		}
 		return nil
 	}
-	return errs.NewExitError(errors.Errorf("certificate does not need renewal"), 1)
+
+	if isVerbose {
+		return errs.NewExitError(errors.Errorf("certificate does not need renewal"), 1)
+	}
+
+	// urfave/cli won't show any message
+	return cli.NewExitError("", 1)
 }
