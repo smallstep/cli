@@ -485,13 +485,26 @@ parameters identify the KMS, and **&**-separated parameters contain credentials.
 		**TPM 2.0**
 		:  Use **tpmkms:** URIs. Parameters: **name**, **device**, **attestation-ca-url**.
 
+		**Google Cloud KMS**
+		:  Use **cloudkms:** URIs. Parameters: **credentials-file**.
+
+		**AWS KMS**
+		:  Use **awskms:** URIs. Parameters: **region**, **profile**, **credentials-file**.
+
+		**Azure Key Vault**
+		:  Use **azurekms:** URIs. Parameters: **tenant-id**, **client-id**, **client-secret**, **client-certificate-file**.
+
 : Examples:
 
 '''
 yubikey:pin-value=123456
 pkcs11:module-path=/usr/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=pass
 tpmkms:name=my-key;device=/dev/tpmrm0
-'''`,
+awskms:region=us-east-1
+azurekms:client-id=fooo;client-secret=bar;tenant-id=9de53416-4431-4181-7a8b-23af3EXAMPLE
+'''
+
+    For more information, see https://smallstep.com/docs/step-ca/cryptographic-protection/.`,
 	}
 
 	AttestationURI = cli.StringFlag{
