@@ -470,7 +470,7 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 
 	KMSUri = cli.StringFlag{
 		Name: "kms",
-		Usage: `The <uri> to configure a Cloud KMS or an HSM.
+		Usage: `The <uri> to configure a (cloud) KMS or an HSM.
 <uri> is formatted as **kmstype:[key=value;...]?[key=value&...]**. The **;**-separated
 parameters identify the KMS, and **&**-separated parameters contain credentials.
 
