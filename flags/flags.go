@@ -469,8 +469,29 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 	}
 
 	KMSUri = cli.StringFlag{
-		Name:  "kms",
-		Usage: "The <uri> to configure a Cloud KMS or an HSM.",
+		Name: "kms",
+		Usage: `The <uri> to configure a Cloud KMS or an HSM.
+<uri> is formatted as **kmstype:[key=value;...]?[key=value&...]**. The **;**-separated
+parameters identify the KMS, and **&**-separated parameters contain credentials.
+
+: Supported KMS types:
+
+		**YubiKey PIV**
+		:  Use **yubikey:** URIs. Parameters: **serial**, **pin-value**, **pin-source**, **management-key**, **management-key-source**.
+
+		**PKCS #11**
+		:  Use **pkcs11:** URIs. Parameters: **module-path**, **token**, **id**, **object**, **pin-value**, **pin-source**.
+
+		**TPM 2.0**
+		:  Use **tpmkms:** URIs. Parameters: **name**, **device**, **attestation-ca-url**.
+
+: Examples:
+
+'''
+yubikey:pin-value=123456
+pkcs11:module-path=/usr/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=pass
+tpmkms:name=my-key;device=/dev/tpmrm0
+'''`,
 	}
 
 	AttestationURI = cli.StringFlag{
