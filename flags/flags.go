@@ -472,7 +472,7 @@ flag exists so it can be configured in $STEPPATH/config/defaults.json.`,
 		Name: "kms",
 		Usage: `The <uri> to configure a (cloud) KMS or an HSM.
 <uri> is formatted as **kmstype:[key=value;...]?[key=value&...]**. The **;**-separated
-parameters identify the KMS, and **&**-separated parameters contain credentials.
+parameters identify the KMS, and **&**-separated parameters contain credentials and additional configuration for those credentials.
 
 : Supported KMS types:
 
