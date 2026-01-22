@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
@@ -96,9 +97,15 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 	// Define default file writers and prompters for go.step.sm/crypto
 	pemutil.WriteFile = fileutil.WriteFile
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {
+		if !ui.CanPrompt() {
+			return nil, errs.NewRequiredInputError("password", "password-file")
+		}
 		return ui.PromptPassword(msg)
 	}
 	jose.PromptPassword = func(msg string) ([]byte, error) {
+		if !ui.CanPrompt() {
+			return nil, errs.NewRequiredInputError("password", "password-file")
+		}
 		return ui.PromptPassword(msg)
 	}
 
@@ -128,6 +135,13 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 	app.Flags = append(app.Flags, cli.StringFlag{
 		Name:  "config",
 		Usage: "path to the config file to use for CLI flags",
+	})
+
+	// Flag to disable interactive prompts
+	app.Flags = append(app.Flags, cli.BoolFlag{
+		Name:   "non-interactive",
+		Usage:  "disable interactive prompts; commands will fail if required input is missing",
+		EnvVar: "STEP_NON_INTERACTIVE",
 	})
 
 	// Action runs on `step` or `step <command>` if the command is not enabled.
