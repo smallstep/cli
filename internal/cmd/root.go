@@ -148,6 +148,15 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 		EnvVar: "STEP_NON_INTERACTIVE",
 	})
 
+	// Before hook to propagate --non-interactive flag to the environment
+	// so that ui.CanPrompt() can check it without access to the cli context.
+	app.Before = func(ctx *cli.Context) error {
+		if ctx.GlobalBool("non-interactive") {
+			os.Setenv("STEP_NON_INTERACTIVE", "1")
+		}
+		return nil
+	}
+
 	// Action runs on `step` or `step <command>` if the command is not enabled.
 	app.Action = func(ctx *cli.Context) error {
 		args := ctx.Args()
