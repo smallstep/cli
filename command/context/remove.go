@@ -92,7 +92,8 @@ func removeAction(ctx *cli.Context) error {
 		}
 		ui.Println()
 
-		if ok, err := ui.PromptYesNo(fmt.Sprintf("Are you sure you want to delete the configuration for context %s (this cannot be undone!) [y/n]", name)); err != nil {
+		if ok, err := ui.PromptYesNo(fmt.Sprintf("Are you sure you want to delete the configuration for context %s (this cannot be undone!) [y/n]", name),
+			ui.WithField("deletion confirmation", "")); err != nil {
 			return err
 		} else if !ok {
 			return errors.New("context not removed")

@@ -259,7 +259,7 @@ func signAction(ctx *cli.Context) error {
 		opts = append(opts, pemutil.WithPasswordPrompt(
 			fmt.Sprintf("Please enter the password to decrypt %s", keyFile),
 			func(s string) ([]byte, error) {
-				return ui.PromptPassword(s)
+				return ui.PromptPassword(s, ui.WithField("CA key password", "password-file"))
 			}))
 	} else {
 		opts = append(opts, pemutil.WithPasswordFile(passFile))

@@ -914,6 +914,7 @@ func savePrivateKey(ctx *cli.Context, filename string, priv interface{}, insecur
 		}
 	} else {
 		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key",
+			ui.WithField("private key password", "password-file"),
 			ui.WithValidateNotEmpty())
 		if err != nil {
 			return errors.Wrap(err, "error reading password")

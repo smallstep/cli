@@ -96,10 +96,10 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 	// Define default file writers and prompters for go.step.sm/crypto
 	pemutil.WriteFile = fileutil.WriteFile
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {
-		return ui.PromptPassword(msg)
+		return ui.PromptPassword(msg, ui.WithField("password", "password-file"))
 	}
 	jose.PromptPassword = func(msg string) ([]byte, error) {
-		return ui.PromptPassword(msg)
+		return ui.PromptPassword(msg, ui.WithField("password", "password-file"))
 	}
 
 	// Override global framework components

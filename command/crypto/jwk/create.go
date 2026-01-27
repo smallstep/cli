@@ -533,7 +533,9 @@ func createAction(ctx *cli.Context) (err error) {
 		// Generate JWE encryption key.
 		if jose.SupportsPBKDF2 {
 			var key []byte
-			key, err = ui.PromptPassword("Please enter the password to encrypt the private JWK", ui.WithValue(password))
+			key, err = ui.PromptPassword("Please enter the password to encrypt the private JWK",
+				ui.WithField("JWK encryption password", "password-file"),
+				ui.WithValue(password))
 			if err != nil {
 				return errors.Wrap(err, "error reading password")
 			}
