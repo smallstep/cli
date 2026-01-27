@@ -144,7 +144,8 @@ func p12Action(ctx *cli.Context) error {
 		}
 
 		if password == "" {
-			pass, err := ui.PromptPassword("Please enter a password to encrypt the .p12 file")
+			pass, err := ui.PromptPassword("Please enter a password to encrypt the .p12 file",
+				ui.WithField("PKCS#12 password", "password-file"))
 			if err != nil {
 				return errors.Wrap(err, "error reading password")
 			}

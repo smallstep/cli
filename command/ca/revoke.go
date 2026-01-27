@@ -396,7 +396,9 @@ func (f *revokeFlow) GenerateToken(ctx *cli.Context, subject *string) (string, e
 	}
 
 	if *subject == "" {
-		*subject, err = ui.Prompt("What is the Serial Number of the certificate you would like to revoke? (`step certificate inspect foo.cert`)", ui.WithValidateNotEmpty())
+		*subject, err = ui.Prompt("What is the Serial Number of the certificate you would like to revoke? (`step certificate inspect foo.cert`)",
+			ui.WithField("certificate serial number", "serial"),
+			ui.WithValidateNotEmpty())
 		if err != nil {
 			return "", err
 		}
