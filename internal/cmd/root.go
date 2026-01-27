@@ -98,17 +98,13 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 	pemutil.WriteFile = fileutil.WriteFile
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {
 		if !ui.CanPrompt() {
-			// Don't suggest a specific flag since different commands use different
-			// password flags (--password-file, --provisioner-password-file, etc.)
-			return nil, errs.NewRequiredInputError("password", "")
+			return nil, errs.NewRequiredInputError("password")
 		}
 		return ui.PromptPassword(msg)
 	}
 	jose.PromptPassword = func(msg string) ([]byte, error) {
 		if !ui.CanPrompt() {
-			// Don't suggest a specific flag since different commands use different
-			// password flags (--password-file, --provisioner-password-file, etc.)
-			return nil, errs.NewRequiredInputError("password", "")
+			return nil, errs.NewRequiredInputError("password")
 		}
 		return ui.PromptPassword(msg)
 	}
