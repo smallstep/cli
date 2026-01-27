@@ -13,7 +13,6 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/cli-utils/command"
-	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
