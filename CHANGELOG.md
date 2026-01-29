@@ -28,6 +28,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [x.y.z] - TBD
 
+### Deprecated
+
+- Creating new Linked CA deployments via `step ca init --deployment-type=linked`
+  is no longer supported in open-source step-ca. Users requiring Linked CA
+  features should use Step CA Pro. See https://smallstep.com/product/step-ca-pro/
+
 ### Changed
 
 - Suppress output messages for `step certificate needs-renewal` and `step ssh
