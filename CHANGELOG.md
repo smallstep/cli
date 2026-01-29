@@ -34,6 +34,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   is no longer supported in open-source step-ca. Users requiring Linked CA
   features should use Step CA Pro. See https://smallstep.com/product/step-ca-pro/
 
+#### Migrating from Linked CA to Standalone
+
+To migrate an existing linked CA to standalone mode:
+
+1. Export your current configuration including cloud-stored provisioners:
+   ```
+   step-ca export $(step path)/config/ca.json --token $STEP_CA_TOKEN > export.json
+   ```
+
+2. Stop the CA
+
+3. Update your `ca.json`:
+   - Remove the `authority.linkedca` section
+   - Ensure `authority.enableAdmin: true`
+   - Ensure `db` is configured
+
+4. Import the provisioners and admins:
+   ```
+   step-ca import $(step path)/config/ca.json export.json
+   ```
+
+5. Start the CA without the `--token` flag:
+   ```
+   step-ca $(step path)/config/ca.json
+   ```
+
 ### Changed
 
 - Suppress output messages for `step certificate needs-renewal` and `step ssh
