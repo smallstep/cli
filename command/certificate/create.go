@@ -330,7 +330,17 @@ $ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
   "Wile E. Coyote" coyote.csr coyote.key
 '''
 
+Create a CSR using <step-kms-plugin>:
+'''
+$ step certificate create --csr --key yubikey:slot-id=9a coyote@acme.corp coyote.csr
+'''
+
 Create a root certificate using <step-kms-plugin>:
+'''
+$ step certificate create --profile root-ca --key yubikey:slot-id=9a 'KMS Root' root_ca.crt
+'''
+
+Create a root certificate using <step-kms-plugin> and the <--kms> flag:
 '''
 $ step kms create \
   --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \

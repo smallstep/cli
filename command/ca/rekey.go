@@ -83,12 +83,16 @@ Rekey a certificate forcing the overwrite of the previous certificate and key
 $ step ca rekey --force internal.crt internal.key
 '''
 
-Rekey a certificate which key is in a KMS, with another from the same KMS:
+Rekey a certificate using a KMS, with another from the same KMS:
+'''
+$ step ca rekey --private-key yubikey:slot-id=9a yubikey.crt yubikey:slot-id=82
+'''
+
+Rekey a certificate using a KMS with the <--kms> flag:
 '''
 $ step ca rekey \
   --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
-  --private-key 'pkcs11:id=4002'
-  pkcs11.crt 'pkcs11:id=4001'
+  --private-key 'pkcs11:id=4002' pkcs11.crt 'pkcs11:id=4001'
 '''
 
 Rekey a certificate providing the <--ca-url> and <--root> flags:

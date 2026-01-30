@@ -107,6 +107,11 @@ $ step ca renew --mtls=false --force internal.crt internal.key
 
 Renew a certificate which key is in a KMS:
 '''
+$ step ca renew yubikey.crt yubikey:slot-id=9a
+'''
+
+Renew a certificate which key is in a KMS, using the <--kms> flag:
+'''
 $ step ca renew \
   --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
   pkcs11.crt 'pkcs11:id=4001'
