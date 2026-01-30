@@ -239,7 +239,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 	// For now, if the --kms flag is given, do not allow to generate a new key
 	// and write it on disk. We can't use the daemon mode because we
 	// cannot generate new keys.
-	if kmsURI != "" {
+	if kmsURI != "" || cryptoutil.IsKMS(keyFile) {
 		switch {
 		case givenPrivate == "":
 			return errs.RequiredWithFlag(ctx, "kms", "private-key")
