@@ -369,7 +369,12 @@ winget:
     # Your app's long description.
     #
     # Templates: allowed
-    description: ""
+    description: |
+      step-cli lets you build, operate, and automate Public Key Infrastructure (PKI)
+      systems and workflows. It's a swiss army knife for authenticated encryption
+      (X.509, TLS), single sign-on (OAuth OIDC, SAML), multi-factor authentication
+      (OATH OTP, FIDO U2F), encryption mechanisms (JSON Web Encryption, NaCl),
+      and verifiable claims (JWT, SAML assertions).
 
     # License URL.
     #
@@ -384,10 +389,25 @@ winget:
     # Create the PR - for testing
     skip_upload: auto
 
+    # Privacy URL.
+    #
+    # Templates: allowed
+    privacy_url: "https://smallstep.com/privacy-policy"
+
     # Tags.
     tags:
       - cli
       - smallstep
+      - pki
+      - x509
+      - certificates
+      - tls
+      - ssl
+      - jwt
+      - oauth
+      - security
+      - encryption
+      - cryptography
 
     # Repository to push the generated files to.
     repository:
@@ -432,7 +452,7 @@ scoops:
     # Default for github is "https://github.com/<repo_owner>/<repo_name>/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     # Default for gitlab is "https://gitlab.com/<repo_owner>/<repo_name>/uploads/{{ .ArtifactUploadHash }}/{{ .ArtifactName }}"
     # Default for gitea is "https://gitea.com/<repo_owner>/<repo_name>/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    url_template: "http://github.com/smallstep/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/smallstep/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
 
     # Repository to push the app manifest to.
     repository:
