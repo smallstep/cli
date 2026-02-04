@@ -167,7 +167,10 @@ $ step certificate sign \
   --kms 'pkcs11:module-path=/usr/local/lib/softhsm/libsofthsm2.so;token=smallstep?pin-value=password' \
   leaf.csr issuer.crt 'pkcs11:id=4001'
 '''
-`,
+
+'''
+$ step certificate sign leaf.csr issuer.crt 'yubikey-slot-id=9a?pin-value=123456'
+'''`,
 		Flags: []cli.Flag{
 			flags.KMSUri,
 			cli.StringFlag{
