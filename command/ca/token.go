@@ -173,8 +173,9 @@ Generate an X5C provisioner token using a certificate in a YubiKey. Note that a
 YubiKey does not support storing a certificate bundle. To make it work, you must
 add the intermediate and the root in the provisioner configuration:
 '''
-$ step ca token --kms yubikey:pin-value=123456 \
-  --x5c-cert yubikey:slot-id=82 --x5c-key yubikey:slot-id=82 \
+$ step ca token \
+  --x5c-cert yubikey:slot-id=82 \
+  --x5c-key 'yubikey:slot-id=82?pin=value=123456' \
   internal.example.com
 '''
 

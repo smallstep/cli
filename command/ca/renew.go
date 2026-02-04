@@ -107,7 +107,7 @@ $ step ca renew --mtls=false --force internal.crt internal.key
 
 Renew a certificate which key is in a KMS:
 '''
-$ step ca renew yubikey.crt yubikey:slot-id=9a
+$ step ca renew yubikey.crt 'yubikey:slot-id=9a?pin-value=123456'
 '''
 
 Renew a certificate which key is in a KMS, using the <--kms> flag:

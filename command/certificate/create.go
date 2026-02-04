@@ -332,12 +332,12 @@ $ step certificate create --csr --template csr.tpl --san coyote@acme.corp \
 
 Create a CSR using <step-kms-plugin>:
 '''
-$ step certificate create --csr --key yubikey:slot-id=9a coyote@acme.corp coyote.csr
+$ step certificate create --csr --key 'yubikey:slot-id=9a?pin=value=123456' coyote@acme.corp coyote.csr
 '''
 
 Create a root certificate using <step-kms-plugin>:
 '''
-$ step certificate create --profile root-ca --key yubikey:slot-id=9a 'KMS Root' root_ca.crt
+$ step certificate create --profile root-ca --key 'yubikey:slot-id=9a?pin=value=123456' 'KMS Root' root_ca.crt
 '''
 
 Create a root certificate using <step-kms-plugin> and the <--kms> flag:
