@@ -168,8 +168,9 @@ $ step certificate sign \
   leaf.csr issuer.crt 'pkcs11:id=4001'
 '''
 
+Sign a CSR using a certificate and a key stored in a KMS:
 '''
-$ step certificate sign leaf.csr issuer.crt 'yubikey-slot-id=9a?pin-value=123456'
+$ step certificate sign leaf.csr yubikey-slot-id=9a 'yubikey-slot-id=9a?pin-value=123456'
 '''`,
 		Flags: []cli.Flag{
 			flags.KMSUri,
@@ -241,6 +242,7 @@ func signAction(ctx *cli.Context) error {
 	csrFile := ctx.Args().Get(0)
 	crtFile := ctx.Args().Get(1)
 	keyFile := ctx.Args().Get(2)
+	kms := ctx.String("kms")
 
 	// Parse certificate request
 	csr, err := pemutil.ReadCertificateRequest(csrFile)
@@ -252,7 +254,7 @@ func signAction(ctx *cli.Context) error {
 	}
 
 	// Parse issuer and issuer key (at least one should be present)
-	issuers, err := pemutil.ReadCertificateBundle(crtFile)
+	issuers, err := cryptoutil.LoadCertificate(kms, crtFile)
 	if err != nil {
 		return err
 	}
@@ -268,7 +270,7 @@ func signAction(ctx *cli.Context) error {
 		opts = append(opts, pemutil.WithPasswordFile(passFile))
 	}
 
-	signer, err := cryptoutil.CreateSigner(ctx.String("kms"), keyFile, opts...)
+	signer, err := cryptoutil.CreateSigner(kms, keyFile, opts...)
 	if err != nil {
 		return err
 	}
