@@ -40,7 +40,7 @@ primitives and higher order resources.
 
 ### Local Development
 
-Check out the [local development](./local-development.md) guide for instructions for working on the `step` CLI code.
+Check out the [local development](./docs/local-development.md) guide for instructions for working on the `step` CLI code.
 
 ### Submitting Patches
 
