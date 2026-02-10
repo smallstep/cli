@@ -109,7 +109,7 @@ Request a new certificate with an X5C provisioner:
 $ step ca certificate foo.internal foo.crt foo.key --x5c-cert x5c.cert --x5c-key x5c.key
 '''
 
-Request a new certificate with an X5C using an certificate from a Yubikey:
+Request a new certificate with an X5C provisioner using a certificate and private key stored on a YubiKey:
 '''
 $ step ca certificate joe@example.com joe.crt joe.key \
   --x5c-cert yubikey:slot-id=9a \
