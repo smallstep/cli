@@ -109,6 +109,13 @@ Request a new certificate with an X5C provisioner:
 $ step ca certificate foo.internal foo.crt foo.key --x5c-cert x5c.cert --x5c-key x5c.key
 '''
 
+Request a new certificate with an X5C provisioner using a certificate and private key stored on a YubiKey:
+'''
+$ step ca certificate joe@example.com joe.crt joe.key \
+  --x5c-cert yubikey:slot-id=9a \
+  --x5c-key 'yubikey:slot-id=9a?pin=value=123456'
+'''
+
 **Certificate Templates** - With a provisioner configured with a custom
 template we can use the **--set** flag to pass user variables:
 '''
