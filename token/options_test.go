@@ -7,6 +7,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,15 +16,17 @@ import (
 	nebula "github.com/slackhq/nebula/cert"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/ssh"
+
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x25519"
-	"golang.org/x/crypto/ssh"
 )
 
 func TestOptions(t *testing.T) {
 	empty := new(Claims)
 	now := time.Now()
+
 	c25519CACert, c25519CAKey := mustNebulaCurve25519CA(t)
 	p256CACert, p256CAKey := mustNebulaP256CA(t)
 	c25519Cert, c25519Signer := mustNebulaCurve25519Cert(t, "test.lan", mustNebulaIPNet(t, "10.1.0.1/16"), []string{"test"}, c25519CACert, c25519CAKey)
@@ -119,16 +122,18 @@ func mustReadSSHPublicKey(t *testing.T, filename string) ssh.PublicKey {
 	return pub
 }
 
-func serializeAndWriteNebulaCert(t *testing.T, tempDir string, cert *nebula.NebulaCertificate) (string, []byte) {
+func serializeAndWriteNebulaCert(t *testing.T, tempDir string, cert nebula.Certificate) (string, []byte) {
 	file, err := os.CreateTemp(tempDir, "nebula-test-cert-*")
 	require.NoError(t, err)
 	defer file.Close()
-	pem, err := cert.MarshalToPEM()
+
+	pem, err := cert.MarshalPEM()
 	require.NoError(t, err)
 	data, err := cert.Marshal()
 	require.NoError(t, err)
 	_, err = file.Write(pem)
 	require.NoError(t, err)
+
 	return file.Name(), data
 }
 
@@ -145,64 +150,56 @@ func mustNebulaIPNet(t *testing.T, s string) *net.IPNet {
 	return ipNet
 }
 
-func mustNebulaCurve25519CA(t *testing.T) (*nebula.NebulaCertificate, ed25519.PrivateKey) {
+func mustNebulaCurve25519CA(t *testing.T) (nebula.Certificate, ed25519.PrivateKey) {
 	t.Helper()
+
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
 
-	nc := &nebula.NebulaCertificate{
-		Details: nebula.NebulaCertificateDetails{
-			Name:   "TestCA",
-			Groups: []string{"test"},
-			Ips: []*net.IPNet{
-				mustNebulaIPNet(t, "10.1.0.0/16"),
-			},
-			Subnets:   []*net.IPNet{},
-			NotBefore: time.Now(),
-			NotAfter:  time.Now().Add(10 * time.Minute),
-			PublicKey: pub,
-			IsCA:      true,
-			Curve:     nebula.Curve_CURVE25519,
-		},
+	tbs := &nebula.TBSCertificate{
+		Version:   nebula.Version1,
+		Name:      "TestCA",
+		Groups:    []string{"test"},
+		Networks:  []netip.Prefix{netip.MustParsePrefix("10.1.0.0/16")},
+		NotBefore: time.Now().Add(-1 * time.Minute),
+		NotAfter:  time.Now().Add(10 * time.Minute),
+		PublicKey: pub,
+		IsCA:      true,
+		Curve:     nebula.Curve_CURVE25519,
 	}
-
-	require.NoError(t, nc.Sign(nebula.Curve_CURVE25519, priv))
+	nc, err := tbs.Sign(nil, nebula.Curve_CURVE25519, priv)
+	require.NoError(t, err)
 
 	return nc, priv
 }
 
-func mustNebulaP256CA(t *testing.T) (*nebula.NebulaCertificate, *ecdh.PrivateKey) {
+func mustNebulaP256CA(t *testing.T) (nebula.Certificate, *ecdh.PrivateKey) {
 	t.Helper()
+
 	priv, err := ecdh.P256().GenerateKey(rand.Reader)
 	require.NoError(t, err)
 
-	nc := &nebula.NebulaCertificate{
-		Details: nebula.NebulaCertificateDetails{
-			Name:   "TestCA",
-			Groups: []string{"test"},
-			Ips: []*net.IPNet{
-				mustNebulaIPNet(t, "10.1.0.0/16"),
-			},
-			Subnets:   []*net.IPNet{},
-			NotBefore: time.Now(),
-			NotAfter:  time.Now().Add(10 * time.Minute),
-			PublicKey: priv.PublicKey().Bytes(),
-			IsCA:      true,
-			Curve:     nebula.Curve_P256,
-		},
+	tbs := &nebula.TBSCertificate{
+		Version:   nebula.Version1,
+		Name:      "TestCA",
+		Groups:    []string{"test"},
+		Networks:  []netip.Prefix{netip.MustParsePrefix("10.1.0.0/16")},
+		NotBefore: time.Now().Add(-1 * time.Minute),
+		NotAfter:  time.Now().Add(10 * time.Minute),
+		PublicKey: priv.PublicKey().Bytes(),
+		IsCA:      true,
+		Curve:     nebula.Curve_P256,
 	}
-
-	require.NoError(t, nc.Sign(nebula.Curve_P256, priv.Bytes()))
+	nc, err := tbs.Sign(nil, nebula.Curve_P256, priv.Bytes())
+	require.NoError(t, err)
 
 	return nc, priv
 }
 
-func mustNebulaCurve25519Cert(t *testing.T, name string, ipNet *net.IPNet, groups []string, ca *nebula.NebulaCertificate, signer ed25519.PrivateKey) (*nebula.NebulaCertificate, x25519.PrivateKey) {
+func mustNebulaCurve25519Cert(t *testing.T, name string, ipNet *net.IPNet, groups []string, ca nebula.Certificate, signer ed25519.PrivateKey) (nebula.Certificate, x25519.PrivateKey) {
 	t.Helper()
 
 	pub, priv, err := x25519.GenerateKey(rand.Reader)
-	require.NoError(t, err)
-	issuer, err := ca.Sha256Sum()
 	require.NoError(t, err)
 
 	invertedGroups := make(map[string]struct{}, len(groups))
@@ -214,33 +211,28 @@ func mustNebulaCurve25519Cert(t *testing.T, name string, ipNet *net.IPNet, group
 	curve := nebula.Curve_CURVE25519
 
 	t1 := time.Now().Truncate(time.Second)
-	nc := &nebula.NebulaCertificate{
-		Details: nebula.NebulaCertificateDetails{
-			Name:           name,
-			Ips:            []*net.IPNet{ipNet},
-			Subnets:        []*net.IPNet{},
-			Groups:         groups,
-			NotBefore:      t1,
-			NotAfter:       t1.Add(5 * time.Minute),
-			PublicKey:      pub,
-			IsCA:           false,
-			Issuer:         issuer,
-			InvertedGroups: invertedGroups,
-			Curve:          curve,
-		},
+	tbs := &nebula.TBSCertificate{
+		Version:   nebula.Version1,
+		Name:      name,
+		Networks:  []netip.Prefix{netip.MustParsePrefix(ipNet.String())},
+		Groups:    groups,
+		NotBefore: t1,
+		NotAfter:  t1.Add(5 * time.Minute),
+		PublicKey: pub,
+		IsCA:      false,
+		Curve:     curve,
 	}
 
-	require.NoError(t, nc.Sign(curve, key))
+	nc, err := tbs.Sign(ca, curve, key)
+	require.NoError(t, err)
 
 	return nc, priv
 }
 
-func mustNebulaP256Cert(t *testing.T, name string, ipNet *net.IPNet, groups []string, ca *nebula.NebulaCertificate, signer *ecdh.PrivateKey) (*nebula.NebulaCertificate, *ecdsa.PrivateKey) {
+func mustNebulaP256Cert(t *testing.T, name string, ipNet *net.IPNet, groups []string, ca nebula.Certificate, signer *ecdh.PrivateKey) (nebula.Certificate, *ecdsa.PrivateKey) {
 	t.Helper()
 
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	require.NoError(t, err)
-	issuer, err := ca.Sha256Sum()
 	require.NoError(t, err)
 
 	invertedGroups := make(map[string]struct{}, len(groups))
@@ -255,23 +247,20 @@ func mustNebulaP256Cert(t *testing.T, name string, ipNet *net.IPNet, groups []st
 	require.NoError(t, err)
 
 	t1 := time.Now().Truncate(time.Second)
-	nc := &nebula.NebulaCertificate{
-		Details: nebula.NebulaCertificateDetails{
-			Name:           name,
-			Ips:            []*net.IPNet{ipNet},
-			Subnets:        []*net.IPNet{},
-			Groups:         groups,
-			NotBefore:      t1,
-			NotAfter:       t1.Add(5 * time.Minute),
-			PublicKey:      pk.PublicKey().Bytes(),
-			IsCA:           false,
-			Issuer:         issuer,
-			InvertedGroups: invertedGroups,
-			Curve:          curve,
-		},
+	tbs := &nebula.TBSCertificate{
+		Version:   nebula.Version2,
+		Name:      name,
+		Networks:  []netip.Prefix{netip.MustParsePrefix(ipNet.String())},
+		Groups:    groups,
+		NotBefore: t1,
+		NotAfter:  t1.Add(5 * time.Minute),
+		PublicKey: pk.PublicKey().Bytes(),
+		IsCA:      false,
+		Curve:     curve,
 	}
 
-	require.NoError(t, nc.Sign(curve, key))
+	nc, err := tbs.Sign(ca, curve, key)
+	require.NoError(t, err)
 
 	return nc, priv
 }
