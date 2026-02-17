@@ -405,7 +405,7 @@ func loadJWK(ctx *cli.Context, p *provisioner.JWK, tokAttrs tokenAttrs) (jwk *jo
 
 		opts = append(opts, jose.WithPasswordPrompter("Please enter the password to decrypt the provisioner key",
 			func(s string) ([]byte, error) {
-				return ui.PromptPassword(s)
+				return ui.PromptPassword(s, ui.WithField("password", "password-file"))
 			}),
 		)
 

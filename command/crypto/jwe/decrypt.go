@@ -123,6 +123,7 @@ func decryptAction(ctx *cli.Context) error {
 		pbes2Key, err =
 			ui.PromptPassword(
 				"Please enter the password to decrypt the content encryption key",
+				ui.WithField("decryption password", "password-file"),
 				ui.WithValue(password))
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwk")

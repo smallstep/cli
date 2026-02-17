@@ -96,10 +96,10 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 	// Define default file writers and prompters for go.step.sm/crypto
 	pemutil.WriteFile = fileutil.WriteFile
 	pemutil.PromptPassword = func(msg string) ([]byte, error) {
-		return ui.PromptPassword(msg)
+		return ui.PromptPassword(msg, ui.WithField("password", "password-file"))
 	}
 	jose.PromptPassword = func(msg string) ([]byte, error) {
-		return ui.PromptPassword(msg)
+		return ui.PromptPassword(msg, ui.WithField("password", "password-file"))
 	}
 
 	// Override global framework components
@@ -129,6 +129,22 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 		Name:  "config",
 		Usage: "path to the config file to use for CLI flags",
 	})
+
+	// Flag to disable interactive prompts
+	app.Flags = append(app.Flags, cli.BoolFlag{
+		Name:   "non-interactive",
+		Usage:  "disable interactive prompts; commands will fail if required input is missing",
+		EnvVar: "STEP_NON_INTERACTIVE",
+	})
+
+	// Before hook to propagate --non-interactive flag to the environment
+	// so that ui.CanPrompt() can check it without access to the cli context.
+	app.Before = func(ctx *cli.Context) error {
+		if ctx.GlobalBool("non-interactive") {
+			os.Setenv("STEP_NON_INTERACTIVE", "1")
+		}
+		return nil
+	}
 
 	// Action runs on `step` or `step <command>` if the command is not enabled.
 	app.Action = func(ctx *cli.Context) error {
