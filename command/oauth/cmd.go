@@ -892,6 +892,9 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 	}
 
 	switch {
+	case idr.VerificationURIComplete != "":
+		// Prefer VerificationURIComplete if present for user convenience
+		idr.VerificationURI = idr.VerificationURIComplete
 	case idr.VerificationURI != "":
 		// do nothing
 	case idr.VerificationURL != "":
