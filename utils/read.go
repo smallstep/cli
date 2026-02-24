@@ -53,7 +53,7 @@ func ReadString(r io.Reader) (string, error) {
 // ReadPasswordFromFile reads and returns the password from the given filename.
 // The contents of the file will be trimmed at the right.
 func ReadPasswordFromFile(filename string) ([]byte, error) {
-	password, err := os.ReadFile(filename)
+	password, err := os.ReadFile(filename) // #nosec G703 -- file intended to be provided by user
 	if err != nil {
 		return nil, errs.FileError(err, filename)
 	}
@@ -94,7 +94,7 @@ func ReadFile(name string) (b []byte, err error) {
 		b, err = io.ReadAll(stdin)
 	} else {
 		var contents []byte
-		contents, err = os.ReadFile(name)
+		contents, err = os.ReadFile(name) // #nosec G703 -- file intended to be provided by user
 		if err != nil {
 			return nil, errs.FileError(err, name)
 		}

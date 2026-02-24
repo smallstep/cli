@@ -17,7 +17,7 @@ func dialAgent() (*Agent, error) {
 	// Override the default windows openssh-ssh-agent pipe
 	if socket := os.Getenv("SSH_AUTH_SOCK"); socket != "" {
 		// Attempt unix sockets for environments like cygwin.
-		if conn, err := net.Dial("unix", socket); err == nil {
+		if conn, err := net.Dial("unix", socket); err == nil { // #nosec G704 -- SSH_AUTH_SOCK points to a local Unix domain socket path
 			return &Agent{
 				ExtendedAgent: agent.NewClient(conn),
 				Conn:          conn,

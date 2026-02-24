@@ -38,7 +38,7 @@ var (
 )
 
 func readWindowsPipeNameFrom(configFile string) (pipeName string) {
-	file, err := os.Open(configFile)
+	file, err := os.Open(configFile) // #nosec G703 -- intentionally reading from user configuration
 	if err == nil {
 		sc := bufio.NewScanner(file)
 		for sc.Scan() {

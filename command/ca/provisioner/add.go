@@ -28,7 +28,7 @@ import (
 )
 
 func addCommand() cli.Command {
-	return cli.Command{
+	return cli.Command{ // #nosec G101 -- Google OIDC example values
 		Name:   "add",
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add a provisioner",

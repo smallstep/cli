@@ -250,7 +250,6 @@ func verifyAction(ctx *cli.Context) error {
 
 	switch {
 	case (verifyCRL || verifyOCSP) && roots != "":
-		//nolint:gosec // using default configuration for 3rd party endpoints
 		tlsConfig := &tls.Config{
 			RootCAs: rootPool,
 		}
@@ -389,7 +388,7 @@ func VerifyOCSPEndpoint(endpoint string, cert, issuer *x509.Certificate, httpCli
 		return false, errors.Errorf("error contacting OCSP server: %s", endpoint)
 	}
 	httpReq.Header.Add("Content-Type", "application/ocsp-request")
-	httpResp, err := httpClient.Do(httpReq)
+	httpResp, err := httpClient.Do(httpReq) // #nosec G704 -- request relies on values from certificate or intentionally provided by user
 	if err != nil {
 		return false, errors.Errorf("error contacting OCSP server: %s", endpoint)
 	}

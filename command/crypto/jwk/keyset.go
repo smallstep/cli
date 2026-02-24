@@ -234,7 +234,7 @@ func rwLockKeySet(filename string) (jwks *jose.JSONWebKeySet, writeFunc func(boo
 		return
 	}
 
-	fd := int(f.Fd())
+	fd := int(f.Fd()) // #nosec G115 -- uintptr comes from file descriptor
 
 	// non-blocking exclusive lock
 	err = sysutils.FileLock(fd)

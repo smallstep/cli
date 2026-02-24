@@ -92,6 +92,6 @@ func bcryptHash(out, shapass, shasalt []byte) {
 	}
 	// Swap bytes due to different endianness.
 	for i := 0; i < 32; i += 4 {
-		out[i+3], out[i+2], out[i+1], out[i] = out[i], out[i+1], out[i+2], out[i+3]
+		out[i+3], out[i+2], out[i+1], out[i] = out[i], out[i+1], out[i+2], out[i+3] // #nosec G602 -- loop condition guarantees this doesn't go out of range
 	}
 }

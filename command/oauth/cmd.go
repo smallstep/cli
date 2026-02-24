@@ -66,9 +66,9 @@ const (
 )
 
 type token struct {
-	AccessToken  string `json:"access_token"`
+	AccessToken  string `json:"access_token"` // #nosec G117 -- JSON property
 	IDToken      string `json:"id_token"`
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token"` // #nosec G117 -- JSON property
 	ExpiresIn    int    `json:"expires_in"`
 	TokenType    string `json:"token_type"`
 	Err          string `json:"error,omitempty"`
@@ -571,13 +571,13 @@ type endpoint struct {
 }
 
 var knownProviders = map[string]endpoint{
-	"google": {
+	"google": { // #nosec G101 -- no credentials; just well-known configuration values
 		authorization:       "https://accounts.google.com/o/oauth2/v2/auth",
 		deviceAuthorization: "https://oauth2.googleapis.com/device/code",
 		token:               "https://www.googleapis.com/oauth2/v4/token",
 		userInfo:            "https://www.googleapis.com/oauth2/v3/userinfo",
 	},
-	"github": {
+	"github": { // #nosec G101 -- no credentials; just well-known configuration values
 		authorization:       "https://github.com/login/oauth/authorize",
 		deviceAuthorization: "https://github.com/login/device/code",
 		token:               "https://github.com/login/oauth/access_token",
@@ -712,7 +712,7 @@ func disco(provider string) (map[string]interface{}, error) {
 // application/json", without this header GitHub will use
 // application/x-www-form-urlencoded.
 func postForm(rawurl string, data url.Values) (*http.Response, error) {
-	req, err := http.NewRequest("POST", rawurl, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", rawurl, strings.NewReader(data.Encode())) // #nosec G704 -- request intentionally relies on user data
 	if err != nil {
 		return nil, fmt.Errorf("create POST %s request failed: %w", rawurl, err)
 	}
@@ -722,7 +722,7 @@ func postForm(rawurl string, data url.Values) (*http.Response, error) {
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
-	return http.DefaultClient.Do(req)
+	return http.DefaultClient.Do(req) // #nosec G704 -- request intentionally relies on user configuration
 }
 
 // NewServer creates http server
@@ -1106,7 +1106,7 @@ func (o *oauth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	code, state := q.Get("code"), q.Get("state")
 	if code == "" || state == "" {
-		fmt.Fprintf(os.Stderr, "Invalid request received: http://%s%s\n", req.RemoteAddr, req.URL.String())
+		fmt.Fprintf(os.Stderr, "Invalid request received: http://%s%s\n", req.RemoteAddr, req.URL.String()) // #nosec G705 -- terminal output
 		fmt.Fprintf(os.Stderr, "You may have an app or browser plugin that needs to be turned off\n")
 		http.Error(w, "400 bad request", http.StatusBadRequest)
 		return

@@ -179,7 +179,7 @@ func (s *Shell) RemoteShell() error {
 	defer session.Close()
 
 	var fallback bool
-	if fd := int(os.Stdin.Fd()); term.IsTerminal(fd) {
+	if fd := int(os.Stdin.Fd()); term.IsTerminal(fd) { // #nosec G115 -- uintptr comes from file descriptor
 		// Put terminal in raw mode
 		if originalState, err := term.MakeRaw(fd); err != nil {
 			fallback = true
