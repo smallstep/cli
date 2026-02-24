@@ -120,7 +120,7 @@ func createAction(ctx *cli.Context) (err error) {
 	client := http.Client{
 		Transport: transport,
 	}
-	resp, err := client.Do(post)
+	resp, err := client.Do(post) // #nosec G704 -- request depends on configuration
 	if err != nil {
 		return err
 	}

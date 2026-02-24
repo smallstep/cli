@@ -509,18 +509,18 @@ func (ac *attestationClient) performAttestation(ctx context.Context, t *tpm.TPM,
 
 	encryptedCredentials := tpm.EncryptedCredential{
 		Credential: attResp.Credential,
-		Secret:     attResp.Secret,
+		Secret:     attResp.EncryptedSecret,
 	}
 
 	// activate the credential with the TPM
-	secret, err := ak.ActivateCredential(ctx, encryptedCredentials)
+	decryptedSecret, err := ak.ActivateCredential(ctx, encryptedCredentials)
 	if err != nil {
 		return nil, fmt.Errorf("failed activating credential: %w", err)
 	}
 
-	secretResp, err := ac.secret(ctx, secret)
+	secretResp, err := ac.verifyDecryptedSecret(ctx, decryptedSecret)
 	if err != nil {
-		return nil, fmt.Errorf("failed validating secret: %w", err)
+		return nil, fmt.Errorf("failed validating decrypted secret: %w", err)
 	}
 
 	akChain := make([]*x509.Certificate, len(secretResp.CertificateChain))
@@ -559,8 +559,8 @@ type attestationRequest struct {
 }
 
 type attestationResponse struct {
-	Credential []byte `json:"credential"`
-	Secret     []byte `json:"secret"` // encrypted secret
+	Credential      []byte `json:"credential"`
+	EncryptedSecret []byte `json:"secret"` // #nosec G117 -- JSON property carrying encrypted secret
 }
 
 // attest performs the HTTP POST request to the `/attest` endpoint of the
@@ -616,7 +616,7 @@ func (ac *attestationClient) attest(ctx context.Context, info *tpm.Info, eks []*
 		return nil, fmt.Errorf("failed creating POST http request for %q: %w", attestURL, err)
 	}
 
-	resp, err := ac.client.Do(req)
+	resp, err := ac.client.Do(req) // #nosec G704 -- request intentionally relies on user configuration
 	if err != nil {
 		return nil, fmt.Errorf("failed performing attestation request with Attestation CA %q: %w", attestURL, err)
 	}
@@ -635,18 +635,18 @@ func (ac *attestationClient) attest(ctx context.Context, info *tpm.Info, eks []*
 }
 
 type secretRequest struct {
-	Secret []byte `json:"secret"` // decrypted secret
+	DecryptedSecret []byte `json:"secret"` // #nosec G117 -- JSON property carrying decrypted secret
 }
 
 type secretResponse struct {
 	CertificateChain [][]byte `json:"chain"`
 }
 
-// secret performs the HTTP POST request to the `/secret` endpoint of the
-// Attestation CA.
-func (ac *attestationClient) secret(ctx context.Context, secret []byte) (*secretResponse, error) {
+// verifyDecryptedSecret performs the HTTP POST request to the `/secret`
+// endpoint of the Attestation CA.
+func (ac *attestationClient) verifyDecryptedSecret(ctx context.Context, secret []byte) (*secretResponse, error) {
 	sr := secretRequest{
-		Secret: secret,
+		DecryptedSecret: secret,
 	}
 
 	body, err := json.Marshal(sr)
@@ -660,7 +660,7 @@ func (ac *attestationClient) secret(ctx context.Context, secret []byte) (*secret
 		return nil, fmt.Errorf("failed creating POST http request for %q: %w", secretURL, err)
 	}
 
-	resp, err := ac.client.Do(req)
+	resp, err := ac.client.Do(req) // #nosec G704 -- request intentionally relies on user configuration
 	if err != nil {
 		return nil, fmt.Errorf("failed performing secret request with attestation CA %q: %w", secretURL, err)
 	}

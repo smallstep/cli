@@ -163,7 +163,7 @@ func panicHandler() {
 
 		fmt.Fprintln(os.Stderr, "Something unexpected happened.")
 		fmt.Fprintln(os.Stderr, "If you want to help us debug the problem, please run:")
-		fmt.Fprintf(os.Stderr, "STEPDEBUG=1 %s\n", strings.Join(os.Args, " "))
+		fmt.Fprintf(os.Stderr, "STEPDEBUG=1 %q\n", strings.Join(os.Args, " ")) // #nosec G705 -- terminal output
 		fmt.Fprintln(os.Stderr, "and send the output to info@smallstep.com")
 		os.Exit(2)
 	}

@@ -38,7 +38,7 @@ func LookPath(name string) (string, error) {
 		}
 		for _, ext := range exts {
 			path := filepath.Join(step.BasePath(), "plugins", fileName+ext)
-			if _, err := os.Stat(path); err == nil {
+			if _, err := os.Stat(path); err == nil { // #nosec G703 -- path to stat intentionally relies on (partial) user configuration
 				return path, nil
 			}
 		}
