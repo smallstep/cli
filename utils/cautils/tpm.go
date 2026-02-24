@@ -40,10 +40,15 @@ import (
 func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
 	attestationURI := clictx.String("attestation-uri")
 	tpmStorageDirectory := clictx.String("tpm-storage-directory")
+	tpmDevice := clictx.String("tpm-device")
 	tpmAttestationCABaseURL := clictx.String("attestation-ca-url")
 	tpmAttestationCARootFile := clictx.String("attestation-ca-root")
 	tpmAttestationCAInsecure := clictx.Bool("attestation-ca-insecure")
 	insecure := clictx.Bool("insecure")
+
+	tpmOpts := []tpm.NewTPMOption{
+		tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)),
+	}
 
 	keyName, attURI, err := parseTPMAttestationURI(attestationURI)
 	if err != nil {
@@ -57,11 +62,9 @@ func doTPMAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge
 		}
 	}
 
-	tpmOpts := []tpm.NewTPMOption{
-		tpm.WithStore(tpmstorage.NewDirstore(tpmStorageDirectory)),
-	}
-	if device := attURI.Get("device"); device != "" {
-		tpmOpts = append(tpmOpts, tpm.WithDeviceName(device))
+	if tpmDevice == "" {
+		tpmDevice := attURI.Get("device")
+		tpmOpts = append(tpmOpts, tpm.WithDeviceName(tpmDevice))
 	}
 
 	t, err := tpm.New(tpmOpts...)
