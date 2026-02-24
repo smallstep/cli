@@ -264,14 +264,19 @@ func WithNebulaCert(certFile string, anyKey any) Options {
 		if err != nil {
 			return errors.Wrapf(err, "error reading %s", certFile)
 		}
+
+		blockType := nebula.CertificateBanner // default to a v1 Nebula certificate
 		if bytes.HasPrefix(b, pemCertPrefix) {
 			block, _ := pem.Decode(b)
-			if block == nil || block.Type != nebula.CertBanner {
+			if block == nil || (block.Type != nebula.CertificateBanner && block.Type != nebula.CertificateV2Banner) {
 				return errors.Errorf("error reading %s: not a proper nebula certificate", certFile)
 			}
 			b = block.Bytes
+			blockType = block.Type
 		}
-		crt, err := nebula.UnmarshalNebulaCertificate(b)
+
+		pemData := pem.EncodeToMemory(&pem.Block{Type: blockType, Bytes: b})
+		crt, _, err := nebula.UnmarshalCertificateFromPEM(pemData)
 		if err != nil {
 			return errors.Wrapf(err, "error reading %s", certFile)
 		}

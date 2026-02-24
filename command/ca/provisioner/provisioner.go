@@ -651,14 +651,14 @@ func readNebulaRoots(rootFile string) ([][]byte, error) {
 		return nil, err
 	}
 
-	var crt *nebula.NebulaCertificate
-	var certs []*nebula.NebulaCertificate
+	var crt nebula.Certificate
+	var certs []nebula.Certificate
 	for len(b) > 0 {
-		crt, b, err = nebula.UnmarshalNebulaCertificateFromPEM(b)
+		crt, b, err = nebula.UnmarshalCertificateFromPEM(b)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error reading %s", rootFile)
 		}
-		if crt.Details.IsCA {
+		if crt.IsCA() {
 			certs = append(certs, crt)
 		}
 	}
@@ -668,7 +668,7 @@ func readNebulaRoots(rootFile string) ([][]byte, error) {
 
 	rootBytes := make([][]byte, len(certs))
 	for i, crt := range certs {
-		b, err = crt.MarshalToPEM()
+		b, err = crt.MarshalPEM()
 		if err != nil {
 			return nil, errors.Wrap(err, "error marshaling certificate")
 		}
