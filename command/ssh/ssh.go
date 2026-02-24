@@ -1,8 +1,13 @@
 package ssh
 
 import (
+	"crypto"
+	"fmt"
 	"net/http"
+	"os"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -13,9 +18,11 @@ import (
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/errs"
 	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/keyutil"
 
+	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sshutil"
 	"github.com/smallstep/cli/token"
@@ -160,6 +167,171 @@ var (
 private key so that the pair can be added to an SSH Agent.`,
 	}
 )
+
+type loginOptions struct {
+	retryFunc func(*cli.Context, error) error
+}
+
+type loginOption func(*loginOptions)
+
+func withRetryFunc(fn func(*cli.Context, error) error) loginOption {
+	return func(lo *loginOptions) {
+		lo.retryFunc = fn
+	}
+}
+
+func runOnFallbackContext(ctx *cli.Context, err error) error {
+	var (
+		contexts = step.Contexts()
+		current  = contexts.GetCurrent()
+	)
+
+	if name := ctx.String("fallback-context"); name != "" && name != current.Name {
+		if _, ok := contexts.Get(name); !ok {
+			return fmt.Errorf("error loading fallback context %q", name)
+		}
+
+		arg0, err := os.Executable()
+		if err != nil || arg0 == "" {
+			arg0 = os.Args[0]
+		}
+
+		args := slices.Clone(os.Args[1:])
+		args = append(args, "--context", name)
+		exec.Exec(arg0, args...)
+	}
+
+	return err
+}
+
+// loginIfNeeded check if the user is logged in looking at the ssh agent, if
+// it's not it will do the login flow.
+func loginIfNeeded(ctx *cli.Context, subject string, opts ...loginOption) error {
+	o := &loginOptions{
+		retryFunc: func(_ *cli.Context, err error) error {
+			return err
+		},
+	}
+	for _, fn := range opts {
+		fn(o)
+	}
+
+	templateData, err := flags.ParseTemplateData(ctx)
+	if err != nil {
+		return err
+	}
+
+	agent, err := sshutil.DialAgent()
+	if err != nil {
+		return err
+	}
+
+	client, err := cautils.NewClient(ctx)
+	if err != nil {
+		return o.retryFunc(ctx, err)
+	}
+
+	// Check if a user key exists
+	if roots, err := client.SSHRoots(); err == nil && len(roots.UserKeys) > 0 {
+		userKeys := make([]ssh.PublicKey, len(roots.UserKeys))
+		for i, uk := range roots.UserKeys {
+			userKeys[i] = uk.PublicKey
+		}
+		exists, err := agent.HasKeys(sshutil.WithSignatureKey(userKeys), sshutil.WithRemoveExpiredCerts(time.Now()))
+		if err != nil {
+			return err
+		}
+		if exists {
+			return nil
+		}
+	}
+
+	// Do login flow
+	flow, err := cautils.NewCertificateFlow(ctx)
+	if err != nil {
+		return o.retryFunc(ctx, err)
+	}
+
+	// There's not need to sanitize the principal, it should come from ssh.
+	principals := []string{subject}
+
+	// Make sure the validAfter is in the past. It avoids `Certificate
+	// invalid: not yet valid` errors if the times are not in sync
+	// perfectly.
+	validAfter := provisioner.NewTimeDuration(time.Now().Add(-1 * time.Minute))
+	validBefore := provisioner.TimeDuration{}
+
+	token, err := flow.GenerateSSHToken(ctx, subject, cautils.SSHUserSignType, principals, validAfter, validBefore)
+	if err != nil {
+		return o.retryFunc(ctx, err)
+	}
+
+	// NOTE: For OIDC tokens the subject should always be the email. The
+	// provisioner is responsible for loading and setting the principals with
+	// the application of an Identity function.
+	if email, ok := tokenEmail(token); ok {
+		subject = email
+	}
+
+	caClient, err := flow.GetClient(ctx, token)
+	if err != nil {
+		return o.retryFunc(ctx, err)
+	}
+
+	version, err := caClient.Version()
+	if err != nil {
+		return o.retryFunc(ctx, err)
+	}
+
+	// Generate identity certificate (x509) if necessary
+	var identityCSR api.CertificateRequest
+	var identityKey crypto.PrivateKey
+	if version.RequireClientAuthentication {
+		csr, key, err := ca.CreateIdentityRequest(subject)
+		if err != nil {
+			return err
+		}
+		identityCSR = *csr
+		identityKey = key
+	}
+
+	// Generate keypair
+	pub, priv, err := keyutil.GenerateDefaultKeyPair()
+	if err != nil {
+		return err
+	}
+
+	sshPub, err := ssh.NewPublicKey(pub)
+	if err != nil {
+		return errors.Wrap(err, "error creating public key")
+	}
+
+	// Sign certificate in the CA
+	resp, err := caClient.SSHSign(&api.SSHSignRequest{
+		PublicKey:    sshPub.Marshal(),
+		OTT:          token,
+		Principals:   principals,
+		CertType:     provisioner.SSHUserCert,
+		KeyID:        subject,
+		ValidAfter:   validAfter,
+		ValidBefore:  validBefore,
+		IdentityCSR:  identityCSR,
+		TemplateData: templateData,
+	})
+	if err != nil {
+		return o.retryFunc(ctx, err)
+	}
+
+	// Write x509 identity certificate
+	if version.RequireClientAuthentication {
+		if err := ca.WriteDefaultIdentity(resp.IdentityCertificate, identityKey); err != nil {
+			return err
+		}
+	}
+
+	// Add certificate and private key to agent
+	return agent.AddCertificate(subject, resp.Certificate.Certificate, priv)
+}
 
 func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 	templateData, err := flags.ParseTemplateData(ctx)

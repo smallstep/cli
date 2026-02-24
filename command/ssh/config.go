@@ -34,7 +34,7 @@ func configCommand() cli.Command {
 [**--team**=<name>] [**--team-authority**=<sub-domain>] [**--host**]
 [**--set**=<key=value>] [**--set-file**=<file>] [**--dry-run**] [**--roots**]
 [**--federation**] [**--console**] [**--force**] [**--offline**] [**--ca-config**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]
+[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--fallback-context**=<name>]
 [**--authority**=<name>] [**--profile**=<name>]`,
 		Description: `**step ssh config** configures SSH to be used with certificates. It also supports
 flags to inspect the root certificates used to sign the certificates.
@@ -104,6 +104,7 @@ times to set multiple variables.`,
 			},
 			flags.ContextProfile,
 			flags.ContextAuthority,
+			flags.FallbackContext,
 			flags.HiddenNoContext,
 		},
 	}
@@ -115,6 +116,8 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	isRoots := ctx.Bool("roots")
 	isFederation := ctx.Bool("federation")
 	sets := ctx.StringSlice("set")
+	contextName := ctx.String("context")
+	fallbackContextName := ctx.String("fallback-context")
 
 	switch {
 	case team != "" && isHost:
@@ -131,6 +134,10 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 		return errs.IncompatibleFlagWithFlag(ctx, "roots", "set")
 	case isFederation && len(sets) > 0:
 		return errs.IncompatibleFlagWithFlag(ctx, "federation", "set")
+	case fallbackContextName != "" && contextName == "":
+		return errs.RequiredWithFlag(ctx, "fallback-context", "context")
+	case fallbackContextName != "" && contextName == fallbackContextName:
+		return errs.IncompatibleFlagValues(ctx, "fallback-context", fallbackContextName, "context", contextName)
 	}
 
 	// Bootstrap Authority
