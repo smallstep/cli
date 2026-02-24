@@ -140,7 +140,7 @@ jobs:
           cd ./docs
 
           git config user.email "eng+ci@smallstep.com"
-          git config user.name "step-travis-ci"
+          git config user.name "step-ci"
 
           # Configure GH commit signing key.
           git config --global commit.gpgsign true
