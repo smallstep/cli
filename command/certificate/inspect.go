@@ -27,7 +27,7 @@ func inspectCommand() cli.Command {
 		Usage:  `print certificate or CSR details in human readable format`,
 		UsageText: `**step certificate inspect** <crt-file>
 [**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]
-[**--servername**=<servername>]`,
+[**--servername**=<servername>] [**--start-tls**]`,
 		Description: `**step certificate inspect** prints the details of the
 certificate or CSR in a human- or machine-readable format. Beware: Local certificates
 are never verified. Always verify a certificate (using **step certificate verify**)
@@ -76,6 +76,26 @@ $ step certificate inspect https://smallstep.com
 Inspect a remote certificate (using the standard port derived from the URL prefix):
 '''
 $ step certificate inspect smtps://smtp.gmail.com
+'''
+
+Inspect a remote certificate using StartTLS (SMTP):
+'''
+$ step certificate inspect --start-tls smtp://smtp.gmail.com:587
+'''
+
+Inspect a remote certificate using StartTLS (IMAP):
+'''
+$ step certificate inspect --start-tls imap://imap.gmail.com:143
+'''
+
+Inspect a remote certificate using StartTLS (POP3):
+'''
+$ step certificate inspect --start-tls pop3://pop.gmail.com:110
+'''
+
+Inspect a remote certificate using StartTLS (FTP):
+'''
+$ step certificate inspect --start-tls ftp://ftp.example.com:21
 '''
 
 Inspect an invalid remote certificate:
@@ -177,6 +197,12 @@ if the input bundle includes any PEM that does not have type CERTIFICATE.`,
 				Usage: `Use an insecure client to retrieve a remote peer certificate. Useful for
 debugging invalid certificates remotely.`,
 			},
+			cli.BoolFlag{
+				Name: "start-tls",
+				Usage: `Use StartTLS to upgrade a plaintext connection to TLS for certificate inspection.
+Supported protocols include SMTP (port 25/587), IMAP (port 143), POP3 (port 110), and FTP (port 21).
+This flag is only valid when inspecting remote certificates using protocol URLs like smtp://, imap://, pop3://, or ftp://.`,
+			},
 		},
 	}
 }
@@ -194,6 +220,7 @@ func inspectAction(ctx *cli.Context) error {
 		serverName = ctx.String("servername")
 		short      = ctx.Bool("short")
 		insecure   = ctx.Bool("insecure")
+		startTLS   = ctx.Bool("start-tls")
 	)
 
 	// Use stdin if no argument is used.
@@ -212,7 +239,7 @@ func inspectAction(ctx *cli.Context) error {
 	case err != nil:
 		return err
 	case isURL:
-		peerCertificates, err := getPeerCertificates(addr, serverName, roots, insecure)
+		peerCertificates, err := getPeerCertificatesWithOptions(addr, serverName, roots, insecure, startTLS, crtFile)
 		if err != nil {
 			return err
 		}
@@ -221,6 +248,9 @@ func inspectAction(ctx *cli.Context) error {
 		}
 		return inspectCertificates(ctx, peerCertificates[:1], os.Stdout)
 	default: // is not URL
+		if startTLS {
+			return errors.New("--start-tls flag can only be used with remote URLs (smtp://, imap://, pop3://, ftp://)")
+		}
 		b, err := utils.ReadFile(crtFile)
 		if err != nil {
 			return errors.Wrapf(err, "error reading file %s", crtFile)
