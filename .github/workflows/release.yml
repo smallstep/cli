@@ -6,6 +6,9 @@ on:
     tags:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
+permissions:
+  contents: write
+
 jobs:
   ci:
     permissions:
@@ -17,6 +20,8 @@ jobs:
 
   create_release:
     name: Create Release
+    permissions:
+      contents: write
     needs: ci
     runs-on: ubuntu-latest
     env:
@@ -31,9 +36,11 @@ jobs:
     steps:
       - name: Is Pre-release
         id: is_prerelease
+        env:
+          REF: ${{ github.ref }}
         run: |
           set +e
-          echo ${{ github.ref }} | grep "\-rc.*"
+          echo "${REF}" | grep "\-rc.*"
           OUT=$?
           if [ $OUT -eq 0 ]; then IS_PRERELEASE=true; else IS_PRERELEASE=false; fi
           echo "IS_PRERELEASE=${IS_PRERELEASE}" >> "${GITHUB_OUTPUT}"
@@ -106,6 +113,8 @@ jobs:
 
   update_reference_docs:
     name: Update Reference Docs
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
