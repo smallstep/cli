@@ -30,14 +30,6 @@ rules:
       - release.yml:99
       - triage.yml:19
       - zizmor.yml:15
-  # These workflows either lack a top-level `permissions:` block
-  # (using GitHub defaults) or delegate to reusable workflows that
-  # declare their own minimal permissions internally.
-  excessive-permissions:
-    ignore:
-      - release.yml:1
-      - release.yml:18
-      - release.yml:109
   # The triage workflow uses `pull_request_target` to label PRs
   # from forks. This is safe because the called reusable workflow
   # does not checkout or execute code from the PR.

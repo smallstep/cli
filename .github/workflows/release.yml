@@ -6,6 +6,9 @@ on:
     tags:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
+permissions:
+  contents: write
+
 jobs:
   ci:
     permissions:
@@ -17,6 +20,8 @@ jobs:
 
   create_release:
     name: Create Release
+    permissions:
+      contents: write
     needs: ci
     runs-on: ubuntu-latest
     env:
@@ -108,6 +113,8 @@ jobs:
 
   update_reference_docs:
     name: Update Reference Docs
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: create_release
     if: needs.create_release.outputs.is_prerelease == 'false'
