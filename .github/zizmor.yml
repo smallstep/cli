@@ -1,0 +1,48 @@
+rules:
+  # Internal reusable workflows (smallstep/*@main) intentionally track
+  # the main branch for centralized CI management. Pinning to a SHA
+  # would defeat the purpose of the shared workflows repo.
+  unpinned-uses:
+    ignore:
+      - actionlint.yml:16
+      - ci.yml:25
+      - code-scan-cron.yml:13
+      - dependabot-auto-merge.yml:10
+      - frizbee.yml:15
+      - release.yml:15
+      - release.yml:73
+      - release.yml:85
+      - release.yml:99
+      - triage.yml:19
+      - zizmor.yml:15
+  # Reusable workflow callers require `secrets: inherit` to pass
+  # credentials needed by the shared workflows (e.g. SSH keys, PATs).
+  secrets-inherit:
+    ignore:
+      - actionlint.yml:16
+      - ci.yml:25
+      - code-scan-cron.yml:13
+      - dependabot-auto-merge.yml:10
+      - frizbee.yml:15
+      - release.yml:15
+      - release.yml:73
+      - release.yml:85
+      - release.yml:99
+      - triage.yml:19
+      - zizmor.yml:15
+  # These workflows either lack a top-level `permissions:` block
+  # (using GitHub defaults) or delegate to reusable workflows that
+  # declare their own minimal permissions internally.
+  excessive-permissions:
+    ignore:
+      - release.yml:1
+      - release.yml:18
+      - release.yml:109
+  # The triage workflow uses `pull_request_target` to label PRs
+  # from forks. This is safe because the called reusable workflow
+  # does not checkout or execute code from the PR.
+  dangerous-triggers:
+    ignore:
+      - triage.yml:3
+
+
