@@ -1,6 +1,6 @@
 module github.com/smallstep/cli
 
-go 1.25
+go 1.25.0
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
@@ -16,7 +16,7 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/slackhq/nebula v1.10.3
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
-	github.com/smallstep/certificates v0.30.0-rc2.0.20260217112636-bb94179fa4c6
+	github.com/smallstep/certificates v0.30.0-rc3
 	github.com/smallstep/certinfo v1.15.0
 	github.com/smallstep/cli-utils v0.12.2
 	github.com/smallstep/go-attestation v0.4.4-0.20241119153605-2306d5b464ca
@@ -129,7 +129,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.39.0 // indirect
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
