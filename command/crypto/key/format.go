@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
+	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
@@ -27,7 +28,7 @@ import (
 func formatCommand() cli.Command {
 	return cli.Command{
 		Name:      "format",
-		Action:    cli.ActionFunc(formatAction),
+		Action:    command.ActionFunc(formatAction),
 		Usage:     `reformat a public or private key`,
 		UsageText: `**step crypto key format** <key-file> [**--out**=<file>]`,
 		Description: `**step crypto key format** prints or writes the key in
