@@ -54,7 +54,7 @@ Step CLI's command groups illustrate its wide-ranging uses:
   - [Generate and verify](https://smallstep.com/docs/step-cli/reference/crypto/otp/) TOTP tokens for multi-factor authentication (MFA)
   - Work with [NaCl](https://nacl.cr.yp.to/)'s high-speed tools for encryption and
       signing
-  - [Apply key derivation functions](https://smallstep.com/docs/step-cli/reference/crypto/kdf/) (KDFs) and [verify passwords](https://smallstep.com/docs/step-cli/reference/crypto/kdf/compare/) using `scrypt`, `bcrypt`, and `argo2`
+  - [Apply key derivation functions](https://smallstep.com/docs/step-cli/reference/crypto/kdf/) (KDFs) and [verify passwords](https://smallstep.com/docs/step-cli/reference/crypto/kdf/compare/) using `scrypt`, `bcrypt`, and `argon2`
   - Generate and check [file hashes](https://smallstep.com/docs/step-cli/reference/crypto/hash/)
 
 - [`step oauth`](https://smallstep.com/docs/step-cli/reference/oauth/): Add an OAuth 2.0 single sign-on flow to any CLI application.
