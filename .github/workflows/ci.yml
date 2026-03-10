@@ -26,4 +26,5 @@ jobs:
     with:
       only-latest-golang: false
       run-codeql: true
+      golangci-lint-version: "v2.10.1"
     secrets: inherit
