@@ -26,7 +26,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
-## [x.y.z] - TBD
+## [0.30.0] - unreleased
+
+### Added
+
+- Allow using KMS URIs directly without the `--kms` flag for commands that use
+  the cryptoutils package (smallstep/cli#1560).
 
 ### Changed
 
@@ -34,6 +39,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   needs-renewal` commands when certificates don't need renewal. Use the
   `--verbose` flag to always show messages regardless of renewal status
   (smallstep/cli#1548).
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Overwrite file when using --force with step crypto key format (smallstep/cli#1581)
+
+### Security
 
 ## [0.29.0] - 2025-12-02
 
