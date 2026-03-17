@@ -891,10 +891,12 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 		return nil, errors.Wrap(err, "failure decoding device authz response to JSON")
 	}
 
+	shouldPrintCode := true
 	switch {
 	case idr.VerificationURIComplete != "":
 		// Prefer VerificationURIComplete if present for user convenience
 		idr.VerificationURI = idr.VerificationURIComplete
+		shouldPrintCode = false
 	case idr.VerificationURI != "":
 		// do nothing
 	case idr.VerificationURL != "":
@@ -909,8 +911,12 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 		idr.Interval = defaultDeviceAuthzInterval
 	}
 
-	fmt.Fprintf(os.Stderr, "Visit %s and enter the code:\n", idr.VerificationURI)
-	fmt.Fprintln(os.Stderr, idr.UserCode)
+	if shouldPrintCode {
+		fmt.Fprintf(os.Stderr, "Visit %s and enter the code:\n", idr.VerificationURI)
+		fmt.Fprintln(os.Stderr, idr.UserCode)
+	} else {
+		fmt.Fprintf(os.Stderr, "Visit %s:\n", idr.VerificationURI)
+	}
 
 	// Poll the Token endpoint until the user completes the flow.
 	data = url.Values{}
