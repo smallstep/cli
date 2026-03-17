@@ -28,7 +28,7 @@ require (
 	github.com/urfave/cli v1.22.17
 	go.mozilla.org/pkcs7 v0.9.0
 	go.step.sm/crypto v0.76.2
-	golang.org/x/crypto v0.48.0
+	golang.org/x/crypto v0.49.0
 	golang.org/x/sys v0.42.0
 	golang.org/x/term v0.41.0
 	google.golang.org/protobuf v1.36.11
@@ -132,7 +132,7 @@ require (
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.42.0 // indirect
 	google.golang.org/api v0.271.0 // indirect
