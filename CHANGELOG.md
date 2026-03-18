@@ -35,6 +35,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Expand `--kms` flag help text with detailed documentation for all supported
+  KMS types (YubiKey PIV, PKCS #11, TPM 2.0, Google Cloud KMS, AWS KMS, Azure
+  Key Vault) and usage examples (smallstep/cli#1550).
+- Prefer `verification_uri_complete` over `verification_uri` in the OIDC
+  Device Authorization Flow when the IdP provides it, so users don't need to
+  manually enter a code (smallstep/cli#1430).
+- Skip printing the user code during OIDC device authorization when the
+  complete verification URI already embeds it (smallstep/cli#1595).
 - Suppress output messages for `step certificate needs-renewal` and `step ssh
   needs-renewal` commands when certificates don't need renewal. Use the
   `--verbose` flag to always show messages regardless of renewal status
