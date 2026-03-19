@@ -26,7 +26,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
-## [0.30.0] - unreleased
+## [0.30.1] - 2026-03-18
+
+- Fix release issue
+
+
+## [0.30.0] - 2026-03-18
 
 ### Added
 
@@ -48,15 +53,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `--verbose` flag to always show messages regardless of renewal status
   (smallstep/cli#1548).
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - Overwrite file when using --force with step crypto key format (smallstep/cli#1581)
 
-### Security
 
 ## [0.29.0] - 2025-12-02
 
