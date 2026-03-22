@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Security
 
 ---
+## [0.30.2] - 2026-03-22
+
+- Update certificates to v0.30.2
+
 
 ## [0.30.1] - 2026-03-18
 
