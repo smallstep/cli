@@ -37,8 +37,9 @@ func IsKMS(rawuri string) bool {
 	return true
 }
 
-func isFilename(kmsURI, name string) bool {
-	return kmsURI == "" && !IsKMS(name)
+func isFilename(name string) bool {
+	_, err := os.Stat(name)
+	return err == nil
 }
 
 // Attestor is the interface implemented by step-kms-plugin using the key, sign,
@@ -49,7 +50,7 @@ type Attestor interface {
 }
 
 func PublicKey(kmsURI, name string, opts ...pemutil.Options) (crypto.PublicKey, error) {
-	if isFilename(kmsURI, name) {
+	if isFilename(name) {
 		s, err := pemutil.Read(name, opts...)
 		if err != nil {
 			return nil, err
@@ -71,7 +72,7 @@ func PublicKey(kmsURI, name string, opts ...pemutil.Options) (crypto.PublicKey, 
 // CreateSigner reads a key from a file with a given name or creates a signer
 // with the given kms and name uri.
 func CreateSigner(kmsURI, name string, opts ...pemutil.Options) (crypto.Signer, error) {
-	if isFilename(kmsURI, name) {
+	if isFilename(name) {
 		s, err := pemutil.Read(name, opts...)
 		if err != nil {
 			return nil, err
@@ -87,7 +88,7 @@ func CreateSigner(kmsURI, name string, opts ...pemutil.Options) (crypto.Signer, 
 
 // LoadCertificate returns a x509.Certificate from a kms or file
 func LoadCertificate(kmsURI, certPath string) ([]*x509.Certificate, error) {
-	if isFilename(kmsURI, certPath) {
+	if isFilename(certPath) {
 		s, err := pemutil.ReadCertificateBundle(certPath)
 		if err != nil {
 			return nil, fmt.Errorf("file %s does not contain a valid certificate: %w", certPath, err)
@@ -123,7 +124,7 @@ func LoadCertificate(kmsURI, certPath string) ([]*x509.Certificate, error) {
 
 // LoadJSONWebKey returns a jose.JSONWebKey from a KMS or a file.
 func LoadJSONWebKey(kmsURI, name string, opts ...jose.Option) (*jose.JSONWebKey, error) {
-	if isFilename(kmsURI, name) {
+	if isFilename(name) {
 		return jose.ReadKey(name, opts...)
 	}
 
