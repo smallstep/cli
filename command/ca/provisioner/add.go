@@ -44,6 +44,7 @@ ACME
 
 **step ca provisioner add** <name> **--type**=ACME
 [**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>]
+[**--acme-proxy-url**=<url>] [**--acme-disable-proxy**] [**--acme-dns-resolver**=<host:port>]
 [**--attestation-format**=<format>] [**--attestation-roots**=<file>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
@@ -145,12 +146,15 @@ SCEP
 			// Nebula provisioner flags
 			nebulaRootFlag,
 
-			// ACME provisioner flags
-			requireEABFlag,        // ACME
-			forceCNFlag,           // ACME + SCEP
-			challengeFlag,         // ACME + SCEP
-			attestationFormatFlag, // ACME
-			attestationRootsFlag,  // ACME
+   // ACME provisioner flags
+   requireEABFlag,        // ACME
+   forceCNFlag,           // ACME + SCEP
+   challengeFlag,         // ACME + SCEP
+   acmeProxyURLFlag,      // ACME networking
+   acmeDisableProxyFlag,  // ACME networking
+   acmeDNSResolverFlag,   // ACME networking
+   attestationFormatFlag, // ACME
+   attestationRootsFlag,  // ACME
 
 			// SCEP provisioner flags
 			scepCapabilitiesFlag,
@@ -335,19 +339,26 @@ func addAction(ctx *cli.Context) (err error) {
 		return errs.InvalidFlagValue(ctx, "type", ctx.String("type"), "JWK, ACME, OIDC, SSHPOP, K8SSA, NEBULA, SCEP, AWS, GCP, AZURE")
 	}
 
-	p := &linkedca.Provisioner{
-		Name: args.Get(0),
-		Type: linkedca.Provisioner_Type(typ),
-	}
+ p := &linkedca.Provisioner{
+        Name: args.Get(0),
+        Type: linkedca.Provisioner_Type(typ),
+    }
 
-	// Validate challenge flag on scep and acme
-	if err := validateChallengeFlag(ctx, p.Type); err != nil {
-		return err
-	}
-	// Validate attestation format flag on acme
-	if err := validateAttestationFormatFlag(ctx, p.Type); err != nil {
-		return err
-	}
+ // Validate challenge flag on scep and acme
+ if err := validateChallengeFlag(ctx, p.Type); err != nil {
+     return err
+ }
+ // Validate attestation format flag on acme
+ if err := validateAttestationFormatFlag(ctx, p.Type); err != nil {
+     return err
+ }
+
+ // Informative note: networking flags for ACME require server + linkedca support
+ if p.Type == linkedca.Provisioner_ACME {
+     if ctx.IsSet("acme-proxy-url") || ctx.IsSet("acme-disable-proxy") || ctx.IsSet("acme-dns-resolver") {
+         ui.PrintSelected("Notice", "ACME networking flags provided (proxy/DNS). Server support depends on linkedca fields.\nIf your CA version does not yet include these fields, the settings will be ignored.")
+     }
+ }
 
 	// Read x509 template if passed
 	p.X509Template = &linkedca.Template{}
