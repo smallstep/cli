@@ -19,7 +19,7 @@ require (
 	github.com/smallstep/certificates v0.30.2
 	github.com/smallstep/certinfo v1.16.0
 	github.com/smallstep/cli-utils v0.12.2
-	github.com/smallstep/go-attestation v0.4.4-0.20241119153605-2306d5b464ca
+	github.com/smallstep/go-attestation v0.4.9
 	github.com/smallstep/linkedca v0.25.0
 	github.com/smallstep/truststore v0.13.0
 	github.com/smallstep/zcrypto v0.0.0-20221001003018-1ab2364d2a91
