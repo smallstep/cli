@@ -526,7 +526,7 @@ func oauthCmd(c *cli.Context) error {
 				fmt.Println(tok.AccessToken)
 			}
 		} else {
-			b, err := json.MarshalIndent(tok, "", "  ")
+			b, err := json.MarshalIndent(tok, "", "  ") // #nosec G117 --  printing the token details intentionally
 			if err != nil {
 				return errors.Wrapf(err, "error marshaling token data")
 			}
@@ -1318,7 +1318,7 @@ func (o *oauth) badRequest(w http.ResponseWriter, msg string) {
 	w.Write([]byte(`</div>`))
 	w.Write([]byte(`<p style='font-size: 20px;'>`))
 	w.Write([]byte(`<strong style='font-size: 28px; color: red;'>Failure</strong><br />`))
-	w.Write([]byte(msg))
+	w.Write([]byte(msg)) // #nosec G705 -- message is either a string literal, or comes from (trusted) IdP
 	w.Write([]byte(`</p></body></html>`))
 	o.errCh <- errors.New(msg)
 }
