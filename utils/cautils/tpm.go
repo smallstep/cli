@@ -649,7 +649,7 @@ func (ac *attestationClient) verifyDecryptedSecret(ctx context.Context, secret [
 		DecryptedSecret: secret,
 	}
 
-	body, err := json.Marshal(sr)
+	body, err := json.Marshal(sr) // #nosec G117 -- the decrypted secret is intentionally sent back to attestation CA (via HTTPS)
 	if err != nil {
 		return nil, fmt.Errorf("failed marshaling secret request: %w", err)
 	}
