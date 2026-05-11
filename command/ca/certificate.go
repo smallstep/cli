@@ -15,6 +15,7 @@ import (
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
+	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 )
 
@@ -182,6 +183,10 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 				Usage: "The directory where TPM keys and certificates will be stored",
 				Value: filepath.Join(step.Path(), "tpm"),
 			},
+			cli.StringFlag{
+				Name:  "token-file",
+				Usage: "The path to a <file> containing the one time token.",
+			},
 			flags.TemplateSet,
 			flags.TemplateSetFile,
 			flags.CaConfig,
@@ -232,19 +237,30 @@ func certificateAction(ctx *cli.Context) error {
 	crtFile, keyFile := args.Get(1), args.Get(2)
 
 	tok := ctx.String("token")
+	tokenFile := ctx.String("token-file")
 	offline := ctx.Bool("offline")
 	sans := ctx.StringSlice("san")
 
 	switch {
+	case tok != "" && tokenFile != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "token", "token-file")
 	case offline && tok != "":
-		// offline and token are incompatible because the token is generated before
-		// the start of the offline CA.
 		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
+	case offline && tokenFile != "":
+		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token-file")
 	case ctx.String("attestation-uri") != "" && ctx.String("kms") != "":
 		// attestation-uri and kms are incompatible because the ACME-DA flow
 		// expects all necessary parameters in the attestation-uri, and having
 		// both can be confusing.
 		return errs.IncompatibleFlagWithFlag(ctx, "attestation-uri", "kms")
+	}
+
+	if tokenFile != "" {
+		b, err := utils.ReadFile(tokenFile)
+		if err != nil {
+			return err
+		}
+		tok = strings.TrimSpace(string(b))
 	}
 
 	// certificate flow unifies online and offline flows on a single api

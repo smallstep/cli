@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Add `--token-file` flag to `step ca certificate` to read the token from a file.
 - Support for inspecting certificates with post-quantum algorithms ML-DSA and
   SLH-DSA (smallstep/certinfo#69).
 
