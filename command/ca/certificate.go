@@ -185,7 +185,7 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			},
 			cli.StringFlag{
 				Name:  "token-file",
-				Usage: "The path to a <file> containing the one time token.",
+				Usage: "The path to a <file> containing the one time token. Mutually exclusive with '--token' and '--offline'; for JWK tokens it is effectively incompatible with '--san' because SANs are taken from the token.",
 			},
 			flags.TemplateSet,
 			flags.TemplateSetFile,
