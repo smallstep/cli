@@ -479,7 +479,7 @@ func certificateAction(ctx *cli.Context) error {
 				prompt = fmt.Sprintf("%s (must be at least %d characters)", prompt, minPasswordLength)
 			}
 			opts = append(opts, pemutil.WithPasswordPrompt(prompt, func(s string) ([]byte, error) {
-				return ui.PromptPassword(s, ui.WithValidateNotEmpty(), ui.WithMinLength(minPasswordLength))
+				return ui.PromptPassword(s, ui.WithField("private key password", "password-file"), ui.WithValidateNotEmpty(), ui.WithMinLength(minPasswordLength))
 			}))
 		}
 
