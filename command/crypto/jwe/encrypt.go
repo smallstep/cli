@@ -151,6 +151,10 @@ parameter is ignored by JWE implementations, but may be processed by
 applications that use JWE.`,
 			},
 			flags.SubtleHidden,
+			cli.StringFlag{
+				Name:  "password-file",
+				Usage: `The path to the <file> containing the password to encrypt the keys.`,
+			},
 		},
 	}
 }
@@ -188,6 +192,7 @@ func encryptAction(ctx *cli.Context) error {
 	typ := ctx.String("typ")
 	cty := ctx.String("cty")
 	isSubtle := ctx.Bool("subtle")
+	passwordFile := ctx.String("password-file")
 
 	switch {
 	case isPBES2 && key != "":
@@ -224,7 +229,17 @@ func encryptAction(ctx *cli.Context) error {
 	case jwks != "":
 		jwk, err = jose.ReadKeySet(jwks, options...)
 	case isPBES2:
-		pbes2Key, err = ui.PromptPassword("Please enter the password to encrypt the content encryption key")
+		var password string
+		if passwordFile != "" {
+			password, err = utils.ReadStringPasswordFromFile(passwordFile)
+			if err != nil {
+				return err
+			}
+		}
+		pbes2Key, err =
+			ui.PromptPassword(
+				"Please enter the password to encrypt the content encryption key",
+				ui.WithValue(password))
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwks")
 	}
