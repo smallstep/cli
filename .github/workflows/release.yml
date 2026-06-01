@@ -86,7 +86,7 @@ jobs:
     needs: create_release
     permissions:
       id-token: write
-      contents: write
+      contents: read
     uses: smallstep/workflows/.github/workflows/docker-buildx-push.yml@main
     with:
       platforms: linux/amd64,linux/386,linux/arm,linux/arm64
@@ -100,7 +100,7 @@ jobs:
     needs: create_release
     permissions:
       id-token: write
-      contents: write
+      contents: read
     uses: smallstep/workflows/.github/workflows/docker-buildx-push.yml@main
     with:
       platforms: linux/amd64,linux/386,linux/arm,linux/arm64
@@ -181,7 +181,7 @@ jobs:
 
           git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
       - name: Push changes
-        uses: ad-m/github-push-action@4cc74773234f74829a8c21bc4d69dd4be9cfa599 # v1.1.0
+        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # v1.3.0
         with:
           github_token: ${{ secrets.DOCS_PAT }}
           branch: 'main'
