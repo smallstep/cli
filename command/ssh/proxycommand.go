@@ -1,24 +1,18 @@
 package ssh
 
 import (
-	"crypto"
 	"io"
 	"net"
 	"os"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/smallstep/certificates/api"
-	"github.com/smallstep/certificates/authority/provisioner"
-	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
-	"go.step.sm/crypto/keyutil"
 
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"
@@ -36,7 +30,8 @@ func proxycommandCommand() cli.Command {
 		UsageText: `**step ssh proxycommand** <user> <host> <port>
 [**--provisioner**=<name>] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--console**] [**--offline**] [**--ca-config**=<file>]
-[**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
+[**--ca-url**=<uri>] [**--root**=<file>]
+[**--context**=<name>] [**--fallback-context**=<name>]`,
 		Description: `**step ssh proxycommand** looks into the host registry
 and proxies the ssh connection according to its configuration. This command
 is used in the ssh client config with <ProxyCommand> keyword.
@@ -64,6 +59,7 @@ This command will add the user to the ssh-agent if necessary.
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
+			flags.FallbackContext,
 		},
 	}
 }
@@ -99,121 +95,7 @@ func proxycommandAction(ctx *cli.Context) error {
 // doLoginIfNeeded check if the user is logged in looking at the ssh agent, if
 // it's not it will do the login flow.
 func doLoginIfNeeded(ctx *cli.Context, subject string) error {
-	templateData, err := flags.ParseTemplateData(ctx)
-	if err != nil {
-		return err
-	}
-
-	agent, err := sshutil.DialAgent()
-	if err != nil {
-		return err
-	}
-
-	client, err := cautils.NewClient(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Check if a user key exists
-	if roots, err := client.SSHRoots(); err == nil && len(roots.UserKeys) > 0 {
-		userKeys := make([]ssh.PublicKey, len(roots.UserKeys))
-		for i, uk := range roots.UserKeys {
-			userKeys[i] = uk.PublicKey
-		}
-		exists, err := agent.HasKeys(sshutil.WithSignatureKey(userKeys), sshutil.WithRemoveExpiredCerts(time.Now()))
-		if err != nil {
-			return err
-		}
-		if exists {
-			return nil
-		}
-	}
-
-	// Do login flow
-	flow, err := cautils.NewCertificateFlow(ctx)
-	if err != nil {
-		return err
-	}
-
-	// There's not need to sanitize the principal, it should come from ssh.
-	principals := []string{subject}
-
-	// Make sure the validAfter is in the past. It avoids `Certificate
-	// invalid: not yet valid` errors if the times are not in sync
-	// perfectly.
-	validAfter := provisioner.NewTimeDuration(time.Now().Add(-1 * time.Minute))
-	validBefore := provisioner.TimeDuration{}
-
-	token, err := flow.GenerateSSHToken(ctx, subject, cautils.SSHUserSignType, principals, validAfter, validBefore)
-	if err != nil {
-		return err
-	}
-
-	// NOTE: For OIDC tokens the subject should always be the email. The
-	// provisioner is responsible for loading and setting the principals with
-	// the application of an Identity function.
-	if email, ok := tokenEmail(token); ok {
-		subject = email
-	}
-
-	caClient, err := flow.GetClient(ctx, token)
-	if err != nil {
-		return err
-	}
-
-	version, err := caClient.Version()
-	if err != nil {
-		return err
-	}
-
-	// Generate identity certificate (x509) if necessary
-	var identityCSR api.CertificateRequest
-	var identityKey crypto.PrivateKey
-	if version.RequireClientAuthentication {
-		csr, key, err := ca.CreateIdentityRequest(subject)
-		if err != nil {
-			return err
-		}
-		identityCSR = *csr
-		identityKey = key
-	}
-
-	// Generate keypair
-	pub, priv, err := keyutil.GenerateDefaultKeyPair()
-	if err != nil {
-		return err
-	}
-
-	sshPub, err := ssh.NewPublicKey(pub)
-	if err != nil {
-		return errors.Wrap(err, "error creating public key")
-	}
-
-	// Sign certificate in the CA
-	resp, err := caClient.SSHSign(&api.SSHSignRequest{
-		PublicKey:    sshPub.Marshal(),
-		OTT:          token,
-		Principals:   principals,
-		CertType:     provisioner.SSHUserCert,
-		KeyID:        subject,
-		ValidAfter:   validAfter,
-		ValidBefore:  validBefore,
-		IdentityCSR:  identityCSR,
-		TemplateData: templateData,
-	})
-	if err != nil {
-		return err
-	}
-
-	// Write x509 identity certificate
-	if version.RequireClientAuthentication {
-		if err := ca.WriteDefaultIdentity(resp.IdentityCertificate, identityKey); err != nil {
-			return err
-		}
-	}
-
-	// Add certificate and private key to agent
-	return agent.AddCertificate(subject, resp.Certificate.Certificate, priv)
+	return loginIfNeeded(ctx, subject, withRetryFunc(runOnFallbackContext))
 }
 
 func getBastion(ctx *cli.Context, user, host string) (*api.SSHBastionResponse, error) {

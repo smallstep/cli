@@ -91,6 +91,7 @@ type bootstrapConfig struct {
 	Fingerprint       string `json:"fingerprint"`
 	Root              string `json:"root"`
 	Redirect          string `json:"redirect-url,omitempty"`
+	FallbackContext   string `json:"fallback-context,omitempty"`
 	Provisioner       string `json:"provisioner,omitempty"`
 	MinPasswordLength int    `json:"min-password-length,omitempty"`
 }
@@ -112,6 +113,7 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 		return errors.Wrap(err, "error downloading root certificate")
 	}
 
+	var fallbackContext string
 	if UseContext(ctx) {
 		ctxName := ctx.String("context")
 		if ctxName == "" {
@@ -125,6 +127,7 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 		if ctxProfile == "" {
 			ctxProfile = ctxName
 		}
+		fallbackContext = ctx.String("fallback-context")
 		if err := step.Contexts().Add(&step.Context{
 			Name:      ctxName,
 			Profile:   ctxProfile,
@@ -168,10 +171,11 @@ func bootstrap(ctx *cli.Context, caURL, fingerprint string, opts ...bootstrapOpt
 
 	// Serialize defaults.json
 	bootConf := bootstrapConfig{
-		CA:          caURL,
-		Fingerprint: fingerprint,
-		Root:        pki.GetRootCAPath(),
-		Redirect:    bc.redirectURL,
+		CA:              caURL,
+		Fingerprint:     fingerprint,
+		Root:            pki.GetRootCAPath(),
+		Redirect:        bc.redirectURL,
+		FallbackContext: fallbackContext,
 	}
 	if bc.minPasswordLength > 0 {
 		bootConf.MinPasswordLength = bc.minPasswordLength
