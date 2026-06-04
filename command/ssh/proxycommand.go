@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -228,6 +227,10 @@ func getBastion(ctx *cli.Context, user, host string) (*api.SSHBastionResponse, e
 }
 
 func proxyDirect(host, port string) error {
+	return proxyDirectWithIO(host, port, os.Stdin, os.Stdout)
+}
+
+func proxyDirectWithIO(host, port string, in io.ReadCloser, out io.Writer) error {
 	address := net.JoinHostPort(host, port)
 	addr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
@@ -239,21 +242,27 @@ func proxyDirect(host, port string) error {
 		return errors.Wrapf(err, "error connecting to %s", address)
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	done := make(chan struct{}, 2)
+
 	go func() {
-		io.Copy(conn, os.Stdin)
-		conn.CloseWrite()
-		wg.Done()
-	}()
-	wg.Add(1)
-	go func() {
-		io.Copy(os.Stdout, conn)
-		conn.CloseRead()
-		wg.Done()
+		io.Copy(conn, in) //nolint:errcheck
+		conn.CloseWrite() //nolint:errcheck
+		done <- struct{}{}
 	}()
 
-	wg.Wait()
+	go func() {
+		io.Copy(out, conn) //nolint:errcheck
+		conn.CloseRead()   //nolint:errcheck
+		done <- struct{}{}
+	}()
+
+	// Return as soon as either direction completes. When the server closes the
+	// connection (e.g. auth failure), the server→client goroutine finishes and
+	// we return immediately — the process exits cleanly and reclaims the
+	// client→server goroutine. Waiting for both goroutines deadlocks on macOS
+	// when os.Stdin is a pipe: closing the read end does not interrupt a
+	// blocked read syscall, so the client→server goroutine never exits.
+	<-done
 	return nil
 }
 
