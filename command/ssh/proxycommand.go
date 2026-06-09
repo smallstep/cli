@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -228,6 +227,10 @@ func getBastion(ctx *cli.Context, user, host string) (*api.SSHBastionResponse, e
 }
 
 func proxyDirect(host, port string) error {
+	return proxyDirectWithIO(host, port, os.Stdin, os.Stdout)
+}
+
+func proxyDirectWithIO(host, port string, stdin io.Reader, stdout io.Writer) error {
 	address := net.JoinHostPort(host, port)
 	addr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
@@ -238,22 +241,25 @@ func proxyDirect(host, port string) error {
 	if err != nil {
 		return errors.Wrapf(err, "error connecting to %s", address)
 	}
+	defer conn.Close()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	// Return as soon as either direction finishes. Waiting for both can
+	// deadlock when the server closes the connection while stdin stays open.
+	// See smallstep/cli#1641. Buffered so the slower goroutine never blocks
+	// sending after we've stopped receiving.
+	done := make(chan struct{}, 2)
 	go func() {
-		io.Copy(conn, os.Stdin)
+		io.Copy(conn, stdin)
 		conn.CloseWrite()
-		wg.Done()
+		done <- struct{}{}
 	}()
-	wg.Add(1)
 	go func() {
-		io.Copy(os.Stdout, conn)
+		io.Copy(stdout, conn)
 		conn.CloseRead()
-		wg.Done()
+		done <- struct{}{}
 	}()
 
-	wg.Wait()
+	<-done
 	return nil
 }
 
