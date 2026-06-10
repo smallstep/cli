@@ -28,6 +28,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Security
 
 ---
+
+## [0.30.3] - 2026-06-09
+
+### Added
+
+- Add support for inspecting certificates with post-quantum algorithms ML-DSA and
+  SLH-DSA (smallstep/certinfo#69, smallstep/cli#1605).
+
+### Fixed
+
+- Fix file paths being misidentified as KMS URIs when the path didn't match a KMS
+  URI pattern; detection now uses an existence check instead (smallstep/cli#1604).
+- Fix `step ssh proxycommand` hanging when the server closes the connection before
+  stdin is closed (smallstep/cli#1647).
+
+
 ## [0.30.2] - 2026-03-22
 
 - Update certificates to v0.30.2
