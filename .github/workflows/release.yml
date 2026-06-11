@@ -7,7 +7,7 @@ on:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   ci:
@@ -18,10 +18,10 @@ jobs:
     uses: ./.github/workflows/ci.yml
     secrets: inherit
 
-  create_release:
-    name: Create Release
+  release_metadata:
+    name: Release Metadata
     permissions:
-      contents: write
+      contents: read
     needs: ci
     runs-on: ubuntu-latest
     env:
@@ -58,19 +58,9 @@ jobs:
         run: |
           echo "DOCKER_TAGS=${{ env.DOCKER_TAGS }},${{ env.DOCKER_IMAGE }}:latest" >> "${GITHUB_ENV}"
           echo "DOCKER_TAGS_DEBIAN=${{ env.DOCKER_TAGS_DEBIAN }},${{ env.DOCKER_IMAGE }}:${DEBIAN_TAG}" >> "${GITHUB_ENV}"
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          draft: true
-          prerelease: ${{ steps.is_prerelease.outputs.IS_PRERELEASE }}
 
   goreleaser:
-    needs: create_release
+    needs: release_metadata
     permissions:
       id-token: write
       contents: write
@@ -78,33 +68,33 @@ jobs:
     uses: smallstep/workflows/.github/workflows/goreleaser.yml@main
     with:
       enable-packages-upload: true
-      is-prerelease: ${{ needs.create_release.outputs.is_prerelease == 'true' }}
+      is-prerelease: ${{ needs.release_metadata.outputs.is_prerelease == 'true' }}
     secrets: inherit
 
   build_upload_docker:
     name: Build & Upload Docker Images
-    needs: create_release
+    needs: release_metadata
     permissions:
       id-token: write
       contents: read
     uses: smallstep/workflows/.github/workflows/docker-buildx-push.yml@main
     with:
       platforms: linux/amd64,linux/386,linux/arm,linux/arm64
-      tags: ${{ needs.create_release.outputs.docker_tags }}
+      tags: ${{ needs.release_metadata.outputs.docker_tags }}
       docker_image: smallstep/step-cli
       docker_file: docker/Dockerfile
     secrets: inherit
 
   build_upload_docker_debian:
     name: Build & Upload Docker Images using Debian
-    needs: create_release
+    needs: release_metadata
     permissions:
       id-token: write
       contents: read
     uses: smallstep/workflows/.github/workflows/docker-buildx-push.yml@main
     with:
       platforms: linux/amd64,linux/386,linux/arm,linux/arm64
-      tags: ${{ needs.create_release.outputs.docker_tags_debian }}
+      tags: ${{ needs.release_metadata.outputs.docker_tags_debian }}
       docker_image: smallstep/step-cli
       docker_file: docker/Dockerfile.debian
     secrets: inherit
@@ -116,8 +106,8 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    needs: create_release
-    if: needs.create_release.outputs.is_prerelease == 'false'
+    needs: release_metadata
+    if: needs.release_metadata.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -179,7 +169,7 @@ jobs:
 
           mv manifest.json.new manifest.json
 
-          git add . && git commit -a -m "step-cli ${{ needs.create_release.outputs.vversion }} reference update"
+          git add . && git commit -a -m "step-cli ${{ needs.release_metadata.outputs.vversion }} reference update"
       - name: Push changes
         uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # v1.3.0
         with:
