@@ -195,7 +195,9 @@ func (f *CertificateFlow) GenerateToken(ctx *cli.Context, subject string, sans [
 	}
 
 	if subject == "" {
-		subject, err = ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)", ui.WithValidateNotEmpty())
+		subject, err = ui.Prompt("What DNS names or IP addresses would you like to use? (e.g. internal.smallstep.com)",
+			ui.WithField("DNS names or IP addresses", "san"),
+			ui.WithValidateNotEmpty())
 		if err != nil {
 			return "", err
 		}

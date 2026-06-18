@@ -542,7 +542,9 @@ func updateJWKDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		if ctx.IsSet("private-key") {
 			return errs.IncompatibleFlag(ctx, "create", "private-key")
 		}
-		pass, err := ui.PromptPasswordGenerate("Please enter a password to encrypt the provisioner private key? [leave empty and we'll generate one]", ui.WithValue(password))
+		pass, err := ui.PromptPasswordGenerate("Please enter a password to encrypt the provisioner private key? [leave empty and we'll generate one]",
+			ui.WithField("provisioner private key password", "provisioner-password-file"),
+			ui.WithValue(password))
 		if err != nil {
 			return err
 		}
