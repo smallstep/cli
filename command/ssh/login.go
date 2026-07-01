@@ -107,6 +107,7 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 			flags.Curve,
 			flags.Size,
 			flags.Insecure,
+			sshConfirmFlag,
 		},
 	}
 }
@@ -283,20 +284,27 @@ func loginAction(ctx *cli.Context) error {
 	}
 
 	// Attempt to add key to agent if private key defined.
-	if err := agent.AddCertificate(comment, resp.Certificate.Certificate, priv); err != nil {
+	var agentOpts []sshutil.AgentOption
+	if ctx.Bool("confirm") {
+		agentOpts = append(agentOpts, sshutil.WithConfirmBeforeUse())
+	}
+
+	if err := agent.AddCertificate(comment, resp.Certificate.Certificate, priv, agentOpts...); err != nil {
 		ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 	} else {
 		ui.PrintSelected("SSH Agent", "yes")
 	}
+
 	if isAddUser {
 		if resp.AddUserCertificate == nil {
 			ui.Printf(`{{ "%s" | red }} {{ "Add User Certificate:" | bold }} failed to create a provisioner certificate`+"\n", ui.IconBad)
-		} else if err := agent.AddCertificate(comment, resp.AddUserCertificate.Certificate, auPriv); err != nil {
+		} else if err := agent.AddCertificate(comment, resp.AddUserCertificate.Certificate, auPriv, agentOpts...); err != nil {
 			ui.Printf(`{{ "%s" | red }} {{ "Add User Certificate:" | bold }} %v`+"\n", ui.IconBad, err)
 		} else {
 			ui.PrintSelected("Add User Certificate", "yes")
 		}
 	}
+
 
 	return nil
 }
