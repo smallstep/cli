@@ -29,7 +29,7 @@ require (
 	go.mozilla.org/pkcs7 v0.9.0
 	go.step.sm/crypto v0.84.1
 	golang.org/x/crypto v0.53.0
-	golang.org/x/sys v0.46.0
+	golang.org/x/sys v0.47.0
 	golang.org/x/term v0.44.0
 	google.golang.org/protobuf v1.36.11
 	software.sslmate.com/src/go-pkcs12 v0.7.3
