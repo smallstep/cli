@@ -133,7 +133,7 @@ func keysetAddAction(ctx *cli.Context) error {
 
 	// Attempt to parse an encrypted file
 	if b, err = jose.Decrypt(b, jose.WithPasswordPrompter("Please enter the password to decrypt JWK", func(s string) ([]byte, error) {
-		return ui.PromptPassword(s)
+		return ui.PromptPassword(s, ui.WithField("password", "password-file"))
 	})); err != nil {
 		return err
 	}
