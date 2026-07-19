@@ -1,6 +1,7 @@
 package eab
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -18,10 +19,11 @@ func removeCommand() cli.Command {
 		Action: cli.ActionFunc(removeAction),
 		Usage:  "remove an ACME EAB Key from the CA",
 		UsageText: `**step ca acme eab remove** <provisioner> <eab-key-id>
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--json**] [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
+			jsonFlag,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminSubject,
@@ -47,6 +49,11 @@ Remove ACME EAB Key with Key ID "zFGdKC1sHmNf3Wsx3OujY808chxwEdmr" from my_acme_
 '''
 $ step ca acme eab remove my_acme_provisioner zFGdKC1sHmNf3Wsx3OujY808chxwEdmr
 '''
+
+Remove an ACME EAB Key and output the result as JSON:
+'''
+$ step ca acme eab remove my_acme_provisioner zFGdKC1sHmNf3Wsx3OujY808chxwEdmr --json
+'''
 `,
 	}
 }
@@ -68,6 +75,23 @@ func removeAction(ctx *cli.Context) error {
 	err = client.RemoveExternalAccountKey(provisioner, keyID)
 	if err != nil {
 		return errors.Wrap(notImplemented(err), "error removing ACME EAB key")
+	}
+
+	if ctx.Bool("json") {
+		b, err := json.MarshalIndent(struct {
+			Provisioner string `json:"provisioner"`
+			ID          string `json:"id"`
+			Deleted     bool   `json:"deleted"`
+		}{
+			Provisioner: provisioner,
+			ID:          keyID,
+			Deleted:     true,
+		}, "", "  ")
+		if err != nil {
+			return errors.Wrap(err, "error marshaling ACME EAB key")
+		}
+		fmt.Println(string(b))
+		return nil
 	}
 
 	fmt.Println("Key was deleted successfully!")
