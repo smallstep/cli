@@ -1,0 +1,54 @@
+rootFile = /tmp/tacky-woodstorks-root.crt
+o = &{transport:<nil> rootSHA256: rootFilename:/tmp/tacky-woodstorks-root.crt rootBundle:[] certificate:{Certificate:[[48 130 2 49 48 130 1 216 160 3 2 1 2 2 17 0 182 13 13 77 232 79 6 134 234 209 74 35 59 37 229 82 48 10 6 8 42 134 72 206 61 4 3 2 48 31 49 29 48 27 6 3 85 4 3 19 20 98 101 116 97 32 73 110 116 101 114 109 101 100 105 97 116 101 32 67 65 48 30 23 13 50 51 49 49 50 49 50 50 48 57 49 57 90 23 13 50 51 49 49 50 50 49 52 49 48 49 57 90 48 31 49 29 48 27 6 3 85 4 3 19 20 48 48 117 49 115 103 53 98 56 114 51 104 51 99 99 81 70 51 53 55 48 89 48 19 6 7 42 134 72 206 61 2 1 6 8 42 134 72 206 61 3 1 7 3 66 0 4 156 164 4 110 68 241 39 36 150 79 244 193 213 139 67 186 238 98 237 76 154 25 71 67 248 75 70 120 237 204 16 72 45 202 210 5 235 252 132 45 163 70 139 119 154 217 60 52 33 72 103 100 201 134 9 30 12 11 168 16 68 148 165 177 163 129 244 48 129 241 48 14 6 3 85 29 15 1 1 255 4 4 3 2 7 128 48 29 6 3 85 29 37 4 22 48 20 6 8 43 6 1 5 5 7 3 1 6 8 43 6 1 5 5 7 3 2 48 29 6 3 85 29 14 4 22 4 20 149 11 93 252 227 218 191 169 195 113 36 131 148 103 128 7 152 15 158 214 48 31 6 3 85 29 35 4 24 48 22 128 20 44 74 72 210 213 40 184 14 213 215 26 8 9 216 142 163 71 236 162 194 48 77 6 3 85 29 17 4 70 48 68 129 17 109 97 120 64 115 109 97 108 108 115 116 101 112 46 99 111 109 134 47 104 116 116 112 115 58 47 47 115 109 97 108 108 115 116 101 112 46 111 107 116 97 46 99 111 109 35 48 48 117 49 115 103 53 98 56 114 51 104 51 99 99 81 70 51 53 55 48 49 6 12 43 6 1 4 1 130 164 100 198 40 64 1 4 33 48 31 2 1 2 4 4 111 107 116 97 4 20 48 111 97 51 50 52 121 118 114 118 57 110 84 117 99 112 99 51 53 55 48 10 6 8 42 134 72 206 61 4 3 2 3 71 0 48 68 2 32 55 188 126 79 195 75 27 93 126 156 234 16 219 13 74 162 137 191 194 190 33 163 191 33 63 169 16 236 255 196 34 9 2 32 21 100 155 30 15 234 222 17 156 185 4 163 218 15 70 163 162 109 120 250 66 218 240 28 102 93 24 120 86 158 20 252] [48 130 1 154 48 130 1 64 160 3 2 1 2 2 16 72 81 162 92 162 222 253 163 99 175 4 48 121 141 91 49 48 10 6 8 42 134 72 206 61 4 3 2 48 23 49 21 48 19 6 3 85 4 3 19 12 98 101 116 97 32 82 111 111 116 32 67 65 48 30 23 13 50 48 48 51 48 53 50 50 50 52 51 49 90 23 13 51 48 48 51 48 51 50 50 50 52 51 49 90 48 31 49 29 48 27 6 3 85 4 3 19 20 98 101 116 97 32 73 110 116 101 114 109 101 100 105 97 116 101 32 67 65 48 89 48 19 6 7 42 134 72 206 61 2 1 6 8 42 134 72 206 61 3 1 7 3 66 0 4 195 111 25 204 207 211 141 49 230 162 220 155 59 164 64 57 91 162 240 224 150 246 101 67 133 219 181 79 145 161 154 100 246 71 38 164 230 194 65 165 161 207 151 255 71 234 228 142 170 209 91 105 201 86 255 211 106 97 114 201 104 29 128 44 163 102 48 100 48 14 6 3 85 29 15 1 1 255 4 4 3 2 1 6 48 18 6 3 85 29 19 1 1 255 4 8 48 6 1 1 255 2 1 0 48 29 6 3 85 29 14 4 22 4 20 44 74 72 210 213 40 184 14 213 215 26 8 9 216 142 163 71 236 162 194 48 31 6 3 85 29 35 4 24 48 22 128 20 223 233 255 201 2 11 254 67 111 127 83 147 155 78 253 207 152 193 146 101 48 10 6 8 42 134 72 206 61 4 3 2 3 72 0 48 69 2 32 35 237 178 221 222 169 41 176 149 188 75 106 44 178 35 21 156 88 166 45 7 202 85 71 96 103 148 184 5 133 195 184 2 33 0 130 200 147 161 156 174 29 7 234 197 116 142 38 58 146 178 77 211 202 82 67 222 58 212 68 71 29 65 82 36 27 221]] PrivateKey:0x140002fb950 SupportedSignatureAlgorithms:[] OCSPStaple:[] SignedCertificateTimestamps:[] Leaf:<nil>} getClientCertificate:0x100d8f880 retryFunc:<nil> x5cJWK:<nil> x5cCertFile: x5cCertStrs:[] x5cCert:<nil> x5cSubject:}
+rootFile = /tmp/tacky-woodstorks-root.crt
+o = &{transport:<nil> rootSHA256: rootFilename:/tmp/tacky-woodstorks-root.crt rootBundle:[] certificate:{Certificate:[] PrivateKey:<nil> SupportedSignatureAlgorithms:[] OCSPStaple:[] SignedCertificateTimestamps:[] Leaf:<nil>} getClientCertificate:<nil> retryFunc:<nil> x5cJWK:<nil> x5cCertFile: x5cCertStrs:[] x5cCert:<nil> x5cSubject:}
+[
+   {
+      "type": "OIDC",
+      "name": "authority-admin",
+      "clientID": "041d4cf2-94b9-4a80-afd0-d94459d058a6",
+      "clientSecret": "75565f15cc82ecdee80dc8f12ae94cdd70b06887d506c0825b273156fd4987a1",
+      "configurationEndpoint": "https://auth.smallstep.com/oidc/smallstep/.well-known/openid-configuration",
+      "admins": [
+         "eng@smallstep.com"
+      ],
+      "listenAddress": "127.0.0.1:10000",
+      "claims": {
+         "maxTLSCertDuration": "8784h0m0s",
+         "enableSSHCA": true,
+         "disableRenewal": false,
+         "allowRenewalAfterExpiry": false,
+         "disableSmallstepExtensions": false
+      },
+      "options": {
+         "x509": {},
+         "ssh": {}
+      }
+   },
+   {
+      "type": "JWK",
+      "name": "jwk-test",
+      "key": {
+         "use": "sig",
+         "kty": "EC",
+         "kid": "rYaaexKdqq-eKBmAqq_Z8LX7P3PidXdI5vCcbnbh_iE",
+         "crv": "P-256",
+         "x": "X50TLO6UDItTeeH9PEQiT5BZafAzezfE-ylgdJcXSwI",
+         "y": "iTFPrcRcwrQkYWQKm77c9gtLp3rPO3q0Mu3i50BfobM"
+      },
+      "encryptedKey": "eyJhbGciOiJQQkVTMi1IUzI1NitBMTI4S1ciLCJlbmMiOiJBMjU2R0NNIiwiY3R5IjoiandrK2pzb24iLCJwMmMiOjIwNDgsInAycyI6ImlTUm9DczhNZkFIVEc3STBhR0VIbXcifQ.j-CdY2VO8Wd-vf-mxmagBMSxYLxvOyxndWCQIYpiIeV1Gp2W-lk6lQ.7bWrvzWACd-5bWFn.hibjDyWd46G3TdZtVW0MTg4cFl1XNCDdqNCP_4mV4kDdVMwy7_cHO7NB46-W7gha_GCqidIpOyoQGtI1LhyV2ogFERUD4HajHrERs9vOyrlr096IoXZFVw0jTq6HgoXrScxbTKlOXg1Ojvf0UmMvC_deiq0ZDzGPJLObaZ_JhNGDIgvdAqbfOJI0yHJbuLPcktSdrmL-fsaRC5LE-S6iQ_te-55MgNFzI-ZQe5Xr5lW5KfQnTm80I5uWbHtgJcIcUSi_XS4JEn9nW7M9yuPWQoOdlLeshzZ5v6EFfNvQUzTXPmtm8_lyZdjTPsP25lPh4dIg39kz35uhYJMJx-A.jay0KteeT47vV7M5AmaaEg",
+      "claims": {
+         "minTLSCertDuration": "5m0s",
+         "maxTLSCertDuration": "730h4m48s",
+         "defaultTLSCertDuration": "24h0m0s",
+         "enableSSHCA": true,
+         "disableRenewal": false,
+         "allowRenewalAfterExpiry": false,
+         "disableSmallstepExtensions": false
+      },
+      "options": {
+         "x509": {},
+         "ssh": {}
+      }
+   }
+]

@@ -1,0 +1,12 @@
+diff --git a/.github/dependabot.yml b/.github/dependabot.yml
+index e0871f9..a9618d0 100644
+--- a/.github/dependabot.yml
++++ b/.github/dependabot.yml
+@@ -9,3 +9,7 @@ updates:
+     directory: "/" # Location of package manifests
+     schedule:
+       interval: "weekly"
++  - package-ecosystem: "github-actions"
++    directory: "/"
++    schedule:
++      interval: "weekly"

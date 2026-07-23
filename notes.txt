@@ -1,0 +1,10 @@
+intermediate 1:
+    subject -- 1F:12:4F:C2:EA:95:A5:F6:EB:BC:C0:CD:53:7A:F6:5B:1B:C7:99:2A
+    issuer  -- 88:FF:9E:B6:35:E8:A9:99:BF:5E:9B:1F:F8:46:4A:96:FD:6A:B2:37
+
+intermediate 2:
+    subject -- 88:FF:9E:B6:35:E8:A9:99:BF:5E:9B:1F:F8:46:4A:96:FD:6A:B2:37
+    issuer  -- BF:1E:F0:8D:E1:D8:DB:E3:02:AA:C5:74:5A:9B:15:75:B5:A0:E6:23
+
+root:
+    subject -- BF:1E:F0:8D:E1:D8:DB:E3:02:AA:C5:74:5A:9B:15:75:B5:A0:E6:23
