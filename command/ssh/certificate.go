@@ -190,6 +190,7 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 			sshPrivateKeyFlag,
 			sshProvisionerPasswordFlag,
 			sshSignFlag,
+			sshConfirmFlag,
 			flags.KTY,
 			flags.Curve,
 			flags.Size,
@@ -531,7 +532,11 @@ func certificateAction(ctx *cli.Context) error {
 			ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 		} else {
 			defer agent.Close()
-			if err := agent.AddCertificate(comment, resp.Certificate.Certificate, priv); err != nil {
+			var opts []sshutil.AgentOption
+			if ctx.Bool("confirm") {
+				opts = append(opts, sshutil.WithConfirmBeforeUse())
+			}
+			if err := agent.AddCertificate(comment, resp.Certificate.Certificate, priv, opts...); err != nil {
 				ui.Printf(`{{ "%s" | red }} {{ "SSH Agent:" | bold }} %v`+"\n", ui.IconBad, err)
 			} else {
 				ui.PrintSelected("SSH Agent", "yes")
