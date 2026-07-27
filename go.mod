@@ -26,7 +26,7 @@ require (
 	github.com/smallstep/zlint v0.0.0-20220930192201-67fb4aa21910
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli v1.22.17
-	go.mozilla.org/pkcs7 v0.9.0
+	go.mozilla.org/pkcs7 v0.10.0
 	go.step.sm/crypto v0.85.0
 	golang.org/x/crypto v0.54.0
 	golang.org/x/sys v0.47.0
