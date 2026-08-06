@@ -633,12 +633,6 @@ func createX5CDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	}
 	var rootBytes [][]byte
 	for _, r := range roots {
-		if r.KeyUsage&x509.KeyUsageCertSign == 0 {
-			return nil, errors.Errorf("error: certificate with common name '%s' cannot be "+
-				"used as an X5C root certificate.\n\n"+
-				"X5C provisioner root certificates must have the 'Certificate Sign' key "+
-				"usage extension.", r.Subject.CommonName)
-		}
 		rootBytes = append(rootBytes, pem.EncodeToMemory(&pem.Block{
 			Type:  "CERTIFICATE",
 			Bytes: r.Raw,
