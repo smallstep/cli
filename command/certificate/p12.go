@@ -26,7 +26,7 @@ func p12Command() cli.Command {
 		Usage:  `package a certificate and keys into a .p12 file`,
 		UsageText: `step certificate p12 <p12-path> [<crt-path>] [<key-path>]
 [**--ca**=<file>] [**--password-file**=<file>] [**--legacy**]
-[**--force**] [**--no-password**] [**--insecure**]`,
+[**--friendly-name**=<name>] [**--force**] [**--no-password**] [**--insecure**]`,
 		Description: `**step certificate p12** creates a .p12 (PFX / PKCS12)
 file containing certificates and keys. This can then be used to import
 into Windows / Firefox / Java applications.
@@ -53,6 +53,12 @@ Package a CA certificate into a "trust store" for Java applications:
 
 '''
 $ step certificate p12 trust.p12 --ca ca.crt
+'''
+
+Package a CA certificate into a "trust store" with a custom friendly name (alias):
+
+'''
+$ step certificate p12 trust.p12 --ca ca.crt --friendly-name "My Root CA"
 '''
 
 Package a certificate and private key with an empty password:
@@ -84,6 +90,15 @@ multiple CAs or intermediates.`,
 				Name:  "legacy",
 				Usage: "Encodes PKCS#12 files using the algorithms that were traditionally used, PBE+SHA1+RC2 for certificates and PBE+SHA1+3DES for keys.",
 			},
+			cli.StringFlag{
+				Name: "friendly-name",
+				Usage: `The <name> to use as the Friendly Name (alias) for the certificate,
+instead of the default '<subject> - <fingerprint>'. Only supported
+when creating a trust store with exactly one '--ca' certificate; not
+currently supported when packaging a certificate and key together, as
+the underlying PKCS#12 library does not expose a friendly name for
+that case.`,
+			},
 			flags.Force,
 			flags.Insecure,
 		},
@@ -99,6 +114,7 @@ func p12Action(ctx *cli.Context) error {
 	crtFile := ctx.Args().Get(1)
 	keyFile := ctx.Args().Get(2)
 	caFiles := ctx.StringSlice("ca")
+	friendlyName := ctx.String("friendly-name")
 	hasKeyAndCert := crtFile != "" && keyFile != ""
 
 	encoder := pkcs12.Modern
@@ -122,6 +138,8 @@ func p12Action(ctx *cli.Context) error {
 		return errs.IncompatibleFlagWithFlag(ctx, "no-password", "password-file")
 	case ctx.Bool("no-password") && !ctx.Bool("insecure"):
 		return errs.RequiredInsecureFlag(ctx, "no-password")
+	case friendlyName != "" && hasKeyAndCert:
+		return errors.Errorf("flag '--%s' is not currently supported when packaging a certificate and key together (it can only be used when creating a trust store with '--ca')", "friendly-name")
 	}
 
 	x509CAs := []*x509.Certificate{}
@@ -131,6 +149,10 @@ func p12Action(ctx *cli.Context) error {
 			return errors.Wrap(err, "error reading CA certificate")
 		}
 		x509CAs = append(x509CAs, x509Bundle...)
+	}
+
+	if friendlyName != "" && len(x509CAs) != 1 {
+		return errors.Errorf("flag '--%s' can only be used when the .p12 file contains exactly one certificate", "friendly-name")
 	}
 
 	var err error
@@ -178,9 +200,13 @@ func p12Action(ctx *cli.Context) error {
 		// If we have only --ca flags, we're making a trust store
 		var certsWithFriendlyNames []pkcs12.TrustStoreEntry
 		for _, cert := range x509CAs {
+			name := fmt.Sprintf("%s - %s", cert.Subject.String(), x509util.Fingerprint(cert))
+			if friendlyName != "" {
+				name = friendlyName
+			}
 			certsWithFriendlyNames = append(certsWithFriendlyNames, pkcs12.TrustStoreEntry{
 				Cert:         cert,
-				FriendlyName: fmt.Sprintf("%s - %s", cert.Subject.String(), x509util.Fingerprint(cert)),
+				FriendlyName: name,
 			})
 		}
 		pkcs12Data, err = encoder.EncodeTrustStoreEntries(certsWithFriendlyNames, password)
