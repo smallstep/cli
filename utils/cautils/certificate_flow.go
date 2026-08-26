@@ -248,6 +248,12 @@ func (f *CertificateFlow) GenerateIdentityToken(ctx *cli.Context) (string, error
 
 // Sign signs the CSR using the online or the offline certificate authority.
 func (f *CertificateFlow) Sign(ctx *cli.Context, tok string, csr api.CertificateRequest, crtFile string) error {
+	return f.SignWithIntermediate(ctx, tok, csr, crtFile, "")
+}
+
+// SignWithIntermediate signs the CSR and optionally writes the intermediate
+// certificate chain to a separate file.
+func (f *CertificateFlow) SignWithIntermediate(ctx *cli.Context, tok string, csr api.CertificateRequest, crtFile, intermediateFile string) error {
 	client, err := f.GetClient(ctx, tok)
 	if err != nil {
 		return err
@@ -281,6 +287,29 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, tok string, csr api.Certificate
 	if len(resp.CertChainPEM) == 0 {
 		resp.CertChainPEM = []api.Certificate{resp.ServerPEM, resp.CaPEM}
 	}
+
+	if intermediateFile != "" && len(resp.CertChainPEM) > 1 {
+		// Write leaf certificate to crtFile
+		leafPEM, err := pemutil.Serialize(resp.CertChainPEM[0].Certificate)
+		if err != nil {
+			return errors.Wrap(err, "error serializing leaf certificate from step-ca API response")
+		}
+		if err := fileutil.WriteFile(crtFile, pem.EncodeToMemory(leafPEM), 0o600); err != nil {
+			return err
+		}
+
+		// Write intermediate chain to intermediateFile
+		var chainData []byte
+		for _, certPEM := range resp.CertChainPEM[1:] {
+			pemblk, err := pemutil.Serialize(certPEM.Certificate)
+			if err != nil {
+				return errors.Wrap(err, "error serializing intermediate certificate from step-ca API response")
+			}
+			chainData = append(chainData, pem.EncodeToMemory(pemblk)...)
+		}
+		return fileutil.WriteFile(intermediateFile, chainData, 0o600)
+	}
+
 	var data []byte
 	for _, certPEM := range resp.CertChainPEM {
 		pemblk, err := pemutil.Serialize(certPEM.Certificate)

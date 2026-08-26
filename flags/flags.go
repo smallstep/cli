@@ -119,6 +119,13 @@ unset, default is P-256 for EC keys and Ed25519 for OKP keys.
 		Usage: `The path to the <file> containing the password to encrypt or decrypt the private key.`,
 	}
 
+	// IntermediateFile is a cli.Flag used to write the intermediate certificate
+	// chain to a separate file.
+	IntermediateFile = cli.StringFlag{
+		Name:  "intermediate-file",
+		Usage: `The path to the <file> where the intermediate certificate chain will be written.`,
+	}
+
 	// NoPassword is a cli.Flag used to avoid using a password to encrypt private
 	// keys.
 	NoPassword = cli.BoolFlag{

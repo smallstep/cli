@@ -31,6 +31,7 @@ func certificateCommand() cli.Command {
 [**--contact**=<email>] [**--http-listen**=<address>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
 [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]
+[**--intermediate-file**=<file>]
 [**--offline**] [**--password-file**] [**--ca-url**=<uri>] [**--root**=<file>]
 [**--context**=<name>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
@@ -156,6 +157,11 @@ step CA does not impose this requirement.
 '''
 $ step ca certificate foo.internal foo.crt foo.key \
 --acme https://acme-staging-v02.api.letsencrypt.org/directory --san bar.internal
+'''
+
+Request a new certificate and write the intermediate chain to a separate file:
+'''
+$ step ca certificate foo.internal foo.crt foo.key --intermediate-file intermediate.crt
 '''`,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
@@ -164,6 +170,7 @@ $ step ca certificate foo.internal foo.crt foo.key \
 that should be authorized. Use the '--san' flag multiple times to configure
 multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			},
+			flags.IntermediateFile,
 			cli.StringFlag{
 				Name:  "attestation-ca-url",
 				Usage: "The base url of the Attestation CA to use",
@@ -292,7 +299,7 @@ func certificateAction(ctx *cli.Context) error {
 		return errors.New("token is not supported")
 	}
 
-	if err := flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
+	if err := flow.SignWithIntermediate(ctx, tok, req.CsrPEM, crtFile, ctx.String("intermediate-file")); err != nil {
 		return err
 	}
 
@@ -303,5 +310,8 @@ func certificateAction(ctx *cli.Context) error {
 
 	ui.PrintSelected("Certificate", crtFile)
 	ui.PrintSelected("Private Key", keyFile)
+	if intermediateFile := ctx.String("intermediate-file"); intermediateFile != "" {
+		ui.PrintSelected("Intermediate Certificate", intermediateFile)
+	}
 	return nil
 }
