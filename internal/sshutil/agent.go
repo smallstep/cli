@@ -15,6 +15,7 @@ import (
 type options struct {
 	filterBySignatureKey func(*agent.Key) bool
 	removeExpiredKey     func(*Agent, *agent.Key) bool
+	confirmBeforeUse     bool
 }
 
 func newOptions(opts []AgentOption) *options {
@@ -27,6 +28,13 @@ func newOptions(opts []AgentOption) *options {
 
 // AgentOption is the type used for variadic options in Agent methods.
 type AgentOption func(o *options)
+
+// WithConfirmBeforeUse requires user confirmation for every use of the key.
+func WithConfirmBeforeUse() AgentOption {
+	return func(o *options) {
+		o.confirmBeforeUse = true
+	}
+}
 
 // WithSignatureKey filters certificate not signed by the given signing keys.
 func WithSignatureKey(keys []ssh.PublicKey) AgentOption {
@@ -242,7 +250,7 @@ func (a *Agent) RemoveAllKeys(opts ...AgentOption) (bool, error) {
 }
 
 // AddCertificate adds the given certificate to the agent.
-func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv interface{}) error {
+func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv interface{}, opts ...AgentOption) error {
 	var (
 		lifetime uint64
 		now      = cast.Uint64(time.Now().Unix())
@@ -262,10 +270,12 @@ func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv inter
 		lifetime = 0
 	}
 
+	o := newOptions(opts)
 	return errors.Wrap(a.Add(agent.AddedKey{
-		PrivateKey:   priv,
-		Certificate:  cert,
-		Comment:      subject,
-		LifetimeSecs: cast.Uint32(lifetime),
+		PrivateKey:       priv,
+		Certificate:      cert,
+		Comment:          subject,
+		LifetimeSecs:     cast.Uint32(lifetime),
+		ConfirmBeforeUse: o.confirmBeforeUse,
 	}), "error adding key to agent")
 }
