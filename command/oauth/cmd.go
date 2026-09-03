@@ -915,7 +915,7 @@ func (o *oauth) DoDeviceAuthorization() (*token, error) {
 		fmt.Fprintf(os.Stderr, "Visit %s and enter the code:\n", idr.VerificationURI)
 		fmt.Fprintln(os.Stderr, idr.UserCode)
 	} else {
-		fmt.Fprintf(os.Stderr, "Visit %s:\n", idr.VerificationURI)
+		fmt.Fprintf(os.Stderr, "Visit %s\n", idr.VerificationURI)
 	}
 
 	// Poll the Token endpoint until the user completes the flow.
