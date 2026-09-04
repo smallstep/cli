@@ -61,7 +61,7 @@ func Key(password, salt []byte, rounds, keyLen int) ([]byte, error) {
 			h.Reset()
 			h.Write(tmp[:])
 			bcryptHash(tmp[:], shapass[:], h.Sum(shasalt[:0]))
-			for j := 0; j < len(out); j++ {
+			for j := range len(out) {
 				out[j] ^= tmp[j]
 			}
 		}
@@ -80,13 +80,13 @@ func bcryptHash(out, shapass, shasalt []byte) {
 	if err != nil {
 		panic(err)
 	}
-	for i := 0; i < 64; i++ {
+	for range 64 {
 		blowfish.ExpandKey(shasalt, c)
 		blowfish.ExpandKey(shapass, c)
 	}
 	copy(out, magic)
 	for i := 0; i < 32; i += 8 {
-		for j := 0; j < 64; j++ {
+		for range 64 {
 			c.Encrypt(out[i:i+8], out[i:i+8])
 		}
 	}

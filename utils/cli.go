@@ -41,10 +41,10 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 				return kty, crv, size, errs.MinSizeFlag(ctx, sizeKey, "0")
 			}
 		case "EC":
-			if ctx.IsSet("size") {
+			if ctx.IsSet(sizeKey) {
 				return kty, crv, size, errs.IncompatibleFlagValue(ctx, sizeKey, ktyKey, kty)
 			}
-			if !ctx.IsSet("curve") {
+			if !ctx.IsSet(curveKey) {
 				crv = DefaultECCurve
 			}
 			switch crv {
@@ -54,7 +54,7 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 					curveKey, crv, "P-256, P-384, P-521")
 			}
 		case "OKP":
-			if ctx.IsSet("size") {
+			if ctx.IsSet(sizeKey) {
 				return kty, crv, size, errs.IncompatibleFlagValue(ctx, sizeKey, ktyKey, kty)
 			}
 			switch crv {
@@ -65,8 +65,15 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 				return kty, crv, size, errs.IncompatibleFlagValueWithFlagValue(ctx, ktyKey, kty,
 					curveKey, crv, "Ed25519")
 			}
+		case "ML-DSA-44", "ML-DSA-65", "ML-DSA-87":
+			switch {
+			case ctx.IsSet(sizeKey):
+				return kty, crv, size, errs.IncompatibleFlagValue(ctx, sizeKey, ktyKey, kty)
+			case ctx.IsSet(curveKey):
+				return kty, crv, size, errs.IncompatibleFlagValue(ctx, sizeKey, ktyKey, kty)
+			}
 		default:
-			return kty, crv, size, errs.InvalidFlagValue(ctx, ktyKey, kty, "RSA, EC, OKP")
+			return kty, crv, size, errs.InvalidFlagValue(ctx, ktyKey, kty, "RSA, EC, OKP, ML-DSA-44, ML-DSA-65, and ML-DSA-87")
 		}
 	} else {
 		if ctx.IsSet(curveKey) {

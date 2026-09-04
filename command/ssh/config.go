@@ -212,11 +212,11 @@ func configAction(ctx *cli.Context) (recoverErr error) {
 	}
 	if len(sets) > 0 {
 		for _, s := range sets {
-			i := strings.Index(s, "=")
-			if i == -1 {
+			before, after, ok := strings.Cut(s, "=")
+			if !ok {
 				return errs.InvalidFlagValue(ctx, "set", s, "")
 			}
-			data[s[:i]] = s[i+1:]
+			data[before] = after
 		}
 	}
 

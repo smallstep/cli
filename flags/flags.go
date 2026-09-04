@@ -31,13 +31,23 @@ If unset, default is EC.
 : <kty> is a case-sensitive string and must be one of:
 
     **EC**
-    :  Create an **elliptic curve** keypair
+    :  Create an **elliptic curve** key pair
 
     **OKP**
     :  Create an octet key pair (for **"Ed25519"** curve)
 
     **RSA**
-    :  Create an **RSA** keypair`,
+    :  Create an **RSA** key pair
+
+	**ML-DSA-44**
+	:  Create a ML-DSA key pair using the **ML-DSA-44** parameter set.
+
+	**ML-DSA-65**
+	:  Create a ML-DSA key pair using the **ML-DSA-65** parameter set.
+
+	**ML-DSA-87**
+	:  Create a ML-DSA key pair using the **ML-DSA-87** parameter set.
+	`,
 	}
 
 	// Size is the flag to set the key size.
@@ -610,8 +620,8 @@ func ParseTemplateData(ctx *cli.Context) (json.RawMessage, error) {
 
 // GetTemplateData parses the set and set-file flags and returns a map to be
 // used in certificate templates.
-func GetTemplateData(ctx *cli.Context) (map[string]interface{}, error) {
-	data := make(map[string]interface{})
+func GetTemplateData(ctx *cli.Context) (map[string]any, error) {
+	data := make(map[string]any)
 	if path := ctx.String("set-file"); path != "" {
 		b, err := utils.ReadFile(path)
 		if err != nil {
@@ -624,14 +634,14 @@ func GetTemplateData(ctx *cli.Context) (map[string]interface{}, error) {
 
 	keyValues := ctx.StringSlice("set")
 	for _, s := range keyValues {
-		i := strings.Index(s, "=")
-		if i == -1 {
+		before, after, ok := strings.Cut(s, "=")
+		if !ok {
 			return nil, errs.InvalidFlagValue(ctx, "set", s, "")
 		}
-		key, value := s[:i], s[i+1:]
+		key, value := before, after
 
 		// If the value is not json, use the raw string.
-		var v interface{}
+		var v any
 		if err := json.Unmarshal([]byte(value), &v); err == nil {
 			data[key] = v
 		} else {

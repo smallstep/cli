@@ -174,7 +174,7 @@ func fingerprintAction(ctx *cli.Context) error {
 		return err
 	}
 
-	var key interface{}
+	var key any
 	switch {
 	case bytes.HasPrefix(b, []byte("-----BEGIN ")): // PEM format:
 		opts := []pemutil.Options{
