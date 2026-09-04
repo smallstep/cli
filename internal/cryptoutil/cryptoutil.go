@@ -13,6 +13,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -216,14 +217,30 @@ type kmsPublicKey struct {
 	kms, key string
 }
 
+// sensitiveURIParams matches the KMS URI attributes whose values are
+// credentials: pin-value (yubikey, pkcs11, capi), management-key (yubikey),
+// and client-secret (azurekms). The value runs until the next URI delimiter
+// (";", "&", "?"), whitespace (an argv or word boundary), or a double quote (a
+// Go-quoted prose boundary), so redaction leaves the surrounding command line
+// and error text intact.
+var sensitiveURIParams = regexp.MustCompile(`(?i)\b(pin-value|management-key|client-secret)=[^;&?\s"]*`)
+
+// redactSecrets replaces the values of sensitive KMS URI attributes in s with
+// "REDACTED", so that a command line or its output can be embedded in an error
+// message without disclosing PINs or other credentials.
+func redactSecrets(s string) string {
+	return sensitiveURIParams.ReplaceAllString(s, "${1}=REDACTED")
+}
+
 // exitError returns the error displayed on stderr after running the given
-// command.
+// command, with the values of sensitive KMS URI attributes redacted.
 func exitError(cmd *exec.Cmd, err error) error {
+	command := redactSecrets(cmd.String())
 	var ee *exec.ExitError
 	if errors.As(err, &ee) {
-		return fmt.Errorf("command %q failed with:\n%s", cmd.String(), ee.Stderr)
+		return fmt.Errorf("command %q failed with:\n%s", command, redactSecrets(string(ee.Stderr)))
 	}
-	return fmt.Errorf("command %q failed with: %w", cmd.String(), err)
+	return fmt.Errorf("command %q failed with: %w", command, err)
 }
 
 // newKMSSigner creates a signer using `step-kms-plugin` as the signer.
