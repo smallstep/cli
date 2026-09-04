@@ -1,6 +1,7 @@
 package eab
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -24,11 +25,12 @@ func listCommand() cli.Command {
 		Action: cli.ActionFunc(listAction),
 		Usage:  "list all ACME External Account Binding Keys",
 		UsageText: `**step ca acme eab list** <provisioner> [<eab-key-reference>]
-[**--limit**=<number>]
+[**--json**] [**--limit**=<number>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
+			jsonFlag,
 			flags.Limit,
 			flags.NoPager,
 			flags.AdminCert,
@@ -64,6 +66,11 @@ Show ACME External Account Binding Key with specific reference:
 '''
 $ step ca acme eab list my_acme_provisioner my_reference
 '''
+
+List all ACME External Account Binding Keys as a JSON array (keys are omitted):
+'''
+$ step ca acme eab list my_acme_provisioner --json
+'''
 `,
 	}
 }
@@ -84,6 +91,41 @@ func listAction(ctx *cli.Context) (err error) {
 	client, err := cautils.NewAdminClient(ctx)
 	if err != nil {
 		return errors.Wrap(err, "error creating admin client")
+	}
+
+	// default to API paging per 100 entities
+	limit := uint(0)
+	if ctx.IsSet("limit") {
+		limit = ctx.Uint("limit")
+	}
+
+	// JSON output collects every page into a single array and bypasses the
+	// $PAGER machinery, which only makes sense for the human-readable table.
+	if ctx.Bool("json") {
+		eaks := []*cliEAK{}
+		cursor := ""
+		for {
+			options := []ca.AdminOption{ca.WithAdminCursor(cursor), ca.WithAdminLimit(cast.Int(limit))}
+			eaksResponse, err := client.GetExternalAccountKeysPaginate(provisioner, reference, options...)
+			if err != nil {
+				return errors.Wrap(notImplemented(err), "error retrieving ACME EAB keys")
+			}
+			for _, k := range eaksResponse.EAKs {
+				cliEAK := toCLI(ctx, client, k)
+				cliEAK.Key = "" // never expose the secret HMAC key in list output
+				eaks = append(eaks, cliEAK)
+			}
+			if eaksResponse.NextCursor == "" {
+				break
+			}
+			cursor = eaksResponse.NextCursor
+		}
+		b, err := json.MarshalIndent(eaks, "", "  ")
+		if err != nil {
+			return errors.Wrap(err, "error marshaling ACME EAB keys")
+		}
+		fmt.Println(string(b))
+		return nil
 	}
 
 	var out io.WriteCloser
@@ -121,12 +163,6 @@ func listAction(ctx *cli.Context) (err error) {
 		out = os.Stdout
 	}
 
-	// default to API paging per 100 entities
-	limit := uint(0)
-	if ctx.IsSet("limit") {
-		limit = ctx.Uint("limit")
-	}
-
 	cursor := ""
 	format := "%-36s%-28s%-16s%-30s%-30s%-40s%s\n"
 	firstIteration := true
@@ -154,7 +190,7 @@ func listAction(ctx *cli.Context) (err error) {
 		}
 		for _, k := range eaksResponse.EAKs {
 			cliEAK := toCLI(ctx, client, k)
-			_, err = fmt.Fprintf(out, format, cliEAK.id, cliEAK.provisioner, "*****", cliEAK.createdAt, cliEAK.boundAt, cliEAK.account, cliEAK.reference)
+			_, err = fmt.Fprintf(out, format, cliEAK.ID, cliEAK.Provisioner, "*****", cliEAK.CreatedAt, cliEAK.BoundAt, cliEAK.Account, cliEAK.Reference)
 			if err != nil {
 				return errors.Wrap(err, "error writing ACME EAB key to output")
 			}
