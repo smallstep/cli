@@ -129,7 +129,8 @@ func changePassAction(ctx *cli.Context) error {
 			if encryptPassFile != "" {
 				opts = append(opts, pemutil.WithPasswordFile(encryptPassFile))
 			} else {
-				pass, err := ui.PromptPassword(fmt.Sprintf("Please enter the password to encrypt %s", newKeyPath))
+				pass, err := ui.PromptPassword(fmt.Sprintf("Please enter the password to encrypt %s", newKeyPath),
+					ui.WithField("new password", "password-file"))
 				if err != nil {
 					return errors.Wrap(err, "error reading password")
 				}
@@ -156,7 +157,7 @@ func changePassAction(ctx *cli.Context) error {
 		if !noPass {
 			opts = []jose.Option{
 				jose.WithPasswordPrompter("Please enter the password to encrypt the private JWK", func(s string) ([]byte, error) {
-					return ui.PromptPassword(s)
+					return ui.PromptPassword(s, ui.WithField("current password", "password-file"))
 				}),
 			}
 			if encryptPassFile != "" {
