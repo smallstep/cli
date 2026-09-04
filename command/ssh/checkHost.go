@@ -49,7 +49,7 @@ $ step ssh check-host internal.smallstep.com
 				Name:  "verbose, v",
 				Usage: `Return "true" or "false" in the terminal.`,
 			},
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.Offline,
 			flags.CaURL,
 			flags.Root,

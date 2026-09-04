@@ -168,7 +168,7 @@ $ step ca renew --offline internal.crt internal.key
 				Usage: `Use mTLS to renew a certificate. Use --mtls=false to force the token
 authorization flow instead.`,
 			},
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.Force,
 			flags.Offline,
 			flags.PasswordFile,

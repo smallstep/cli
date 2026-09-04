@@ -67,7 +67,7 @@ $ step ssh logout --all
 			},
 			flags.Identity,
 			flags.Offline,
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

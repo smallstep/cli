@@ -287,13 +287,11 @@ uses the configuration, certificates, and keys created with **step ca init**,
 but can accept a different configuration file using **--ca-config** flag.`,
 	}
 
-	// CaConfig is a cli.Flag used to pass the CA configuration file.
-	CaConfig = cli.StringFlag{
-		Name: "ca-config",
-		Usage: `The certificate authority configuration <file>. Defaults to
-$(step path)/config/ca.json`,
-		Value: filepath.Join(step.Path(), "config", "ca.json"),
-	}
+	// CaConfig is now a function (see the CaConfig func below). Defining it as a
+	// package var made its default value call step.Path() at package
+	// initialization, which caches the step configuration path from $HOME before
+	// a program has a chance to set STEPPATH (e.g. an SSH/PAM session hook where
+	// PAM exports the target user's HOME). Resolving it lazily fixes that.
 
 	// AdminCert is a cli.Flag used to pass the x5c header certificate for a JWT.
 	AdminCert = cli.StringFlag{
@@ -727,4 +725,18 @@ func FirstStringOf(ctx *cli.Context, flags ...string) (string, string) {
 	}
 
 	return "", name
+}
+
+// CaConfig returns the --ca-config flag. It is a function rather than a package
+// var so its default value, which calls step.Path(), is resolved when the
+// command is constructed instead of at package initialization. As a var,
+// importing this package would call step.Path() at load time and cache the
+// step configuration path from $HOME before a program could set STEPPATH.
+func CaConfig() cli.Flag {
+	return cli.StringFlag{
+		Name: "ca-config",
+		Usage: `The certificate authority configuration <file>. Defaults to
+$(step path)/config/ca.json`,
+		Value: filepath.Join(step.Path(), "config", "ca.json"),
+	}
 }
