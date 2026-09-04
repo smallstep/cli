@@ -2,8 +2,12 @@ package certificate
 
 import (
 	"bytes"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/json"
 	"flag"
+	"strings"
 	"testing"
 
 	"github.com/smallstep/assert"
@@ -138,3 +142,148 @@ func TestInspectCertificateRequest(t *testing.T) {
 	}
 
 }
+
+func TestInspectCertificates_Logotypes(t *testing.T) {
+	mustMarshal := func(val interface{}) []byte {
+		b, err := asn1.Marshal(val)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return b
+	}
+
+	wrapExplicit := func(tag int, payload []byte) []byte {
+		var lenBytes []byte
+		length := len(payload)
+		if length < 128 {
+			lenBytes = []byte{byte(length)}
+		} else if length < 256 {
+			lenBytes = []byte{0x81, byte(length)}
+		} else {
+			lenBytes = []byte{0x82, byte(length >> 8), byte(length & 0xff)}
+		}
+		result := []byte{byte(0xa0 | tag)}
+		result = append(result, lenBytes...)
+		result = append(result, payload...)
+		return result
+	}
+
+	wrapSequence := func(payload []byte) []byte {
+		var lenBytes []byte
+		length := len(payload)
+		if length < 128 {
+			lenBytes = []byte{byte(length)}
+		} else if length < 256 {
+			lenBytes = []byte{0x81, byte(length)}
+		} else {
+			lenBytes = []byte{0x82, byte(length >> 8), byte(length & 0xff)}
+		}
+		result := []byte{0x30}
+		result = append(result, lenBytes...)
+		result = append(result, payload...)
+		return result
+	}
+
+	// Direct CHOICE value [0] LogotypeData
+	directDataBytes := mustMarshal(LogotypeData{
+		Image: []LogotypeImage{
+			{
+				ImageDetails: LogotypeDetails{
+					MediaType:   "image/png",
+					LogotypeURI: []string{"https://example.com/subject-direct.png"},
+				},
+			},
+		},
+	})
+	directDataBytes[0] = 0xa0 // choice tag [0] implicit
+
+	// Indirect CHOICE value [1] LogotypeReference
+	indirectRefBytes := mustMarshal(LogotypeReference{
+		RefStructURI: []string{"https://example.com/issuer-indirect.png"},
+	})
+	indirectRefBytes[0] = 0xa1 // choice tag [1] implicit
+
+	// Community LOGOS list element (direct Choice [0] LogotypeData)
+	communityDirectBytes := mustMarshal(LogotypeData{
+		Image: []LogotypeImage{
+			{
+				ImageDetails: LogotypeDetails{
+					MediaType:   "image/svg+xml",
+					LogotypeURI: []string{"https://example.com/community-direct.svg"},
+				},
+			},
+		},
+	})
+	communityDirectBytes[0] = 0xa0
+
+	// Community LOGOS list element (indirect Choice [1] LogotypeReference)
+	communityIndirectBytes := mustMarshal(LogotypeReference{
+		RefStructURI: []string{"https://example.com/community-indirect.png"},
+	})
+	communityIndirectBytes[0] = 0xa1
+
+	// OtherLogotypeInfo element
+	otherInfoBytes := mustMarshal(OtherLogotypeInfo{
+		LogotypeType: asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 1, 12, 99},
+		Info: asn1.RawValue{
+			FullBytes: communityDirectBytes,
+		},
+	})
+
+	// Wrap in communityLogos explicit tag [0]
+	communitySeqBytes := append(communityDirectBytes, communityIndirectBytes...)
+	communityLogosDER := wrapExplicit(0, wrapSequence(communitySeqBytes))
+
+	// Wrap in issuerLogo explicit tag [1]
+	issuerLogoDER := wrapExplicit(1, indirectRefBytes)
+
+	// Wrap in subjectLogo explicit tag [2]
+	subjectLogoDER := wrapExplicit(2, directDataBytes)
+
+	// Wrap in otherLogos explicit tag [3]
+	otherLogosDER := wrapExplicit(3, wrapSequence(otherInfoBytes))
+
+	var extnBytes []byte
+	extnBytes = append(extnBytes, communityLogosDER...)
+	extnBytes = append(extnBytes, issuerLogoDER...)
+	extnBytes = append(extnBytes, subjectLogoDER...)
+	extnBytes = append(extnBytes, otherLogosDER...)
+
+	extDER := wrapSequence(extnBytes)
+
+	certs, err := pemutil.ParseCertificateBundle(pemData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	crt := certs[0]
+	crt.Extensions = append(crt.Extensions, pkix.Extension{
+		Id:    asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 1, 12},
+		Value: extDER,
+	})
+
+	app := &cli.App{}
+	set := flag.NewFlagSet("contrive", 0)
+	_ = set.String("format", "text", "")
+	ctx := cli.NewContext(app, set, nil)
+
+	var buf bytes.Buffer
+	err = inspectCertificates(ctx, []*x509.Certificate{crt}, &buf)
+	assert.NoError(t, err)
+
+	output := buf.String()
+	t.Logf("Output:\n%s", output)
+
+	if !strings.Contains(output, "Logotype URI: https://example.com/community-direct.svg") {
+		t.Error("missing community-direct URI")
+	}
+	if !strings.Contains(output, "Logotype URI: https://example.com/community-indirect.png") {
+		t.Error("missing community-indirect URI")
+	}
+	if !strings.Contains(output, "Logotype URI: https://example.com/issuer-indirect.png") {
+		t.Error("missing issuer-indirect URI")
+	}
+	if !strings.Contains(output, "Logotype URI: https://example.com/subject-direct.png") {
+		t.Error("missing subject-direct URI")
+	}
+}
+
