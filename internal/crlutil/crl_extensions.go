@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -133,11 +134,11 @@ func newExtension(e pkix.Extension) Extension {
 			"authority_key_id": hex.EncodeToString(e.Value),
 		}
 		if _, err := asn1.Unmarshal(e.Value, &v); err == nil {
-			var s string
+			var s strings.Builder
 			for _, b := range v.ID {
-				s += fmt.Sprintf(":%02X", b)
+				fmt.Fprintf(&s, ":%02X", b)
 			}
-			ext.AddDetail("keyid" + s)
+			ext.AddDetail("keyid" + s.String())
 		} else {
 			ext.AddDetail(sanitizeBytes(e.Value))
 		}

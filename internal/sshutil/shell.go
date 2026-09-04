@@ -50,7 +50,7 @@ func WithSigner(signer ssh.Signer) ShellOption {
 
 // WithCertificate adds a signer with the given certificate as an
 // ssh.AuthMethod.
-func WithCertificate(cert *ssh.Certificate, priv interface{}) ShellOption {
+func WithCertificate(cert *ssh.Certificate, priv any) ShellOption {
 	return func(s *Shell) error {
 		signer, err := NewCertSigner(cert, priv)
 		if err != nil {

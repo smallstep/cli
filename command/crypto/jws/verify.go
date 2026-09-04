@@ -80,7 +80,7 @@ be encoded using Base64.`,
 }
 
 // Get the public key for a JWK.
-func publicKey(jwk *jose.JSONWebKey) interface{} {
+func publicKey(jwk *jose.JSONWebKey) any {
 	if jose.IsSymmetric(jwk) {
 		return jwk.Key
 	}

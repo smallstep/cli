@@ -50,7 +50,7 @@ type Payload struct {
 	IdentityProvider        string            `json:"idp"`
 	ObjectID                string            `json:"oid"`
 	TenantID                string            `json:"tid"`
-	Version                 interface{}       `json:"ver"`
+	Version                 any               `json:"ver"`
 	XMSMirID                string            `json:"xms_mirid"`
 	K8sSANamespace          string            `json:"kubernetes.io/serviceaccount/namespace,omitempty"`
 	K8sSASecretName         string            `json:"kubernetes.io/serviceaccount/secret.name,omitempty"` // #nosec G117 -- JSON property
@@ -136,7 +136,7 @@ type AzurePayload struct {
 }
 
 // Parse parses the given token verifying the signature with the key.
-func Parse(token string, key interface{}) (*JSONWebToken, error) {
+func Parse(token string, key any) (*JSONWebToken, error) {
 	jwt, err := jose.ParseSigned(token)
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing token")

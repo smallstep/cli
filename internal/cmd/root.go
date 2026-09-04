@@ -47,6 +47,11 @@ func Run() {
 	os.Exit(run())
 }
 
+type messengerError interface {
+	error
+	Message() string
+}
+
 func run() int {
 	defer panicHandler()
 
@@ -60,10 +65,7 @@ func run() int {
 	app := newApp(os.Stdout, os.Stderr)
 
 	if err := app.Run(os.Args); err != nil {
-		var messenger interface {
-			Message() string
-		}
-		if errors.As(err, &messenger) {
+		if messenger, ok := errors.AsType[messengerError](err); ok {
 			if os.Getenv("STEPDEBUG") == "1" {
 				fmt.Fprintf(os.Stderr, "%+v\n\n%s", err, messenger.Message())
 			} else {
@@ -171,7 +173,7 @@ func panicHandler() {
 
 func flagValue(f cli.Flag) reflect.Value {
 	fv := reflect.ValueOf(f)
-	for fv.Kind() == reflect.Ptr {
+	for fv.Kind() == reflect.Pointer {
 		fv = reflect.Indirect(fv)
 	}
 	return fv

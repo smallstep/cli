@@ -19,6 +19,7 @@ import (
 
 	"github.com/smallstep/linkedca"
 	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/mldsa"
 	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/flags"
@@ -752,7 +753,7 @@ func updateK8SSADetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		var (
 			block   *pem.Block
 			rest    = pemKeysB
-			pemKeys = []interface{}{}
+			pemKeys = []any{}
 		)
 		for rest != nil {
 			block, rest = pem.Decode(rest)
@@ -764,7 +765,7 @@ func updateK8SSADetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 				return errors.Wrapf(err, "error parsing public key from %s", pemKeysF)
 			}
 			switch q := key.(type) {
-			case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey:
+			case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey, *mldsa.PublicKey:
 			default:
 				return errors.Errorf("Unexpected public key type %T in %s", q, pemKeysF)
 			}

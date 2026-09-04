@@ -17,6 +17,7 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/mldsa"
 	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/utils"
@@ -180,7 +181,7 @@ func signAction(ctx *cli.Context) error {
 			return err
 		}
 		digest = hash(opts.HashFunc(), b)
-	case ed25519.PrivateKey:
+	case ed25519.PrivateKey, *mldsa.PrivateKey:
 		opts = crypto.Hash(0)
 		digest = b
 	default:

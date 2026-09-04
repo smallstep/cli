@@ -215,7 +215,7 @@ the **"kid"** member of one of the JWKs in the JWK Set.`,
 
 func signAction(ctx *cli.Context) error {
 	var err error
-	var payload interface{}
+	var payload any
 
 	// Read payload if provided
 	args := ctx.Args()
@@ -404,11 +404,11 @@ func signAction(ctx *cli.Context) error {
 
 	// Add extra headers. Currently only string headers are supported.
 	for _, s := range ctx.StringSlice("header") {
-		i := strings.Index(s, "=")
-		if i == -1 {
+		before, after, ok := strings.Cut(s, "=")
+		if !ok {
 			return errs.InvalidFlagValue(ctx, "header", s, "")
 		}
-		so.WithHeader(jose.HeaderKey(s[:i]), s[i+1:])
+		so.WithHeader(jose.HeaderKey(before), after)
 	}
 
 	if isX5C {
@@ -449,7 +449,7 @@ func signAction(ctx *cli.Context) error {
 
 	// Some implementations only accept "aud" as a string.
 	// Using claim overwriting for this special case.
-	aud := make(map[string]interface{})
+	aud := make(map[string]any)
 	if len(c.Audience) == 1 {
 		aud["aud"] = c.Audience[0]
 	}
@@ -463,7 +463,7 @@ func signAction(ctx *cli.Context) error {
 	return nil
 }
 
-func readPayload(filename string) (interface{}, error) {
+func readPayload(filename string) (any, error) {
 	var r io.Reader
 	switch filename {
 	case "":
@@ -472,7 +472,7 @@ func readPayload(filename string) (interface{}, error) {
 			return nil, errors.Wrap(err, "error reading data")
 		}
 		if st.Size() == 0 && st.Mode()&os.ModeNamedPipe == 0 {
-			return make(map[string]interface{}), nil
+			return make(map[string]any), nil
 		}
 		r = os.Stdin
 	case "-":
@@ -485,7 +485,7 @@ func readPayload(filename string) (interface{}, error) {
 		r = bytes.NewReader(b)
 	}
 
-	v := make(map[string]interface{})
+	v := make(map[string]any)
 	if err := json.NewDecoder(r).Decode(&v); err != nil {
 		// Some CI platforms will feed an empty pipe as STDIN.
 		// In that case we should treat it as a valid empty JSON.

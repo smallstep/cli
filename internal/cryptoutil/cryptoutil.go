@@ -20,6 +20,7 @@ import (
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/kms"
 	"go.step.sm/crypto/kms/apiv1"
+	"go.step.sm/crypto/mldsa"
 	"go.step.sm/crypto/pemutil"
 )
 
@@ -181,13 +182,14 @@ func IsKMSSigner(signer crypto.Signer) (ok bool) {
 }
 
 // IsX509Signer returns true if the given signer is supported by Go's
-// crypto/x509 package to sign X509 certificates. This methods returns true
-// for ECDSA, RSA and Ed25519 keys, but if the kms is `sshagentkms:` it will
-// only return true for Ed25519 keys.
-// TODO(hs): introspect the KMS key to verify that it can actually be
-// used for signing? E.g. for Google Cloud KMS RSA keys can be used for
-// signing or decryption, but only one of those at a time. Trying to use
-// a signing key to decrypt data will result in an error from Cloud KMS.
+// crypto/x509 package to sign X509 certificates. This methods returns true for
+// ECDSA, RSA, Ed25519, and ML-DSA keys, but if the kms is `sshagentkms:` it
+// will only return true for Ed25519 keys.
+//
+// TODO(hs): introspect the KMS key to verify that it can actually be used for
+// signing? E.g. for Google Cloud KMS RSA keys can be used for signing or
+// decryption, but only one of those at a time. Trying to use a signing key to
+// decrypt data will result in an error from Cloud KMS.
 func IsX509Signer(signer crypto.Signer) bool {
 	pub := signer.Public()
 	if ks, ok := signer.(*kmsSigner); ok {
@@ -197,7 +199,7 @@ func IsX509Signer(signer crypto.Signer) bool {
 		}
 	}
 	switch pub.(type) {
-	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey:
+	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey, *mldsa.PublicKey:
 		return true
 	default:
 		return false
@@ -219,8 +221,7 @@ type kmsPublicKey struct {
 // exitError returns the error displayed on stderr after running the given
 // command.
 func exitError(cmd *exec.Cmd, err error) error {
-	var ee *exec.ExitError
-	if errors.As(err, &ee) {
+	if ee, ok := errors.AsType[*exec.ExitError](err); ok {
 		return fmt.Errorf("command %q failed with:\n%s", cmd.String(), ee.Stderr)
 	}
 	return fmt.Errorf("command %q failed with: %w", cmd.String(), err)
