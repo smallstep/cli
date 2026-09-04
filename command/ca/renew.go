@@ -330,7 +330,7 @@ func renewCertificateAction(ctx *cli.Context) error {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
 		next := nextRenewDuration(cert.Leaf, expiresIn, renewPeriod)
-		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew)
+		return renewer.Daemon(outFile, next, expiresIn, renewPeriod, afterRenew, nil)
 	}
 
 	// Do not renew if (cert.notAfter - now) > (expiresIn + jitter)
@@ -583,7 +583,7 @@ func (r *renewer) RenewAndPrepareNext(outFile string, expiresIn, renewPeriod tim
 	return next, nil
 }
 
-func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Duration, afterRenew func() error) error {
+func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Duration, afterRenew func() error, rekeyFunc func() error) error {
 	// Loggers
 	infoLog := log.New(os.Stdout, "INFO: ", log.LstdFlags)
 	errLog := log.New(os.Stderr, "ERROR: ", log.LstdFlags)
@@ -605,6 +605,11 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 				} else if err := afterRenew(); err != nil {
 					errLog.Println(err)
 				}
+				if rekeyFunc != nil {
+					if err := rekeyFunc(); err != nil {
+						errLog.Println(err)
+					}
+				}
 			case syscall.SIGINT, syscall.SIGTERM:
 				return nil
 			}
@@ -613,6 +618,11 @@ func (r *renewer) Daemon(outFile string, next, expiresIn, renewPeriod time.Durat
 				errLog.Println(err)
 			} else if err := afterRenew(); err != nil {
 				errLog.Println(err)
+			}
+			if rekeyFunc != nil {
+				if err := rekeyFunc(); err != nil {
+					errLog.Println(err)
+				}
 			}
 		}
 	}
