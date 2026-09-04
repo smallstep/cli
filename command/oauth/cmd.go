@@ -348,6 +348,88 @@ func (o *options) Validate() error {
 	return nil
 }
 
+// accountCredentials holds the OAuth endpoints and client credentials read from
+// an --account file.
+type accountCredentials struct {
+	authzEp      string
+	tokenEp      string
+	clientID     string
+	clientSecret string
+	issuer       string
+	do2lo        bool
+}
+
+// accountString reads a string value out of a decoded account file, naming the
+// key when it is absent or of the wrong type. The values come straight from the
+// file, so a type assertion here would panic on any partial or non-Google JSON.
+func accountString(m map[string]interface{}, key, filename string) (string, error) {
+	v, ok := m[key].(string)
+	if !ok {
+		return "", errors.Errorf("error reading %s: missing or invalid %q", filename, key)
+	}
+	return v, nil
+}
+
+// readAccountCredentials parses an --account file. It supports the "installed"
+// shape written by the Google console and Google service accounts.
+func readAccountCredentials(filename string) (*accountCredentials, error) {
+	b, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading account from %s", filename)
+	}
+
+	account := make(map[string]interface{})
+	if err := json.Unmarshal(b, &account); err != nil {
+		return nil, errors.Wrapf(err, "error reading %s: unsupported format", filename)
+	}
+
+	creds := &accountCredentials{}
+	if _, ok := account["installed"]; ok {
+		details, ok := account["installed"].(map[string]interface{})
+		if !ok {
+			return nil, errors.Errorf("error reading %s: %q must be an object", filename, "installed")
+		}
+		for _, f := range []struct {
+			dst *string
+			key string
+		}{
+			{&creds.authzEp, "auth_uri"},
+			{&creds.tokenEp, "token_uri"},
+			{&creds.clientID, "client_id"},
+			{&creds.clientSecret, "client_secret"},
+		} {
+			if *f.dst, err = accountString(details, f.key, filename); err != nil {
+				return nil, err
+			}
+		}
+		return creds, nil
+	}
+
+	if accountType, ok := account["type"]; ok && accountType == "service_account" {
+		for _, f := range []struct {
+			dst *string
+			key string
+		}{
+			{&creds.authzEp, "auth_uri"},
+			{&creds.tokenEp, "token_uri"},
+			{&creds.clientID, "private_key_id"},
+			{&creds.clientSecret, "private_key"},
+			{&creds.issuer, "client_email"},
+		} {
+			if *f.dst, err = accountString(account, f.key, filename); err != nil {
+				return nil, err
+			}
+		}
+		creds.do2lo = true
+		return creds, nil
+	}
+
+	// The original code wrapped a nil err here, and errors.Wrapf(nil, ...) is
+	// nil, so an unsupported file reported nothing and the flow continued with
+	// empty endpoints.
+	return nil, errors.Errorf("error reading %s: unsupported account type", filename)
+}
+
 func oauthCmd(c *cli.Context) error {
 	opts := &options{
 		Provider:            c.String("provider"),
@@ -432,32 +514,16 @@ func oauthCmd(c *cli.Context) error {
 	// This code supports Google service accounts. Probably maybe also support JWKs?
 	if c.IsSet("account") {
 		opts.Provider = ""
-		filename := c.String("account")
-		b, err := os.ReadFile(filename)
+		creds, err := readAccountCredentials(c.String("account"))
 		if err != nil {
-			return errors.Wrapf(err, "error reading account from %s", filename)
+			return err
 		}
-		account := make(map[string]interface{})
-		if err = json.Unmarshal(b, &account); err != nil {
-			return errors.Wrapf(err, "error reading %s: unsupported format", filename)
-		}
-
-		if _, ok := account["installed"]; ok {
-			details := account["installed"].(map[string]interface{})
-			authzEp = details["auth_uri"].(string)
-			tokenEp = details["token_uri"].(string)
-			clientID = details["client_id"].(string)
-			clientSecret = details["client_secret"].(string)
-		} else if accountType, ok := account["type"]; ok && accountType == "service_account" {
-			authzEp = account["auth_uri"].(string)
-			tokenEp = account["token_uri"].(string)
-			clientID = account["private_key_id"].(string)
-			clientSecret = account["private_key"].(string)
-			issuer = account["client_email"].(string)
-			do2lo = true
-		} else {
-			return errors.Wrapf(err, "error reading %s: unsupported account type", filename)
-		}
+		authzEp = creds.authzEp
+		tokenEp = creds.tokenEp
+		clientID = creds.clientID
+		clientSecret = creds.clientSecret
+		issuer = creds.issuer
+		do2lo = creds.do2lo
 	}
 
 	scope := "openid email"
