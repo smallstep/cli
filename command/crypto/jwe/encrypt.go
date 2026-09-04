@@ -22,7 +22,8 @@ func encryptCommand() cli.Command {
 		Usage:  "encrypt a payload using JSON Web Encryption (JWE)",
 		UsageText: `**step crypto jwe encrypt**
 [**--alg**=<key-enc-algorithm>] [**--enc**=<content-enc-algorithm>]
-[**--key**=<file>] [**--jwks**=<jwks>] [**--kid**=<kid>]`,
+[**--key**=<file>] [**--jwks**=<jwks>] [**--kid**=<kid>]
+[**--password-file**=<file>]`,
 		Description: `**step crypto jwe encrypt** encrypts a payload using JSON Web Encryption
 (JWE). By default, the payload to encrypt is read from STDIN and the JWE data
 structure will be written to STDOUT.
@@ -150,6 +151,10 @@ applications where more than one JWE payload type may be present. This
 parameter is ignored by JWE implementations, but may be processed by
 applications that use JWE.`,
 			},
+			cli.StringFlag{
+				Name:  "password-file",
+				Usage: `The path to the <file> containing the password to encrypt the keys.`,
+			},
 			flags.SubtleHidden,
 		},
 	}
@@ -187,6 +192,7 @@ func encryptAction(ctx *cli.Context) error {
 	kid := ctx.String("kid")
 	typ := ctx.String("typ")
 	cty := ctx.String("cty")
+	passwordFile := ctx.String("password-file")
 	isSubtle := ctx.Bool("subtle")
 
 	switch {
@@ -224,7 +230,17 @@ func encryptAction(ctx *cli.Context) error {
 	case jwks != "":
 		jwk, err = jose.ReadKeySet(jwks, options...)
 	case isPBES2:
-		pbes2Key, err = ui.PromptPassword("Please enter the password to encrypt the content encryption key")
+		var password string
+		if passwordFile != "" {
+			password, err = utils.ReadStringPasswordFromFile(passwordFile)
+			if err != nil {
+				return err
+			}
+		}
+		pbes2Key, err =
+			ui.PromptPassword(
+				"Please enter the password to encrypt the content encryption key",
+				ui.WithValue(password))
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwks")
 	}
