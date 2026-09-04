@@ -123,6 +123,21 @@ func newApp(stdout, stderr io.Writer) *cli.App {
 	app.Flags = append(app.Flags, cli.HelpFlag)
 	app.EnableBashCompletion = true
 	app.Copyright = fmt.Sprintf("(c) 2018-%d Smallstep Labs, Inc.", time.Now().Year())
+	app.BashComplete = func(c *cli.Context) {
+		// If the first argument resolves to a plugin, let the plugin generate
+		// its own completions (subcommands, flags, etc.). urfave/cli doesn't do
+		// this for us because plugins aren't registered commands.
+		if name := c.Args().First(); name != "" {
+			if file, err := plugin.LookPath(name); err == nil {
+				_ = plugin.Complete(c, file)
+				return
+			}
+		}
+		cli.DefaultAppComplete(c)
+		for _, name := range plugin.Names() {
+			fmt.Fprintln(c.App.Writer, name)
+		}
+	}
 
 	// Flag of custom configuration flag
 	app.Flags = append(app.Flags, cli.StringFlag{
