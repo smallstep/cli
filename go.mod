@@ -17,7 +17,7 @@ require (
 	github.com/slackhq/nebula v1.10.3
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/certificates v0.30.2
-	github.com/smallstep/certinfo v1.16.0
+	github.com/smallstep/certinfo v1.17.0
 	github.com/smallstep/cli-utils v0.12.2
 	github.com/smallstep/go-attestation v0.4.4-0.20260814222900-a849f4e2cd68
 	github.com/smallstep/linkedca v0.26.0
