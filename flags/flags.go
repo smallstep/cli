@@ -40,13 +40,13 @@ If unset, default is EC.
     :  Create an **RSA** key pair
 
 	**ML-DSA-44**
-	:  Create a ML-DSA key pair using the **ML-DSA-44** parameter set.
+	:  Create an ML-DSA key pair using the **ML-DSA-44** parameter set.
 
 	**ML-DSA-65**
-	:  Create a ML-DSA key pair using the **ML-DSA-65** parameter set.
+	:  Create an ML-DSA key pair using the **ML-DSA-65** parameter set.
 
 	**ML-DSA-87**
-	:  Create a ML-DSA key pair using the **ML-DSA-87** parameter set.
+	:  Create an ML-DSA key pair using the **ML-DSA-87** parameter set.
 	`,
 	}
 
