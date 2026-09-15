@@ -15,6 +15,7 @@ import (
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
 	"github.com/urfave/cli"
+	"go.step.sm/crypto/mldsa"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
 
@@ -295,7 +296,7 @@ func signAction(ctx *cli.Context) error {
 
 	// Read template if passed. If not use a template depending on the profile.
 	var template string
-	var userData map[string]interface{}
+	var userData map[string]any
 	if templateFile != "" {
 		b, err := utils.ReadFile(templateFile)
 		if err != nil {
@@ -417,6 +418,14 @@ func validateIssuerKey(crt *x509.Certificate, signer crypto.Signer) error {
 		}
 	case ed25519.PublicKey:
 		pk, ok := signer.Public().(ed25519.PublicKey)
+		if !ok {
+			return errors.New("private key type does not match issuer public key type")
+		}
+		if !pub.Equal(pk) {
+			return errors.New("private key does not match issuer public key")
+		}
+	case *mldsa.PublicKey:
+		pk, ok := signer.Public().(*mldsa.PublicKey)
 		if !ok {
 			return errors.New("private key type does not match issuer public key type")
 		}

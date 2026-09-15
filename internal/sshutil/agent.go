@@ -242,7 +242,7 @@ func (a *Agent) RemoveAllKeys(opts ...AgentOption) (bool, error) {
 }
 
 // AddCertificate adds the given certificate to the agent.
-func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv interface{}) error {
+func (a *Agent) AddCertificate(subject string, cert *ssh.Certificate, priv any) error {
 	var (
 		lifetime uint64
 		now      = cast.Uint64(time.Now().Unix())

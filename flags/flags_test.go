@@ -99,10 +99,10 @@ func Test_parseCaURL(t *testing.T) {
 		{name: "ok/ipv6-bracketed-no-port", caURL: "https://[::1]", ret: "https://[::1]"},
 		{name: "ok/ipv6-bracketed-no-scheme", caURL: "[::1]:8080", ret: "https://[::1]:8080"},
 		{name: "ok/ipv6-bracketed-no-port-no-scheme", caURL: "[::1]", ret: "https://[::1]"},
-		{name: "ok/ipv6-non-bracketed", caURL: "https://::1:8080", ret: "https://[::1]:8080"},
-		{name: "ok/ipv6-non-bracketed-no-port", caURL: "https://::1", ret: "https://[::1]"},
-		{name: "ok/ipv6-non-bracketed-no-scheme", caURL: "::1:8080", ret: "https://[::1]:8080"},
-		{name: "ok/ipv6-non-bracketed-no-port-no-scheme", caURL: "::1", ret: "https://[::1]"},
+		{name: "fail/ipv6-non-bracketed", caURL: "https://::1:8080", ret: "", err: errors.New("invalid value 'https://::1:8080' for flag '--ca-url'; invalid URL")},
+		{name: "fail/ipv6-non-bracketed-no-port", caURL: "https://::1", ret: "", err: errors.New("invalid value 'https://::1' for flag '--ca-url'; invalid URL")},
+		{name: "fail/ipv6-non-bracketed-no-scheme", caURL: "::1:8080", ret: "", err: errors.New("invalid value 'https://::1:8080' for flag '--ca-url'; invalid URL")},
+		{name: "fail/ipv6-non-bracketed-no-port-no-scheme", caURL: "::1", ret: "", err: errors.New("invalid value 'https://::1' for flag '--ca-url'; invalid URL")},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

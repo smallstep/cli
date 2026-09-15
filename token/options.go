@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
+	"maps"
 	"os"
 	"time"
 
@@ -28,7 +29,7 @@ import (
 type Options func(c *Claims) error
 
 // WithClaim is an Options function that adds a custom claim to the JWT.
-func WithClaim(name string, value interface{}) Options {
+func WithClaim(name string, value any) Options {
 	return func(c *Claims) error {
 		if name == "" {
 			return errors.New("name cannot be empty")
@@ -73,7 +74,7 @@ func WithSANS(sans []string) Options {
 }
 
 // WithStep returns an Options function that sets the step claim in the payload.
-func WithStep(v interface{}) Options {
+func WithStep(v any) Options {
 	return func(c *Claims) error {
 		c.Set(StepClaim, v)
 		return nil
@@ -82,27 +83,25 @@ func WithStep(v interface{}) Options {
 
 // WithUserData returns an Option function that merges the provided map with the
 // existing user claim in the payload.
-func WithUserData(v map[string]interface{}) Options {
+func WithUserData(v map[string]any) Options {
 	return func(c *Claims) error {
 		if _, ok := c.ExtraClaims[UserClaim]; !ok {
-			c.Set(UserClaim, make(map[string]interface{}))
+			c.Set(UserClaim, make(map[string]any))
 		}
 		s := c.ExtraClaims[UserClaim]
-		sm, ok := s.(map[string]interface{})
+		sm, ok := s.(map[string]any)
 		if !ok {
 			return fmt.Errorf("%q claim is %T, not map[string]interface{}", UserClaim, s)
 		}
-		for k, val := range v {
-			sm[k] = val
-		}
+		maps.Copy(sm, v)
 		return nil
 	}
 }
 
 // WithSSH returns an Options function that sets the step claim with the ssh
 // property in the value.
-func WithSSH(v interface{}) Options {
-	return WithStep(map[string]interface{}{
+func WithSSH(v any) Options {
+	return WithStep(map[string]any{
 		"ssh": v,
 	})
 }
@@ -228,7 +227,7 @@ func WithKid(s string) Options {
 }
 
 // WithX5CFile returns a Options that sets the header x5c claims.
-func WithX5CFile(certFile string, key interface{}) Options {
+func WithX5CFile(certFile string, key any) Options {
 	return func(c *Claims) error {
 		certs, err := pemutil.ReadCertificateBundle(certFile)
 		if err != nil {
@@ -244,7 +243,7 @@ func WithX5CFile(certFile string, key interface{}) Options {
 }
 
 // WithX5CCerts returns a Options that sets the header x5c claims from a cert in memory
-func WithX5CCerts(certs []*x509.Certificate, key interface{}) Options {
+func WithX5CCerts(certs []*x509.Certificate, key any) Options {
 	return func(c *Claims) error {
 		certStrs, err := jose.ValidateX5C(certs, key)
 		if err != nil {
@@ -322,7 +321,7 @@ func WithNebulaCert(certFile string, anyKey any) Options {
 // a use case where the user would prefer not to validate the certificate chain
 // before returning it. Presumably the user would then perform their own validation.
 // NOTE: here be dragons. Use WithX5CFile unless you know what you are doing.
-func WithX5CInsecureFile(certFile string, key interface{}) Options {
+func WithX5CInsecureFile(certFile string, key any) Options {
 	return func(c *Claims) error {
 		certs, err := pemutil.ReadCertificateBundle(certFile)
 		if err != nil {
@@ -338,7 +337,7 @@ func WithX5CInsecureFile(certFile string, key interface{}) Options {
 }
 
 // WithX5CInsecureCerts returns a Options that sets the header x5cAllowInvalid claims using the cert in memory
-func WithX5CInsecureCerts(certs []*x509.Certificate, key interface{}) Options {
+func WithX5CInsecureCerts(certs []*x509.Certificate, key any) Options {
 	return func(c *Claims) error {
 		certStrs, err := jose.ValidateX5C(certs, key)
 		if err != nil {
@@ -350,7 +349,7 @@ func WithX5CInsecureCerts(certs []*x509.Certificate, key interface{}) Options {
 }
 
 // WithSSHPOPFile returns a Options that sets the header sshpop claims.
-func WithSSHPOPFile(certFile string, key interface{}) Options {
+func WithSSHPOPFile(certFile string, key any) Options {
 	return func(c *Claims) error {
 		certStrs, err := jose.ValidateSSHPOP(certFile, key)
 		if err != nil {

@@ -505,7 +505,7 @@ func generateRenewToken(ctx *cli.Context, aud, sub string) (string, error) {
 		x5c = append(x5c, base64.StdEncoding.EncodeToString(crt.Raw))
 	}
 	if claims.ExtraHeaders == nil {
-		claims.ExtraHeaders = make(map[string]interface{})
+		claims.ExtraHeaders = make(map[string]any)
 	}
 	claims.ExtraHeaders[jose.X5cInsecureKey] = x5c
 

@@ -124,7 +124,7 @@ func createAction(ctx *cli.Context) (err error) {
 		}
 	}
 
-	var pub, priv interface{}
+	var pub, priv any
 	fromJWK := ctx.String("from-jwk")
 	if fromJWK != "" {
 		switch {

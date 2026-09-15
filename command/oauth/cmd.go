@@ -437,13 +437,13 @@ func oauthCmd(c *cli.Context) error {
 		if err != nil {
 			return errors.Wrapf(err, "error reading account from %s", filename)
 		}
-		account := make(map[string]interface{})
+		account := make(map[string]any)
 		if err = json.Unmarshal(b, &account); err != nil {
 			return errors.Wrapf(err, "error reading %s: unsupported format", filename)
 		}
 
 		if _, ok := account["installed"]; ok {
-			details := account["installed"].(map[string]interface{})
+			details := account["installed"].(map[string]any)
 			authzEp = details["auth_uri"].(string)
 			tokenEp = details["token_uri"].(string)
 			clientID = details["client_id"].(string)
@@ -681,7 +681,7 @@ func newOauth(provider, clientID, clientSecret, authzEp, deviceAuthzEp, tokenEp,
 	}, nil
 }
 
-func disco(provider string) (map[string]interface{}, error) {
+func disco(provider string) (map[string]any, error) {
 	u, err := url.Parse(provider)
 	if err != nil {
 		return nil, err
@@ -701,7 +701,7 @@ func disco(provider string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "error retrieving %s", u.String())
 	}
-	details := make(map[string]interface{})
+	details := make(map[string]any)
 	if err = json.Unmarshal(b, &details); err != nil {
 		return nil, errors.Wrapf(err, "error reading %s: unsupported format", u.String())
 	}
@@ -993,7 +993,7 @@ func (o *oauth) DoTwoLeggedAuthorization(issuer string) (*token, error) {
 
 	// Add claims
 	now := int(time.Now().Unix())
-	c := map[string]interface{}{
+	c := map[string]any{
 		"aud":   o.tokenEndpoint,
 		"nbf":   now,
 		"iat":   now,
@@ -1056,7 +1056,7 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 
 	// Add claims
 	now := int(time.Now().Unix())
-	c := map[string]interface{}{
+	c := map[string]any{
 		"aud": aud,
 		"nbf": now,
 		"iat": now,

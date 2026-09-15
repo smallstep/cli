@@ -7,6 +7,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"maps"
 	"net"
 	"net/url"
 	"os"
@@ -44,7 +45,7 @@ type flowContext struct {
 	SSHPublicKey            ssh.PublicKey
 	CertificateRequest      *x509.CertificateRequest
 	ConfirmationFingerprint string
-	CustomAttributes        map[string]interface{}
+	CustomAttributes        map[string]any
 }
 
 // sharedContext is used to share information between commands.
@@ -91,14 +92,12 @@ func WithConfirmationFingerprint(fp string) Option {
 }
 
 // WithCustomAttributes adds custom attributes to be set in the "user" claim.
-func WithCustomAttributes(v map[string]interface{}) Option {
+func WithCustomAttributes(v map[string]any) Option {
 	return newFuncFlowOption(func(fo *flowContext) {
 		if fo.CustomAttributes == nil {
-			fo.CustomAttributes = make(map[string]interface{})
+			fo.CustomAttributes = make(map[string]any)
 		}
-		for k, val := range v {
-			fo.CustomAttributes[k] = val
-		}
+		maps.Copy(fo.CustomAttributes, v)
 	})
 }
 

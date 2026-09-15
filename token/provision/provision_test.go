@@ -38,7 +38,7 @@ func TestNew(t *testing.T) {
 	want.claims.Subject = "test.domain"
 	wantWithOptions.claims.Subject = "test.domain"
 	wantWithOptions.claims.Issuer = "new-issuer"
-	wantWithOptions.claims.ExtraClaims = map[string]interface{}{"sha": "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"}
+	wantWithOptions.claims.ExtraClaims = map[string]any{"sha": "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"}
 
 	tests := []struct {
 		name    string
@@ -74,7 +74,7 @@ func TestToken_SignedString(t *testing.T) {
 	}
 	type args struct {
 		sigAlg string
-		key    interface{}
+		key    any
 	}
 
 	rsaKey, err := pemutil.Read("../testdata/openssl.rsa1024.pem")

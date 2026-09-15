@@ -31,6 +31,6 @@ func New(subject string, opts ...token.Options) (*Token, error) {
 
 // SignedString implementation of the Token interface. It returns a JWT using
 // the compact serialization.
-func (t *Token) SignedString(sigAlg string, key interface{}) (string, error) {
+func (t *Token) SignedString(sigAlg string, key any) (string, error) {
 	return t.claims.Sign(jose.SignatureAlgorithm(sigAlg), key)
 }

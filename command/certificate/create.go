@@ -909,7 +909,7 @@ func parseSigner(ctx *cli.Context, defaultSigner crypto.Signer) (*x509.Certifica
 }
 
 // savePrivateKey saves the given key, asking the password if necessary.
-func savePrivateKey(ctx *cli.Context, filename string, priv interface{}, insecure bool) error {
+func savePrivateKey(ctx *cli.Context, filename string, priv any, insecure bool) error {
 	var err error
 	if insecure {
 		_, err = pemutil.Serialize(priv, pemutil.ToFile(filename, 0o600))

@@ -217,7 +217,7 @@ func loginAction(ctx *cli.Context) error {
 
 	var sshAuPub ssh.PublicKey
 	var sshAuPubBytes []byte
-	var auPub, auPriv interface{}
+	var auPub, auPriv any
 	if isAddUser {
 		auPub, auPriv, err = keyutil.GenerateKeyPair(kty, curve, size)
 		if err != nil {

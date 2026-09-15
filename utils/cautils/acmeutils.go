@@ -35,6 +35,7 @@ import (
 	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/mldsa"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/tpm"
 	tpmstorage "go.step.sm/crypto/tpm/storage"
@@ -296,7 +297,7 @@ func validateSANsForACME(sans []string) ([]string, []net.IP, error) {
 	return dnsNames, ips, nil
 }
 
-func createNewOrderRequest(ctx *cli.Context, acmeDir, subject string, sans []string) (interface{}, []string, []net.IP, error) {
+func createNewOrderRequest(ctx *cli.Context, acmeDir, subject string, sans []string) (any, []string, []net.IP, error) {
 	dnsNames, ips, err := validateSANsForACME(sans)
 	if err != nil {
 		return nil, nil, nil, err
@@ -395,8 +396,8 @@ type attestationPayload struct {
 }
 
 type attestationObject struct {
-	Format       string                 `json:"fmt"`
-	AttStatement map[string]interface{} `json:"attStmt,omitempty"`
+	Format       string         `json:"fmt"`
+	AttStatement map[string]any `json:"attStmt,omitempty"`
 }
 
 // doDeviceAttestation performs `device-attest-01` challenge validation.
@@ -443,6 +444,19 @@ func doDeviceAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challe
 		alg = -8 // EdDSA
 		opts = crypto.Hash(0)
 		digest = []byte(data)
+	case *mldsa.PublicKey:
+		switch k.Parameters() {
+		case mldsa.MLDSA44():
+			alg = -48 // ML-DSA-44
+		case mldsa.MLDSA65():
+			alg = -49 // ML-DSA-65
+		case mldsa.MLDSA87():
+			alg = -50 // ML-DSA-87
+		default:
+			return fmt.Errorf("unsupportted ML-DSA parameter %q", k.Parameters().String())
+		}
+		opts = crypto.Hash(0)
+		digest = []byte(data)
 	default:
 		return fmt.Errorf("unsupported public key type %T", k)
 	}
@@ -474,7 +488,7 @@ func doDeviceAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challe
 	// omitted as described in the device-attest-01 RFC.
 	obj := &attestationObject{
 		Format: "step",
-		AttStatement: map[string]interface{}{
+		AttStatement: map[string]any{
 			"alg": alg,
 			"sig": sig,
 			"x5c": x5c,
@@ -521,7 +535,7 @@ func getChallengeStatus(ac *ca.ACMEClient, ch *acme.Challenge, durationBetweenAt
 		vch     *acme.Challenge
 		err     error
 	)
-	for attempts := 0; attempts < 10; attempts++ {
+	for range 10 {
 		vch, err = ac.GetChallenge(ch.URL) // TODO(hs): GetChallenge should return an ACME GetChallenge client response type; not core acme.Challenge type (for safety)
 		if err != nil {
 			return errors.Wrapf(err, "error retrieving ACME Challenge at %s", ch.URL)
@@ -615,7 +629,7 @@ type acmeFlow struct {
 	ctx             *cli.Context
 	provisionerName string
 	csr             *x509.CertificateRequest
-	priv            interface{}
+	priv            any
 	subject         string
 	sans            []string
 	acmeDir         string
@@ -710,7 +724,7 @@ func (af *acmeFlow) getClientTruststoreOption(mergeRootCAs bool) (ca.ClientOptio
 func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	var (
 		err             error
-		newOrderRequest interface{}
+		newOrderRequest any
 		dnsNames        []string
 		ips             []net.IP
 	)

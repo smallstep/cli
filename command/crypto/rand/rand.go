@@ -225,19 +225,19 @@ func randWithDictionary(dictionary string, length int) error {
 		return err
 	}
 
-	var s string
+	var s strings.Builder
 
-	for i := 0; i < length; i++ {
+	for i := range length {
 		bn, err := rand.Int(rand.Reader, big.NewInt(int64(len(words))))
 		if err != nil {
 			return err
 		}
-		s += words[bn.Int64()]
+		s.WriteString(words[bn.Int64()])
 		if i != length-1 {
-			s += "-"
+			s.WriteString("-")
 		}
 	}
 
-	fmt.Println(s)
+	fmt.Println(s.String())
 	return nil
 }

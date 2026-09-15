@@ -223,7 +223,7 @@ func initAction(ctx *cli.Context) (err error) {
 	}
 
 	var rootCrt *x509.Certificate
-	var rootKey interface{}
+	var rootKey any
 
 	caURL := ctx.String("with-ca-url")
 	root := ctx.String("root")

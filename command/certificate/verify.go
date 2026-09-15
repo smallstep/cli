@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -243,9 +244,10 @@ func verifyAction(ctx *cli.Context) error {
 		return errors.Wrapf(err, "failed to verify certificate")
 	}
 
-	verboseMSG := "certificate validated against roots\n"
+	var verboseMSG strings.Builder
+	verboseMSG.WriteString("certificate validated against roots\n")
 	if host != "" {
-		verboseMSG += "certificate host name validated\n"
+		verboseMSG.WriteString("certificate host name validated\n")
 	}
 
 	switch {
@@ -322,7 +324,7 @@ func verifyAction(ctx *cli.Context) error {
 			respReceived, err := VerifyCRLEndpoint(endpoint, cert, issuer, httpClient, insecure)
 			switch {
 			case err == nil:
-				verboseMSG += fmt.Sprintf("certificate not revoked in CRL %s\n", endpoint)
+				fmt.Fprintf(&verboseMSG, "certificate not revoked in CRL %s\n", endpoint)
 				crlVerified = true
 				break crlOut
 			case respReceived:
@@ -355,7 +357,7 @@ func verifyAction(ctx *cli.Context) error {
 			respReceived, err := VerifyOCSPEndpoint(endpoint, cert, issuer, httpClient)
 			switch {
 			case err == nil:
-				verboseMSG += fmt.Sprintf("certificate status is good according OCSP %s\n", endpoint)
+				fmt.Fprintf(&verboseMSG, "certificate status is good according OCSP %s\n", endpoint)
 				ocspVerified = true
 				break ocspOut
 			case respReceived:
@@ -372,7 +374,7 @@ func verifyAction(ctx *cli.Context) error {
 	}
 
 	if verbose {
-		fmt.Println(verboseMSG + "certficiate is valid")
+		fmt.Println(verboseMSG.String() + "certficiate is valid")
 	}
 	return nil
 }

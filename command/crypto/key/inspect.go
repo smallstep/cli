@@ -13,6 +13,7 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/mldsa"
 	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/utils"
@@ -74,7 +75,7 @@ func inspectAction(ctx *cli.Context) error {
 		return err
 	}
 
-	var key interface{}
+	var key any
 	switch {
 	case bytes.HasPrefix(b, []byte("-----BEGIN ")):
 		opts := []pemutil.Options{
@@ -118,17 +119,29 @@ func inspectAction(ctx *cli.Context) error {
 		bigIntPrinter("Exponent #2", k.Precomputed.Dq)
 		bigIntPrinter("Coefficient", k.Precomputed.Qinv)
 	case *ecdsa.PublicKey:
+		pubBytes, err := k.Bytes()
+		if err != nil {
+			return err
+		}
 		byteLen := (k.Params().BitSize + 7) >> 3
 		fmt.Printf("EC Public-Key: (%d bit)\n", k.Params().BitSize)
-		bigIntPaddedPrinter("X", k.X, byteLen)
-		bigIntPaddedPrinter("Y", k.Y, byteLen)
+		bytesPrinter("X", pubBytes[1:byteLen+1])
+		bytesPrinter("Y", pubBytes[byteLen+1:])
 		fmt.Printf("Curve: %s\n", k.Params().Name)
 	case *ecdsa.PrivateKey:
+		pubBytes, err := k.PublicKey.Bytes()
+		if err != nil {
+			return err
+		}
+		privBytes, err := k.Bytes()
+		if err != nil {
+			return err
+		}
 		byteLen := (k.Params().BitSize + 7) >> 3
 		fmt.Printf("EC PrivateKey-Key: (%d bit)\n", k.Params().BitSize)
-		bigIntPaddedPrinter("X", k.X, byteLen)
-		bigIntPaddedPrinter("Y", k.Y, byteLen)
-		bigIntPaddedPrinter("D", k.D, byteLen)
+		bytesPrinter("X", pubBytes[1:byteLen+1])
+		bytesPrinter("Y", pubBytes[byteLen+1:])
+		bytesPrinter("D", privBytes)
 		fmt.Printf("Curve: %s\n", k.Params().Name)
 	case ed25519.PublicKey:
 		fmt.Printf("Ed25519 Public-Key: (%d bit)\n", 8*len(k))
@@ -137,6 +150,15 @@ func inspectAction(ctx *cli.Context) error {
 		fmt.Printf("Ed25519 Private-Key: (%d bit)\n", 8*len(k))
 		bytesPrinter("Public", k[32:])
 		bytesPrinter("Private", k[:32])
+	case *mldsa.PublicKey:
+		p := k.Parameters()
+		fmt.Printf("%s Public-Key: (%d bytes)\n", p.String(), p.PublicKeySize())
+		bytesPrinter("Public", k.Bytes())
+	case *mldsa.PrivateKey:
+		p := k.PublicKey().Parameters()
+		fmt.Printf("%s Private-Key: (%d bits)\n", p.String(), 8*mldsa.PrivateKeySize)
+		bytesPrinter("Public", k.PublicKey().Bytes())
+		bytesPrinter("Seed", k.Bytes())
 	default:
 		return errors.Errorf("unsupported key type '%T'", k)
 	}

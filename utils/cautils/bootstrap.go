@@ -340,7 +340,7 @@ func (e *apiError) Error() string {
 	return e.Message
 }
 
-func readJSON(r io.ReadCloser, v interface{}) error {
+func readJSON(r io.ReadCloser, v any) error {
 	defer r.Close()
 	return json.NewDecoder(r).Decode(v)
 }

@@ -435,9 +435,8 @@ func newRenewer(ctx *cli.Context, caURL string, cert tls.Certificate, rootFile s
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
-			RootCAs:                  rootCAs,
-			PreferServerCipherSuites: true,
-			MinVersion:               tls.VersionTLS12,
+			RootCAs:    rootCAs,
+			MinVersion: tls.VersionTLS12,
 		},
 	}
 
@@ -507,7 +506,7 @@ func (r *renewer) Renew(outFile string) (resp *api.SignResponse, err error) {
 	return resp, nil
 }
 
-func (r *renewer) Rekey(priv interface{}, outCert, outKey string, writePrivateKey bool) (*api.SignResponse, error) {
+func (r *renewer) Rekey(priv any, outCert, outKey string, writePrivateKey bool) (*api.SignResponse, error) {
 	csrBytes, err := x509.CreateCertificateRequest(cryptoRand.Reader, &x509.CertificateRequest{}, priv)
 	if err != nil {
 		return nil, err
@@ -635,7 +634,7 @@ func (r *renewer) RenewWithToken(cert tls.Certificate) (*api.SignResponse, error
 		x5c = append(x5c, base64.StdEncoding.EncodeToString(b))
 	}
 	if claims.ExtraHeaders == nil {
-		claims.ExtraHeaders = make(map[string]interface{})
+		claims.ExtraHeaders = make(map[string]any)
 	}
 	claims.ExtraHeaders[jose.X5cInsecureKey] = x5c
 

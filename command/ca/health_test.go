@@ -75,13 +75,11 @@ func Test_healthAction(t *testing.T) {
 	require.NoError(t, err)
 
 	var wg sync.WaitGroup
-	wg.Add(1)
 
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		err = c.Run()
 		require.ErrorIs(t, err, http.ErrServerClosed)
-	}()
+	})
 
 	caCommand := cli.Command{Name: "ca"}
 	caCommand.Subcommands = []cli.Command{healthCommand()}

@@ -3,6 +3,7 @@ package ssh
 import (
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/urfave/cli"
@@ -75,14 +76,14 @@ func hostsAction(ctx *cli.Context) error {
 
 	fmt.Fprintln(w, "HOSTNAME\tID\tTAGS")
 	for _, h := range resp.Hosts {
-		tags := ""
+		var tags strings.Builder
 		for i, ht := range h.HostTags {
 			if i > 0 {
-				tags += ","
+				tags.WriteString(",")
 			}
-			tags += ht.Name + "=" + ht.Value
+			tags.WriteString(ht.Name + "=" + ht.Value)
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", h.Hostname, h.HostID, tags)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", h.Hostname, h.HostID, tags.String())
 	}
 	w.Flush()
 	return nil

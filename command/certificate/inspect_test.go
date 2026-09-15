@@ -55,7 +55,7 @@ func TestInspectCertificates(t *testing.T) {
 		},
 		"format json": {"json",
 			func(buf *bytes.Buffer) {
-				var v interface{}
+				var v any
 				err := json.Unmarshal(buf.Bytes(), &v)
 				assert.NoError(t, err)
 			},
@@ -113,7 +113,7 @@ func TestInspectCertificateRequest(t *testing.T) {
 		},
 		"format json": {"json",
 			func(buf *bytes.Buffer) {
-				var v interface{}
+				var v any
 				err := json.Unmarshal(buf.Bytes(), &v)
 				assert.NoError(t, err)
 			},

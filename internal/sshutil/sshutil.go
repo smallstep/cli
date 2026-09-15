@@ -3,7 +3,6 @@ package sshutil
 import (
 	"crypto"
 	"crypto/dsa" //nolint:staticcheck // support deprecated algorithms.
-	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -19,7 +18,7 @@ import (
 )
 
 // NewCertSigner creates a new signer with the given certificate and private key.
-func NewCertSigner(cert *ssh.Certificate, priv interface{}) (ssh.Signer, error) {
+func NewCertSigner(cert *ssh.Certificate, priv any) (ssh.Signer, error) {
 	signer, err := ssh.NewSignerFromKey(priv)
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating signer")
@@ -194,39 +193,24 @@ func parseECDSA(in []byte) (*ecdsa.PublicKey, error) {
 		return nil, errors.Wrap(err, "error unmarshaling public key")
 	}
 
-	var (
-		key   *ecdh.PublicKey
-		curve elliptic.Curve
-		size  int
-		err   error
-	)
-
+	var curve elliptic.Curve
 	switch w.Curve {
 	case "nistp256":
 		curve = elliptic.P256()
-		key, err = ecdh.P256().NewPublicKey(w.Key)
-		size = 32
 	case "nistp384":
 		curve = elliptic.P384()
-		key, err = ecdh.P384().NewPublicKey(w.Key)
-		size = 48
 	case "nistp521":
 		curve = elliptic.P521()
-		key, err = ecdh.P521().NewPublicKey(w.Key)
-		size = 66
 	default:
 		return nil, errors.Errorf("unsupported curve %s", w.Curve)
 	}
 
+	key, err := ecdsa.ParseUncompressedPublicKey(curve, w.Key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create key: %w", err)
 	}
 
-	return &ecdsa.PublicKey{
-		Curve: curve,
-		X:     big.NewInt(0).SetBytes(key.Bytes()[1 : size+1]),
-		Y:     big.NewInt(0).SetBytes(key.Bytes()[size+1:]),
-	}, nil
+	return key, nil
 }
 
 func parseED25519(in []byte) (ed25519.PublicKey, error) {

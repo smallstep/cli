@@ -266,7 +266,7 @@ func inspectCertificates(ctx *cli.Context, crts []*x509.Certificate, w io.Writer
 		}
 		return nil
 	case "json":
-		var v interface{}
+		var v any
 		if len(crts) == 1 {
 			zcrt, err := zx509.ParseCertificate(crts[0].Raw)
 			if err != nil {

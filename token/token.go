@@ -41,34 +41,34 @@ const ConfirmationClaim = "cnf"
 
 // Token interface which all token types should attempt to implement.
 type Token interface {
-	SignedString(sigAlg string, priv interface{}) (string, error)
+	SignedString(sigAlg string, priv any) (string, error)
 }
 
 // Claims represents the claims that a token might have.
 type Claims struct {
 	jose.Claims
-	ExtraClaims  map[string]interface{}
-	ExtraHeaders map[string]interface{}
+	ExtraClaims  map[string]any
+	ExtraHeaders map[string]any
 }
 
 // Set adds the given key and value to the map of extra claims.
-func (c *Claims) Set(key string, value interface{}) {
+func (c *Claims) Set(key string, value any) {
 	if c.ExtraClaims == nil {
-		c.ExtraClaims = make(map[string]interface{})
+		c.ExtraClaims = make(map[string]any)
 	}
 	c.ExtraClaims[key] = value
 }
 
 // SetHeader adds the given key and value to the map of extra headers.
-func (c *Claims) SetHeader(key string, value interface{}) {
+func (c *Claims) SetHeader(key string, value any) {
 	if c.ExtraHeaders == nil {
-		c.ExtraHeaders = make(map[string]interface{})
+		c.ExtraHeaders = make(map[string]any)
 	}
 	c.ExtraHeaders[key] = value
 }
 
 // Sign creates a JWT with the claims and signs it with the given key.
-func (c *Claims) Sign(alg jose.SignatureAlgorithm, key interface{}) (string, error) {
+func (c *Claims) Sign(alg jose.SignatureAlgorithm, key any) (string, error) {
 	kid, err := GenerateKeyID(key)
 	if err != nil {
 		return "", err
@@ -125,12 +125,12 @@ func DefaultClaims() *Claims {
 			NotBefore: jose.NewNumericDate(now),
 			IssuedAt:  jose.NewNumericDate(now),
 		},
-		ExtraClaims: make(map[string]interface{}),
+		ExtraClaims: make(map[string]any),
 	}
 }
 
 // GenerateKeyID returns the SHA256 of a public key.
-func GenerateKeyID(priv interface{}) (string, error) {
+func GenerateKeyID(priv any) (string, error) {
 	if signer, ok := priv.(jose.OpaqueSigner); ok {
 		return jose.Thumbprint(signer.Public())
 	}

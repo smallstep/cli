@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.step.sm/crypto/mldsa"
 )
 
 // CRL is the JSON representation of a certificate revocation list.
@@ -133,6 +134,8 @@ func (c *CRL) VerifySignature(ca *x509.Certificate) bool {
 		}
 	case ed25519.PublicKey:
 		return ed25519.Verify(pub, c.Raw, sig)
+	case *mldsa.PublicKey:
+		return mldsa.Verify(pub, c.Raw, sig, nil) == nil
 	default:
 		return false
 	}
@@ -190,16 +193,16 @@ type Signature struct {
 
 // DistinguishedName is the JSON representation of the CRL issuer.
 type DistinguishedName struct {
-	Country            []string                 `json:"country,omitempty"`
-	Organization       []string                 `json:"organization,omitempty"`
-	OrganizationalUnit []string                 `json:"organizational_unit,omitempty"`
-	Locality           []string                 `json:"locality,omitempty"`
-	Province           []string                 `json:"province,omitempty"`
-	StreetAddress      []string                 `json:"street_address,omitempty"`
-	PostalCode         []string                 `json:"postal_code,omitempty"`
-	SerialNumber       string                   `json:"serial_number,omitempty"`
-	CommonName         string                   `json:"common_name,omitempty"`
-	ExtraNames         map[string][]interface{} `json:"extra_names,omitempty"`
+	Country            []string         `json:"country,omitempty"`
+	Organization       []string         `json:"organization,omitempty"`
+	OrganizationalUnit []string         `json:"organizational_unit,omitempty"`
+	Locality           []string         `json:"locality,omitempty"`
+	Province           []string         `json:"province,omitempty"`
+	StreetAddress      []string         `json:"street_address,omitempty"`
+	PostalCode         []string         `json:"postal_code,omitempty"`
+	SerialNumber       string           `json:"serial_number,omitempty"`
+	CommonName         string           `json:"common_name,omitempty"`
+	ExtraNames         map[string][]any `json:"extra_names,omitempty"`
 	dn                 pkix.Name
 }
 
@@ -209,9 +212,9 @@ func (d DistinguishedName) String() string {
 }
 
 func newDistinguishedName(dn pkix.Name) DistinguishedName {
-	var extraNames map[string][]interface{}
+	var extraNames map[string][]any
 	if len(dn.ExtraNames) > 0 {
-		extraNames = make(map[string][]interface{})
+		extraNames = make(map[string][]any)
 		for _, tv := range dn.ExtraNames {
 			oid := tv.Type.String()
 			if s, ok := tv.Value.(string); ok {
@@ -282,7 +285,7 @@ func printBytes(bs []byte, prefix string) {
 	fmt.Println()
 }
 
-func escapeValue(v interface{}) string {
+func escapeValue(v any) string {
 	s := fmt.Sprint(v)
 	escaped := make([]rune, 0, len(s))
 

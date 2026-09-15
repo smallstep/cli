@@ -113,7 +113,7 @@ func Test_parseECDSA(t *testing.T) {
 
 		got, err := parseECDSA(b)
 		require.Error(t, err)
-		require.EqualError(t, err, "failed to create key: crypto/ecdh: invalid public key")
+		require.EqualError(t, err, "failed to create key: ecdsa: invalid uncompressed public key")
 		require.Nil(t, got)
 	})
 }

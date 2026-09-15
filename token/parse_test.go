@@ -57,7 +57,7 @@ const (
 )
 
 func TestParse(t *testing.T) {
-	mustKeys := func(s string) interface{} {
+	mustKeys := func(s string) any {
 		keys := new(jose.JSONWebKeySet)
 		if err := json.Unmarshal([]byte(s), keys); err != nil {
 			t.Fatal(err)
@@ -78,7 +78,7 @@ func TestParse(t *testing.T) {
 
 	type args struct {
 		token string
-		key   interface{}
+		key   any
 	}
 	tests := []struct {
 		name    string

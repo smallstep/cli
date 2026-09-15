@@ -318,7 +318,7 @@ func attestationStatement(ctx context.Context, key *tpm.Key, akChain []*x509.Cer
 
 	obj := &attestationObject{
 		Format: "tpm",
-		AttStatement: map[string]interface{}{
+		AttStatement: map[string]any{
 			"ver":      "2.0",
 			"alg":      alg,
 			"x5c":      akChainBytes,

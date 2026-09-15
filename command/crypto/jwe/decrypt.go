@@ -131,7 +131,7 @@ func decryptAction(ctx *cli.Context) error {
 		return err
 	}
 
-	var decryptKey interface{}
+	var decryptKey any
 	if isPBES2 {
 		decryptKey = pbes2Key
 	} else {
