@@ -50,7 +50,7 @@ one of the JWKs in the JWK Set.`,
 			},
 			cli.StringFlag{
 				Name:  "password-file",
-				Usage: `The path to the <file> containing the password to encrypt the keys.`,
+				Usage: `The path to the <file> containing the password to decrypt the keys.`,
 			},
 		},
 	}
