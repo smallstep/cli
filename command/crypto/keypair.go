@@ -1,6 +1,9 @@
 package crypto
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
@@ -188,6 +191,12 @@ func createAction(ctx *cli.Context) (err error) {
 	} else {
 		var pass []byte
 		pass, err = ui.PromptPassword("Please enter the password to encrypt the private key", ui.WithValue(password), ui.WithValidateNotEmpty())
+		var pe *os.PathError
+		if errors.As(err, &pe) {
+			if pe.Op == "open" && pe.Path == "/dev/tty" {
+				return fmt.Errorf("could not read password to encrypt the private key: %w", err)
+			}
+		}
 		if err != nil {
 			return errors.Wrap(err, "error reading password")
 		}
