@@ -226,7 +226,7 @@ Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`,
 			flags.PasswordFile,
 			flags.Root,
 			flags.CaURL,
-			flags.CaConfig,
+			flags.CaConfig(),
 		},
 	}
 }

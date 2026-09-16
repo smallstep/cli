@@ -98,7 +98,7 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 			flags.Console,
 			flags.Force,
 			flags.Offline,
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

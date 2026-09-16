@@ -26,7 +26,7 @@ func removeCommand() cli.Command {
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			flags.CaConfig,
+			flags.CaConfig(),
 		},
 		Description: `**step ca provisioner webhook remove** removes a webhook from a provisioner.
 
