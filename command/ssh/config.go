@@ -98,13 +98,9 @@ times to set multiple variables.`,
 			flags.CaURL,
 			flags.Root,
 			flags.Offline,
-			cli.StringFlag{
-				Name:  "context",
-				Usage: `The <name> of the context for the new authority.`,
-			},
+			flags.Context,
 			flags.ContextProfile,
 			flags.ContextAuthority,
-			flags.HiddenNoContext,
 		},
 	}
 }
