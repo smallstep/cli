@@ -142,6 +142,7 @@ func adminPrompt(ctx *cli.Context, client *ca.AdminClient, admins []*linkedca.Ad
 	}
 
 	i, _, err := ui.Select("Select an admin:", items,
+		ui.WithField("admin", "admin-subject"),
 		ui.WithSelectTemplates(ui.NamedSelectTemplates("Admin")))
 	if err != nil {
 		return nil, err

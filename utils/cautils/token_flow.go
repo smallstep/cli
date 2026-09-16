@@ -132,7 +132,7 @@ func NewTokenFlow(ctx *cli.Context, tokType int, subject string, sans []string, 
 			if tokType == SSHUserSignType {
 				q = "What user principal would you like to use? (e.g. alice)"
 			}
-			subject, err = ui.Prompt(q, ui.WithValidateNotEmpty())
+			subject, err = ui.Prompt(q, ui.WithField("subject", "subject"), ui.WithValidateNotEmpty())
 			if err != nil {
 				return "", err
 			}
@@ -399,7 +399,9 @@ func provisionerPrompt(ctx *cli.Context, provisioners provisioner.List) (provisi
 		return items[0].Provisioner, nil
 	}
 
-	i, _, err := ui.Select("What provisioner key do you want to use?", items, ui.WithSelectTemplates(ui.NamedSelectTemplates("Provisioner")))
+	i, _, err := ui.Select("What provisioner key do you want to use?", items,
+		ui.WithField("provisioner key", "provisioner"),
+		ui.WithSelectTemplates(ui.NamedSelectTemplates("Provisioner")))
 	if err != nil {
 		return nil, err
 	}
