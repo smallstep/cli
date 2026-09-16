@@ -81,19 +81,15 @@ func initCommand() cli.Command {
     Choose standalone if you'd like to run step-ca yourself and do not want
     cloud services or commercial support.
 
-    **linked**
-    :  An instance of step-ca with locally managed keys that connects to your
-    Certificate Manager account for provisioner management, alerting,
-    reporting, revocation, and other managed services.
-    Choose linked if you'd like cloud services and support, but need to
-    control your authority's signing keys.
-
     **hosted**
     :  A highly available, fully-managed instance of step-ca run by smallstep
     just for you.
     Choose hosted if you'd like cloud services and support.
 
-: More information and pricing at: https://u.step.sm/cm`,
+: More information and pricing at: https://u.step.sm/cm
+
+: Note: Linked CA deployment type is available in Step CA Pro.
+  See https://smallstep.com/product/step-ca-pro/`,
 			},
 			cli.StringFlag{
 				Name:  "name",
@@ -445,10 +441,7 @@ func initAction(ctx *cli.Context) (err error) {
 			ui.Println()
 			return nil
 		}
-		// When initializing a linked CA, providing the --acme flag doesn't currently
-		// result in the default ACME provisioner being added. We may want to support this
-		// for ease of use, but this seems to require a bit of refactoring when generating
-		// the full CA configuration with DB initialization.
+		// The --acme flag is only supported with standalone deployments.
 		if deploymentType != pki.StandaloneDeployment && addDefaultACMEProvisioner {
 			return fmt.Errorf("adding a default ACME provisioner by providing the --acme flag is not supported with deployment type %q.\nPlease use `step ca provisioner add acme --type ACME` after initializing your CA", deploymentType.String())
 		}
@@ -606,9 +599,7 @@ func initAction(ctx *cli.Context) (err error) {
 				pki.WithSuperAdminSubject(firstSuperAdminSubject),
 			)
 		}
-		if deploymentType == pki.LinkedDeployment {
-			pkiOpts = append(pkiOpts, pki.WithAdmin())
-		} else if ctx.Bool("ssh") {
+		if ctx.Bool("ssh") {
 			pkiOpts = append(pkiOpts, pki.WithSSH())
 		}
 		if noDB {
@@ -638,7 +629,7 @@ func initAction(ctx *cli.Context) (err error) {
 		// but this is not common on RA mode.
 		ui.Println("Choose a password for your first provisioner.", ui.WithValue(password))
 	} else {
-		// Linked CAs will use OIDC as a first provisioner.
+		// Hosted deployments use a different provisioner setup.
 		if pkiOnly || deploymentType != pki.StandaloneDeployment {
 			ui.Println("Choose a password for your CA keys.", ui.WithValue(password))
 		} else {
@@ -767,9 +758,16 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 		return pki.StandaloneDeployment, nil
 	}
 
+	// Linked deployment type is no longer available in open-source step-ca.
+	// It is available in Step CA Pro. See https://smallstep.com/product/step-ca-pro/
+	if deploymentType == "linked" {
+		return 0, errors.New("Creating new Linked CAs is no longer supported in open-source step-ca.\n" +
+			"Linked CA functionality is available in Step CA Pro.\n" +
+			"See: https://smallstep.com/product/step-ca-pro/")
+	}
+
 	deploymentTypes = []deployment{
 		{"Standalone", "step-ca instance you run yourself", pki.StandaloneDeployment},
-		{"Linked", "standalone, plus cloud configuration, reporting & alerting", pki.LinkedDeployment},
 		{"Hosted", "fully-managed step-ca cloud instance run for you by smallstep", pki.HostedDeployment},
 	}
 
@@ -777,25 +775,21 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 		switch deploymentType {
 		case "":
 			// Deployment type Hosted is not supported for RAs
-			deploymentTypes = deploymentTypes[:2]
+			deploymentTypes = deploymentTypes[:1]
 		case "standalone":
 			return pki.StandaloneDeployment, nil
-		case "linked":
-			return pki.LinkedDeployment, nil
 		default:
-			return 0, errs.InvalidFlagValue(ctx, "deployment-type", deploymentType, "standalone or linked")
+			return 0, errs.InvalidFlagValue(ctx, "deployment-type", deploymentType, "standalone")
 		}
 	} else {
 		switch deploymentType {
 		case "":
 		case "standalone":
 			return pki.StandaloneDeployment, nil
-		case "linked":
-			return pki.LinkedDeployment, nil
 		case "hosted":
 			return pki.HostedDeployment, nil
 		default:
-			return 0, errs.InvalidFlagValue(ctx, "deployment-type", deploymentType, "standalone, linked or hosted")
+			return 0, errs.InvalidFlagValue(ctx, "deployment-type", deploymentType, "standalone or hosted")
 		}
 	}
 
