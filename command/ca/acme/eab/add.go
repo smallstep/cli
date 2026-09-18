@@ -1,6 +1,7 @@
 package eab
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -20,10 +21,11 @@ func addCommand() cli.Command {
 		Action: cli.ActionFunc(addAction),
 		Usage:  "add ACME External Account Binding Key",
 		UsageText: `**step ca acme eab add** <provisioner> [<eab-key-reference>]
-[**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
+[**--json**] [**--admin-cert**=<file>] [**--admin-key**=<file>] [**--admin-subject**=<subject>]
 [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>]`,
 		Flags: []cli.Flag{
+			jsonFlag,
 			flags.AdminCert,
 			flags.AdminKey,
 			flags.AdminSubject,
@@ -53,6 +55,11 @@ $ step ca acme eab add my_acme_provisioner
 Add an ACME External Account Binding Key with reference:
 '''
 $ step ca acme eab add my_acme_provisioner my_first_eab_key
+'''
+
+Add an ACME External Account Binding Key and output the result as JSON:
+'''
+$ step ca acme eab add my_acme_provisioner my_first_eab_key --json
 '''`,
 	}
 }
@@ -84,12 +91,19 @@ func addAction(ctx *cli.Context) (err error) {
 
 	cliEAK := toCLI(ctx, client, eak)
 
-	// TODO(hs): JSON output, so that executing this command can be more easily automated?
+	if ctx.Bool("json") {
+		b, err := json.MarshalIndent(cliEAK, "", "  ")
+		if err != nil {
+			return errors.Wrap(err, "error marshaling ACME EAB key")
+		}
+		fmt.Println(string(b))
+		return nil
+	}
 
 	out := os.Stdout
 	format := "%-36s%-28s%-48s%s\n"
 	fmt.Fprintf(out, format, "Key ID", "Provisioner", "Key (base64, raw url encoded)", "Reference")
-	fmt.Fprintf(out, format, cliEAK.id, cliEAK.provisioner, cliEAK.key, cliEAK.reference)
+	fmt.Fprintf(out, format, cliEAK.ID, cliEAK.Provisioner, cliEAK.Key, cliEAK.Reference)
 
 	return nil
 }

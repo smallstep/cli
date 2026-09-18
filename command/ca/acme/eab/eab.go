@@ -16,29 +16,39 @@ import (
 )
 
 type cliEAK struct {
-	id          string
-	provisioner string
-	reference   string
-	key         string
-	createdAt   string
-	boundAt     string
-	account     string
+	ID          string `json:"id"`
+	Provisioner string `json:"provisioner"`
+	Reference   string `json:"reference"`
+	Key         string `json:"key,omitempty"`
+	CreatedAt   string `json:"createdAt,omitempty"`
+	BoundAt     string `json:"boundAt,omitempty"`
+	Account     string `json:"account,omitempty"`
 }
 
 func toCLI(_ *cli.Context, _ *ca.AdminClient, eak *linkedca.EABKey) *cliEAK {
+	createdAt := ""
+	if !eak.CreatedAt.AsTime().IsZero() {
+		createdAt = eak.CreatedAt.AsTime().Format("2006-01-02 15:04:05 -07:00")
+	}
 	boundAt := ""
 	if !eak.BoundAt.AsTime().IsZero() {
 		boundAt = eak.BoundAt.AsTime().Format("2006-01-02 15:04:05 -07:00")
 	}
 	return &cliEAK{
-		id:          eak.Id,
-		provisioner: eak.Provisioner,
-		reference:   eak.Reference,
-		key:         base64.RawURLEncoding.Strict().EncodeToString(eak.HmacKey),
-		createdAt:   eak.CreatedAt.AsTime().Format("2006-01-02 15:04:05 -07:00"),
-		boundAt:     boundAt,
-		account:     eak.Account,
+		ID:          eak.Id,
+		Provisioner: eak.Provisioner,
+		Reference:   eak.Reference,
+		Key:         base64.RawURLEncoding.Strict().EncodeToString(eak.HmacKey),
+		CreatedAt:   createdAt,
+		BoundAt:     boundAt,
+		Account:     eak.Account,
 	}
+}
+
+// jsonFlag toggles machine-readable JSON output for the eab subcommands.
+var jsonFlag = cli.BoolFlag{
+	Name:  "json",
+	Usage: `Print output as a JSON object (or array) instead of the human-readable table.`,
 }
 
 // Command returns the eab subcommand.
