@@ -15,6 +15,7 @@ import (
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"
+	"github.com/smallstep/cli/utils"
 	"github.com/smallstep/cli/utils/cautils"
 )
 
@@ -24,7 +25,8 @@ func certificateCommand() cli.Command {
 		Action: command.ActionFunc(certificateAction),
 		Usage:  "generate a new private key and certificate signed by the root certificate",
 		UsageText: `**step ca certificate** <subject> <crt-file> <key-file>
-[**--token**=<token>]  [**--issuer**=<name>] [**--provisioner-password-file**=<file>]
+[**--token**=<token>] [**--token-file**=<file>] [**--issuer**=<name>]
+[**--provisioner-password-file**=<file>]
 [**--not-before**=<time|duration>] [**--not-after**=<time|duration>]
 [**--san**=<SAN>] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
@@ -162,7 +164,8 @@ $ step ca certificate foo.internal foo.crt foo.key \
 				Name: "san",
 				Usage: `Add <dns|ip|email|uri> Subject Alternative Name(s) (SANs)
 that should be authorized. Use the '--san' flag multiple times to configure
-multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
+multiple SANs. The '--san' flag and the '--token' / '--token-file' flags are
+mutually exclusive for JWK tokens.`,
 			},
 			cli.StringFlag{
 				Name:  "attestation-ca-url",
@@ -188,6 +191,12 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			flags.CaURL,
 			flags.Root,
 			flags.Token,
+			cli.StringFlag{
+				Name: "token-file",
+				Usage: `The path to the <file> containing the one-time <token> used to
+authenticate with the CA in order to create the certificate. The '--token-file'
+flag and the '--token' flag are mutually exclusive.`,
+			},
 			flags.Context,
 			flags.Provisioner,
 			flags.ProvisionerPasswordFile,
@@ -231,15 +240,18 @@ func certificateAction(ctx *cli.Context) error {
 	subject := args.Get(0)
 	crtFile, keyFile := args.Get(1), args.Get(2)
 
-	tok := ctx.String("token")
+	tok, tokSource, err := resolveCertificateToken(ctx)
+	if err != nil {
+		return err
+	}
 	offline := ctx.Bool("offline")
 	sans := ctx.StringSlice("san")
 
 	switch {
-	case offline && tok != "":
-		// offline and token are incompatible because the token is generated before
-		// the start of the offline CA.
-		return errs.IncompatibleFlagWithFlag(ctx, "offline", "token")
+	case offline && tokSource != "":
+		// offline and externally supplied tokens are incompatible because the
+		// token is generated before the start of the offline CA.
+		return errs.IncompatibleFlagWithFlag(ctx, "offline", tokSource)
 	case ctx.String("attestation-uri") != "" && ctx.String("kms") != "":
 		// attestation-uri and kms are incompatible because the ACME-DA flow
 		// expects all necessary parameters in the attestation-uri, and having
@@ -272,24 +284,8 @@ func certificateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	jwt, err := token.ParseInsecure(tok)
-	if err != nil {
+	if err := validateTokenType(ctx, tokSource, subject, req.CsrPEM.Subject.CommonName, tok, sans); err != nil {
 		return err
-	}
-
-	switch jwt.Payload.Type() {
-	case token.JWK: // Validate that subject matches the CSR common name.
-		if ctx.String("token") != "" && len(sans) > 0 {
-			return errs.MutuallyExclusiveFlags(ctx, "token", "san")
-		}
-		if !strings.EqualFold(subject, req.CsrPEM.Subject.CommonName) {
-			return errors.Errorf("token subject '%s' and argument '%s' do not match", req.CsrPEM.Subject.CommonName, subject)
-		}
-	case token.OIDC, token.AWS, token.GCP, token.Azure, token.K8sSA:
-		// Common name will be validated on the server side, it depends on
-		// server configuration.
-	default:
-		return errors.New("token is not supported")
 	}
 
 	if err := flow.Sign(ctx, tok, req.CsrPEM, crtFile); err != nil {
@@ -303,5 +299,58 @@ func certificateAction(ctx *cli.Context) error {
 
 	ui.PrintSelected("Certificate", crtFile)
 	ui.PrintSelected("Private Key", keyFile)
+	return nil
+}
+
+// resolveCertificateToken returns the externally supplied certificate token
+// from either the --token or --token-file flag, along with the name of the
+// flag used to supply it. If no external token source is provided, it returns
+// an empty token and an empty source so that the caller can generate a token.
+func resolveCertificateToken(ctx *cli.Context) (tok, source string, err error) {
+	tok = ctx.String("token")
+	tokenFile := ctx.String("token-file")
+	switch {
+	case tok != "" && tokenFile != "":
+		return "", "", errs.MutuallyExclusiveFlags(ctx, "token", "token-file")
+	case tokenFile != "":
+		b, err := utils.ReadFile(tokenFile)
+		if err != nil {
+			return "", "", err
+		}
+		tok = strings.TrimSpace(string(b))
+		if tok == "" {
+			return "", "", errors.Errorf("file '%s' is empty or contains only whitespace", tokenFile)
+		}
+		source = "token-file"
+	case tok != "":
+		source = "token"
+	}
+	return tok, source, nil
+}
+
+// validateTokenType validates the token payload after the token has been
+// resolved. The source flag is the name of the flag used to supply an
+// externally provided token, or empty if the token was generated by the
+// certificate flow.
+func validateTokenType(ctx *cli.Context, source, subject, csrCommonName, tok string, sans []string) error {
+	jwt, err := token.ParseInsecure(tok)
+	if err != nil {
+		return err
+	}
+
+	switch jwt.Payload.Type() {
+	case token.JWK: // Validate that subject matches the CSR common name.
+		if source != "" && len(sans) > 0 {
+			return errs.MutuallyExclusiveFlags(ctx, source, "san")
+		}
+		if !strings.EqualFold(subject, csrCommonName) {
+			return errors.Errorf("token subject '%s' and argument '%s' do not match", csrCommonName, subject)
+		}
+	case token.OIDC, token.AWS, token.GCP, token.Azure, token.K8sSA:
+		// Common name will be validated on the server side, it depends on
+		// server configuration.
+	default:
+		return errors.New("token is not supported")
+	}
 	return nil
 }
