@@ -41,7 +41,7 @@ func addCommand() cli.Command {
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			flags.CaConfig,
+			flags.CaConfig(),
 		},
 		Description: `**step ca provisioner webhook add** adds a webhook to a provisioner.
 
