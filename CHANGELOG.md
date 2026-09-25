@@ -29,6 +29,47 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [0.31.0] - 2026-09-25
+
+### Added
+
+- Add support for ML-DSA keys (ML-DSA-44, ML-DSA-65, and ML-DSA-87) in the
+  `step ca`, `step certificate`, and `step crypto key` commands, including
+  X.509 certificate and CRL signing, and ACME `device-attest-01` challenges.
+  SSH and JOSE commands do not support ML-DSA keys yet (smallstep/cli#1698,
+  smallstep/crypto#1098, smallstep/crypto#1123).
+- Show the full ML-DSA parameter set in the public key algorithm section when
+  inspecting certificates and certificate requests (smallstep/certinfo#94).
+- Allow subject DN components in MacKMS certificate URIs, and create MacKMS
+  signers without a label (smallstep/crypto#1073, smallstep/crypto#1134).
+
+### Changed
+
+- Require Go 1.26 or later to build (smallstep/cli#1698).
+
+
+## [0.30.6] - 2026-06-10
+
+### Fixed
+
+- Fix release issue (smallstep/cli#1651).
+
+
+## [0.30.5] - 2026-06-09
+
+### Fixed
+
+- Fix release workflow to work with the GitHub immutable releases setting
+  (smallstep/cli#1650).
+
+
+## [0.30.4] - 2026-06-09
+
+### Fixed
+
+- Fix release issue
+
+
 ## [0.30.3] - 2026-06-09
 
 ### Added
