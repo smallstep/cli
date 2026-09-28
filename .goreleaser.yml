@@ -45,6 +45,7 @@ builds:
       - linux_arm_7
       - linux_mips
       - linux_mips64
+      - linux_s390x
       - linux_ppc64le
       - windows_amd64
       - windows_arm64
