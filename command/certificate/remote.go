@@ -33,6 +33,14 @@ var urlPrefixes = map[string]uint16{
 //	*insecure*:   do not verify that the server's certificate has been signed by
 //	              a trusted root
 func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509.Certificate, error) {
+	return getPeerCertificatesWithClientCert(addr, serverName, roots, insecure, nil)
+}
+
+// getPeerCertificatesWithClientCert is like getPeerCertificates but also
+// presents the given client certificates to the server for TLS client
+// authentication, enabling inspection of certificates served on mTLS-protected
+// endpoints.
+func getPeerCertificatesWithClientCert(addr, serverName, roots string, insecure bool, clientCerts []tls.Certificate) ([]*x509.Certificate, error) {
 	var (
 		err     error
 		rootCAs *x509.CertPool
@@ -47,8 +55,9 @@ func getPeerCertificates(addr, serverName, roots string, insecure bool) ([]*x509
 		addr = net.JoinHostPort(addr, "443")
 	}
 	tlsConfig := &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		RootCAs:    rootCAs,
+		MinVersion:   tls.VersionTLS12,
+		RootCAs:      rootCAs,
+		Certificates: clientCerts,
 	}
 	if insecure {
 		tlsConfig.InsecureSkipVerify = true

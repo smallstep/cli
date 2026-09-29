@@ -1,6 +1,7 @@
 package certificate
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -27,7 +28,7 @@ func inspectCommand() cli.Command {
 		Usage:  `print certificate or CSR details in human readable format`,
 		UsageText: `**step certificate inspect** <crt-file>
 [**--bundle**] [**--short**] [**--format**=<format>] [**--roots**=<root-bundle>]
-[**--servername**=<servername>]`,
+[**--servername**=<servername>] [**--cert**=<cert-file>] [**--key**=<key-file>]`,
 		Description: `**step certificate inspect** prints the details of the
 certificate or CSR in a human- or machine-readable format. Beware: Local certificates
 are never verified. Always verify a certificate (using **step certificate verify**)
@@ -105,6 +106,12 @@ $ step certificate inspect https://smallstep.com \
 --roots "./path/to/root/certificates/"
 '''
 
+Inspect a remote certificate on an mTLS-enabled server, using a client certificate to authenticate:
+'''
+$ step certificate inspect https://service.example.com \
+--cert ./client.crt --key ./client.key
+'''
+
 Inspect a remote certificate chain in json format using a custom directory of
 root certificates to verify the server:
 '''
@@ -160,6 +167,17 @@ authenticity of the remote server.
     **directory**
 	:  Relative or full path to a directory. Every PEM encoded certificate from each file in the directory will be used for path validation.`,
 			},
+			cli.StringFlag{
+				Name: "cert",
+				Usage: `The <file> containing the client certificate that will be used to
+authenticate to the remote server. The --cert flag must be used together with the
+--key flag.`,
+			},
+			cli.StringFlag{
+				Name: "key",
+				Usage: `The <file> containing the private key that will be used to authenticate
+to the remote server. The --key flag must be used together with the --cert flag.`,
+			},
 			flags.ServerName,
 			cli.BoolFlag{
 				Name: `bundle`,
@@ -192,6 +210,8 @@ func inspectAction(ctx *cli.Context) error {
 		format     = ctx.String("format")
 		roots      = ctx.String("roots")
 		serverName = ctx.String("servername")
+		certFile   = ctx.String("cert")
+		keyFile    = ctx.String("key")
 		short      = ctx.Bool("short")
 		insecure   = ctx.Bool("insecure")
 	)
@@ -207,12 +227,26 @@ func inspectAction(ctx *cli.Context) error {
 	if short && (format == "json" || format == "pem") {
 		return errs.IncompatibleFlagWithFlag(ctx, "short", "format "+format)
 	}
+	if (certFile == "") != (keyFile == "") {
+		if certFile == "" {
+			return errs.RequiredWithFlag(ctx, "key", "cert")
+		}
+		return errs.RequiredWithFlag(ctx, "cert", "key")
+	}
 
 	switch addr, isURL, err := trimURL(crtFile); {
 	case err != nil:
 		return err
 	case isURL:
-		peerCertificates, err := getPeerCertificates(addr, serverName, roots, insecure)
+		var clientCerts []tls.Certificate
+		if certFile != "" {
+			cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+			if err != nil {
+				return errors.Wrapf(err, "error loading the client certificate and key")
+			}
+			clientCerts = []tls.Certificate{cert}
+		}
+		peerCertificates, err := getPeerCertificatesWithClientCert(addr, serverName, roots, insecure, clientCerts)
 		if err != nil {
 			return err
 		}
