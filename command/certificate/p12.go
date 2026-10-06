@@ -2,7 +2,9 @@ package certificate
 
 import (
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -86,6 +88,9 @@ multiple CAs or intermediates.`,
 			},
 			flags.Force,
 			flags.Insecure,
+		},
+		Subcommands: cli.Commands{
+			extractP12Command,
 		},
 	}
 }
@@ -194,5 +199,52 @@ func p12Action(ctx *cli.Context) error {
 	}
 
 	ui.Printf("Your .p12 bundle has been saved as %s.\n", p12File)
+	return nil
+}
+
+var extractP12Command = cli.Command{
+	Name:   "extract",
+	Action: command.ActionFunc(extractP12Action),
+	Usage:  `extract certificates and keys from a .p12 file`,
+	UsageText: `step certificate p12 extract <p12-path>
+[**--password-file**=<file>]`,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "password-file",
+			Usage: `The path to the <file> containing the password to decrypt the .p12 file.`,
+		},
+	},
+}
+
+func extractP12Action(ctx *cli.Context) error {
+	if err := errs.NumberOfArguments(ctx, 1); err != nil {
+		return err
+	}
+
+	p12File := ctx.Args().Get(0)
+	p12Data, err := os.ReadFile(p12File)
+	if err != nil {
+		return errors.Wrap(err, "error reading p12 file")
+	}
+
+	password := ""
+	if passwordFile := ctx.String("password-file"); passwordFile != "" {
+		password, err = utils.ReadStringPasswordFromFile(passwordFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	blocks, err := pkcs12.ToPEM(p12Data, password)
+	if err != nil {
+		return errs.Wrap(err, "failed to decode PKCS12 data")
+	}
+
+	for _, block := range blocks {
+		if err := pem.Encode(os.Stdout, block); err != nil {
+			return errors.Wrap(err, "error writing pem block")
+		}
+	}
+
 	return nil
 }
