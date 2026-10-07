@@ -113,7 +113,7 @@ attribute certificate have been compromised (reasonCode=10).
 `,
 			},
 			flags.Offline,
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

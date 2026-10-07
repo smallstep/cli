@@ -65,7 +65,7 @@ $ step ssh renew -out new-id_ecdsa-cer.pub id_ecdsa-cert.pub id_ecdsa
 			flags.SSHPOPKey,
 			flags.Force,
 			flags.Offline,
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
