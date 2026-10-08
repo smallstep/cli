@@ -350,7 +350,10 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		// Force is always enabled when daemon mode is used
 		ctx.Set("force", "true")
 		next := nextRenewDuration(leaf, expiresIn, rekeyPeriod)
-		return renewer.Daemon(outCert, next, expiresIn, rekeyPeriod, afterRekey)
+		rekeyFunc := func() error {
+			return renewer.RekeyAndWrite(ctx, outCert, outKey, givenPrivate, passFile, kmsURI)
+		}
+		return renewer.Daemon(outCert,next,expiresIn,rekeyPeriod, afterRekey, rekeyFunc)
 	}
 
 	// Do not rekey if (cert.notAfter - now) > (expiresIn + jitter)
@@ -363,27 +366,7 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		}
 	}
 
-	var signer crypto.Signer
-	if givenPrivate == "" {
-		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, false, "kty", "curve", "size")
-		if err != nil {
-			return err
-		}
-		signer, err = keyutil.GenerateSigner(kty, crv, size)
-		if err != nil {
-			return err
-		}
-	} else {
-		opts := []pemutil.Options{pemutil.WithFilename(givenPrivate)}
-		if passFile != "" {
-			opts = append(opts, pemutil.WithPasswordFile(passFile))
-		}
-		signer, err = cryptoutil.CreateSigner(kmsURI, givenPrivate, opts...)
-		if err != nil {
-			return err
-		}
-	}
-	if _, err := renewer.Rekey(signer, outCert, outKey, ctx.IsSet("out-key") || givenPrivate == ""); err != nil {
+	if err := renewer.RekeyAndWrite(ctx, outCert, outKey, givenPrivate, passFile, kmsURI); err != nil {
 		return err
 	}
 
@@ -395,4 +378,30 @@ func rekeyCertificateAction(ctx *cli.Context) error {
 		ui.PrintSelected("Private Key", outKey)
 	}
 	return afterRekey()
+}
+func (r *renewer) RekeyAndWrite(ctx *cli.Context, outCert, outKey, givenPrivate, passFile, kmsURI string) error {
+	signer, err := generateSigner(ctx, givenPrivate, passFile, kmsURI)
+	if err != nil {
+		return err
+	}
+	if _, err := r.Rekey(signer, outCert, outKey, ctx.IsSet("out-key") || givenPrivate == ""); err != nil {
+		return err
+	}
+	return nil
+}
+
+func generateSigner(ctx *cli.Context, givenPrivate, passFile, kmsURI string) (crypto.Signer, error) {
+	if givenPrivate == "" {
+		kty, crv, size, err := utils.GetKeyDetailsFromCLI(ctx, false, "kty", "curve", "size")
+		if err != nil {
+			return nil, err
+		}
+		return keyutil.GenerateSigner(kty, crv, size)
+	} else {
+		opts := []pemutil.Options{pemutil.WithFilename(givenPrivate)}
+		if passFile != "" {
+			opts = append(opts, pemutil.WithPasswordFile(passFile))
+		}
+		return cryptoutil.CreateSigner(kmsURI, givenPrivate, opts...)
+	}
 }
