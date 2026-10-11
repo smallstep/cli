@@ -2,6 +2,7 @@ package ssh
 
 import (
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -29,6 +30,11 @@ func init() {
 		Usage:     "create and manage ssh certificates",
 		UsageText: "step ssh <subcommand> [arguments] [global-flags] [subcommand-flags]",
 		Description: `**step ssh** command group provides facilities to sign SSH certificates.
+
+When automatic login issues an X.509 identity, issuer-validity truncation
+warnings are printed to stderr after the identity is installed, including login
+while recovering from an unauthorized response. Warning output does not change
+successful exit status or SSH certificate validity.
 
 ## EXAMPLES
 
@@ -247,6 +253,7 @@ func loginOnUnauthorized(ctx *cli.Context) (ca.RetryFunc, error) {
 			agent.AddCertificate(jwt.Payload.Email, resp.Certificate.Certificate, priv)
 		}
 
+		cautils.PrintCertificateWarnings(os.Stderr, resp.Warnings)
 		return true
 	}, nil
 }
