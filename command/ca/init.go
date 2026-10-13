@@ -325,60 +325,72 @@ func initAction(ctx *cli.Context) (err error) {
 
 		iss := ctx.String("issuer")
 		if iss == "" {
-			create, err = ui.PromptYesNo("Would you like to create a new PKI (y) or use an existing one (n)?")
+			create, err = ui.PromptYesNo("Would you like to create a new PKI (y) or use an existing one (n)?",
+			ui.WithField("PKI creation choice", ""))
 			if err != nil {
 				return err
 			}
 			if create {
 				ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
 				name, err = ui.Prompt("(e.g. Smallstep)",
+					ui.WithField("PKI name", "name"),
 					ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
 				if err != nil {
 					return err
 				}
 				ui.Println("What is the name of your organization?")
 				org, err = ui.Prompt("(e.g. Smallstep)",
+					ui.WithField("organization name", ""),
 					ui.WithValidateNotEmpty())
 				if err != nil {
 					return err
 				}
 				ui.Println("What resource id do you want to use? [we will append -Root-CA or -Intermediate-CA]")
 				resource, err = ui.Prompt("(e.g. Smallstep)",
+					ui.WithField("resource ID", ""),
 					ui.WithValidateRegexp("^[a-zA-Z0-9-_]+$"))
 				if err != nil {
 					return err
 				}
 				ui.Println("What is the id of your project on Google's Cloud Platform?")
 				project, err = ui.Prompt("(e.g. smallstep-ca)",
+					ui.WithField("GCP project ID", ""),
 					ui.WithValidateRegexp("^[a-z][a-z0-9-]{4,28}[a-z0-9]$"))
 				if err != nil {
 					return err
 				}
 				ui.Println("What region or location do you want to use?")
 				location, err = ui.Prompt("(e.g. us-west1)",
+					ui.WithField("GCP location", ""),
 					ui.WithValidateRegexp("^[a-z0-9-]+$"))
 				if err != nil {
 					return err
 				}
 				ui.Println("What CA pool name do you want to use?")
 				caPool, err = ui.Prompt("(e.g. Smallstep)",
+					ui.WithField("CA pool name", ""),
 					ui.WithValidateRegexp("^[a-zA-Z0-9_-]{1,63}"))
 				if err != nil {
 					return err
 				}
-				i, _, err := ui.Select("What CA pool tier do you want to use?", caPoolTiers, ui.WithSelectTemplates(ui.NamedSelectTemplates("Tier")))
+				i, _, err := ui.Select("What CA pool tier do you want to use?", caPoolTiers,
+					ui.WithField("CA pool tier", ""),
+					ui.WithSelectTemplates(ui.NamedSelectTemplates("Tier")))
 				if err != nil {
 					return err
 				}
 				caPoolTier = caPoolTiers[i].Value
 				ui.Println("What GCS bucket do you want to use? Leave it empty to use a managed one.")
-				gcsBucket, err = ui.Prompt("(e.g. my-bucket)", ui.WithValidateRegexp("(^$)|(^[a-z0-9._-]{3,222}$)"))
+				gcsBucket, err = ui.Prompt("(e.g. my-bucket)",
+					ui.WithField("GCS bucket", ""),
+					ui.WithValidateRegexp("(^$)|(^[a-z0-9._-]{3,222}$)"))
 				if err != nil {
 					return err
 				}
 			} else {
 				ui.Println("What certificate authority would you like to use?")
 				iss, err = ui.Prompt("(e.g. projects/smallstep-ca/locations/us-west1/caPools/smallstep/certificateAuthorities/intermediate-ca)",
+					ui.WithField("certificate authority", "issuer"),
 					ui.WithValidateRegexp("^projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/locations/[a-z0-9-]+/caPools/[a-zA-Z0-9-_]+/certificateAuthorities/[a-zA-Z0-9-_]+$"))
 				if err != nil {
 					return err
@@ -403,18 +415,21 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 		ui.Println("What is the url of your CA?", ui.WithValue(ctx.String("issuer")))
 		ca, err := ui.Prompt("(e.g. https://ca.smallstep.com:9000)",
+			ui.WithField("CA URL", "issuer"),
 			ui.WithValidateRegexp("(?i)^https://.+$"), ui.WithValue(ctx.String("issuer")))
 		if err != nil {
 			return err
 		}
 		ui.Println("What is the fingerprint of the CA's root file?", ui.WithValue(ctx.String("issuer-fingerprint")))
 		fingerprint, err := ui.Prompt("(e.g. 4fe5f5ef09e95c803fdcb80b8cf511e2a885eb86f3ce74e3e90e62fa3faf1531)",
+			ui.WithField("root certificate fingerprint", "issuer-fingerprint"),
 			ui.WithValidateRegexp("^[a-fA-F0-9]{64}$"), ui.WithValue(ctx.String("issuer-fingerprint")))
 		if err != nil {
 			return err
 		}
 		ui.Println("What is the JWK provisioner you want to use?", ui.WithValue(ctx.String("issuer-provisioner")))
 		provisioner, err := ui.Prompt("(e.g. you@smallstep.com)",
+			ui.WithField("issuer provisioner name", "issuer-provisioner"),
 			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("issuer-provisioner")))
 		if err != nil {
 			return err
@@ -454,7 +469,9 @@ func initAction(ctx *cli.Context) (err error) {
 		}
 
 		ui.Println("What would you like to name your new PKI?", ui.WithValue(ctx.String("name")))
-		name, err = ui.Prompt("(e.g. Smallstep)", ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
+		name, err = ui.Prompt("(e.g. Smallstep)",
+			ui.WithField("PKI name", "name"),
+			ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("name")))
 		if err != nil {
 			return err
 		}
@@ -483,6 +500,7 @@ func initAction(ctx *cli.Context) (err error) {
 			if rootKey == nil {
 				ui.Println("What URI would you like to use for the root certificate key?", ui.WithValue(ctx.String("kms-root")))
 				rootURI, err = ui.Prompt("(e.g. azurekms:name=my-root-key;vault=my-vault)",
+					ui.WithField("root key URI", "kms-root"),
 					ui.WithValidateFunc(validateFunc), ui.WithValue(ctx.String("kms-root")))
 				if err != nil {
 					return err
@@ -491,6 +509,7 @@ func initAction(ctx *cli.Context) (err error) {
 
 			ui.Println("What URI would you like to use for the intermediate certificate key?", ui.WithValue(ctx.String("kms-intermediate")))
 			intermediateURI, err = ui.Prompt("(e.g. azurekms:name=my-intermediate-key;vault=my-vault)",
+				ui.WithField("intermediate key URI", "kms-intermediate"),
 				ui.WithValidateFunc(validateFunc), ui.WithValue(ctx.String("kms-intermediate")))
 			if err != nil {
 				return err
@@ -499,6 +518,7 @@ func initAction(ctx *cli.Context) (err error) {
 			if ctx.Bool("ssh") {
 				ui.Println("What URI would you like to use for the SSH host key?", ui.WithValue(ctx.String("kms-ssh-host")))
 				sshHostURI, err = ui.Prompt("(e.g. azurekms:name=my-host-key;vault=my-vault)",
+					ui.WithField("SSH host key URI", "kms-ssh-host"),
 					ui.WithValidateFunc(validateFunc), ui.WithValue(ctx.String("kms-ssh-host")))
 				if err != nil {
 					return err
@@ -506,6 +526,7 @@ func initAction(ctx *cli.Context) (err error) {
 
 				ui.Println("What URI would you like to use for the SSH user key?", ui.WithValue(ctx.String("kms-ssh-user")))
 				sshUserURI, err = ui.Prompt("(e.g. azurekms:name=my-user-key;vault=my-vault)",
+					ui.WithField("SSH user key URI", "kms-ssh-user"),
 					ui.WithValidateFunc(validateFunc), ui.WithValue(ctx.String("kms-ssh-user")))
 				if err != nil {
 					return err
@@ -533,6 +554,7 @@ func initAction(ctx *cli.Context) (err error) {
 		ui.Println("What DNS names or IP addresses will clients use to reach your CA?",
 			ui.WithSliceValue(ctx.StringSlice("dns")))
 		dnsValue, err := ui.Prompt("(e.g. ca.example.com[,10.1.2.3,etc.])",
+			ui.WithField("DNS names or IP addresses", "dns"),
 			ui.WithSliceValue(ctx.StringSlice("dns")))
 		if err != nil {
 			return err
@@ -576,6 +598,7 @@ func initAction(ctx *cli.Context) (err error) {
 			ui.Println("What IP and port will your new CA bind to? (:443 will bind to 0.0.0.0:443)", ui.WithValue(ctx.String("address")))
 		}
 		address, err = ui.Prompt("(e.g. :443 or 127.0.0.1:443)",
+			ui.WithField("listen address", "address"),
 			ui.WithValidateFunc(ui.Address()), ui.WithValue(ctx.String("address")))
 		if err != nil {
 			return err
@@ -588,6 +611,7 @@ func initAction(ctx *cli.Context) (err error) {
 		if deploymentType == pki.StandaloneDeployment {
 			ui.Println("What would you like to name the CA's first provisioner?", ui.WithValue(ctx.String("provisioner")))
 			provisioner, err = ui.Prompt("(e.g. you@smallstep.com)",
+				ui.WithField("provisioner name", "provisioner"),
 				ui.WithValidateNotEmpty(), ui.WithValue(ctx.String("provisioner")))
 			if err != nil {
 				return err
@@ -651,7 +675,9 @@ func initAction(ctx *cli.Context) (err error) {
 		return err
 	}
 
-	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]", ui.WithRichPrompt(), ui.WithValue(password))
+	pass, err := ui.PromptPasswordGenerate("[leave empty and we'll generate one]",
+		ui.WithField("password", "password-file"),
+		ui.WithRichPrompt(), ui.WithValue(password))
 	if err != nil {
 		return err
 	}
@@ -800,6 +826,7 @@ func promptDeploymentType(ctx *cli.Context, isRA bool) (pki.DeploymentType, erro
 	}
 
 	i, _, err := ui.Select("What deployment type would you like to configure?", deploymentTypes,
+		ui.WithField("deployment type", "deployment-type"),
 		ui.WithSelectTemplates(&promptui.SelectTemplates{
 			Active:   fmt.Sprintf("%s {{ printf \"%%s - %%s\" .Name .Description | underline }}", ui.IconSelect),
 			Inactive: "  {{ .Name }} - {{ .Description }}",

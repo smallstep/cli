@@ -142,7 +142,9 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		}
 		subject := ctx.String("admin-subject")
 		if subject == "" {
-			subject, err = ui.Prompt("Please enter admin name/subject (e.g., name@example.com)", ui.WithValidateNotEmpty())
+			subject, err = ui.Prompt("Please enter admin name/subject (e.g., name@example.com)",
+				ui.WithField("admin name", "admin-subject"),
+				ui.WithValidateNotEmpty())
 			if err != nil {
 				return nil, err
 			}

@@ -315,7 +315,7 @@ func parseJWK(ctx *cli.Context, b []byte) (any, error) {
 	if _, err := jose.ParseEncrypted(string(b)); err == nil {
 		opts := []jose.Option{
 			jose.WithPasswordPrompter("Please enter the password to decrypt the key", func(s string) ([]byte, error) {
-				return ui.PromptPassword(s)
+				return ui.PromptPassword(s, ui.WithField("decryption password", "password-file"))
 			}),
 		}
 		if passFile := ctx.String("password-file"); passFile != "" {
@@ -352,7 +352,7 @@ func convertToPEM(ctx *cli.Context, key any) (b []byte, err error) {
 				opts = append(opts, pemutil.WithPasswordFile(passFile))
 			} else {
 				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
-					return ui.PromptPassword(s, ui.WithValidateNotEmpty())
+					return ui.PromptPassword(s, ui.WithField("encryption password", "password-file"), ui.WithValidateNotEmpty())
 				}))
 			}
 		default:
@@ -408,7 +408,7 @@ func convertToSSH(ctx *cli.Context, key any) ([]byte, error) {
 				opts = append(opts, pemutil.WithPasswordFile(passFile))
 			} else {
 				opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
-					return ui.PromptPassword(s, ui.WithValidateNotEmpty())
+					return ui.PromptPassword(s, ui.WithField("encryption password", "password-file"), ui.WithValidateNotEmpty())
 				}))
 			}
 		}

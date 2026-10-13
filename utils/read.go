@@ -80,7 +80,7 @@ func ReadInput(prompt string) ([]byte, error) {
 	}
 
 	if st.Size() == 0 && st.Mode()&os.ModeNamedPipe == 0 {
-		return ui.PromptPassword(prompt)
+		return ui.PromptPassword(prompt, ui.WithField("password", "password-file"))
 	}
 
 	return ReadAll(stdin)

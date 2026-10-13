@@ -165,7 +165,7 @@ func rekeyAction(ctx *cli.Context) error {
 		opts = append(opts, pemutil.WithPasswordFile(passwordFile))
 	default:
 		opts = append(opts, pemutil.WithPasswordPrompt("Please enter the password to encrypt the private key", func(s string) ([]byte, error) {
-			return ui.PromptPassword(s, ui.WithValidateNotEmpty())
+			return ui.PromptPassword(s, ui.WithField("private key password", "password-file"), ui.WithValidateNotEmpty())
 		}))
 	}
 	_, err = pemutil.Serialize(priv, opts...)

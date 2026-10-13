@@ -224,7 +224,8 @@ func encryptAction(ctx *cli.Context) error {
 	case jwks != "":
 		jwk, err = jose.ReadKeySet(jwks, options...)
 	case isPBES2:
-		pbes2Key, err = ui.PromptPassword("Please enter the password to encrypt the content encryption key")
+		pbes2Key, err = ui.PromptPassword("Please enter the password to encrypt the content encryption key",
+			ui.WithField("encryption password", "password-file"))
 	default:
 		return errs.RequiredOrFlag(ctx, "key", "jwks")
 	}
