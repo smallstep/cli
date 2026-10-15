@@ -46,7 +46,9 @@ ACME
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
 [**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
 [**--attestation-format**=<format>] [**--remove-attestation-format**=<format>]
-[**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--attestation-roots**=<file>] [**--issuer-domain-name**=<domain>]
+[**--remove-issuer-domain-name**=<domain>] [**--account-hash-prefix**=<prefix>]
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 [**--x509-template**=<file>] [**--x509-template-data**=<file>]
@@ -150,6 +152,9 @@ SCEP
 			attestationFormatFlag,       // ACME
 			removeAttestationFormatFlag, // ACME
 			attestationRootsFlag,        // ACME
+			issuerDomainNameFlag,        // ACME
+			removeIssuerDomainNameFlag,  // ACME
+			accountHashPrefixFlag,       // ACME
 
 			// SCEP flags
 			scepCapabilitiesFlag,
@@ -273,6 +278,13 @@ step ca provisioner update x5c --x5c-roots x5c_ca.crt
 Update an ACME provisioner:
 '''
 step ca provisioner update acme --force-cn --require-eab
+'''
+
+Enable persistent DNS validation in an ACME provisioner:
+'''
+step ca provisioner update acme --challenge dns-persist-01 \
+  --issuer-domain-name ca.example.com \
+  --account-hash-prefix https://ca.example.com/acme/acme/account-hash/
 '''
 
 Update an K8SSA provisioner:
@@ -681,6 +693,20 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 			return err
 		}
 		details.AttestationRoots = attestationRoots
+	}
+	if ctx.IsSet("remove-issuer-domain-name") {
+		values := ctx.StringSlice("remove-issuer-domain-name")
+		details.IssuerDomainNames = sliceutil.RemoveValues(details.IssuerDomainNames, values)
+	}
+	if ctx.IsSet("issuer-domain-name") {
+		values := ctx.StringSlice("issuer-domain-name")
+		details.IssuerDomainNames = append(details.IssuerDomainNames, values...)
+	}
+	if ctx.IsSet("issuer-domain-name") || ctx.IsSet("remove-issuer-domain-name") {
+		details.IssuerDomainNames = sliceutil.RemoveDuplicates(details.IssuerDomainNames)
+	}
+	if ctx.IsSet("account-hash-prefix") {
+		details.AccountHashPrefix = ctx.String("account-hash-prefix")
 	}
 	return nil
 }
