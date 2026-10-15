@@ -341,6 +341,13 @@ accessible under that domain name.
 provisioning a TXT resource record containing a designated value for a specific
 validation domain name.
 
+**dns-persist-01**
+: With the persistent DNS challenge, the client can prove control of a domain by
+provisioning a long-lived TXT resource record that authorizes its ACME account
+to get certificates for the domain. The same record can be reused for later
+validations. This challenge requires the **--issuer-domain-name** and
+**--account-hash-prefix** flags.
+
 **tls-alpn-01**
 : With the TLS with Application-Layer Protocol Negotiation (TLS ALPN) challenge,
 the client can prove control over a domain name by configuring a TLS server to
@@ -399,6 +406,27 @@ certificates. Use the flag multiple times to read from multiple files.`,
 		Name: "remove-attestation-format",
 		Usage: `Remove an ACME attestation statement <format> from the list configured in the provisioner.
 Use the flag multiple times to remove multiple formats.`,
+	}
+
+	issuerDomainNameFlag = cli.StringSliceFlag{
+		Name: "issuer-domain-name",
+		Usage: `The issuer <domain> that dns-persist-01 TXT records must name for the
+provisioner to accept them. It must be a lowercase domain name without a
+trailing dot. Use the flag multiple times to configure up to 10 names.`,
+	}
+
+	removeIssuerDomainNameFlag = cli.StringSliceFlag{
+		Name: "remove-issuer-domain-name",
+		Usage: `Remove an issuer <domain> from the list configured in the provisioner.
+Use the flag multiple times to remove multiple names.`,
+	}
+
+	accountHashPrefixFlag = cli.StringFlag{
+		Name: "account-hash-prefix",
+		Usage: `The URL <prefix> of the hashed account URIs that clients publish in their
+dns-persist-01 TXT records, for example
+'https://ca.example.com/acme/acme/account-hash/'. Records stop validating if
+the prefix changes, so it must stay the same for as long as they are in use.`,
 	}
 
 	// SCEP provisioner flags

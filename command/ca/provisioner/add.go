@@ -46,6 +46,7 @@ ACME
 **step ca provisioner add** <name> **--type**=ACME
 [**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>]
 [**--attestation-format**=<format>] [**--attestation-roots**=<file>]
+[**--issuer-domain-name**=<domain>] [**--account-hash-prefix**=<prefix>]
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -152,6 +153,8 @@ SCEP
 			challengeFlag,         // ACME + SCEP
 			attestationFormatFlag, // ACME
 			attestationRootsFlag,  // ACME
+			issuerDomainNameFlag,  // ACME
+			accountHashPrefixFlag, // ACME
 
 			// SCEP provisioner flags
 			scepCapabilitiesFlag,
@@ -266,6 +269,13 @@ step ca provisioner add acme --type ACME --force-cn --require-eab
 Create an ACME provisioner for device attestation:
 '''
 step ca provisioner add attestation --type ACME --challenge device-attest-01
+'''
+
+Create an ACME provisioner with persistent DNS validation:
+'''
+step ca provisioner add acme --type ACME --challenge dns-persist-01 \
+  --issuer-domain-name ca.example.com \
+  --account-hash-prefix https://ca.example.com/acme/acme/account-hash/
 '''
 
 Create an K8SSA provisioner:
@@ -609,6 +619,10 @@ func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 					acmeAttestationFormatToLinkedca(ctx.StringSlice("attestation-format")),
 				),
 				AttestationRoots: attestationRoots,
+				IssuerDomainNames: sliceutil.RemoveDuplicates(
+					ctx.StringSlice("issuer-domain-name"),
+				),
+				AccountHashPrefix: ctx.String("account-hash-prefix"),
 			},
 		},
 	}, nil
@@ -906,16 +920,16 @@ func validateChallengeFlag(ctx *cli.Context, typ linkedca.Provisioner_Type) erro
 	case linkedca.Provisioner_ACME:
 		for _, v := range ctx.StringSlice("challenge") {
 			switch strings.ToLower(v) {
-			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01":
+			case "http-01", "dns-01", "dns-persist-01", "tls-alpn-01", "device-attest-01":
 			default:
-				return errs.InvalidFlagValue(ctx, "challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
+				return errs.InvalidFlagValue(ctx, "challenge", v, "http-01, dns-01, dns-persist-01, tls-alpn-01 and device-attest-01")
 			}
 		}
 		for _, v := range ctx.StringSlice("remove-challenge") {
 			switch strings.ToLower(v) {
-			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01":
+			case "http-01", "dns-01", "dns-persist-01", "tls-alpn-01", "device-attest-01":
 			default:
-				return errs.InvalidFlagValue(ctx, "remove-challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
+				return errs.InvalidFlagValue(ctx, "remove-challenge", v, "http-01, dns-01, dns-persist-01, tls-alpn-01 and device-attest-01")
 			}
 		}
 
@@ -958,6 +972,8 @@ func acmeChallengeToLinkedca(challenges []string) []linkedca.ACMEProvisioner_Cha
 			ret = append(ret, linkedca.ACMEProvisioner_HTTP_01)
 		case "dns-01":
 			ret = append(ret, linkedca.ACMEProvisioner_DNS_01)
+		case "dns-persist-01":
+			ret = append(ret, linkedca.ACMEProvisioner_DNS_PERSIST_01)
 		case "tls-alpn-01":
 			ret = append(ret, linkedca.ACMEProvisioner_TLS_ALPN_01)
 		case "device-attest-01":
