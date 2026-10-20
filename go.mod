@@ -3,7 +3,7 @@ module github.com/smallstep/cli
 go 1.26.0
 
 require (
-	github.com/Microsoft/go-winio v0.6.2
+	github.com/Microsoft/go-winio v0.6.4
 	github.com/ccoveille/go-safecast/v2 v2.0.1
 	github.com/fxamacker/cbor/v2 v2.9.6
 	github.com/go-jose/go-jose/v3 v3.0.5
@@ -112,7 +112,7 @@ require (
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/sirupsen/logrus v1.10.1 // indirect
+	github.com/sirupsen/logrus v1.10.2 // indirect
 	github.com/smallstep/nosql v0.8.0 // indirect
 	github.com/smallstep/pkcs7 v0.2.1 // indirect
 	github.com/smallstep/scep v0.0.0-20250318231241-a25cabb69492 // indirect
