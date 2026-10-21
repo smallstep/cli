@@ -37,6 +37,11 @@ an existing SSH Certificate and key pair to authenticate and templatize the
 request. It writes the new certificate to disk - either overwriting
 <ssh-cert> or using new files when the **--out**=<file> flag is used.
 
+When the CA also renews an X.509 identity, issuer-validity truncation warnings
+are printed to stderr after the credentials are written. These warnings do not
+change successful exit status or the SSH certificate's validity. Offline SSH
+rekey does not renew an X.509 identity.
+
 ## POSITIONAL ARGUMENTS
 
 <ssh-cert>
@@ -194,5 +199,6 @@ func rekeyAction(ctx *cli.Context) error {
 	ui.PrintSelected("Public Key", newPubFile)
 	ui.PrintSelected("Certificate", newCertFile)
 
+	cautils.PrintCertificateWarnings(os.Stderr, resp.Warnings)
 	return nil
 }
