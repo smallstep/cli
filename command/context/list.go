@@ -3,6 +3,7 @@ package context
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/cli-utils/command"
@@ -37,12 +38,20 @@ ssh.beta
 func listAction(*cli.Context) error {
 	cs := step.Contexts()
 
+	contexts := cs.ListAlphabetical()
+	if len(contexts) == 0 {
+		// Printing nothing and exiting 0 is indistinguishable from a STEPPATH
+		// that has contexts but none of them listable, so say so and fail the
+		// way `step context current` does when there is nothing selected.
+		return errors.New("no contexts present")
+	}
+
 	cur := cs.GetCurrent()
 	if cur != nil {
 		fmt.Printf("▶ %s\n", cur.Name)
 	}
 
-	for _, v := range cs.ListAlphabetical() {
+	for _, v := range contexts {
 		if cur != nil && v.Name == cur.Name {
 			continue
 		}
