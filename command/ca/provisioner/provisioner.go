@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -105,6 +106,15 @@ type crudClient interface {
 func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 	unauthAdminClient, err := cautils.NewUnauthenticatedAdminClient(cliCtx)
 	if err != nil {
+		// Documented offline workflow: `step ca provisioner add ... --ca-config
+		// ca.json` edits the file locally and must not require --ca-url/--root
+		// when those flags are absent. Fall back only when the config file
+		// exists; otherwise keep the original admin-client error.
+		if cfgFile != "" {
+			if _, statErr := os.Stat(cfgFile); statErr == nil {
+				return newLocalCaConfigClient(cfgFile)
+			}
+		}
 		return nil, fmt.Errorf("error generating admin client: %w", err)
 	}
 
@@ -113,22 +123,26 @@ func newCRUDClient(cliCtx *cli.Context, cfgFile string) (crudClient, error) {
 	err = unauthAdminClient.IsEnabled()
 	switch {
 	case errors.As(err, &netErr) || errors.Is(err, ca.ErrAdminAPINotImplemented):
-		ui.PrintSelected("CA Configuration", cfgFile)
-		cfg, err := config.LoadConfiguration(cfgFile)
-		if err != nil {
-			return nil, fmt.Errorf("error loading configuration: %w", err)
-		}
-		// Assume the ca.json is already valid to avoid enabling all the
-		// features present in step-ca just to modify the provisioners.
-		cfg.SkipValidation = true
-
-		ui.Println()
-		return newCaConfigClient(context.Background(), cfg, cfgFile)
+		return newLocalCaConfigClient(cfgFile)
 	case errors.Is(err, ca.ErrAdminAPINotAuthorized):
 		return cautils.NewAdminClient(cliCtx)
 	default:
 		return nil, err
 	}
+}
+
+func newLocalCaConfigClient(cfgFile string) (crudClient, error) {
+	ui.PrintSelected("CA Configuration", cfgFile)
+	cfg, err := config.LoadConfiguration(cfgFile)
+	if err != nil {
+		return nil, fmt.Errorf("error loading configuration: %w", err)
+	}
+	// Assume the ca.json is already valid to avoid enabling all the
+	// features present in step-ca just to modify the provisioners.
+	cfg.SkipValidation = true
+
+	ui.Println()
+	return newCaConfigClient(context.Background(), cfg, cfgFile)
 }
 
 func parseInstanceAge(ctx *cli.Context) (age string, err error) {
