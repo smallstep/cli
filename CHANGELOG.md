@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Support for inspecting certificates with post-quantum algorithms ML-DSA and
   SLH-DSA (smallstep/certinfo#69).
+- Show the enrollment time in the `Step Managed Device` extension of a
+  certificate when it is present (smallstep/certinfo#96).
 
 ### Changed
 
