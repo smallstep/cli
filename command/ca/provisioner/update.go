@@ -46,7 +46,22 @@ ACME
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
 [**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
 [**--attestation-format**=<format>] [**--remove-attestation-format**=<format>]
-[**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
+[**--attestation-roots**=<file>] [**--remote-attestation-require**]
+[**--remote-attestation-format**=<format>]... [**--remove-remote-attestation-format**=<format>]...
+[**--remote-attestation-claims-hint**=<claim>]... [**--remove-remote-attestation-claims-hint**=<claim>]...
+[**--remote-attestation-tdx-roots**=<file>] [**--remote-attestation-sev-snp-roots**=<file>]
+[**--remote-attestation-cs-roots**=<file>] [**--remote-attestation-cs-audience**=<audience>]
+[**--remote-attestation-cs-max-token-age**=<duration>]
+[**--remote-attestation-cs-image-digest**=<digest>]... [**--remove-remote-attestation-cs-image-digest**=<digest>]...
+[**--remote-attestation-cs-image-signer-key-id**=<id>]... [**--remove-remote-attestation-cs-image-signer-key-id**=<id>]...
+[**--remote-attestation-cs-require-support-attribute**=<attribute>]...
+[**--remove-remote-attestation-cs-require-support-attribute**=<attribute>]...
+[**--remote-attestation-cs-hwmodel**=<model>]... [**--remove-remote-attestation-cs-hwmodel**=<model>]...
+[**--remote-attestation-cs-swname**=<name>]... [**--remove-remote-attestation-cs-swname**=<name>]...
+[**--remote-attestation-cs-project**=<id>]... [**--remove-remote-attestation-cs-project**=<id>]...
+[**--remote-attestation-cs-service-account**=<email>]...
+[**--remove-remote-attestation-cs-service-account**=<email>]...
+[**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
 [**--x509-template**=<file>] [**--x509-template-data**=<file>]
@@ -150,6 +165,32 @@ SCEP
 			attestationFormatFlag,       // ACME
 			removeAttestationFormatFlag, // ACME
 			attestationRootsFlag,        // ACME
+
+			// ACME remote-attest-01 flags
+			remoteAttestationRequireFlag,
+			remoteAttestationFormatFlag,
+			removeRemoteAttestationFormatFlag,
+			remoteAttestationClaimsHintFlag,
+			removeRemoteAttestationClaimsHintFlag,
+			remoteAttestationTDXRootsFlag,
+			remoteAttestationSEVSNPRootsFlag,
+			remoteAttestationCSRootsFlag,
+			remoteAttestationCSAudienceFlag,
+			remoteAttestationCSMaxTokenAgeFlag,
+			remoteAttestationCSImageDigestFlag,
+			removeRemoteAttestationCSImageDigestFlag,
+			remoteAttestationCSImageSignerKeyIDFlag,
+			removeRemoteAttestationCSImageSignerKeyIDFlag,
+			remoteAttestationCSRequireSupportAttributeFlag,
+			removeRemoteAttestationCSRequireSupportAttributeFlag,
+			remoteAttestationCSHWModelFlag,
+			removeRemoteAttestationCSHWModelFlag,
+			remoteAttestationCSSWNameFlag,
+			removeRemoteAttestationCSSWNameFlag,
+			remoteAttestationCSProjectFlag,
+			removeRemoteAttestationCSProjectFlag,
+			remoteAttestationCSServiceAccountFlag,
+			removeRemoteAttestationCSServiceAccountFlag,
 
 			// SCEP flags
 			scepCapabilitiesFlag,
@@ -273,6 +314,20 @@ step ca provisioner update x5c --x5c-roots x5c_ca.crt
 Update an ACME provisioner:
 '''
 step ca provisioner update acme --force-cn --require-eab
+'''
+
+Update an ACME provisioner to accept Confidential Space workloads of the project
+'workloads' instead of 'staging':
+'''
+step ca provisioner update rats --remote-attestation-cs-project workloads \
+	--remove-remote-attestation-cs-project staging
+'''
+
+Update an ACME provisioner to stop requiring remote attestation and to restore
+Intel's root CA for TDX evidence:
+'''
+step ca provisioner update rats --remote-attestation-require=false \
+	--remote-attestation-tdx-roots ""
 '''
 
 Update an K8SSA provisioner:
@@ -682,7 +737,7 @@ func updateACMEDetails(ctx *cli.Context, p *linkedca.Provisioner) error {
 		}
 		details.AttestationRoots = attestationRoots
 	}
-	return nil
+	return updateRemoteAttestation(ctx, details)
 }
 
 func updateSSHPOPDetails(*cli.Context, *linkedca.Provisioner) error {

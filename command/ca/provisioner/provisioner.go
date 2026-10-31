@@ -352,6 +352,18 @@ identifying information.
 permanent identifier of a device by providing an attestation statement
 containing the identifier of the device.
 
+**remote-attest-01**
+: With the remote attestation challenge (draft-ietf-acme-rats), the client
+proves that it runs in a trusted execution environment by sending evidence: an
+Intel TDX quote, an AMD SEV-SNP attestation report, or a Google Cloud
+Confidential Space token. The evidence must bind the SHA-256 digest of the key
+authorization of the challenge followed by the DER SubjectPublicKeyInfo of the
+key the certificate will be issued for, which makes it fresh, ties it to the
+account and attests the key. The '--remote-attestation-*' flags set the
+accepted formats, their roots, and the values a Confidential Space workload
+must match. To admit only known clients, require External Account Binding with
+'--require-eab' and give each client its own key.
+
 If the provisioner has no challenges configured, http-01, dns-01 and tls-alpn-01
 will be automatically enabled.`,
 	}

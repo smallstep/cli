@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   SLH-DSA (smallstep/certinfo#69).
 - Show the enrollment time in the `Step Managed Device` extension of a
   certificate when it is present (smallstep/certinfo#96).
+- `step ca provisioner add` and `step ca provisioner update` configure the ACME
+  `remote-attest-01` challenge (draft-ietf-acme-rats):
+  `--challenge remote-attest-01` enables it, and the `--remote-attestation-*`
+  flags set whether every order requires it, the accepted evidence formats
+  (`tdx`, `sev-snp` and `confidential-space`), the claims hint, the Intel TDX
+  and AMD SEV-SNP roots, and the roots, audience, maximum token age and
+  expected workload of Google Cloud Confidential Space tokens. `update` removes
+  list values with the matching `--remove-remote-attestation-*` flags.
 
 ### Changed
 

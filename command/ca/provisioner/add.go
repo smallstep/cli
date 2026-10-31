@@ -46,6 +46,16 @@ ACME
 **step ca provisioner add** <name> **--type**=ACME
 [**--force-cn**] [**--require-eab**] [**--challenge**=<challenge>]
 [**--attestation-format**=<format>] [**--attestation-roots**=<file>]
+[**--remote-attestation-require**] [**--remote-attestation-format**=<format>]...
+[**--remote-attestation-claims-hint**=<claim>]...
+[**--remote-attestation-tdx-roots**=<file>] [**--remote-attestation-sev-snp-roots**=<file>]
+[**--remote-attestation-cs-roots**=<file>] [**--remote-attestation-cs-audience**=<audience>]
+[**--remote-attestation-cs-max-token-age**=<duration>]
+[**--remote-attestation-cs-image-digest**=<digest>]...
+[**--remote-attestation-cs-image-signer-key-id**=<id>]...
+[**--remote-attestation-cs-require-support-attribute**=<attribute>]...
+[**--remote-attestation-cs-hwmodel**=<model>]... [**--remote-attestation-cs-swname**=<name>]...
+[**--remote-attestation-cs-project**=<id>]... [**--remote-attestation-cs-service-account**=<email>]...
 [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
 [**--ca-url**=<uri>] [**--root**=<file>] [**--context**=<name>] [**--ca-config**=<file>]
@@ -152,6 +162,23 @@ SCEP
 			challengeFlag,         // ACME + SCEP
 			attestationFormatFlag, // ACME
 			attestationRootsFlag,  // ACME
+
+			// ACME remote-attest-01 flags
+			remoteAttestationRequireFlag,
+			remoteAttestationFormatFlag,
+			remoteAttestationClaimsHintFlag,
+			remoteAttestationTDXRootsFlag,
+			remoteAttestationSEVSNPRootsFlag,
+			remoteAttestationCSRootsFlag,
+			remoteAttestationCSAudienceFlag,
+			remoteAttestationCSMaxTokenAgeFlag,
+			remoteAttestationCSImageDigestFlag,
+			remoteAttestationCSImageSignerKeyIDFlag,
+			remoteAttestationCSRequireSupportAttributeFlag,
+			remoteAttestationCSHWModelFlag,
+			remoteAttestationCSSWNameFlag,
+			remoteAttestationCSProjectFlag,
+			remoteAttestationCSServiceAccountFlag,
 
 			// SCEP provisioner flags
 			scepCapabilitiesFlag,
@@ -266,6 +293,19 @@ step ca provisioner add acme --type ACME --force-cn --require-eab
 Create an ACME provisioner for device attestation:
 '''
 step ca provisioner add attestation --type ACME --challenge device-attest-01
+'''
+
+Create an ACME provisioner that requires remote attestation for every
+certificate, from Intel TDX, AMD SEV-SNP or Confidential Space workloads, the
+last in the project 'workloads' on a STABLE image, and External Account Binding
+for account creation:
+'''
+step ca provisioner add rats --type ACME --challenge remote-attest-01 \
+	--require-eab --remote-attestation-require \
+	--remote-attestation-format tdx --remote-attestation-format sev-snp \
+	--remote-attestation-format confidential-space \
+	--remote-attestation-cs-project workloads \
+	--remote-attestation-cs-require-support-attribute STABLE
 '''
 
 Create an K8SSA provisioner:
@@ -597,19 +637,23 @@ func createACMEDetails(ctx *cli.Context) (*linkedca.ProvisionerDetails, error) {
 	if err != nil {
 		return nil, err
 	}
+	details := &linkedca.ACMEProvisioner{
+		ForceCn:    ctx.Bool("force-cn"),
+		RequireEab: ctx.Bool("require-eab"),
+		Challenges: sliceutil.RemoveDuplicates(
+			acmeChallengeToLinkedca(ctx.StringSlice("challenge")),
+		),
+		AttestationFormats: sliceutil.RemoveDuplicates(
+			acmeAttestationFormatToLinkedca(ctx.StringSlice("attestation-format")),
+		),
+		AttestationRoots: attestationRoots,
+	}
+	if err := updateRemoteAttestation(ctx, details); err != nil {
+		return nil, err
+	}
 	return &linkedca.ProvisionerDetails{
 		Data: &linkedca.ProvisionerDetails_ACME{
-			ACME: &linkedca.ACMEProvisioner{
-				ForceCn:    ctx.Bool("force-cn"),
-				RequireEab: ctx.Bool("require-eab"),
-				Challenges: sliceutil.RemoveDuplicates(
-					acmeChallengeToLinkedca(ctx.StringSlice("challenge")),
-				),
-				AttestationFormats: sliceutil.RemoveDuplicates(
-					acmeAttestationFormatToLinkedca(ctx.StringSlice("attestation-format")),
-				),
-				AttestationRoots: attestationRoots,
-			},
+			ACME: details,
 		},
 	}, nil
 }
@@ -906,16 +950,16 @@ func validateChallengeFlag(ctx *cli.Context, typ linkedca.Provisioner_Type) erro
 	case linkedca.Provisioner_ACME:
 		for _, v := range ctx.StringSlice("challenge") {
 			switch strings.ToLower(v) {
-			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01":
+			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01", "remote-attest-01":
 			default:
-				return errs.InvalidFlagValue(ctx, "challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
+				return errs.InvalidFlagValue(ctx, "challenge", v, "http-01, dns-01, tls-alpn-01, device-attest-01 and remote-attest-01")
 			}
 		}
 		for _, v := range ctx.StringSlice("remove-challenge") {
 			switch strings.ToLower(v) {
-			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01":
+			case "http-01", "dns-01", "tls-alpn-01", "device-attest-01", "remote-attest-01":
 			default:
-				return errs.InvalidFlagValue(ctx, "remove-challenge", v, "http-01, dns-01, tls-alpn-01 and device-attest-01")
+				return errs.InvalidFlagValue(ctx, "remove-challenge", v, "http-01, dns-01, tls-alpn-01, device-attest-01 and remote-attest-01")
 			}
 		}
 
@@ -962,6 +1006,8 @@ func acmeChallengeToLinkedca(challenges []string) []linkedca.ACMEProvisioner_Cha
 			ret = append(ret, linkedca.ACMEProvisioner_TLS_ALPN_01)
 		case "device-attest-01":
 			ret = append(ret, linkedca.ACMEProvisioner_DEVICE_ATTEST_01)
+		case "remote-attest-01":
+			ret = append(ret, linkedca.ACMEProvisioner_REMOTE_ATTEST_01)
 		}
 	}
 	return ret
