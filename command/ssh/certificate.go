@@ -55,6 +55,11 @@ certificate using [step certificates](https://github.com/smallstep/certificates)
 With a certificate clients or servers may trust only the CA key and verify its
 signature on a certificate rather than trusting many user/host keys.
 
+When the CA also issues an X.509 identity, issuer-validity truncation warnings
+are printed to stderr after the credentials are written. These warnings do not
+change successful exit status or the SSH certificate's validity. Offline SSH
+issuance does not issue an X.509 identity.
+
 Note that not all the provisioner types will be able to generate user and host
 certificates. Currently JWK provisioners can generate both, but with an OIDC
 provisioner you will only be able to generate user certificates unless you are
@@ -545,6 +550,7 @@ func certificateAction(ctx *cli.Context) error {
 		ui.PrintSelected("Add User Certificate", baseName+"-provisioner-cert.pub")
 	}
 
+	cautils.PrintCertificateWarnings(os.Stderr, resp.Warnings)
 	return nil
 }
 

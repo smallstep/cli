@@ -31,6 +31,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- Display issuer-validity truncation warnings on stderr after successful native
+  CA issuance, renewal, rekey, admin login, and SSH-associated X.509 identity
+  operations, including offline X.509 operations and renewal daemons, without
+  changing successful exit status
+  ([smallstep/certificates#381](https://github.com/smallstep/certificates/issues/381)).
+
+### Fixed
+
+- Keep certificate warnings nonfatal when stderr is a broken pipe, without
+  changing process-wide signal handling
+  ([smallstep/certificates#560](https://github.com/smallstep/certificates/issues/560)).
+- Display X.509 identity validity warnings during implicit SSH proxy login and
+  automatic login after an unauthorized response
+  ([smallstep/certificates#560](https://github.com/smallstep/certificates/issues/560)).
+
 ## [0.31.0] - 2026-09-25
 
 ### Added
