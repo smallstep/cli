@@ -61,6 +61,11 @@ Bundle an end certificate with the issuing certificate:
 $ step certificate bundle ./baz.crt ./foo.crt bundle.crt
 '''
 
+Split a bundle back into its leaf and intermediate certificates:
+'''
+$ step certificate unbundle --leaf --out leaf.crt bundle.crt
+'''
+
 Convert PEM format certificate to DER and write to disk.
 '''
 $ step certificate format foo.pem --out foo.der
@@ -83,6 +88,7 @@ $ step certificate uninstall root-ca.crt
 
 		Subcommands: cli.Commands{
 			bundleCommand(),
+			unbundleCommand(),
 			createCommand(),
 			formatCommand(),
 			inspectCommand(),
