@@ -288,7 +288,11 @@ func (f *CertificateFlow) Sign(ctx *cli.Context, tok string, csr api.Certificate
 		}
 		data = append(data, pem.EncodeToMemory(pemblk)...)
 	}
-	return fileutil.WriteFile(crtFile, data, 0o600)
+	if err := fileutil.WriteFile(crtFile, data, 0o600); err != nil {
+		return err
+	}
+	PrintCertificateWarnings(os.Stderr, resp.Warnings)
+	return nil
 }
 
 // CreateSignRequest is a helper function that given an x509 OTT returns a

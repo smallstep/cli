@@ -35,6 +35,11 @@ func certificateCommand() cli.Command {
 [**--context**=<name>]`,
 		Description: `**step ca certificate** command generates a new certificate pair
 
+For native CA issuance, including **--offline**, issuer-validity truncation
+warnings are printed to stderr after the certificate is written. These warnings
+do not change successful exit status. ACME issuance does not provide native CA
+warning metadata.
+
 ## POSITIONAL ARGUMENTS
 
 <subject>

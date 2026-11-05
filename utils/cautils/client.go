@@ -14,6 +14,7 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
@@ -117,6 +118,7 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		adminKeyFile  = ctx.String("admin-key")
 		adminCert     []*x509.Certificate
 		adminKey      any
+		warnings      []apiv1.CertificateWarning
 	)
 	if adminCertFile != "" || adminKeyFile != "" {
 		if adminCertFile == "" {
@@ -194,11 +196,19 @@ func NewAdminClient(ctx *cli.Context, opts ...ca.ClientOption) (*ca.AdminClient,
 		for i, c := range signResponse.CertChainPEM {
 			adminCert[i] = c.Certificate
 		}
+		warnings = signResponse.Warnings
 	}
 
 	// Create online client
 	opts = append([]ca.ClientOption{ca.WithRootFile(root),
 		ca.WithAdminX5C(adminCert, adminKey, ctx.String("password-file"))},
 		opts...)
-	return ca.NewAdminClient(caURL, opts...)
+	client, err := ca.NewAdminClient(caURL, opts...)
+	if err != nil {
+		return nil, err
+	}
+	if len(warnings) > 0 {
+		PrintCertificateWarnings(os.Stderr, warnings)
+	}
+	return client, nil
 }
