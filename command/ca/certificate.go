@@ -29,6 +29,8 @@ func certificateCommand() cli.Command {
 [**--san**=<SAN>] [**--set**=<key=value>] [**--set-file**=<file>]
 [**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>]
+[**--eab-key-id**=<id>] [**--eab-hmac-key-file**=<file>]
+[**--remote-attestation-plugin**=<name>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
 [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]
 [**--offline**] [**--password-file**] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -156,6 +158,22 @@ step CA does not impose this requirement.
 '''
 $ step ca certificate foo.internal foo.crt foo.key \
 --acme https://acme-staging-v02.api.letsencrypt.org/directory --san bar.internal
+'''
+
+Request a new certificate from an ACME provisioner that requires external
+account binding:
+'''
+$ step ca certificate foo.internal foo.crt foo.key --provisioner my-acme-provisioner \
+--eab-key-id $KEY_ID --eab-hmac-key-file eab.key
+'''
+
+Request a new certificate with the ACME remote-attest-01 challenge, from a
+trusted execution environment. The plugin **step-tee-plugin** reads the evidence.
+The <subject> is sent as the order's hint and doesn't name the certificate: the
+request has no names, and the provisioner decides them.
+'''
+$ step ca certificate my-hint foo.crt foo.key --provisioner my-acme-provisioner \
+--remote-attestation-plugin tee
 '''`,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
@@ -181,6 +199,20 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 				Name:  "tpm-storage-directory",
 				Usage: "The directory where TPM keys and certificates will be stored",
 				Value: filepath.Join(step.Path(), "tpm"),
+			},
+			cli.StringFlag{
+				Name: "remote-attestation-plugin",
+				Usage: `The <name> of the plugin that reads attestation evidence for the ACME
+remote-attest-01 challenge. **step-<name>-plugin attest --binding <hex>** must print the
+evidence in the form the challenge takes.`,
+			},
+			cli.StringFlag{
+				Name:  "eab-key-id",
+				Usage: "The <id> of the external account key to bind the ACME account to",
+			},
+			cli.StringFlag{
+				Name:  "eab-hmac-key-file",
+				Usage: "The <file> holding the HMAC key of the external account key, base64 encoded",
 			},
 			flags.TemplateSet,
 			flags.TemplateSetFile,
@@ -245,6 +277,20 @@ func certificateAction(ctx *cli.Context) error {
 		// expects all necessary parameters in the attestation-uri, and having
 		// both can be confusing.
 		return errs.IncompatibleFlagWithFlag(ctx, "attestation-uri", "kms")
+	case ctx.String("eab-key-id") != "" && ctx.String("eab-hmac-key-file") == "":
+		return errs.RequiredWithFlag(ctx, "eab-key-id", "eab-hmac-key-file")
+	case ctx.String("eab-hmac-key-file") != "" && ctx.String("eab-key-id") == "":
+		return errs.RequiredWithFlag(ctx, "eab-hmac-key-file", "eab-key-id")
+	}
+
+	if ctx.String("remote-attestation-plugin") != "" {
+		// The flow orders a remote-attestation identifier and a software key, and
+		// the certificate's names are the CA's to decide.
+		for _, flag := range []string{"attestation-uri", "kms", "san", "token", "offline"} {
+			if ctx.IsSet(flag) {
+				return errs.IncompatibleFlagWithFlag(ctx, "remote-attestation-plugin", flag)
+			}
+		}
 	}
 
 	// certificate flow unifies online and offline flows on a single api

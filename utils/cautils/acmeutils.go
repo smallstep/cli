@@ -1,6 +1,7 @@
 package cautils
 
 import (
+	"bytes"
 	"context"
 	"crypto"
 	"crypto/ecdsa"
@@ -19,6 +20,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -42,6 +44,7 @@ import (
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/cryptoutil"
+	"github.com/smallstep/cli/internal/plugin"
 	"github.com/smallstep/cli/utils"
 )
 
@@ -196,6 +199,7 @@ func serveAndValidateHTTPChallenge(ctx *cli.Context, ac *ca.ACMEClient, ch *acme
 
 func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order, af *acmeFlow) error {
 	isAttest := (ctx.String("attestation-uri") != "")
+	isRemoteAttest := (ctx.String("remote-attestation-plugin") != "")
 	for _, azURL := range o.AuthorizationURLs {
 		az, err := ac.GetAuthz(azURL)
 		if err != nil {
@@ -209,8 +213,15 @@ func authorizeOrder(ctx *cli.Context, ac *ca.ACMEClient, o *acme.Order, af *acme
 
 		chValidated := false
 		for _, ch := range az.Challenges {
+			if ch.Type == acme.REMOTEATTEST01 && isRemoteAttest {
+				if err := doRemoteAttestation(ctx, ac, ch, ident, af); err != nil {
+					return err
+				}
+				chValidated = true
+				break
+			}
 			// TODO: Allow other types of challenges (not just http).
-			if ch.Type == "http-01" && !isAttest {
+			if ch.Type == "http-01" && !isAttest && !isRemoteAttest {
 				if err := serveAndValidateHTTPChallenge(ctx, ac, ch, ident); err != nil {
 					return err
 				}
@@ -525,6 +536,50 @@ func doDeviceAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challe
 	return nil
 }
 
+// doRemoteAttestation performs `remote-attest-01` challenge validation
+// (draft-ietf-acme-rats). The plugin reads evidence that binds the challenge,
+// the account and the certificate's key, and prints it in the form the
+// challenge takes, so this works with any evidence format the plugin knows.
+func doRemoteAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challenge, identifier string, af *acmeFlow) error {
+	if ch.FreshnessNonce == "" {
+		return errors.Errorf("the remote-attest-01 challenge at %s has no freshness nonce", ch.URL)
+	}
+	keyAuth, err := acme.KeyAuthorization(ch.FreshnessNonce, ac.Key)
+	if err != nil {
+		return errors.Wrap(err, "error generating ACME key authorization")
+	}
+
+	name, err := plugin.LookPath(clictx.String("remote-attestation-plugin"))
+	if err != nil {
+		return errors.Wrap(err, "error finding the remote attestation plugin")
+	}
+	var stderr bytes.Buffer
+	//nolint:gosec // The plugin is the one named on the command line.
+	cmd := exec.Command(name, "attest", "--binding", acme.RemoteAttestationBinding(keyAuth, af.csr))
+	cmd.Stderr = &stderr
+	record, err := cmd.Output()
+	if err != nil {
+		return errors.Wrapf(err, "error reading evidence with %s: %s", name, strings.TrimSpace(stderr.String()))
+	}
+
+	ui.Printf("Using Remote Attestation challenge to validate %q", identifier)
+	ui.Printf(" .") // Indicates passage of time.
+
+	if err := ac.ValidateWithPayload(ch.URL, bytes.TrimSpace(record)); err != nil {
+		ui.Printf(" Error!\n\n")
+		return errors.Wrapf(err, "error validating ACME Challenge at %s", ch.URL)
+	}
+
+	durationBetweenAttempts := 2 * time.Second
+	if err := getChallengeStatus(ac, ch, durationBetweenAttempts); err != nil {
+		ui.Printf(" Error!\n\n")
+		return err
+	}
+
+	ui.Printf(" done!\n")
+	return nil
+}
+
 // getChallengeStatus retrieves the ACME Challenge status from the CA. It
 // will retry this 10 times if the status is not `invalid` or `valid`. This
 // is the case, for example, when the CA hasn't been able to connect to the
@@ -721,6 +776,64 @@ func (af *acmeFlow) getClientTruststoreOption(mergeRootCAs bool) (ca.ClientOptio
 	return ca.WithTransport(http.DefaultTransport), nil
 }
 
+// getExternalAccountBindingOption returns the client option for the external
+// account key in --eab-key-id and --eab-hmac-key-file. The HMAC key is base64url
+// encoded as step-ca prints it; standard base64 is accepted too.
+func (af *acmeFlow) getExternalAccountBindingOption() (ca.ClientOption, error) {
+	file := af.ctx.String("eab-hmac-key-file")
+	b, err := os.ReadFile(file)
+	if err != nil {
+		return nil, errs.FileError(err, file)
+	}
+	encoded := strings.TrimRight(strings.TrimSpace(string(b)), "=")
+	enc := base64.RawURLEncoding
+	if strings.ContainsAny(encoded, "+/") {
+		enc = base64.RawStdEncoding
+	}
+	hmacKey, err := enc.DecodeString(encoded)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error decoding the HMAC key in %s", file)
+	}
+	return ca.WithExternalAccountBinding(af.ctx.String("eab-key-id"), hmacKey), nil
+}
+
+// newRemoteAttestationOrder returns the new order request of a remote-attest-01
+// flow, whose one identifier carries the subject as its hint. It also generates
+// the certificate's key and request, since the evidence binds the key and so it
+// must exist before the challenge is answered. The request has no names, since
+// the order names none: the CA, its template and its webhooks decide them.
+func (af *acmeFlow) newRemoteAttestationOrder() (*acmeAPI.NewOrderRequest, error) {
+	nbf, naf, err := flags.ParseTimeDuration(af.ctx)
+	if err != nil {
+		return nil, err
+	}
+	kty, crv, size, err := utils.GetKeyDetailsFromCLI(af.ctx, af.ctx.Bool("insecure"), "kty", "curve", "size")
+	if err != nil {
+		return nil, err
+	}
+	signer, err := keyutil.GenerateSigner(kty, crv, size)
+	if err != nil {
+		return nil, errors.Wrap(err, "error generating private key")
+	}
+	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &x509.CertificateRequest{}, signer)
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating certificate request")
+	}
+	af.csr, err = x509.ParseCertificateRequest(csrBytes)
+	if err != nil {
+		return nil, errors.Wrap(err, "error parsing certificate request")
+	}
+	af.priv = signer
+	return &acmeAPI.NewOrderRequest{
+		Identifiers: []acme.Identifier{{
+			Type:  acme.RemoteAttestation,
+			Value: af.subject,
+		}},
+		NotBefore: nbf.Time(),
+		NotAfter:  naf.Time(),
+	}, nil
+}
+
 func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	var (
 		err             error
@@ -730,12 +843,18 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 	)
 
 	attestationURI := af.ctx.String("attestation-uri")
-	if attestationURI == "" {
+	switch {
+	case af.ctx.String("remote-attestation-plugin") != "":
+		newOrderRequest, err = af.newRemoteAttestationOrder()
+		if err != nil {
+			return nil, err
+		}
+	case attestationURI == "":
 		newOrderRequest, dnsNames, ips, err = createNewOrderRequest(af.ctx, af.acmeDir, af.subject, af.sans)
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	default:
 		// parse times or durations
 		nbf, naf, err := flags.ParseTimeDuration(af.ctx)
 		if err != nil {
@@ -758,12 +877,20 @@ func (af *acmeFlow) GetCertificate() ([]*x509.Certificate, error) {
 		return nil, errors.Wrap(err, "error marshaling order request")
 	}
 
-	ops, err := af.getClientTruststoreOption(af.ctx.IsSet("acme"))
+	truststore, err := af.getClientTruststoreOption(af.ctx.IsSet("acme"))
 	if err != nil {
 		return nil, err
 	}
+	ops := []ca.ClientOption{truststore}
+	if af.ctx.String("eab-key-id") != "" {
+		eab, err := af.getExternalAccountBindingOption()
+		if err != nil {
+			return nil, err
+		}
+		ops = append(ops, eab)
+	}
 
-	ac, err := ca.NewACMEClient(af.acmeDir, af.ctx.StringSlice("contact"), ops)
+	ac, err := ca.NewACMEClient(af.acmeDir, af.ctx.StringSlice("contact"), ops...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error initializing ACME client with server %s", af.acmeDir)
 	}
