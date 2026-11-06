@@ -554,7 +554,7 @@ func doRemoteAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challe
 		return errors.Wrap(err, "error finding the remote attestation plugin")
 	}
 	var stderr bytes.Buffer
-	//nolint:gosec // The plugin is the one named on the command line.
+	// The plugin is the one named on the command line.
 	cmd := exec.Command(name, "attest", "--binding", acme.RemoteAttestationBinding(keyAuth, af.csr))
 	cmd.Stderr = &stderr
 	record, err := cmd.Output()
