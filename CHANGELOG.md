@@ -21,6 +21,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Enforce the minimum HMAC key lengths from RFC 7518 §3.2 after migrating to
+  go-jose v4. `oct` keys must now be at least 32 bytes for HS256, 48 bytes for
+  HS384, and 64 bytes for HS512. `step crypto jwk create` rejects smaller values
+  for `--size`, and `--insecure` no longer overrides the minimum. Existing
+  shorter keys can no longer be used with the `step crypto jwt` commands and
+  must be replaced (smallstep/cli#1732, smallstep/crypto#1157).
+- Require the `--size` of `oct` keys in `step crypto jwk create` to match the
+  AES key wrap algorithm exactly: 16 bytes for A128KW and A128GCMKW, 24 bytes for
+  A192KW and A192GCMKW, and 32 bytes for A256KW and A256GCMKW
+  (smallstep/cli#1732, smallstep/crypto#1157).
+
 ### Deprecated
 
 ### Removed
