@@ -17,7 +17,6 @@ import (
 	"testing"
 	"time"
 
-	gojose "github.com/go-jose/go-jose/v3"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	"github.com/rogpeppe/go-internal/testscript"
@@ -502,7 +501,7 @@ func createToken(t *testing.T, jwk *jose.JSONWebKey, now time.Time) string {
 	require.NoError(t, err)
 
 	payload := make(map[string]any)
-	raw, err := jose.Signed(signer).Claims(c).Claims(payload).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c).Claims(payload).Serialize()
 	require.NoError(t, err)
 
 	return raw
@@ -527,11 +526,11 @@ func readKey(t *testing.T, file string) (*jose.JSONWebKey, []byte) {
 	return jwk, b
 }
 
-func readKeySet(t *testing.T, file string) (*gojose.JSONWebKeySet, []byte) {
+func readKeySet(t *testing.T, file string) (*jose.JSONWebKeySet, []byte) {
 	t.Helper()
 
 	b := readBytes(t, file)
-	var jwks gojose.JSONWebKeySet
+	var jwks jose.JSONWebKeySet
 	err := json.Unmarshal(b, &jwks)
 	require.NoError(t, err)
 

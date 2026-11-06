@@ -236,7 +236,7 @@ func verifyAction(ctx *cli.Context) error {
 
 	expected := jose.Expected{Issuer: iss}
 	if aud != "" {
-		expected.Audience = jose.Audience{aud}
+		expected.AnyAudience = jose.Audience{aud}
 	}
 	if tClaims.Expiry != nil || tClaims.NotBefore != nil {
 		expected.Time = time.Now()
@@ -268,7 +268,7 @@ func validateClaimsWithLeeway(ctx *cli.Context, c jose.Claims, e jose.Expected, 
 		ers = append(ers, "invalid ID claim (jti)")
 	}
 
-	for _, v := range e.Audience {
+	for _, v := range e.AnyAudience {
 		if !c.Audience.Contains(v) {
 			ers = append(ers, "invalid audience claim (aud)")
 			break

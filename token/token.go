@@ -96,7 +96,7 @@ func (c *Claims) Sign(alg jose.SignatureAlgorithm, key any) (string, error) {
 		c.Set("aud", c.Audience[0])
 	}
 
-	raw, err := jose.Signed(signer).Claims(c.Claims).Claims(c.ExtraClaims).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c.Claims).Claims(c.ExtraClaims).Serialize()
 	if err != nil {
 		return "", errors.Wrapf(err, "error serializing JWT")
 	}
