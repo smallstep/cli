@@ -454,7 +454,7 @@ func signAction(ctx *cli.Context) error {
 		aud["aud"] = c.Audience[0]
 	}
 
-	raw, err := jose.Signed(signer).Claims(c).Claims(aud).Claims(payload).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c).Claims(aud).Claims(payload).Serialize()
 	if err != nil {
 		return errors.Wrapf(err, "error serializing JWT")
 	}

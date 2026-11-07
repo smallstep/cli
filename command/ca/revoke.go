@@ -14,6 +14,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/ocsp"
 
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
@@ -25,7 +26,6 @@ import (
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
-	"golang.org/x/crypto/ocsp"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"

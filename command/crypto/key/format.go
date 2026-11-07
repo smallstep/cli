@@ -13,6 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
+	"golang.org/x/crypto/ssh"
+
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
@@ -20,7 +22,6 @@ import (
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/mldsa"
 	"go.step.sm/crypto/pemutil"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"

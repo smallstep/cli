@@ -1,36 +1,110 @@
 # oct defaults
-exec step crypto jwk create --password-file password.txt --kty oct oct-defaults.pub oct-defaults.priv 
+exec step crypto jwk create --password-file password.txt --kty oct oct-defaults.pub oct-defaults.priv
 check_jwk oct-defaults.pub oct-defaults.priv oct HS256
 
 
-# oct too small without insecure fails
-! exec step crypto jwk create --password-file password.txt --size 4 --kty oct fail.pub fail.priv 
-stderr 'flag ''--size'' requires at least 16 unless ''--insecure'' flag is provided'
+# oct default sizes
+check_oct_size oct-defaults.priv 32
+
+exec step crypto jwk create --password-file password.txt --kty oct --use enc oct-default-enc.pub oct-default-enc.priv
+check_jwk oct-default-enc.pub oct-default-enc.priv oct A256GCMKW
+check_oct_size oct-default-enc.priv 32
+
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS384 oct-default-hs384.pub oct-default-hs384.priv
+check_jwk oct-default-hs384.pub oct-default-hs384.priv oct HS384
+check_oct_size oct-default-hs384.priv 48
+
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS512 oct-default-hs512.pub oct-default-hs512.priv
+check_jwk oct-default-hs512.pub oct-default-hs512.priv oct HS512
+check_oct_size oct-default-hs512.priv 64
+
+exec step crypto jwk create --password-file password.txt --kty oct --alg A128KW --use enc oct-default-a128kw.pub oct-default-a128kw.priv
+check_jwk oct-default-a128kw.pub oct-default-a128kw.priv oct A128KW
+check_oct_size oct-default-a128kw.priv 16
+
+exec step crypto jwk create --password-file password.txt --kty oct --alg A192GCMKW --use enc oct-default-a192gcmkw.pub oct-default-a192gcmkw.priv
+check_jwk oct-default-a192gcmkw.pub oct-default-a192gcmkw.priv oct A192GCMKW
+check_oct_size oct-default-a192gcmkw.priv 24
+
+exec step crypto jwk create --password-file password.txt --kty oct --alg dir --use enc oct-default-dir.pub oct-default-dir.priv
+check_jwk oct-default-dir.pub oct-default-dir.priv oct dir
+check_oct_size oct-default-dir.priv 32
 
 
-# oct small size with insecure
-exec step crypto jwk create --password-file password.txt --kty oct --size 4 --insecure oct-small.pub oct-small.priv 
-check_jwk oct-small.pub oct-small.priv oct HS256
+# oct has no default kid
+! grep '"kid"' oct-defaults.pub
 
 
-# oct size 0 with insecure fails
-! exec step crypto jwk create --password-file password.txt --size 0 --insecure --kty oct fail.pub fail.priv 
-stderr 'must be greater than or equal to 0'
+# oct with kid
+exec step crypto jwk create --password-file password.txt --kty oct --kid foo oct-kid.pub oct-kid.priv
+check_jwk oct-kid.pub oct-kid.priv oct HS256
+grep '"kid": "foo"' oct-kid.pub
 
 
-# oct HS256
-exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 64 oct-hs256.pub oct-hs256.priv 
+# oct algorithm without a defined size too small
+! exec step crypto jwk create --password-file password.txt --kty oct --alg foo --use foo --size 15 fail.pub fail.priv
+stderr 'flag ''--size'' requires at least 16 bytes unless ''--insecure'' flag is provided'
+
+
+# oct size checks do not set the algorithm of a PEM key
+exec step crypto keypair --no-password --insecure --kty RSA rsa.pub rsa.pem
+! exec step crypto jwk create --password-file password.txt --from-pem rsa.pem --kty oct --size 32 fail.pub fail.priv
+stderr 'flag ''--alg'' is required with the given key'
+
+
+# oct too small
+! exec step crypto jwk create --password-file password.txt --size 4 --kty oct fail.pub fail.priv
+stderr 'flag ''--size'' must be greater than or equal to 32 bytes'
+
+
+# oct custom use too small
+! exec step crypto jwk create --password-file password.txt --size 4 --kty oct --use foo fail.pub fail.priv
+stderr 'flag ''--size'' must be greater than or equal to 32 bytes'
+
+
+# oct HS256 too small
+! exec step crypto jwk create --password-file password.txt --size 31 --kty oct --alg HS256 fail.pub fail.priv
+stderr 'flag ''--size'' must be greater than or equal to 32 bytes'
+
+
+# oct HS384 too small
+! exec step crypto jwk create --password-file password.txt --size 47 --kty oct --alg HS384 fail.pub fail.priv
+stderr 'flag ''--size'' must be greater than or equal to 48 bytes'
+
+
+# oct HS512 too small
+! exec step crypto jwk create --password-file password.txt --size 63 --kty oct --alg HS512 fail.pub fail.priv
+stderr 'flag ''--size'' must be greater than or equal to 64 bytes'
+
+
+# oct HS256 min size
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 32 oct-hs256.pub oct-hs256.priv
 check_jwk oct-hs256.pub oct-hs256.priv oct HS256
 
 
-# oct HS384
-exec step crypto jwk create --password-file password.txt --kty oct --alg HS384 --size 64 oct-hs384.pub oct-hs384.priv 
+# oct HS384 min size
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS384 --size 48 oct-hs384.pub oct-hs384.priv
 check_jwk oct-hs384.pub oct-hs384.priv oct HS384
 
 
-# oct HS512
-exec step crypto jwk create --password-file password.txt --kty oct --alg HS512 --size 64 oct-hs512.pub oct-hs512.priv 
+# oct HS512 min size
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS512 --size 64 oct-hs512.pub oct-hs512.priv
 check_jwk oct-hs512.pub oct-hs512.priv oct HS512
+
+
+# oct HS256 larger size
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 48 oct-hs256-48.pub oct-hs256-48.priv
+check_jwk oct-hs256-48.pub oct-hs256-48.priv oct HS256
+
+
+# oct HS384 larger size
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS384 --size 64 oct-hs384-64.pub oct-hs384-64.priv
+check_jwk oct-hs384-64.pub oct-hs384-64.priv oct HS384
+
+
+# oct HS512 larger size
+exec step crypto jwk create --password-file password.txt --kty oct --alg HS512 --size 80 oct-hs512-80.pub oct-hs512-80.priv
+check_jwk oct-hs512-80.pub oct-hs512-80.priv oct HS512
 
 
 # oct HS256 with enc use fails
@@ -39,43 +113,103 @@ stderr 'alg ''HS256'' is not compatible with kty ''oct'''
 
 
 # oct enc dir
-exec step crypto jwk create --password-file password.txt --kty oct --alg dir --size 64 --use enc oct-enc-dir.pub oct-enc-dir.priv 
+exec step crypto jwk create --password-file password.txt --kty oct --alg dir --size 64 --use enc oct-enc-dir.pub oct-enc-dir.priv
 check_jwk oct-enc-dir.pub oct-enc-dir.priv oct dir
 
 
+# oct enc dir min size
+exec step crypto jwk create --password-file password.txt --kty oct --alg dir --size 16 --use enc oct-enc-dir-16.pub oct-enc-dir-16.priv
+check_jwk oct-enc-dir-16.pub oct-enc-dir-16.priv oct dir
+
+
+# oct enc dir too small
+! exec step crypto jwk create --password-file password.txt --kty oct --alg dir --size 15 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' requires at least 16 bytes unless ''--insecure'' flag is provided'
+
+
+# oct enc dir too small with insecure
+exec step crypto jwk create --password-file password.txt --insecure --kty oct --alg dir --size 15 --use enc oct-enc-dir-15.pub oct-enc-dir-15.priv
+check_jwk oct-enc-dir-15.pub oct-enc-dir-15.priv oct dir
+
+
+# oct enc dir negative size
+! exec step crypto jwk create --password-file password.txt --kty oct --alg dir --size -1 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' requires at least 16 bytes unless ''--insecure'' flag is provided'
+
+
+# oct enc dir negative size with insecure
+! exec step crypto jwk create --password-file password.txt --insecure --kty oct --alg dir --size -1 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' must be greater than or equal to 1 byte'
+
+
+# oct enc dir zero size
+! exec step crypto jwk create --password-file password.txt --kty oct --alg dir --size 0 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' requires at least 16 bytes unless ''--insecure'' flag is provided'
+
+
+# oct enc dir zero size with insecure
+! exec step crypto jwk create --password-file password.txt --insecure --kty oct --alg dir --size 0 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' must be greater than or equal to 1 byte'
+
+
 # oct A128KW
-exec step crypto jwk create --password-file password.txt --kty oct --alg A128KW --size 32 --use enc oct-a128kw.pub oct-a128kw.priv 
+exec step crypto jwk create --password-file password.txt --kty oct --alg A128KW --size 16 --use enc oct-a128kw.pub oct-a128kw.priv
 check_jwk oct-a128kw.pub oct-a128kw.priv oct A128KW
 
 
 # oct A192KW
-exec step crypto jwk create --password-file password.txt --kty oct --alg A192KW --size 32 --use enc oct-a192kw.pub oct-a192kw.priv 
+exec step crypto jwk create --password-file password.txt --kty oct --alg A192KW --size 24 --use enc oct-a192kw.pub oct-a192kw.priv
 check_jwk oct-a192kw.pub oct-a192kw.priv oct A192KW
 
 
 # oct A256KW
-exec step crypto jwk create --password-file password.txt --kty oct --alg A256KW --size 32 --use enc oct-a256kw.pub oct-a256kw.priv 
+exec step crypto jwk create --password-file password.txt --kty oct --alg A256KW --size 32 --use enc oct-a256kw.pub oct-a256kw.priv
 check_jwk oct-a256kw.pub oct-a256kw.priv oct A256KW
 
 
 # oct A128GCMKW
-exec step crypto jwk create --password-file password.txt --kty oct --alg A128GCMKW --size 32 --use enc oct-a128gcmkw.pub oct-a128gcmkw.priv 
+exec step crypto jwk create --password-file password.txt --kty oct --alg A128GCMKW --size 16 --use enc oct-a128gcmkw.pub oct-a128gcmkw.priv
 check_jwk oct-a128gcmkw.pub oct-a128gcmkw.priv oct A128GCMKW
 
 
 # oct A192GCMKW
-exec step crypto jwk create --password-file password.txt --kty oct --alg A192GCMKW --size 32 --use enc oct-a192gcmkw.pub oct-a192gcmkw.priv 
+exec step crypto jwk create --password-file password.txt --kty oct --alg A192GCMKW --size 24 --use enc oct-a192gcmkw.pub oct-a192gcmkw.priv
 check_jwk oct-a192gcmkw.pub oct-a192gcmkw.priv oct A192GCMKW
 
 
 # oct A256GCMKW
-exec step crypto jwk create --password-file password.txt --kty oct --alg A256GCMKW --size 32 --use enc oct-a256gcmkw.pub oct-a256gcmkw.priv 
+exec step crypto jwk create --password-file password.txt --kty oct --alg A256GCMKW --size 32 --use enc oct-a256gcmkw.pub oct-a256gcmkw.priv
 check_jwk oct-a256gcmkw.pub oct-a256gcmkw.priv oct A256GCMKW
 
 
-# oct 256 HS256 
-exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 32 --kid foo oct-256-hs256.pub oct-256-hs256.priv 
-check_jwk oct-256-hs256.pub oct-256-hs256.priv oct HS256
+# oct A128KW fail
+! exec step crypto jwk create --password-file password.txt --kty oct --alg A128KW --size 32 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' must be equal to 16 bytes'
+
+
+# oct A192KW fail
+! exec step crypto jwk create --password-file password.txt --kty oct --alg A192KW --size 48 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' must be equal to 24 bytes'
+
+
+# oct A256KW fail
+! exec step crypto jwk create --password-file password.txt --kty oct --alg A256KW --size 64 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' must be equal to 32 bytes'
+
+
+# oct A128GCMKW fail
+! exec step crypto jwk create --password-file password.txt --kty oct --alg A128GCMKW --size 32 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' must be equal to 16 bytes'
+
+
+# oct A192GCMKW fail
+! exec step crypto jwk create --password-file password.txt --kty oct --alg A192GCMKW --size 48 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' must be equal to 24 bytes'
+
+
+# oct A256GCMKW fail
+! exec step crypto jwk create --password-file password.txt --kty oct --alg A256GCMKW --size 64 --use enc fail.pub fail.priv
+stderr 'flag ''--size'' must be equal to 32 bytes'
 
 
 # oct with RSA algorithm fails
@@ -83,16 +217,16 @@ check_jwk oct-256-hs256.pub oct-256-hs256.priv oct HS256
 stderr 'alg ''RS256'' is not compatible with kty ''oct'''
 
 
-# oct with curve fails 
+# oct with curve fails
 ! exec step crypto jwk create --password-file password.txt --kty oct --alg HS256 --size 32 --curve P-256 fail.pub fail.priv
 stderr 'flag ''--crv'' is incompatible with ''--kty oct'''
 
 
 # oct without password
-exec step crypto jwk create --no-password --insecure --kty oct oct-no-pass.pub oct-no-pass.priv 
+exec step crypto jwk create --no-password --insecure --kty oct oct-no-pass.pub oct-no-pass.priv
 check_jwk_without_password oct-no-pass.pub oct-no-pass.priv oct HS256
 
 
 # oct without password without insecure fails
-! exec step crypto jwk create --no-password --kty oct fail.pub fail.priv 
+! exec step crypto jwk create --no-password --kty oct fail.pub fail.priv
 stderr 'flag ''--no-password'' requires the ''--insecure'' flag'

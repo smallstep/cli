@@ -6,8 +6,9 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/smallstep/assert"
 	"github.com/urfave/cli"
+
+	"github.com/smallstep/assert"
 	"go.step.sm/crypto/pemutil"
 )
 

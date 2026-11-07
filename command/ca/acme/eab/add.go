@@ -87,7 +87,7 @@ func addAction(ctx *cli.Context) (err error) {
 	// TODO(hs): JSON output, so that executing this command can be more easily automated?
 
 	out := os.Stdout
-	format := "%-36s%-28s%-48s%s\n"
+	format := "%-40s%-28s%-48s%s\n"
 	fmt.Fprintf(out, format, "Key ID", "Provisioner", "Key (base64, raw url encoded)", "Reference")
 	fmt.Fprintf(out, format, cliEAK.id, cliEAK.provisioner, cliEAK.key, cliEAK.reference)
 

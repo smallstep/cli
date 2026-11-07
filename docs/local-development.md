@@ -29,10 +29,11 @@ learn more about `$GOPATH` in the
 ### Installing Dependencies and Bootstrapping
 
 Once you've cloned the repository to the appropriate location, you will now be
-able to install any other dependencies via the `make bootstrap` command.
+able to install GoReleaser Pro, which `make goreleaser` uses, via the
+`make bootstrap` command.
 
-You should only ever need to run this command once, as it will ensure you have
-the right version of `golangci-lint` installed.
+The other development tools, like `golangci-lint`, are defined in `go.mod` and
+run with `go tool`, so the `make` targets that use them do not need any setup.
 
 ### Building step
 

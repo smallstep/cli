@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"go.step.sm/crypto/mldsa"
 )
 

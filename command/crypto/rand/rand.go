@@ -13,7 +13,6 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
-
 	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/randutil"
 )

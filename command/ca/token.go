@@ -7,13 +7,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
+	"golang.org/x/crypto/ssh"
+
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
 	"go.step.sm/crypto/pemutil"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"

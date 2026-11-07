@@ -240,9 +240,12 @@ func encryptAction(ctx *cli.Context) error {
 			KeyID:     kid,
 		}
 	} else {
-		// Public keys are used for encryption
-		jwkPub := jwk.Public()
-		jwk = &jwkPub
+		// Public keys are used for encryption. go-jose JSONWebKey.Public() returns
+		// an empty key for oct, which are symmetric and are used as they are.
+		if !jose.IsSymmetric(jwk) {
+			jwkPub := jwk.Public()
+			jwk = &jwkPub
+		}
 
 		if jwk.Use == "sig" {
 			return errors.New("invalid jwk use: found 'sig' (signature), expecting 'enc' (encryption)")

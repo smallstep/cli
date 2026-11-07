@@ -17,7 +17,6 @@ import (
 	"testing"
 	"time"
 
-	gojose "github.com/go-jose/go-jose/v3"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	"github.com/rogpeppe/go-internal/testscript"
@@ -87,6 +86,7 @@ func TestCryptoJWKCreateOctCommand(t *testing.T) {
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
 			"check_jwk":                  checkKeyPair,
 			"check_jwk_without_password": checkKeyPairWithoutPassword,
+			"check_oct_size":             checkOctKeySize,
 		},
 	})
 }
@@ -192,7 +192,7 @@ func TestCryptoJWTCommand(t *testing.T) {
 			require.NoError(t, err)
 			err = os.WriteFile(filepath.Join(e.Cd, "invalid-header-bad-json.txt"), []byte(createFakeToken(t, `{"kty":"EC","alg":"ES256","}`, parts[1], parts[2])), 0600)
 			require.NoError(t, err)
-			err = os.WriteFile(filepath.Join(e.Cd, "invalid-payload.txt"), []byte(createFakeToken(t, parts[0], "foo", parts[2])), 0600)
+			err = os.WriteFile(filepath.Join(e.Cd, "invalid-payload.txt"), []byte(createTokenWithPayload(t, ed25519JWK, "foo")), 0600)
 			require.NoError(t, err)
 
 			// write tokens created by OpenSSL
@@ -230,6 +230,24 @@ func TestCryptoJWTCommand(t *testing.T) {
 
 			return nil
 		},
+	})
+}
+
+func TestCryptoJWSInspectCommand(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jws-inspect.txtar"},
+	})
+}
+
+func TestCryptoJOSEFormatCommand(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jose-format.txtar"},
+	})
+}
+
+func TestCryptoJWEEncryptCommand(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jwe-encrypt.txtar"},
 	})
 }
 
@@ -345,6 +363,29 @@ func checkKeyPairWithoutPassword(ts *testscript.TestScript, _ bool, args []strin
 	ts.Check(err)
 
 	checkKeyDetails(ts, pub, priv, args)
+}
+
+// checkOctKeySize checks that the password protected oct key in the file in the
+// first argument has the size in bytes given in the second argument.
+func checkOctKeySize(ts *testscript.TestScript, neg bool, args []string) {
+	if neg {
+		ts.Fatalf("unsupported: ! check_oct_size")
+	}
+	if len(args) != 2 {
+		ts.Fatalf("expected 2 arguments, got %d", len(args))
+	}
+
+	want, err := strconv.Atoi(args[1])
+	ts.Check(err)
+	jwk, err := jose.ParseKey([]byte(ts.ReadFile(args[0])), jose.WithPassword([]byte("password")))
+	ts.Check(err)
+	key, ok := jwk.Key.([]byte)
+	if !ok {
+		ts.Fatalf("expected key %s to be a byte slice; got %T", args[0], jwk.Key)
+	}
+	if len(key) != want {
+		ts.Fatalf("expected key %s to have %d bytes; got %d", args[0], want, len(key))
+	}
 }
 
 // checkKeyDetails checks that the public/private key pair is valid. It performs
@@ -502,7 +543,7 @@ func createToken(t *testing.T, jwk *jose.JSONWebKey, now time.Time) string {
 	require.NoError(t, err)
 
 	payload := make(map[string]any)
-	raw, err := jose.Signed(signer).Claims(c).Claims(payload).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c).Claims(payload).Serialize()
 	require.NoError(t, err)
 
 	return raw
@@ -527,11 +568,11 @@ func readKey(t *testing.T, file string) (*jose.JSONWebKey, []byte) {
 	return jwk, b
 }
 
-func readKeySet(t *testing.T, file string) (*gojose.JSONWebKeySet, []byte) {
+func readKeySet(t *testing.T, file string) (*jose.JSONWebKeySet, []byte) {
 	t.Helper()
 
 	b := readBytes(t, file)
-	var jwks gojose.JSONWebKeySet
+	var jwks jose.JSONWebKeySet
 	err := json.Unmarshal(b, &jwks)
 	require.NoError(t, err)
 
@@ -555,6 +596,25 @@ func generateJWK(t *testing.T, kty, crv string) (*jose.JSONWebKey, []byte) {
 	require.NoError(t, err)
 
 	return &jwk, b
+}
+
+// createTokenWithPayload returns a token with a valid signature over the given
+// payload, so that verification reaches the payload.
+func createTokenWithPayload(t *testing.T, jwk *jose.JSONWebKey, payload string) string {
+	t.Helper()
+
+	so := new(jose.SignerOptions).WithType("JWT").WithHeader("kid", jwk.KeyID)
+	signer, err := jose.NewSigner(jose.SigningKey{
+		Algorithm: jose.SignatureAlgorithm(jwk.Algorithm),
+		Key:       jwk.Key,
+	}, so)
+	require.NoError(t, err)
+
+	jws, err := signer.Sign([]byte(payload))
+	require.NoError(t, err)
+	raw, err := jws.CompactSerialize()
+	require.NoError(t, err)
+	return raw
 }
 
 func createFakeToken(t *testing.T, header, payload, signature string) string {

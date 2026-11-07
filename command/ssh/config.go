@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
+	"golang.org/x/crypto/ssh"
+
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
@@ -18,7 +20,6 @@ import (
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sshutil"

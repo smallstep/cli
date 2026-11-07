@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/smallstep/cli/internal/cast"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
+
+	"github.com/smallstep/cli/internal/cast"
 )
 
 type options struct {

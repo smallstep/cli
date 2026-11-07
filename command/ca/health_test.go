@@ -13,11 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli"
 
-	"go.step.sm/crypto/minica"
-	"go.step.sm/crypto/pemutil"
-
 	"github.com/smallstep/certificates/authority/config"
 	stepca "github.com/smallstep/certificates/ca"
+	"go.step.sm/crypto/minica"
+	"go.step.sm/crypto/pemutil"
 )
 
 // reservePort "reserves" a TCP port by opening a listener on a random

@@ -17,10 +17,11 @@ import (
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
 	"github.com/smallstep/cli-utils/usage"
-	"github.com/smallstep/cli/command/version"
-	"github.com/smallstep/cli/internal/plugin"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
+
+	"github.com/smallstep/cli/command/version"
+	"github.com/smallstep/cli/internal/plugin"
 
 	// Enabled cas interfaces.
 	_ "github.com/smallstep/certificates/cas/cloudcas"
