@@ -15,9 +15,8 @@ import (
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ocsp"
 
-	"go.step.sm/crypto/x509util"
-
 	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/x509util"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/crlutil"

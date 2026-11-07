@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 

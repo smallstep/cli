@@ -8,7 +8,6 @@ import (
 
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
-
 	libsshutil "go.step.sm/crypto/sshutil"
 
 	"github.com/smallstep/cli/internal/sshutil"

@@ -12,14 +12,14 @@ import (
 
 	"github.com/urfave/cli"
 
-	"go.step.sm/crypto/jose"
-	"go.step.sm/crypto/pemutil"
-
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
 	"github.com/smallstep/cli-utils/usage"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
+
 	"github.com/smallstep/cli/command/version"
 	"github.com/smallstep/cli/internal/plugin"
 

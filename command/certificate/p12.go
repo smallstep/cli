@@ -8,13 +8,12 @@ import (
 	"github.com/urfave/cli"
 	"software.sslmate.com/src/go-pkcs12"
 
-	"go.step.sm/crypto/pemutil"
-	"go.step.sm/crypto/x509util"
-
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"

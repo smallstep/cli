@@ -13,12 +13,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	"go.step.sm/crypto/mldsa"
-	"go.step.sm/crypto/pemutil"
-	"go.step.sm/crypto/x509util"
 
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/mldsa"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/cryptoutil"

@@ -6,9 +6,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
-	"go.step.sm/crypto/pemutil"
-
 	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/pemutil"
 )
 
 // ACMECreateCertFlow performs an ACME transaction to get a new certificate.

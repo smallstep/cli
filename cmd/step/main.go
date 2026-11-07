@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/smallstep/certificates/ca"
-
 	"github.com/smallstep/cli-utils/step"
 
 	"github.com/smallstep/cli/internal/cmd"

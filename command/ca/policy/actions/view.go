@@ -8,9 +8,8 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certificates/ca"
-	"github.com/smallstep/linkedca"
-
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/linkedca"
 
 	"github.com/smallstep/cli/command/ca/policy/policycontext"
 	"github.com/smallstep/cli/flags"

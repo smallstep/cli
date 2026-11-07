@@ -14,19 +14,18 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/ocsp"
 
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"go.step.sm/crypto/jose"
-	"go.step.sm/crypto/pemutil"
-	"go.step.sm/crypto/x509util"
-	"golang.org/x/crypto/ocsp"
-
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"

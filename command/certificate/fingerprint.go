@@ -5,19 +5,18 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	//nolint:gosec // support for sha1 fingerprints
-	_ "crypto/sha1"
-
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
+	"github.com/smallstep/cli-utils/errs"
 	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/pemutil"
 
-	"github.com/smallstep/cli-utils/errs"
-
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
+
+	//nolint:gosec // support for sha1 fingerprints
+	_ "crypto/sha1"
 )
 
 func fingerprintCommand() cli.Command {

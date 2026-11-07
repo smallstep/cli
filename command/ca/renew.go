@@ -25,14 +25,13 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"go.step.sm/crypto/jose"
-	"go.step.sm/crypto/pemutil"
-	"go.step.sm/crypto/x509util"
-
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/cryptoutil"

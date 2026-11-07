@@ -9,9 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
-	"go.step.sm/crypto/jose"
-
 	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/jose"
 )
 
 func publicCommand() cli.Command {

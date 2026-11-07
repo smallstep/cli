@@ -1,6 +1,13 @@
 package hash
 
 import (
+	"github.com/pkg/errors"
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli-utils/errs"
+
+	"github.com/smallstep/cli/flags"
+
 	//nolint:gosec // md5 can only be used with --insecure flag
 	"crypto/md5"
 	//nolint:gosec // sha1 is being used to calculate a hash, not a key
@@ -16,13 +23,6 @@ import (
 	"os"
 	"path"
 	"strings"
-
-	"github.com/pkg/errors"
-	"github.com/urfave/cli"
-
-	"github.com/smallstep/cli-utils/errs"
-
-	"github.com/smallstep/cli/flags"
 )
 
 type hashConstructor func() hash.Hash

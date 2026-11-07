@@ -11,9 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
-	"go.step.sm/crypto/pemutil"
-
 	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/flags"
 )

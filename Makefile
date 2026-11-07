@@ -164,7 +164,7 @@ race:
 #########################################
 
 fmt:
-	$Q go tool $(GOIMPORTS) -local github.com/smallstep/cli -l -w $(GOSRC)
+	$Q go tool $(GOIMPORTS) -local github.com/smallstep/cli/ -l -w $(GOSRC)
 
 lint: golint govulncheck
 

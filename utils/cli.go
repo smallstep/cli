@@ -5,9 +5,8 @@ import (
 
 	"github.com/urfave/cli"
 
-	"go.step.sm/crypto/keyutil"
-
 	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/keyutil"
 )
 
 // DefaultRSASize sets the default key size for RSA to 2048 bits.

@@ -15,13 +15,12 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/truststore"
-	"go.step.sm/crypto/pemutil"
-
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
+	"github.com/smallstep/truststore"
+	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/utils"
 )

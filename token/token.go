@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
 )

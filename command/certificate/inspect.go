@@ -12,10 +12,9 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certinfo"
+	"github.com/smallstep/cli-utils/errs"
 	zx509 "github.com/smallstep/zcrypto/x509"
 	"go.step.sm/crypto/pemutil"
-
-	"github.com/smallstep/cli-utils/errs"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"

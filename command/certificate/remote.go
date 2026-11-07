@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+
 	"go.step.sm/crypto/x509util"
 )
 

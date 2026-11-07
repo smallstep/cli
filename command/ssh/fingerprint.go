@@ -5,9 +5,8 @@ import (
 
 	"github.com/urfave/cli"
 
-	"go.step.sm/crypto/sshutil"
-
 	"github.com/smallstep/cli-utils/errs"
+	"go.step.sm/crypto/sshutil"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"

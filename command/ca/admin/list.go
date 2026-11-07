@@ -7,9 +7,8 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/smallstep/linkedca"
-
 	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/linkedca"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils/cautils"

@@ -13,10 +13,9 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certificates/api"
-	"go.step.sm/crypto/fingerprint"
-
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/step"
+	"go.step.sm/crypto/fingerprint"
 
 	"github.com/smallstep/cli/utils"
 )

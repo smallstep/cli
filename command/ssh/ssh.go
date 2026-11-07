@@ -12,10 +12,9 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/errs"
-	"go.step.sm/crypto/keyutil"
-
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/ui"
+	"go.step.sm/crypto/keyutil"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sshutil"

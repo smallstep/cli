@@ -11,7 +11,6 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certificates/ca"
-
 	"github.com/smallstep/cli-utils/errs"
 
 	"github.com/smallstep/cli/flags"
