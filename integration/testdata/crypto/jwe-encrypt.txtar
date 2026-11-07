@@ -1,0 +1,193 @@
+# oct A128KW round trip
+exec step crypto jwk create --no-password --insecure --kty oct --use enc --alg A128KW a128kw.pub a128kw.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key a128kw.priv --enc A256GCM
+cp stdout a128kw.jwe
+stdin a128kw.jwe
+exec step crypto jwe decrypt --key a128kw.priv
+stdout '^secret$'
+
+stdin secret.txt
+exec step crypto jwe encrypt --key a128kw.pub --enc A256GCM
+cp stdout a128kw-pub.jwe
+stdin a128kw-pub.jwe
+exec step crypto jwe decrypt --key a128kw.priv
+stdout '^secret$'
+
+
+# oct A192KW round trip
+exec step crypto jwk create --no-password --insecure --kty oct --use enc --alg A192KW a192kw.pub a192kw.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key a192kw.priv --enc A256GCM
+cp stdout a192kw.jwe
+stdin a192kw.jwe
+exec step crypto jwe decrypt --key a192kw.priv
+stdout '^secret$'
+
+stdin secret.txt
+exec step crypto jwe encrypt --key a192kw.pub --enc A256GCM
+cp stdout a192kw-pub.jwe
+stdin a192kw-pub.jwe
+exec step crypto jwe decrypt --key a192kw.priv
+stdout '^secret$'
+
+
+# oct A256KW round trip
+exec step crypto jwk create --no-password --insecure --kty oct --use enc --alg A256KW a256kw.pub a256kw.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key a256kw.priv --enc A256GCM
+cp stdout a256kw.jwe
+stdin a256kw.jwe
+exec step crypto jwe decrypt --key a256kw.priv
+stdout '^secret$'
+
+stdin secret.txt
+exec step crypto jwe encrypt --key a256kw.pub --enc A256GCM
+cp stdout a256kw-pub.jwe
+stdin a256kw-pub.jwe
+exec step crypto jwe decrypt --key a256kw.priv
+stdout '^secret$'
+
+
+# oct A128GCMKW round trip
+exec step crypto jwk create --no-password --insecure --kty oct --use enc --alg A128GCMKW a128gcmkw.pub a128gcmkw.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key a128gcmkw.priv --enc A256GCM
+cp stdout a128gcmkw.jwe
+stdin a128gcmkw.jwe
+exec step crypto jwe decrypt --key a128gcmkw.priv
+stdout '^secret$'
+
+stdin secret.txt
+exec step crypto jwe encrypt --key a128gcmkw.pub --enc A256GCM
+cp stdout a128gcmkw-pub.jwe
+stdin a128gcmkw-pub.jwe
+exec step crypto jwe decrypt --key a128gcmkw.priv
+stdout '^secret$'
+
+
+# oct A192GCMKW round trip
+exec step crypto jwk create --no-password --insecure --kty oct --use enc --alg A192GCMKW a192gcmkw.pub a192gcmkw.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key a192gcmkw.priv --enc A256GCM
+cp stdout a192gcmkw.jwe
+stdin a192gcmkw.jwe
+exec step crypto jwe decrypt --key a192gcmkw.priv
+stdout '^secret$'
+
+stdin secret.txt
+exec step crypto jwe encrypt --key a192gcmkw.pub --enc A256GCM
+cp stdout a192gcmkw-pub.jwe
+stdin a192gcmkw-pub.jwe
+exec step crypto jwe decrypt --key a192gcmkw.priv
+stdout '^secret$'
+
+
+# oct A256GCMKW round trip
+exec step crypto jwk create --no-password --insecure --kty oct --use enc --alg A256GCMKW a256gcmkw.pub a256gcmkw.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key a256gcmkw.priv --enc A256GCM
+cp stdout a256gcmkw.jwe
+stdin a256gcmkw.jwe
+exec step crypto jwe decrypt --key a256gcmkw.priv
+stdout '^secret$'
+
+stdin secret.txt
+exec step crypto jwe encrypt --key a256gcmkw.pub --enc A256GCM
+cp stdout a256gcmkw-pub.jwe
+stdin a256gcmkw-pub.jwe
+exec step crypto jwe decrypt --key a256gcmkw.priv
+stdout '^secret$'
+
+
+# oct dir round trip
+exec step crypto jwk create --no-password --insecure --kty oct --use enc --alg dir dir.pub dir.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key dir.priv --enc A256GCM
+cp stdout dir.jwe
+stdin dir.jwe
+exec step crypto jwe decrypt --key dir.priv
+stdout '^secret$'
+
+stdin secret.txt
+exec step crypto jwe encrypt --key dir.pub --enc A256GCM
+cp stdout dir-pub.jwe
+stdin dir-pub.jwe
+exec step crypto jwe decrypt --key dir.priv
+stdout '^secret$'
+
+
+# oct default algorithm round trip
+exec step crypto jwk create --no-password --insecure --kty oct --use enc default.pub default.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key default.priv
+cp stdout default.jwe
+stdin default.jwe
+exec step crypto jwe decrypt --key default.priv
+stdout '^secret$'
+
+
+# oct round trip with a key set
+stdin secret.txt
+exec step crypto jwe encrypt --jwks oct-set.json --kid k1
+cp stdout jwks.jwe
+stdin jwks.jwe
+exec step crypto jwe decrypt --jwks oct-set.json --kid k1
+stdout '^secret$'
+
+
+# RSA round trip uses the public key
+exec step crypto jwk create --no-password --insecure --kty RSA --use enc --alg RSA-OAEP-256 rsa.pub rsa.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key rsa.priv
+cp stdout rsa.jwe
+stdin rsa.jwe
+exec step crypto jwe decrypt --key rsa.priv
+stdout '^secret$'
+
+stdin secret.txt
+exec step crypto jwe encrypt --key rsa.pub
+cp stdout rsa-pub.jwe
+stdin rsa-pub.jwe
+exec step crypto jwe decrypt --key rsa.priv
+stdout '^secret$'
+
+
+# EC round trip uses the public key
+exec step crypto jwk create --no-password --insecure --kty EC --use enc --alg ECDH-ES ec.pub ec.priv
+stdin secret.txt
+exec step crypto jwe encrypt --key ec.priv
+cp stdout ec.jwe
+stdin ec.jwe
+exec step crypto jwe decrypt --key ec.priv
+stdout '^secret$'
+
+
+# oct key does not leak in the output
+stdin secret.txt
+exec step crypto jwe encrypt --key leak.json
+! stdout '"k"'
+! stdout 'AAECAwQFBgcICQoLDA0ODw'
+
+
+# oct key with the wrong size for its algorithm fails
+stdin secret.txt
+! exec step crypto jwe encrypt --key mismatch.json
+stderr 'alg ''A128KW'' requires a key of 16 bytes'
+
+
+# oct key for signatures fails
+stdin secret.txt
+! exec step crypto jwe encrypt --key sig.json
+stderr 'invalid jwk use: found ''sig'' \(signature\), expecting ''enc'' \(encryption\)'
+
+-- secret.txt --
+secret
+-- leak.json --
+{"kty":"oct","alg":"A128KW","use":"enc","k":"AAECAwQFBgcICQoLDA0ODw"}
+-- mismatch.json --
+{"kty":"oct","alg":"A128KW","use":"enc","k":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"}
+-- sig.json --
+{"kty":"oct","alg":"HS256","use":"sig","k":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"}
+-- oct-set.json --
+{"keys":[{"kty":"oct","alg":"A256KW","use":"enc","kid":"k1","k":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"}]}

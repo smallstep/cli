@@ -10,9 +10,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
-	"github.com/smallstep/cli-utils/errs"
 	"go.step.sm/crypto/jose"
 
+	"github.com/smallstep/cli-utils/errs"
+
+	"github.com/smallstep/cli/internal/joseutil"
 	"github.com/smallstep/cli/utils"
 )
 
@@ -55,7 +57,7 @@ func inspectAction(ctx *cli.Context) error {
 }
 
 func printToken(token string) error {
-	tok, err := jose.ParseJWS(token)
+	tok, err := joseutil.ParseSignedInsecure(token)
 	if err != nil {
 		return errors.Wrap(jose.TrimPrefix(err), "error parsing token")
 	}

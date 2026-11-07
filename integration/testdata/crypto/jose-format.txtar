@@ -1,0 +1,114 @@
+# format token with none-nosig header, and back to compact
+stdin none-nosig.txt
+exec step crypto jose format
+stdout '"protected":'
+cp stdout none-nosig.json
+stdin none-nosig.json
+exec step crypto jose format
+stdout '^eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.$'
+
+
+# format token with none header, and back to compact
+stdin none.txt
+exec step crypto jose format
+stdout '"protected":'
+cp stdout none.json
+stdin none.json
+exec step crypto jose format
+stdout '^eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.c2lnbmF0dXJl$'
+
+
+# format token with es256k header, and back to compact
+stdin es256k.txt
+exec step crypto jose format
+stdout '"protected":'
+cp stdout es256k.json
+stdin es256k.json
+exec step crypto jose format
+stdout '^eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl$'
+
+
+# format token with unknown header, and back to compact
+stdin unknown.txt
+exec step crypto jose format
+stdout '"protected":'
+cp stdout unknown.json
+stdin unknown.json
+exec step crypto jose format
+stdout '^eyJhbGciOiJGT08ifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl$'
+
+
+# format token with noalg header, and back to compact
+stdin noalg.txt
+exec step crypto jose format
+stdout '"protected":'
+cp stdout noalg.json
+stdin noalg.json
+exec step crypto jose format
+stdout '^eyJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl$'
+
+
+# format fails for invalid token
+exec echo foo
+stdin stdout
+! exec step crypto jose format
+stderr 'error parsing data: compact JWS format must have three parts'
+
+
+# format keeps the protected header of jws-order
+stdin jws-order.txt
+exec step crypto jose format
+stdout '"protected":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"'
+cp stdout jws-order.json
+stdin jws-order.json
+exec step crypto jose format
+stdout '^eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.c2lnbmF0dXJl$'
+
+
+# format keeps the protected header of jwe-order
+stdin jwe-order.txt
+exec step crypto jose format
+stdout '"protected":"eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTI1NktXIn0"'
+cp stdout jwe-order.json
+stdin jwe-order.json
+exec step crypto jose format
+stdout '^eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTI1NktXIn0.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE$'
+
+
+# format keeps the protected header of jwe-unknown-alg
+stdin jwe-unknown-alg.txt
+exec step crypto jose format
+stdout '"protected":"eyJhbGciOiJGT08iLCJlbmMiOiJBMjU2R0NNIn0"'
+cp stdout jwe-unknown-alg.json
+stdin jwe-unknown-alg.json
+exec step crypto jose format
+stdout '^eyJhbGciOiJGT08iLCJlbmMiOiJBMjU2R0NNIn0.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE$'
+
+
+# format keeps the protected header of jwe-unknown-enc
+stdin jwe-unknown-enc.txt
+exec step crypto jose format
+stdout '"protected":"eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJCQVIifQ"'
+cp stdout jwe-unknown-enc.json
+stdin jwe-unknown-enc.json
+exec step crypto jose format
+stdout '^eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJCQVIifQ.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE$'
+
+-- none-nosig.txt --
+eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.
+-- none.txt --
+eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- es256k.txt --
+eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- unknown.txt --
+eyJhbGciOiJGT08ifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- noalg.txt --
+eyJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- jws-order.txt --
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- jwe-order.txt --
+eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTI1NktXIn0.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE
+-- jwe-unknown-alg.txt --
+eyJhbGciOiJGT08iLCJlbmMiOiJBMjU2R0NNIn0.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE
+-- jwe-unknown-enc.txt --
+eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJCQVIifQ.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE

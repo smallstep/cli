@@ -14,3 +14,44 @@ exec echo foo
 stdin stdout
 ! exec step crypto jwt inspect --insecure
 stderr 'error parsing token: compact JWS format must have three parts'
+
+# inspect token with none-nosig header
+stdin none-nosig.txt
+exec step crypto jwt inspect --insecure
+stdout '"alg": "none"'
+stdout '"sub": "x"'
+
+# inspect token with none header
+stdin none.txt
+exec step crypto jwt inspect --insecure
+stdout '"alg": "none"'
+stdout '"sub": "x"'
+
+# inspect token with es256k header
+stdin es256k.txt
+exec step crypto jwt inspect --insecure
+stdout '"alg": "ES256K"'
+stdout '"sub": "x"'
+
+# inspect token with unknown header
+stdin unknown.txt
+exec step crypto jwt inspect --insecure
+stdout '"alg": "FOO"'
+stdout '"sub": "x"'
+
+# inspect token with noalg header
+stdin noalg.txt
+exec step crypto jwt inspect --insecure
+stdout '"typ": "JWT"'
+stdout '"sub": "x"'
+
+-- none-nosig.txt --
+eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.
+-- none.txt --
+eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- es256k.txt --
+eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- unknown.txt --
+eyJhbGciOiJGT08ifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- noalg.txt --
+eyJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl

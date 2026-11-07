@@ -1,6 +1,7 @@
 package jose
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -10,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"go.step.sm/crypto/jose"
+
+	"github.com/smallstep/cli/internal/joseutil"
 )
 
 // Command returns the cli.Command for jose related subcommands.
@@ -75,10 +78,10 @@ func formatAction(*cli.Context) error {
 	// Attempt to parse an encrypted
 	// If it fails parse a regular JWS
 	var srz serializer
-	if enc, err := jose.ParseEncrypted(token); err == nil {
+	if enc, err := joseutil.ParseEncryptedInsecure(token); err == nil {
 		srz = enc
 	} else {
-		tok, err := jose.ParseJWS(token)
+		tok, err := joseutil.ParseSignedInsecure(token)
 		if err != nil {
 			return errors.Wrap(jose.TrimPrefix(err), "error parsing data")
 		}
@@ -90,12 +93,54 @@ func formatAction(*cli.Context) error {
 		if err != nil {
 			return errors.Wrap(jose.TrimPrefix(err), "error serializing data")
 		}
-		fmt.Println(str)
+		fmt.Println(withCompactProtected(str, token))
 	} else {
-		fmt.Println(srz.FullSerialize())
+		fmt.Println(withJSONProtected(srz.FullSerialize(), token))
 	}
 
 	return nil
+}
+
+// withCompactProtected returns the given compact serialization with the protected
+// header of the original token in JSON format. go-jose marshals the header again
+// when it serializes a token, which changes the bytes that the signature or the
+// authentication tag cover if the fields are in a different order.
+func withCompactProtected(compact, token string) string {
+	var jws struct {
+		Protected  string `json:"protected"`
+		Signatures []struct {
+			Protected string `json:"protected"`
+		} `json:"signatures"`
+	}
+	if err := json.Unmarshal([]byte(token), &jws); err != nil {
+		return compact
+	}
+
+	protected := jws.Protected
+	if protected == "" && len(jws.Signatures) == 1 {
+		protected = jws.Signatures[0].Protected
+	}
+	_, rest, ok := strings.Cut(compact, ".")
+	if protected == "" || !ok {
+		return compact
+	}
+	return strings.TrimRight(protected, "=") + "." + rest
+}
+
+// withJSONProtected returns the given JSON serialization with the protected header
+// of the original token in compact format, see withCompactProtected.
+func withJSONProtected(full, token string) string {
+	var serialized struct {
+		Protected string `json:"protected"`
+	}
+	if err := json.Unmarshal([]byte(full), &serialized); err != nil {
+		return full
+	}
+
+	protected, _, _ := strings.Cut(token, ".")
+	return strings.Replace(full,
+		`"protected":"`+serialized.Protected+`"`,
+		`"protected":"`+protected+`"`, 1)
 }
 
 var stripWhitespaceRegex = regexp.MustCompile(`\s`)

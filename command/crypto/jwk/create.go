@@ -11,13 +11,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/randutil"
+
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
-	"go.step.sm/crypto/jose"
-	"go.step.sm/crypto/keyutil"
-	"go.step.sm/crypto/randutil"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
@@ -150,14 +151,14 @@ $ step crypto jwk create jwk.pub.json jwk.json \
     --from-pem key.pem
 '''
 
-Create an 4096 bit RSA encryption key:
+Create a 4096-bit RSA encryption key:
 
 '''
 $ step crypto jwk create rsa-enc.pub.json rsa-enc.json \
    --kty RSA --size 4096 --use enc
 '''
 
-Create a 192 bit (24 bytes) symmetric encryption key for use with AES Key Wrap:
+Create a 24-byte (192-bit) symmetric encryption key for use with AES GCM key wrapping:
 
 '''
 $ step crypto jwk create kw.pub.json kw.json \
@@ -186,7 +187,13 @@ If unset, default is EC.
     :  Create an **RSA** keypair
 `,
 			},
-			flags.Size,
+			cli.IntFlag{
+				Name: "size",
+				Usage: `The <size> of the key for RSA and oct key types, in bits for RSA keys and in
+bytes for oct keys. RSA keys require a minimum key size of 2048 bits. If unset,
+default is 2048 bits for RSA keys. For oct keys, default is the size required
+by the algorithm, or 32 bytes if the algorithm does not define one.`,
+			},
 			flags.Curve,
 			cli.StringFlag{
 				Name: "alg, algorithm",
@@ -446,7 +453,7 @@ func createAction(ctx *cli.Context) (err error) {
 				return errs.MinSizeInsecureFlag(ctx, "size", strconv.Itoa(minimalSize))
 			}
 			if size <= 0 {
-				return errs.MinSizeFlag(ctx, "size", "0")
+				return errs.MinSizeFlag(ctx, "size", "1")
 			}
 		}
 	case "OKP":
@@ -457,25 +464,38 @@ func createAction(ctx *cli.Context) (err error) {
 		if ctx.IsSet("crv") {
 			return errs.IncompatibleFlag(ctx, "crv", "--kty oct")
 		}
-		// If size is not set it will use a safe default
+		// If size is not set it will use a safe default. GenerateJWK also checks
+		// the size of HMAC and AES key wrap algorithms, these checks report the
+		// problem in terms of the flag.
 		if ctx.IsSet("size") {
-			if alg == "" {
-				switch use {
-				case "", "sig":
-					alg = jose.DefaultOctSigAlgorithm
-				case "enc":
-					alg = string(jose.DefaultOctKeyAlgorithm)
+			sizeAlg := alg
+			if sizeAlg == "" {
+				// Same defaults as GenerateJWK, which uses the signature algorithm for
+				// any use other than enc.
+				if use == "enc" {
+					sizeAlg = string(jose.DefaultOctKeyAlgorithm)
+				} else {
+					sizeAlg = jose.DefaultOctSigAlgorithm
 				}
 			}
 			// go-jose v4 enforces RFC 7518 §3.2, which says an HMAC key must be at
 			// least as long as the hash output.
-			if n := hmacKeySize(alg); size < n {
-				return errs.MinSizeFlag(ctx, "size", strconv.Itoa(n))
+			if n := hmacKeySize(sizeAlg); n > 0 && size < n {
+				return errs.MinSizeFlag(ctx, "size", strconv.Itoa(n)+" bytes")
 			}
 			// go-jose selects the AES variant from the key size, so the size must
 			// match the algorithm exactly.
-			if n := aesKeySize(alg); n > 0 && size != n {
-				return fmt.Errorf("flag '--size' must be equal to %d", n)
+			if n := aesKeySize(sizeAlg); n > 0 && size != n {
+				return fmt.Errorf("flag '--size' must be equal to %d bytes", n)
+			}
+			// Other algorithms only have a minimum. The size of a dir key depends on
+			// the content encryption algorithm, which is not known until encrypting.
+			if size < 16 && !ctx.Bool("insecure") {
+				return errs.MinSizeInsecureFlag(ctx, "size", "16 bytes")
+			}
+			// GenerateJWK would treat a size of 0 as unset and use the default.
+			if size <= 0 {
+				return errs.MinSizeFlag(ctx, "size", "1 byte")
 			}
 		}
 	default:

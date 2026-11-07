@@ -82,7 +82,7 @@ stderr 'error parsing token: invalid protected header'
 # Ed25519 verification fails with invalid payload
 stdin invalid-payload.txt
 ! exec step crypto jwt verify -key ed25519.json -iss TestIssuer -aud TestAudience
-stderr 'error parsing token: invalid protected header'
+stderr 'claim verify failed'
 
 
 # Verify with JWKS and KID 1
