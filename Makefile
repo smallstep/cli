@@ -26,6 +26,13 @@ GORELEASER_BUILD_ID?=default
 
 # all go files
 SRC=$(shell find . -type f -name '*.go' -or -name go.mod -or -name go.sum)
+GOSRC=$(shell find . -type f -name '*.go')
+
+# tools run with `go tool`, their versions are defined in go.mod
+GOIMPORTS=golang.org/x/tools/cmd/goimports
+GOLANGCI_LINT=github.com/golangci/golangci-lint/v2/cmd/golangci-lint
+GOTESTSUM=gotest.tools/gotestsum
+GOVULNCHECK=golang.org/x/vuln/cmd/govulncheck
 
 all: lint test build
 
@@ -104,10 +111,6 @@ GORELEASER_SKIP=$(if $(filter true,$(shell goreleaser --version | grep -q gorele
 TMPDIR := $(shell mktemp -d)
 bootstra%: GOPATH=$(shell go env GOPATH)
 bootstra%:
-	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin latest
-	$Q go install golang.org/x/vuln/cmd/govulncheck@latest
-	$Q go install gotest.tools/gotestsum@latest
-	$Q go install golang.org/x/tools/cmd/goimports@latest
 	@echo "Installing GoReleaser Pro into $(GOPATH)/bin"
 	$Q curl -o $(TMPDIR)/goreleaser.tar.gz -L $(GORELEASER_PRO_URL)
 	$Q ls $(TMPDIR)
@@ -149,10 +152,10 @@ goreleaser:
 #########################################
 
 test:
-	$Q $(CGO_OVERRIDE) $(GOFLAGS) gotestsum -- -coverprofile=coverage.out -short -covermode=atomic ./...
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) go tool $(GOTESTSUM) -- -coverprofile=coverage.out -short -covermode=atomic ./...
 
 race:
-	$Q $(CGO_OVERRIDE) $(GOFLAGS) gotestsum -- -race ./...
+	$Q $(CGO_OVERRIDE) $(GOFLAGS) go tool $(GOTESTSUM) -- -race ./...
 
 .PHONY: test race
 
@@ -161,16 +164,16 @@ race:
 #########################################
 
 fmt:
-	$Q goimports -local github.com/golangci/golangci-lint -l -w $(SRC)
+	$Q go tool $(GOIMPORTS) -local github.com/smallstep/cli -l -w $(GOSRC)
 
 lint: golint govulncheck
 
 golint: SHELL:=/bin/bash
 golint:
-	$Q LOG_LEVEL=error golangci-lint run --config <(curl -s https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml) --timeout=30m
+	$Q LOG_LEVEL=error go tool $(GOLANGCI_LINT) run --config <(curl -s https://raw.githubusercontent.com/smallstep/workflows/master/.golangci.yml) --timeout=30m
 
 govulncheck:
-	$Q govulncheck ./...
+	$Q go tool $(GOVULNCHECK) ./...
 
 .PHONY: fmt lint golint govulncheck
 
