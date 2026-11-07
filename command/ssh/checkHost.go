@@ -11,9 +11,10 @@ import (
 
 	"github.com/smallstep/certificates/ca"
 	caErrs "github.com/smallstep/certificates/errs"
+	"go.step.sm/crypto/jose"
+
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
-	"go.step.sm/crypto/jose"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/token"

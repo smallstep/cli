@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 
 	adminAPI "github.com/smallstep/certificates/authority/admin/api"
+
 	"github.com/smallstep/cli-utils/errs"
 
 	"github.com/smallstep/cli/flags"

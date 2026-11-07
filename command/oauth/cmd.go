@@ -22,10 +22,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
-	"github.com/smallstep/cli-utils/command"
-	"github.com/smallstep/cli-utils/errs"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/randutil"
+
+	"github.com/smallstep/cli-utils/command"
+	"github.com/smallstep/cli-utils/errs"
 
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/flags"

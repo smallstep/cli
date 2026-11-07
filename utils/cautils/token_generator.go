@@ -18,11 +18,12 @@ import (
 
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli-utils/errs"
-	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/randutil"
+
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/ui"
 
 	"github.com/smallstep/cli/exec"
 	"github.com/smallstep/cli/internal/cryptoutil"

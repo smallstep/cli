@@ -9,6 +9,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/smallstep/certificates/ca"
+
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 

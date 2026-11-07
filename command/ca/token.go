@@ -9,11 +9,12 @@ import (
 
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/pki"
+	"go.step.sm/crypto/pemutil"
+	"golang.org/x/crypto/ssh"
+
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
-	"go.step.sm/crypto/pemutil"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"

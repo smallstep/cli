@@ -11,6 +11,7 @@ import (
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca/identity"
+
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"

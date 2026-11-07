@@ -12,6 +12,9 @@ import (
 
 	"github.com/urfave/cli"
 
+	"go.step.sm/crypto/jose"
+	"go.step.sm/crypto/pemutil"
+
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/step"
@@ -19,8 +22,6 @@ import (
 	"github.com/smallstep/cli-utils/usage"
 	"github.com/smallstep/cli/command/version"
 	"github.com/smallstep/cli/internal/plugin"
-	"go.step.sm/crypto/jose"
-	"go.step.sm/crypto/pemutil"
 
 	// Enabled cas interfaces.
 	_ "github.com/smallstep/certificates/cas/cloudcas"

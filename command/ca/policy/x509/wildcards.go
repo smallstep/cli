@@ -3,10 +3,11 @@ package x509
 import (
 	"context"
 
+	"github.com/urfave/cli"
+
 	"github.com/smallstep/cli/command/ca/policy/actions"
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/command"
-	"github.com/urfave/cli"
 )
 
 var provisionerFilterFlag = cli.StringFlag{

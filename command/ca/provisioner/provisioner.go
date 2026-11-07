@@ -13,9 +13,10 @@ import (
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/linkedca"
+
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
-	"github.com/smallstep/linkedca"
 
 	"github.com/smallstep/cli/command/ca/provisioner/webhook"
 	"github.com/smallstep/cli/utils"

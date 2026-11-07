@@ -20,12 +20,13 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/ca/identity"
+	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/pemutil"
+
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/fileutil"
 	"github.com/smallstep/cli-utils/ui"
-	"go.step.sm/crypto/keyutil"
-	"go.step.sm/crypto/pemutil"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sshutil"

@@ -14,11 +14,12 @@ import (
 	"github.com/smallstep/certificates/authority/provisioner"
 	"github.com/smallstep/certificates/ca"
 	"github.com/smallstep/certificates/templates"
+	"golang.org/x/crypto/ssh"
+
 	"github.com/smallstep/cli-utils/command"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/cli-utils/ui"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/internal/sshutil"

@@ -18,12 +18,13 @@ import (
 
 	"github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/pki"
-	"github.com/smallstep/cli-utils/errs"
-	"github.com/smallstep/cli-utils/step"
-	"github.com/smallstep/cli-utils/ui"
 	"go.step.sm/crypto/kms"
 	_ "go.step.sm/crypto/kms/azurekms" // enable azurekms
 	"go.step.sm/crypto/pemutil"
+
+	"github.com/smallstep/cli-utils/errs"
+	"github.com/smallstep/cli-utils/step"
+	"github.com/smallstep/cli-utils/ui"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
