@@ -10,9 +10,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/smallstep/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli"
+
+	"github.com/smallstep/assert"
 	"go.step.sm/crypto/fingerprint"
 )
 

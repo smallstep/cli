@@ -1,0 +1,84 @@
+# inspect token with none-nosig header
+stdin none-nosig.txt
+exec step crypto jws inspect --insecure
+stdout '"sub":"x"'
+
+stdin none-nosig.txt
+exec step crypto jws inspect --insecure --json
+stdout '"alg": "none"'
+
+
+# inspect token with none header
+stdin none.txt
+exec step crypto jws inspect --insecure
+stdout '"sub":"x"'
+
+stdin none.txt
+exec step crypto jws inspect --insecure --json
+stdout '"alg": "none"'
+
+
+# inspect token with es256k header
+stdin es256k.txt
+exec step crypto jws inspect --insecure
+stdout '"sub":"x"'
+
+stdin es256k.txt
+exec step crypto jws inspect --insecure --json
+stdout '"alg": "ES256K"'
+
+
+# inspect token with unknown header
+stdin unknown.txt
+exec step crypto jws inspect --insecure
+stdout '"sub":"x"'
+
+stdin unknown.txt
+exec step crypto jws inspect --insecure --json
+stdout '"alg": "FOO"'
+
+
+# inspect token with noalg header
+stdin noalg.txt
+exec step crypto jws inspect --insecure
+stdout '"sub":"x"'
+
+stdin noalg.txt
+exec step crypto jws inspect --insecure --json
+stdout '"typ": "JWT"'
+
+
+# inspect fails for invalid token
+exec echo foo
+stdin stdout
+! exec step crypto jws inspect --insecure
+stderr 'error parsing token: compact JWS format must have three parts'
+
+
+# verify keeps rejecting algorithms that are not allowed
+exec step crypto jwk create --no-password --insecure --kty EC key.pub key.priv
+
+stdin none.txt
+! exec step crypto jws verify --key key.pub
+stderr 'error parsing token: unexpected signature algorithm "none"'
+
+stdin es256k.txt
+! exec step crypto jws verify --key key.pub
+stderr 'error parsing token: unexpected signature algorithm "ES256K"'
+
+
+# jwt verify keeps rejecting algorithms that are not allowed
+stdin none.txt
+! exec step crypto jwt verify --key key.pub --iss a --aud b
+stderr 'error parsing token: unexpected signature algorithm "none"'
+
+-- none-nosig.txt --
+eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.
+-- none.txt --
+eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- es256k.txt --
+eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- unknown.txt --
+eyJhbGciOiJGT08ifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl
+-- noalg.txt --
+eyJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ4In0.c2lnbmF0dXJl

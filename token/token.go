@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
 )
@@ -96,7 +97,7 @@ func (c *Claims) Sign(alg jose.SignatureAlgorithm, key any) (string, error) {
 		c.Set("aud", c.Audience[0])
 	}
 
-	raw, err := jose.Signed(signer).Claims(c.Claims).Claims(c.ExtraClaims).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c.Claims).Claims(c.ExtraClaims).Serialize()
 	if err != nil {
 		return "", errors.Wrapf(err, "error serializing JWT")
 	}

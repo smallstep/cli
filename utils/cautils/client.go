@@ -17,7 +17,6 @@ import (
 	"github.com/smallstep/certificates/pki"
 	"github.com/smallstep/cli-utils/errs"
 	"github.com/smallstep/cli-utils/ui"
-
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/pemutil"
 

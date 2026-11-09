@@ -16,12 +16,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/smallstep/cli/internal/plugin"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/kms"
 	"go.step.sm/crypto/kms/apiv1"
 	"go.step.sm/crypto/mldsa"
 	"go.step.sm/crypto/pemutil"
+
+	"github.com/smallstep/cli/internal/plugin"
 )
 
 // IsKMS returns true if the given uri is a KMS URI. It will return false if a

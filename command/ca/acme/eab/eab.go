@@ -9,10 +9,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
-	"github.com/smallstep/linkedca"
-
 	"github.com/smallstep/certificates/authority/admin"
 	"github.com/smallstep/certificates/ca"
+	"github.com/smallstep/linkedca"
 )
 
 type cliEAK struct {

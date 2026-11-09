@@ -60,7 +60,7 @@ stderr 'the size of the RSA key should be at least 2048 bits'
 
 # RSA 0, PS256
 ! exec step crypto jwk create --password-file password.txt --kty RSA --size 0 --alg PS256 --insecure fail.pub fail.priv 
-stderr 'flag ''--size'' must be greater than or equal to 0'
+stderr 'flag ''--size'' must be greater than or equal to 1$'
 
 
 # RSA 2048, bad alg

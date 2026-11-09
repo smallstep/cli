@@ -1015,7 +1015,7 @@ func (o *oauth) DoTwoLeggedAuthorization(issuer string) (*token, error) {
 		return nil, errors.Wrapf(err, "error creating JWT signer")
 	}
 
-	raw, err := jose.Signed(signer).Claims(c).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c).Serialize()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error serializing JWT")
 	}
@@ -1078,7 +1078,7 @@ func (o *oauth) DoJWTAuthorization(issuer, aud string) (*token, error) {
 		return nil, errors.Wrapf(err, "error creating JWT signer")
 	}
 
-	raw, err := jose.Signed(signer).Claims(c).CompactSerialize()
+	raw, err := jose.Signed(signer).Claims(c).Serialize()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error serializing JWT")
 	}

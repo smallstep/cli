@@ -9,19 +9,20 @@ import (
 	"fmt"
 	"os"
 
-	//nolint:gosec // support for sha1 fingerprints
-	_ "crypto/sha1"
-
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
+
+	"golang.org/x/crypto/ssh"
 
 	"github.com/smallstep/cli-utils/errs"
 	"go.step.sm/crypto/fingerprint"
 	"go.step.sm/crypto/pemutil"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/smallstep/cli/flags"
 	"github.com/smallstep/cli/utils"
+
+	//nolint:gosec // support for sha1 fingerprints
+	_ "crypto/sha1"
 )
 
 func fingerprintCommand() cli.Command {

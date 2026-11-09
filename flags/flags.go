@@ -53,8 +53,8 @@ If unset, default is EC.
 	// Size is the flag to set the key size.
 	Size = cli.IntFlag{
 		Name: "size",
-		Usage: `The <size> (in bits) of the key for RSA and oct key types. RSA keys require a
-minimum key size of 2048 bits. If unset, default is 2048 bits for RSA keys and 128 bits for oct keys.`,
+		Usage: `The <size> (in bits) of the key for RSA key types. RSA keys require a
+minimum key size of 2048 bits. If unset, default is 2048 bits for RSA keys.`,
 	}
 
 	// Curve is the flag to se the key curve.

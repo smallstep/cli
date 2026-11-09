@@ -38,7 +38,7 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 				return kty, crv, size, errs.MinSizeInsecureFlag(ctx, sizeKey, strconv.Itoa(minimalSize))
 			}
 			if size <= 0 {
-				return kty, crv, size, errs.MinSizeFlag(ctx, sizeKey, "0")
+				return kty, crv, size, errs.MinSizeFlag(ctx, sizeKey, "1")
 			}
 		case "EC":
 			if ctx.IsSet(sizeKey) {

@@ -128,7 +128,7 @@ func listAction(ctx *cli.Context) (err error) {
 	}
 
 	cursor := ""
-	format := "%-36s%-28s%-16s%-30s%-30s%-40s%s\n"
+	format := "%-40s%-28s%-16s%-30s%-30s%-40s%s\n"
 	firstIteration := true
 	startedPager := false
 
