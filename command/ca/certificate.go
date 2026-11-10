@@ -30,7 +30,7 @@ func certificateCommand() cli.Command {
 [**--acme**=<file>] [**--standalone**] [**--webroot**=<file>]
 [**--contact**=<email>] [**--http-listen**=<address>]
 [**--eab-key-id**=<id>] [**--eab-hmac-key-file**=<file>]
-[**--remote-attestation-plugin**=<name>]
+[**--remote-attestation-plugin**=<name>] [**--remote-attestation-audience**=<audience>]
 [**--kty**=<type>] [**--curve**=<curve>] [**--size**=<size>] [**--console**]
 [**--x5c-cert**=<file>] [**--x5c-key**=<file>] [**--k8ssa-token-path**=<file>]
 [**--offline**] [**--password-file**] [**--ca-url**=<uri>] [**--root**=<file>]
@@ -203,8 +203,14 @@ multiple SANs. The '--san' flag and the '--token' flag are mutually exclusive.`,
 			cli.StringFlag{
 				Name: "remote-attestation-plugin",
 				Usage: `The <name> of the plugin that reads attestation evidence for the ACME
-remote-attest-01 challenge. **step-<name>-plugin attest --binding <hex>** must print the
-evidence in the form the challenge takes.`,
+remote-attest-01 challenge. **step-<name>-plugin attest --binding <hex> --audience <audience>**
+must print the evidence in the form the challenge takes.`,
+			},
+			cli.StringFlag{
+				Name: "remote-attestation-audience",
+				Usage: `The <audience> the plugin requests its evidence for, when the evidence is
+an attestation token. It defaults to the ACME directory URL, which is what a provisioner
+expects unless it configures another audience.`,
 			},
 			cli.StringFlag{
 				Name:  "eab-key-id",
@@ -281,6 +287,8 @@ func certificateAction(ctx *cli.Context) error {
 		return errs.RequiredWithFlag(ctx, "eab-key-id", "eab-hmac-key-file")
 	case ctx.String("eab-hmac-key-file") != "" && ctx.String("eab-key-id") == "":
 		return errs.RequiredWithFlag(ctx, "eab-hmac-key-file", "eab-key-id")
+	case ctx.String("remote-attestation-audience") != "" && ctx.String("remote-attestation-plugin") == "":
+		return errs.RequiredWithFlag(ctx, "remote-attestation-audience", "remote-attestation-plugin")
 	}
 
 	if ctx.String("remote-attestation-plugin") != "" {

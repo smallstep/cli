@@ -20,7 +20,7 @@ import (
 func acmeFlagsContext(t *testing.T, values map[string]string) *cli.Context {
 	t.Helper()
 	set := flag.NewFlagSet(t.Name(), flag.ContinueOnError)
-	for _, name := range []string{"kty", "curve", "not-before", "not-after", "eab-key-id", "eab-hmac-key-file", "remote-attestation-plugin"} {
+	for _, name := range []string{"kty", "curve", "not-before", "not-after", "eab-key-id", "eab-hmac-key-file", "remote-attestation-plugin", "remote-attestation-audience"} {
 		set.String(name, values[name], "")
 	}
 	set.Int("size", 0, "")
@@ -108,6 +108,35 @@ func TestGetExternalAccountBindingOption_noFile(t *testing.T) {
 	})}
 	_, err := af.getExternalAccountBindingOption()
 	assert.Error(t, err)
+}
+
+func TestRemoteAttestationArgs(t *testing.T) {
+	const (
+		directory = "https://ca.example.com/acme/pool/directory"
+		keyAuth   = "nonce.thumbprint"
+	)
+	tests := []struct {
+		name         string
+		audience     string
+		wantAudience string
+	}{
+		{name: "the directory by default", wantAudience: directory},
+		{name: "the audience given", audience: "https://ca.example.com/attested", wantAudience: "https://ca.example.com/attested"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := acmeFlagsContext(t, map[string]string{"remote-attestation-audience": tt.audience})
+			af := &acmeFlow{ctx: ctx, subject: "the-hint", acmeDir: directory}
+			_, err := af.newRemoteAttestationOrder()
+			require.NoError(t, err)
+
+			assert.Equal(t, []string{
+				"attest",
+				"--binding", acme.RemoteAttestationBinding(keyAuth, af.csr),
+				"--audience", tt.wantAudience,
+			}, remoteAttestationArgs(ctx, af, keyAuth))
+		})
+	}
 }
 
 func TestDoRemoteAttestation_noFreshnessNonce(t *testing.T) {

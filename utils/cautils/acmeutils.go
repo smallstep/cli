@@ -555,7 +555,7 @@ func doRemoteAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challe
 	}
 	var stderr bytes.Buffer
 	// The plugin is the one named on the command line.
-	cmd := exec.Command(name, "attest", "--binding", acme.RemoteAttestationBinding(keyAuth, af.csr))
+	cmd := exec.Command(name, remoteAttestationArgs(clictx, af, keyAuth)...)
 	cmd.Stderr = &stderr
 	record, err := cmd.Output()
 	if err != nil {
@@ -578,6 +578,24 @@ func doRemoteAttestation(clictx *cli.Context, ac *ca.ACMEClient, ch *acme.Challe
 
 	ui.Printf(" done!\n")
 	return nil
+}
+
+// remoteAttestationArgs returns the arguments the remote attestation plugin
+// runs with: the binding its evidence must carry, and the audience of evidence
+// that is requested for one, such as an attestation token. The audience is the
+// one given with --remote-attestation-audience or else the ACME directory URL,
+// which is what step-ca expects of a provisioner that configures none. A
+// plugin whose evidence has no audience ignores it.
+func remoteAttestationArgs(clictx *cli.Context, af *acmeFlow, keyAuth string) []string {
+	audience := clictx.String("remote-attestation-audience")
+	if audience == "" {
+		audience = af.acmeDir
+	}
+	return []string{
+		"attest",
+		"--binding", acme.RemoteAttestationBinding(keyAuth, af.csr),
+		"--audience", audience,
+	}
 }
 
 // getChallengeStatus retrieves the ACME Challenge status from the CA. It
