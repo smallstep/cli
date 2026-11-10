@@ -35,6 +35,11 @@ It writes the new certificate to disk - either overwriting <ssh-cert> or
 using a new file when the **--out**=<file> flag is used. This command cannot
 be used to renew SSH User Certificates.
 
+When the CA also renews an X.509 identity, issuer-validity truncation warnings
+are printed to stderr after the credentials are written. These warnings do not
+change successful exit status or the SSH certificate's validity. Offline SSH
+renewal does not renew an X.509 identity.
+
 ## POSITIONAL ARGUMENTS
 
 <ssh-cert>
@@ -141,5 +146,6 @@ func renewAction(ctx *cli.Context) error {
 
 	ui.PrintSelected("Certificate", outFile)
 
+	cautils.PrintCertificateWarnings(os.Stderr, resp.Warnings)
 	return nil
 }
