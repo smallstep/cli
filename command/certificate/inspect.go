@@ -2,6 +2,8 @@ package certificate
 
 import (
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -263,6 +265,7 @@ func inspectCertificates(ctx *cli.Context, crts []*x509.Certificate, w io.Writer
 				}
 			}
 			fmt.Fprint(w, text)
+			printLogotypes(crt, w)
 		}
 		return nil
 	case "json":
@@ -342,5 +345,150 @@ func inspectCertificateRequest(ctx *cli.Context, csr *x509.CertificateRequest, w
 		return nil
 	default:
 		return errs.InvalidFlagValue(ctx, "format", format, "text, json")
+	}
+}
+
+type HashAlgAndValue struct {
+	HashAlgorithm pkix.AlgorithmIdentifier
+	HashValue     []byte
+}
+
+type LogotypeDetails struct {
+	MediaType    string `asn1:"ia5"`
+	LogotypeHash []HashAlgAndValue
+	LogotypeURI  []string
+}
+
+type LogotypeImageInfo struct {
+	Type       int `asn1:"optional,tag:0"`
+	FileSize   int
+	XSize      int
+	YSize      int
+	Resolution asn1.RawValue `asn1:"optional"`
+	Language   string        `asn1:"optional,ia5,tag:4"`
+}
+
+type LogotypeImage struct {
+	ImageDetails LogotypeDetails
+	ImageInfo    LogotypeImageInfo `asn1:"optional"`
+}
+
+type LogotypeAudioInfo struct {
+	FileSize   int
+	PlayTime   int
+	Channels   int
+	SampleRate int    `asn1:"optional,tag:3"`
+	Language   string `asn1:"optional,ia5,tag:4"`
+}
+
+type LogotypeAudio struct {
+	AudioDetails LogotypeDetails
+	AudioInfo    LogotypeAudioInfo `asn1:"optional"`
+}
+
+type LogotypeData struct {
+	Image []LogotypeImage `asn1:"optional"`
+	Audio []LogotypeAudio `asn1:"optional,tag:1"`
+}
+
+type LogotypeReference struct {
+	RefStructHash []HashAlgAndValue
+	RefStructURI  []string
+}
+
+type OtherLogotypeInfo struct {
+	LogotypeType asn1.ObjectIdentifier
+	Info         asn1.RawValue
+}
+
+type LogotypeExtn struct {
+	CommunityLogos []asn1.RawValue `asn1:"explicit,optional,tag:0"`
+	IssuerLogo     asn1.RawValue   `asn1:"explicit,optional,tag:1"`
+	SubjectLogo    asn1.RawValue   `asn1:"explicit,optional,tag:2"`
+	OtherLogos     []asn1.RawValue `asn1:"explicit,optional,tag:3"`
+}
+
+func unmarshalImplicitSequence(val asn1.RawValue, out interface{}) error {
+	der := val.FullBytes
+	if len(der) == 0 {
+		return io.EOF
+	}
+	derCopy := make([]byte, len(der))
+	copy(derCopy, der)
+	derCopy[0] = 0x30
+	_, err := asn1.Unmarshal(derCopy, out)
+	return err
+}
+
+func parseLogotypeURIs(value []byte) ([]string, error) {
+	var ext LogotypeExtn
+	if _, err := asn1.Unmarshal(value, &ext); err != nil {
+		return nil, err
+	}
+
+	var uris []string
+
+	extractFromInfo := func(raw asn1.RawValue) {
+		switch raw.Tag {
+		case 0: // direct (LogotypeData)
+			var data LogotypeData
+			if err := unmarshalImplicitSequence(raw, &data); err == nil {
+				for _, img := range data.Image {
+					uris = append(uris, img.ImageDetails.LogotypeURI...)
+				}
+				for _, aud := range data.Audio {
+					uris = append(uris, aud.AudioDetails.LogotypeURI...)
+				}
+			}
+		case 1: // indirect (LogotypeReference)
+			var ref LogotypeReference
+			if err := unmarshalImplicitSequence(raw, &ref); err == nil {
+				uris = append(uris, ref.RefStructURI...)
+			}
+		}
+	}
+
+	// 1. communityLogos
+	for _, logoInfo := range ext.CommunityLogos {
+		extractFromInfo(logoInfo)
+	}
+
+	// 2. issuerLogo
+	if len(ext.IssuerLogo.Bytes) > 0 {
+		var choice asn1.RawValue
+		if _, err := asn1.Unmarshal(ext.IssuerLogo.Bytes, &choice); err == nil {
+			extractFromInfo(choice)
+		}
+	}
+
+	// 3. subjectLogo
+	if len(ext.SubjectLogo.Bytes) > 0 {
+		var choice asn1.RawValue
+		if _, err := asn1.Unmarshal(ext.SubjectLogo.Bytes, &choice); err == nil {
+			extractFromInfo(choice)
+		}
+	}
+
+	// 4. otherLogos
+	for _, other := range ext.OtherLogos {
+		var otherInfo OtherLogotypeInfo
+		if _, err := asn1.Unmarshal(other.FullBytes, &otherInfo); err == nil {
+			extractFromInfo(otherInfo.Info)
+		}
+	}
+
+	return uris, nil
+}
+
+func printLogotypes(crt *x509.Certificate, w io.Writer) {
+	for _, ext := range crt.Extensions {
+		if ext.Id.Equal(asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 1, 12}) {
+			uris, err := parseLogotypeURIs(ext.Value)
+			if err == nil && len(uris) > 0 {
+				for _, uri := range uris {
+					fmt.Fprintf(w, "Logotype URI: %s\n", uri)
+				}
+			}
+		}
 	}
 }
