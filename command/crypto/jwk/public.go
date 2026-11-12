@@ -35,7 +35,7 @@ func publicAction(*cli.Context) error {
 	jwk := new(jose.JSONWebKey)
 	// Attempt to decrypt if encrypted
 	if b, err = jose.Decrypt(b, jose.WithPasswordPrompter("Please enter the password to decrypt your private JWK", func(s string) ([]byte, error) {
-		return ui.PromptPassword(s)
+		return ui.PromptPassword(s, ui.WithField("password", "password-file"))
 	})); err != nil {
 		return err
 	}
