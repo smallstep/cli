@@ -210,7 +210,7 @@ $  step ssh certificate --kty OKP --curve Ed25519 mariano@work id_ed25519
 				Usage: "Set minimum required length for password used to encrypt private key. The default value is '0'. Values <=0 are interpreted as if no minimum value is set.",
 				Value: 0,
 			},
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

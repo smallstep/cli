@@ -139,7 +139,7 @@ $ step ca sign foo.csr foo.crt \
 			acmeContactFlag,
 			acmeHTTPListenFlag,
 			flags.K8sSATokenPathFlag,
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.CaURL,
 			flags.Root,
 			flags.Context,

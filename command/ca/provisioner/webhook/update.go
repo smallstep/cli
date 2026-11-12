@@ -44,7 +44,7 @@ func updateCommand() cli.Command {
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			flags.CaConfig,
+			flags.CaConfig(),
 		},
 		Description: `**step ca provisioner webhook update** updates a webhook attached to a provisioner.
 
