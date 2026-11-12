@@ -369,6 +369,23 @@ Use the flag multiple times to remove multiple challenges.`,
 If this flag is set to false, then disable EAB.`,
 	}
 
+	// ACME networking flags (provider-level)
+	acmeProxyURLFlag = cli.StringFlag{
+		Name: "acme-proxy-url",
+		Usage: `Explicit proxy <url> to use for outbound ACME validation requests (e.g. http-01 fetches).
+If not set, system or environment proxy configuration will be used unless '--acme-disable-proxy' is set.`,
+	}
+
+	acmeDisableProxyFlag = cli.BoolFlag{
+		Name:  "acme-disable-proxy",
+		Usage: `Disable any HTTP(S) proxy for outbound ACME validation requests, ignoring environment variables.`,
+	}
+
+	acmeDNSResolverFlag = cli.StringFlag{
+		Name:  "acme-dns-resolver",
+		Usage: `Force a DNS resolver <host:port> (e.g. 8.8.8.8:53) for DNS queries performed during ACME challenges.`,
+	}
+
 	attestationFormatFlag = cli.StringSliceFlag{
 		Name: "attestation-format",
 		Usage: `Enable an ACME attestation statement <format> in the provisioner. Use the flag
