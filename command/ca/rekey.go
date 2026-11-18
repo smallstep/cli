@@ -43,6 +43,10 @@ to disk - either overwriting <crt-file> and <key-file> positional arguments
 or using new files when the **--out-cert**=<file> and **--out-key**=<file>
 flags are used.
 
+Issuer-validity truncation warnings are printed to stderr after the certificate
+and key are written, including daemon rekeys. These warnings do not change
+successful exit status.
+
 With the **--daemon** flag the command will periodically update the given
 certificate. By default, it will rekey the certificate before 2/3 of the validity
 period of the certificate has elapsed. A random jitter is used to avoid multiple

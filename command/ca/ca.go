@@ -21,6 +21,12 @@ func init() {
 authority, retrieve the root of trust, sign and renew certificates, and create
 and manage provisioners.
 
+Native CA commands print issuer-validity truncation warnings to stderr after
+successfully writing or installing the issued credentials, without changing
+successful exit status. Administrative commands also report these warnings
+when login creates a new in-memory admin identity; existing admin credentials
+do not trigger issuance warnings.
+
 ## EXAMPLES
 
 Create the configuration for a new certificate authority:

@@ -40,7 +40,11 @@ func proxycommandCommand() cli.Command {
 and proxies the ssh connection according to its configuration. This command
 is used in the ssh client config with <ProxyCommand> keyword.
 
-This command will add the user to the ssh-agent if necessary.
+This command will add the user to the ssh-agent if necessary. When the CA also
+issues an X.509 identity, issuer-validity truncation warnings are printed to
+stderr after the identity is installed. These warnings do not change successful
+exit status or the SSH certificate's validity. Offline SSH issuance does not
+issue an X.509 identity.
 
 ## POSITIONAL ARGUMENTS
 
@@ -212,7 +216,12 @@ func doLoginIfNeeded(ctx *cli.Context, subject string) error {
 	}
 
 	// Add certificate and private key to agent
-	return agent.AddCertificate(subject, resp.Certificate.Certificate, priv)
+	if err := agent.AddCertificate(subject, resp.Certificate.Certificate, priv); err != nil {
+		return err
+	}
+
+	cautils.PrintCertificateWarnings(os.Stderr, resp.Warnings)
+	return nil
 }
 
 func getBastion(ctx *cli.Context, user, host string) (*api.SSHBastionResponse, error) {

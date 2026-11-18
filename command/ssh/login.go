@@ -2,6 +2,7 @@ package ssh
 
 import (
 	"crypto"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -40,6 +41,11 @@ certificate. This certificate will be automatically added to the SSH agent.
 
 With a certificate servers may trust only the CA key and verify its signature on
 a certificate rather than trusting many user keys.
+
+When the CA also issues an X.509 identity, issuer-validity truncation warnings
+are printed to stderr after the identity is installed. These warnings do not
+change successful exit status or the SSH certificate's validity. Offline SSH
+issuance does not issue an X.509 identity.
 
 ## POSITIONAL ARGUMENTS
 
@@ -298,5 +304,6 @@ func loginAction(ctx *cli.Context) error {
 		}
 	}
 
+	cautils.PrintCertificateWarnings(os.Stderr, resp.Warnings)
 	return nil
 }

@@ -55,12 +55,19 @@ func renewCertificateCommand() cli.Command {
 certificate authority) and writes the new certificate to disk - either overwriting
 <crt-file> or using a new file when the **--out**=<file> flag is used.
 
+Issuer-validity truncation warnings are printed to stderr after the renewed
+certificate is written, including offline and daemon renewals. These warnings
+do not change successful exit status.
+
 With the **--daemon** flag the command will periodically update the given
 certificate. By default, it will renew the certificate before 2/3 of the validity
 period of the certificate has elapsed. A random jitter is used to avoid multiple
 instances running at the same time. The amount of time between renewal and
 certificate expiration can be configured using the **--expires-in** flag, or a
 fixed period can be set with the **--renew-period** flag.
+If issuer validity shortens the certificate lifetime below a fixed renewal
+period, the existing scheduling policy renews immediately. Renewal preserves
+the previous certificate's duration, including an earlier truncated duration.
 
 The **--daemon** flag can be combined with **--pid**, **--signal**, or **--exec**
 to provide certificate reloads on your services.
@@ -503,6 +510,7 @@ func (r *renewer) Renew(outFile string) (resp *api.SignResponse, err error) {
 		return nil, errs.FileError(err, outFile)
 	}
 
+	cautils.PrintCertificateWarnings(os.Stderr, resp.Warnings)
 	return resp, nil
 }
 
@@ -540,6 +548,7 @@ func (r *renewer) Rekey(priv any, outCert, outKey string, writePrivateKey bool) 
 		}
 	}
 
+	cautils.PrintCertificateWarnings(os.Stderr, resp.Warnings)
 	return resp, nil
 }
 
