@@ -4,8 +4,9 @@ WORKDIR /src
 COPY go.mod go.sum .
 RUN go mod download
 COPY . .
+RUN echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | tee /etc/apt/sources.list.d/goreleaser.list
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends make git curl
+    && apt-get install -y --no-install-recommends curl goreleaser-pro
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -17,8 +18,13 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     if [ "${TARGETARCH}" = "arm" ] && [ "${TARGETVARIANT}" ]; then \
     GOARM="${TARGETVARIANT#v}"; \
     fi; \
-    CGO_ENABLED=0 GOOS_OVERRIDE="GOOS=${GOOS} GOARCH=${GOARCH} GOARM=${GOARM}" \
-    make V=1 bin/step
+    CGO_ENABLED=0 \
+    goreleaser build \
+      --id default \
+      --single-target \
+      --auto-snapshot \
+      --clean \
+      --output bin/step
 
 FROM debian:trixie
 
