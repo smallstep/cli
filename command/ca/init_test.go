@@ -1,9 +1,13 @@
 package ca
 
 import (
+	"flag"
 	"reflect"
 	"testing"
 
+	"github.com/smallstep/certificates/pki"
+	"github.com/stretchr/testify/assert"
+	"github.com/urfave/cli"
 	_ "go.step.sm/crypto/kms/azurekms"
 )
 
@@ -115,6 +119,85 @@ func Test_processDNSValue(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("processDNSValue() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_promptDeploymentType(t *testing.T) {
+	app := &cli.App{}
+
+	tests := []struct {
+		name           string
+		deploymentType string
+		isRA           bool
+		want           pki.DeploymentType
+		wantErr        string
+	}{
+		{
+			name:           "ok/standalone",
+			deploymentType: "standalone",
+			isRA:           false,
+			want:           pki.StandaloneDeployment,
+		},
+		{
+			name:           "ok/standalone-ra",
+			deploymentType: "standalone",
+			isRA:           true,
+			want:           pki.StandaloneDeployment,
+		},
+		{
+			name:           "ok/hosted",
+			deploymentType: "hosted",
+			isRA:           false,
+			want:           pki.HostedDeployment,
+		},
+		{
+			name:           "fail/linked-deprecated",
+			deploymentType: "linked",
+			isRA:           false,
+			wantErr:        "Creating new Linked CAs is no longer supported in open-source step-ca",
+		},
+		{
+			name:           "fail/linked-deprecated-ra",
+			deploymentType: "linked",
+			isRA:           true,
+			wantErr:        "Creating new Linked CAs is no longer supported in open-source step-ca",
+		},
+		{
+			name:           "fail/invalid-type",
+			deploymentType: "invalid",
+			isRA:           false,
+			wantErr:        "invalid value",
+		},
+		{
+			name:           "fail/invalid-type-ra",
+			deploymentType: "invalid",
+			isRA:           true,
+			wantErr:        "invalid value",
+		},
+		{
+			name:           "fail/hosted-ra",
+			deploymentType: "hosted",
+			isRA:           true,
+			wantErr:        "invalid value",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			set := flag.NewFlagSet("test", 0)
+			_ = set.String("deployment-type", "", "")
+			ctx := cli.NewContext(app, set, nil)
+			_ = ctx.Set("deployment-type", tt.deploymentType)
+
+			got, err := promptDeploymentType(ctx, tt.isRA)
+			if tt.wantErr != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
 			}
 		})
 	}
