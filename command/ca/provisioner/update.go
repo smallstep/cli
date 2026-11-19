@@ -44,6 +44,7 @@ ACME
 
 **step ca provisioner update** <name> [**--force-cn**] [**--require-eab**]
 [**--challenge**=<challenge>] [**--remove-challenge**=<challenge>]
+[**--acme-proxy-url**=<url>] [**--acme-disable-proxy**] [**--acme-dns-resolver**=<host:port>]
 [**--attestation-format**=<format>] [**--remove-attestation-format**=<format>]
 [**--attestation-roots**=<file>] [**--admin-cert**=<file>] [**--admin-key**=<file>]
 [**--admin-subject**=<subject>] [**--admin-provisioner**=<name>] [**--admin-password-file**=<file>]
@@ -141,14 +142,17 @@ SCEP
 			// Nebula provisioner flags
 			nebulaRootFlag,
 
-			// ACME provisioner flags
-			requireEABFlag,              // ACME
-			forceCNFlag,                 // ACME + SCEP
-			challengeFlag,               // ACME + SCEP
-			removeChallengeFlag,         // ACME
-			attestationFormatFlag,       // ACME
-			removeAttestationFormatFlag, // ACME
-			attestationRootsFlag,        // ACME
+   // ACME provisioner flags
+   requireEABFlag,              // ACME
+   forceCNFlag,                 // ACME + SCEP
+   challengeFlag,               // ACME + SCEP
+   removeChallengeFlag,         // ACME
+   acmeProxyURLFlag,            // ACME networking
+   acmeDisableProxyFlag,        // ACME networking
+   acmeDNSResolverFlag,         // ACME networking
+   attestationFormatFlag,       // ACME
+   removeAttestationFormatFlag, // ACME
+   attestationRootsFlag,        // ACME
 
 			// SCEP flags
 			scepCapabilitiesFlag,
