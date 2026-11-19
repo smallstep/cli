@@ -3,14 +3,18 @@ package provisioner
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"flag"
+	"fmt"
 	"net/netip"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	nebula "github.com/slackhq/nebula/cert"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli"
 )
 
 func TestReadNebulaRoots(t *testing.T) {
@@ -94,4 +98,52 @@ func serializeAndWriteNebulaCert(t *testing.T, tempDir string, cert nebula.Certi
 	require.NoError(t, err)
 
 	return file.Name(), data
+}
+
+func TestNewCRUDClient_CaConfigWithoutCaURL(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	cfgFile := filepath.Join(dir, "ca.json")
+	// Paths need not exist: SkipValidation is set before authority.New.
+	cfg := fmt.Sprintf(`{
+  "root": %q,
+  "crt": %q,
+  "key": %q,
+  "address": ":9000",
+  "dnsNames": ["localhost"],
+  "authority": {
+    "provisioners": []
+  }
+}
+`, filepath.Join(dir, "root.crt"), filepath.Join(dir, "intermediate.crt"), filepath.Join(dir, "intermediate.key"))
+	require.NoError(t, os.WriteFile(cfgFile, []byte(cfg), 0o600))
+
+	app := cli.NewApp()
+	set := flag.NewFlagSet("test", 0)
+	_ = set.String("ca-url", "", "")
+	_ = set.String("root", "", "")
+	_ = set.String("ca-config", cfgFile, "")
+	ctx := cli.NewContext(app, set, nil)
+
+	client, err := newCRUDClient(ctx, cfgFile)
+	require.NoError(t, err)
+	require.NotNil(t, client)
+	_, ok := client.(*caConfigClient)
+	require.True(t, ok, "expected local caConfigClient when --ca-config exists and --ca-url is unset")
+}
+
+func TestNewCRUDClient_MissingCaURLWithoutConfig(t *testing.T) {
+	t.Parallel()
+
+	app := cli.NewApp()
+	set := flag.NewFlagSet("test", 0)
+	_ = set.String("ca-url", "", "")
+	_ = set.String("root", "", "")
+	ctx := cli.NewContext(app, set, nil)
+
+	client, err := newCRUDClient(ctx, "")
+	require.Error(t, err)
+	require.Nil(t, client)
+	require.Contains(t, err.Error(), "ca-url")
 }
