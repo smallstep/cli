@@ -208,7 +208,7 @@ extra names. Use the '--principal' flag multiple times to configure
 multiple principals.`,
 			},
 			sshHostFlag,
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.Force,
 			cli.StringFlag{
 				Name: "not-before",

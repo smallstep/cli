@@ -68,7 +68,7 @@ $ step ssh rekey --out id2_ecdsa id_ecdsa-cert.pub id_ecdsa
 			flags.SSHPOPCert,
 			flags.SSHPOPKey,
 			flags.Offline,
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
