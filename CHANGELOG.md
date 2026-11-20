@@ -14,8 +14,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Support for inspecting certificates with post-quantum algorithms ML-DSA and
-  SLH-DSA (smallstep/certinfo#69).
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+---
+
+## [0.31.1] - 2026-11-20
+
+### Added
+
 - Show the enrollment time in the `Step Managed Device` extension of a
   certificate when it is present (smallstep/certinfo#96).
 
@@ -35,10 +49,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `--size` for A128KW, A192KW, A128GCMKW, or A192GCMKW, are now rejected by
   `step crypto jwe decrypt` (smallstep/cli#1732, smallstep/crypto#1157).
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - Fix `step crypto jwe encrypt` with `oct` keys, which failed with
@@ -46,10 +56,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Keep the original protected header in `step crypto jose format`, reordering
   its fields invalidated the signature or authentication tag of the token
   (smallstep/cli#1732).
+- Fix the column alignment of `step ca acme eab list` and
+  `step ca acme eab add` for 36-character key IDs, such as UUIDs, which left no
+  space before the provisioner name (smallstep/cli#1733).
 
 ### Security
 
----
+- Upgrade dependencies with published security advisories:
+  `golang.org/x/net` to v0.62.0, `golang.org/x/crypto` to v0.59.0,
+  `github.com/go-jose/go-jose/v4` to v4.1.9, `github.com/klauspost/compress` to
+  v1.20.3, `github.com/go-chi/chi/v5` to v5.5.0, `github.com/jackc/pgx/v5` to
+  v5.12.0, and `go.opentelemetry.io/otel/trace` to v1.47.0. go-jose v3 is no
+  longer a dependency (smallstep/cli#1732, smallstep/cli#1737).
+- Build the release binaries and container images with Go 1.27.4; v0.31.0 used
+  Go 1.27.1. This picks up the standard library security fixes from Go 1.27.2
+  through 1.27.4.
+
 
 ## [0.31.0] - 2026-09-25
 
