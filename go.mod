@@ -28,7 +28,7 @@ require (
 	github.com/urfave/cli v1.22.17
 	go.mozilla.org/pkcs7 v0.10.0
 	go.step.sm/crypto v0.92.1
-	golang.org/x/crypto v0.58.0
+	golang.org/x/crypto v0.59.0
 	golang.org/x/sys v0.50.0
 	golang.org/x/term v0.48.0
 	google.golang.org/protobuf v1.36.12
@@ -191,8 +191,8 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.9.2 // indirect
-	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/jackc/pgx/v5 v5.12.0 // indirect
+	github.com/jackc/puddle/v2 v2.2.3 // indirect
 	github.com/jgautheron/goconst v1.11.0 // indirect
 	github.com/jjti/go-spancheck v0.6.5 // indirect
 	github.com/julz/importas v0.2.0 // indirect
@@ -319,7 +319,7 @@ require (
 	golang.org/x/oauth2 v0.38.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/telemetry v0.0.0-20261010193011-f71dc92da45e // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
 	golang.org/x/vuln v1.9.0 // indirect
