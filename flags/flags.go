@@ -39,15 +39,14 @@ If unset, default is EC.
     **RSA**
     :  Create an **RSA** key pair
 
-	**ML-DSA-44**
-	:  Create an ML-DSA key pair using the **ML-DSA-44** parameter set.
+    **ML-DSA-44**
+    :  Create an ML-DSA key pair using the **ML-DSA-44** parameter set.
 
-	**ML-DSA-65**
-	:  Create an ML-DSA key pair using the **ML-DSA-65** parameter set.
+    **ML-DSA-65**
+    :  Create an ML-DSA key pair using the **ML-DSA-65** parameter set.
 
-	**ML-DSA-87**
-	:  Create an ML-DSA key pair using the **ML-DSA-87** parameter set.
-	`,
+    **ML-DSA-87**
+    :  Create an ML-DSA key pair using the **ML-DSA-87** parameter set.`,
 	}
 
 	// Size is the flag to set the key size.

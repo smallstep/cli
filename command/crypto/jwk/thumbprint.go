@@ -1,12 +1,8 @@
 package jwk
 
 import (
-	"crypto"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -20,19 +16,24 @@ func thumbprintCommand() cli.Command {
 		Name:      "thumbprint",
 		Action:    cli.ActionFunc(thumbprintAction),
 		Usage:     "compute thumbprint for a JWK",
-		UsageText: `**step crypto jwk thumbprint**`,
-		Description: `**step crypto jwk thumbprint** reads a JWK from STDINT, derives the
-corresponding JWK Thumbprint (RFC7638), and prints the base64-urlencoded
+		UsageText: `**step crypto jwk thumbprint** [<jwk-file>]`,
+		Description: `**step crypto jwk thumbprint** reads a JWK from <jwk-file> or STDIN, derives
+the corresponding JWK Thumbprint (RFC7638), and prints the base64-urlencoded
 thumbprint to STDOUT.
+
+## POSITIONAL ARGUMENTS
+
+<jwk-file>
+:  Path to a JWK. If it is not set, the JWK is read from STDIN.
 
 For examples, see **step help crypto jwk**.`,
 	}
 }
 
-func thumbprintAction(*cli.Context) error {
-	b, err := io.ReadAll(os.Stdin)
+func thumbprintAction(ctx *cli.Context) error {
+	b, err := readFromStdInOrFile(ctx)
 	if err != nil {
-		return errors.Wrap(err, "error reading from STDIN")
+		return err
 	}
 
 	jwk := new(jose.JSONWebKey)
@@ -48,10 +49,10 @@ func thumbprintAction(*cli.Context) error {
 		return errors.New("error reading JWK: unsupported format")
 	}
 
-	hash, err := jwk.Thumbprint(crypto.SHA256)
+	s, err := jose.Thumbprint(jwk)
 	if err != nil {
-		return errors.Wrap(err, "error generating JWK thumbprint")
+		return err
 	}
-	fmt.Println(base64.RawURLEncoding.EncodeToString(hash))
+	fmt.Println(s)
 	return nil
 }

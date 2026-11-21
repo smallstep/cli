@@ -76,7 +76,7 @@ func publicAction(ctx *cli.Context) error {
 
 	b, err := utils.ReadFile(name)
 	if err != nil {
-		return errs.FileError(err, name)
+		return err
 	}
 
 	opts := []pemutil.Options{pemutil.WithFilename(name), pemutil.WithFirstBlock()}

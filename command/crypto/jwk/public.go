@@ -3,8 +3,6 @@ package jwk
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -18,18 +16,23 @@ func publicCommand() cli.Command {
 		Name:      "public",
 		Action:    cli.ActionFunc(publicAction),
 		Usage:     "extract a public JSON Web Key (JWK) from a private JWK",
-		UsageText: `**step crypto jwk public**`,
-		Description: `**step crypto jwk public** command reads a JWK from STDIN, derives the
-corresponding public JWK, and prints the derived JWK to STDOUT.
+		UsageText: `**step crypto jwk public** [<jwk-file>]`,
+		Description: `**step crypto jwk public** command reads a JWK from <jwk-file> or STDIN,
+derives the corresponding public JWK, and prints the derived JWK to STDOUT.
+
+## POSITIONAL ARGUMENTS
+
+<jwk-file>
+:  Path to a JWK. If it is not set, the JWK is read from STDIN.
 
 For examples, see **step help crypto jwk**.`,
 	}
 }
 
-func publicAction(*cli.Context) error {
-	b, err := io.ReadAll(os.Stdin)
+func publicAction(ctx *cli.Context) error {
+	b, err := readFromStdInOrFile(ctx)
 	if err != nil {
-		return errors.Wrap(err, "error reading from STDIN")
+		return err
 	}
 
 	jwk := new(jose.JSONWebKey)
