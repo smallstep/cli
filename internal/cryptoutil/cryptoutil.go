@@ -157,6 +157,17 @@ func LoadJSONWebKey(kmsURI, name string, opts ...jose.Option) (*jose.JSONWebKey,
 		jwk.Algorithm = jose.RS256
 	case ed25519.PublicKey:
 		jwk.Algorithm = jose.EdDSA
+	case *mldsa.PublicKey:
+		switch pub.Parameters() {
+		case mldsa.MLDSA44():
+			jwk.Algorithm = jose.MLDSA44
+		case mldsa.MLDSA65():
+			jwk.Algorithm = jose.MLDSA65
+		case mldsa.MLDSA87():
+			jwk.Algorithm = jose.MLDSA87
+		default:
+			return nil, fmt.Errorf("unsupported ML-DSA parameter set %q", pub.Parameters().String())
+		}
 	default:
 		return nil, fmt.Errorf("unsupported key type %T", pub)
 	}

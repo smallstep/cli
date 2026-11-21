@@ -2,8 +2,6 @@ package jwk
 
 import (
 	"bytes"
-	"crypto"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -130,6 +128,12 @@ Create an RSA JWK:
 $ step crypto jwk create rsa.pub.json rsa.json --kty RSA
 '''
 
+Create a JWK with a ML-DSA-44 key:
+
+'''
+$ step crypto jwk create mldsa.pub.json mldsa.json --alg ML-DSA-44
+'''
+
 Create a symmetric key (oct key type):
 
 '''
@@ -176,14 +180,17 @@ If unset, default is EC.
     **EC**
     :  Create an **elliptic curve** keypair
 
-    **oct**
-    :  Create a **symmetric key** (octet stream)
+    **RSA**
+    :  Create an **RSA** keypair
 
     **OKP**
     :  Create an octet key pair (for **"Ed25519"** curve)
 
-    **RSA**
-    :  Create an **RSA** keypair
+    **AKP**
+    :  Create a **ML-DSA-44**, **ML-DSA-65**, or **ML-DSA-87** keypair
+
+    **oct**
+    :  Create a **symmetric key** (octet stream)
 `,
 			},
 			cli.IntFlag{
@@ -205,14 +212,15 @@ depends on the key use, key type, and curve (for EC and OKP keys). Defaults are:
   | EC       | sig | P-256   | ES256             |
   | EC       | sig | P-384   | ES384             |
   | EC       | sig | P-521   | ES512             |
-  | oct      | sig | N/A     | HS256             |
   | RSA      | sig | N/A     | RS256             |
   | OKP      | sig | Ed25519 | EdDSA             |
+  | AKP      | sig | N/A     | ML-DSA-44         |
+  | oct      | sig | N/A     | HS256             |
   | EC       | enc | P-256   | ECDH-ES           |
   | EC       | enc | P-384   | ECDH-ES           |
   | EC       | enc | P-521   | ECDH-ES           |
-  | oct      | enc | N/A     | A256GCMKW         |
   | RSA      | enc | N/A     | RSA-OAP-256       |
+  | oct      | enc | N/A     | A256GCMKW         |
 
 : If the key **"use"** is **"sig"** (signing) <algorithm> must be one of:
 
@@ -254,6 +262,15 @@ depends on the key use, key type, and curve (for EC and OKP keys). Defaults are:
 
     **EdDSA**
     :  EdDSA signature algorithm
+
+    **ML-DSA-44**
+    : ML-DSA-44 signature algorithm (FIPS 204, RFC 9964)
+
+    **ML-DSA-65**
+    : ML-DSA-65 signature algorithm (FIPS 204, RFC 9964)
+
+    **ML-DSA-87**
+    : ML-DSA-87 signature algorithm (FIPS 204, RFC 9964)
 
 : If the key **"use"** is **"enc"** (encryption) <algorithm> must be one of:
 
@@ -436,12 +453,23 @@ func createAction(ctx *cli.Context) (err error) {
 	size := ctx.Int("size")
 	pemFile := ctx.String("from-pem")
 
+	// Get the kty and use if --alg is passed:
+	// step crypto jwk create --alg ML-DSA-44 ml.pub ml.priv
+	if alg != "" && !ctx.IsSet("kty") {
+		var algUse string
+		kty, algUse = getKeyTypeAndUseFromAlgorithm(alg, kty)
+		if !ctx.IsSet("use") {
+			use = algUse
+		}
+
+	}
+
 	switch kty {
-	case "EC":
+	case jose.EC:
 		if ctx.IsSet("size") {
 			return errs.IncompatibleFlag(ctx, "size", "--kty EC")
 		}
-	case "RSA":
+	case jose.RSA:
 		if ctx.IsSet("crv") {
 			return errs.IncompatibleFlag(ctx, "crv", "--kty RSA")
 		}
@@ -455,11 +483,18 @@ func createAction(ctx *cli.Context) (err error) {
 				return errs.MinSizeFlag(ctx, "size", "1")
 			}
 		}
-	case "OKP":
+	case jose.OKP:
 		if ctx.IsSet("size") {
 			return errs.IncompatibleFlag(ctx, "size", "--kty OKP")
 		}
-	case "oct":
+	case jose.AKP:
+		switch {
+		case ctx.IsSet("size"):
+			return errs.IncompatibleFlag(ctx, "size", "--kty AKP")
+		case ctx.IsSet("crv"):
+			return errs.IncompatibleFlag(ctx, "crv", "--kty AKP")
+		}
+	case jose.OCT:
 		if ctx.IsSet("crv") {
 			return errs.IncompatibleFlag(ctx, "crv", "--kty oct")
 		}
@@ -498,7 +533,7 @@ func createAction(ctx *cli.Context) (err error) {
 			}
 		}
 	default:
-		return errs.InvalidFlagValue(ctx, "kty", kty, "EC, RSA, OKP, or oct")
+		return errs.InvalidFlagValue(ctx, "kty", kty, "EC, RSA, OKP, AKP, or oct")
 	}
 
 	// Generate or read secrets
@@ -517,13 +552,9 @@ func createAction(ctx *cli.Context) (err error) {
 	if ctx.IsSet("kid") {
 		jwk.KeyID = ctx.String("kid")
 	} else if kty != "oct" {
-		// A hash of a symmetric key can leak information, so we only thumbprint asymmetric keys.
-		var hash []byte
-		hash, err = jwk.Thumbprint(crypto.SHA256)
-		if err != nil {
-			return errors.Wrap(err, "error generating JWK thumbprint")
+		if jwk.KeyID, err = jose.Thumbprint(jwk); err != nil {
+			return err
 		}
-		jwk.KeyID = base64.RawURLEncoding.EncodeToString(hash)
 	}
 	jwk.Use = use
 
@@ -658,4 +689,41 @@ func aesKeySize(alg string) int {
 	default:
 		return 0
 	}
+}
+
+func getKeyTypeAndUseFromAlgorithm(alg, def string) (string, string) {
+	const (
+		sig = "sig"
+		enc = "enc"
+	)
+
+	// Signature algorithms
+	switch alg {
+	case jose.ES256, jose.ES384, jose.ES512:
+		return jose.EC, sig
+	case jose.RS256, jose.RS384, jose.RS512:
+		return jose.RSA, sig
+	case jose.PS256, jose.PS384, jose.PS512:
+		return jose.RSA, sig
+	case jose.EdDSA, jose.XEdDSA:
+		return jose.OKP, sig
+	case jose.MLDSA44, jose.MLDSA65, jose.MLDSA87:
+		return jose.AKP, sig
+	case jose.HS256, jose.HS384, jose.HS512:
+		return jose.OCT, sig
+	}
+
+	// Encryption algorithms
+	switch jose.KeyAlgorithm(alg) {
+	case jose.ECDH_ES, jose.ECDH_ES_A128KW, jose.ECDH_ES_A192KW, jose.ECDH_ES_A256KW:
+		return jose.EC, enc
+	case jose.RSA1_5, jose.RSA_OAEP, jose.RSA_OAEP_256:
+		return jose.RSA, enc
+	case jose.DIRECT,
+		jose.A128GCMKW, jose.A192GCMKW, jose.A256GCMKW,
+		jose.A128KW, jose.A192KW, jose.A256KW:
+		return jose.OCT, enc
+	}
+
+	return def, sig
 }

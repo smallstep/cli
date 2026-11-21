@@ -5,22 +5,22 @@ check_jwk defaults.pub defaults.priv ECDSA P-256
 
 # bad RSA key type
 ! exec step crypto jwk create --kty rsa --size 2048 --alg HS384 fail.pub fail.priv 
-stderr 'invalid value ''rsa'' for flag ''--kty''; options are EC, RSA, OKP, or oct'
+stderr 'invalid value ''rsa'' for flag ''--kty''; options are EC, RSA, OKP, AKP, or oct'
 
 
 # bad EC key type
 ! exec step crypto jwk create --kty ec fail.pub fail.priv 
-stderr 'invalid value ''ec'' for flag ''--kty''; options are EC, RSA, OKP, or oct'
+stderr 'invalid value ''ec'' for flag ''--kty''; options are EC, RSA, OKP, AKP, or oct'
 
 
 # bad oct key type
 ! exec step crypto jwk create --kty OCT fail.pub fail.priv 
-stderr 'invalid value ''OCT'' for flag ''--kty''; options are EC, RSA, OKP, or oct'
+stderr 'invalid value ''OCT'' for flag ''--kty''; options are EC, RSA, OKP, AKP, or oct'
 
 
 # bad OKP key type
 ! exec step crypto jwk create --kty okp fail.pub fail.priv 
-stderr 'invalid value ''okp'' for flag ''--kty''; options are EC, RSA, OKP, or oct'
+stderr 'invalid value ''okp'' for flag ''--kty''; options are EC, RSA, OKP, AKP, or oct'
 
 
 # no positional args

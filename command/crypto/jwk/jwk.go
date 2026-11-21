@@ -1,6 +1,12 @@
 package jwk
 
-import "github.com/urfave/cli"
+import (
+	"github.com/urfave/cli"
+
+	"github.com/smallstep/cli-utils/errs"
+
+	"github.com/smallstep/cli/utils"
+)
 
 // Command returns the jwk subcommand.
 func Command() cli.Command {
@@ -92,4 +98,22 @@ L38TOXsig8h6FeBOos03nFy6iXmwusFcIBBB0ZilahY
 			thumbprintCommand(),
 		},
 	}
+}
+
+func readFromStdInOrFile(ctx *cli.Context) ([]byte, error) {
+	if err := errs.MinMaxNumberOfArguments(ctx, 0, 1); err != nil {
+		return nil, err
+	}
+
+	var name string
+	switch ctx.NArg() {
+	case 0:
+		name = "-"
+	case 1:
+		name = ctx.Args().First()
+	default:
+		return nil, errs.TooManyArguments(ctx)
+	}
+
+	return utils.ReadFile(name)
 }

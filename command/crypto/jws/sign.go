@@ -81,7 +81,16 @@ the two options must match unless the '--subtle' flag is also passed.
     :  RSASSA-PSS using SHA-512 and MGF1 with SHA-512
 
     **EdDSA**
-    :  EdDSA signature algorithm`,
+    :  EdDSA signature algorithm
+
+    **ML-DSA-44**
+    : ML-DSA-44 signature algorithm (FIPS 204, RFC 9964)
+
+    **ML-DSA-65**
+    : ML-DSA-65 signature algorithm (FIPS 204, RFC 9964)
+
+    **ML-DSA-87**
+    : ML-DSA-87 signature algorithm (FIPS 204, RFC 9964)`,
 			},
 			cli.StringFlag{
 				Name: "jku",
