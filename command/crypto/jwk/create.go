@@ -461,7 +461,6 @@ func createAction(ctx *cli.Context) (err error) {
 		if !ctx.IsSet("use") {
 			use = algUse
 		}
-
 	}
 
 	switch kty {
