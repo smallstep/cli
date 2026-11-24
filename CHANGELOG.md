@@ -20,14 +20,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   certificate when it is present (smallstep/certinfo#96).
 - Add support for ML-DSA keys (ML-DSA-44, ML-DSA-65, and ML-DSA-87) in the
   `step crypto jwk`, `step crypto jws`, and `step crypto jwt` commands, using
-  the `AKP` key type (smallstep/cli#1732).
+  the `AKP` key type (smallstep/cli#1742).
 - Add support for creating JWK provisioners that use ML-DSA keys
-  (smallstep/cli#1732).
+  (smallstep/cli#1742).
 - Infer the key type and use from `--alg` in `step crypto jwk create` when
-  `--kty` is not set, for example `--alg ML-DSA-44` (smallstep/cli#1732).
+  `--kty` is not set, for example `--alg ML-DSA-44` (smallstep/cli#1742).
 - Allow `step crypto jwk public` and `step crypto jwk thumbprint` to read the
   JWK from a file passed as an argument, in addition to STDIN
-  (smallstep/cli#1732).
+  (smallstep/cli#1742).
 
 ### Changed
 
@@ -59,12 +59,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Reject JSON JWEs with additional authenticated data in
   `step crypto jose format` when converting to the compact serialization, which
   cannot carry it. The command used to print a token that could not be decrypted
-  (smallstep/cli#1732).
+  (smallstep/cli#1742).
 - Fix the error of `step crypto keypair` and other key commands when `--curve`
   is used with an ML-DSA key type, it named `--size` as the incompatible flag
-  (smallstep/cli#1732).
+  (smallstep/cli#1742).
 - Fix the use of ML-DSA keys in a KMS to sign tokens, which failed with
-  `unsupported key type *mldsa.PublicKey` (smallstep/cli#1732).
+  `unsupported key type *mldsa.PublicKey` (smallstep/cli#1742).
 
 ### Security
 

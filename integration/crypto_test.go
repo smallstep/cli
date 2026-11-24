@@ -83,7 +83,7 @@ func TestCryptoJWKCreateAKPCommand(t *testing.T) {
 		t.SkipNow()
 	}
 	testscript.Run(t, testscript.Params{
-		Files: []string{"testdata/crypto/jwk-create-akp.txtar"}, // OKP generation
+		Files: []string{"testdata/crypto/jwk-create-akp.txtar"}, // AKP generation
 		Setup: func(e *testscript.Env) error {
 			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
 		},

@@ -128,7 +128,7 @@ Create an RSA JWK:
 $ step crypto jwk create rsa.pub.json rsa.json --kty RSA
 '''
 
-Create a JWK with a ML-DSA-44 key:
+Create a JWK with an ML-DSA-44 key:
 
 '''
 $ step crypto jwk create mldsa.pub.json mldsa.json --alg ML-DSA-44
@@ -187,7 +187,7 @@ If unset, default is EC.
     :  Create an octet key pair (for **"Ed25519"** curve)
 
     **AKP**
-    :  Create a **ML-DSA-44**, **ML-DSA-65**, or **ML-DSA-87** keypair
+    :  Create an **ML-DSA-44**, **ML-DSA-65**, or **ML-DSA-87** keypair
 
     **oct**
     :  Create a **symmetric key** (octet stream)
