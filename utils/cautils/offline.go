@@ -19,6 +19,7 @@ import (
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/cas/apiv1"
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
 
@@ -195,6 +196,10 @@ func (c *OfflineCA) Version() (*api.VersionResponse, error) {
 // intermediate.
 func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 	ctx := provisioner.NewContextWithMethod(context.Background(), provisioner.SignMethod)
+	var warnings []apiv1.CertificateWarning
+	ctx = apiv1.WithCertificateWarningHandler(ctx, func(w apiv1.CertificateWarning) {
+		warnings = append(warnings, w)
+	})
 	opts, err := c.authority.Authorize(ctx, req.OTT)
 	if err != nil {
 		return nil, err
@@ -218,6 +223,7 @@ func (c *OfflineCA) Sign(req *api.SignRequest) (*api.SignResponse, error) {
 		CaPEM:        caPEM,
 		CertChainPEM: certChainPEM,
 		TLSOptions:   c.authority.GetTLSOptions(),
+		Warnings:     warnings,
 	}, nil
 }
 
@@ -232,7 +238,11 @@ func (c *OfflineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 		return nil, errors.Wrap(err, "error parsing certificate")
 	}
 	// renew cert using authority
-	certChain, err := c.authority.Renew(peer)
+	var warnings []apiv1.CertificateWarning
+	ctx := apiv1.WithCertificateWarningHandler(context.Background(), func(w apiv1.CertificateWarning) {
+		warnings = append(warnings, w)
+	})
+	certChain, err := c.authority.RenewContext(ctx, peer, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -246,6 +256,7 @@ func (c *OfflineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 		CaPEM:        caPEM,
 		CertChainPEM: certChainPEM,
 		TLSOptions:   c.authority.GetTLSOptions(),
+		Warnings:     warnings,
 	}, nil
 }
 
@@ -253,11 +264,15 @@ func (c *OfflineCA) Renew(rt http.RoundTripper) (*api.SignResponse, error) {
 // method. It returns an api.SignResponse with the requested certificate and the
 // intermediate.
 func (c *OfflineCA) RenewWithToken(ott string) (*api.SignResponse, error) {
-	cert, err := c.authority.AuthorizeRenewToken(context.Background(), ott)
+	var warnings []apiv1.CertificateWarning
+	ctx := apiv1.WithCertificateWarningHandler(context.Background(), func(w apiv1.CertificateWarning) {
+		warnings = append(warnings, w)
+	})
+	cert, err := c.authority.AuthorizeRenewToken(ctx, ott)
 	if err != nil {
 		return nil, err
 	}
-	certChain, err := c.authority.Renew(cert)
+	certChain, err := c.authority.RenewContext(ctx, cert, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -271,6 +286,7 @@ func (c *OfflineCA) RenewWithToken(ott string) (*api.SignResponse, error) {
 		CaPEM:        caPEM,
 		CertChainPEM: certChainPEM,
 		TLSOptions:   c.authority.GetTLSOptions(),
+		Warnings:     warnings,
 	}, nil
 }
 
@@ -323,7 +339,11 @@ func (c *OfflineCA) Rekey(req *api.RekeyRequest, rt http.RoundTripper) (*api.Sig
 	}
 	// rekey cert using authority
 
-	certChain, err := c.authority.Rekey(peer, req.CsrPEM.PublicKey)
+	var warnings []apiv1.CertificateWarning
+	ctx := apiv1.WithCertificateWarningHandler(context.Background(), func(w apiv1.CertificateWarning) {
+		warnings = append(warnings, w)
+	})
+	certChain, err := c.authority.RenewContext(ctx, peer, req.CsrPEM.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -337,6 +357,7 @@ func (c *OfflineCA) Rekey(req *api.RekeyRequest, rt http.RoundTripper) (*api.Sig
 		CaPEM:        caPEM,
 		CertChainPEM: certChainPEM,
 		TLSOptions:   c.authority.GetTLSOptions(),
+		Warnings:     warnings,
 	}, nil
 }
 
