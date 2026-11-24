@@ -150,3 +150,8 @@ stderr 'error reading rsa.pem: unsupported format'
 # Sign with Ed25519
 exec step crypto jwt sign -key ed25519.json -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
 stdout 'eyJhbGciOiJFZERTQSIsImtpZCI6ImtpZC1PS1AtRWQyNTUxOSIsInR5cCI6IkpXVCJ9'
+
+
+# Sign with ML-DSA-44
+[mldsa] exec step crypto jwt sign -key mldsa44.json -iss TestIssuer -aud TestAudience -sub TestSubject -nbf $NBF -iat $IAT -exp $EXP
+[mldsa] stdout 'eyJhbGciOiJNTC1EU0EtNDQiLCJraWQiOiJraWQtQUtQLU1MLURTQS00NCIsInR5cCI6IkpXVCJ9'

@@ -107,6 +107,28 @@ stdin jwkstoken.txt
 exec step crypto jwt verify -jwks jwks.json -iss TestIssuer -aud TestAudience
 
 
+# ML-DSA-44 verifications
+[mldsa] stdin mldsa44token.txt
+[mldsa] exec step crypto jwt verify -key mldsa44.json -iss TestIssuer -aud TestAudience
+
+
+# ML-DSA-44 subtle verifications
+[mldsa] stdin mldsa44token.txt
+[mldsa] exec step crypto jwt verify -key mldsa44.json -subtle
+
+
+# ML-DSA-44 verifications wrong kid
+[mldsa] stdin mldsa44token.txt
+[mldsa] ! exec step crypto jwt verify -key mldsa44.json -kid 1 -iss TestIssuer -aud TestAudience
+[mldsa] stderr 'kid 1 does not match the kid on mldsa44.json'
+
+
+# ML-DSA-44 verifications wrong algorithm
+[mldsa] stdin mldsa44token.txt
+[mldsa] ! exec step crypto jwt verify -key mldsa44.json -alg ML-DSA-65 -iss TestIssuer -aud TestAudience
+[mldsa] stderr 'alg ML-DSA-65 does not match the alg on mldsa44.json'
+
+
 # Verify token created by OpenSSL
 stdin ossltoken.txt
 exec step crypto jwt verify -key rsa.pem -alg RS256 -iss TestIssuer -aud TestAudience

@@ -132,8 +132,16 @@ func TestCryptoJWTCommand(t *testing.T) {
 	ed25519Token := createToken(t, ed25519JWK, now)
 	jwksToken := createToken(t, &jwks.Key("1")[0], now)
 
+	mldsaCondition := func(cond string) (bool, error) {
+		if cond == "mldsa" {
+			return mldsa.Supported, nil
+		}
+		return true, nil
+	}
+
 	testscript.Run(t, testscript.Params{
-		Files: []string{"testdata/crypto/jwt-sign.txtar"},
+		Files:     []string{"testdata/crypto/jwt-sign.txtar"},
+		Condition: mldsaCondition,
 		Setup: func(e *testscript.Env) error {
 			// set some additional environment variables required for token creation
 			e.Vars = append(e.Vars,
@@ -182,7 +190,8 @@ func TestCryptoJWTCommand(t *testing.T) {
 	})
 
 	testscript.Run(t, testscript.Params{
-		Files: []string{"testdata/crypto/jwt-verify.txtar"},
+		Files:     []string{"testdata/crypto/jwt-verify.txtar"},
+		Condition: mldsaCondition,
 		Setup: func(e *testscript.Env) error {
 			// write the (existing) keys to the (temporary) test directory
 			err := os.WriteFile(filepath.Join(e.Cd, "p256.pem"), p256Bytes, 0600)
@@ -208,6 +217,9 @@ func TestCryptoJWTCommand(t *testing.T) {
 				err = os.WriteFile(filepath.Join(e.Cd, "mldsa44.json"), mldsa44JSONBytes, 0600)
 				require.NoError(t, err)
 				err = os.WriteFile(filepath.Join(e.Cd, "mldsa44token.txt"), []byte(mldsa44Token), 0600)
+				require.NoError(t, err)
+			} else {
+				err = os.WriteFile(filepath.Join(e.Cd, "mldsa44token.txt"), []byte{}, 0600)
 				require.NoError(t, err)
 			}
 
