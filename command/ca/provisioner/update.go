@@ -212,7 +212,7 @@ SCEP
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
-			flags.CaConfig,
+			flags.CaConfig(),
 		},
 		Description: `**step ca provisioner update** updates a provisioner in the CA configuration.
 

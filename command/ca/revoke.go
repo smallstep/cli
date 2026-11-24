@@ -198,7 +198,7 @@ attribute certificate have been compromised (reasonCode=10).
 `,
 			},
 			flags.Token,
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.Offline,
 			flags.CaURL,
 			flags.Root,

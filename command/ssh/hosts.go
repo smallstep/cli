@@ -40,7 +40,7 @@ $ step ssh hosts
 			flags.TemplateSetFile,
 			flags.Console,
 			flags.Offline,
-			flags.CaConfig,
+			flags.CaConfig(),
 			flags.CaURL,
 			flags.Root,
 			flags.Context,
