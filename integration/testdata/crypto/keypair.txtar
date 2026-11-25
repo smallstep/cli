@@ -110,3 +110,8 @@ stderr 'flag ''--kty EC'' is incompatible with flag ''--curve P-512'''
 # EC with RSA size
 ! exec step crypto keypair --kty EC --size 2048 ec-error.pub ec-error.priv
 stderr 'flag ''--size'' is incompatible with flag ''--kty EC'''
+
+
+# ML-DSA with curve
+! exec step crypto keypair --kty ML-DSA-44 --curve P-256 mldsa-error.pub mldsa-error.priv
+stderr 'flag ''--curve'' is incompatible with flag ''--kty ML-DSA-44'''

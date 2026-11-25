@@ -1,0 +1,48 @@
+# AKP defaults 
+exec step crypto jwk create --password-file password.txt --kty AKP defaults.pub defaults.priv 
+check_jwk defaults.pub defaults.priv AKP ML-DSA-44
+
+
+# AKP with algorithm
+exec step crypto jwk create --password-file password.txt --alg ML-DSA-44 mldsa44.pub mldsa44.priv 
+check_jwk mldsa44.pub mldsa44.priv AKP ML-DSA-44
+
+
+# AKP with kty and algorithm
+exec step crypto jwk create --password-file password.txt --kty AKP --alg ML-DSA-65 alg.pub alg.priv 
+check_jwk alg.pub alg.priv AKP ML-DSA-65
+
+
+# AKP with alg and KID
+exec step crypto jwk create --password-file password.txt --kty AKP --alg ML-DSA-87 --kid keyid keyid.pub keyid.priv 
+check_jwk keyid.pub keyid.priv AKP ML-DSA-87
+
+
+# AKP with wrong arg fails
+! exec step crypto jwk create --password-file password.txt --kty AKP --alg ES256 fail.pub fail.priv
+stderr 'missing or invalid value for argument ''alg'', expected ''ML-DSA-44'', ''ML-DSA-65'', or ''ML-DSA-87'', but got ''ES256'''
+
+
+# AKP with size flag fails
+! exec step crypto jwk create --password-file password.txt --kty AKP --size 256 fail.pub fail.priv
+stderr 'flag ''--size'' is incompatible with ''--kty AKP'''
+
+
+# AKP with crv flag fails
+! exec step crypto jwk create --password-file password.txt --kty AKP --crv ML-DSA-44 fail.pub fail.priv
+stderr 'flag ''--crv'' is incompatible with ''--kty AKP'''
+
+
+# bad key type
+! exec step crypto jwk create --password-file password.txt --kty akp fail.pub fail.priv 
+stderr 'invalid value ''akp'' for flag ''--kty''; options are EC, RSA, OKP, AKP, or oct'
+
+
+# AKP without password
+exec step crypto jwk create --no-password --insecure --kty AKP akp-no-pass.pub akp-no-pass.priv 
+check_jwk_without_password akp-no-pass.pub akp-no-pass.priv AKP ML-DSA-44
+
+
+# AKP without password without insecure fails
+! exec step crypto jwk create --no-password --kty AKP fail.pub fail.priv 
+stderr 'flag ''--no-password'' requires the ''--insecure'' flag'

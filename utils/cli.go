@@ -70,7 +70,7 @@ func GetKeyDetailsFromCLI(ctx *cli.Context, insecure bool, ktyKey, curveKey, siz
 			case ctx.IsSet(sizeKey):
 				return kty, crv, size, errs.IncompatibleFlagValue(ctx, sizeKey, ktyKey, kty)
 			case ctx.IsSet(curveKey):
-				return kty, crv, size, errs.IncompatibleFlagValue(ctx, sizeKey, ktyKey, kty)
+				return kty, crv, size, errs.IncompatibleFlagValue(ctx, curveKey, ktyKey, kty)
 			}
 		default:
 			return kty, crv, size, errs.InvalidFlagValue(ctx, ktyKey, kty, "RSA, EC, OKP, ML-DSA-44, ML-DSA-65, and ML-DSA-87")

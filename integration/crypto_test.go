@@ -24,6 +24,7 @@ import (
 
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/keyutil"
+	"go.step.sm/crypto/mldsa"
 )
 
 func TestCryptoJWKCommand(t *testing.T) {
@@ -77,6 +78,22 @@ func TestCryptoJWKCreateOKPCommand(t *testing.T) {
 	})
 }
 
+func TestCryptoJWKCreateAKPCommand(t *testing.T) {
+	if !mldsa.Supported {
+		t.SkipNow()
+	}
+	testscript.Run(t, testscript.Params{
+		Files: []string{"testdata/crypto/jwk-create-akp.txtar"}, // AKP generation
+		Setup: func(e *testscript.Env) error {
+			return os.WriteFile(filepath.Join(e.Cd, "password.txt"), []byte("password"), 0600)
+		},
+		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
+			"check_jwk":                  checkKeyPair,
+			"check_jwk_without_password": checkKeyPairWithoutPassword,
+		},
+	})
+}
+
 func TestCryptoJWKCreateOctCommand(t *testing.T) {
 	testscript.Run(t, testscript.Params{
 		Files: []string{"testdata/crypto/jwk-create-oct.txtar"}, // oct generation
@@ -115,8 +132,16 @@ func TestCryptoJWTCommand(t *testing.T) {
 	ed25519Token := createToken(t, ed25519JWK, now)
 	jwksToken := createToken(t, &jwks.Key("1")[0], now)
 
+	mldsaCondition := func(cond string) (bool, error) {
+		if cond == "mldsa" {
+			return mldsa.Supported, nil
+		}
+		return false, fmt.Errorf("unsupported condition %q", cond)
+	}
+
 	testscript.Run(t, testscript.Params{
-		Files: []string{"testdata/crypto/jwt-sign.txtar"},
+		Files:     []string{"testdata/crypto/jwt-sign.txtar"},
+		Condition: mldsaCondition,
 		Setup: func(e *testscript.Env) error {
 			// set some additional environment variables required for token creation
 			e.Vars = append(e.Vars,
@@ -154,12 +179,19 @@ func TestCryptoJWTCommand(t *testing.T) {
 			err = os.WriteFile(filepath.Join(e.Cd, "jwks.json"), jwksBytes, 0600)
 			require.NoError(t, err)
 
+			if mldsa.Supported {
+				_, mldsa44JSONBytes := generateJWK(t, "AKP", "ML-DSA-44")
+				err = os.WriteFile(filepath.Join(e.Cd, "mldsa44.json"), mldsa44JSONBytes, 0600)
+				require.NoError(t, err)
+			}
+
 			return nil
 		},
 	})
 
 	testscript.Run(t, testscript.Params{
-		Files: []string{"testdata/crypto/jwt-verify.txtar"},
+		Files:     []string{"testdata/crypto/jwt-verify.txtar"},
+		Condition: mldsaCondition,
 		Setup: func(e *testscript.Env) error {
 			// write the (existing) keys to the (temporary) test directory
 			err := os.WriteFile(filepath.Join(e.Cd, "p256.pem"), p256Bytes, 0600)
@@ -178,6 +210,15 @@ func TestCryptoJWTCommand(t *testing.T) {
 			require.NoError(t, err)
 			err = os.WriteFile(filepath.Join(e.Cd, "jwkstoken.txt"), []byte(jwksToken), 0600)
 			require.NoError(t, err)
+
+			if mldsa.Supported {
+				mldsa44JWK, mldsa44JSONBytes := generateJWK(t, "AKP", "ML-DSA-44")
+				mldsa44Token := createToken(t, mldsa44JWK, now)
+				err = os.WriteFile(filepath.Join(e.Cd, "mldsa44.json"), mldsa44JSONBytes, 0600)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(e.Cd, "mldsa44token.txt"), []byte(mldsa44Token), 0600)
+				require.NoError(t, err)
+			}
 
 			// write fake / invalid tokens to the (temporary) test directory
 			invalidSignature := ed25519Token[:len(ed25519Token)-5] + "12345"
@@ -396,6 +437,7 @@ func checkOctKeySize(ts *testscript.TestScript, neg bool, args []string) {
 //   - For RSA keys, the key size is the expected size, and using the expected algorithm
 //   - For EC keys, the key curve is the expected curve, and using the expected algorithm
 //   - For OKP keys, the key curve is the expected curve, and using the expected algorithm
+//   - For AKP keys, the key is using the expected algorithm
 //   - For oct keys, the key parts are of the expected type, and using the expected algorithm
 func checkKeyDetails(ts *testscript.TestScript, pub, priv *jose.JSONWebKey, args []string) {
 	keyType := strings.ToUpper(args[2])
@@ -443,11 +485,15 @@ func checkKeyDetails(ts *testscript.TestScript, pub, priv *jose.JSONWebKey, args
 		return
 	case keyType == "OKP":
 		if !strings.HasPrefix(pub.Algorithm, "EdDSA") {
-			ts.Fatalf("expected EC algorithm for EC key, got %q", pub.Algorithm)
+			ts.Fatalf("expected EdDSA algorithm for OKP key, got %q", pub.Algorithm)
 		}
 
 		if crv := strings.ToUpper(args[3]); crv != "ED25519" {
 			ts.Fatalf("unexpected OKP curve %q", args[3])
+		}
+	case keyType == "AKP":
+		if !strings.HasPrefix(pub.Algorithm, "ML-DSA") {
+			ts.Fatalf("expected ML-DSA algorithm for AKP key, got %q", pub.Algorithm)
 		}
 	case keyType == "OCT":
 		if !strings.HasPrefix(pub.Algorithm, "HS") && !strings.HasPrefix(pub.Algorithm, "A") && pub.Algorithm != "dir" {

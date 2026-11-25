@@ -94,6 +94,24 @@ stdin jwe-unknown-enc.json
 exec step crypto jose format
 stdout '^eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJCQVIifQ.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE$'
 
+
+# format ignores a leading non-breaking space
+stdin jws-nbsp.json
+exec step crypto jose format
+stdout '^eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.c2lnbmF0dXJl$'
+
+
+# format keeps the protected header of the signature in jws-general
+stdin jws-general.json
+exec step crypto jose format
+stdout '^eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.c2lnbmF0dXJl$'
+
+
+# format fails for a JWE with additional authenticated data
+stdin jwe-aad.json
+! exec step crypto jose format
+stderr 'error serializing data: compact serialization does not support additional authenticated data \(aad\)'
+
 -- none-nosig.txt --
 eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.
 -- none.txt --
@@ -112,3 +130,9 @@ eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTI1NktXIn0.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.
 eyJhbGciOiJGT08iLCJlbmMiOiJBMjU2R0NNIn0.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE
 -- jwe-unknown-enc.txt --
 eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJCQVIifQ.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE.YWFhYWFhYWE
+-- jws-nbsp.json --
+ {"payload":"eyJzdWIiOiJ4In0","protected":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9","signature":"c2lnbmF0dXJl"}
+-- jws-general.json --
+{"payload":"eyJzdWIiOiJ4In0","protected":"Ym9ndXM","signatures":[{"protected":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9","signature":"c2lnbmF0dXJl"}]}
+-- jwe-aad.json --
+{"protected":"eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTI1NktXIn0","encrypted_key":"YWFhYWFhYWE","aad":"YWFhYWFhYWE","iv":"YWFhYWFhYWE","ciphertext":"YWFhYWFhYWE","tag":"YWFhYWFhYWE"}

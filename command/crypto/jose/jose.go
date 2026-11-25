@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -80,6 +80,12 @@ func formatAction(*cli.Context) error {
 	// If it fails parse a regular JWS
 	var srz serializer
 	if enc, err := joseutil.ParseEncryptedInsecure(token); err == nil {
+		// The compact serialization cannot carry the additional authenticated
+		// data, and go-jose would drop it, which makes the token impossible to
+		// decrypt.
+		if strings.HasPrefix(token, "{") && len(enc.GetAuthData()) > 0 {
+			return errors.New("error serializing data: compact serialization does not support additional authenticated data (aad)")
+		}
 		srz = enc
 	} else {
 		tok, err := joseutil.ParseSignedInsecure(token)
@@ -117,8 +123,10 @@ func withCompactProtected(compact, token string) string {
 		return compact
 	}
 
+	// Like go-jose, ignore the flattened members if there are signatures. There
+	// is only one at this point, the compact serialization fails otherwise.
 	protected := jws.Protected
-	if protected == "" && len(jws.Signatures) == 1 {
+	if len(jws.Signatures) > 0 {
 		protected = jws.Signatures[0].Protected
 	}
 	_, rest, ok := strings.Cut(compact, ".")
@@ -144,9 +152,14 @@ func withJSONProtected(full, token string) string {
 		`"protected":"`+protected+`"`, 1)
 }
 
-var stripWhitespaceRegex = regexp.MustCompile(`\s`)
-
-// stripWhitespace strip all newlines and whitespace
+// stripWhitespace strips all newlines and whitespace. It removes the same
+// characters as the parsers, the format of the output and the protected header
+// to keep are taken from the result.
 func stripWhitespace(data string) string {
-	return stripWhitespaceRegex.ReplaceAllString(data, "")
+	return strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, data)
 }
