@@ -136,7 +136,7 @@ func TestCryptoJWTCommand(t *testing.T) {
 		if cond == "mldsa" {
 			return mldsa.Supported, nil
 		}
-		return true, nil
+		return false, fmt.Errorf("unsupported condition %q", cond)
 	}
 
 	testscript.Run(t, testscript.Params{
@@ -217,9 +217,6 @@ func TestCryptoJWTCommand(t *testing.T) {
 				err = os.WriteFile(filepath.Join(e.Cd, "mldsa44.json"), mldsa44JSONBytes, 0600)
 				require.NoError(t, err)
 				err = os.WriteFile(filepath.Join(e.Cd, "mldsa44token.txt"), []byte(mldsa44Token), 0600)
-				require.NoError(t, err)
-			} else {
-				err = os.WriteFile(filepath.Join(e.Cd, "mldsa44token.txt"), []byte{}, 0600)
 				require.NoError(t, err)
 			}
 
